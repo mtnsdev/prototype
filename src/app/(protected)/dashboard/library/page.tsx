@@ -1,11 +1,16 @@
-export default function LibraryPage() {
-    return (
-        <div className="h-full flex items-center justify-center">
-            <div className="w-[90%] h-[90%] rounded-xl border-2 border-dashed border-white/20 flex items-center justify-center">
-                <p className="text-white/60 text-3xl font-semibold tracking-wide">
-                    Library Placeholder
-                </p>
-            </div>
-        </div>
-    );
+"use client";
+
+import { useSearchParams } from "next/navigation";
+import LibraryView from "@/components/library/LibraryView";
+
+export default function LibraryPageClient() {
+    const sp = useSearchParams();
+    const root = sp.get("root");
+
+    const rootId =
+        root && root.trim() !== "" && Number.isFinite(Number(root))
+            ? Number(root)
+            : undefined;
+
+    return <LibraryView initialRootId={rootId} />;
 }
