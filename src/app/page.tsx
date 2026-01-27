@@ -1,16 +1,18 @@
 import { redirect } from "next/navigation";
-import { getSessionCookie } from "@/lib/auth/cookies";
-import { verifySession } from "@/lib/auth/jwt";
+// import { getSessionCookie } from "@/lib/auth/cookies";
+// import { verifySession } from "@/lib/auth/jwt";
 
 export default async function HomePage() {
-  const token = await getSessionCookie();
+  // const token = await getSessionCookie();
 
-  if (!token) redirect("/login");
+  // if (!token) redirect("/login");
 
-  try {
-    verifySession(token);
-    redirect("/chat");
-  } catch {
-    redirect("/login");
-  }
+  // try {
+  //   verifySession(token);
+  //   redirect("/chat");
+  // } catch {
+  //   redirect("/login");
+  // }
+
+  redirect("/dashboard")
 }

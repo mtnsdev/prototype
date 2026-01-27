@@ -15,3 +15,5 @@ export type TLItem =
           version_num: number;
           URI?: string;
       };
+
+export type FolderChildrenResponse = { items: TLItem[] };

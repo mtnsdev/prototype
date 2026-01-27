@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.972.0",
+    "@tanstack/react-query": "^5.90.20",
     "autoprefixer": "^10.4.23",
     "bcryptjs": "^3.0.3",
     "cookie": "^1.1.1",
