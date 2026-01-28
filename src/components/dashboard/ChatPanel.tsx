@@ -248,7 +248,7 @@ export default function ChatPanel() {
         setLoading(true);
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat/query`, {
+            const res = await fetch(`/api/chat/query`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ query: text }),
