@@ -190,25 +190,25 @@ export default function ChatPanel() {
 
     return (
         <>
-            <section className="h-full flex flex-col">
-                <div className="px-4 py-3 border-b border-white/10">
+            <section className="h-full flex flex-col overflow-hidden">
+                <div className="flex-shrink-0 px-4 py-3 border-b border-white/10">
                     <h2 className="text-sm font-semibold">Chat</h2>
                     <p className="text-xs text-white/60 mt-1">Ask questions about your documents</p>
                 </div>
 
-                <div className="flex-1 overflow-auto px-4 py-4 space-y-6">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-6" style={{ minHeight: 0 }}>
                     {messages.map((m, i) => (
                         <div key={i} className="space-y-3">
                             {/* User Message */}
                             {m.role === "user" && (
-                                <div className="ml-auto max-w-[85%] rounded-xl px-4 py-3 text-sm leading-relaxed shadow-sm bg-linear-gradient-to-br from-white to-white/95 text-black font-medium">
+                                <div className="ml-auto max-w-[85%] rounded-xl px-4 py-3 text-sm leading-relaxed shadow-md bg-gradient-to-br from-white to-white/95 text-black font-medium border border-gray-200/50">
                                     {m.text}
                                 </div>
                             )}
 
                             {/* Bot Response */}
                             {m.role === "bot" && m.response && (
-                                <div className="mr-auto max-w-[85%] bg-linear-gradient-to-br from-white/10 to-white/5 text-white backdrop-blur-sm border border-white/10 rounded-xl p-6 space-y-6 shadow-lg">
+                                <div className="mr-auto max-w-[85%] bg-gradient-to-br from-white/10 to-white/5 text-white backdrop-blur-sm border border-white/10 rounded-xl p-6 space-y-6 shadow-lg">
                                     {/* Status Indicators */}
                                     {m.response.can_answer && (
                                         <div className="flex items-center gap-4 text-xs text-white/70 border-b border-white/10 pb-3">
@@ -371,33 +371,33 @@ export default function ChatPanel() {
                         </div>
                     ))}
 
-                    {loading && (
-                        <div className="mr-auto max-w-[85%] bg-white/10 text-white rounded-xl px-4 py-3 text-sm flex items-center gap-2 border border-white/10">
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Thinking...</span>
-                        </div>
-                    )}
-                </div>
-
-                <div className="p-3 border-t border-white/10">
-                    <div className="flex gap-2">
-                        <input
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => (e.key === "Enter" ? send() : null)}
-                            placeholder="Ask about products, destinations..."
-                            className="flex-1 rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40"
-                        />
-                        <button
-                            type="button"
-                            onClick={send}
-                            disabled={loading}
-                            className="rounded-md bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90 disabled:opacity-50"
-                        >
-                            Send
-                        </button>
+                {loading && (
+                    <div className="mr-auto max-w-[85%] bg-white/10 text-white rounded-xl px-4 py-3 text-sm flex items-center gap-2 border border-white/10">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Thinking...</span>
                     </div>
+                )}
+            </div>
+
+            <div className="flex-shrink-0 p-3 border-t border-white/10 bg-black/50 backdrop-blur-sm sticky bottom-0 z-10">
+                <div className="flex gap-2">
+                    <input
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => (e.key === "Enter" ? send() : null)}
+                        placeholder="Ask about products, destinations..."
+                        className="flex-1 rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40"
+                    />
+                    <button
+                        type="button"
+                        onClick={send}
+                        disabled={loading}
+                        className="rounded-md bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90 disabled:opacity-50"
+                    >
+                        Send
+                    </button>
                 </div>
+            </div>
             </section>
 
             {/* PDF Modal */}
