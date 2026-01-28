@@ -15,26 +15,10 @@ interface PdfModalProps {
 // Function to get PDF preview URL from filename and page number
 function getPdfPreviewUrlFromFilename(filename: string, pageNumber: number | string, pdfPath?: string): string {
     // Extract filename from pdf_path if it's a full path, otherwise use filename
-    let finalFilename = filename;
     
-    if (pdfPath) {
-        // If pdf_path contains a filename, extract it
-        const pathParts = pdfPath.split(/[/\\]/);
-        const pdfFilename = pathParts[pathParts.length - 1];
-        if (pdfFilename && pdfFilename.endsWith('.pdf')) {
-            finalFilename = pdfFilename;
-        } else if (!finalFilename.endsWith('.pdf') && pdfFilename) {
-            finalFilename = pdfFilename;
-        }
-    }
-    
-    // Ensure filename has .pdf extension if not present
-    if (!finalFilename.endsWith('.pdf')) {
-        finalFilename = `${finalFilename}.pdf`;
-    }
     
     // Build the PDF preview URL with page parameter
-    const baseUrl = backendUrl(`/api/document/pdf/${encodeURIComponent(finalFilename)}`);
+    const baseUrl = backendUrl(`/api/document/pdf/${encodeURIComponent(filename)}`);
     const url = new URL(baseUrl);
     url.searchParams.set('page', String(pageNumber));
     
