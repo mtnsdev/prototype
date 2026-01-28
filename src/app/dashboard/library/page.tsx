@@ -1,9 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import LibraryView from "@/components/library/LibraryView";
 
-export default function LibraryPageClient() {
+function LibraryPageContent() {
     const sp = useSearchParams();
     const root = sp.get("root");
 
@@ -13,4 +14,12 @@ export default function LibraryPageClient() {
             : undefined;
 
     return <LibraryView initialRootId={rootId} />;
+}
+
+export default function LibraryPageClient() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <LibraryPageContent />
+        </Suspense>
+    );
 }
