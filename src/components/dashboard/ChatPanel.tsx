@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, AlertTriangle, CheckCircle2, Loader2, ExternalLink } from "lucide-react";
+import React from "react";
+import { AlertTriangle, CheckCircle2, Loader2, ExternalLink } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import PdfModal from "./PdfModal";
-import { backendUrl } from "@/lib/claromentis/backendApi";
 
 type Citation = {
     source: string;
@@ -78,33 +78,135 @@ function consolidateCitations(citations: Citation[]): ConsolidatedCitation[] {
     return Array.from(grouped.values());
 }
 
-// Function to get PDF preview URL from filename and page number
-function getPdfPreviewUrlFromFilename(filename: string, pageNumber: number | string, pdfPath?: string): string {
-    // Extract filename from pdf_path if it's a full path, otherwise use filename
-    let finalFilename = filename;
+// Function to process answer text and create clickable citations
+function AnswerWithCitations({ 
+    answer, 
+    citations, 
+    onCitationClick 
+}: { 
+    answer: string; 
+    citations: Citation[]; 
+    onCitationClick: (filename: string, pageNumber: number | string, pdfPath?: string) => void;
+}) {
+    // Pattern to match citations like [Source: filename, Page: 1] or [Source: filename, Pages: 1, 24, 25, 27]
+    const citationPattern = /\[Source:\s*([^,\]]+),\s*Pages?:\s*([^\]]+)\]/gi;
     
-    if (pdfPath) {
-        // If pdf_path contains a filename, extract it
-        const pathParts = pdfPath.split(/[/\\]/);
-        const pdfFilename = pathParts[pathParts.length - 1];
-        if (pdfFilename && pdfFilename.endsWith('.pdf')) {
-            finalFilename = pdfFilename;
-        } else if (!finalFilename.endsWith('.pdf') && pdfFilename) {
-            finalFilename = pdfFilename;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+    let citationIndex = 0;
+    
+    // Reset regex lastIndex
+    citationPattern.lastIndex = 0;
+    
+    while ((match = citationPattern.exec(answer)) !== null) {
+        // Add text before the citation
+        if (match.index > lastIndex) {
+            const textBefore = answer.substring(lastIndex, match.index);
+            if (textBefore) {
+                parts.push(textBefore);
+            }
+        }
+        
+        const filename = match[1].trim();
+        const pageNumbersStr = match[2].trim();
+        // Parse page numbers (can be single number or comma-separated list)
+        const pageNumbers = pageNumbersStr.split(',').map(p => p.trim()).filter(Boolean);
+        
+        // Find matching citation from the citations array to get pdf_path
+        const matchingCitation = citations.find(
+            c => (c.filename || c.source) === filename || 
+                 (c.filename || c.source)?.toLowerCase() === filename.toLowerCase()
+        );
+        
+        const pdfPath = matchingCitation?.pdf_path;
+        
+        // Create concise, appealing citation badges with modern design
+        parts.push(
+            <span key={`citation-group-${citationIndex++}`} className="inline-flex items-center gap-1 ml-1.5">
+                <span className="text-white/50 text-xs">[</span>
+                <span className="text-white/70 text-xs font-medium truncate max-w-[120px]" title={filename}>
+                    {filename}
+                </span>
+                <span className="text-white/50 text-xs">:</span>
+                {pageNumbers.map((pageNum, pageIdx) => (
+                    <React.Fragment key={`page-${pageIdx}`}>
+                        <button
+                            onClick={() => onCitationClick(filename, pageNum, pdfPath)}
+                            className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/15 px-1.5 py-0.5 rounded-md cursor-pointer transition-all inline-flex items-center gap-1 text-xs font-semibold border border-blue-400/20 hover:border-blue-400/40"
+                            title={`View ${filename} page ${pageNum}`}
+                        >
+                            {pageNum}
+                            <ExternalLink className="w-2.5 h-2.5" />
+                        </button>
+                        {pageIdx < pageNumbers.length - 1 && <span className="text-white/40 text-xs mx-0.5">,</span>}
+                    </React.Fragment>
+                ))}
+                <span className="text-white/50 text-xs">]</span>
+            </span>
+        );
+        
+        lastIndex = citationPattern.lastIndex;
+    }
+    
+    // Add remaining text after last citation
+    if (lastIndex < answer.length) {
+        const textAfter = answer.substring(lastIndex);
+        if (textAfter) {
+            parts.push(textAfter);
         }
     }
     
-    // Ensure filename has .pdf extension if not present
-    if (!finalFilename.endsWith('.pdf')) {
-        finalFilename = `${finalFilename}.pdf`;
+    // If no citations found, return the original answer rendered with ReactMarkdown
+    if (parts.length === 0 || (parts.length === 1 && typeof parts[0] === 'string')) {
+        return (
+            <ReactMarkdown
+                components={{
+                    p: ({ children }) => <p className="mb-2 text-white/90">{children}</p>,
+                    ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1 text-white/90">{children}</ul>,
+                    li: ({ children }) => <li className="ml-4 text-white/90">{children}</li>,
+                    strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
+                    h1: ({ children }) => <h1 className="text-white font-semibold">{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-white font-semibold">{children}</h2>,
+                    h3: ({ children }) => <h3 className="text-white font-semibold">{children}</h3>,
+                }}
+            >
+                {answer}
+            </ReactMarkdown>
+        );
     }
     
-    // Build the PDF preview URL with page parameter
-    const baseUrl = backendUrl(`/api/document/pdf/${encodeURIComponent(finalFilename)}`);
-    const url = new URL(baseUrl);
-    url.searchParams.set('page', String(pageNumber));
-    
-    return url.toString();
+    // Render mixed content: process text parts with ReactMarkdown, render buttons as-is
+    return (
+        <>
+            {parts.map((part, idx) => {
+                if (React.isValidElement(part)) {
+                    // It's a React element (clickable citation button) - render inline
+                    return <React.Fragment key={`citation-${idx}`}>{part}</React.Fragment>;
+                }
+                // It's a string - render with ReactMarkdown
+                const textPart = String(part);
+                if (!textPart.trim()) return null;
+                
+                return (
+                    <ReactMarkdown
+                        key={`text-${idx}`}
+                        components={{
+                            p: ({ children }) => <p className="mb-2 text-white/90">{children}</p>,
+                            ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1 text-white/90">{children}</ul>,
+                            li: ({ children }) => <li className="ml-4 text-white/90">{children}</li>,
+                            strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
+                            h1: ({ children }) => <h1 className="text-white font-semibold">{children}</h1>,
+                            h2: ({ children }) => <h2 className="text-white font-semibold">{children}</h2>,
+                            h3: ({ children }) => <h3 className="text-white font-semibold">{children}</h3>,
+                        }}
+                    >
+                        {textPart}
+                    </ReactMarkdown>
+                );
+            })}
+        </>
+    );
 }
 
 export default function ChatPanel() {
@@ -222,20 +324,13 @@ export default function ChatPanel() {
                                     {/* Answer Section */}
                                     {m.response.answer && (
                                         <div className="space-y-2">
+                                            <h3 className="text-lg font-semibold text-white">Answer:</h3>
                                             <div className="prose prose-sm max-w-none text-white/90 prose-headings:font-semibold prose-headings:text-white prose-p:my-2 prose-ul:my-2 prose-li:my-1 prose-strong:text-white">
-                                                <ReactMarkdown
-                                                    components={{
-                                                        p: ({ children }) => <p className="mb-2 text-white/90">{children}</p>,
-                                                        ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1 text-white/90">{children}</ul>,
-                                                        li: ({ children }) => <li className="ml-4 text-white/90">{children}</li>,
-                                                        strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
-                                                        h1: ({ children }) => <h1 className="text-white font-semibold">{children}</h1>,
-                                                        h2: ({ children }) => <h2 className="text-white font-semibold">{children}</h2>,
-                                                        h3: ({ children }) => <h3 className="text-white font-semibold">{children}</h3>,
-                                                    }}
-                                                >
-                                                    {m.response.answer}
-                                                </ReactMarkdown>
+                                                <AnswerWithCitations
+                                                    answer={m.response.answer}
+                                                    citations={m.response.citations || []}
+                                                    onCitationClick={openPdfModal}
+                                                />
                                             </div>
                                         </div>
                                     )}
@@ -244,18 +339,21 @@ export default function ChatPanel() {
                                     {m.response.citations && m.response.citations.length > 0 && (
                                         <div className="space-y-2">
                                             <h3 className="text-lg font-semibold text-white">Excerpts:</h3>
-                                            <ul className="space-y-3 list-disc list-inside">
+                                            <div className="space-y-3">
                                                 {m.response.citations.map((citation, idx) => (
-                                                    <li key={idx} className="text-white/90">
-                                                        <span className="text-sm">
+                                                    <div 
+                                                        key={idx} 
+                                                        className="text-white/90 pl-4 border-l-2 border-white/30"
+                                                    >
+                                                        <div className="text-sm">
                                                             {citation.excerpt}
-                                                        </span>
-                                                        <span className="text-xs text-white/60 ml-2">
+                                                        </div>
+                                                        <div className="text-xs text-white/60 mt-2">
                                                             [Source: {citation.filename || citation.source}, Page: {citation.page_number}]
-                                                        </span>
-                                                    </li>
+                                                        </div>
+                                                    </div>
                                                 ))}
-                                            </ul>
+                                            </div>
                                         </div>
                                     )}
 
@@ -265,23 +363,27 @@ export default function ChatPanel() {
                                         return (
                                             <div className="space-y-2">
                                                 <h3 className="text-lg font-semibold text-white">Citations:</h3>
-                                                <ul className="space-y-2 list-disc list-inside">
+                                                <div className="space-y-2">
                                                     {consolidated.map((citation, idx) => (
-                                                        <li key={idx} className="text-white/90">
+                                                        <div 
+                                                            key={idx} 
+                                                            className="pl-4 border-l-2 border-blue-400/50 hover:border-blue-400 transition-colors"
+                                                        >
                                                             <button
                                                                 onClick={() => openPdfModal(
                                                                     citation.filename,
                                                                     citation.page_number,
                                                                     citation.pdf_path
                                                                 )}
-                                                                className="text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1 transition-colors"
+                                                                className="text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-2 transition-colors text-sm font-medium"
                                                             >
-                                                                {citation.filename} (Page {citation.page_number})
-                                                                <ExternalLink className="w-3 h-3" />
+                                                                <ExternalLink className="w-4 h-4" />
+                                                                <span>{citation.filename}</span>
+                                                                <span className="text-white/70">(Page {citation.page_number})</span>
                                                             </button>
-                                                        </li>
+                                                        </div>
                                                     ))}
-                                                </ul>
+                                                </div>
                                             </div>
                                         );
                                     })()}
@@ -328,37 +430,7 @@ export default function ChatPanel() {
                                     )}
 
 
-                                    {/* Conflicting Information Warning */}
-                                    {m.response.conflicts && m.response.conflicts.length > 0 && (
-                                        <div className="bg-amber-500/15 border-l-4 border-amber-400/50 p-4 rounded">
-                                            <div className="flex items-start gap-2 mb-2">
-                                                <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-                                                <div className="flex-1">
-                                                    <h4 className="font-semibold text-amber-200 mb-2">Conflicting Information:</h4>
-                                                    {m.response.conflicts.map((conflict, idx) => (
-                                                        <div key={idx} className="mb-3 last:mb-0">
-                                                            <div className="font-medium text-amber-200 mb-1">
-                                                                {conflict.attribute.replace(/_/g, " ")}:
-                                                            </div>
-                                                            <ul className="list-disc list-inside space-y-1 ml-2">
-                                                                {conflict.claims.map((claim, claimIdx) => (
-                                                                    <li key={claimIdx} className="text-sm text-white/90">
-                                                                        {claim.claim}
-                                                                        <button
-                                                                            onClick={() => openPdfModal(claim.source, claim.page_number)}
-                                                                            className="text-xs text-blue-400 hover:text-blue-300 hover:underline ml-1 transition-colors"
-                                                                        >
-                                                                            ({claim.source}, Page {claim.page_number})
-                                                                        </button>
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
+                                  
                                 </div>
                             )}
 
