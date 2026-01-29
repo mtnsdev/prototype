@@ -17,10 +17,11 @@ function getPdfPreviewUrlFromFilename(filename: string, pageNumber: number | str
 
 
     // Build the PDF preview URL with page parameter
-    const path = `/api/document/pdf/${encodeURIComponent(filename)}`;
-    const url = new URL(path, window.location.origin); // only for searchParams
-    url.searchParams.set("page", String(pageNumber));
-    return url.pathname + url.search;
+    const baseUrl =`/api/document/pdf/${encodeURIComponent(filename)}`;
+    const url = new URL(baseUrl);
+    url.searchParams.set('page', String(pageNumber));
+    
+    return url.toString();
 }
 
 export default function PdfModal({ isOpen, onClose, filename, pageNumber, pdfPath }: PdfModalProps) {
