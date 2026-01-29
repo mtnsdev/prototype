@@ -9,10 +9,10 @@ export default async function HomePage() {
 
   // try {
   //   verifySession(token);
-  //   redirect("/chat");
+  //   redirect("/dashboard");
   // } catch {
   //   redirect("/login");
   // }
 
-  redirect("/dashboard")
+  redirect("/login")
 }
