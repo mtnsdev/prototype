@@ -1,20 +1,23 @@
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 if (!BACKEND) {
-    // This runs at build time too; keep it explicit.
     throw new Error("Missing NEXT_PUBLIC_BACKEND_URL");
-}
-
-export function backendUrl(path: string) {
-    // path like "/api/library/folders"
-    return `${BACKEND.replace(/\/+$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 export async function backendGet<T>(
     path: string,
     params?: Record<string, string | number | undefined>,
-) {
-    const url = new URL(backendUrl(path));
+): Promise<T> {
+    // Force relative API paths so Next rewrites can apply
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    if (!normalizedPath.startsWith("/api/")) {
+        throw new Error(
+            `backendGet path must start with "/api/". Received: ${path}`,
+        );
+    }
+
+    // Build a relative URL (no origin needed)
+    const url = new URL(normalizedPath, "http://localhost"); // base is irrelevant for relative URL building
 
     if (params) {
         for (const [k, v] of Object.entries(params)) {
@@ -23,10 +26,8 @@ export async function backendGet<T>(
         }
     }
 
-    const res = await fetch(url.toString(), {
+    const res = await fetch(url.pathname + url.search, {
         method: "GET",
-        // If you use cookies/auth later, you might want:
-        // credentials: "include",
         cache: "no-store",
     });
 

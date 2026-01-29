@@ -142,7 +142,7 @@ export default function LibraryView({ initialRootId }: { initialRootId?: number 
                     {error ? (
                         <div className="px-4 py-4 text-sm text-red-400">{error}</div>
                     ) : items.length === 0 ? (
-                        <div className="px-4 py-6 text-sm text-white/60">No items found.</div>
+                        <div className="px-4 py-6 text-sm text-white/60">{loading && <span className="text-xs text-white/60">Loading…</span>}</div>
                     ) : (
                         <ul className="divide-y divide-white/10">
                             {items.map((it) => (

@@ -14,8 +14,8 @@ interface PdfModalProps {
 // Function to get PDF preview URL from filename and page number
 function getPdfPreviewUrlFromFilename(filename: string, pageNumber: number | string, pdfPath?: string): string {
     // Extract filename from pdf_path if it's a full path, otherwise use filename
-    
-    
+
+
     // Build the PDF preview URL with page parameter
     const baseUrl =`/api/document/pdf/${encodeURIComponent(filename)}`;
     const url = new URL(baseUrl);
@@ -28,7 +28,7 @@ export default function PdfModal({ isOpen, onClose, filename, pageNumber, pdfPat
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
     // Build PDF URL with page parameter and hash for direct navigation
-    const pdfUrl = isOpen 
+    const pdfUrl = isOpen
         ? `${getPdfPreviewUrlFromFilename(filename, pageNumber, pdfPath)}#page=${pageNumber}`
         : "";
 
