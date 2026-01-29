@@ -20,6 +20,7 @@ declare global {
                             size: string;
                             width: number;
                             text: string;
+                            locale?: string;
                         }
                     ) => void;
                 };
@@ -41,7 +42,7 @@ export default function LoginPage() {
         if (!googleClientId) return;
 
         const script = document.createElement("script");
-        script.src = "https://accounts.google.com/gsi/client";
+        script.src = "https://accounts.google.com/gsi/client?hl=en";
         script.async = true;
         script.defer = true;
         script.onload = () => {
@@ -58,6 +59,7 @@ export default function LoginPage() {
                         size: "large",
                         width: 320,
                         text: "signin_with",
+                        locale: "en",
                     });
                 }
             }
@@ -88,7 +90,7 @@ export default function LoginPage() {
 
             // Store token in localStorage
             localStorage.setItem("auth_token", data.token.access_token);
-            
+
             // Redirect to dashboard
             router.push("/dashboard/chat");
         } catch (err) {
@@ -118,7 +120,7 @@ export default function LoginPage() {
 
             // Store token in localStorage
             localStorage.setItem("auth_token", data.token.access_token);
-            
+
             // Redirect to dashboard
             router.push("/dashboard/chat");
         } catch (err) {
