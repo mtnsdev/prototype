@@ -53,11 +53,11 @@ type ConsolidatedCitation = {
 // Function to consolidate citations by filename and page number
 function consolidateCitations(citations: Citation[]): ConsolidatedCitation[] {
     const grouped = new Map<string, ConsolidatedCitation>();
-    
+
     for (const citation of citations) {
         // Create a key from filename and page number
         const key = `${citation.filename || citation.source}_${citation.page_number}`;
-        
+
         if (grouped.has(key)) {
             const existing = grouped.get(key)!;
             // Add excerpt if it's different from existing ones
@@ -74,31 +74,31 @@ function consolidateCitations(citations: Citation[]): ConsolidatedCitation[] {
             });
         }
     }
-    
+
     return Array.from(grouped.values());
 }
 
 // Function to process answer text and create clickable citations
-function AnswerWithCitations({ 
-    answer, 
-    citations, 
-    onCitationClick 
-}: { 
-    answer: string; 
-    citations: Citation[]; 
+function AnswerWithCitations({
+    answer,
+    citations,
+    onCitationClick
+}: {
+    answer: string;
+    citations: Citation[];
     onCitationClick: (filename: string, pageNumber: number | string, pdfPath?: string) => void;
 }) {
     // Pattern to match citations like [Source: filename, Page: 1] or [Source: filename, Pages: 1, 24, 25, 27]
     const citationPattern = /\[Source:\s*([^,\]]+),\s*Pages?:\s*([^\]]+)\]/gi;
-    
+
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
     let match;
     let citationIndex = 0;
-    
+
     // Reset regex lastIndex
     citationPattern.lastIndex = 0;
-    
+
     while ((match = citationPattern.exec(answer)) !== null) {
         // Add text before the citation
         if (match.index > lastIndex) {
@@ -107,25 +107,25 @@ function AnswerWithCitations({
                 parts.push(textBefore);
             }
         }
-        
+
         const filename = match[1].trim();
         const pageNumbersStr = match[2].trim();
         // Parse page numbers (can be single number or comma-separated list)
         const pageNumbers = pageNumbersStr.split(',').map(p => p.trim()).filter(Boolean);
-        
+
         // Find matching citation from the citations array to get pdf_path
         const matchingCitation = citations.find(
-            c => (c.filename || c.source) === filename || 
-                 (c.filename || c.source)?.toLowerCase() === filename.toLowerCase()
+            c => (c.filename || c.source) === filename ||
+                (c.filename || c.source)?.toLowerCase() === filename.toLowerCase()
         );
-        
+
         const pdfPath = matchingCitation?.pdf_path;
-        
+
         // Create concise, appealing citation badges with modern design
         parts.push(
             <span key={`citation-group-${citationIndex++}`} className="inline-flex items-center gap-1 ml-1.5">
                 <span className="text-white/50 text-xs">[</span>
-                <span className="text-white/70 text-xs font-medium truncate max-w-[120px]" title={filename}>
+                <span className="text-white/70 text-xs font-medium truncate max-w-30" title={filename}>
                     {filename}
                 </span>
                 <span className="text-white/50 text-xs">:</span>
@@ -145,10 +145,10 @@ function AnswerWithCitations({
                 <span className="text-white/50 text-xs">]</span>
             </span>
         );
-        
+
         lastIndex = citationPattern.lastIndex;
     }
-    
+
     // Add remaining text after last citation
     if (lastIndex < answer.length) {
         const textAfter = answer.substring(lastIndex);
@@ -156,7 +156,7 @@ function AnswerWithCitations({
             parts.push(textAfter);
         }
     }
-    
+
     // If no citations found, return the original answer rendered with ReactMarkdown
     if (parts.length === 0 || (parts.length === 1 && typeof parts[0] === 'string')) {
         return (
@@ -175,7 +175,7 @@ function AnswerWithCitations({
             </ReactMarkdown>
         );
     }
-    
+
     // Render mixed content: process text parts with ReactMarkdown, render buttons as-is
     return (
         <>
@@ -187,7 +187,7 @@ function AnswerWithCitations({
                 // It's a string - render with ReactMarkdown
                 const textPart = String(part);
                 if (!textPart.trim()) return null;
-                
+
                 return (
                     <ReactMarkdown
                         key={`text-${idx}`}
@@ -293,7 +293,7 @@ export default function ChatPanel() {
     return (
         <>
             <section className="h-full flex flex-col overflow-hidden">
-                <div className="flex-shrink-0 px-4 py-3 border-b border-white/10">
+                <div className="shrink-0 px-4 py-3 border-b border-white/10">
                     <h2 className="text-sm font-semibold">Chat</h2>
                     <p className="text-xs text-white/60 mt-1">Ask questions about your documents</p>
                 </div>
@@ -303,14 +303,14 @@ export default function ChatPanel() {
                         <div key={i} className="space-y-3">
                             {/* User Message */}
                             {m.role === "user" && (
-                                <div className="ml-auto max-w-[85%] rounded-xl px-4 py-3 text-sm leading-relaxed shadow-md bg-gradient-to-br from-white to-white/95 text-black font-medium border border-gray-200/50">
+                                <div className="ml-auto max-w-[85%] rounded-xl px-4 py-3 text-sm leading-relaxed shadow-md bg-linear-to-br from-white to-white/95 text-black font-medium border border-gray-200/50">
                                     {m.text}
                                 </div>
                             )}
 
                             {/* Bot Response */}
                             {m.role === "bot" && m.response && (
-                                <div className="mr-auto max-w-[85%] bg-gradient-to-br from-white/10 to-white/5 text-white backdrop-blur-sm border border-white/10 rounded-xl p-6 space-y-6 shadow-lg">
+                                <div className="mr-auto max-w-[85%] bg-linear-to-br from-white/10 to-white/5 text-white backdrop-blur-sm border border-white/10 rounded-xl p-6 space-y-6 shadow-lg">
                                     {/* Status Indicators */}
                                     {m.response.can_answer && (
                                         <div className="flex items-center gap-4 text-xs text-white/70 border-b border-white/10 pb-3">
@@ -341,8 +341,8 @@ export default function ChatPanel() {
                                             <h3 className="text-lg font-semibold text-white">Excerpts:</h3>
                                             <div className="space-y-3">
                                                 {m.response.citations.map((citation, idx) => (
-                                                    <div 
-                                                        key={idx} 
+                                                    <div
+                                                        key={idx}
                                                         className="text-white/90 pl-4 border-l-2 border-white/30"
                                                     >
                                                         <div className="text-sm">
@@ -365,8 +365,8 @@ export default function ChatPanel() {
                                                 <h3 className="text-lg font-semibold text-white">Citations:</h3>
                                                 <div className="space-y-2">
                                                     {consolidated.map((citation, idx) => (
-                                                        <div 
-                                                            key={idx} 
+                                                        <div
+                                                            key={idx}
                                                             className="pl-4 border-l-2 border-blue-400/50 hover:border-blue-400 transition-colors"
                                                         >
                                                             <button
@@ -430,46 +430,46 @@ export default function ChatPanel() {
                                     )}
 
 
-                                  
+
                                 </div>
                             )}
 
                             {/* Simple Bot Message (no response data) */}
                             {m.role === "bot" && !m.response && m.text && (
-                                <div className="mr-auto max-w-[85%] rounded-xl px-4 py-3 text-sm leading-relaxed shadow-sm bg-gradient-to-br from-white/10 to-white/5 text-white backdrop-blur-sm border border-white/10">
+                                <div className="mr-auto max-w-[85%] rounded-xl px-4 py-3 text-sm leading-relaxed shadow-sm bg-linear-to-br from-white/10 to-white/5 text-white backdrop-blur-sm border border-white/10">
                                     {m.text}
                                 </div>
                             )}
                         </div>
                     ))}
 
-                {loading && (
-                    <div className="mr-auto max-w-[85%] bg-white/10 text-white rounded-xl px-4 py-3 text-sm flex items-center gap-2 border border-white/10">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Thinking...</span>
-                    </div>
-                )}
-            </div>
-
-            <div className="flex-shrink-0 p-3 border-t border-white/10 bg-black/50 backdrop-blur-sm sticky bottom-0 z-10">
-                <div className="flex gap-2">
-                    <input
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => (e.key === "Enter" ? send() : null)}
-                        placeholder="Ask about products, destinations..."
-                        className="flex-1 rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40"
-                    />
-                    <button
-                        type="button"
-                        onClick={send}
-                        disabled={loading}
-                        className="rounded-md bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90 disabled:opacity-50"
-                    >
-                        Send
-                    </button>
+                    {loading && (
+                        <div className="mr-auto max-w-[85%] bg-white/10 text-white rounded-xl px-4 py-3 text-sm flex items-center gap-2 border border-white/10">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Thinking...</span>
+                        </div>
+                    )}
                 </div>
-            </div>
+
+                <div className="shrink-0 p-3 border-t border-white/10 bg-black/50 backdrop-blur-sm sticky bottom-0 z-10">
+                    <div className="flex gap-2">
+                        <input
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => (e.key === "Enter" ? send() : null)}
+                            placeholder="Ask about products, destinations..."
+                            className="flex-1 rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40"
+                        />
+                        <button
+                            type="button"
+                            onClick={send}
+                            disabled={loading}
+                            className="rounded-md bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90 disabled:opacity-50"
+                        >
+                            Send
+                        </button>
+                    </div>
+                </div>
             </section>
 
             {/* PDF Modal */}

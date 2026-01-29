@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
-import { backendUrl } from "@/lib/claromentis/backendApi";
 
 interface PdfModalProps {
     isOpen: boolean;
@@ -15,21 +14,20 @@ interface PdfModalProps {
 // Function to get PDF preview URL from filename and page number
 function getPdfPreviewUrlFromFilename(filename: string, pageNumber: number | string, pdfPath?: string): string {
     // Extract filename from pdf_path if it's a full path, otherwise use filename
-    
-    
+
+
     // Build the PDF preview URL with page parameter
-    const baseUrl = backendUrl(`/api/document/pdf/${encodeURIComponent(filename)}`);
-    const url = new URL(baseUrl);
-    url.searchParams.set('page', String(pageNumber));
-    
-    return url.toString();
+    const path = `/api/document/pdf/${encodeURIComponent(filename)}`;
+    const url = new URL(path, window.location.origin); // only for searchParams
+    url.searchParams.set("page", String(pageNumber));
+    return url.pathname + url.search;
 }
 
 export default function PdfModal({ isOpen, onClose, filename, pageNumber, pdfPath }: PdfModalProps) {
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
     // Build PDF URL with page parameter and hash for direct navigation
-    const pdfUrl = isOpen 
+    const pdfUrl = isOpen
         ? `${getPdfPreviewUrlFromFilename(filename, pageNumber, pdfPath)}#page=${pageNumber}`
         : "";
 

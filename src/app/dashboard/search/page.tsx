@@ -1,12 +1,11 @@
 "use client";
 
 import { Suspense } from "react";
-import LibraryView from "@/components/library/LibraryView";
-
+import ClaromentisSearchPanel from "@/components/search/SearchPanel";
 export default function LibraryPageClient() {
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <LibraryView initialRootId={0} />;
+            <ClaromentisSearchPanel />;
         </Suspense>
     );
 }
