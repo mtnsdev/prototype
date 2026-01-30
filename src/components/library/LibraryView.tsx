@@ -23,17 +23,30 @@ export default function LibraryView({ initialRootId }: { initialRootId?: number 
         return path[path.length - 1]!.id;
     }, [rootId, path]);
 
-    const cachedForCurrent = currentId !== undefined && clientCache.current.has(currentId)
-        ? clientCache.current.get(currentId)!
-        : undefined;
+    const getCachedItems = (id: number | undefined) => {
+        if (id === undefined) return undefined;
+        return clientCache.current.get(id);
+    };
+
+    const cachedForCurrent = getCachedItems(currentId);
 
     const { items, loading, error } = useFolderChildren(currentId, undefined, {
+        // keep this if your hook supports it, but we won't rely on it
         initialItems: cachedForCurrent,
-        enabled: currentId !== undefined && cachedForCurrent === undefined, // fetch only if not cached
+        enabled: currentId !== undefined && cachedForCurrent === undefined,
         onSuccess: (next) => {
             if (currentId !== undefined) clientCache.current.set(currentId, next as TLItem[]);
         },
     });
+
+    // Use currentId as dependency to force recalculation when navigating
+    const visibleItems = useMemo(() => {
+        const cached = getCachedItems(currentId);
+        return cached ?? items;
+    }, [currentId, items]);
+
+    // Optional: only show "Loading…" when we have nothing to show yet
+    const showLoading = loading && !cachedForCurrent;
 
     const clickLockRef = useRef(false);
     function withClickLock(fn: () => void | Promise<void>) {
@@ -88,7 +101,9 @@ export default function LibraryView({ initialRootId }: { initialRootId?: number 
             <div className="h-full flex items-center justify-center">
                 <div className="w-130 rounded-xl border border-white/10 bg-white/5 p-6">
                     <h2 className="text-lg font-semibold">Library</h2>
-                    <p className="mt-2 text-sm text-white/60">Root folder id is missing. Enter a folder id to start browsing.</p>
+                    <p className="mt-2 text-sm text-white/60">
+                        Root folder id is missing. Enter a folder id to start browsing.
+                    </p>
 
                     <div className="mt-4 flex gap-2">
                         <input
@@ -135,17 +150,19 @@ export default function LibraryView({ initialRootId }: { initialRootId?: number 
                         <p className="text-sm font-semibold">Library</p>
                         <p className="text-xs text-white/60">{currentId !== undefined ? `Folder ID: ${currentId}` : ""}</p>
                     </div>
-                    {loading && <span className="text-xs text-white/60">Loading…</span>}
+                    {showLoading && <span className="text-xs text-white/60">Loading…</span>}
                 </div>
 
                 <div className="min-h-0 flex-1 overflow-y-auto">
                     {error ? (
                         <div className="px-4 py-4 text-sm text-red-400">{error}</div>
-                    ) : items.length === 0 ? (
-                        <div className="px-4 py-6 text-sm text-white/60">{loading && <span className="text-xs text-white/60">Loading…</span>}</div>
+                    ) : visibleItems.length === 0 ? (
+                        <div className="px-4 py-6 text-sm text-white/60">
+                            {showLoading ? <span className="text-xs text-white/60">Loading…</span> : "No items."}
+                        </div>
                     ) : (
                         <ul className="divide-y divide-white/10">
-                            {items.map((it) => (
+                            {visibleItems.map((it) => (
                                 <li key={it.kind === "folder" ? `f-${it.id}` : `d-${it.doc_id}-${it.version_num}`}>
                                     <div className="w-full px-4 py-3 flex items-center justify-between gap-4 hover:bg-white/5">
                                         <button

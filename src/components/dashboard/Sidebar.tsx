@@ -9,7 +9,7 @@ import {
     PanelLeftClose,
     PanelLeftOpen,
     Settings,
-    Search
+    // Search
 } from "lucide-react";
 
 type Props = {
@@ -71,13 +71,13 @@ export default function Sidebar({ collapsed, onToggle }: Props) {
                         active={pathname.startsWith("/dashboard/library")}
                     />
 
-                    <NavLink
+                    {/* <NavLink
                         href="/dashboard/search"
                         collapsed={collapsed}
                         icon={<Search size={18} />}
                         label="Search"
                         active={pathname.startsWith("/dashboard/search")}
-                    />
+                    /> */}
 
                     <NavLink
                         href="/dashboard/settings"
