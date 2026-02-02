@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import React from "react";
-import { AlertTriangle, CheckCircle2, Loader2, ExternalLink } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, ExternalLink, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import PdfModal from "./PdfModal";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 type Citation = {
     source: string;
@@ -40,6 +42,19 @@ type Message = {
     text: string;
     response?: BotResponse;
 };
+
+type Props = {
+    conversationId: number | null;
+    onConversationCreated?: (id: number) => void;
+    userName?: string;
+};
+
+const SUGGESTION_CHIPS = [
+    "What benefits am I entitled to?",
+    "How do I submit a claim?",
+    "What is the coverage limit?",
+    "Can you explain the policy terms?",
+];
 
 // Consolidated citation type for grouping
 type ConsolidatedCitation = {
@@ -209,12 +224,12 @@ function AnswerWithCitations({
     );
 }
 
-export default function ChatPanel() {
-    const [messages, setMessages] = useState<Message[]>([
-        { role: "bot", text: "Hello! I'm here to help answer your questions. What would you like to know?" },
-    ]);
+export default function ChatPanel({ conversationId, onConversationCreated, userName = "there" }: Props) {
+    const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
+    const [loadingConversation, setLoadingConversation] = useState(false);
+    const [currentConversationId, setCurrentConversationId] = useState<number | null>(conversationId);
     const [pdfModal, setPdfModal] = useState<{
         isOpen: boolean;
         filename: string;
@@ -225,6 +240,45 @@ export default function ChatPanel() {
         filename: "",
         pageNumber: 1,
     });
+
+    // Load conversation when conversationId changes
+    const loadConversation = useCallback(async (id: number) => {
+        setLoadingConversation(true);
+        try {
+            const token = localStorage.getItem("auth_token");
+            const response = await fetch(`${API_URL}/api/chat/conversations/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Convert API messages to local format
+                const loadedMessages: Message[] = data.messages.map((msg: { role: string; content: string; metadata?: BotResponse }) => ({
+                    role: msg.role === "assistant" ? "bot" : "user",
+                    text: msg.role === "user" ? msg.content : "",
+                    response: msg.role === "assistant" ? msg.metadata : undefined,
+                }));
+                setMessages(loadedMessages);
+                setCurrentConversationId(id);
+            }
+        } catch (error) {
+            console.error("Failed to load conversation:", error);
+        } finally {
+            setLoadingConversation(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (conversationId) {
+            loadConversation(conversationId);
+        } else {
+            // Reset to empty state for new conversation
+            setMessages([]);
+            setCurrentConversationId(null);
+        }
+    }, [conversationId, loadConversation]);
 
     const openPdfModal = (filename: string, pageNumber: number | string, pdfPath?: string) => {
         setPdfModal({
@@ -239,13 +293,75 @@ export default function ChatPanel() {
         setPdfModal({ isOpen: false, filename: "", pageNumber: 1 });
     };
 
-    async function send() {
-        const text = input.trim();
+    // Save message to conversation
+    const saveMessage = async (convId: number, role: string, content: string, metadata?: BotResponse) => {
+        try {
+            const token = localStorage.getItem("auth_token");
+            await fetch(`${API_URL}/api/chat/conversations/${convId}/messages`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    role,
+                    content,
+                    metadata,
+                }),
+            });
+        } catch (error) {
+            console.error("Failed to save message:", error);
+        }
+    };
+
+    // Create a new conversation
+    const createConversation = async (firstMessage: string): Promise<number | null> => {
+        try {
+            const token = localStorage.getItem("auth_token");
+            const response = await fetch(`${API_URL}/api/chat/conversations`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    title: firstMessage.slice(0, 50) + (firstMessage.length > 50 ? "..." : ""),
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                return data.id;
+            }
+        } catch (error) {
+            console.error("Failed to create conversation:", error);
+        }
+        return null;
+    };
+
+    async function send(messageText?: string) {
+        const text = (messageText || input).trim();
         if (!text || loading) return;
 
         setInput("");
         setMessages((m) => [...m, { role: "user", text }]);
         setLoading(true);
+
+        let convId = currentConversationId;
+
+        // Create conversation if this is the first message
+        if (!convId) {
+            convId = await createConversation(text);
+            if (convId) {
+                setCurrentConversationId(convId);
+                onConversationCreated?.(convId);
+            }
+        }
+
+        // Save user message
+        if (convId) {
+            await saveMessage(convId, "user", text);
+        }
 
         try {
             const res = await fetch(`/api/chat/query`, {
@@ -258,37 +374,55 @@ export default function ChatPanel() {
             setLoading(false);
 
             if (!res.ok || !data) {
+                const errorMsg = "Sorry, I encountered an error processing your request. Please try again.";
                 setMessages((m) => [
                     ...m,
                     {
                         role: "bot",
-                        text: "Sorry, I encountered an error processing your request. Please try again.",
+                        text: errorMsg,
                     },
                 ]);
+                if (convId) {
+                    await saveMessage(convId, "assistant", errorMsg);
+                }
                 return;
             }
 
-            setMessages((m) => [
-                ...m,
-                {
-                    role: "bot",
-                    text: data.can_answer
-                        ? "" // Don't show duplicate answer text when we have structured response
-                        : "I'm sorry, I don't have enough information to answer that question accurately.",
-                    response: data,
-                },
-            ]);
+            const botMessage: Message = {
+                role: "bot",
+                text: data.can_answer
+                    ? "" // Don't show duplicate answer text when we have structured response
+                    : "I'm sorry, I don't have enough information to answer that question accurately.",
+                response: data,
+            };
+
+            setMessages((m) => [...m, botMessage]);
+
+            // Save assistant message with metadata
+            if (convId) {
+                await saveMessage(convId, "assistant", data.answer || botMessage.text, data);
+            }
         } catch {
             setLoading(false);
+            const errorMsg = "Failed to connect to the server. Please check if the API is running.";
             setMessages((m) => [
                 ...m,
                 {
                     role: "bot",
-                    text: "Failed to connect to the server. Please check if the API is running.",
+                    text: errorMsg,
                 },
             ]);
+            if (convId) {
+                await saveMessage(convId, "assistant", errorMsg);
+            }
         }
     }
+
+    const handleSuggestionClick = (suggestion: string) => {
+        send(suggestion);
+    };
+
+    const isEmptyState = messages.length === 0 && !loadingConversation;
 
     return (
         <>
@@ -299,7 +433,41 @@ export default function ChatPanel() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-6" style={{ minHeight: 0 }}>
-                    {messages.map((m, i) => (
+                    {/* Empty State */}
+                    {isEmptyState && (
+                        <div className="flex flex-col items-center justify-center h-full text-center px-4">
+                            <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-6">
+                                <Sparkles size={32} className="text-white/70" />
+                            </div>
+                            <h2 className="text-2xl font-semibold text-white mb-2">
+                                Hey {userName}, how can I help you?
+                            </h2>
+                            <p className="text-white/60 mb-8 max-w-md">
+                                Ask me anything about your documents. I can help you find information, answer questions, and more.
+                            </p>
+                            <div className="flex flex-wrap justify-center gap-2 max-w-lg">
+                                {SUGGESTION_CHIPS.map((suggestion, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => handleSuggestionClick(suggestion)}
+                                        className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-sm text-white/80 hover:text-white transition-colors border border-white/10"
+                                    >
+                                        {suggestion}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Loading conversation */}
+                    {loadingConversation && (
+                        <div className="flex items-center justify-center h-full">
+                            <Loader2 className="w-8 h-8 animate-spin text-white/50" />
+                        </div>
+                    )}
+
+                    {/* Messages */}
+                    {!isEmptyState && !loadingConversation && messages.map((m, i) => (
                         <div key={i} className="space-y-3">
                             {/* User Message */}
                             {m.role === "user" && (
@@ -443,7 +611,7 @@ export default function ChatPanel() {
                         </div>
                     ))}
 
-                    {loading && (
+                    {loading && !isEmptyState && (
                         <div className="mr-auto max-w-[85%] bg-white/10 text-white rounded-xl px-4 py-3 text-sm flex items-center gap-2 border border-white/10">
                             <Loader2 className="w-4 h-4 animate-spin" />
                             <span>Thinking...</span>
@@ -462,7 +630,7 @@ export default function ChatPanel() {
                         />
                         <button
                             type="button"
-                            onClick={send}
+                            onClick={() => send()}
                             disabled={loading}
                             className="rounded-md bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90 disabled:opacity-50"
                         >
