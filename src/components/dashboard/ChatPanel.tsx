@@ -261,7 +261,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
         try {
             const token = localStorage.getItem("auth_token");
             // Using /api/chat/sessions/{id}/messages endpoint (Swagger-compliant)
-            const response = await fetch(`${API_URL}/api/chat/sessions/${id}/messages`, {
+            const response = await fetch(`/api/chat/sessions/${id}/messages`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
