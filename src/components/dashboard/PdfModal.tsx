@@ -1,28 +1,33 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { X } from "lucide-react";
+import { X, FileText } from "lucide-react";
 
 interface PdfModalProps {
     isOpen: boolean;
     onClose: () => void;
     filename: string;
-    pageNumber: number | string;
+    pageNumber?: number | string;
     pdfPath?: string;
+    /** Optional custom URL - if provided, bypasses default URL construction */
+    customUrl?: string;
 }
 
-// Build PDF URL from backend /pdf/{filename} (no URL object)
-function getPdfPreviewUrl(filename: string, pageNumber: number | string): string {
-    const encoded = encodeURIComponent(filename);
-    return `/api/document/pdf/${encoded}?page=${encodeURIComponent(String(pageNumber))}#page=${pageNumber}`;
+// Function to get PDF preview URL from filename and page number
+function getPdfPreviewUrlFromFilename(filename: string, pageNumber: number | string): string {
+    // Build the PDF preview URL with page parameter
+    // Use string concatenation instead of URL constructor (which requires absolute URLs)
+    const baseUrl = `/api/document/pdf/${encodeURIComponent(filename)}`;
+    return `${baseUrl}?page=${encodeURIComponent(String(pageNumber))}`;
 }
 
-export default function PdfModal({ isOpen, onClose, filename, pageNumber }: PdfModalProps) {
+export default function PdfModal({ isOpen, onClose, filename, pageNumber = 1, pdfPath, customUrl }: PdfModalProps) {
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
-    // Build PDF URL from backend /pdf/{filename}
-    const pdfUrl = isOpen ? getPdfPreviewUrl(filename, pageNumber) : "";
-    console.log(pdfUrl)
+    // Build PDF URL - use customUrl if provided, otherwise construct from filename
+    const pdfUrl = isOpen
+        ? customUrl || `${getPdfPreviewUrlFromFilename(filename, pageNumber)}#page=${pageNumber}`
+        : "";
 
     useEffect(() => {
         if (isOpen && iframeRef.current) {
@@ -36,34 +41,39 @@ export default function PdfModal({ isOpen, onClose, filename, pageNumber }: PdfM
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm transition-opacity duration-200"
             onClick={onClose}
         >
             <div
-                className="relative w-full h-full max-w-7xl max-h-[90vh] m-4 bg-white rounded-lg shadow-2xl flex flex-col"
+                className="relative w-full h-full max-w-6xl max-h-[90vh] m-4 bg-[#F5F5F5] rounded-2xl shadow-2xl flex flex-col overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                    <div className="flex-1 min-w-0">
-                        <h2 className="text-lg font-semibold text-gray-900 truncate">
-                            {filename}
-                        </h2>
-                        <p className="text-sm text-gray-500 mt-1">
-                            Page {pageNumber}
-                        </p>
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(0,0,0,0.08)] bg-white">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 rounded-lg bg-[rgba(0,0,0,0.05)] flex items-center justify-center shrink-0">
+                            <FileText size={20} className="text-[rgba(0,0,0,0.5)]" />
+                        </div>
+                        <div className="min-w-0">
+                            <h2 className="text-[15px] font-semibold text-[#0C0C0C] truncate">
+                                {filename}
+                            </h2>
+                            <p className="text-[12px] text-[rgba(0,0,0,0.5)] mt-0.5">
+                                {customUrl ? "Document Preview" : `Page ${pageNumber}`}
+                            </p>
+                        </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="ml-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
+                        className="ml-4 w-9 h-9 flex items-center justify-center hover:bg-[rgba(0,0,0,0.05)] rounded-lg transition-colors duration-150"
                         aria-label="Close"
                     >
-                        <X className="w-5 h-5 text-gray-600" />
+                        <X className="w-5 h-5 text-[rgba(0,0,0,0.5)]" />
                     </button>
                 </div>
 
                 {/* PDF Viewer */}
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 overflow-hidden bg-[#e5e5e5]">
                     <iframe
                         ref={iframeRef}
                         src={pdfUrl}

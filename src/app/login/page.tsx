@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import Image from "next/image";
 
 declare global {
     interface Window {
@@ -88,8 +89,9 @@ export default function LoginPage() {
                 throw new Error(data.detail || "Google sign-in failed");
             }
 
-            // Store token in localStorage
+            // Store token and user data in localStorage
             localStorage.setItem("auth_token", data.token.access_token);
+            localStorage.setItem("user_data", JSON.stringify(data.user));
 
             // Redirect to dashboard
             router.push("/dashboard/chat");
@@ -118,8 +120,9 @@ export default function LoginPage() {
                 throw new Error(data.detail || "Invalid email or password");
             }
 
-            // Store token in localStorage
+            // Store token and user data in localStorage
             localStorage.setItem("auth_token", data.token.access_token);
+            localStorage.setItem("user_data", JSON.stringify(data.user));
 
             // Redirect to dashboard
             router.push("/dashboard/chat");
@@ -131,32 +134,39 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-black/95 px-4">
+        <div className="min-h-screen flex items-center justify-center bg-[#0C0C0C] px-4">
             <div className="w-full max-w-md">
                 {/* Logo */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 mb-4">
-                        <span className="text-2xl font-bold text-white">E</span>
+                <div className="text-center mb-10">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 mb-5 shadow-lg">
+                        <Image
+                            src="/TL_logo.svg"
+                            alt="Enable Logo"
+                            width={32}
+                            height={32}
+                            className="opacity-90"
+                        />
                     </div>
-                    <h1 className="text-3xl font-bold text-white">Enable</h1>
+                    <h1 className="text-[28px] font-bold text-[#F5F5F5] tracking-tight">Enable</h1>
+                    <p className="text-[14px] text-[rgba(245,245,245,0.45)] mt-1">AI Assistant</p>
                 </div>
 
                 {/* Card */}
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur">
-                    <h2 className="text-xl font-semibold text-white mb-2">Welcome back</h2>
-                    <p className="text-white/60 mb-6">Sign in to your account to continue</p>
+                <div className="bg-[#161616] border border-[rgba(255,255,255,0.08)] rounded-2xl p-8 shadow-xl">
+                    <h2 className="text-[18px] font-semibold text-[#F5F5F5] mb-1.5">Welcome back</h2>
+                    <p className="text-[14px] text-[rgba(245,245,245,0.5)] mb-6">Sign in to your account to continue</p>
 
                     {/* Error Message */}
                     {error && (
-                        <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                            <p className="text-sm text-red-400">{error}</p>
+                        <div className="mb-5 p-3.5 rounded-xl bg-[rgba(200,122,122,0.1)] border border-[rgba(200,122,122,0.2)]">
+                            <p className="text-[13px] text-[#C87A7A]">{error}</p>
                         </div>
                     )}
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-1.5">
+                            <label htmlFor="email" className="block text-[13px] font-medium text-[rgba(245,245,245,0.7)] mb-2">
                                 Email
                             </label>
                             <input
@@ -167,12 +177,19 @@ export default function LoginPage() {
                                 placeholder="you@example.com"
                                 required
                                 disabled={isLoading}
-                                className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                                className={[
+                                    "w-full px-4 py-3 rounded-xl text-[14px]",
+                                    "bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)]",
+                                    "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
+                                    "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
+                                    "disabled:opacity-50 disabled:cursor-not-allowed",
+                                    "transition-all duration-150",
+                                ].join(" ")}
                             />
                         </div>
 
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-1.5">
+                            <label htmlFor="password" className="block text-[13px] font-medium text-[rgba(245,245,245,0.7)] mb-2">
                                 Password
                             </label>
                             <input
@@ -183,14 +200,28 @@ export default function LoginPage() {
                                 placeholder="••••••••"
                                 required
                                 disabled={isLoading}
-                                className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                                className={[
+                                    "w-full px-4 py-3 rounded-xl text-[14px]",
+                                    "bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)]",
+                                    "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
+                                    "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
+                                    "disabled:opacity-50 disabled:cursor-not-allowed",
+                                    "transition-all duration-150",
+                                ].join(" ")}
                             />
                         </div>
 
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full py-2.5 px-4 rounded-lg bg-white text-black font-medium hover:bg-white/90 focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className={[
+                                "w-full py-3 px-4 rounded-xl text-[14px] font-medium",
+                                "bg-[#F5F5F5] hover:bg-white text-[#0C0C0C]",
+                                "disabled:opacity-50 disabled:cursor-not-allowed",
+                                "transition-all duration-150",
+                                "shadow-sm hover:shadow-md",
+                                "flex items-center justify-center gap-2",
+                            ].join(" ")}
                         >
                             {isLoading ? (
                                 <>
@@ -206,10 +237,10 @@ export default function LoginPage() {
                     {/* Divider */}
                     <div className="relative my-6">
                         <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-white/10"></div>
+                            <div className="w-full border-t border-[rgba(255,255,255,0.08)]"></div>
                         </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="px-4 bg-[#0a0a0a] text-white/40">or continue with</span>
+                        <div className="relative flex justify-center text-[12px]">
+                            <span className="px-4 bg-[#161616] text-[rgba(245,245,245,0.4)]">or continue with</span>
                         </div>
                     </div>
 
@@ -223,7 +254,12 @@ export default function LoginPage() {
                         <button
                             type="button"
                             disabled
-                            className="w-full py-2.5 px-4 rounded-lg bg-white/5 border border-white/10 text-white/60 font-medium flex items-center justify-center gap-3 cursor-not-allowed"
+                            className={[
+                                "w-full py-3 px-4 rounded-xl text-[14px] font-medium",
+                                "bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)]",
+                                "text-[rgba(245,245,245,0.4)]",
+                                "flex items-center justify-center gap-3 cursor-not-allowed",
+                            ].join(" ")}
                         >
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
                                 <path
@@ -249,9 +285,9 @@ export default function LoginPage() {
                 </div>
 
                 {/* Footer */}
-                <p className="text-center text-white/40 text-sm mt-6">
+                <p className="text-center text-[rgba(245,245,245,0.4)] text-[13px] mt-6">
                     Don&apos;t have an account?{" "}
-                    <a href="#" className="text-white hover:underline">
+                    <a href="#" className="text-[#F5F5F5] hover:underline transition-colors">
                         Contact admin
                     </a>
                 </p>
