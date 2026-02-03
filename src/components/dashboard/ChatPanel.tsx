@@ -78,136 +78,15 @@ function consolidateCitations(citations: Citation[]): ConsolidatedCitation[] {
     return Array.from(grouped.values());
 }
 
-// Function to process answer text and create clickable citations
-function AnswerWithCitations({
-    answer,
-    citations,
-    onCitationClick
-}: {
-    answer: string;
-    citations: Citation[];
-    onCitationClick: (filename: string, pageNumber: number | string, pdfPath?: string) => void;
-}) {
-    // Pattern to match citations like [Source: filename, Page: 1] or [Source: filename, Pages: 1, 24, 25, 27]
-    const citationPattern = /\[Source:\s*([^,\]]+),\s*Pages?:\s*([^\]]+)\]/gi;
-
-    const parts: React.ReactNode[] = [];
-    let lastIndex = 0;
-    let match;
-    let citationIndex = 0;
-
-    // Reset regex lastIndex
-    citationPattern.lastIndex = 0;
-
-    while ((match = citationPattern.exec(answer)) !== null) {
-        // Add text before the citation
-        if (match.index > lastIndex) {
-            const textBefore = answer.substring(lastIndex, match.index);
-            if (textBefore) {
-                parts.push(textBefore);
-            }
-        }
-
-        const filename = match[1].trim();
-        const pageNumbersStr = match[2].trim();
-        // Parse page numbers (can be single number or comma-separated list)
-        const pageNumbers = pageNumbersStr.split(',').map(p => p.trim()).filter(Boolean);
-
-        // Find matching citation from the citations array to get pdf_path
-        const matchingCitation = citations.find(
-            c => (c.filename || c.source) === filename ||
-                (c.filename || c.source)?.toLowerCase() === filename.toLowerCase()
-        );
-
-        const pdfPath = matchingCitation?.pdf_path;
-
-        // Create concise, appealing citation badges with modern design
-        parts.push(
-            <span key={`citation-group-${citationIndex++}`} className="inline-flex items-center gap-1 ml-1.5">
-                <span className="text-white/50 text-xs">[</span>
-                <span className="text-white/70 text-xs font-medium truncate max-w-30" title={filename}>
-                    {filename}
-                </span>
-                <span className="text-white/50 text-xs">:</span>
-                {pageNumbers.map((pageNum, pageIdx) => (
-                    <React.Fragment key={`page-${pageIdx}`}>
-                        <button
-                            onClick={() => onCitationClick(filename, pageNum, pdfPath)}
-                            className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/15 px-1.5 py-0.5 rounded-md cursor-pointer transition-all inline-flex items-center gap-1 text-xs font-semibold border border-blue-400/20 hover:border-blue-400/40"
-                            title={`View ${filename} page ${pageNum}`}
-                        >
-                            {pageNum}
-                            <ExternalLink className="w-2.5 h-2.5" />
-                        </button>
-                        {pageIdx < pageNumbers.length - 1 && <span className="text-white/40 text-xs mx-0.5">,</span>}
-                    </React.Fragment>
-                ))}
-                <span className="text-white/50 text-xs">]</span>
-            </span>
-        );
-
-        lastIndex = citationPattern.lastIndex;
-    }
-
-    // Add remaining text after last citation
-    if (lastIndex < answer.length) {
-        const textAfter = answer.substring(lastIndex);
-        if (textAfter) {
-            parts.push(textAfter);
-        }
-    }
-
-    // If no citations found, return the original answer rendered with ReactMarkdown
-    if (parts.length === 0 || (parts.length === 1 && typeof parts[0] === 'string')) {
-        return (
-            <ReactMarkdown
-                components={{
-                    p: ({ children }) => <p className="mb-2 text-white/90">{children}</p>,
-                    ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1 text-white/90">{children}</ul>,
-                    li: ({ children }) => <li className="ml-4 text-white/90">{children}</li>,
-                    strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
-                    h1: ({ children }) => <h1 className="text-white font-semibold">{children}</h1>,
-                    h2: ({ children }) => <h2 className="text-white font-semibold">{children}</h2>,
-                    h3: ({ children }) => <h3 className="text-white font-semibold">{children}</h3>,
-                }}
-            >
-                {answer}
-            </ReactMarkdown>
-        );
-    }
-
-    // Render mixed content: process text parts with ReactMarkdown, render buttons as-is
-    return (
-        <>
-            {parts.map((part, idx) => {
-                if (React.isValidElement(part)) {
-                    // It's a React element (clickable citation button) - render inline
-                    return <React.Fragment key={`citation-${idx}`}>{part}</React.Fragment>;
-                }
-                // It's a string - render with ReactMarkdown
-                const textPart = String(part);
-                if (!textPart.trim()) return null;
-
-                return (
-                    <ReactMarkdown
-                        key={`text-${idx}`}
-                        components={{
-                            p: ({ children }) => <p className="mb-2 text-white/90">{children}</p>,
-                            ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1 text-white/90">{children}</ul>,
-                            li: ({ children }) => <li className="ml-4 text-white/90">{children}</li>,
-                            strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
-                            h1: ({ children }) => <h1 className="text-white font-semibold">{children}</h1>,
-                            h2: ({ children }) => <h2 className="text-white font-semibold">{children}</h2>,
-                            h3: ({ children }) => <h3 className="text-white font-semibold">{children}</h3>,
-                        }}
-                    >
-                        {textPart}
-                    </ReactMarkdown>
-                );
-            })}
-        </>
-    );
-}
+const markdownComponents = {
+    p: ({ children }: { children?: React.ReactNode }) => <p className="mb-2 text-white/90">{children}</p>,
+    ul: ({ children }: { children?: React.ReactNode }) => <ul className="list-disc list-inside mb-2 space-y-1 text-white/90">{children}</ul>,
+    li: ({ children }: { children?: React.ReactNode }) => <li className="ml-4 text-white/90">{children}</li>,
+    strong: ({ children }: { children?: React.ReactNode }) => <strong className="font-semibold text-white">{children}</strong>,
+    h1: ({ children }: { children?: React.ReactNode }) => <h1 className="text-white font-semibold">{children}</h1>,
+    h2: ({ children }: { children?: React.ReactNode }) => <h2 className="text-white font-semibold">{children}</h2>,
+    h3: ({ children }: { children?: React.ReactNode }) => <h3 className="text-white font-semibold">{children}</h3>,
+};
 
 export default function ChatPanel() {
     const [messages, setMessages] = useState<Message[]>([
@@ -248,7 +127,7 @@ export default function ChatPanel() {
         setLoading(true);
 
         try {
-            const res = await fetch(`/api/chat/query`, {
+            const res = await fetch(`http://localhost:8000/api/chat/query`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ query: text }),
@@ -257,7 +136,10 @@ export default function ChatPanel() {
             const data: BotResponse = await res.json().catch(() => null);
             setLoading(false);
 
-            if (!res.ok || !data) {
+
+            // Use response body if it's valid, even when backend returns 5xx (backend should return 2xx for success)
+            const hasValidResponse = data && typeof data.can_answer === "boolean";
+            if (!hasValidResponse) {
                 setMessages((m) => [
                     ...m,
                     {
@@ -326,36 +208,14 @@ export default function ChatPanel() {
                                         <div className="space-y-2">
                                             <h3 className="text-lg font-semibold text-white">Answer:</h3>
                                             <div className="prose prose-sm max-w-none text-white/90 prose-headings:font-semibold prose-headings:text-white prose-p:my-2 prose-ul:my-2 prose-li:my-1 prose-strong:text-white">
-                                                <AnswerWithCitations
-                                                    answer={m.response.answer}
-                                                    citations={m.response.citations || []}
-                                                    onCitationClick={openPdfModal}
-                                                />
+                                                <ReactMarkdown components={markdownComponents}>
+                                                    {m.response.answer}
+                                                </ReactMarkdown>
                                             </div>
                                         </div>
                                     )}
 
-                                    {/* Excerpts Section */}
-                                    {m.response.citations && m.response.citations.length > 0 && (
-                                        <div className="space-y-2">
-                                            <h3 className="text-lg font-semibold text-white">Excerpts:</h3>
-                                            <div className="space-y-3">
-                                                {m.response.citations.map((citation, idx) => (
-                                                    <div
-                                                        key={idx}
-                                                        className="text-white/90 pl-4 border-l-2 border-white/30"
-                                                    >
-                                                        <div className="text-sm">
-                                                            {citation.excerpt}
-                                                        </div>
-                                                        <div className="text-xs text-white/60 mt-2">
-                                                            [Source: {citation.filename || citation.source}, Page: {citation.page_number}]
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
+                               
 
                                     {/* Citations Section */}
                                     {m.response.citations && m.response.citations.length > 0 && (() => {

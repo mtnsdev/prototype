@@ -11,26 +11,18 @@ interface PdfModalProps {
     pdfPath?: string;
 }
 
-// Function to get PDF preview URL from filename and page number
-function getPdfPreviewUrlFromFilename(filename: string, pageNumber: number | string, pdfPath?: string): string {
-    // Extract filename from pdf_path if it's a full path, otherwise use filename
-
-
-    // Build the PDF preview URL with page parameter
-    const baseUrl =`/api/document/pdf/${encodeURIComponent(filename)}`;
-    const url = new URL(baseUrl);
-    url.searchParams.set('page', String(pageNumber));
-    
-    return url.toString();
+// Build PDF URL from backend /pdf/{filename} (no URL object)
+function getPdfPreviewUrl(filename: string, pageNumber: number | string): string {
+    const encoded = encodeURIComponent(filename);
+    return `/api/document/pdf/${encoded}?page=${encodeURIComponent(String(pageNumber))}#page=${pageNumber}`;
 }
 
-export default function PdfModal({ isOpen, onClose, filename, pageNumber, pdfPath }: PdfModalProps) {
+export default function PdfModal({ isOpen, onClose, filename, pageNumber }: PdfModalProps) {
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
-    // Build PDF URL with page parameter and hash for direct navigation
-    const pdfUrl = isOpen
-        ? `${getPdfPreviewUrlFromFilename(filename, pageNumber, pdfPath)}#page=${pageNumber}`
-        : "";
+    // Build PDF URL from backend /pdf/{filename}
+    const pdfUrl = isOpen ? getPdfPreviewUrl(filename, pageNumber) : "";
+    console.log(pdfUrl)
 
     useEffect(() => {
         if (isOpen && iframeRef.current) {
