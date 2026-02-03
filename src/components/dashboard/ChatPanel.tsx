@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import React from "react";
-import { AlertTriangle, CheckCircle2, Loader2, ExternalLink, Send, ArrowLeft } from "lucide-react";
+import { AlertTriangle, Loader2, ExternalLink, Send, ArrowLeft } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Image from "next/image";
 import PdfModal from "./PdfModal";
+import { useUserOptional } from "@/contexts/UserContext";
+import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 type Citation = {
     source: string;
@@ -31,6 +33,7 @@ type Conflict = {
 };
 
 type BotResponse = {
+    session_id?: number;
     answer: string;
     can_answer: boolean;
     citations: Citation[];
@@ -227,12 +230,13 @@ function AnswerWithCitations({
 }
 
 export default function ChatPanel({ conversationId, onConversationCreated, userName = "there", onBackToHome }: Props) {
+    const userContext = useUserOptional();
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [loadingConversation, setLoadingConversation] = useState(false);
-    const [currentConversationId, setCurrentConversationId] = useState<number | null>(conversationId);
-    const [conversationTitle, setConversationTitle] = useState<string>("");
+    const [currentSessionId, setCurrentSessionId] = useState<number | null>(conversationId);
+    const [sessionTitle, setSessionTitle] = useState<string>("");
     const [pdfModal, setPdfModal] = useState<{
         isOpen: boolean;
         filename: string;
@@ -244,12 +248,20 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
         pageNumber: 1,
     });
 
-    // Load conversation when conversationId changes
-    const loadConversation = useCallback(async (id: number) => {
+    // Delayed loading states to prevent flickering
+    const showSendingLoader = useDelayedLoading(loading);
+    const showConversationLoader = useDelayedLoading(loadingConversation);
+
+    // Get first name from user context or fall back to prop
+    const displayName = userContext?.getFirstName?.() || userName;
+
+    // Load session messages when conversationId changes
+    const loadSession = useCallback(async (id: number) => {
         setLoadingConversation(true);
         try {
             const token = localStorage.getItem("auth_token");
-            const response = await fetch(`${API_URL}/api/chat/conversations/${id}`, {
+            // Using /api/chat/sessions/{id}/messages endpoint (Swagger-compliant)
+            const response = await fetch(`${API_URL}/api/chat/sessions/${id}/messages`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -257,18 +269,31 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
 
             if (response.ok) {
                 const data = await response.json();
-                // Convert API messages to local format
-                const loadedMessages: Message[] = data.messages.map((msg: { role: string; content: string; metadata?: BotResponse }) => ({
+                // Convert API messages (ChatMessageResponse) to local format
+                const loadedMessages: Message[] = data.map((msg: {
+                    role: string;
+                    answer: string;
+                    citations?: Citation[];
+                    conflicts?: Conflict[];
+                    can_answer?: boolean;
+                }) => ({
                     role: msg.role === "assistant" ? "bot" : "user",
-                    text: msg.role === "user" ? msg.content : "",
-                    response: msg.role === "assistant" ? msg.metadata : undefined,
+                    text: msg.role === "user" ? msg.answer : "",
+                    response: msg.role === "assistant" ? {
+                        answer: msg.answer,
+                        can_answer: msg.can_answer ?? true,
+                        citations: msg.citations || [],
+                        conflicts: msg.conflicts || [],
+                    } : undefined,
                 }));
                 setMessages(loadedMessages);
-                setCurrentConversationId(id);
-                setConversationTitle(data.title || "");
+                setCurrentSessionId(id);
+                // Session title can be fetched separately if needed, or set from first message
+                const firstUserMsg = loadedMessages.find(m => m.role === "user");
+                setSessionTitle(firstUserMsg?.text?.slice(0, 50) || `Chat ${id}`);
             }
         } catch (error) {
-            console.error("Failed to load conversation:", error);
+            console.error("Failed to load session:", error);
         } finally {
             setLoadingConversation(false);
         }
@@ -276,14 +301,14 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
 
     useEffect(() => {
         if (conversationId) {
-            loadConversation(conversationId);
+            loadSession(conversationId);
         } else {
-            // Reset to empty state for new conversation
+            // Reset to empty state for new session
             setMessages([]);
-            setCurrentConversationId(null);
-            setConversationTitle("");
+            setCurrentSessionId(null);
+            setSessionTitle("");
         }
-    }, [conversationId, loadConversation]);
+    }, [conversationId, loadSession]);
 
     const openPdfModal = (filename: string, pageNumber: number | string, pdfPath?: string) => {
         setPdfModal({
@@ -298,52 +323,6 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
         setPdfModal({ isOpen: false, filename: "", pageNumber: 1 });
     };
 
-    // Save message to conversation
-    const saveMessage = async (convId: number, role: string, content: string, metadata?: BotResponse) => {
-        try {
-            const token = localStorage.getItem("auth_token");
-            await fetch(`${API_URL}/api/chat/conversations/${convId}/messages`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    role,
-                    content,
-                    metadata,
-                }),
-            });
-        } catch (error) {
-            console.error("Failed to save message:", error);
-        }
-    };
-
-    // Create a new conversation
-    const createConversation = async (firstMessage: string): Promise<number | null> => {
-        try {
-            const token = localStorage.getItem("auth_token");
-            const response = await fetch(`${API_URL}/api/chat/conversations`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    title: firstMessage.slice(0, 50) + (firstMessage.length > 50 ? "..." : ""),
-                }),
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                return data.id;
-            }
-        } catch (error) {
-            console.error("Failed to create conversation:", error);
-        }
-        return null;
-    };
-
     async function send(messageText?: string) {
         const text = (messageText || input).trim();
         if (!text || loading) return;
@@ -352,27 +331,20 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
         setMessages((m) => [...m, { role: "user", text }]);
         setLoading(true);
 
-        let convId = currentConversationId;
-
-        // Create conversation if this is the first message
-        if (!convId) {
-            convId = await createConversation(text);
-            if (convId) {
-                setCurrentConversationId(convId);
-                onConversationCreated?.(convId);
-            }
-        }
-
-        // Save user message
-        if (convId) {
-            await saveMessage(convId, "user", text);
-        }
-
         try {
-            const res = await fetch(`/api/chat/query`, {
+            const token = localStorage.getItem("auth_token");
+            // Send query with session_id if we have one (Swagger-compliant)
+            // Backend will create session if session_id is not provided
+            const res = await fetch(`${API_URL}/api/chat/query`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ query: text }),
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    query: text,
+                    session_id: currentSessionId || undefined,
+                }),
             });
 
             const data: BotResponse = await res.json().catch(() => null);
@@ -387,10 +359,14 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                         text: errorMsg,
                     },
                 ]);
-                if (convId) {
-                    await saveMessage(convId, "assistant", errorMsg);
-                }
                 return;
+            }
+
+            // Update session ID from response (backend creates session if needed)
+            if (data.session_id && !currentSessionId) {
+                setCurrentSessionId(data.session_id);
+                setSessionTitle(text.slice(0, 50) + (text.length > 50 ? "..." : ""));
+                onConversationCreated?.(data.session_id);
             }
 
             const botMessage: Message = {
@@ -402,11 +378,6 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
             };
 
             setMessages((m) => [...m, botMessage]);
-
-            // Save assistant message with metadata
-            if (convId) {
-                await saveMessage(convId, "assistant", data.answer || botMessage.text, data);
-            }
         } catch {
             setLoading(false);
             const errorMsg = "Failed to connect to the server. Please check if the API is running.";
@@ -417,9 +388,6 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                     text: errorMsg,
                 },
             ]);
-            if (convId) {
-                await saveMessage(convId, "assistant", errorMsg);
-            }
         }
     }
 
@@ -451,7 +419,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                             </button>
                             <div className="min-w-0 flex-1">
                                 <h2 className="text-[14px] font-semibold text-[#F5F5F5] truncate">
-                                    {conversationTitle || "Conversation"}
+                                    {sessionTitle || "Conversation"}
                                 </h2>
                                 {messages.length > 0 && messages[0].role === "user" && (
                                     <p className="text-[12px] text-[rgba(245,245,245,0.5)] mt-0.5 truncate">
@@ -472,7 +440,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                 <Image src="/TL_logo.svg" alt="Enable" width={48} height={48} />
                             </div>
                             <h2 className="text-[24px] font-semibold text-[#F5F5F5] mb-3 tracking-tight">
-                                Hey {userName}, how can I help?
+                                Hey {displayName}, how can I help?
                             </h2>
                             <p className="text-[rgba(245,245,245,0.5)] mb-10 max-w-md text-[14px] leading-relaxed">
                                 Ask a question or choose a suggestion below
@@ -499,7 +467,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                     )}
 
                     {/* Loading conversation */}
-                    {loadingConversation && (
+                    {showConversationLoader && (
                         <div className="flex items-center justify-center h-full">
                             <div className="flex flex-col items-center gap-3">
                                 <Loader2 className="w-8 h-8 animate-spin text-[rgba(245,245,245,0.4)]" />
@@ -509,7 +477,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                     )}
 
                     {/* Messages */}
-                    {!isEmptyState && !loadingConversation && messages.map((m, i) => (
+                    {!isEmptyState && !showConversationLoader && messages.map((m, i) => (
                         <div key={i} className="space-y-4">
                             {/* User Message */}
                             {m.role === "user" && (
@@ -524,16 +492,6 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                             {m.role === "bot" && m.response && (
                                 <div className="mr-auto max-w-[85%]">
                                     <div className="bg-[#161616] border border-[rgba(255,255,255,0.08)] rounded-2xl rounded-bl-md p-5 space-y-5 shadow-lg">
-                                        {/* Status Indicators */}
-                                        {m.response.can_answer && (
-                                            <div className="flex items-center gap-3 text-[12px] border-b border-[rgba(255,255,255,0.08)] pb-4">
-                                                <span className="flex items-center gap-1.5 text-[#7CB889]">
-                                                    <CheckCircle2 className="w-4 h-4" />
-                                                    Answered from documents
-                                                </span>
-                                            </div>
-                                        )}
-
                                         {/* Answer Section */}
                                         {m.response.answer && (
                                             <div className="space-y-3">
@@ -651,7 +609,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                         </div>
                     ))}
 
-                    {loading && !isEmptyState && (
+                    {showSendingLoader && !isEmptyState && (
                         <div className="mr-auto max-w-[85%]">
                             <div className="bg-[#161616] border border-[rgba(255,255,255,0.08)] rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-3 shadow-sm">
                                 <Loader2 className="w-4 h-4 animate-spin text-[rgba(245,245,245,0.5)]" />

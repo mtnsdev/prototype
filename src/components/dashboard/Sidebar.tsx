@@ -18,8 +18,9 @@ import {
     // Search
 } from "lucide-react";
 import Image from "next/image";
+import { useUserOptional } from "@/contexts/UserContext";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 export type Conversation = {
     id: number;
@@ -48,6 +49,7 @@ export default function Sidebar({
 }: Props) {
     const pathname = usePathname();
     const router = useRouter();
+    const userContext = useUserOptional();
     const [recentConversations, setRecentConversations] = useState<Conversation[]>([]);
     const [userPopoverOpen, setUserPopoverOpen] = useState(false);
     const [knowledgeExpanded, setKnowledgeExpanded] = useState(false);
@@ -78,7 +80,8 @@ export default function Sidebar({
             const token = localStorage.getItem("auth_token");
             if (!token) return;
 
-            const response = await fetch(`${API_URL}/api/chat/conversations?limit=5`, {
+            // Using /api/chat/sessions endpoint (Swagger-compliant)
+            const response = await fetch(`${API_URL}/api/chat/sessions`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -86,25 +89,28 @@ export default function Sidebar({
 
             if (response.ok) {
                 const data = await response.json();
-                setRecentConversations(data);
+                // Map session response to conversation format and limit to 5
+                const conversations = data.slice(0, 5).map((session: { id: number; title?: string; created_at: string; updated_at: string }) => ({
+                    id: session.id,
+                    title: session.title || `Chat ${session.id}`,
+                    created_at: session.created_at,
+                    updated_at: session.updated_at,
+                }));
+                setRecentConversations(conversations);
             }
         } catch (error) {
-            console.error("Failed to fetch conversations:", error);
+            console.error("Failed to fetch sessions:", error);
         }
     };
 
-    const handleSignOut = async () => {
-        try {
-            await fetch(`${API_URL}/api/auth/logout`, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-                },
-            });
-        } catch {
-            // Ignore errors - we're logging out anyway
+    const handleSignOut = () => {
+        // Local-only logout - clear user data and token
+        if (userContext?.clearUser) {
+            userContext.clearUser();
+        } else {
+            localStorage.removeItem("auth_token");
+            localStorage.removeItem("user_data");
         }
-        localStorage.removeItem("auth_token");
         router.push("/login");
     };
 
@@ -296,7 +302,9 @@ export default function Sidebar({
                                     </div>
                                     <div className="min-w-0">
                                         <p className="text-[11px] text-[rgba(245,245,245,0.5)]">Signed in</p>
-                                        <p className="text-[13px] font-medium text-[#F5F5F5] truncate">User</p>
+                                        <p className="text-[13px] font-medium text-[#F5F5F5] truncate">
+                                            {userContext?.user?.username || userContext?.user?.email?.split("@")[0] || "User"}
+                                        </p>
                                     </div>
                                 </div>
                                 <ChevronRight

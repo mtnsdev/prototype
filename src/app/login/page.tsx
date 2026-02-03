@@ -89,8 +89,9 @@ export default function LoginPage() {
                 throw new Error(data.detail || "Google sign-in failed");
             }
 
-            // Store token in localStorage
+            // Store token and user data in localStorage
             localStorage.setItem("auth_token", data.token.access_token);
+            localStorage.setItem("user_data", JSON.stringify(data.user));
 
             // Redirect to dashboard
             router.push("/dashboard/chat");
@@ -119,8 +120,9 @@ export default function LoginPage() {
                 throw new Error(data.detail || "Invalid email or password");
             }
 
-            // Store token in localStorage
+            // Store token and user data in localStorage
             localStorage.setItem("auth_token", data.token.access_token);
+            localStorage.setItem("user_data", JSON.stringify(data.user));
 
             // Redirect to dashboard
             router.push("/dashboard/chat");

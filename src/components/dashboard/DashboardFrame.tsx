@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { ChatProvider, useChatContextOptional } from "@/contexts/ChatContext";
+import { UserProvider } from "@/contexts/UserContext";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -29,8 +30,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
 export default function DashboardFrame({ children }: { children: React.ReactNode }) {
     return (
-        <ChatProvider>
-            <DashboardContent>{children}</DashboardContent>
-        </ChatProvider>
+        <UserProvider>
+            <ChatProvider>
+                <DashboardContent>{children}</DashboardContent>
+            </ChatProvider>
+        </UserProvider>
     );
 }

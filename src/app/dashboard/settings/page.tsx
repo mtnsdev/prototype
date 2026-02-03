@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { User, LogOut, Mail, AtSign, Loader2 } from "lucide-react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { useUser } from "@/contexts/UserContext";
 
 type UserProfile = {
     email: string;
@@ -13,62 +12,57 @@ type UserProfile = {
 
 export default function SettingsPage() {
     const router = useRouter();
+    const { user, isLoading: isUserLoading, clearUser } = useUser();
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSigningOut, setIsSigningOut] = useState(false);
 
     useEffect(() => {
-        fetchProfile();
-    }, []);
+        // Check if user is authenticated
+        const token = localStorage.getItem("auth_token");
+        if (!token) {
+            router.push("/login");
+            return;
+        }
 
-    const fetchProfile = async () => {
-        try {
-            const token = localStorage.getItem("auth_token");
-            if (!token) {
-                router.push("/login");
-                return;
-            }
-
-            const response = await fetch(`${API_URL}/api/auth/me`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            if (response.ok) {
-                const data = await response.json();
+        // Wait for user context to load
+        if (!isUserLoading) {
+            if (user) {
                 setProfile({
-                    email: data.email || "user@example.com",
-                    username: data.username || data.email?.split("@")[0] || "User",
+                    email: user.email || "user@example.com",
+                    username: user.username || user.email?.split("@")[0] || "User",
                 });
-            } else if (response.status === 401) {
-                router.push("/login");
+            } else {
+                // Fallback: try to load from localStorage directly
+                try {
+                    const storedUser = localStorage.getItem("user_data");
+                    if (storedUser) {
+                        const parsedUser = JSON.parse(storedUser);
+                        setProfile({
+                            email: parsedUser.email || "user@example.com",
+                            username: parsedUser.username || parsedUser.email?.split("@")[0] || "User",
+                        });
+                    } else {
+                        setProfile({
+                            email: "user@example.com",
+                            username: "User",
+                        });
+                    }
+                } catch {
+                    setProfile({
+                        email: "user@example.com",
+                        username: "User",
+                    });
+                }
             }
-        } catch (error) {
-            console.error("Failed to fetch profile:", error);
-            // Set fallback profile data
-            setProfile({
-                email: "user@example.com",
-                username: "User",
-            });
-        } finally {
             setIsLoading(false);
         }
-    };
+    }, [user, isUserLoading, router]);
 
-    const handleSignOut = async () => {
+    const handleSignOut = () => {
         setIsSigningOut(true);
-        try {
-            await fetch(`${API_URL}/api/auth/logout`, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-                },
-            });
-        } catch {
-            // Ignore errors - we're logging out anyway
-        }
-        localStorage.removeItem("auth_token");
+        // Local-only logout - clear user data and token
+        clearUser();
         router.push("/login");
     };
 

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { X, Search, MessageSquare, Trash2, Loader2, Clock } from "lucide-react";
+import { X, Search, MessageSquare, Trash2, Loader2, Clock, AlertCircle } from "lucide-react";
 import type { Conversation } from "./Sidebar";
+import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 type Props = {
     isOpen: boolean;
@@ -61,19 +62,24 @@ export default function HistoryDrawer({
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // Delayed loading to prevent flickering
+    const showLoader = useDelayedLoading(isLoading);
 
     const fetchConversations = useCallback(async (search?: string) => {
         setIsLoading(true);
+        setError(null);
         try {
             const token = localStorage.getItem("auth_token");
-            if (!token) return;
-
-            const params = new URLSearchParams({ limit: "100" });
-            if (search) {
-                params.append("search", search);
+            if (!token) {
+                setIsLoading(false);
+                return;
             }
 
-            const response = await fetch(`${API_URL}/api/chat/conversations?${params}`, {
+            // Using /api/chat/sessions endpoint (Swagger-compliant)
+            // Note: Backend doesn't support search param, so we filter client-side
+            const response = await fetch(`${API_URL}/api/chat/sessions`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -81,10 +87,27 @@ export default function HistoryDrawer({
 
             if (response.ok) {
                 const data = await response.json();
-                setConversations(data);
+                // Map session response to conversation format
+                let conversations = data.map((session: { id: number; title?: string; created_at: string; updated_at: string }) => ({
+                    id: session.id,
+                    title: session.title || `Chat ${session.id}`,
+                    created_at: session.created_at,
+                    updated_at: session.updated_at,
+                }));
+
+                // Client-side search filtering
+                if (search) {
+                    const searchLower = search.toLowerCase();
+                    conversations = conversations.filter((conv: Conversation) =>
+                        conv.title.toLowerCase().includes(searchLower)
+                    );
+                }
+
+                setConversations(conversations);
             }
-        } catch (error) {
-            console.error("Failed to fetch conversations:", error);
+        } catch (err) {
+            console.error("Failed to fetch sessions:", err);
+            setError("Failed to load conversations. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -108,26 +131,10 @@ export default function HistoryDrawer({
 
     const handleDelete = async (e: React.MouseEvent, id: number) => {
         e.stopPropagation();
-
-        if (!confirm("Are you sure you want to delete this conversation?")) {
-            return;
-        }
-
-        try {
-            const token = localStorage.getItem("auth_token");
-            const response = await fetch(`${API_URL}/api/chat/conversations/${id}`, {
-                method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            if (response.ok) {
-                setConversations((prev) => prev.filter((c) => c.id !== id));
-            }
-        } catch (error) {
-            console.error("Failed to delete conversation:", error);
-        }
+        // Note: Backend doesn't support session deletion endpoint yet
+        // Show a message to the user
+        alert("Session deletion is not available yet.");
+        console.log("Delete requested for session:", id);
     };
 
     const handleSelect = (id: number) => {
@@ -195,7 +202,20 @@ export default function HistoryDrawer({
 
                 {/* Conversations List */}
                 <div className="flex-1 overflow-y-auto p-4">
-                    {isLoading ? (
+                    {error ? (
+                        <div className="flex flex-col items-center justify-center py-12 text-center">
+                            <div className="w-14 h-14 rounded-2xl bg-[rgba(200,122,122,0.1)] flex items-center justify-center mb-4">
+                                <AlertCircle size={24} className="text-[#C87A7A]" />
+                            </div>
+                            <p className="text-[14px] text-[rgba(245,245,245,0.7)]">{error}</p>
+                            <button
+                                onClick={() => fetchConversations(searchQuery || undefined)}
+                                className="mt-4 px-4 py-2 text-[13px] rounded-lg bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] text-[rgba(245,245,245,0.7)] transition-colors"
+                            >
+                                Try again
+                            </button>
+                        </div>
+                    ) : showLoader ? (
                         <div className="flex flex-col items-center justify-center py-12">
                             <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)]" />
                             <span className="text-[13px] text-[rgba(245,245,245,0.5)] mt-3">Loading history...</span>
@@ -276,11 +296,19 @@ function ConversationGroup({
             </h3>
             <div className="space-y-0.5">
                 {conversations.map((conv) => (
-                    <button
+                    <div
                         key={conv.id}
                         onClick={() => onSelect(conv.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                onSelect(conv.id);
+                            }
+                        }}
                         className={[
-                            "w-full flex items-center justify-between group",
+                            "w-full flex items-center justify-between group cursor-pointer",
                             "px-3 py-2.5 rounded-xl text-left",
                             "transition-all duration-150",
                             selectedId === conv.id
@@ -301,7 +329,7 @@ function ConversationGroup({
                         >
                             <Trash2 size={14} className="text-[rgba(245,245,245,0.4)] hover:text-[#C87A7A]" />
                         </button>
-                    </button>
+                    </div>
                 ))}
             </div>
         </div>

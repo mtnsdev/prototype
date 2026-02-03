@@ -7,29 +7,26 @@ interface PdfModalProps {
     isOpen: boolean;
     onClose: () => void;
     filename: string;
-    pageNumber: number | string;
+    pageNumber?: number | string;
     pdfPath?: string;
+    /** Optional custom URL - if provided, bypasses default URL construction */
+    customUrl?: string;
 }
 
 // Function to get PDF preview URL from filename and page number
-function getPdfPreviewUrlFromFilename(filename: string, pageNumber: number | string, pdfPath?: string): string {
-    // Extract filename from pdf_path if it's a full path, otherwise use filename
-
-
+function getPdfPreviewUrlFromFilename(filename: string, pageNumber: number | string): string {
     // Build the PDF preview URL with page parameter
+    // Use string concatenation instead of URL constructor (which requires absolute URLs)
     const baseUrl = `/api/document/pdf/${encodeURIComponent(filename)}`;
-    const url = new URL(baseUrl);
-    url.searchParams.set('page', String(pageNumber));
-
-    return url.toString();
+    return `${baseUrl}?page=${encodeURIComponent(String(pageNumber))}`;
 }
 
-export default function PdfModal({ isOpen, onClose, filename, pageNumber, pdfPath }: PdfModalProps) {
+export default function PdfModal({ isOpen, onClose, filename, pageNumber = 1, pdfPath, customUrl }: PdfModalProps) {
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
-    // Build PDF URL with page parameter and hash for direct navigation
+    // Build PDF URL - use customUrl if provided, otherwise construct from filename
     const pdfUrl = isOpen
-        ? `${getPdfPreviewUrlFromFilename(filename, pageNumber, pdfPath)}#page=${pageNumber}`
+        ? customUrl || `${getPdfPreviewUrlFromFilename(filename, pageNumber)}#page=${pageNumber}`
         : "";
 
     useEffect(() => {
@@ -62,7 +59,7 @@ export default function PdfModal({ isOpen, onClose, filename, pageNumber, pdfPat
                                 {filename}
                             </h2>
                             <p className="text-[12px] text-[rgba(0,0,0,0.5)] mt-0.5">
-                                Page {pageNumber}
+                                {customUrl ? "Document Preview" : `Page ${pageNumber}`}
                             </p>
                         </div>
                     </div>

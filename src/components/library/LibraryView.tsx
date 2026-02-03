@@ -1,13 +1,32 @@
 "use client";
 
-import { useRef, useState, useCallback, useMemo } from "react";
+import { useRef, useState, useCallback, useMemo, useEffect } from "react";
 import { useFolderChildren } from "@/hooks/useFolderChildren";
 import { useProxyUrl } from "@/hooks/useProxyUrl";
-import { Folder, FileText, ChevronRight, ChevronDown, ExternalLink, Loader2, Search } from "lucide-react";
+import { useDelayedLoading } from "@/hooks/useDelayedLoading";
+import { Folder, FileText, ChevronRight, ChevronDown, Eye, Loader2, Search } from "lucide-react";
+import PdfModal from "@/components/dashboard/PdfModal";
 
 type TLItem =
     | { kind: "folder"; id: number; parent_id: number; title: string; has_children?: boolean; URI?: string }
     | { kind: "document"; doc_id: number; parent_id: number; title: string; version_num: number; URI?: string };
+
+type TLSearchResult = {
+    items: TLItem[];
+    limit: number;
+    offset: number;
+    next_offset?: number | null;
+    total?: number | null;
+};
+
+const SEARCH_ENDPOINT = "/api/library/search";
+const PROXY_ENDPOINT = "/api/library/proxy";
+
+type PdfModalState = {
+    isOpen: boolean;
+    filename: string;
+    customUrl: string;
+};
 
 // Tree node component for recursive rendering
 function TreeNode({
@@ -16,12 +35,14 @@ function TreeNode({
     expandedIds,
     onToggleExpand,
     clientCache,
+    onOpenPreview,
 }: {
     item: TLItem;
     depth: number;
     expandedIds: Set<number>;
     onToggleExpand: (id: number) => void;
     clientCache: React.MutableRefObject<Map<number, TLItem[]>>;
+    onOpenPreview: (filename: string, proxyUrl: string) => void;
 }) {
     const isFolder = item.kind === "folder";
     const folderId = isFolder ? item.id : null;
@@ -41,7 +62,7 @@ function TreeNode({
     }), [isExpanded, folderId, handleSuccess]);
 
     // Fetch children only for expanded folders
-    const { items: children, loading } = useFolderChildren(
+    const { items: children, showLoading: loading } = useFolderChildren(
         isExpanded ? folderId : undefined,
         undefined,
         hookOptions
@@ -107,7 +128,7 @@ function TreeNode({
 
                 {/* Preview button for documents */}
                 {item.kind === "document" && (
-                    <PreviewButton doc={item} />
+                    <PreviewButton doc={item} onOpenPreview={onOpenPreview} />
                 )}
             </div>
 
@@ -122,6 +143,7 @@ function TreeNode({
                             expandedIds={expandedIds}
                             onToggleExpand={onToggleExpand}
                             clientCache={clientCache}
+                            onOpenPreview={onOpenPreview}
                         />
                     ))}
                 </div>
@@ -130,7 +152,13 @@ function TreeNode({
     );
 }
 
-function PreviewButton({ doc }: { doc: Extract<TLItem, { kind: "document" }> }) {
+function PreviewButton({
+    doc,
+    onOpenPreview
+}: {
+    doc: Extract<TLItem, { kind: "document" }>;
+    onOpenPreview: (filename: string, proxyUrl: string) => void;
+}) {
     const filePath =
         `/intranet/rest/documents/document/${doc.doc_id}/${doc.version_num}/file` +
         `?parent_id=${doc.parent_id}`;
@@ -151,7 +179,7 @@ function PreviewButton({ doc }: { doc: Extract<TLItem, { kind: "document" }> }) 
                 e.stopPropagation();
                 withClickLock(() => {
                     if (!proxyUrl) return;
-                    window.open(proxyUrl, "_blank", "noopener,noreferrer");
+                    onOpenPreview(doc.title, proxyUrl);
                 });
             }}
             className={[
@@ -163,9 +191,100 @@ function PreviewButton({ doc }: { doc: Extract<TLItem, { kind: "document" }> }) 
                 "transition-all duration-150",
             ].join(" ")}
         >
-            <ExternalLink className="w-3 h-3" />
+            <Eye className="w-3 h-3" />
             Preview
         </button>
+    );
+}
+
+// Helper to build proxy URL for search results
+function buildProxyUrl(path: string, filename: string): string {
+    const url = new URL(PROXY_ENDPOINT, window.location.origin);
+    url.searchParams.set("path", path);
+    url.searchParams.set("filename", filename);
+    return url.toString();
+}
+
+// Search result item component
+function SearchResultItem({
+    item,
+    onOpenPreview,
+}: {
+    item: TLItem;
+    onOpenPreview: (filename: string, proxyUrl: string) => void;
+}) {
+    const isFolder = item.kind === "folder";
+
+    // Build preview URL for documents
+    const getPreviewUrl = (): string | null => {
+        if (item.kind !== "document") return null;
+
+        // Search results may have URI from the API
+        if (item.URI && item.URI.startsWith("/")) {
+            return buildProxyUrl(item.URI, item.title);
+        }
+
+        // Fallback to building REST URL if version_num exists
+        if (item.version_num > 0) {
+            const path = `/intranet/rest/documents/document/${item.doc_id}/${item.version_num}/file?parent_id=${item.parent_id}`;
+            return buildProxyUrl(path, item.title);
+        }
+
+        return null;
+    };
+
+    const previewUrl = getPreviewUrl();
+
+    return (
+        <div
+            className={[
+                "flex items-center gap-3 px-5 py-3",
+                "border-b border-[rgba(255,255,255,0.06)]",
+                "hover:bg-white/4 transition-colors",
+            ].join(" ")}
+        >
+            {/* Icon */}
+            <div className={[
+                "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                isFolder
+                    ? "bg-[rgba(122,163,200,0.1)] text-[#7AA3C8]"
+                    : "bg-[rgba(245,245,245,0.06)] text-[rgba(245,245,245,0.5)]",
+            ].join(" ")}>
+                {isFolder ? <Folder size={16} /> : <FileText size={16} />}
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+                <p className="text-[13px] text-[#F5F5F5] truncate font-medium">
+                    {item.title}
+                </p>
+                <p className="text-[11px] text-[rgba(245,245,245,0.45)] mt-0.5">
+                    {isFolder
+                        ? `Folder • ID ${item.id}`
+                        : `Document • ID ${item.doc_id}`
+                    }
+                </p>
+            </div>
+
+            {/* Preview button for documents */}
+            {item.kind === "document" && previewUrl && (
+                <button
+                    type="button"
+                    onClick={() => onOpenPreview(item.title, previewUrl)}
+                    className={[
+                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md",
+                        "text-[11px] font-medium",
+                        "bg-[rgba(122,163,200,0.1)] hover:bg-[rgba(122,163,200,0.18)]",
+                        "border border-[rgba(122,163,200,0.2)] hover:border-[rgba(122,163,200,0.35)]",
+                        "text-[#7AA3C8] hover:text-[#9BBDD8]",
+                        "transition-all duration-150",
+                    ].join(" ")}
+                >
+                    <Eye className="w-3 h-3" />
+                    Preview
+                </button>
+            )}
+        </div>
     );
 }
 
@@ -174,8 +293,122 @@ export default function LibraryView({ initialRootId }: { initialRootId?: number 
     const [draftRootId, setDraftRootId] = useState<string>("");
     const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
     const [searchQuery, setSearchQuery] = useState<string>("");
+    const [pdfModal, setPdfModal] = useState<PdfModalState>({
+        isOpen: false,
+        filename: "",
+        customUrl: "",
+    });
+
+    // Search state
+    const [searchResults, setSearchResults] = useState<TLItem[]>([]);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [searchError, setSearchError] = useState<string | null>(null);
+    const [searchTotal, setSearchTotal] = useState<number | null>(null);
+    const [searchNextOffset, setSearchNextOffset] = useState<number | null>(null);
+
+    // Delayed loading to prevent flickering
+    const showSearchLoader = useDelayedLoading(searchLoading);
 
     const clientCache = useRef<Map<number, TLItem[]>>(new Map());
+
+    // Debounced search effect
+    useEffect(() => {
+        const query = searchQuery.trim();
+
+        // Reset search if query is too short
+        if (query.length < 2) {
+            setSearchResults([]);
+            setSearchError(null);
+            setSearchTotal(null);
+            setSearchNextOffset(null);
+            return;
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(async () => {
+            setSearchLoading(true);
+            setSearchError(null);
+
+            try {
+                const url = new URL(SEARCH_ENDPOINT, window.location.origin);
+                url.searchParams.set("q", query);
+                url.searchParams.set("limit", "50");
+                url.searchParams.set("offset", "0");
+                url.searchParams.set("object_type", "document,folder");
+
+                const res = await fetch(url.toString(), {
+                    method: "GET",
+                    signal: controller.signal
+                });
+
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(text || `HTTP ${res.status}`);
+                }
+
+                const data: TLSearchResult = await res.json();
+                setSearchResults(data.items);
+                setSearchTotal(data.total ?? null);
+                setSearchNextOffset(data.next_offset ?? null);
+            } catch (e: unknown) {
+                if (e instanceof Error && e.name === "AbortError") return;
+                const message = e instanceof Error ? e.message : "Search failed";
+                setSearchError(message);
+                setSearchResults([]);
+            } finally {
+                setSearchLoading(false);
+            }
+        }, 300); // 300ms debounce
+
+        return () => {
+            clearTimeout(timeoutId);
+            controller.abort();
+        };
+    }, [searchQuery]);
+
+    // Load more search results
+    const loadMoreResults = useCallback(async () => {
+        if (searchNextOffset === null || searchLoading) return;
+
+        const query = searchQuery.trim();
+        if (query.length < 2) return;
+
+        setSearchLoading(true);
+        try {
+            const url = new URL(SEARCH_ENDPOINT, window.location.origin);
+            url.searchParams.set("q", query);
+            url.searchParams.set("limit", "50");
+            url.searchParams.set("offset", String(searchNextOffset));
+            url.searchParams.set("object_type", "document,folder");
+
+            const res = await fetch(url.toString(), { method: "GET" });
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || `HTTP ${res.status}`);
+            }
+
+            const data: TLSearchResult = await res.json();
+            setSearchResults(prev => [...prev, ...data.items]);
+            setSearchNextOffset(data.next_offset ?? null);
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : "Failed to load more";
+            setSearchError(message);
+        } finally {
+            setSearchLoading(false);
+        }
+    }, [searchNextOffset, searchLoading, searchQuery]);
+
+    // Check if we're in search mode
+    const isSearchMode = searchQuery.trim().length >= 2;
+
+    // PDF modal handlers
+    const openPreview = useCallback((filename: string, customUrl: string) => {
+        setPdfModal({ isOpen: true, filename, customUrl });
+    }, []);
+
+    const closePreview = useCallback(() => {
+        setPdfModal({ isOpen: false, filename: "", customUrl: "" });
+    }, []);
 
     // Memoize the onSuccess callback to prevent re-renders
     const handleRootSuccess = useCallback((next: TLItem[]) => {
@@ -190,11 +423,11 @@ export default function LibraryView({ initialRootId }: { initialRootId?: number 
         onSuccess: handleRootSuccess,
     }), [rootId, handleRootSuccess]);
 
-    const { items, loading, error } = useFolderChildren(rootId, undefined, rootHookOptions);
+    const { items, loading, showLoading, error } = useFolderChildren(rootId, undefined, rootHookOptions);
 
     const cachedItems = rootId !== undefined ? clientCache.current.get(rootId) : undefined;
     const rawDisplayItems = cachedItems ?? items;
-    const showLoading = loading && !cachedItems;
+    const showRootLoading = showLoading && !cachedItems;
 
     // Filter items by search query (case-insensitive)
     const displayItems = useMemo(() => {
@@ -282,7 +515,7 @@ export default function LibraryView({ initialRootId }: { initialRootId?: number 
                             {rootId !== undefined ? `Folder ID: ${rootId}` : "Browse documents"}
                         </p>
                     </div>
-                    {showLoading && (
+                    {showRootLoading && (
                         <div className="flex items-center gap-2 text-[12px] text-[rgba(245,245,245,0.5)]">
                             <Loader2 size={14} className="animate-spin" />
                             <span>Loading...</span>
@@ -312,7 +545,10 @@ export default function LibraryView({ initialRootId }: { initialRootId?: number 
                         />
                     </div>
                     <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-2">
-                        Searches within the current folder.
+                        {searchQuery.trim().length < 2
+                            ? "Type at least 2 characters to search all documents and folders."
+                            : `Searching across all folders${searchTotal !== null ? ` • ${searchResults.length}${searchTotal > searchResults.length ? ` of ${searchTotal}` : ""} results` : ""}`
+                        }
                     </p>
                     <div className="flex items-center gap-2 mt-2 text-[12px]">
                         <button
@@ -333,42 +569,118 @@ export default function LibraryView({ initialRootId }: { initialRootId?: number 
                     </div>
                 </div>
 
-                {/* Tree View */}
+                {/* Tree View / Search Results */}
                 <div className="min-h-0 flex-1 overflow-y-auto py-2">
-                    {error ? (
-                        <div className="px-5 py-6 text-[14px] text-[#C87A7A] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
-                            {error}
-                        </div>
-                    ) : displayItems.length === 0 ? (
-                        <div className="px-5 py-10 text-center">
-                            {showLoading ? (
-                                <div className="flex flex-col items-center gap-3">
-                                    <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)]" />
-                                    <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Loading items...</span>
+                    {isSearchMode ? (
+                        // Search Results Mode
+                        <>
+                            {searchError ? (
+                                <div className="px-5 py-6 text-[14px] text-[#C87A7A] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
+                                    {searchError}
+                                </div>
+                            ) : showSearchLoader && searchResults.length === 0 ? (
+                                <div className="px-5 py-10 text-center">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)]" />
+                                        <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Searching...</span>
+                                    </div>
+                                </div>
+                            ) : searchResults.length === 0 ? (
+                                <div className="px-5 py-10 text-center">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <Search size={32} className="text-[rgba(245,245,245,0.2)]" />
+                                        <span className="text-[14px] text-[rgba(245,245,245,0.5)]">No results found</span>
+                                        <span className="text-[12px] text-[rgba(245,245,245,0.35)]">Try a different search term</span>
+                                    </div>
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center gap-2">
-                                    <Folder size={32} className="text-[rgba(245,245,245,0.2)]" />
-                                    <span className="text-[14px] text-[rgba(245,245,245,0.5)]">This folder is empty</span>
+                                <div>
+                                    {searchResults.map((item) => (
+                                        <SearchResultItem
+                                            key={item.kind === "folder" ? `sf-${item.id}` : `sd-${item.doc_id}-${item.version_num}`}
+                                            item={item}
+                                            onOpenPreview={openPreview}
+                                        />
+                                    ))}
+                                    {/* Load more button */}
+                                    {searchNextOffset !== null && (
+                                        <div className="px-5 py-4 flex justify-center">
+                                            <button
+                                                type="button"
+                                                onClick={loadMoreResults}
+                                                disabled={searchLoading}
+                                                className={[
+                                                    "inline-flex items-center gap-2 px-4 py-2 rounded-lg",
+                                                    "text-[12px] font-medium",
+                                                    "bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)]",
+                                                    "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
+                                                    "text-[rgba(245,245,245,0.7)] hover:text-[#F5F5F5]",
+                                                    "transition-all duration-150",
+                                                    "disabled:opacity-50 disabled:cursor-not-allowed",
+                                                ].join(" ")}
+                                            >
+                                                {showSearchLoader ? (
+                                                    <>
+                                                        <Loader2 size={14} className="animate-spin" />
+                                                        Loading...
+                                                    </>
+                                                ) : (
+                                                    "Load more results"
+                                                )}
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
-                        </div>
+                        </>
                     ) : (
-                        <div>
-                            {displayItems.map((item) => (
-                                <TreeNode
-                                    key={item.kind === "folder" ? `f-${item.id}` : `d-${item.doc_id}-${item.version_num}`}
-                                    item={item}
-                                    depth={0}
-                                    expandedIds={expandedIds}
-                                    onToggleExpand={handleToggleExpand}
-                                    clientCache={clientCache}
-                                />
-                            ))}
-                        </div>
+                        // Tree View Mode
+                        <>
+                            {error ? (
+                                <div className="px-5 py-6 text-[14px] text-[#C87A7A] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
+                                    {error}
+                                </div>
+                            ) : displayItems.length === 0 ? (
+                                <div className="px-5 py-10 text-center">
+                                    {showRootLoading ? (
+                                        <div className="flex flex-col items-center gap-3">
+                                            <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)]" />
+                                            <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Loading items...</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-2">
+                                            <Folder size={32} className="text-[rgba(245,245,245,0.2)]" />
+                                            <span className="text-[14px] text-[rgba(245,245,245,0.5)]">This folder is empty</span>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div>
+                                    {displayItems.map((item) => (
+                                        <TreeNode
+                                            key={item.kind === "folder" ? `f-${item.id}` : `d-${item.doc_id}-${item.version_num}`}
+                                            item={item}
+                                            depth={0}
+                                            expandedIds={expandedIds}
+                                            onToggleExpand={handleToggleExpand}
+                                            clientCache={clientCache}
+                                            onOpenPreview={openPreview}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>
+
+            {/* PDF Preview Modal */}
+            <PdfModal
+                isOpen={pdfModal.isOpen}
+                onClose={closePreview}
+                filename={pdfModal.filename}
+                customUrl={pdfModal.customUrl}
+            />
         </div>
     );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FolderChildrenResponse, TLItem } from "@/lib/claromentis/types";
 import { backendGet } from "@/lib/claromentis/backendApi";
+import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
 type UseFolderChildrenOpts = {
     initialItems?: TLItem[];
@@ -18,6 +19,9 @@ export function useFolderChildren(
     const [items, setItems] = useState<TLItem[]>(opts?.initialItems ?? []);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Delayed loading to prevent flickering
+    const showLoading = useDelayedLoading(loading);
 
     const enabled = opts?.enabled ?? true;
 
@@ -65,5 +69,5 @@ export function useFolderChildren(
         };
     }, [enabled, key, id, metadata, opts]); // opts callbacks assumed stable or inline safe
 
-    return { items, loading, error, setItems };
+    return { items, loading, showLoading, error, setItems };
 }

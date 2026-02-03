@@ -17,7 +17,7 @@ export async function backendGet<T>(
     }
 
     // Build a relative URL (no origin needed)
-    const url = new URL(normalizedPath, "http://localhost"); // base is irrelevant for relative URL building
+    const url = new URL(normalizedPath, `http://${BACKEND}`); // base is irrelevant for relative URL building
 
     if (params) {
         for (const [k, v] of Object.entries(params)) {
