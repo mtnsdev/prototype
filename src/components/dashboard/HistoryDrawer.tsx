@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { X, Search, MessageSquare, Trash2 } from "lucide-react";
+import { X, Search, MessageSquare, Trash2, Loader2, Clock } from "lucide-react";
 import type { Conversation } from "./Sidebar";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -143,36 +143,52 @@ export default function HistoryDrawer({
         <>
             {/* Backdrop */}
             <div
-                className="fixed inset-0 bg-black/50 z-40"
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-200"
                 onClick={onClose}
             />
 
             {/* Drawer */}
-            <div className="fixed right-0 top-0 h-full w-96 max-w-full bg-gray-900 border-l border-white/10 z-50 flex flex-col shadow-2xl">
+            <div className="fixed right-0 top-0 h-full w-[400px] max-w-full bg-[#0C0C0C] border-l border-[rgba(255,255,255,0.08)] z-50 flex flex-col shadow-2xl">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-white/10">
-                    <h2 className="text-lg font-semibold">Chat History</h2>
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(255,255,255,0.08)]">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-white/10">
+                            <Clock size={18} className="text-[rgba(245,245,245,0.6)]" />
+                        </div>
+                        <div>
+                            <h2 className="text-[15px] font-semibold text-[#F5F5F5]">Chat History</h2>
+                            <p className="text-[11px] text-[rgba(245,245,245,0.45)]">
+                                {conversations.length} conversation{conversations.length !== 1 ? "s" : ""}
+                            </p>
+                        </div>
+                    </div>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-md hover:bg-white/10 transition-colors"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/8 transition-colors duration-150 text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5]"
                     >
-                        <X size={20} />
+                        <X size={18} />
                     </button>
                 </div>
 
                 {/* Search */}
-                <div className="p-4 border-b border-white/10">
+                <div className="p-4 border-b border-[rgba(255,255,255,0.08)]">
                     <div className="relative">
                         <Search
-                            size={18}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50"
+                            size={16}
+                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[rgba(245,245,245,0.35)]"
                         />
                         <input
                             type="text"
                             placeholder="Search conversations..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-white/30"
+                            className={[
+                                "w-full pl-10 pr-4 py-2.5 rounded-xl text-[14px]",
+                                "bg-[#161616] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.35)]",
+                                "border border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.12)]",
+                                "focus:outline-none focus:border-[rgba(255,255,255,0.2)] focus:ring-1 focus:ring-[rgba(255,255,255,0.08)]",
+                                "transition-all duration-150",
+                            ].join(" ")}
                         />
                     </div>
                 </div>
@@ -180,13 +196,19 @@ export default function HistoryDrawer({
                 {/* Conversations List */}
                 <div className="flex-1 overflow-y-auto p-4">
                     {isLoading ? (
-                        <div className="flex items-center justify-center py-8">
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                        <div className="flex flex-col items-center justify-center py-12">
+                            <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)]" />
+                            <span className="text-[13px] text-[rgba(245,245,245,0.5)] mt-3">Loading history...</span>
                         </div>
                     ) : conversations.length === 0 ? (
-                        <div className="text-center py-8 text-white/50">
-                            <MessageSquare size={32} className="mx-auto mb-2 opacity-50" />
-                            <p>No conversations found</p>
+                        <div className="flex flex-col items-center justify-center py-12 text-center">
+                            <div className="w-14 h-14 rounded-2xl bg-[rgba(255,255,255,0.04)] flex items-center justify-center mb-4">
+                                <MessageSquare size={24} className="text-[rgba(245,245,245,0.25)]" />
+                            </div>
+                            <p className="text-[14px] text-[rgba(245,245,245,0.5)]">No conversations found</p>
+                            <p className="text-[12px] text-[rgba(245,245,245,0.35)] mt-1">
+                                {searchQuery ? "Try a different search term" : "Start a new chat to get started"}
+                            </p>
                         </div>
                     ) : (
                         <div className="space-y-6">
@@ -249,28 +271,35 @@ function ConversationGroup({
 }) {
     return (
         <div>
-            <h3 className="text-xs font-medium text-white/50 uppercase tracking-wider mb-2">
+            <h3 className="text-[11px] font-medium text-[rgba(245,245,245,0.4)] uppercase tracking-wider mb-2 px-1">
                 {title}
             </h3>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
                 {conversations.map((conv) => (
                     <button
                         key={conv.id}
                         onClick={() => onSelect(conv.id)}
                         className={[
                             "w-full flex items-center justify-between group",
-                            "px-3 py-2 rounded-lg text-left",
-                            "hover:bg-white/10 transition-colors",
-                            selectedId === conv.id ? "bg-white/10" : "",
+                            "px-3 py-2.5 rounded-xl text-left",
+                            "transition-all duration-150",
+                            selectedId === conv.id
+                                ? "bg-white/10 border border-[rgba(255,255,255,0.12)]"
+                                : "hover:bg-white/6 border border-transparent",
                         ].join(" ")}
                     >
-                        <span className="text-sm truncate flex-1 mr-2">{conv.title}</span>
+                        <span className={[
+                            "text-[13px] truncate flex-1 mr-3",
+                            selectedId === conv.id ? "text-[#F5F5F5] font-medium" : "text-[rgba(245,245,245,0.75)]",
+                        ].join(" ")}>
+                            {conv.title}
+                        </span>
                         <button
                             onClick={(e) => onDelete(e, conv.id)}
-                            className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-opacity"
+                            className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-[rgba(200,122,122,0.15)] transition-all duration-150"
                             title="Delete conversation"
                         >
-                            <Trash2 size={14} className="text-white/50" />
+                            <Trash2 size={14} className="text-[rgba(245,245,245,0.4)] hover:text-[#C87A7A]" />
                         </button>
                     </button>
                 ))}

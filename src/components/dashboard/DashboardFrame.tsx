@@ -9,7 +9,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     const chatContext = useChatContextOptional();
 
     return (
-        <div className="min-h-screen bg-black text-white">
+        <div className="min-h-screen bg-[#0C0C0C] text-[#F5F5F5]">
             <div className="h-screen flex">
                 <Sidebar
                     collapsed={sidebarCollapsed}

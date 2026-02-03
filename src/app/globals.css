@@ -1,26 +1,197 @@
 @import "tailwindcss";
 
+/* ==========================================
+   Enable Design System Tokens
+   ========================================== */
+
 :root {
-    --background: #ffffff;
-    --foreground: #171717;
+    /* Surface Colors (Warm Dark Grays) */
+    --surface-base: #0C0C0C;
+    --surface-elevated: #141414;
+    --surface-card: #161616;
+    --surface-card-hover: #1a1a1a;
+    --surface-interactive: rgba(255, 255, 255, 0.06);
+    --surface-interactive-hover: rgba(255, 255, 255, 0.10);
+    --surface-interactive-active: rgba(255, 255, 255, 0.14);
+
+    /* Text Colors (Warm Off-White) */
+    --text-primary: #F5F5F5;
+    --text-secondary: rgba(245, 245, 245, 0.64);
+    --text-tertiary: rgba(245, 245, 245, 0.44);
+    --text-quaternary: rgba(245, 245, 245, 0.28);
+    --text-disabled: rgba(245, 245, 245, 0.24);
+
+    /* Border Colors */
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-default: rgba(255, 255, 255, 0.12);
+    --border-strong: rgba(255, 255, 255, 0.20);
+
+    /* Brand Colors */
+    --brand-primary: #A0A0A0;
+    --brand-accent: #E8E8E8;
+
+    /* Semantic Colors */
+    --color-success: #7CB889;
+    --color-success-muted: rgba(124, 184, 137, 0.12);
+    --color-warning: #D4A574;
+    --color-warning-muted: rgba(212, 165, 116, 0.12);
+    --color-error: #C87A7A;
+    --color-error-muted: rgba(200, 122, 122, 0.12);
+    --color-info: #7AA3C8;
+    --color-info-muted: rgba(122, 163, 200, 0.12);
+
+    /* Spacing (4px grid) */
+    --space-0: 0;
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-7: 32px;
+    --space-8: 48px;
+    --space-9: 64px;
+
+    /* Typography */
+    --font-sans: 'Libre Franklin', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+
+    /* Font Sizes */
+    --text-2xs: 10px;
+    --text-xs: 11px;
+    --text-sm: 12px;
+    --text-base: 13px;
+    --text-md: 14px;
+    --text-lg: 16px;
+    --text-xl: 20px;
+    --text-2xl: 24px;
+    --text-3xl: 32px;
+
+    /* Line Heights */
+    --leading-none: 1;
+    --leading-tight: 1.2;
+    --leading-snug: 1.3;
+    --leading-normal: 1.45;
+    --leading-relaxed: 1.55;
+
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --radius-2xl: 16px;
+    --radius-full: 9999px;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.3);
+    --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.35);
+
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-normal: 200ms ease;
+    --transition-slow: 300ms ease;
+
+    /* Legacy support */
+    --background: var(--surface-base);
+    --foreground: var(--text-primary);
 }
 
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-    --font-sans: var(--font-geist-sans);
-    --font-mono: var(--font-geist-mono);
+    --font-sans: var(--font-sans);
+    --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --background: #0a0a0a;
-        --foreground: #ededed;
-    }
+/* ==========================================
+   Base Styles
+   ========================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
 body {
-    background: var(--background);
-    color: var(--foreground);
-    font-family: Arial, Helvetica, sans-serif;
+    background: var(--surface-base);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+}
+
+/* ==========================================
+   Scrollbar Styling
+   ========================================== */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+/* ==========================================
+   Focus States (Accessibility)
+   ========================================== */
+
+:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.4);
+    outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.4);
+    outline-offset: 2px;
+}
+
+/* ==========================================
+   Selection
+   ========================================== */
+
+::selection {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+}
+
+/* ==========================================
+   Reduced Motion
+   ========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }
