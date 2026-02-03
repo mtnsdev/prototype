@@ -20,8 +20,6 @@ import {
 import Image from "next/image";
 import { useUserOptional } from "@/contexts/UserContext";
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-
 export type Conversation = {
     id: number;
     title: string;

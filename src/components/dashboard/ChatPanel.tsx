@@ -9,8 +9,6 @@ import PdfModal from "./PdfModal";
 import { useUserOptional } from "@/contexts/UserContext";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-
 type Citation = {
     source: string;
     page_number: number;
@@ -335,7 +333,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
             const token = localStorage.getItem("auth_token");
             // Send query with session_id if we have one (Swagger-compliant)
             // Backend will create session if session_id is not provided
-            const res = await fetch(`${API_URL}/api/chat/query`, {
+            const res = await fetch(`/api/chat/query`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -5,8 +5,6 @@ import { X, Search, MessageSquare, Trash2, Loader2, Clock, AlertCircle } from "l
 import type { Conversation } from "./Sidebar";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-
 type Props = {
     isOpen: boolean;
     onClose: () => void;
