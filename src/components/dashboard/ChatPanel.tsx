@@ -10,6 +10,7 @@ import { useUserOptional } from "@/contexts/UserContext";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
 type Citation = {
+    chunk_id?: string;
     source: string;
     page_number: number;
     excerpt: string;
@@ -96,6 +97,64 @@ function consolidateCitations(citations: Citation[]): ConsolidatedCitation[] {
     return Array.from(grouped.values());
 }
 
+// Inline citation marker: dark blue circle with number, hover = popover (excerpt + source), click = PDF modal
+function InlineCitationMarker({
+    citation,
+    displayNumber,
+    onCitationClick,
+}: {
+    citation: Citation;
+    displayNumber: number;
+    onCitationClick: (filename: string, pageNumber: number | string, pdfPath?: string) => void;
+}) {
+    const [hover, setHover] = useState(false);
+    const filename = citation.filename || citation.source;
+    const pageNumber = citation.page_number;
+
+    return (
+        <span
+            className="relative inline-flex align-baseline"
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+        >
+            <button
+                type="button"
+                onClick={(e) => {
+                    e.preventDefault();
+                    onCitationClick(filename, pageNumber, citation.pdf_path);
+                }}
+                className={[
+                    "inline-flex items-center justify-center min-w-[1.25em] h-[1.25em] rounded-full text-white text-[11px] font-semibold",
+                    "bg-[#3C4472] hover:bg-[#4a5285] border border-[rgba(255,255,255,0.15)]",
+                    "cursor-pointer transition-colors duration-150 align-[0.2em] ml-0.5",
+                ].join(" ")}
+                title={`${filename}, page ${pageNumber}`}
+                aria-label={`Citation ${displayNumber}: ${filename} page ${pageNumber}`}
+            >
+                {displayNumber}
+            </button>
+            {hover && (
+                <>
+                    {/* Invisible bridge so moving mouse to the panel doesn't trigger onMouseLeave */}
+                    <div className="absolute left-0 top-full min-w-[540px] w-full h-3 z-40" aria-hidden style={{ width: "max(100%, 240px)" }} />
+                    <div
+                        className="absolute left-0 top-full mt-1.5 z-50 min-w-[540px] max-w-[580px] max-h-[320px] rounded-lg shadow-xl border border-[rgba(255,255,255,0.12)] bg-[#1a1a1a] p-4 flex flex-col"
+                        role="tooltip"
+                    >
+                        <div className="text-[13px] text-[rgba(245,245,245,0.9)] leading-relaxed whitespace-pre-wrap overflow-y-auto min-h-0 flex-1 pr-1">
+                            {citation.excerpt}
+                        </div>
+                        <div className="mt-3 pt-3 border-t border-[rgba(255,255,255,0.08)] text-[11px] text-[rgba(245,245,245,0.55)] shrink-0">
+                            {filename}
+                            {pageNumber != null && ` · Page ${pageNumber}`}
+                        </div>
+                    </div>
+                </>
+            )}
+        </span>
+    );
+}
+
 // Function to process answer text and create clickable citations
 function AnswerWithCitations({
     answer,
@@ -106,15 +165,73 @@ function AnswerWithCitations({
     citations: Citation[];
     onCitationClick: (filename: string, pageNumber: number | string, pdfPath?: string) => void;
 }) {
-    // Pattern to match citations like [Source: filename, Page: 1] or [Source: filename, Pages: 1, 24, 25, 27]
-    const citationPattern = /\[Source:\s*([^,\]]+),\s*Pages?:\s*([^\]]+)\]/gi;
+    // New format: [^chunk_id] — replace with markdown links so citations render inline inside the same block (same line), keeping existing block style
+    const chunkIdPattern = /\[\^([a-f0-9-]{36})\]/gi;
+    const citationByChunkId = new Map<string, Citation>(
+        (citations || []).filter((c): c is Citation & { chunk_id: string } => !!c.chunk_id).map((c) => [c.chunk_id!, c])
+    );
 
+    const chunkIdMatches = [...answer.matchAll(chunkIdPattern)];
+    if (chunkIdMatches.length > 0 && citationByChunkId.size > 0) {
+        const orderedChunkIds: string[] = [];
+        const seen = new Set<string>();
+        for (const m of chunkIdMatches) {
+            const id = m[1].toLowerCase();
+            if (!seen.has(id)) {
+                seen.add(id);
+                orderedChunkIds.push(id);
+            }
+        }
+        const chunkIdToDisplayNumber = new Map<string, number>();
+        orderedChunkIds.forEach((id, idx) => chunkIdToDisplayNumber.set(id, idx + 1));
+
+        // Replace [^uuid] with [1](#citation:uuid). Fragment URLs (#...) are not stripped by ReactMarkdown's urlTransform (non-http protocols get cleared otherwise).
+        const answerWithLinks = answer.replace(/\[\^([a-f0-9-]{36})\]/gi, (_, chunkId) => {
+            const id = chunkId.toLowerCase();
+            const num = chunkIdToDisplayNumber.get(id) ?? 0;
+            return num ? `[${num}](#citation:${id})` : "";
+        });
+
+        const blockMarkdownComponents = {
+            p: ({ children }: { children?: React.ReactNode }) => <p className="mb-3 text-[rgba(245,245,245,0.88)] leading-relaxed">{children}</p>,
+            ul: ({ children }: { children?: React.ReactNode }) => <ul className="list-disc list-inside mb-3 space-y-1.5 text-[rgba(245,245,245,0.88)]">{children}</ul>,
+            li: ({ children }: { children?: React.ReactNode }) => <li className="ml-4 text-[rgba(245,245,245,0.88)]">{children}</li>,
+            strong: ({ children }: { children?: React.ReactNode }) => <strong className="font-semibold text-[#F5F5F5]">{children}</strong>,
+            h1: ({ children }: { children?: React.ReactNode }) => <h1 className="text-[#F5F5F5] font-semibold text-lg mb-2">{children}</h1>,
+            h2: ({ children }: { children?: React.ReactNode }) => <h2 className="text-[#F5F5F5] font-semibold text-base mb-2">{children}</h2>,
+            h3: ({ children }: { children?: React.ReactNode }) => <h3 className="text-[#F5F5F5] font-semibold text-sm mb-2">{children}</h3>,
+            a: ({ href, children: linkChildren }: { href?: string; children?: React.ReactNode }) => {
+                if (href?.startsWith("#citation:")) {
+                    const chunkId = href.slice("#citation:".length).toLowerCase();
+                    const citation = citationByChunkId.get(chunkId);
+                    const displayNumber = chunkIdToDisplayNumber.get(chunkId) ?? 0;
+                    if (citation) {
+                        return (
+                            <InlineCitationMarker
+                                citation={citation}
+                                displayNumber={displayNumber}
+                                onCitationClick={onCitationClick}
+                            />
+                        );
+                    }
+                }
+                return <a href={href}>{linkChildren}</a>;
+            },
+        };
+
+        return (
+            <ReactMarkdown components={blockMarkdownComponents}>
+                {answerWithLinks}
+            </ReactMarkdown>
+        );
+    }
+
+    // Legacy format: [Source: filename, Page: 1] or [Source: filename, Pages: 1, 24, 25, 27]
+    const citationPattern = /\[Source:\s*([^,\]]+),\s*Pages?:\s*([^\]]+)\]/gi;
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
     let match;
     let citationIndex = 0;
-
-    // Reset regex lastIndex
     citationPattern.lastIndex = 0;
 
     while ((match = citationPattern.exec(answer)) !== null) {
@@ -503,55 +620,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                             </div>
                                         )}
 
-                                        {/* Excerpts Section */}
-                                        {m.response.citations && m.response.citations.length > 0 && (
-                                            <div className="space-y-3 pt-2">
-                                                <h4 className="text-[12px] font-medium uppercase tracking-wider text-[rgba(245,245,245,0.4)]">Sources</h4>
-                                                <div className="space-y-2">
-                                                    {m.response.citations.map((citation, idx) => (
-                                                        <div
-                                                            key={idx}
-                                                            className="text-[rgba(245,245,245,0.75)] pl-3 border-l-2 border-[rgba(255,255,255,0.15)] py-1"
-                                                        >
-                                                            <div className="text-[13px] leading-relaxed">
-                                                                {citation.excerpt}
-                                                            </div>
-                                                            <div className="text-[11px] text-[rgba(245,245,245,0.45)] mt-1.5">
-                                                                {citation.filename || citation.source} • Page {citation.page_number}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Citations Section */}
-                                        {m.response.citations && m.response.citations.length > 0 && (() => {
-                                            const consolidated = consolidateCitations(m.response.citations);
-                                            return (
-                                                <div className="space-y-3 pt-2">
-                                                    <h4 className="text-[12px] font-medium uppercase tracking-wider text-[rgba(245,245,245,0.4)]">References</h4>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {consolidated.map((citation, idx) => (
-                                                            <button
-                                                                key={idx}
-                                                                onClick={() => openPdfModal(
-                                                                    citation.filename,
-                                                                    citation.page_number,
-                                                                    citation.pdf_path
-                                                                )}
-                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[rgba(122,163,200,0.1)] hover:bg-[rgba(122,163,200,0.18)] border border-[rgba(122,163,200,0.2)] hover:border-[rgba(122,163,200,0.35)] transition-all duration-150 text-[12px] font-medium text-[#7AA3C8] hover:text-[#9BBDD8]"
-                                                            >
-                                                                <ExternalLink className="w-3 h-3" />
-                                                                <span className="truncate max-w-[150px]">{citation.filename}</span>
-                                                                <span className="text-[rgba(245,245,245,0.5)]">p.{citation.page_number}</span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })()}
-
+                                     
                                         {/* Conflicts / Disagreements Section */}
                                         {m.response.conflicts && m.response.conflicts.length > 0 && (
                                             <div className="space-y-3 pt-2">
