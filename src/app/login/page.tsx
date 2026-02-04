@@ -147,7 +147,7 @@ export default function LoginPage() {
                             className="opacity-90"
                         />
                     </div>
-                    <h1 className="text-[28px] font-bold text-[#F5F5F5] tracking-tight">Travel Lustre AI</h1>
+                    <h1 className="text-[28px] font-bold text-[#F5F5F5] tracking-tight">TRAVELLUSTRE</h1>
                     <p className="text-[14px] text-[rgba(245,245,245,0.45)] mt-1">Created by Enable VIC</p>
                 </div>
 

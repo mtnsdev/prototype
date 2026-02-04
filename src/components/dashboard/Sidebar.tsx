@@ -140,7 +140,7 @@ export default function Sidebar({
                         </div>
                         {!collapsed && (
                             <div className="truncate">
-                                <p className="text-sm font-semibold leading-none text-[#F5F5F5]">Travel Lustre AI</p>
+                                <p className="text-sm font-semibold leading-none text-[#F5F5F5]">TRAVELLUSTRE</p>
                                 <p className="text-[11px] text-[rgba(245,245,245,0.5)] mt-1">Created by Enable VIC</p>
                             </div>
                         )}
