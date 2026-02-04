@@ -79,7 +79,7 @@ export default function Sidebar({
             if (!token) return;
 
             // Using /api/chat/sessions endpoint (Swagger-compliant)
-            const response = await fetch(`api/chat/sessions`, {
+            const response = await fetch(`/api/chat/sessions`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

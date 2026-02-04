@@ -618,7 +618,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                 </div>
 
                 {/* Input Area */}
-                <div className="shrink-0 p-4 border-t border-[rgba(255,255,255,0.08)] bg-[#0C0C0C]">
+                <div className="shrink-0 p-4 bg-[#0C0C0C]">
                     <div className="flex gap-3 items-center max-w-4xl mx-auto">
                         <div className="flex-1 relative">
                             <input

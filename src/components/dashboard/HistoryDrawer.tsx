@@ -77,7 +77,7 @@ export default function HistoryDrawer({
 
             // Using /api/chat/sessions endpoint (Swagger-compliant)
             // Note: Backend doesn't support search param, so we filter client-side
-            const response = await fetch(`api/chat/sessions`, {
+            const response = await fetch(`/api/chat/sessions`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
