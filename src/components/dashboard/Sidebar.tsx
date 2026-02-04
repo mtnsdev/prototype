@@ -132,7 +132,7 @@ export default function Sidebar({
                         <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center border border-white/10 shadow-sm">
                             <Image
                                 src="/TL_logo.svg"
-                                alt="Enable Logo"
+                                alt="Travel Lustre Logo"
                                 width={18}
                                 height={18}
                                 className="opacity-90"
@@ -140,8 +140,8 @@ export default function Sidebar({
                         </div>
                         {!collapsed && (
                             <div className="truncate">
-                                <p className="text-sm font-semibold leading-none text-[#F5F5F5]">Enable</p>
-                                <p className="text-[11px] text-[rgba(245,245,245,0.5)] mt-1">AI Assistant</p>
+                                <p className="text-sm font-semibold leading-none text-[#F5F5F5]">Travel Lustre AI</p>
+                                <p className="text-[11px] text-[rgba(245,245,245,0.5)] mt-1">Created by Enable VIC</p>
                             </div>
                         )}
                     </div>

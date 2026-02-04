@@ -141,14 +141,14 @@ export default function LoginPage() {
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 mb-5 shadow-lg">
                         <Image
                             src="/TL_logo.svg"
-                            alt="Enable Logo"
+                            alt="Travel Lustre Logo"
                             width={32}
                             height={32}
                             className="opacity-90"
                         />
                     </div>
-                    <h1 className="text-[28px] font-bold text-[#F5F5F5] tracking-tight">Enable</h1>
-                    <p className="text-[14px] text-[rgba(245,245,245,0.45)] mt-1">AI Assistant</p>
+                    <h1 className="text-[28px] font-bold text-[#F5F5F5] tracking-tight">Travel Lustre AI</h1>
+                    <p className="text-[14px] text-[rgba(245,245,245,0.45)] mt-1">Created by Enable VIC</p>
                 </div>
 
                 {/* Card */}
