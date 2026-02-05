@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { X, FileText } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { X, FileText, Loader2 } from "lucide-react";
 
 interface PdfModalProps {
     isOpen: boolean;
@@ -9,33 +9,93 @@ interface PdfModalProps {
     filename: string;
     pageNumber?: number | string;
     pdfPath?: string;
-    /** Optional custom URL - if provided, bypasses default URL construction */
+    /** Optional custom URL - if provided, bypasses POST fetch and uses this URL in iframe */
     customUrl?: string;
-}
-
-// Function to get PDF preview URL from filename and page number
-function getPdfPreviewUrlFromFilename(filename: string, pageNumber: number | string): string {
-    // Build the PDF preview URL with page parameter
-    // Use string concatenation instead of URL constructor (which requires absolute URLs)
-    const baseUrl = `/api/document/pdf/${encodeURIComponent(filename)}`;
-    return `${baseUrl}?page=${encodeURIComponent(String(pageNumber))}`;
 }
 
 export default function PdfModal({ isOpen, onClose, filename, pageNumber = 1, pdfPath, customUrl }: PdfModalProps) {
     const iframeRef = useRef<HTMLIFrameElement>(null);
+    const objectUrlRef = useRef<string | null>(null);
+    const [pdfObjectUrl, setPdfObjectUrl] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    // Build PDF URL - use customUrl if provided, otherwise construct from filename
-    const pdfUrl = isOpen
-        ? customUrl || `${getPdfPreviewUrlFromFilename(filename, pageNumber)}#page=${pageNumber}`
-        : "";
-
+    // When using POST API: fetch PDF with { pdf_path, page }, then show in iframe via blob URL
     useEffect(() => {
-        if (isOpen && iframeRef.current) {
-            // Reset iframe src to ensure it reloads with the new page
-            const iframe = iframeRef.current;
-            iframe.src = pdfUrl;
+        if (!isOpen) return;
+
+        if (customUrl) {
+            if (objectUrlRef.current) {
+                URL.revokeObjectURL(objectUrlRef.current);
+                objectUrlRef.current = null;
+            }
+            return;
         }
-    }, [isOpen, pdfUrl]);
+
+        if (!pdfPath && !filename) {
+            queueMicrotask(() => {
+                setError("No document path provided.");
+                setPdfObjectUrl(null);
+            });
+            return;
+        }
+
+        const path = pdfPath || filename;
+        if (objectUrlRef.current) {
+            URL.revokeObjectURL(objectUrlRef.current);
+            objectUrlRef.current = null;
+        }
+        queueMicrotask(() => {
+            setPdfObjectUrl(null);
+            setLoading(true);
+            setError(null);
+        });
+
+        const token = typeof localStorage !== "undefined" ? localStorage.getItem("auth_token") : null;
+        fetch("/api/document/pdf", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+                pdf_path: path,
+                page: Number(pageNumber) || 1,
+            }),
+        })
+            .then(async (res) => {
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(text || `Failed to load PDF (${res.status})`);
+                }
+                return res.blob();
+            })
+            .then((blob) => {
+                const url = URL.createObjectURL(blob);
+                objectUrlRef.current = url;
+                setPdfObjectUrl(url);
+            })
+            .catch((err) => {
+                setError(err?.message || "Failed to load PDF.");
+                setPdfObjectUrl(null);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+
+        return () => {
+            if (objectUrlRef.current) {
+                URL.revokeObjectURL(objectUrlRef.current);
+                objectUrlRef.current = null;
+            }
+        };
+    }, [isOpen, pdfPath, filename, pageNumber, customUrl]);
+
+    const iframeSrc = customUrl
+        ? customUrl
+        : pdfObjectUrl
+            ? `${pdfObjectUrl}#page=${pageNumber}`
+            : "";
 
     if (!isOpen) return null;
 
@@ -73,14 +133,26 @@ export default function PdfModal({ isOpen, onClose, filename, pageNumber = 1, pd
                 </div>
 
                 {/* PDF Viewer */}
-                <div className="flex-1 overflow-hidden bg-[#e5e5e5]">
-                    <iframe
-                        ref={iframeRef}
-                        src={pdfUrl}
-                        className="w-full h-full border-0"
-                        title={`PDF Viewer - ${filename} - Page ${pageNumber}`}
-                        style={{ minHeight: '600px' }}
-                    />
+                <div className="flex-1 overflow-hidden bg-[#e5e5e5] relative">
+                    {!customUrl && loading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-[#e5e5e5] z-10">
+                            <Loader2 className="w-10 h-10 animate-spin text-[rgba(0,0,0,0.4)]" />
+                        </div>
+                    )}
+                    {!customUrl && error && (
+                        <div className="absolute inset-0 flex items-center justify-center p-6 bg-[#e5e5e5] z-10">
+                            <p className="text-[15px] text-[rgba(0,0,0,0.7)]">{error}</p>
+                        </div>
+                    )}
+                    {iframeSrc && !error && (
+                        <iframe
+                            ref={iframeRef}
+                            src={iframeSrc}
+                            className="w-full h-full border-0"
+                            title={`PDF Viewer - ${filename} - Page ${pageNumber}`}
+                            style={{ minHeight: "600px" }}
+                        />
+                    )}
                 </div>
             </div>
         </div>

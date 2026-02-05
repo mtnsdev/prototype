@@ -20,10 +20,11 @@ type Citation = {
 
 type ConflictClaim = {
     claim: string;
-    source: string;
+    filename: string;
     page_number: number;
     excerpt: string;
     effective_date: string;
+    pdf_path: string;
 };
 
 type Conflict = {
@@ -74,6 +75,7 @@ function InlineCitationMarker({
     const [hover, setHover] = useState(false);
     const filename = citation.filename || citation.source;
     const pageNumber = citation.page_number;
+    const pdf_path = citation.pdf_path
 
     return (
         <span
@@ -85,7 +87,7 @@ function InlineCitationMarker({
                 type="button"
                 onClick={(e) => {
                     e.preventDefault();
-                    onCitationClick(filename, pageNumber, citation.pdf_path);
+                    onCitationClick(filename, pageNumber, pdf_path);
                 }}
                 className={[
                     "inline-flex items-center justify-center min-w-[1.25em] h-[1.25em] rounded-full text-white text-[11px] font-semibold",
@@ -119,7 +121,7 @@ function InlineCitationMarker({
     );
 }
 
-// Ellipsis for 3+ citations: shows "..." until clicked, then expands to show all citation circles separately
+// Ellipsis for 3+ citations: shows "..." until clicked, then expands to show all citation circles; collapse button returns to first + "..."
 function InlineCitationMarkerEllipsis({
     chunkIds,
     citationByChunkId,
@@ -137,7 +139,7 @@ function InlineCitationMarkerEllipsis({
 
     if (expanded) {
         return (
-            <>
+            <span className="inline-flex items-center flex-nowrap gap-0 align-baseline">
                 {citations.map((citation, i) => (
                     <InlineCitationMarker
                         key={chunkIds[i]}
@@ -146,7 +148,23 @@ function InlineCitationMarkerEllipsis({
                         onCitationClick={onCitationClick}
                     />
                 ))}
-            </>
+                <button
+                    type="button"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        setExpanded(false);
+                    }}
+                    className={[
+                        "inline-flex items-center justify-center min-w-[1.25em] h-[1.25em] rounded-full text-[11px] font-semibold",
+                        "bg-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.3)] text-white border border-[rgba(255,255,255,0.2)]",
+                        "cursor-pointer transition-colors duration-150 align-[0.2em] ml-1.5",
+                    ].join(" ")}
+                    title="Collapse citations"
+                    aria-label="Collapse citations"
+                >
+                    ←
+                </button>
+            </span>
         );
     }
 
@@ -231,8 +249,8 @@ function AnswerWithCitations({
             }
             const firstNum = chunkIdToDisplayNumber.get(ids[0]) ?? 0;
             if (!firstNum) return "";
-            const rest = ids.slice(1).join(";");
-            return `[${firstNum}](#citation:${ids[0]})[...](#citation-more:${rest})`;
+            // Use citation-group so first circle and ellipsis render in one no-wrap container (same line)
+            return `[${firstNum} …](#citation-group:${ids.join(";")})`;
         });
 
         const blockMarkdownComponents = {
@@ -244,6 +262,33 @@ function AnswerWithCitations({
             h2: ({ children }: { children?: React.ReactNode }) => <h2 className="text-[#F5F5F5] font-semibold text-base mb-2">{children}</h2>,
             h3: ({ children }: { children?: React.ReactNode }) => <h3 className="text-[#F5F5F5] font-semibold text-sm mb-2">{children}</h3>,
             a: ({ href, children: linkChildren }: { href?: string; children?: React.ReactNode }) => {
+                if (href?.startsWith("#citation-group:")) {
+                    const payload = href.slice("#citation-group:".length);
+                    const allIds = payload.split(";").map((id) => id.trim().toLowerCase()).filter(Boolean);
+                    if (allIds.length >= 2) {
+                        const firstId = allIds[0];
+                        const restIds = allIds.slice(1);
+                        const firstCitation = citationByChunkId.get(firstId);
+                        const firstNum = chunkIdToDisplayNumber.get(firstId);
+                        if (firstCitation != null && firstNum != null) {
+                            return (
+                                <span className="inline-flex items-center flex-nowrap align-baseline">
+                                    <InlineCitationMarker
+                                        citation={firstCitation}
+                                        displayNumber={firstNum}
+                                        onCitationClick={onCitationClick}
+                                    />
+                                    <InlineCitationMarkerEllipsis
+                                        chunkIds={restIds}
+                                        citationByChunkId={citationByChunkId}
+                                        chunkIdToDisplayNumber={chunkIdToDisplayNumber}
+                                        onCitationClick={onCitationClick}
+                                    />
+                                </span>
+                            );
+                        }
+                    }
+                }
                 if (href?.startsWith("#citation-more:")) {
                     const payload = href.slice("#citation-more:".length);
                     const chunkIds = payload.split(";").map((id) => id.trim().toLowerCase()).filter(Boolean);
@@ -704,10 +749,10 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                                                     )}
                                                                     <div className="text-[11px] text-[rgba(245,245,245,0.5)]">
                                                                         <button
-                                                                            onClick={() => openPdfModal(claim.source, claim.page_number)}
+                                                                            onClick={() => openPdfModal(claim.filename, claim.page_number, claim.pdf_path)}
                                                                             className="text-[#7AA3C8] hover:text-[#9BBDD8] hover:underline transition-colors"
                                                                         >
-                                                                            {claim.source}, Page {claim.page_number}
+                                                                            {claim.filename}, Page {claim.page_number}
                                                                         </button>
                                                                         {claim.effective_date && ` • Effective: ${claim.effective_date}`}
                                                                     </div>
