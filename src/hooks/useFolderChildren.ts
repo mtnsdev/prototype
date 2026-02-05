@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { FolderChildrenResponse, TLItem } from "@/lib/claromentis/types";
-import { backendGet } from "@/lib/claromentis/backendApi";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
 type UseFolderChildrenOpts = {
@@ -33,6 +32,17 @@ export function useFolderChildren(
     useEffect(() => {
         let cancelled = false;
 
+        const getCookieValue = (name: string) => {
+            const prefix = `${name}=`;
+            for (const part of document.cookie.split(";")) {
+                const trimmed = part.trim();
+                if (trimmed.startsWith(prefix)) {
+                    return decodeURIComponent(trimmed.slice(prefix.length));
+                }
+            }
+            return "";
+        };
+
         async function run() {
             if (!enabled) return;
             if (id === undefined || id === null) return;
@@ -41,14 +51,26 @@ export function useFolderChildren(
             setError(null);
 
             try {
-                const data = await backendGet<FolderChildrenResponse>(
-                    "/api/library/folders",
-                    {
-                        id,
-                        metadata,
-                    },
-                );
+                const url = new URL("/api/library/folders", window.location.origin);
+                url.searchParams.set("id", String(id));
+                if (metadata) url.searchParams.set("metadata", metadata);
 
+                const token = getCookieValue("auth_token");
+                const headers = token
+                    ? { Authorization: `Bearer ${token}` }
+                    : undefined;
+
+                const res = await fetch(url.pathname + url.search, {
+                    cache: "no-store",
+                    headers,
+                });
+
+                if (!res.ok) {
+                    const text = await res.text().catch(() => "");
+                    throw new Error(`Backend error ${res.status}: ${text || res.statusText}`);
+                }
+
+                const data = (await res.json()) as FolderChildrenResponse;
                 const next = data.items ?? [];
 
                 if (!cancelled) {

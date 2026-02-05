@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
 
@@ -32,10 +32,23 @@ declare global {
 
 export default function LoginPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [info, setInfo] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+
+    // Get redirect URL and reason from query params
+    const redirectUrl = searchParams.get("redirect") || "/dashboard/chat";
+    const reason = searchParams.get("reason");
+
+    // Show session expired message
+    useEffect(() => {
+        if (reason === "session_expired") {
+            setInfo("Your session has expired. Please sign in again.");
+        }
+    }, [reason]);
 
     // Initialize Google Sign-In
     useEffect(() => {
@@ -72,9 +85,17 @@ export default function LoginPage() {
         };
     }, []);
 
+    const setAuthCookie = (token: string) => {
+        // `src/proxy.ts` runs server-side and cannot read localStorage.
+        // Mirror the token into a cookie so route protection can see it.
+        const secure = window.location.protocol === "https:" ? "; Secure" : "";
+        document.cookie = `auth_token=${encodeURIComponent(token)}; Path=/; SameSite=Lax${secure}`;
+    };
+
     const handleGoogleCallback = async (response: { credential: string }) => {
         setIsLoading(true);
         setError("");
+        setInfo("");
 
         try {
             const res = await fetch("/api/auth/google", {
@@ -86,15 +107,21 @@ export default function LoginPage() {
             const data = await res.json();
 
             if (!res.ok) {
+                // Handle access denied (not invited)
+                if (res.status === 403) {
+                    router.push("/access-denied");
+                    return;
+                }
                 throw new Error(data.detail || "Google sign-in failed");
             }
 
             // Store token and user data in localStorage
             localStorage.setItem("auth_token", data.token.access_token);
             localStorage.setItem("user_data", JSON.stringify(data.user));
+            setAuthCookie(data.token.access_token);
 
-            // Redirect to dashboard
-            router.push("/dashboard/chat");
+            // Redirect to requested page or dashboard
+            router.push(redirectUrl);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Google sign-in failed");
         } finally {
@@ -106,6 +133,7 @@ export default function LoginPage() {
         e.preventDefault();
         setIsLoading(true);
         setError("");
+        setInfo("");
 
         try {
             const res = await fetch("/api/auth/login", {
@@ -117,15 +145,21 @@ export default function LoginPage() {
             const data = await res.json();
 
             if (!res.ok) {
+                // Handle access denied (disabled account)
+                if (res.status === 403) {
+                    router.push("/access-denied?reason=disabled");
+                    return;
+                }
                 throw new Error(data.detail || "Invalid email or password");
             }
 
             // Store token and user data in localStorage
             localStorage.setItem("auth_token", data.token.access_token);
             localStorage.setItem("user_data", JSON.stringify(data.user));
+            setAuthCookie(data.token.access_token);
 
-            // Redirect to dashboard
-            router.push("/dashboard/chat");
+            // Redirect to requested page or dashboard
+            router.push(redirectUrl);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Sign in failed");
         } finally {
@@ -155,6 +189,13 @@ export default function LoginPage() {
                 <div className="bg-[#161616] border border-[rgba(255,255,255,0.08)] rounded-2xl p-8 shadow-xl">
                     <h2 className="text-[18px] font-semibold text-[#F5F5F5] mb-1.5">Welcome back</h2>
                     <p className="text-[14px] text-[rgba(245,245,245,0.5)] mb-6">Sign in to your account to continue</p>
+
+                    {/* Info Message */}
+                    {info && (
+                        <div className="mb-5 p-3.5 rounded-xl bg-[rgba(251,191,36,0.1)] border border-[rgba(251,191,36,0.2)]">
+                            <p className="text-[13px] text-amber-400">{info}</p>
+                        </div>
+                    )}
 
                     {/* Error Message */}
                     {error && (

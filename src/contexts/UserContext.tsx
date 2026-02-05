@@ -8,6 +8,7 @@ export type User = {
     username: string;
     agency_id?: string | null;
     role: string;
+    status: string;
 };
 
 type UserContextType = {
@@ -55,6 +56,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setUserState(null);
         localStorage.removeItem(USER_STORAGE_KEY);
         localStorage.removeItem("auth_token");
+        // Keep cookie in sync with local logout
+        document.cookie = "auth_token=; Path=/; Max-Age=0; SameSite=Lax";
     }, []);
 
     const getFirstName = useCallback((): string => {

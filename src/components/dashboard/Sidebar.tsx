@@ -108,6 +108,7 @@ export default function Sidebar({
         } else {
             localStorage.removeItem("auth_token");
             localStorage.removeItem("user_data");
+            document.cookie = "auth_token=; Path=/; Max-Age=0; SameSite=Lax";
         }
         router.push("/login");
     };
