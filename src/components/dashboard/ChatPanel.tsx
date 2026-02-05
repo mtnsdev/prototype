@@ -20,10 +20,11 @@ type Citation = {
 
 type ConflictClaim = {
     claim: string;
-    source: string;
+    filename: string;
     page_number: number;
     excerpt: string;
     effective_date: string;
+    pdf_path: string;
 };
 
 type Conflict = {
@@ -748,10 +749,10 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                                                     )}
                                                                     <div className="text-[11px] text-[rgba(245,245,245,0.5)]">
                                                                         <button
-                                                                            onClick={() => openPdfModal(claim.source, claim.page_number)}
+                                                                            onClick={() => openPdfModal(claim.filename, claim.page_number, claim.pdf_path)}
                                                                             className="text-[#7AA3C8] hover:text-[#9BBDD8] hover:underline transition-colors"
                                                                         >
-                                                                            {claim.source}, Page {claim.page_number}
+                                                                            {claim.filename}, Page {claim.page_number}
                                                                         </button>
                                                                         {claim.effective_date && ` • Effective: ${claim.effective_date}`}
                                                                     </div>
