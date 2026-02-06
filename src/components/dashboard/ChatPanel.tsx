@@ -10,6 +10,7 @@ import { useUserOptional } from "@/contexts/UserContext";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
 type Citation = {
+    chunk_id?: string;
     source: string;
     page_number: number;
     excerpt: string;
@@ -19,10 +20,11 @@ type Citation = {
 
 type ConflictClaim = {
     claim: string;
-    source: string;
+    filename: string;
     page_number: number;
     excerpt: string;
     effective_date: string;
+    pdf_path: string;
 };
 
 type Conflict = {
@@ -59,41 +61,131 @@ const SUGGESTION_CHIPS = [
     "What's the GDS code for FSPP?",
 ];
 
-// Consolidated citation type for grouping
-type ConsolidatedCitation = {
-    filename: string;
-    page_number: number;
-    excerpts: string[];
-    pdf_path: string;
-    source: string;
-};
 
-// Function to consolidate citations by filename and page number
-function consolidateCitations(citations: Citation[]): ConsolidatedCitation[] {
-    const grouped = new Map<string, ConsolidatedCitation>();
+// Inline citation marker: dark blue circle with number, hover = popover (excerpt + source), click = PDF modal
+function InlineCitationMarker({
+    citation,
+    displayNumber,
+    onCitationClick,
+}: {
+    citation: Citation;
+    displayNumber: number;
+    onCitationClick: (filename: string, pageNumber: number | string, pdfPath?: string) => void;
+}) {
+    const [hover, setHover] = useState(false);
+    const filename = citation.filename || citation.source;
+    const pageNumber = citation.page_number;
+    const pdf_path = citation.pdf_path
 
-    for (const citation of citations) {
-        // Create a key from filename and page number
-        const key = `${citation.filename || citation.source}_${citation.page_number}`;
+    return (
+        <span
+            className="relative inline-flex align-baseline"
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+        >
+            <button
+                type="button"
+                onClick={(e) => {
+                    e.preventDefault();
+                    onCitationClick(filename, pageNumber, pdf_path);
+                }}
+                className={[
+                    "inline-flex items-center justify-center min-w-[1.25em] h-[1.25em] rounded-full text-white text-[11px] font-semibold",
+                    "bg-[#3C4472] hover:bg-[#4a5285] border border-[rgba(255,255,255,0.15)]",
+                    "cursor-pointer transition-colors duration-150 align-[0.2em] ml-1.5",
+                ].join(" ")}
+                title={`${filename}, page ${pageNumber}`}
+                aria-label={`Citation ${displayNumber}: ${filename} page ${pageNumber}`}
+            >
+                {displayNumber}
+            </button>
+            {hover && (
+                <>
+                    {/* Invisible bridge so moving mouse to the panel doesn't trigger onMouseLeave (span to avoid <div> inside <p>) */}
+                    <span className="absolute left-0 top-full min-w-[540px] w-full h-3 z-40 block" aria-hidden style={{ width: "max(100%, 240px)" }} />
+                    <span
+                        className="absolute left-0 top-full mt-1.5 z-50 min-w-[540px] max-w-[580px] max-h-[320px] rounded-lg shadow-xl border border-[rgba(255,255,255,0.12)] bg-[#1a1a1a] p-4 flex flex-col"
+                        role="tooltip"
+                    >
+                        <span className="text-[13px] text-[rgba(245,245,245,0.9)] leading-relaxed whitespace-pre-wrap overflow-y-auto min-h-0 flex-1 pr-1 block">
+                            {citation.excerpt}
+                        </span>
+                        <span className="mt-3 pt-3 border-t border-[rgba(255,255,255,0.08)] text-[11px] text-[rgba(245,245,245,0.55)] shrink-0 block">
+                            {filename}
+                            {pageNumber != null && ` · Page ${pageNumber}`}
+                        </span>
+                    </span>
+                </>
+            )}
+        </span>
+    );
+}
 
-        if (grouped.has(key)) {
-            const existing = grouped.get(key)!;
-            // Add excerpt if it's different from existing ones
-            if (!existing.excerpts.includes(citation.excerpt)) {
-                existing.excerpts.push(citation.excerpt);
-            }
-        } else {
-            grouped.set(key, {
-                filename: citation.filename || citation.source,
-                page_number: citation.page_number,
-                excerpts: [citation.excerpt],
-                pdf_path: citation.pdf_path,
-                source: citation.source,
-            });
-        }
+// Ellipsis for 3+ citations: shows "..." until clicked, then expands to show all citation circles; collapse button returns to first + "..."
+function InlineCitationMarkerEllipsis({
+    chunkIds,
+    citationByChunkId,
+    chunkIdToDisplayNumber,
+    onCitationClick,
+}: {
+    chunkIds: string[];
+    citationByChunkId: Map<string, Citation>;
+    chunkIdToDisplayNumber: Map<string, number>;
+    onCitationClick: (filename: string, pageNumber: number | string, pdfPath?: string) => void;
+}) {
+    const [expanded, setExpanded] = useState(false);
+    const citations = chunkIds.map((id) => citationByChunkId.get(id)).filter(Boolean) as Citation[];
+    if (citations.length === 0) return null;
+
+    if (expanded) {
+        return (
+            <span className="inline-flex items-center flex-nowrap gap-0 align-baseline">
+                {citations.map((citation, i) => (
+                    <InlineCitationMarker
+                        key={chunkIds[i]}
+                        citation={citation}
+                        displayNumber={chunkIdToDisplayNumber.get(chunkIds[i]) ?? i + 1}
+                        onCitationClick={onCitationClick}
+                    />
+                ))}
+                <button
+                    type="button"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        setExpanded(false);
+                    }}
+                    className={[
+                        "inline-flex items-center justify-center min-w-[1.25em] h-[1.25em] rounded-full text-[11px] font-semibold",
+                        "bg-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.3)] text-white border border-[rgba(255,255,255,0.2)]",
+                        "cursor-pointer transition-colors duration-150 align-[0.2em] ml-1.5",
+                    ].join(" ")}
+                    title="Collapse citations"
+                    aria-label="Collapse citations"
+                >
+                    ←
+                </button>
+            </span>
+        );
     }
 
-    return Array.from(grouped.values());
+    return (
+        <button
+            type="button"
+            onClick={(e) => {
+                e.preventDefault();
+                setExpanded(true);
+            }}
+            className={[
+                "inline-flex items-center justify-center min-w-[1.25em] h-[1.25em] rounded-full text-white text-[11px] font-semibold",
+                "bg-[#3C4472] hover:bg-[#4a5285] border border-[rgba(255,255,255,0.15)]",
+                "cursor-pointer transition-colors duration-150 align-[0.2em] ml-1.5",
+            ].join(" ")}
+            title="Show all citations"
+            aria-label="Show all citations"
+        >
+            …
+        </button>
+    );
 }
 
 // Function to process answer text and create clickable citations
@@ -106,28 +198,155 @@ function AnswerWithCitations({
     citations: Citation[];
     onCitationClick: (filename: string, pageNumber: number | string, pdfPath?: string) => void;
 }) {
-    // Pattern to match citations like [Source: filename, Page: 1] or [Source: filename, Pages: 1, 24, 25, 27]
-    const citationPattern = /\[Source:\s*([^,\]]+),\s*Pages?:\s*([^\]]+)\]/gi;
+    // New format: [^chunk_id] or [^chunk_id_1,^chunk_id_2] — replace with markdown links so citations render inline
+    const citationBlockPattern = /\[\^([^\]]+)\]/gi;
+    const citationByChunkId = new Map<string, Citation>(
+        (citations || []).filter((c): c is Citation & { chunk_id: string } => !!c.chunk_id).map((c) => [c.chunk_id!.toLowerCase(), c])
+    );
 
+    function parseCitationIds(inner: string): string[] {
+        return inner
+            .split(",")
+            .map((s) => s.trim().replace(/^\^/, "").trim().toLowerCase())
+            .filter((id) => /^[a-f0-9-]{36}$/.test(id));
+    }
+
+    const allMatches: { index: number; ids: string[] }[] = [];
+    let match;
+    citationBlockPattern.lastIndex = 0;
+    while ((match = citationBlockPattern.exec(answer)) !== null) {
+        const ids = parseCitationIds(match[1]);
+        if (ids.length > 0) allMatches.push({ index: match.index, ids });
+    }
+
+    if (allMatches.length > 0 && citationByChunkId.size > 0) {
+        const orderedChunkIds: string[] = [];
+        const seen = new Set<string>();
+        for (const { ids } of allMatches) {
+            for (const id of ids) {
+                if (!seen.has(id)) {
+                    seen.add(id);
+                    orderedChunkIds.push(id);
+                }
+            }
+        }
+        const chunkIdToDisplayNumber = new Map<string, number>();
+        orderedChunkIds.forEach((id, idx) => chunkIdToDisplayNumber.set(id, idx + 1));
+
+        // Replace so each citation is separate: 1 id → [1](#citation:id); 2 ids → [1][2] two links; 3+ → [1] + [...](#citation-more:id2;id3)
+        const answerWithLinks = answer.replace(citationBlockPattern, (_, inner) => {
+            const ids = parseCitationIds(inner).filter((id) => citationByChunkId.has(id));
+            if (ids.length === 0) return "";
+            if (ids.length === 1) {
+                const num = chunkIdToDisplayNumber.get(ids[0]) ?? 0;
+                return num ? `[${num}](#citation:${ids[0]})` : "";
+            }
+            if (ids.length === 2) {
+                const n1 = chunkIdToDisplayNumber.get(ids[0]) ?? 0;
+                const n2 = chunkIdToDisplayNumber.get(ids[1]) ?? 0;
+                if (!n1 || !n2) return "";
+                return `[${n1}](#citation:${ids[0]})[${n2}](#citation:${ids[1]})`;
+            }
+            const firstNum = chunkIdToDisplayNumber.get(ids[0]) ?? 0;
+            if (!firstNum) return "";
+            // Use citation-group so first circle and ellipsis render in one no-wrap container (same line)
+            return `[${firstNum} …](#citation-group:${ids.join(";")})`;
+        });
+
+        const blockMarkdownComponents = {
+            p: ({ children }: { children?: React.ReactNode }) => <p className="mb-3 text-[rgba(245,245,245,0.88)] leading-relaxed">{children}</p>,
+            ul: ({ children }: { children?: React.ReactNode }) => <ul className="list-disc list-inside mb-3 space-y-1.5 text-[rgba(245,245,245,0.88)]">{children}</ul>,
+            li: ({ children }: { children?: React.ReactNode }) => <li className="ml-4 text-[rgba(245,245,245,0.88)]">{children}</li>,
+            strong: ({ children }: { children?: React.ReactNode }) => <strong className="font-semibold text-[#F5F5F5]">{children}</strong>,
+            h1: ({ children }: { children?: React.ReactNode }) => <h1 className="text-[#F5F5F5] font-semibold text-lg mb-2">{children}</h1>,
+            h2: ({ children }: { children?: React.ReactNode }) => <h2 className="text-[#F5F5F5] font-semibold text-base mb-2">{children}</h2>,
+            h3: ({ children }: { children?: React.ReactNode }) => <h3 className="text-[#F5F5F5] font-semibold text-sm mb-2">{children}</h3>,
+            a: ({ href, children: linkChildren }: { href?: string; children?: React.ReactNode }) => {
+                if (href?.startsWith("#citation-group:")) {
+                    const payload = href.slice("#citation-group:".length);
+                    const allIds = payload.split(";").map((id) => id.trim().toLowerCase()).filter(Boolean);
+                    if (allIds.length >= 2) {
+                        const firstId = allIds[0];
+                        const restIds = allIds.slice(1);
+                        const firstCitation = citationByChunkId.get(firstId);
+                        const firstNum = chunkIdToDisplayNumber.get(firstId);
+                        if (firstCitation != null && firstNum != null) {
+                            return (
+                                <span className="inline-flex items-center flex-nowrap align-baseline">
+                                    <InlineCitationMarker
+                                        citation={firstCitation}
+                                        displayNumber={firstNum}
+                                        onCitationClick={onCitationClick}
+                                    />
+                                    <InlineCitationMarkerEllipsis
+                                        chunkIds={restIds}
+                                        citationByChunkId={citationByChunkId}
+                                        chunkIdToDisplayNumber={chunkIdToDisplayNumber}
+                                        onCitationClick={onCitationClick}
+                                    />
+                                </span>
+                            );
+                        }
+                    }
+                }
+                if (href?.startsWith("#citation-more:")) {
+                    const payload = href.slice("#citation-more:".length);
+                    const chunkIds = payload.split(";").map((id) => id.trim().toLowerCase()).filter(Boolean);
+                    if (chunkIds.length > 0) {
+                        return (
+                            <InlineCitationMarkerEllipsis
+                                chunkIds={chunkIds}
+                                citationByChunkId={citationByChunkId}
+                                chunkIdToDisplayNumber={chunkIdToDisplayNumber}
+                                onCitationClick={onCitationClick}
+                            />
+                        );
+                    }
+                }
+                if (href?.startsWith("#citation:")) {
+                    const chunkId = href.slice("#citation:".length).toLowerCase();
+                    const citation = citationByChunkId.get(chunkId);
+                    const displayNumber = chunkIdToDisplayNumber.get(chunkId) ?? 0;
+                    if (citation) {
+                        return (
+                            <InlineCitationMarker
+                                citation={citation}
+                                displayNumber={displayNumber}
+                                onCitationClick={onCitationClick}
+                            />
+                        );
+                    }
+                }
+                return <a href={href}>{linkChildren}</a>;
+            },
+        };
+
+        return (
+            <ReactMarkdown components={blockMarkdownComponents}>
+                {answerWithLinks}
+            </ReactMarkdown>
+        );
+    }
+
+    // Legacy format: [Source: filename, Page: 1] or [Source: filename, Pages: 1, 24, 25, 27]
+    const citationPattern = /\[Source:\s*([^,\]]+),\s*Pages?:\s*([^\]]+)\]/gi;
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
-    let match;
+    let legacyMatch;
     let citationIndex = 0;
-
-    // Reset regex lastIndex
     citationPattern.lastIndex = 0;
 
-    while ((match = citationPattern.exec(answer)) !== null) {
+    while ((legacyMatch = citationPattern.exec(answer)) !== null) {
         // Add text before the citation
-        if (match.index > lastIndex) {
-            const textBefore = answer.substring(lastIndex, match.index);
+        if (legacyMatch.index > lastIndex) {
+            const textBefore = answer.substring(lastIndex, legacyMatch.index);
             if (textBefore) {
                 parts.push(textBefore);
             }
         }
 
-        const filename = match[1].trim();
-        const pageNumbersStr = match[2].trim();
+        const filename = legacyMatch[1].trim();
+        const pageNumbersStr = legacyMatch[2].trim();
         // Parse page numbers (can be single number or comma-separated list)
         const pageNumbers = pageNumbersStr.split(',').map(p => p.trim()).filter(Boolean);
 
@@ -503,55 +722,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                             </div>
                                         )}
 
-                                        {/* Excerpts Section */}
-                                        {m.response.citations && m.response.citations.length > 0 && (
-                                            <div className="space-y-3 pt-2">
-                                                <h4 className="text-[12px] font-medium uppercase tracking-wider text-[rgba(245,245,245,0.4)]">Sources</h4>
-                                                <div className="space-y-2">
-                                                    {m.response.citations.map((citation, idx) => (
-                                                        <div
-                                                            key={idx}
-                                                            className="text-[rgba(245,245,245,0.75)] pl-3 border-l-2 border-[rgba(255,255,255,0.15)] py-1"
-                                                        >
-                                                            <div className="text-[13px] leading-relaxed">
-                                                                {citation.excerpt}
-                                                            </div>
-                                                            <div className="text-[11px] text-[rgba(245,245,245,0.45)] mt-1.5">
-                                                                {citation.filename || citation.source} • Page {citation.page_number}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Citations Section */}
-                                        {m.response.citations && m.response.citations.length > 0 && (() => {
-                                            const consolidated = consolidateCitations(m.response.citations);
-                                            return (
-                                                <div className="space-y-3 pt-2">
-                                                    <h4 className="text-[12px] font-medium uppercase tracking-wider text-[rgba(245,245,245,0.4)]">References</h4>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {consolidated.map((citation, idx) => (
-                                                            <button
-                                                                key={idx}
-                                                                onClick={() => openPdfModal(
-                                                                    citation.filename,
-                                                                    citation.page_number,
-                                                                    citation.pdf_path
-                                                                )}
-                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[rgba(122,163,200,0.1)] hover:bg-[rgba(122,163,200,0.18)] border border-[rgba(122,163,200,0.2)] hover:border-[rgba(122,163,200,0.35)] transition-all duration-150 text-[12px] font-medium text-[#7AA3C8] hover:text-[#9BBDD8]"
-                                                            >
-                                                                <ExternalLink className="w-3 h-3" />
-                                                                <span className="truncate max-w-[150px]">{citation.filename}</span>
-                                                                <span className="text-[rgba(245,245,245,0.5)]">p.{citation.page_number}</span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })()}
-
+                                     
                                         {/* Conflicts / Disagreements Section */}
                                         {m.response.conflicts && m.response.conflicts.length > 0 && (
                                             <div className="space-y-3 pt-2">
@@ -578,10 +749,10 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                                                     )}
                                                                     <div className="text-[11px] text-[rgba(245,245,245,0.5)]">
                                                                         <button
-                                                                            onClick={() => openPdfModal(claim.source, claim.page_number)}
+                                                                            onClick={() => openPdfModal(claim.filename, claim.page_number, claim.pdf_path)}
                                                                             className="text-[#7AA3C8] hover:text-[#9BBDD8] hover:underline transition-colors"
                                                                         >
-                                                                            {claim.source}, Page {claim.page_number}
+                                                                            {claim.filename}, Page {claim.page_number}
                                                                         </button>
                                                                         {claim.effective_date && ` • Effective: ${claim.effective_date}`}
                                                                     </div>

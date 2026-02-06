@@ -67,27 +67,19 @@ export default function Sidebar({
         }
     }, [userPopoverOpen]);
 
+
     useEffect(() => {
-        if (isOnChatPage) {
-            fetchRecentConversations();
-        }
-    }, [isOnChatPage, refreshTrigger]);
+        if (!isOnChatPage) return;
+        const token = localStorage.getItem("auth_token");
+        if (!token) return;
 
-    const fetchRecentConversations = async () => {
-        try {
-            const token = localStorage.getItem("auth_token");
-            if (!token) return;
-
-            // Using /api/chat/sessions endpoint (Swagger-compliant)
-            const response = await fetch(`/api/chat/sessions`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                // Map session response to conversation format and limit to 5
+        let cancelled = false;
+        fetch(`/api/chat/sessions`, {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+                if (cancelled || !data) return;
                 const conversations = data.slice(0, 5).map((session: { id: number; title?: string; created_at: string; updated_at: string }) => ({
                     id: session.id,
                     title: session.title || `Chat ${session.id}`,
@@ -95,11 +87,16 @@ export default function Sidebar({
                     updated_at: session.updated_at,
                 }));
                 setRecentConversations(conversations);
-            }
-        } catch (error) {
-            console.error("Failed to fetch sessions:", error);
-        }
-    };
+            })
+            .catch((err) => {
+                if (!cancelled) console.error("Failed to fetch sessions:", err);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [isOnChatPage, refreshTrigger]);
+
+   
 
     const handleSignOut = () => {
         // Local-only logout - clear user data and token
