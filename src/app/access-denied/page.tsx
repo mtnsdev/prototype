@@ -1,10 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ShieldX, ArrowLeft, UserX, Clock } from "lucide-react";
 
-export default function AccessDeniedPage() {
+function AccessDeniedContent() {
     const searchParams = useSearchParams();
     const reason = searchParams.get("reason");
 
@@ -92,5 +93,13 @@ export default function AccessDeniedPage() {
                 </p>
             </div>
         </div>
+    );
+}
+
+export default function AccessDeniedPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-[#0C0C0C]" />}>
+            <AccessDeniedContent />
+        </Suspense>
     );
 }
