@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ShieldX, Mail, ArrowLeft, UserX, Clock } from "lucide-react";
+import { ShieldX, ArrowLeft, UserX, Clock } from "lucide-react";
 
 export default function AccessDeniedPage() {
     const searchParams = useSearchParams();
