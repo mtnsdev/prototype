@@ -1,0 +1,529 @@
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import {
+    FolderLock,
+    Plus,
+    Trash2,
+    Folder,
+    FileText,
+    Users,
+    User,
+    Check,
+    X,
+    Loader2,
+    ChevronDown,
+    Shield,
+} from "lucide-react";
+
+type ContentRule = {
+    id: number;
+    subject_type: string;
+    subject_id: string;
+    target_type: string;
+    target_id: number;
+    effect: string;
+    applies_to_descendants: boolean;
+    created_by_id: number | null;
+    created_at: string;
+};
+
+type RulesResponse = {
+    rules: ContentRule[];
+    total: number;
+};
+
+type UserItem = {
+    id: number;
+    email: string;
+    username: string;
+    role: string;
+    status: string;
+};
+
+export default function PermissionsPage() {
+    const [rules, setRules] = useState<ContentRule[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Filters
+    const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
+
+    // Create rule modal
+    const [showCreateModal, setShowCreateModal] = useState(false);
+
+    // Users list for dropdown
+    const [users, setUsers] = useState<UserItem[]>([]);
+
+    const fetchRules = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const token = localStorage.getItem("auth_token");
+            const params = new URLSearchParams();
+            if (subjectFilter) {
+                if (subjectFilter === "role:admin" || subjectFilter === "role:user") {
+                    params.set("subject_type", "role");
+                    params.set("subject_id", subjectFilter.split(":")[1]);
+                } else {
+                    params.set("subject_type", "user");
+                    params.set("subject_id", subjectFilter);
+                }
+            }
+
+            const response = await fetch(`/api/admin/rules?${params}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (!response.ok) throw new Error("Failed to fetch rules");
+
+            const data: RulesResponse = await response.json();
+            setRules(data.rules);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to load rules");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [subjectFilter]);
+
+    const fetchUsers = useCallback(async () => {
+        try {
+            const token = localStorage.getItem("auth_token");
+            const response = await fetch("/api/admin/users?page_size=100", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setUsers(data.users);
+            }
+        } catch (err) {
+            console.error("Failed to fetch users", err);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchRules();
+        fetchUsers();
+    }, [fetchRules, fetchUsers]);
+
+    const handleCreateRule = async (rule: Omit<ContentRule, "id" | "created_by_id" | "created_at">) => {
+        try {
+            const token = localStorage.getItem("auth_token");
+            const response = await fetch("/api/admin/rules", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(rule),
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.detail || "Failed to create rule");
+            }
+
+            setShowCreateModal(false);
+            fetchRules();
+        } catch (err) {
+            alert(err instanceof Error ? err.message : "Failed to create rule");
+        }
+    };
+
+    const handleDeleteRule = async (ruleId: number) => {
+        if (!confirm("Are you sure you want to delete this rule?")) return;
+
+        try {
+            const token = localStorage.getItem("auth_token");
+            const response = await fetch(`/api/admin/rules/${ruleId}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.detail || "Failed to delete rule");
+            }
+
+            fetchRules();
+        } catch (err) {
+            alert(err instanceof Error ? err.message : "Failed to delete rule");
+        }
+    };
+
+    const getSubjectLabel = (rule: ContentRule) => {
+        if (rule.subject_type === "role") {
+            return rule.subject_id === "admin" ? "All Admins" : "All Users";
+        }
+        const user = users.find(u => u.id.toString() === rule.subject_id);
+        return user ? user.email : `User #${rule.subject_id}`;
+    };
+
+    return (
+        <div className="space-y-6">
+            {/* Header with Filters */}
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <select
+                        value={subjectFilter || ""}
+                        onChange={(e) => setSubjectFilter(e.target.value || null)}
+                        className="px-3 py-2.5 rounded-xl bg-[#161616] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                    >
+                        <option value="">All Subjects</option>
+                        <option value="role:admin">Role: Admin</option>
+                        <option value="role:user">Role: User</option>
+                        {users.map(user => (
+                            <option key={user.id} value={user.id.toString()}>
+                                {user.email}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-[rgba(255,255,255,0.1)] text-[14px] font-medium text-[#F5F5F5] transition-colors"
+                >
+                    <Plus size={16} />
+                    Add Rule
+                </button>
+            </div>
+
+            {/* Info Card */}
+            <div className="rounded-2xl bg-[rgba(59,130,246,0.08)] border border-[rgba(59,130,246,0.2)] p-4">
+                <div className="flex items-start gap-3">
+                    <FolderLock size={20} className="text-blue-400 shrink-0 mt-0.5" />
+                    <div className="text-[13px] text-[rgba(245,245,245,0.7)] space-y-1">
+                        <p><strong>How permission rules work:</strong></p>
+                        <ul className="list-disc ml-4 space-y-1">
+                            <li>User-specific rules override role-based rules</li>
+                            <li>Deny rules take precedence over allow rules at the same level</li>
+                            <li>More specific rules (direct target) override inherited rules</li>
+                            <li>Admins bypass all rules and can see all content</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {/* Rules Table */}
+            <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] overflow-hidden">
+                {isLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                        <Loader2 className="w-6 h-6 animate-spin text-[rgba(245,245,245,0.4)]" />
+                    </div>
+                ) : error ? (
+                    <div className="p-6 text-center">
+                        <p className="text-[14px] text-[#C87A7A]">{error}</p>
+                    </div>
+                ) : rules.length === 0 ? (
+                    <div className="p-12 text-center">
+                        <FolderLock size={48} className="mx-auto text-[rgba(245,245,245,0.2)] mb-4" />
+                        <p className="text-[14px] text-[rgba(245,245,245,0.5)]">No permission rules defined</p>
+                        <p className="text-[13px] text-[rgba(245,245,245,0.4)] mt-1">Add rules to control content access</p>
+                    </div>
+                ) : (
+                    <table className="w-full">
+                        <thead>
+                            <tr className="border-b border-[rgba(255,255,255,0.08)]">
+                                <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Subject</th>
+                                <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Target</th>
+                                <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Effect</th>
+                                <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Scope</th>
+                                <th className="w-12"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rules.map((rule) => (
+                                <tr key={rule.id} className="border-b border-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.02)]">
+                                    <td className="px-5 py-4">
+                                        <div className="flex items-center gap-2">
+                                            {rule.subject_type === "role" ? (
+                                                <Users size={16} className="text-[rgba(245,245,245,0.5)]" />
+                                            ) : (
+                                                <User size={16} className="text-[rgba(245,245,245,0.5)]" />
+                                            )}
+                                            <div>
+                                                <p className="text-[14px] text-[#F5F5F5]">{getSubjectLabel(rule)}</p>
+                                                <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
+                                                    {rule.subject_type === "role" ? "Role" : "User"}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-5 py-4">
+                                        <div className="flex items-center gap-2">
+                                            {rule.target_type === "folder" ? (
+                                                <Folder size={16} className="text-amber-400" />
+                                            ) : (
+                                                <FileText size={16} className="text-blue-400" />
+                                            )}
+                                            <div>
+                                                <p className="text-[14px] text-[#F5F5F5]">ID: {rule.target_id}</p>
+                                                <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
+                                                    {rule.target_type.charAt(0).toUpperCase() + rule.target_type.slice(1)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-5 py-4">
+                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium ${rule.effect === "allow"
+                                                ? "bg-green-500/10 text-green-400"
+                                                : "bg-red-500/10 text-red-400"
+                                            }`}>
+                                            {rule.effect === "allow" ? <Check size={12} /> : <X size={12} />}
+                                            {rule.effect.charAt(0).toUpperCase() + rule.effect.slice(1)}
+                                        </span>
+                                    </td>
+                                    <td className="px-5 py-4 text-[13px] text-[rgba(245,245,245,0.5)]">
+                                        {rule.applies_to_descendants ? "Including children" : "This item only"}
+                                    </td>
+                                    <td className="px-2 py-4">
+                                        <button
+                                            onClick={() => handleDeleteRule(rule.id)}
+                                            className="p-2 rounded-lg hover:bg-[rgba(200,122,122,0.1)] text-[rgba(245,245,245,0.5)] hover:text-[#C87A7A] transition-colors"
+                                            title="Delete rule"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
+
+            {/* Create Rule Modal */}
+            {showCreateModal && (
+                <CreateRuleModal
+                    users={users}
+                    onClose={() => setShowCreateModal(false)}
+                    onCreate={handleCreateRule}
+                />
+            )}
+        </div>
+    );
+}
+
+// Create Rule Modal Component
+function CreateRuleModal({
+    users,
+    onClose,
+    onCreate,
+}: {
+    users: UserItem[];
+    onClose: () => void;
+    onCreate: (rule: Omit<ContentRule, "id" | "created_by_id" | "created_at">) => void;
+}) {
+    const [subjectType, setSubjectType] = useState<"user" | "role">("role");
+    const [subjectId, setSubjectId] = useState("user");
+    const [targetType, setTargetType] = useState<"folder" | "doc">("folder");
+    const [targetId, setTargetId] = useState("");
+    const [effect, setEffect] = useState<"allow" | "deny">("allow");
+    const [applyToDescendants, setApplyToDescendants] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!targetId.trim()) return;
+
+        setIsSubmitting(true);
+        await onCreate({
+            subject_type: subjectType,
+            subject_id: subjectType === "user" ? subjectId : subjectId,
+            target_type: targetType,
+            target_id: parseInt(targetId, 10),
+            effect: effect,
+            applies_to_descendants: applyToDescendants,
+        });
+        setIsSubmitting(false);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="w-full max-w-md rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.1)] overflow-hidden">
+                <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between">
+                    <h2 className="text-[16px] font-semibold text-[#F5F5F5]">Create Permission Rule</h2>
+                    <button onClick={onClose} className="p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)]">
+                        <X size={18} className="text-[rgba(245,245,245,0.5)]" />
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    {/* Subject Type */}
+                    <div>
+                        <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                            Apply To
+                        </label>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSubjectType("role");
+                                    setSubjectId("user");
+                                }}
+                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium transition-colors ${subjectType === "role"
+                                        ? "bg-[rgba(255,255,255,0.08)] border-[rgba(255,255,255,0.15)] text-[#F5F5F5]"
+                                        : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
+                                    }`}
+                            >
+                                <Users size={16} />
+                                Role
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSubjectType("user");
+                                    setSubjectId(users[0]?.id.toString() || "");
+                                }}
+                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium transition-colors ${subjectType === "user"
+                                        ? "bg-[rgba(255,255,255,0.08)] border-[rgba(255,255,255,0.15)] text-[#F5F5F5]"
+                                        : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
+                                    }`}
+                            >
+                                <User size={16} />
+                                User
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Subject Selection */}
+                    <div>
+                        <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                            {subjectType === "role" ? "Select Role" : "Select User"}
+                        </label>
+                        <select
+                            value={subjectId}
+                            onChange={(e) => setSubjectId(e.target.value)}
+                            className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                        >
+                            {subjectType === "role" ? (
+                                <>
+                                    <option value="user">All Users (role: user)</option>
+                                    <option value="admin">All Admins (role: admin)</option>
+                                </>
+                            ) : (
+                                users.map(user => (
+                                    <option key={user.id} value={user.id.toString()}>
+                                        {user.email}
+                                    </option>
+                                ))
+                            )}
+                        </select>
+                    </div>
+
+                    {/* Target Type */}
+                    <div>
+                        <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                            Content Type
+                        </label>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setTargetType("folder")}
+                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium transition-colors ${targetType === "folder"
+                                        ? "bg-[rgba(255,255,255,0.08)] border-[rgba(255,255,255,0.15)] text-[#F5F5F5]"
+                                        : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
+                                    }`}
+                            >
+                                <Folder size={16} />
+                                Folder
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setTargetType("doc")}
+                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium transition-colors ${targetType === "doc"
+                                        ? "bg-[rgba(255,255,255,0.08)] border-[rgba(255,255,255,0.15)] text-[#F5F5F5]"
+                                        : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
+                                    }`}
+                            >
+                                <FileText size={16} />
+                                Document
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Target ID */}
+                    <div>
+                        <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                            Content ID
+                        </label>
+                        <input
+                            type="number"
+                            value={targetId}
+                            onChange={(e) => setTargetId(e.target.value)}
+                            placeholder="Enter content ID from Claromentis"
+                            required
+                            min="0"
+                            className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                        />
+                    </div>
+
+                    {/* Effect */}
+                    <div>
+                        <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                            Permission
+                        </label>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setEffect("allow")}
+                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium transition-colors ${effect === "allow"
+                                        ? "bg-green-500/10 border-green-500/30 text-green-400"
+                                        : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
+                                    }`}
+                            >
+                                <Check size={16} />
+                                Allow
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setEffect("deny")}
+                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium transition-colors ${effect === "deny"
+                                        ? "bg-red-500/10 border-red-500/30 text-red-400"
+                                        : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
+                                    }`}
+                            >
+                                <X size={16} />
+                                Deny
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Apply to Descendants */}
+                    <div className="flex items-center gap-3">
+                        <input
+                            type="checkbox"
+                            id="descendants"
+                            checked={applyToDescendants}
+                            onChange={(e) => setApplyToDescendants(e.target.checked)}
+                            className="w-4 h-4 rounded border-[rgba(255,255,255,0.2)] bg-[#0C0C0C] text-blue-500 focus:ring-0 focus:ring-offset-0"
+                        />
+                        <label htmlFor="descendants" className="text-[14px] text-[rgba(245,245,245,0.7)]">
+                            Apply to all children (folders and documents inside)
+                        </label>
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.08)] text-[14px] font-medium text-[rgba(245,245,245,0.7)] transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting || !targetId.trim()}
+                            className="flex-1 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.15)] border border-[rgba(255,255,255,0.15)] text-[14px] font-medium text-[#F5F5F5] transition-colors disabled:opacity-50"
+                        >
+                            {isSubmitting ? "Creating..." : "Create Rule"}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
