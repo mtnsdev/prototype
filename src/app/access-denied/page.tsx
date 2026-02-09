@@ -75,7 +75,7 @@ export default function AccessDeniedPage() {
                         Back to Sign In
                     </Link>
 
-                    {reason !== "session_expired" && (
+                    {/* {reason !== "session_expired" && (
                         <a
                             href="mailto:admin@example.com"
                             className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-transparent hover:bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-[14px] font-medium text-[rgba(245,245,245,0.6)] transition-colors"
@@ -83,7 +83,7 @@ export default function AccessDeniedPage() {
                             <Mail size={16} />
                             Contact Administrator
                         </a>
-                    )}
+                    )} */}
                 </div>
 
                 {/* Footer */}
