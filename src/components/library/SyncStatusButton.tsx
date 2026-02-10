@@ -188,15 +188,17 @@ export default function SyncStatusButton() {
                             {neverSynced
                                 ? "Never synced — Sync now"
                                 : formatted
-                                  ? `Last update was at: ${formatted}`
-                                  : "Last update: —"}
+                                    ? `Last update was at: ${formatted}`
+                                    : "Last update: —"}
                         </span>
                     </>
                 )}
             </button>
             {hasError && (
-                <p className="text-[11px] text-[#C87A7A] max-w-[220px] truncate" title={status?.last_run_error || triggerError || error}>
-                    {triggerError || status?.last_run_error || error}
+                <p
+                    className="text-[11px] text-[#C87A7A] max-w-[220px] truncate"
+                    title={status?.last_run_error ?? triggerError ?? error ?? undefined}
+                >
                 </p>
             )}
             {timedOut && (
