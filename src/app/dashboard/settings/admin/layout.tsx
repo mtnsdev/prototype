@@ -4,12 +4,13 @@ import { ReactNode, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/contexts/UserContext";
-import { Shield, Users, FolderLock, ArrowLeft, Loader2 } from "lucide-react";
+import { Shield, Users, FolderLock, RefreshCw, ArrowLeft, Loader2 } from "lucide-react";
 
 const ADMIN_NAV_ITEMS = [
     { href: "/dashboard/settings/admin", label: "Overview", icon: Shield, exact: true },
     { href: "/dashboard/settings/admin/users", label: "Users", icon: Users },
     { href: "/dashboard/settings/admin/permissions", label: "Permissions", icon: FolderLock },
+    { href: "/dashboard/settings/admin/sync", label: "Sync Health", icon: RefreshCw },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
