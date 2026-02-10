@@ -255,8 +255,9 @@ function AnswerWithCitations({
 
         const blockMarkdownComponents = {
             p: ({ children }: { children?: React.ReactNode }) => <p className="mb-3 text-[rgba(245,245,245,0.88)] leading-relaxed">{children}</p>,
-            ul: ({ children }: { children?: React.ReactNode }) => <ul className="list-disc list-inside mb-3 space-y-1.5 text-[rgba(245,245,245,0.88)]">{children}</ul>,
-            li: ({ children }: { children?: React.ReactNode }) => <li className="ml-4 text-[rgba(245,245,245,0.88)]">{children}</li>,
+            ul: ({ children }: { children?: React.ReactNode }) => <ul className="list-disc list-outside pl-6 mb-3 space-y-1.5 text-[rgba(245,245,245,0.88)]">{children}</ul>,
+            ol: ({ children }: { children?: React.ReactNode }) => <ol className="list-decimal list-outside pl-6 mb-3 space-y-1.5 text-[rgba(245,245,245,0.88)]">{children}</ol>,
+            li: ({ children }: { children?: React.ReactNode }) => <li className="pl-1 text-[rgba(245,245,245,0.88)] [&>p]:inline [&>p]:my-0">{children}</li>,
             strong: ({ children }: { children?: React.ReactNode }) => <strong className="font-semibold text-[#F5F5F5]">{children}</strong>,
             h1: ({ children }: { children?: React.ReactNode }) => <h1 className="text-[#F5F5F5] font-semibold text-lg mb-2">{children}</h1>,
             h2: ({ children }: { children?: React.ReactNode }) => <h2 className="text-[#F5F5F5] font-semibold text-base mb-2">{children}</h2>,
@@ -400,8 +401,9 @@ function AnswerWithCitations({
             <ReactMarkdown
                 components={{
                     p: ({ children }) => <p className="mb-3 text-[rgba(245,245,245,0.88)] leading-relaxed">{children}</p>,
-                    ul: ({ children }) => <ul className="list-disc list-inside mb-3 space-y-1.5 text-[rgba(245,245,245,0.88)]">{children}</ul>,
-                    li: ({ children }) => <li className="ml-4 text-[rgba(245,245,245,0.88)]">{children}</li>,
+                    ul: ({ children }) => <ul className="list-disc list-outside pl-6 mb-3 space-y-1.5 text-[rgba(245,245,245,0.88)]">{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal list-outside pl-6 mb-3 space-y-1.5 text-[rgba(245,245,245,0.88)]">{children}</ol>,
+                    li: ({ children }) => <li className="pl-1 text-[rgba(245,245,245,0.88)] [&>p]:inline [&>p]:my-0">{children}</li>,
                     strong: ({ children }) => <strong className="font-semibold text-[#F5F5F5]">{children}</strong>,
                     h1: ({ children }) => <h1 className="text-[#F5F5F5] font-semibold text-lg mb-2">{children}</h1>,
                     h2: ({ children }) => <h2 className="text-[#F5F5F5] font-semibold text-base mb-2">{children}</h2>,
@@ -430,8 +432,9 @@ function AnswerWithCitations({
                         key={`text-${idx}`}
                         components={{
                             p: ({ children }) => <p className="mb-3 text-[rgba(245,245,245,0.88)] leading-relaxed">{children}</p>,
-                            ul: ({ children }) => <ul className="list-disc list-inside mb-3 space-y-1.5 text-[rgba(245,245,245,0.88)]">{children}</ul>,
-                            li: ({ children }) => <li className="ml-4 text-[rgba(245,245,245,0.88)]">{children}</li>,
+                            ul: ({ children }) => <ul className="list-disc list-outside pl-6 mb-3 space-y-1.5 text-[rgba(245,245,245,0.88)]">{children}</ul>,
+                            ol: ({ children }) => <ol className="list-decimal list-outside pl-6 mb-3 space-y-1.5 text-[rgba(245,245,245,0.88)]">{children}</ol>,
+                            li: ({ children }) => <li className="pl-1 text-[rgba(245,245,245,0.88)] [&>p]:inline [&>p]:my-0">{children}</li>,
                             strong: ({ children }) => <strong className="font-semibold text-[#F5F5F5]">{children}</strong>,
                             h1: ({ children }) => <h1 className="text-[#F5F5F5] font-semibold text-lg mb-2">{children}</h1>,
                             h2: ({ children }) => <h2 className="text-[#F5F5F5] font-semibold text-base mb-2">{children}</h2>,
@@ -452,6 +455,8 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [loadingConversation, setLoadingConversation] = useState(false);
+    /** Steps received via SSE during thinking; cleared when result or error arrives. */
+    const [thinkingSteps, setThinkingSteps] = useState<{ stepIndex: number; message: string }[]>([]);
     const [currentSessionId, setCurrentSessionId] = useState<number | null>(conversationId);
     const [sessionTitle, setSessionTitle] = useState<string>("");
     const [pdfModal, setPdfModal] = useState<{
@@ -547,12 +552,11 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
         setInput("");
         setMessages((m) => [...m, { role: "user", text }]);
         setLoading(true);
+        setThinkingSteps([]);
 
         try {
             const token = localStorage.getItem("auth_token");
-            // Send query with session_id if we have one (Swagger-compliant)
-            // Backend will create session if session_id is not provided
-            const res = await fetch(`/api/chat/query`, {
+            const res = await fetch(`/api/chat/query/stream`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -564,46 +568,95 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                 }),
             });
 
-            const data: BotResponse = await res.json().catch(() => null);
-            setLoading(false);
-
-            if (!res.ok || !data) {
+            if (!res.ok || !res.body) {
+                setLoading(false);
+                setThinkingSteps([]);
                 const errorMsg = "Sorry, I encountered an error processing your request. Please try again.";
-                setMessages((m) => [
-                    ...m,
-                    {
-                        role: "bot",
-                        text: errorMsg,
-                    },
-                ]);
+                setMessages((m) => [...m, { role: "bot", text: errorMsg }]);
                 return;
             }
 
-            // Update session ID from response (backend creates session if needed)
-            if (data.session_id && !currentSessionId) {
-                setCurrentSessionId(data.session_id);
-                setSessionTitle(text.slice(0, 50) + (text.length > 50 ? "..." : ""));
-                onConversationCreated?.(data.session_id);
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = "";
+            let lastEventType = "";
+            let data: BotResponse | null = null;
+            let streamErrorReceived = false;
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split("\n");
+                buffer = lines.pop() ?? "";
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    if (line.startsWith("event:")) {
+                        lastEventType = line.slice(6).trim();
+                    } else if (line.startsWith("data:") && lastEventType) {
+                        const payload = line.slice(5).trim();
+                        if (lastEventType === "step") {
+                            try {
+                                const { step_index, message } = JSON.parse(payload) as { step_index: number; message: string };
+                                setThinkingSteps((prev) => {
+                                    const next = [...prev];
+                                    const idx = next.findIndex((s) => s.stepIndex === step_index);
+                                    if (idx >= 0) next[idx] = { stepIndex: step_index, message };
+                                    else next.push({ stepIndex: step_index, message });
+                                    return next.sort((a, b) => a.stepIndex - b.stepIndex);
+                                });
+                            } catch {
+                                // ignore malformed step
+                            }
+                        } else if (lastEventType === "result") {
+                            try {
+                                data = JSON.parse(payload) as BotResponse;
+                            } catch {
+                                // ignore
+                            }
+                        } else if (lastEventType === "error") {
+                            streamErrorReceived = true;
+                            try {
+                                const { detail } = JSON.parse(payload) as { detail?: string };
+                                setMessages((m) => [...m, { role: "bot", text: detail || "An error occurred." }]);
+                            } catch {
+                                setMessages((m) => [...m, { role: "bot", text: "An error occurred." }]);
+                            }
+                        }
+                        lastEventType = "";
+                    }
+                }
             }
 
-            const botMessage: Message = {
-                role: "bot",
-                text: data.can_answer
-                    ? "" // Don't show duplicate answer text when we have structured response
-                    : "I'm sorry, I don't have enough information to answer that question accurately.",
-                response: data,
-            };
+            setLoading(false);
+            setThinkingSteps([]);
 
-            setMessages((m) => [...m, botMessage]);
+            if (data) {
+                if (data.session_id && !currentSessionId) {
+                    setCurrentSessionId(data.session_id);
+                    setSessionTitle(text.slice(0, 50) + (text.length > 50 ? "..." : ""));
+                    onConversationCreated?.(data.session_id);
+                }
+                const botMessage: Message = {
+                    role: "bot",
+                    text: data.can_answer
+                        ? ""
+                        : "I'm sorry, I don't have enough information to answer that question accurately.",
+                    response: data,
+                };
+                setMessages((m) => [...m, botMessage]);
+            } else if (!streamErrorReceived) {
+                setMessages((m) => [
+                    ...m,
+                    { role: "bot", text: "Sorry, I encountered an error processing your request. Please try again." },
+                ]);
+            }
         } catch {
             setLoading(false);
-            const errorMsg = "Failed to connect to the server. Please check if the API is running.";
+            setThinkingSteps([]);
             setMessages((m) => [
                 ...m,
-                {
-                    role: "bot",
-                    text: errorMsg,
-                },
+                { role: "bot", text: "Failed to connect to the server. Please check if the API is running." },
             ]);
         }
     }
@@ -712,7 +765,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                         {/* Answer Section */}
                                         {m.response.answer && (
                                             <div className="space-y-3">
-                                                <div className="prose prose-sm max-w-none">
+                                                <div className="prose prose-sm max-w-none prose-p:text-[rgba(245,245,245,0.88)] prose-headings:text-[#F5F5F5] prose-strong:text-[#F5F5F5] [&_ul]:list-outside [&_ul]:pl-6 [&_ol]:list-outside [&_ol]:pl-6 [&_li>p]:inline [&_li>p]:my-0">
                                                     <AnswerWithCitations
                                                         answer={m.response.answer}
                                                         citations={m.response.citations || []}
@@ -780,9 +833,18 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
 
                     {showSendingLoader && !isEmptyState && (
                         <div className="mr-auto max-w-[85%]">
-                            <div className="bg-[#161616] border border-[rgba(255,255,255,0.08)] rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-3 shadow-sm">
-                                <Loader2 className="w-4 h-4 animate-spin text-[rgba(245,245,245,0.5)]" />
-                                <span className="text-[14px] text-[rgba(245,245,245,0.6)]">Thinking...</span>
+                            <div className="bg-[#161616] border border-[rgba(255,255,255,0.08)] rounded-2xl rounded-bl-md px-4 py-3 shadow-sm space-y-2">
+                                {thinkingSteps.length === 0 ? (
+                                    <div className="flex items-center gap-3">
+                                        <Loader2 className="w-4 h-4 animate-spin text-[rgba(245,245,245,0.5)] shrink-0" />
+                                        <span className="text-[14px] text-[rgba(245,245,245,0.6)]">Thinking...</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-3 text-[14px] text-[rgba(245,245,245,0.9)]">
+                                        <Loader2 className="w-4 h-4 animate-spin text-[rgba(245,245,245,0.6)] shrink-0" />
+                                        <span>{thinkingSteps[thinkingSteps.length - 1].message}</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
