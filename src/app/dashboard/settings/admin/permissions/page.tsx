@@ -12,9 +12,8 @@ import {
     Check,
     X,
     Loader2,
-    ChevronDown,
-    Shield,
 } from "lucide-react";
+import { FolderTreeSelector, SelectedTarget } from "@/components/admin/FolderTreeSelector";
 
 type ContentRule = {
     id: number;
@@ -108,27 +107,33 @@ export default function PermissionsPage() {
         fetchUsers();
     }, [fetchRules, fetchUsers]);
 
-    const handleCreateRule = async (rule: Omit<ContentRule, "id" | "created_by_id" | "created_at">) => {
+    const handleCreateRules = async (payload: {
+        subject_type: string;
+        subject_id: string;
+        targets: { target_type: string; target_id: number }[];
+        effect: string;
+        applies_to_descendants: boolean;
+    }) => {
         try {
             const token = localStorage.getItem("auth_token");
-            const response = await fetch("/api/admin/rules", {
+            const response = await fetch("/api/admin/rules/batch", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify(rule),
+                body: JSON.stringify(payload),
             });
 
             if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.detail || "Failed to create rule");
+                throw new Error(data.detail || "Failed to create rules");
             }
 
             setShowCreateModal(false);
             fetchRules();
         } catch (err) {
-            alert(err instanceof Error ? err.message : "Failed to create rule");
+            alert(err instanceof Error ? err.message : "Failed to create rules");
         }
     };
 
@@ -300,7 +305,7 @@ export default function PermissionsPage() {
                 <CreateRuleModal
                     users={users}
                     onClose={() => setShowCreateModal(false)}
-                    onCreate={handleCreateRule}
+                    onCreate={handleCreateRules}
                 />
             )}
         </div>
@@ -315,27 +320,35 @@ function CreateRuleModal({
 }: {
     users: UserItem[];
     onClose: () => void;
-    onCreate: (rule: Omit<ContentRule, "id" | "created_by_id" | "created_at">) => void;
+    onCreate: (payload: {
+        subject_type: string;
+        subject_id: string;
+        targets: { target_type: string; target_id: number }[];
+        effect: string;
+        applies_to_descendants: boolean;
+    }) => void;
 }) {
     const [subjectType, setSubjectType] = useState<"user" | "role">("role");
     const [subjectId, setSubjectId] = useState("user");
-    const [targetType, setTargetType] = useState<"folder" | "doc">("folder");
-    const [targetId, setTargetId] = useState("");
+    const [selectedTargets, setSelectedTargets] = useState<SelectedTarget[]>([]);
     const [effect, setEffect] = useState<"allow" | "deny">("allow");
     const [applyToDescendants, setApplyToDescendants] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const token = typeof localStorage !== "undefined" ? localStorage.getItem("auth_token") : null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!targetId.trim()) return;
+        if (selectedTargets.length === 0) return;
 
         setIsSubmitting(true);
         await onCreate({
             subject_type: subjectType,
-            subject_id: subjectType === "user" ? subjectId : subjectId,
-            target_type: targetType,
-            target_id: parseInt(targetId, 10),
-            effect: effect,
+            subject_id: subjectId,
+            targets: selectedTargets.map((t) => ({
+                target_type: t.node_type === "folder" ? "folder" : "doc",
+                target_id: t.external_id,
+            })),
+            effect,
             applies_to_descendants: applyToDescendants,
         });
         setIsSubmitting(false);
@@ -343,15 +356,15 @@ function CreateRuleModal({
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="w-full max-w-md rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.1)] overflow-hidden">
-                <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between">
+            <div className="w-full max-w-md rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.1)] overflow-hidden max-h-[90vh] flex flex-col">
+                <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between shrink-0">
                     <h2 className="text-[16px] font-semibold text-[#F5F5F5]">Create Permission Rule</h2>
                     <button onClick={onClose} className="p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)]">
                         <X size={18} className="text-[rgba(245,245,245,0.5)]" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
                     {/* Subject Type */}
                     <div>
                         <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
@@ -397,6 +410,7 @@ function CreateRuleModal({
                         <select
                             value={subjectId}
                             onChange={(e) => setSubjectId(e.target.value)}
+                            style={{ colorScheme: "dark" }}
                             className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
                         >
                             {subjectType === "role" ? (
@@ -414,51 +428,52 @@ function CreateRuleModal({
                         </select>
                     </div>
 
-                    {/* Target Type */}
+                    {/* Folder / document tree selector (multi-select) */}
                     <div>
                         <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
-                            Content Type
+                            Content (select one or more)
                         </label>
-                        <div className="flex gap-2">
-                            <button
-                                type="button"
-                                onClick={() => setTargetType("folder")}
-                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium transition-colors ${targetType === "folder"
-                                        ? "bg-[rgba(255,255,255,0.08)] border-[rgba(255,255,255,0.15)] text-[#F5F5F5]"
-                                        : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
-                                    }`}
-                            >
-                                <Folder size={16} />
-                                Folder
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setTargetType("doc")}
-                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium transition-colors ${targetType === "doc"
-                                        ? "bg-[rgba(255,255,255,0.08)] border-[rgba(255,255,255,0.15)] text-[#F5F5F5]"
-                                        : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
-                                    }`}
-                            >
-                                <FileText size={16} />
-                                Document
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Target ID */}
-                    <div>
-                        <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
-                            Content ID
-                        </label>
-                        <input
-                            type="number"
-                            value={targetId}
-                            onChange={(e) => setTargetId(e.target.value)}
-                            placeholder="Enter content ID from Claromentis"
-                            required
-                            min="0"
-                            className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
-                        />
+                        <p className="text-[12px] text-[rgba(245,245,245,0.5)] mb-2">
+                            Check the folders or documents to apply the rule to.
+                        </p>
+                        {token ? (
+                            <FolderTreeSelector
+                                token={token}
+                                multiSelect
+                                selectedTargets={selectedTargets}
+                                onSelectionChange={setSelectedTargets}
+                            />
+                        ) : (
+                            <p className="text-[13px] text-[rgba(245,245,245,0.5)]">Sign in to load tree</p>
+                        )}
+                        {selectedTargets.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                                {selectedTargets.map((t) => (
+                                    <span
+                                        key={t.external_id}
+                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] text-[12px] text-[rgba(245,245,245,0.7)]"
+                                    >
+                                        {t.node_type === "folder" ? (
+                                            <Folder size={10} className="text-amber-400" />
+                                        ) : (
+                                            <FileText size={10} className="text-blue-400" />
+                                        )}
+                                        {t.title}
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setSelectedTargets((prev) =>
+                                                    prev.filter((x) => x.external_id !== t.external_id)
+                                                )
+                                            }
+                                            className="ml-0.5 hover:text-red-400"
+                                        >
+                                            <X size={10} />
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Effect */}
@@ -516,10 +531,14 @@ function CreateRuleModal({
                         </button>
                         <button
                             type="submit"
-                            disabled={isSubmitting || !targetId.trim()}
+                            disabled={isSubmitting || selectedTargets.length === 0 || !token}
                             className="flex-1 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.15)] border border-[rgba(255,255,255,0.15)] text-[14px] font-medium text-[#F5F5F5] transition-colors disabled:opacity-50"
                         >
-                            {isSubmitting ? "Creating..." : "Create Rule"}
+                            {isSubmitting
+                                ? "Creating..."
+                                : selectedTargets.length > 1
+                                    ? `Create ${selectedTargets.length} Rules`
+                                    : "Create Rule"}
                         </button>
                     </div>
                 </form>

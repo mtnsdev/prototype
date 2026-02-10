@@ -6,6 +6,7 @@ import { useProxyUrl } from "@/hooks/useProxyUrl";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 import { Folder, FileText, ChevronRight, ChevronDown, Eye, Loader2, Search } from "lucide-react";
 import PdfModal from "@/components/dashboard/PdfModal";
+import SyncStatusButton from "@/components/library/SyncStatusButton";
 
 type TLItem =
     | { kind: "folder"; id: number; parent_id: number; title: string; has_children?: boolean; URI?: string }
@@ -515,12 +516,15 @@ export default function LibraryView({ initialRootId }: { initialRootId?: number 
                             {rootId !== undefined ? `Folder ID: ${rootId}` : "Browse documents"}
                         </p>
                     </div>
-                    {showRootLoading && (
-                        <div className="flex items-center gap-2 text-[12px] text-[rgba(245,245,245,0.5)]">
-                            <Loader2 size={14} className="animate-spin" />
-                            <span>Loading...</span>
-                        </div>
-                    )}
+                    <div className="flex items-center gap-4">
+                        {showRootLoading && (
+                            <div className="flex items-center gap-2 text-[12px] text-[rgba(245,245,245,0.5)]">
+                                <Loader2 size={14} className="animate-spin" />
+                                <span>Loading...</span>
+                            </div>
+                        )}
+                        <SyncStatusButton />
+                    </div>
                 </div>
 
                 {/* Search Input */}
