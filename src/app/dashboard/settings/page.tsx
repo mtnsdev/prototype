@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { User, LogOut, Mail, AtSign, Loader2, Shield, ChevronRight, Key } from "lucide-react";
+import { User, LogOut, Mail, AtSign, Loader2, Shield, ChevronRight, Key, Plug } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 
 type UserProfile = {
@@ -344,6 +344,36 @@ export default function SettingsPage() {
                                 </>
                             )}
                         </button>
+                    </div>
+                </section>
+
+                {/* Integrations Section */}
+                <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
+                    <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-white/10">
+                            <Plug size={18} className="text-[rgba(245,245,245,0.6)]" />
+                        </div>
+                        <h2 className="text-[15px] font-semibold text-[#F5F5F5]">Integrations</h2>
+                    </div>
+                    <div className="p-5">
+                        <p className="text-[13px] text-[rgba(245,245,245,0.5)] mb-4">
+                            Connect Google Drive and other data sources for search.
+                        </p>
+                        <Link
+                            href="/dashboard/settings/integrations"
+                            className={[
+                                "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
+                                "text-[14px] font-medium",
+                                "bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)]",
+                                "border border-[rgba(255,255,255,0.1)]",
+                                "text-[#F5F5F5]",
+                                "transition-all duration-150",
+                            ].join(" ")}
+                        >
+                            <Plug size={16} />
+                            Manage Integrations
+                            <ChevronRight size={16} />
+                        </Link>
                     </div>
                 </section>
 
