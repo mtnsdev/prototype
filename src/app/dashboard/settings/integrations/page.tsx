@@ -123,6 +123,10 @@ export default function IntegrationsPage() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.detail || "Sync failed");
             if (data.status === "already_running") return;
+            if (data.status === "queue_unavailable") {
+                setError(data.message || "Sync service unavailable.");
+                return;
+            }
             await fetchStatus();
         } catch (e) {
             setError(e instanceof Error ? e.message : "Sync failed");
