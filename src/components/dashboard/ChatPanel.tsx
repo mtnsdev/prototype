@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import React from "react";
-import { AlertTriangle, Loader2, ExternalLink, Send, ArrowLeft } from "lucide-react";
+import { AlertTriangle, Loader2, ExternalLink, Send, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Image from "next/image";
 import PdfModal from "./PdfModal";
@@ -34,6 +34,7 @@ type Conflict = {
 
 type BotResponse = {
     session_id?: number;
+    message_id?: number;
     answer: string;
     can_answer: boolean;
     citations: Citation[];
@@ -45,6 +46,10 @@ type Message = {
     role: "user" | "bot";
     text: string;
     response?: BotResponse;
+    /** Backend message id (for assistant messages); used for feedback */
+    id?: number;
+    feedback_rating?: number | null;
+    feedback_comment?: string | null;
 };
 
 type Props = {
@@ -469,6 +474,11 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
         filename: "",
         pageNumber: 1,
     });
+    /** Draft comment per message id (for feedback form) */
+    const [feedbackCommentDraft, setFeedbackCommentDraft] = useState<Record<number, string>>({});
+    const [feedbackSubmitting, setFeedbackSubmitting] = useState<number | null>(null);
+    /** Message id for which the comment popup is open (null = closed) */
+    const [feedbackCommentPopupMessageId, setFeedbackCommentPopupMessageId] = useState<number | null>(null);
 
     // Delayed loading states to prevent flickering
     const showSendingLoader = useDelayedLoading(loading);
@@ -493,19 +503,26 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                 const data = await response.json();
                 // Convert API messages (ChatMessageResponse) to local format
                 const loadedMessages: Message[] = data.map((msg: {
+                    id: number;
                     role: string;
                     answer: string;
                     citations?: Citation[];
                     conflicts?: Conflict[];
                     can_answer?: boolean;
+                    feedback_rating?: number | null;
+                    feedback_comment?: string | null;
                 }) => ({
                     role: msg.role === "assistant" ? "bot" : "user",
                     text: msg.role === "user" ? msg.answer : "",
+                    id: msg.role === "assistant" ? msg.id : undefined,
+                    feedback_rating: msg.role === "assistant" ? (msg.feedback_rating ?? null) : undefined,
+                    feedback_comment: msg.role === "assistant" ? (msg.feedback_comment ?? null) : undefined,
                     response: msg.role === "assistant" ? {
                         answer: msg.answer,
                         can_answer: msg.can_answer ?? true,
                         citations: msg.citations || [],
                         conflicts: msg.conflicts || [],
+                        message_id: msg.id,
                     } : undefined,
                 }));
                 setMessages(loadedMessages);
@@ -544,6 +561,52 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
     const closePdfModal = () => {
         setPdfModal({ isOpen: false, filename: "", pageNumber: 1 });
     };
+
+    async function submitFeedback(
+        messageId: number,
+        update: { rating?: number | null; comment?: string | null }
+    ) {
+        if (!currentSessionId) return;
+        setFeedbackSubmitting(messageId);
+        try {
+            const token = localStorage.getItem("auth_token");
+            const body: { rating?: number | null; comment?: string | null } = {};
+            if (update.rating !== undefined) body.rating = update.rating;
+            if (update.comment !== undefined) body.comment = update.comment;
+            const res = await fetch(
+                `/api/chat/sessions/${currentSessionId}/messages/${messageId}/feedback`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(body),
+                }
+            );
+            if (!res.ok) return;
+            const updated = await res.json();
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    msg.id === messageId
+                        ? {
+                              ...msg,
+                              feedback_rating: updated.feedback_rating ?? null,
+                              feedback_comment: updated.feedback_comment ?? null,
+                          }
+                        : msg
+                )
+            );
+            setFeedbackCommentDraft((d) => {
+                const next = { ...d };
+                delete next[messageId];
+                return next;
+            });
+            setFeedbackCommentPopupMessageId((openId) => (openId === messageId ? null : openId));
+        } finally {
+            setFeedbackSubmitting(null);
+        }
+    }
 
     async function send(messageText?: string) {
         const text = (messageText || input).trim();
@@ -643,6 +706,9 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                         ? ""
                         : "I'm sorry, I don't have enough information to answer that question accurately.",
                     response: data,
+                    id: data.message_id,
+                    feedback_rating: null,
+                    feedback_comment: null,
                 };
                 setMessages((m) => [...m, botMessage]);
             } else if (!streamErrorReceived) {
@@ -816,6 +882,66 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                                 ))}
                                             </div>
                                         )}
+
+                                        {/* Feedback: thumbs up/down + optional comment */}
+                                        {m.id != null && currentSessionId != null && (
+                                            <div className="pt-3 mt-3 border-t border-[rgba(255,255,255,0.08)] space-y-2">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="text-[11px] uppercase tracking-wider text-[rgba(245,245,245,0.45)] mr-1">Was this helpful?</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => submitFeedback(m.id!, { rating: m.feedback_rating === 1 ? null : 1 })}
+                                                        disabled={feedbackSubmitting === m.id}
+                                                        className={[
+                                                            "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors",
+                                                            m.feedback_rating === 1
+                                                                ? "bg-[#2d4a2d] text-[#86ef86] border border-[rgba(134,239,134,0.3)]"
+                                                                : "bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.1)] border border-transparent",
+                                                        ].join(" ")}
+                                                        title="Thumbs up"
+                                                    >
+                                                        <ThumbsUp className="w-3.5 h-3.5" />
+                                                        Yes
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => submitFeedback(m.id!, { rating: m.feedback_rating === -1 ? null : -1 })}
+                                                        disabled={feedbackSubmitting === m.id}
+                                                        className={[
+                                                            "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors",
+                                                            m.feedback_rating === -1
+                                                                ? "bg-[#4a2d2d] text-[#f87171] border border-[rgba(248,113,113,0.3)]"
+                                                                : "bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.1)] border border-transparent",
+                                                        ].join(" ")}
+                                                        title="Thumbs down"
+                                                    >
+                                                        <ThumbsDown className="w-3.5 h-3.5" />
+                                                        No
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setFeedbackCommentPopupMessageId(m.id!);
+                                                            setFeedbackCommentDraft((d) => ({
+                                                                ...d,
+                                                                [m.id!]: d[m.id!] ?? m.feedback_comment ?? "",
+                                                            }));
+                                                        }}
+                                                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.1)] border border-transparent transition-colors"
+                                                        title="Add a comment"
+                                                    >
+                                                        <MessageSquare className="w-3.5 h-3.5" />
+                                                        {m.feedback_comment ? "Edit comment" : "Comment"}
+                                                    </button>
+                                                </div>
+                                                {m.feedback_comment != null && m.feedback_comment !== "" && (
+                                                    <div className="flex items-start gap-2 text-[12px] text-[rgba(245,245,245,0.7)] mt-2">
+                                                        <MessageSquare className="w-3.5 h-3.5 mt-0.5 shrink-0 text-[rgba(245,245,245,0.5)]" />
+                                                        <span className="italic">&ldquo;{m.feedback_comment}&rdquo;</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -894,6 +1020,59 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                 pageNumber={pdfModal.pageNumber}
                 pdfPath={pdfModal.pdfPath}
             />
+
+            {/* Feedback comment popup */}
+            {feedbackCommentPopupMessageId != null && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+                    onClick={() => setFeedbackCommentPopupMessageId(null)}
+                    role="presentation"
+                >
+                    <div
+                        className="bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] rounded-xl shadow-xl max-w-md w-full p-5 flex flex-col gap-4"
+                        onClick={(e) => e.stopPropagation()}
+                        role="dialog"
+                        aria-labelledby="feedback-comment-title"
+                    >
+                        <h3 id="feedback-comment-title" className="text-[14px] font-semibold text-[#F5F5F5]">
+                            Add feedback comment
+                        </h3>
+                        <textarea
+                            placeholder="Your comment (optional)"
+                            value={feedbackCommentDraft[feedbackCommentPopupMessageId] ?? ""}
+                            onChange={(e) =>
+                                setFeedbackCommentDraft((d) => ({
+                                    ...d,
+                                    [feedbackCommentPopupMessageId]: e.target.value,
+                                }))
+                            }
+                            className="min-h-[100px] w-full rounded-lg border border-[rgba(255,255,255,0.12)] bg-[rgba(0,0,0,0.2)] px-3 py-2 text-[13px] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] focus:outline-none focus:ring-1 focus:ring-[#AE8550] resize-y max-h-48"
+                            maxLength={2000}
+                            autoFocus
+                        />
+                        <div className="flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setFeedbackCommentPopupMessageId(null)}
+                                className="px-3 py-1.5 rounded-lg text-[12px] font-medium text-[rgba(245,245,245,0.7)] hover:bg-white/10 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const comment = feedbackCommentDraft[feedbackCommentPopupMessageId]?.trim() ?? "";
+                                    submitFeedback(feedbackCommentPopupMessageId, { comment: comment || null });
+                                }}
+                                disabled={feedbackSubmitting === feedbackCommentPopupMessageId}
+                                className="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-[rgba(174,133,80,0.2)] text-[#D4A574] hover:bg-[rgba(174,133,80,0.3)] border border-[rgba(174,133,80,0.3)] transition-colors disabled:opacity-50"
+                            >
+                                {feedbackSubmitting === feedbackCommentPopupMessageId ? "Saving…" : "Submit"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
