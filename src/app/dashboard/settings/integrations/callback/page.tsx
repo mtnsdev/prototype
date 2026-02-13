@@ -12,6 +12,28 @@ export default function GoogleDriveOAuthCallbackPage() {
         const code = params.get("code");
         const errorParam = params.get("error");
 
+        // Extract connection_type from the OAuth state parameter or query string
+        let connectionType = "personal";
+        const stateParam = params.get("state");
+        if (stateParam) {
+            try {
+                const stateData = JSON.parse(stateParam);
+                if (stateData.connection_type) {
+                    connectionType = stateData.connection_type;
+                }
+            } catch {
+                // state might be a plain string, not JSON -- check if it's directly the connection_type
+                if (stateParam === "agency" || stateParam === "personal") {
+                    connectionType = stateParam;
+                }
+            }
+        }
+        // Also check for explicit query param (backend may pass it directly)
+        const ctParam = params.get("connection_type");
+        if (ctParam) {
+            connectionType = ctParam;
+        }
+
         if (errorParam) {
             setStatus("error");
             setMessage(errorParam === "access_denied" ? "You denied access." : "Authorization failed.");
@@ -33,7 +55,7 @@ export default function GoogleDriveOAuthCallbackPage() {
                 "Content-Type": "application/json",
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
-            body: JSON.stringify({ code, redirect_uri: redirectUri }),
+            body: JSON.stringify({ code, redirect_uri: redirectUri, connection_type: connectionType }),
         })
             .then(async (res) => {
                 const data = await res.json().catch(() => ({}));
@@ -45,7 +67,10 @@ export default function GoogleDriveOAuthCallbackPage() {
                 setStatus("success");
                 setMessage("Connected. Closing...");
                 if (window.opener) {
-                    window.opener.postMessage({ type: "google_drive_oauth_done" }, window.location.origin);
+                    window.opener.postMessage(
+                        { type: "google_drive_oauth_done", connection_type: connectionType },
+                        window.location.origin
+                    );
                     window.close();
                 }
             })

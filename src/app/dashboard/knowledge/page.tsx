@@ -5,13 +5,21 @@ import { useSearchParams } from "next/navigation";
 import LibraryView from "@/components/library/LibraryView";
 import { Database } from "lucide-react";
 
+type IntegrationConfig = {
+    source: "claromentis" | "google-drive";
+    rootId?: number;
+    connectionType?: "personal" | "agency";
+    name: string;
+};
+
 function KnowledgeContent() {
     const searchParams = useSearchParams();
     const integration = searchParams.get("integration");
 
-    // Map integration names to their root folder IDs
-    const integrationConfig: Record<string, { rootId: number; name: string }> = {
-        claromentis: { rootId: 0, name: "Claromentis (Intranet)" },
+    const integrationConfig: Record<string, IntegrationConfig> = {
+        claromentis: { source: "claromentis", rootId: 0, name: "Claromentis (Intranet)" },
+        "google-drive-personal": { source: "google-drive", connectionType: "personal", name: "My Google Drive" },
+        "google-drive-agency": { source: "google-drive", connectionType: "agency", name: "Agency Google Drive" },
     };
 
     const config = integration ? integrationConfig[integration] : null;
@@ -32,7 +40,16 @@ function KnowledgeContent() {
         );
     }
 
-    return <LibraryView initialRootId={config.rootId} />;
+    if (config.source === "google-drive") {
+        return (
+            <LibraryView
+                source="google-drive"
+                connectionType={config.connectionType}
+            />
+        );
+    }
+
+    return <LibraryView initialRootId={config.rootId} source="claromentis" />;
 }
 
 export default function KnowledgePage() {
