@@ -109,6 +109,7 @@ export default function BulkTestPage() {
     const [runsTotal, setRunsTotal] = useState(0);
     const [runsPage, setRunsPage] = useState(1);
     const RUNS_PAGE_SIZE = 20;
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // Run test state
