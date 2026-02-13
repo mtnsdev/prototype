@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useUserOptional } from "@/contexts/UserContext";
+import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
 
 export type Conversation = {
     id: number;
@@ -53,6 +54,10 @@ export default function Sidebar({
     const [knowledgeExpanded, setKnowledgeExpanded] = useState(false);
     const popoverRef = useRef<HTMLDivElement>(null);
     const isOnChatPage = pathname.startsWith("/dashboard/chat");
+
+    // Google Drive connection status for sidebar entries
+    const { status: personalDriveStatus } = useGoogleDriveStatus("personal");
+    const { status: agencyDriveStatus } = useGoogleDriveStatus("agency");
 
     // Close popover when clicking outside
     useEffect(() => {
@@ -252,6 +257,22 @@ export default function Sidebar({
                                     onClick={() => router.push("/dashboard/knowledge?integration=claromentis")}
                                     active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("claromentis")}
                                 />
+                                {personalDriveStatus?.connected && (
+                                    <IntegrationItem
+                                        name="My Google Drive"
+                                        status="active"
+                                        onClick={() => router.push("/dashboard/knowledge?integration=google-drive-personal")}
+                                        active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("google-drive-personal")}
+                                    />
+                                )}
+                                {agencyDriveStatus?.connected && (
+                                    <IntegrationItem
+                                        name="Agency Google Drive"
+                                        status="active"
+                                        onClick={() => router.push("/dashboard/knowledge?integration=google-drive-agency")}
+                                        active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("google-drive-agency")}
+                                    />
+                                )}
                                 <IntegrationItem
                                     name="Virtuoso"
                                     status="coming_soon"

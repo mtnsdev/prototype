@@ -10,9 +10,10 @@ type Props = {
     onClose: () => void;
     onSelect: (folderId: string, folderName: string) => void;
     mode?: "connect" | "change";
+    connectionType?: string;
 };
 
-export default function GoogleDriveFolderPicker({ open, onClose, onSelect, mode = "connect" }: Props) {
+export default function GoogleDriveFolderPicker({ open, onClose, onSelect, mode = "connect", connectionType = "personal" }: Props) {
     const [breadcrumb, setBreadcrumb] = useState<FolderItem[]>([{ id: "root", name: "My Drive", mimeType: "application/vnd.google-apps.folder" }]);
     const [folders, setFolders] = useState<FolderItem[]>([]);
     const [loading, setLoading] = useState(false);
@@ -27,7 +28,7 @@ export default function GoogleDriveFolderPicker({ open, onClose, onSelect, mode 
         setError(null);
         try {
             const token = localStorage.getItem("auth_token");
-            const res = await fetch(`/api/integrations/google-drive/folders?parent_id=${encodeURIComponent(parent)}`, {
+            const res = await fetch(`/api/integrations/google-drive/folders?parent_id=${encodeURIComponent(parent)}&connection_type=${encodeURIComponent(connectionType)}`, {
                 headers: token ? { Authorization: `Bearer ${token}` } : {},
             });
             if (res.status === 401) {
@@ -44,7 +45,7 @@ export default function GoogleDriveFolderPicker({ open, onClose, onSelect, mode 
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [connectionType]);
 
     useEffect(() => {
         if (open && parentId) fetchFolders(parentId);
