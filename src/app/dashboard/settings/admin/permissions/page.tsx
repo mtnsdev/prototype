@@ -21,6 +21,7 @@ type ContentRule = {
     subject_id: string;
     target_type: string;
     target_id: number;
+    target_title: string | null;
     effect: string;
     applies_to_descendants: boolean;
     created_by_id: number | null;
@@ -265,9 +266,12 @@ export default function PermissionsPage() {
                                                 <FileText size={16} className="text-blue-400" />
                                             )}
                                             <div>
-                                                <p className="text-[14px] text-[#F5F5F5]">ID: {rule.target_id}</p>
+                                                <p className="text-[14px] text-[#F5F5F5]">
+                                                    {rule.target_title || "Unknown target"}
+                                                </p>
                                                 <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
                                                     {rule.target_type.charAt(0).toUpperCase() + rule.target_type.slice(1)}
+                                                    {!rule.target_title && ` (ID: ${rule.target_id})`}
                                                 </p>
                                             </div>
                                         </div>
