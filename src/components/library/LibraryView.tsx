@@ -57,7 +57,7 @@ type DriveTreeNode = {
 
 /** Build a virtual folder tree from flat DriveFile[] using drive_path. */
 function buildDriveTree(files: DriveFile[]): DriveTreeNode[] {
-    const root: DriveTreeNode = { kind: "folder", name: "", path: "", children: [] };
+    const root: DriveTreeNode = { kind: "folder", name: "", path: "", uniqueKey: "folder-root", children: [] };
 
     for (const file of files) {
         const pathParts = (file.drive_path || "").split("/").filter(Boolean);
