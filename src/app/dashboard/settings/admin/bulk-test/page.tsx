@@ -11,9 +11,26 @@ import {
     XCircle,
     AlertTriangle,
     LayoutDashboard,
+    Eye,
+    X,
 } from "lucide-react";
 
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+
 const API_BASE = "/api/admin/bulk-test";
+
+const GEMINI_MODEL_OPTIONS = [
+    { value: "gemini-2.5-pro", label: "gemini-2.5-pro" },
+    { value: "gemini-2.0-flash", label: "gemini-2.0-flash" },
+    { value: "gemini-1.5-pro", label: "gemini-1.5-pro" },
+    { value: "gemini-1.5-flash", label: "gemini-1.5-flash" },
+] as const;
 
 function getAuthHeaders(): HeadersInit {
     const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
@@ -86,6 +103,9 @@ export default function BulkTestPage() {
     const [tab, setTab] = useState<TabId>("run");
     const [questions, setQuestions] = useState<BulkTestQuestion[]>([]);
     const [runs, setRuns] = useState<BulkTestRun[]>([]);
+    const [runsTotal, setRunsTotal] = useState(0);
+    const [runsPage, setRunsPage] = useState(1);
+    const RUNS_PAGE_SIZE = 20;
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -94,6 +114,7 @@ export default function BulkTestPage() {
     const [currentRunId, setCurrentRunId] = useState<number | null>(null);
     const [progress, setProgress] = useState<{ completed_count: number; total_count: number; status: string } | null>(null);
     const [lastRun, setLastRun] = useState<BulkTestRun | null>(null);
+    const [geminiModel, setGeminiModel] = useState("gemini-2.5-pro");
 
     // Compare state
     const [runA, setRunA] = useState<number | null>(null);
@@ -121,11 +142,15 @@ export default function BulkTestPage() {
         rows: Array<{
             question_id: number;
             question_text?: string | null;
+            expected_answer?: string | null;
             result_a?: BulkTestResult | null;
             result_b?: BulkTestResult | null;
         }>;
     } | null>(null);
     const [compareLoading, setCompareLoading] = useState(false);
+    const [compareDetailRow, setCompareDetailRow] = useState<number | null>(null);
+    const [runResultDetailId, setRunResultDetailId] = useState<number | null>(null);
+    const [deleteQuestionId, setDeleteQuestionId] = useState<number | null>(null);
 
     // Question form
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -164,12 +189,15 @@ export default function BulkTestPage() {
         }
     }, []);
 
-    const fetchRuns = useCallback(async () => {
+    const fetchRuns = useCallback(async (page: number, pageSize: number) => {
         try {
-            const r = await fetch(`${API_BASE}/runs?limit=50`, { headers: getAuthHeaders() });
+            const offset = (page - 1) * pageSize;
+            const r = await fetch(`${API_BASE}/runs?limit=${pageSize}&offset=${offset}`, { headers: getAuthHeaders() });
             if (!r.ok) throw new Error("Failed to fetch runs");
             const data = await r.json();
-            setRuns(data);
+            setRuns(data.runs ?? []);
+            setRunsTotal(data.total ?? 0);
+            setRunsPage(page);
         } catch (e) {
             setError(e instanceof Error ? e.message : "Failed to load runs");
         }
@@ -194,9 +222,13 @@ export default function BulkTestPage() {
             fetchQuestions();
             fetchSuggestions();
         }
-        if (tab === "history" || tab === "run" || tab === "compare") fetchRuns();
+        if (tab === "run") {
+            fetchQuestions();
+        }
+        if (tab === "history") fetchRuns(runsPage, RUNS_PAGE_SIZE);
+        if (tab === "run" || tab === "compare") fetchRuns(1, 100);
         if (tab === "dashboard") fetchDashboard();
-    }, [tab, fetchQuestions, fetchRuns, fetchDashboard, fetchSuggestions]);
+    }, [tab, runsPage, fetchQuestions, fetchRuns, fetchDashboard, fetchSuggestions]);
 
     const startRun = async () => {
         setError(null);
@@ -208,6 +240,7 @@ export default function BulkTestPage() {
             const r = await fetch(`${API_BASE}/runs`, {
                 method: "POST",
                 headers: getAuthHeaders(),
+                body: JSON.stringify({ gemini_model: geminiModel }),
             });
             if (!r.ok) {
                 const err = await r.json().catch(() => ({}));
@@ -230,7 +263,7 @@ export default function BulkTestPage() {
                     setCurrentRunId(null);
                     const runDetail = await fetch(`${API_BASE}/runs/${data.run_id}`, { headers: getAuthHeaders() });
                     if (runDetail.ok) setLastRun(await runDetail.json());
-                    fetchRuns();
+                    fetchRuns(1, 100);
                     return;
                 }
                 setTimeout(poll, 2500);
@@ -244,6 +277,7 @@ export default function BulkTestPage() {
 
     const loadCompare = async () => {
         if (runA == null || runB == null) return;
+        console.log("type", typeof runA, typeof runB);
         setCompareLoading(true);
         setError(null);
         try {
@@ -301,17 +335,19 @@ export default function BulkTestPage() {
         }
     };
 
-    const deleteQuestion = async (id: number) => {
-        if (!confirm("Delete this question?")) return;
+    const deleteQuestion = async (id: number): Promise<boolean> => {
         try {
             const r = await fetch(`${API_BASE}/questions/${id}`, {
                 method: "DELETE",
                 headers: getAuthHeaders(),
             });
             if (!r.ok) throw new Error("Delete failed");
+            setError(null);
             fetchQuestions();
+            return true;
         } catch (e) {
             setError(e instanceof Error ? e.message : "Delete failed");
+            return false;
         }
     };
 
@@ -456,6 +492,27 @@ export default function BulkTestPage() {
                         <p className="text-[14px] text-[rgba(245,245,245,0.6)] mb-4">
                             Execute all active questions through the RAG pipeline and score answers (1–10). Results are stored and regressions flagged.
                         </p>
+                        <div className="mb-4 flex flex-wrap items-center gap-3">
+                            <label className="text-[14px] font-medium text-[rgba(245,245,245,0.8)]">
+                                Gemini model
+                            </label>
+                            <Select
+                                value={geminiModel}
+                                onValueChange={setGeminiModel}
+                                disabled={running}
+                            >
+                                <SelectTrigger className="w-[200px] bg-[rgba(255,255,255,0.06)] border-[rgba(255,255,255,0.12)] text-[#F5F5F5] focus-visible:ring-amber-500/50">
+                                    <SelectValue placeholder="Select model" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {GEMINI_MODEL_OPTIONS.map((opt) => (
+                                        <SelectItem key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                         <button
                             onClick={startRun}
                             disabled={running || questions.filter((q) => q.is_active).length === 0}
@@ -505,6 +562,7 @@ export default function BulkTestPage() {
                                             <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-20">Score</th>
                                             <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-24">Status</th>
                                             <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-24">Regression</th>
+                                            <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-24">Detail</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -530,6 +588,16 @@ export default function BulkTestPage() {
                                                         <span className="text-[rgba(245,245,245,0.4)]">—</span>
                                                     )}
                                                 </td>
+                                                <td className="p-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setRunResultDetailId(res.id)}
+                                                        title="More detail"
+                                                        className="inline-flex items-center justify-center p-2 rounded-lg bg-[rgba(255,255,255,0.08)] text-[#F5F5F5] hover:bg-[rgba(255,255,255,0.12)]"
+                                                    >
+                                                        <Eye size={18} />
+                                                    </button>
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -537,6 +605,53 @@ export default function BulkTestPage() {
                             </div>
                         </div>
                     )}
+
+                    {/* Run result detail modal */}
+                    {lastRun && runResultDetailId !== null && (() => {
+                        const res = (lastRun.results ?? []).find((r) => r.id === runResultDetailId);
+                        if (!res) return null;
+                        const reasoning = res.score_breakdown && typeof res.score_breakdown === "object" && "reasoning" in res.score_breakdown
+                            ? String((res.score_breakdown as { reasoning?: string }).reasoning ?? "")
+                            : "";
+                        return (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setRunResultDetailId(null)}>
+                                <div className="rounded-2xl bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.08)]">
+                                        <h4 className="text-[16px] font-semibold text-[#F5F5F5]">Test detail</h4>
+                                        <button type="button" onClick={() => setRunResultDetailId(null)} className="p-1.5 rounded-lg text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.08)] hover:text-[#F5F5F5]">
+                                            <X size={20} />
+                                        </button>
+                                    </div>
+                                    <div className="p-4 overflow-y-auto space-y-4 text-[14px]">
+                                        <div>
+                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Question</div>
+                                            <p className="text-[#F5F5F5] whitespace-pre-wrap">{res.question_text ?? `Q#${res.question_id}`}</p>
+                                        </div>
+                                        <div>
+                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Generated answer</div>
+                                            <p className="text-[#F5F5F5] whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">{res.answer ?? "—"}</p>
+                                        </div>
+                                        {reasoning && (
+                                            <div>
+                                                <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Reasoning</div>
+                                                <p className="text-[rgba(245,245,245,0.8)] whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">{reasoning}</p>
+                                            </div>
+                                        )}
+                                        <div className="flex flex-wrap gap-4 text-[13px]">
+                                            <span className="text-[rgba(245,245,245,0.6)]">Score: <span className="text-[#F5F5F5]">{res.quality_score ?? "—"}</span></span>
+                                            <span className="text-[rgba(245,245,245,0.6)]">Status: {res.passed ? <span className="text-green-400">Pass</span> : <span className="text-red-400">Fail</span>}</span>
+                                            {res.regression_detected && res.previous_score != null && (
+                                                <span className="text-amber-400">Regression (previous score: {res.previous_score})</span>
+                                            )}
+                                        </div>
+                                        {res.error && (
+                                            <p className="text-[#C87A7A] text-[13px]">{res.error}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </div>
             )}
 
@@ -614,6 +729,31 @@ export default function BulkTestPage() {
                     {runs.length === 0 && (
                         <div className="p-8 text-center text-[rgba(245,245,245,0.5)] text-[14px]">No runs yet. Start one from the Run Test tab.</div>
                     )}
+                    {runsTotal > 0 && (
+                        <div className="p-3 border-t border-[rgba(255,255,255,0.08)] flex items-center justify-between gap-4 flex-wrap">
+                            <span className="text-[13px] text-[rgba(245,245,245,0.6)]">
+                                Showing {(runsPage - 1) * RUNS_PAGE_SIZE + 1}–{Math.min(runsPage * RUNS_PAGE_SIZE, runsTotal)} of {runsTotal}
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setRunsPage((p) => Math.max(1, p - 1))}
+                                    disabled={runsPage <= 1}
+                                    className="px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.08)] text-[#F5F5F5] hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50 disabled:pointer-events-none text-[13px]"
+                                >
+                                    Previous
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setRunsPage((p) => p + 1)}
+                                    disabled={runsPage * RUNS_PAGE_SIZE >= runsTotal}
+                                    className="px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.08)] text-[#F5F5F5] hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50 disabled:pointer-events-none text-[13px]"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -621,36 +761,44 @@ export default function BulkTestPage() {
                 <div className="space-y-6">
                     <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] p-6">
                         <h3 className="text-[16px] font-semibold text-[#F5F5F5] mb-4">Compare Two Runs</h3>
-                        <div className="flex flex-wrap items-end gap-4">
+                        <div className="compare-runs-dropdowns flex flex-wrap items-end gap-4">
                             <div>
                                 <label className="block text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Run A</label>
-                                <select
-                                    value={runA ?? ""}
-                                    onChange={(e) => setRunA(e.target.value ? Number(e.target.value) : null)}
-                                    className="bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] rounded-lg px-3 py-2 text-[14px] text-[#F5F5F5] min-w-[140px]"
+                                <Select
+                                    value={runA != null ? String(runA) : "__none__"}
+                                    onValueChange={(v) => setRunA(v === "__none__" ? null : Number(v))}
                                 >
-                                    <option value="">Select run</option>
-                                    {runs.map((r) => (
-                                        <option key={r.id} value={r.id}>
-                                            #{r.id} – {new Date(r.created_at).toLocaleDateString()}
-                                        </option>
-                                    ))}
-                                </select>
+                                    <SelectTrigger className="min-w-[200px] bg-[rgba(255,255,255,0.06)] border-[rgba(255,255,255,0.12)] text-[#F5F5F5] focus-visible:ring-amber-500/50">
+                                        <SelectValue placeholder="Select run" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="__none__">Select run</SelectItem>
+                                        {runs.map((r) => (
+                                            <SelectItem key={r.id} value={String(r.id)}>
+                                                #{r.id} – {new Date(r.created_at).toLocaleDateString()}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div>
                                 <label className="block text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Run B</label>
-                                <select
-                                    value={runB ?? ""}
-                                    onChange={(e) => setRunB(e.target.value ? Number(e.target.value) : null)}
-                                    className="bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] rounded-lg px-3 py-2 text-[14px] text-[#F5F5F5] min-w-[140px]"
+                                <Select
+                                    value={runB != null ? String(runB) : "__none__"}
+                                    onValueChange={(v) => setRunB(v === "__none__" ? null : Number(v))}
                                 >
-                                    <option value="">Select run</option>
-                                    {runs.map((r) => (
-                                        <option key={r.id} value={r.id}>
-                                            #{r.id} – {new Date(r.created_at).toLocaleDateString()}
-                                        </option>
-                                    ))}
-                                </select>
+                                    <SelectTrigger className="min-w-[200px] bg-[rgba(255,255,255,0.06)] border-[rgba(255,255,255,0.12)] text-[#F5F5F5] focus-visible:ring-amber-500/50">
+                                        <SelectValue placeholder="Select run" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="__none__">Select run</SelectItem>
+                                        {runs.map((r) => (
+                                            <SelectItem key={r.id} value={String(r.id)}>
+                                                #{r.id} – {new Date(r.created_at).toLocaleDateString()}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <button
                                 onClick={loadCompare}
@@ -682,6 +830,7 @@ export default function BulkTestPage() {
                                             <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-20">Score B</th>
                                             <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-24">Pass A</th>
                                             <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-24">Pass B</th>
+                                            <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-24">Detail</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -696,6 +845,16 @@ export default function BulkTestPage() {
                                                 <td className="p-3">
                                                     {row.result_b ? (row.result_b.passed ? "Pass" : "Fail") : "—"}
                                                 </td>
+                                                <td className="p-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setCompareDetailRow(i)}
+                                                        title="More detail"
+                                                        className="inline-flex items-center justify-center p-2 rounded-lg bg-[rgba(255,255,255,0.08)] text-[#F5F5F5] hover:bg-[rgba(255,255,255,0.12)]"
+                                                    >
+                                                        <Eye size={18} />
+                                                    </button>
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -703,6 +862,81 @@ export default function BulkTestPage() {
                             </div>
                         </div>
                     )}
+
+                    {/* Row detail modal */}
+                    {compareData && compareDetailRow !== null && compareData.rows[compareDetailRow] && (() => {
+                        const row = compareData.rows[compareDetailRow];
+                        const reasoningA = row.result_a?.score_breakdown && typeof row.result_a.score_breakdown === "object" && "reasoning" in row.result_a.score_breakdown
+                            ? String((row.result_a.score_breakdown as { reasoning?: string }).reasoning ?? "")
+                            : "";
+                        const reasoningB = row.result_b?.score_breakdown && typeof row.result_b.score_breakdown === "object" && "reasoning" in row.result_b.score_breakdown
+                            ? String((row.result_b.score_breakdown as { reasoning?: string }).reasoning ?? "")
+                            : "";
+                        return (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setCompareDetailRow(null)}>
+                                <div className="rounded-2xl bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] shadow-xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.08)]">
+                                        <h4 className="text-[16px] font-semibold text-[#F5F5F5]">Test detail</h4>
+                                        <button type="button" onClick={() => setCompareDetailRow(null)} className="p-1.5 rounded-lg text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.08)] hover:text-[#F5F5F5]">
+                                            <X size={20} />
+                                        </button>
+                                    </div>
+                                    <div className="p-4 overflow-y-auto space-y-4 text-[14px]">
+                                        <div>
+                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Question</div>
+                                            <p className="text-[#F5F5F5] whitespace-pre-wrap">{row.question_text ?? `Q#${row.question_id}`}</p>
+                                        </div>
+                                        <div>
+                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Expected / sample answer</div>
+                                            <p className="text-[#F5F5F5] whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">{row.expected_answer ?? "—"}</p>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="rounded-xl border border-[rgba(255,255,255,0.08)] overflow-hidden">
+                                                <div className="px-3 py-2 bg-[rgba(255,255,255,0.06)] text-[12px] font-medium text-[rgba(245,245,245,0.7)] border-b border-[rgba(255,255,255,0.08)]">
+                                                    Run A {row.result_a != null && `· Score ${row.result_a.quality_score ?? "—"} · ${row.result_a.passed ? "Pass" : "Fail"}`}
+                                                </div>
+                                                <div className="p-3 space-y-3">
+                                                    <div>
+                                                        <div className="text-[11px] text-[rgba(245,245,245,0.5)] uppercase tracking-wide mb-1">Generated answer</div>
+                                                        <p className="text-[#F5F5F5] whitespace-pre-wrap text-[13px]">{row.result_a?.answer ?? "—"}</p>
+                                                    </div>
+                                                    {reasoningA && (
+                                                        <div>
+                                                            <div className="text-[11px] text-[rgba(245,245,245,0.5)] uppercase tracking-wide mb-1">Reasoning</div>
+                                                            <p className="text-[rgba(245,245,245,0.8)] whitespace-pre-wrap text-[13px]">{reasoningA}</p>
+                                                        </div>
+                                                    )}
+                                                    {row.result_a?.error && (
+                                                        <p className="text-[#C87A7A] text-[13px]">{row.result_a.error}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="rounded-xl border border-[rgba(255,255,255,0.08)] overflow-hidden">
+                                                <div className="px-3 py-2 bg-[rgba(255,255,255,0.06)] text-[12px] font-medium text-[rgba(245,245,245,0.7)] border-b border-[rgba(255,255,255,0.08)]">
+                                                    Run B {row.result_b != null && `· Score ${row.result_b.quality_score ?? "—"} · ${row.result_b.passed ? "Pass" : "Fail"}`}
+                                                </div>
+                                                <div className="p-3 space-y-3">
+                                                    <div>
+                                                        <div className="text-[11px] text-[rgba(245,245,245,0.5)] uppercase tracking-wide mb-1">Generated answer</div>
+                                                        <p className="text-[#F5F5F5] whitespace-pre-wrap text-[13px]">{row.result_b?.answer ?? "—"}</p>
+                                                    </div>
+                                                    {reasoningB && (
+                                                        <div>
+                                                            <div className="text-[11px] text-[rgba(245,245,245,0.5)] uppercase tracking-wide mb-1">Reasoning</div>
+                                                            <p className="text-[rgba(245,245,245,0.8)] whitespace-pre-wrap text-[13px]">{reasoningB}</p>
+                                                        </div>
+                                                    )}
+                                                    {row.result_b?.error && (
+                                                        <p className="text-[#C87A7A] text-[13px]">{row.result_b.error}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </div>
             )}
 
@@ -837,7 +1071,7 @@ export default function BulkTestPage() {
                                                     Edit
                                                 </button>
                                                 <button
-                                                    onClick={() => deleteQuestion(q.id)}
+                                                    onClick={() => setDeleteQuestionId(q.id)}
                                                     className="text-red-400 hover:underline text-[13px]"
                                                 >
                                                     Delete
@@ -854,6 +1088,41 @@ export default function BulkTestPage() {
                             </div>
                         )}
                     </div>
+
+                    {/* Delete question confirmation modal */}
+                    {deleteQuestionId !== null && (() => {
+                        const q = questions.find((x) => x.id === deleteQuestionId);
+                        return (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setDeleteQuestionId(null)}>
+                                <div className="rounded-2xl bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] shadow-xl max-w-md w-full p-5" onClick={(e) => e.stopPropagation()}>
+                                    <h4 className="text-[16px] font-semibold text-[#F5F5F5] mb-2">Delete question?</h4>
+                                    {q && (
+                                        <p className="text-[14px] text-[rgba(245,245,245,0.8)] mb-4 line-clamp-3">{q.question}</p>
+                                    )}
+                                    <p className="text-[13px] text-[rgba(245,245,245,0.5)] mb-4">This cannot be undone.</p>
+                                    <div className="flex justify-end gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setDeleteQuestionId(null)}
+                                            className="px-4 py-2 rounded-lg bg-[rgba(255,255,255,0.08)] text-[#F5F5F5] hover:bg-[rgba(255,255,255,0.12)] text-[14px]"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                const ok = await deleteQuestion(deleteQuestionId);
+                                                if (ok) setDeleteQuestionId(null);
+                                            }}
+                                            className="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 text-[14px]"
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </div>
             )}
         </div>
