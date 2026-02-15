@@ -28,6 +28,8 @@ const API_BASE = "/api/admin/bulk-test";
 const GEMINI_MODEL_OPTIONS = [
     { value: "gemini-2.5-pro", label: "gemini-2.5-pro" },
     { value: "gemini-2.0-flash", label: "gemini-2.0-flash" },
+    { value: "gemini-3-pro-preview", label: "gemini-3-pro-preview"},
+    { value: "gemini-3-flash-preview", label: "gemini-3-flash-preview"},
     { value: "gemini-1.5-pro", label: "gemini-1.5-pro" },
     { value: "gemini-1.5-flash", label: "gemini-1.5-flash" },
 ] as const;
