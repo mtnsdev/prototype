@@ -4,10 +4,15 @@ import { useRef, useState, useCallback, useMemo, useEffect } from "react";
 import { useFolderChildren } from "@/hooks/useFolderChildren";
 import { useProxyUrl } from "@/hooks/useProxyUrl";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
-import { Folder, FileText, ChevronRight, ChevronDown, Eye, Loader2, Search } from "lucide-react";
+import { useDriveFiles } from "@/hooks/useDriveFiles";
+import { Folder, FileText, ChevronRight, ChevronDown, Eye, Loader2, Search, Cloud, Shield, Lock, Globe } from "lucide-react";
 import PdfModal from "@/components/dashboard/PdfModal";
 import SyncStatusButton from "@/components/library/SyncStatusButton";
+import type { DriveFile } from "@/types/google-drive";
 
+// ---------------------------------------------------------------------------
+// Claromentis types (existing)
+// ---------------------------------------------------------------------------
 type TLItem =
     | { kind: "folder"; id: number; parent_id: number; title: string; has_children?: boolean; URI?: string }
     | { kind: "document"; doc_id: number; parent_id: number; title: string; version_num: number; URI?: string };
@@ -29,7 +34,592 @@ type PdfModalState = {
     customUrl: string;
 };
 
-// Tree node component for recursive rendering
+// ---------------------------------------------------------------------------
+// Props for LibraryView
+// ---------------------------------------------------------------------------
+type LibraryViewProps = {
+    initialRootId?: number;
+    source?: "claromentis" | "google-drive";
+    connectionType?: "personal" | "agency";
+};
+
+// ===========================================================================
+// GOOGLE DRIVE: Virtual tree types and helpers
+// ===========================================================================
+type DriveTreeNode = {
+    kind: "folder" | "file";
+    name: string;
+    path: string;
+    uniqueKey: string; // stable unique key for React rendering
+    file?: DriveFile;
+    children: DriveTreeNode[];
+};
+
+/** Build a virtual folder tree from flat DriveFile[] using drive_path. */
+function buildDriveTree(files: DriveFile[]): DriveTreeNode[] {
+    const root: DriveTreeNode = { kind: "folder", name: "", path: "", uniqueKey: "folder-root", children: [] };
+
+    for (const file of files) {
+        const pathParts = (file.drive_path || "").split("/").filter(Boolean);
+        let current = root;
+
+        if (file.is_folder) {
+            // Ensure folder path exists in tree
+            for (let i = 0; i < pathParts.length; i++) {
+                const part = pathParts[i];
+                const partPath = pathParts.slice(0, i + 1).join("/");
+                let child = current.children.find((c) => c.kind === "folder" && c.name === part && c.path === partPath);
+                if (!child) {
+                    child = { kind: "folder", name: part, path: partPath, uniqueKey: `folder-${partPath}`, children: [] };
+                    current.children.push(child);
+                }
+                // Attach the DriveFile to the final folder node (use its DB id for key)
+                if (i === pathParts.length - 1) {
+                    child.file = file;
+                    child.uniqueKey = `folder-${file.id}`;
+                }
+                current = child;
+            }
+        } else {
+            // File: place into its parent folder
+            const parentParts = pathParts.slice(0, -1);
+            let parent = root;
+            for (let i = 0; i < parentParts.length; i++) {
+                const part = parentParts[i];
+                const partPath = parentParts.slice(0, i + 1).join("/");
+                let child = parent.children.find((c) => c.kind === "folder" && c.name === part && c.path === partPath);
+                if (!child) {
+                    child = { kind: "folder", name: part, path: partPath, uniqueKey: `folder-${partPath}`, children: [] };
+                    parent.children.push(child);
+                }
+                parent = child;
+            }
+            parent.children.push({
+                kind: "file",
+                name: file.filename || pathParts[pathParts.length - 1] || "Untitled",
+                path: file.drive_path || "",
+                uniqueKey: `file-${file.id}`,
+                file,
+                children: [],
+            });
+        }
+    }
+
+    // Sort: folders first, then files, alphabetically
+    function sortTree(nodes: DriveTreeNode[]) {
+        nodes.sort((a, b) => {
+            if (a.kind !== b.kind) return a.kind === "folder" ? -1 : 1;
+            return a.name.localeCompare(b.name);
+        });
+        for (const node of nodes) {
+            if (node.children.length > 0) sortTree(node.children);
+        }
+    }
+    sortTree(root.children);
+
+    return root.children;
+}
+
+// Access level badge component
+function AccessLevelBadge({ level }: { level?: string }) {
+    if (!level) return null;
+
+    const config: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
+        public: {
+            label: "Public",
+            icon: <Globe size={10} />,
+            className: "bg-green-500/15 text-green-400 border-green-500/25",
+        },
+        admin_only: {
+            label: "Admin only",
+            icon: <Lock size={10} />,
+            className: "bg-amber-500/15 text-amber-400 border-amber-500/25",
+        },
+        user_specific: {
+            label: "Restricted",
+            icon: <Shield size={10} />,
+            className: "bg-blue-500/15 text-blue-400 border-blue-500/25",
+        },
+        role_restricted: {
+            label: "Role restricted",
+            icon: <Shield size={10} />,
+            className: "bg-purple-500/15 text-purple-400 border-purple-500/25",
+        },
+    };
+
+    const c = config[level];
+    if (!c) return null;
+
+    return (
+        <span
+            className={[
+                "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border",
+                c.className,
+            ].join(" ")}
+        >
+            {c.icon}
+            {c.label}
+        </span>
+    );
+}
+
+// Drive preview button for files
+function DrivePreviewButton({
+    file,
+    onPreview,
+}: {
+    file: DriveFile;
+    onPreview: (fileId: number, filename: string) => void;
+}) {
+    if (file.is_folder) return null;
+    if (file.sync_status !== "synced" && file.index_status !== "indexed") return null;
+
+    return (
+        <button
+            type="button"
+            onClick={(e) => {
+                e.stopPropagation();
+                onPreview(file.id, file.filename || "document");
+            }}
+            className={[
+                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md",
+                "text-[11px] font-medium",
+                "bg-[rgba(122,163,200,0.1)] hover:bg-[rgba(122,163,200,0.18)]",
+                "border border-[rgba(122,163,200,0.2)] hover:border-[rgba(122,163,200,0.35)]",
+                "text-[#7AA3C8] hover:text-[#9BBDD8]",
+                "transition-all duration-150",
+            ].join(" ")}
+        >
+            <Eye className="w-3 h-3" />
+            Preview
+        </button>
+    );
+}
+
+// Drive tree node component
+function DriveTreeNodeItem({
+    node,
+    depth,
+    expandedPaths,
+    onToggleExpand,
+    showAccessLevel,
+    onPreview,
+}: {
+    node: DriveTreeNode;
+    depth: number;
+    expandedPaths: Set<string>;
+    onToggleExpand: (path: string) => void;
+    showAccessLevel: boolean;
+    onPreview: (fileId: number, filename: string) => void;
+}) {
+    const isFolder = node.kind === "folder";
+    const isExpanded = isFolder && expandedPaths.has(node.path);
+    const hasChildren = isFolder && node.children.length > 0;
+    const paddingLeft = 20 + depth * 24;
+
+    return (
+        <div>
+            <div
+                className={[
+                    "flex items-center gap-2 py-2 pr-4",
+                    "transition-all duration-150",
+                    isFolder && hasChildren ? "hover:bg-white/4 cursor-pointer" : "hover:bg-white/2",
+                ].join(" ")}
+                style={{ paddingLeft }}
+                onClick={() => isFolder && hasChildren && onToggleExpand(node.path)}
+            >
+                {/* Expand/Collapse indicator */}
+                {isFolder && hasChildren ? (
+                    <button
+                        type="button"
+                        className="w-5 h-5 flex items-center justify-center text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleExpand(node.path);
+                        }}
+                    >
+                        {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                    </button>
+                ) : (
+                    <div className="w-5" />
+                )}
+
+                {/* Icon */}
+                <div
+                    className={[
+                        "w-7 h-7 rounded-md flex items-center justify-center shrink-0",
+                        isFolder
+                            ? "bg-[rgba(122,163,200,0.1)] text-[#7AA3C8]"
+                            : "bg-[rgba(245,245,245,0.06)] text-[rgba(245,245,245,0.5)]",
+                    ].join(" ")}
+                >
+                    {isFolder ? <Folder size={14} /> : <FileText size={14} />}
+                </div>
+
+                {/* Name */}
+                <div className="flex-1 min-w-0">
+                    <p
+                        className={[
+                            "text-[13px] truncate",
+                            isFolder ? "text-[#F5F5F5] font-medium" : "text-[rgba(245,245,245,0.8)]",
+                        ].join(" ")}
+                    >
+                        {node.name}
+                    </p>
+                </div>
+
+                {/* Access level badge (agency only) */}
+                {showAccessLevel && node.file && !isFolder && (
+                    <AccessLevelBadge level={node.file.access_level} />
+                )}
+
+                {/* Sync status indicator */}
+                {node.file && !isFolder && node.file.index_status === "pending" && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/25">
+                        Indexing...
+                    </span>
+                )}
+
+                {/* Preview button for synced files */}
+                {node.file && !isFolder && (
+                    <DrivePreviewButton file={node.file} onPreview={onPreview} />
+                )}
+            </div>
+
+            {/* Children */}
+            {isFolder && isExpanded && node.children.length > 0 && (
+                <div>
+                    {node.children.map((child) => (
+                        <DriveTreeNodeItem
+                            key={child.uniqueKey}
+                            node={child}
+                            depth={depth + 1}
+                            expandedPaths={expandedPaths}
+                            onToggleExpand={onToggleExpand}
+                            showAccessLevel={showAccessLevel}
+                            onPreview={onPreview}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ===========================================================================
+// GOOGLE DRIVE: Main content view
+// ===========================================================================
+function DriveLibraryContent({
+    connectionType = "personal",
+}: {
+    connectionType?: "personal" | "agency";
+}) {
+    const { files, loading, error, refetch } = useDriveFiles(connectionType, { includeFolders: true });
+    const [searchQuery, setSearchQuery] = useState("");
+    const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
+    const showAccessLevel = connectionType === "agency";
+
+    const showLoading = useDelayedLoading(loading);
+
+    // Preview modal state
+    const [previewModal, setPreviewModal] = useState<{
+        isOpen: boolean;
+        filename: string;
+        blobUrl: string;
+        loading: boolean;
+        error: string | null;
+    }>({ isOpen: false, filename: "", blobUrl: "", loading: false, error: null });
+    const blobUrlRef = useRef<string | null>(null);
+
+    const handlePreview = useCallback(async (fileId: number, filename: string) => {
+        // Clean up old blob URL
+        if (blobUrlRef.current) {
+            URL.revokeObjectURL(blobUrlRef.current);
+            blobUrlRef.current = null;
+        }
+
+        setPreviewModal({ isOpen: true, filename, blobUrl: "", loading: true, error: null });
+
+        try {
+            const token = localStorage.getItem("auth_token");
+            const res = await fetch(
+                `/api/integrations/google-drive/files/${fileId}/download`,
+                {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
+                }
+            );
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || `Failed to load file (${res.status})`);
+            }
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            blobUrlRef.current = url;
+            setPreviewModal((prev) => ({ ...prev, blobUrl: url, loading: false }));
+        } catch (e) {
+            setPreviewModal((prev) => ({
+                ...prev,
+                loading: false,
+                error: e instanceof Error ? e.message : "Failed to load file",
+            }));
+        }
+    }, []);
+
+    const closePreview = useCallback(() => {
+        if (blobUrlRef.current) {
+            URL.revokeObjectURL(blobUrlRef.current);
+            blobUrlRef.current = null;
+        }
+        setPreviewModal({ isOpen: false, filename: "", blobUrl: "", loading: false, error: null });
+    }, []);
+
+    // Build virtual tree from flat files
+    const tree = useMemo(() => buildDriveTree(files), [files]);
+
+    // Client-side search filtering
+    const filteredFiles = useMemo(() => {
+        const q = searchQuery.trim().toLowerCase();
+        if (!q) return files;
+        return files.filter(
+            (f) =>
+                (f.filename || "").toLowerCase().includes(q) ||
+                (f.drive_path || "").toLowerCase().includes(q)
+        );
+    }, [files, searchQuery]);
+
+    const isSearchMode = searchQuery.trim().length >= 2;
+
+    function handleToggleExpand(path: string) {
+        setExpandedPaths((prev) => {
+            const next = new Set(prev);
+            if (next.has(path)) {
+                next.delete(path);
+            } else {
+                next.add(path);
+            }
+            return next;
+        });
+    }
+
+    const headerLabel = connectionType === "personal" ? "My Google Drive" : "Agency Google Drive";
+    const fileCount = files.filter((f) => !f.is_folder).length;
+    const folderCount = files.filter((f) => f.is_folder).length;
+
+    return (
+        <div className="h-full p-6 flex flex-col min-h-0 bg-[#0C0C0C]">
+            <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden flex flex-col min-h-0 flex-1">
+                {/* Header */}
+                <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-white/10">
+                            <Cloud size={16} className="text-[rgba(245,245,245,0.6)]" />
+                        </div>
+                        <div>
+                            <h1 className="text-[15px] font-semibold text-[#F5F5F5]">{headerLabel}</h1>
+                            <p className="text-[12px] text-[rgba(245,245,245,0.45)] mt-0.5">
+                                {fileCount} files, {folderCount} folders
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {showLoading && (
+                            <div className="flex items-center gap-2 text-[12px] text-[rgba(245,245,245,0.5)]">
+                                <Loader2 size={14} className="animate-spin" />
+                                <span>Loading...</span>
+                            </div>
+                        )}
+                        <button
+                            type="button"
+                            onClick={refetch}
+                            className="text-[12px] text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors px-2 py-1 rounded-md hover:bg-white/6"
+                        >
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+                {/* Search */}
+                <div className="px-5 py-3 border-b border-[rgba(255,255,255,0.08)] shrink-0">
+                    <div className="relative">
+                        <Search
+                            size={16}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(245,245,245,0.4)]"
+                        />
+                        <input
+                            type="text"
+                            placeholder="Search files and folders..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className={[
+                                "w-full rounded-lg pl-10 pr-4 py-2.5 text-[13px]",
+                                "bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.4)]",
+                                "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
+                                "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
+                                "transition-all duration-150",
+                            ].join(" ")}
+                        />
+                    </div>
+                    {isSearchMode && (
+                        <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-2">
+                            {filteredFiles.length} result{filteredFiles.length !== 1 ? "s" : ""}
+                        </p>
+                    )}
+                </div>
+
+                {/* Content */}
+                <div className="min-h-0 flex-1 overflow-y-auto py-2">
+                    {error ? (
+                        <div className="px-5 py-6 text-[14px] text-[#C87A7A] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
+                            {error}
+                        </div>
+                    ) : showLoading && files.length === 0 ? (
+                        <div className="px-5 py-10 text-center">
+                            <div className="flex flex-col items-center gap-3">
+                                <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)]" />
+                                <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Loading files...</span>
+                            </div>
+                        </div>
+                    ) : files.length === 0 ? (
+                        <div className="px-5 py-10 text-center">
+                            <div className="flex flex-col items-center gap-2">
+                                <Cloud size={32} className="text-[rgba(245,245,245,0.2)]" />
+                                <span className="text-[14px] text-[rgba(245,245,245,0.5)]">No synced files yet</span>
+                                <span className="text-[12px] text-[rgba(245,245,245,0.35)]">
+                                    Files will appear here after syncing your Google Drive folder.
+                                </span>
+                            </div>
+                        </div>
+                    ) : isSearchMode ? (
+                        // Search results -- flat list
+                        <div>
+                            {filteredFiles.length === 0 ? (
+                                <div className="px-5 py-10 text-center">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <Search size={32} className="text-[rgba(245,245,245,0.2)]" />
+                                        <span className="text-[14px] text-[rgba(245,245,245,0.5)]">No results found</span>
+                                        <span className="text-[12px] text-[rgba(245,245,245,0.35)]">
+                                            Try a different search term
+                                        </span>
+                                    </div>
+                                </div>
+                            ) : (
+                                filteredFiles.map((file) => (
+                                    <div
+                                        key={`drive-${file.id}`}
+                                        className="flex items-center gap-3 px-5 py-3 border-b border-[rgba(255,255,255,0.06)] hover:bg-white/4 transition-colors"
+                                    >
+                                        <div
+                                            className={[
+                                                "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                                                file.is_folder
+                                                    ? "bg-[rgba(122,163,200,0.1)] text-[#7AA3C8]"
+                                                    : "bg-[rgba(245,245,245,0.06)] text-[rgba(245,245,245,0.5)]",
+                                            ].join(" ")}
+                                        >
+                                            {file.is_folder ? <Folder size={16} /> : <FileText size={16} />}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[13px] text-[#F5F5F5] truncate font-medium">
+                                                {file.filename || "Untitled"}
+                                            </p>
+                                            {file.drive_path && (
+                                                <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-0.5 truncate">
+                                                    {file.drive_path}
+                                                </p>
+                                            )}
+                                        </div>
+                                        {showAccessLevel && <AccessLevelBadge level={file.access_level} />}
+                                        {!file.is_folder && (
+                                            <DrivePreviewButton file={file} onPreview={handlePreview} />
+                                        )}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    ) : (
+                        // Tree view
+                        <div>
+                            {tree.map((node) => (
+                                <DriveTreeNodeItem
+                                    key={node.uniqueKey}
+                                    node={node}
+                                    depth={0}
+                                    expandedPaths={expandedPaths}
+                                    onToggleExpand={handleToggleExpand}
+                                    showAccessLevel={showAccessLevel}
+                                    onPreview={handlePreview}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Drive file preview modal */}
+            {previewModal.isOpen && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm transition-opacity duration-200"
+                    onClick={closePreview}
+                >
+                    <div
+                        className="relative w-full h-full max-w-6xl max-h-[90vh] m-4 bg-[#F5F5F5] rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(0,0,0,0.08)] bg-white">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className="w-10 h-10 rounded-lg bg-[rgba(0,0,0,0.05)] flex items-center justify-center shrink-0">
+                                    <FileText size={20} className="text-[rgba(0,0,0,0.5)]" />
+                                </div>
+                                <div className="min-w-0">
+                                    <h2 className="text-[15px] font-semibold text-[#0C0C0C] truncate">
+                                        {previewModal.filename}
+                                    </h2>
+                                    <p className="text-[12px] text-[rgba(0,0,0,0.5)] mt-0.5">
+                                        Google Drive Preview
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={closePreview}
+                                className="ml-4 w-9 h-9 flex items-center justify-center hover:bg-[rgba(0,0,0,0.05)] rounded-lg transition-colors duration-150"
+                                aria-label="Close"
+                            >
+                                <span className="text-[rgba(0,0,0,0.5)] text-lg">&times;</span>
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-hidden bg-[#e5e5e5] relative">
+                            {previewModal.loading && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-[#e5e5e5] z-10">
+                                    <Loader2 className="w-10 h-10 animate-spin text-[rgba(0,0,0,0.4)]" />
+                                </div>
+                            )}
+                            {previewModal.error && (
+                                <div className="absolute inset-0 flex items-center justify-center p-6 bg-[#e5e5e5] z-10">
+                                    <p className="text-[15px] text-[rgba(0,0,0,0.7)]">{previewModal.error}</p>
+                                </div>
+                            )}
+                            {previewModal.blobUrl && !previewModal.error && (
+                                <iframe
+                                    src={previewModal.blobUrl}
+                                    className="w-full h-full border-0"
+                                    title={`Preview - ${previewModal.filename}`}
+                                    style={{ minHeight: "600px" }}
+                                />
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ===========================================================================
+// CLAROMENTIS: Tree node component (existing, unchanged)
+// ===========================================================================
 function TreeNode({
     item,
     depth,
@@ -289,7 +879,10 @@ function SearchResultItem({
     );
 }
 
-export default function LibraryView({ initialRootId }: { initialRootId?: number }) {
+// ===========================================================================
+// CLAROMENTIS: Content view (existing, extracted into sub-component)
+// ===========================================================================
+function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }) {
     const [rootId, setRootId] = useState<number | undefined>(initialRootId);
     const [draftRootId, setDraftRootId] = useState<string>("");
     const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
@@ -687,4 +1280,15 @@ export default function LibraryView({ initialRootId }: { initialRootId?: number 
             />
         </div>
     );
+}
+
+// ===========================================================================
+// LibraryView: Main export -- delegates to Claromentis or Drive content
+// ===========================================================================
+export default function LibraryView({ initialRootId, source = "claromentis", connectionType }: LibraryViewProps) {
+    if (source === "google-drive") {
+        return <DriveLibraryContent connectionType={connectionType} />;
+    }
+
+    return <ClaromentisLibraryContent initialRootId={initialRootId} />;
 }
