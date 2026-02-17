@@ -96,6 +96,7 @@ type BulkTestRun = {
         error?: string;
     } | null;
     task_id: string | null;
+    model_name?: string | null;
     created_at: string;
     updated_at: string;
     results?: BulkTestResult[];
@@ -427,6 +428,9 @@ export default function BulkTestPage() {
                                         <div className="space-y-2 text-[14px]">
                                             <p className="text-[rgba(245,245,245,0.8)]">
                                                 Run #{dashboard.latest_run.id} · {new Date(dashboard.latest_run.created_at).toLocaleString()}
+                                                {dashboard.latest_run.model_name && (
+                                                    <span className="text-[rgba(245,245,245,0.6)]"> · {dashboard.latest_run.model_name}</span>
+                                                )}
                                             </p>
                                             <p>
                                                 <span className="text-green-400">{dashboard.latest_run.summary?.passed ?? 0} passed</span>
@@ -551,6 +555,7 @@ export default function BulkTestPage() {
                             <div className="p-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between flex-wrap gap-2">
                                 <h3 className="text-[16px] font-semibold text-[#F5F5F5]">Last Run Results</h3>
                                 <span className="text-[13px] text-[rgba(245,245,245,0.5)]">
+                                    {lastRun.model_name && <span>{lastRun.model_name} · </span>}
                                     {lastRun.summary?.passed ?? 0} passed / {lastRun.summary?.failed ?? 0} failed
                                     {lastRun.summary?.avg_score != null && ` · Avg ${lastRun.summary.avg_score}/10`}
                                     {lastRun.summary?.duration_sec != null && ` · ${lastRun.summary.duration_sec}s`}
@@ -668,6 +673,7 @@ export default function BulkTestPage() {
                                 <tr className="border-b border-[rgba(255,255,255,0.08)]">
                                     <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Run #</th>
                                     <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Date</th>
+                                    <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Model</th>
                                     <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Status</th>
                                     <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Passed / Failed</th>
                                     <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Avg Score</th>
@@ -704,6 +710,9 @@ export default function BulkTestPage() {
                                         </td>
                                         <td className="p-3 text-[rgba(245,245,245,0.8)]">
                                             {new Date(run.created_at).toLocaleString()}
+                                        </td>
+                                        <td className="p-3 text-[rgba(245,245,245,0.7)]">
+                                            {run.model_name ?? "—"}
                                         </td>
                                         <td className="p-3">
                                             <span
@@ -778,6 +787,7 @@ export default function BulkTestPage() {
                                         {runs.map((r) => (
                                             <SelectItem key={r.id} value={String(r.id)}>
                                                 #{r.id} – {new Date(r.created_at).toLocaleDateString()}
+                                                {r.model_name ? ` (${r.model_name})` : ""}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -797,6 +807,7 @@ export default function BulkTestPage() {
                                         {runs.map((r) => (
                                             <SelectItem key={r.id} value={String(r.id)}>
                                                 #{r.id} – {new Date(r.created_at).toLocaleDateString()}
+                                                {r.model_name ? ` (${r.model_name})` : ""}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -817,10 +828,14 @@ export default function BulkTestPage() {
                         <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] overflow-hidden">
                             <div className="p-4 border-b border-[rgba(255,255,255,0.08)] flex flex-wrap gap-4 text-[14px]">
                                 <span className="text-[rgba(245,245,245,0.6)]">
-                                    Run A: #{compareData.run_a.id} ({compareData.run_a.summary?.passed ?? 0}/{compareData.run_a.summary?.failed ?? 0}, avg {compareData.run_a.summary?.avg_score ?? "—"})
+                                    Run A: #{compareData.run_a.id}
+                                    {compareData.run_a.model_name ? ` (${compareData.run_a.model_name})` : ""}
+                                    {" "}({compareData.run_a.summary?.passed ?? 0}/{compareData.run_a.summary?.failed ?? 0}, avg {compareData.run_a.summary?.avg_score ?? "—"})
                                 </span>
                                 <span className="text-[rgba(245,245,245,0.6)]">
-                                    Run B: #{compareData.run_b.id} ({compareData.run_b.summary?.passed ?? 0}/{compareData.run_b.summary?.failed ?? 0}, avg {compareData.run_b.summary?.avg_score ?? "—"})
+                                    Run B: #{compareData.run_b.id}
+                                    {compareData.run_b.model_name ? ` (${compareData.run_b.model_name})` : ""}
+                                    {" "}({compareData.run_b.summary?.passed ?? 0}/{compareData.run_b.summary?.failed ?? 0}, avg {compareData.run_b.summary?.avg_score ?? "—"})
                                 </span>
                             </div>
                             <div className="overflow-x-auto">
