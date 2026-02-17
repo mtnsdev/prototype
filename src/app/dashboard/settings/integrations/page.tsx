@@ -32,7 +32,7 @@ function formatTime(iso: string | null | undefined): string {
 }
 
 // ---------------------------------------------------------------------------
-// DriveConnectionCard -- renders one Google Drive connection (personal or agency)
+// DriveConnectionCard -- renders one Google Drive connection (personal or admin)
 // ---------------------------------------------------------------------------
 function DriveConnectionCard({
     connectionType,
@@ -49,7 +49,7 @@ function DriveConnectionCard({
     const [pickerOpen, setPickerOpen] = useState(false);
     const [pickerMode, setPickerMode] = useState<"connect" | "change">("connect");
 
-    const label = connectionType === "personal" ? "Personal Google Drive" : "Agency Google Drive";
+    const label = connectionType === "personal" ? "Personal Google Drive" : "Admin Google Drive";
     const description =
         connectionType === "personal"
             ? "Connect your personal Google Drive folder. Only you can see its content in search and answers."
@@ -280,7 +280,7 @@ function DriveConnectionCard({
                                 ].join(" ")}
                             >
                                 <Cloud size={16} />
-                                Connect {connectionType === "personal" ? "Personal" : "Agency"} Drive
+                                Connect {connectionType === "personal" ? "Personal" : "Admin"} Drive
                             </button>
                         </>
                     ) : (
@@ -364,7 +364,7 @@ export default function IntegrationsPage() {
                 {/* Personal Google Drive -- available to all users */}
                 <DriveConnectionCard connectionType="personal" isAdmin={isAdmin} />
 
-                {/* Agency Google Drive -- admin only */}
+                {/* Admin Google Drive -- admin only */}
                 {isAdmin && (
                     <DriveConnectionCard connectionType="agency" isAdmin={isAdmin} />
                 )}

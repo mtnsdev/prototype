@@ -267,7 +267,7 @@ export default function Sidebar({
                                 )}
                                 {agencyDriveStatus?.connected && (
                                     <IntegrationItem
-                                        name="Agency Google Drive"
+                                        name="Admin Google Drive"
                                         status="active"
                                         onClick={() => router.push("/dashboard/knowledge?integration=google-drive-agency")}
                                         active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("google-drive-agency")}

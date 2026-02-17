@@ -19,7 +19,7 @@ function KnowledgeContent() {
     const integrationConfig: Record<string, IntegrationConfig> = {
         claromentis: { source: "claromentis", rootId: 0, name: "Claromentis (Intranet)" },
         "google-drive-personal": { source: "google-drive", connectionType: "personal", name: "My Google Drive" },
-        "google-drive-agency": { source: "google-drive", connectionType: "agency", name: "Agency Google Drive" },
+        "google-drive-agency": { source: "google-drive", connectionType: "agency", name: "Admin Google Drive" },
     };
 
     const config = integration ? integrationConfig[integration] : null;
