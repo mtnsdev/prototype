@@ -35,6 +35,8 @@ type FolderTreeSelectorProps = {
   selectedTargets?: SelectedTarget[];
   onSelectionChange?: (targets: SelectedTarget[]) => void;
   token: string;
+  /** Scoped root folder ID for Google Drive mode (restricts tree to this folder) */
+  rootFolderId?: string | null;
 };
 
 const API_BASE = "/api";
@@ -74,6 +76,7 @@ async function fetchDriveChildren(
   token: string,
   parentId: string,
   driveId?: string | null,
+  isRootLoad?: boolean,
 ): Promise<FolderTreeNode[]> {
   const params = new URLSearchParams({ parent_id: parentId });
   if (driveId) params.set("drive_id", driveId);
@@ -91,7 +94,7 @@ async function fetchDriveChildren(
     throw new Error(`Failed to load Drive tree (${res.status}): ${text.slice(0, 100)}`);
   }
   const data = await res.json();
-  return (data.children ?? []).map((c: Record<string, unknown>) => ({
+  const children = (data.children ?? []).map((c: Record<string, unknown>) => ({
     id: 0,
     external_id: c.external_id as string,
     title: c.title as string,
@@ -102,6 +105,27 @@ async function fetchDriveChildren(
     drive_id: (c.drive_id as string) || null,
     is_shared_drive: (c.is_shared_drive as boolean) || false,
   }));
+
+  // If the backend returned root folder metadata and there are no children,
+  // show the root folder itself so the tree is never empty when connected.
+  // Only apply this during the initial root load, not when expanding a node
+  // (otherwise the root folder would appear as its own child in an infinite loop).
+  if (isRootLoad && data.root_folder && children.length === 0) {
+    const rf = data.root_folder as Record<string, unknown>;
+    return [{
+      id: 0,
+      external_id: rf.external_id as string,
+      title: rf.title as string,
+      parent_external_id: null,
+      node_type: rf.node_type as string,
+      has_children: rf.has_children as boolean,
+      is_admin_only: false,
+      drive_id: (rf.drive_id as string) || null,
+      is_shared_drive: (rf.is_shared_drive as boolean) || false,
+    }];
+  }
+
+  return children;
 }
 
 /** Unified fetch dispatcher */
@@ -110,9 +134,10 @@ function fetchChildren(
   parentId: number | string | null,
   mode: "claromentis" | "google-drive",
   driveId?: string | null,
+  isRootLoad?: boolean,
 ): Promise<FolderTreeNode[]> {
   if (mode === "google-drive") {
-    return fetchDriveChildren(token, String(parentId ?? "root"), driveId);
+    return fetchDriveChildren(token, String(parentId ?? "root"), driveId, isRootLoad);
   }
   return fetchClaromentisChildren(token, parentId as number | null);
 }
@@ -222,9 +247,8 @@ function TreeNode({
             handleClick();
           }
         }}
-        className={`flex items-center gap-2 py-1.5 pr-2 rounded-lg cursor-pointer transition-colors ${
-          isSelected ? "bg-[rgba(255,255,255,0.12)]" : "hover:bg-[rgba(255,255,255,0.06)]"
-        }`}
+        className={`flex items-center gap-2 py-1.5 pr-2 rounded-lg cursor-pointer transition-colors ${isSelected ? "bg-[rgba(255,255,255,0.12)]" : "hover:bg-[rgba(255,255,255,0.06)]"
+          }`}
         style={{ paddingLeft }}
       >
         {isExpandable ? (
@@ -303,6 +327,7 @@ export function FolderTreeSelector({
   selectedTargets,
   onSelectionChange,
   token,
+  rootFolderId,
 }: FolderTreeSelectorProps) {
   const [rootNodes, setRootNodes] = useState<FolderTreeNode[]>([]);
   const [loading, setLoading] = useState(true);
@@ -320,13 +345,18 @@ export function FolderTreeSelector({
     if (!token) return;
     setLoading(true);
     setError(null);
-    fetchChildren(token, mode === "google-drive" ? "root" : null, mode)
+    // For Google Drive mode, use scoped rootFolderId if available; backend will
+    // also enforce this, but starting at the right folder avoids showing "root".
+    const initialParent = mode === "google-drive"
+      ? (rootFolderId || "root")
+      : null;
+    fetchChildren(token, initialParent, mode, undefined, true)
       .then((children) => {
         setRootNodes(children);
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"))
       .finally(() => setLoading(false));
-  }, [token, mode]);
+  }, [token, mode, rootFolderId]);
 
   // Reset state when mode changes
   useEffect(() => {
@@ -385,7 +415,7 @@ export function FolderTreeSelector({
     return (
       <div className="py-4 text-[14px] text-[rgba(245,245,245,0.5)]">
         {mode === "google-drive"
-          ? "No folders found. Make sure the Admin Drive is connected."
+          ? "No folders available. The connected root folder may be empty or inaccessible."
           : "No folders yet. Sync the folder tree from the admin panel first."}
       </div>
     );

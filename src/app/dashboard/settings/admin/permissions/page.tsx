@@ -369,19 +369,26 @@ function CreateRuleModal({
     const [applyToDescendants, setApplyToDescendants] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasAgencyConnection, setHasAgencyConnection] = useState<boolean | null>(null);
+    const [rootFolderId, setRootFolderId] = useState<string | null>(null);
     const token = typeof localStorage !== "undefined" ? localStorage.getItem("auth_token") : null;
 
     const sourceLabel = source === "claromentis" ? "Claromentis" : "Google Drive";
 
-    // Check agency connection status when in Google Drive mode
+    // Check agency connection status and fetch root_folder_id when in Google Drive mode
     useEffect(() => {
         if (source !== "google_drive" || !token) return;
         fetch("/api/admin/google-drive/connection-status", {
             headers: { Authorization: `Bearer ${token}` },
         })
             .then((res) => res.json())
-            .then((data) => setHasAgencyConnection(data.connected === true))
-            .catch(() => setHasAgencyConnection(false));
+            .then((data) => {
+                setHasAgencyConnection(data.connected === true);
+                setRootFolderId(data.root_folder_id || null);
+            })
+            .catch(() => {
+                setHasAgencyConnection(false);
+                setRootFolderId(null);
+            });
     }, [source, token]);
 
     const hasSelection = source === "claromentis"
@@ -595,6 +602,7 @@ function CreateRuleModal({
                                     multiSelect
                                     selectedTargets={selectedTargets}
                                     onSelectionChange={setSelectedTargets}
+                                    rootFolderId={rootFolderId}
                                 />
                             ) : (
                                 <p className="text-[13px] text-[rgba(245,245,245,0.5)]">Sign in to load tree</p>
