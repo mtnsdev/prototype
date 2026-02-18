@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import React from "react";
-import { AlertTriangle, Loader2, ExternalLink, Send, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare } from "lucide-react";
+import { AlertTriangle, Loader2, ExternalLink, Send, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, ChevronDown } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Image from "next/image";
 import PdfModal from "./PdfModal";
@@ -482,6 +482,10 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
 
     /** Ref for the bottom of the messages area; scroll here after sending so the new question is visible */
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    /** Ref for the scrollable messages container; used for scroll-to-bottom button and scroll detection */
+    const messagesScrollRef = useRef<HTMLDivElement>(null);
+    /** Show "scroll to bottom" button when user has scrolled up and content overflows */
+    const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
     // Delayed loading states to prevent flickering
     const showSendingLoader = useDelayedLoading(loading);
@@ -736,6 +740,28 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
         send(suggestion);
     };
 
+    const checkShowScrollToBottom = useCallback(() => {
+        const el = messagesScrollRef.current;
+        if (!el) return;
+        const { scrollTop, scrollHeight, clientHeight } = el;
+        const threshold = 80;
+        const isOverflowing = scrollHeight > clientHeight;
+        const isNearBottom = scrollHeight - scrollTop - clientHeight <= threshold;
+        setShowScrollToBottom(isOverflowing && !isNearBottom);
+    }, []);
+
+    const scrollToBottom = useCallback(() => {
+        messagesScrollRef.current?.scrollTo({ top: messagesScrollRef.current.scrollHeight, behavior: "smooth" });
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, []);
+
+    // Re-check scroll position when messages or loading state changes (layout may have changed)
+    useEffect(() => {
+        if (messages.length === 0 && !loadingConversation) return;
+        const t = setTimeout(checkShowScrollToBottom, 100);
+        return () => clearTimeout(t);
+    }, [messages.length, loading, showConversationLoader, loadingConversation, checkShowScrollToBottom]);
+
     const isEmptyState = messages.length === 0 && !loadingConversation;
 
     return (
@@ -773,7 +799,12 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                 </div>
 
                 {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-6 space-y-6" style={{ minHeight: 0 }}>
+                <div
+                    ref={messagesScrollRef}
+                    className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-6 space-y-6"
+                    style={{ minHeight: 0 }}
+                    onScroll={checkShowScrollToBottom}
+                >
                     {/* Empty State */}
                     {isEmptyState && (
                         <div className="flex flex-col items-center justify-center h-full text-center px-4">
@@ -981,6 +1012,26 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                     )}
                     <div ref={messagesEndRef} aria-hidden />
                 </div>
+
+                {/* Scroll to bottom button - above input when messages overflow and user has scrolled up */}
+                {showScrollToBottom && !isEmptyState && (
+                    <div className="shrink-0 flex justify-center py-1 bg-[#0C0C0C]">
+                        <button
+                            type="button"
+                            onClick={scrollToBottom}
+                            className={[
+                                "flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium",
+                                "bg-[#161616] hover:bg-[#1e1e1e] text-[rgba(245,245,245,0.9)]",
+                                "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(174,133,80,0.3)]",
+                                "shadow-md hover:shadow-lg transition-all duration-150",
+                            ].join(" ")}
+                            title="Scroll to bottom"
+                            aria-label="Scroll to bottom"
+                        >
+                            <ChevronDown className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
 
                 {/* Input Area */}
                 <div className="shrink-0 p-4 bg-[#0C0C0C]">
