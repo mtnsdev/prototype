@@ -109,12 +109,10 @@ export default function BulkTestPage() {
     const [runsTotal, setRunsTotal] = useState(0);
     const [runsPage, setRunsPage] = useState(1);
     const RUNS_PAGE_SIZE = 20;
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // Run test state
     const [running, setRunning] = useState(false);
-    const [currentRunId, setCurrentRunId] = useState<number | null>(null);
     const [progress, setProgress] = useState<{ completed_count: number; total_count: number; status: string } | null>(null);
     const [lastRun, setLastRun] = useState<BulkTestRun | null>(null);
     const [geminiModel, setGeminiModel] = useState("gemini-2.5-pro");
@@ -236,7 +234,6 @@ export default function BulkTestPage() {
     const startRun = async () => {
         setError(null);
         setRunning(true);
-        setCurrentRunId(null);
         setProgress(null);
         setLastRun(null);
         try {
@@ -250,7 +247,6 @@ export default function BulkTestPage() {
                 throw new Error(err.detail || "Failed to start run");
             }
             const data = await r.json();
-            setCurrentRunId(data.run_id);
             setProgress({ completed_count: 0, total_count: 0, status: "pending" });
             const poll = async () => {
                 const pr = await fetch(`${API_BASE}/runs/${data.run_id}/progress`, { headers: getAuthHeaders() });
@@ -263,7 +259,6 @@ export default function BulkTestPage() {
                 });
                 if (prog.status === "completed" || prog.status === "failed") {
                     setRunning(false);
-                    setCurrentRunId(null);
                     const runDetail = await fetch(`${API_BASE}/runs/${data.run_id}`, { headers: getAuthHeaders() });
                     if (runDetail.ok) setLastRun(await runDetail.json());
                     fetchRuns(1, 100);

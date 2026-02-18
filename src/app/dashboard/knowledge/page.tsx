@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useCallback } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import LibraryView from "@/components/library/LibraryView";
 import { useFolderChildren } from "@/hooks/useFolderChildren";

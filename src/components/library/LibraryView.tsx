@@ -953,7 +953,6 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
 
     // Pages data - fetch when in pages mode OR when accordion pages section is open
     const { items: pagesItems, hasMore: pagesHasMore, isLoading: pagesLoading, error: pagesError, loadMore: loadMorePages } = usePages({ enabled: navigationMode === "pages" || (navigationMode === "knowledge-root" && pagesOpen) });
-    const pagesData = pagesItems.length > 0 || !pagesLoading ? { items: pagesItems } : null;
 
     // Debounced search effect
     useEffect(() => {
@@ -1067,7 +1066,7 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
         onSuccess: handleRootSuccess,
     }), [rootId, handleRootSuccess]);
 
-    const { items, loading, showLoading, error } = useFolderChildren(rootId, undefined, rootHookOptions);
+    const { items, showLoading, error } = useFolderChildren(rootId, undefined, rootHookOptions);
 
     const cachedItems = rootId !== undefined ? clientCache.current.get(rootId) : undefined;
     const rawDisplayItems = cachedItems ?? items;

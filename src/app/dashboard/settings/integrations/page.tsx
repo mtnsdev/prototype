@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
     Loader2,
@@ -38,10 +38,8 @@ function formatTime(iso: string | null | undefined): string {
 // ---------------------------------------------------------------------------
 function DriveConnectionCard({
     connectionType,
-    isAdmin,
 }: {
     connectionType: "personal" | "agency";
-    isAdmin: boolean;
 }) {
     const router = useRouter();
     const [driveStatus, setDriveStatus] = useState<DriveStatus | null>(null);
@@ -402,8 +400,10 @@ function ClaromentisSync() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [triggering, setTriggering] = useState(false);
+    const [syncMessage, setSyncMessage] = useState<string | null>(null);
+    const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const fetchHealth = useCallback(async () => {
+    const fetchHealth = useCallback(async (): Promise<SyncHealthResponse | null> => {
         try {
             const token = localStorage.getItem("auth_token");
             const res = await fetch("/api/sync/health", {
@@ -414,8 +414,10 @@ function ClaromentisSync() {
             const data: SyncHealthResponse = await res.json();
             setHealth(data);
             setError(null);
+            return data;
         } catch (e) {
             setError(e instanceof Error ? e.message : "Failed to load");
+            return null;
         } finally {
             setIsLoading(false);
         }
@@ -423,8 +425,28 @@ function ClaromentisSync() {
 
     useEffect(() => { fetchHealth(); }, [fetchHealth]);
 
+    // Poll health every 3 s while any integration is running, then stop.
+    const startPolling = useCallback(() => {
+        if (pollRef.current) return;
+        const tick = async () => {
+            const data = await fetchHealth();
+            const anyRunning = data?.integrations.some(
+                (i) => i.last_run_status === "running"
+            );
+            if (anyRunning) {
+                pollRef.current = setTimeout(tick, 3000);
+            } else {
+                pollRef.current = null;
+            }
+        };
+        pollRef.current = setTimeout(tick, 3000);
+    }, [fetchHealth]);
+
+    useEffect(() => () => { if (pollRef.current) clearTimeout(pollRef.current); }, []);
+
     const triggerSync = useCallback(async () => {
         setTriggering(true);
+        setSyncMessage(null);
         try {
             const token = localStorage.getItem("auth_token");
             const res = await fetch("/api/sync/trigger-safe", {
@@ -433,13 +455,20 @@ function ClaromentisSync() {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.detail || "Trigger failed");
+
+            if (data.status === "already_running") {
+                setSyncMessage("Sync already in progress — check back in a moment.");
+            } else {
+                setSyncMessage("Sync started.");
+                startPolling();
+            }
             await fetchHealth();
         } catch (e) {
             setError(e instanceof Error ? e.message : "Trigger failed");
         } finally {
             setTriggering(false);
         }
-    }, [fetchHealth]);
+    }, [fetchHealth, startPolling]);
 
     return (
         <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
@@ -477,6 +506,11 @@ function ClaromentisSync() {
 
             {/* Body */}
             <div className="p-5">
+                {syncMessage && (
+                    <div className="mb-4 rounded-xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] px-4 py-2.5 text-[12px] text-[rgba(245,245,245,0.65)]">
+                        {syncMessage}
+                    </div>
+                )}
                 {isLoading ? (
                     <div className="flex items-center gap-2 py-4 justify-center">
                         <Loader2 size={18} className="animate-spin text-[rgba(245,245,245,0.4)]" />
@@ -550,11 +584,11 @@ export default function IntegrationsPage() {
                 </div>
 
                 {/* My Google Drive -- available to all users */}
-                <DriveConnectionCard connectionType="personal" isAdmin={isAdmin} />
+                <DriveConnectionCard connectionType="personal" />
 
                 {/* Admin Google Drive -- admin only */}
                 {isAdmin && (
-                    <DriveConnectionCard connectionType="agency" isAdmin={isAdmin} />
+                    <DriveConnectionCard connectionType="agency" />
                 )}
 
                 {/* Claromentis sync health -- admin only */}

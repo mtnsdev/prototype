@@ -10,7 +10,6 @@ const ADMIN_NAV_ITEMS = [
     { href: "/dashboard/settings/admin", label: "Overview", icon: Shield, exact: true },
     { href: "/dashboard/settings/admin/users", label: "Users", icon: Users },
     { href: "/dashboard/settings/admin/permissions", label: "Permissions", icon: FolderLock },
-    { href: "/dashboard/settings/admin/sync", label: "Sync Health", icon: RefreshCw },
     { href: "/dashboard/settings/admin/bulk-test", label: "Bulk Test", icon: FlaskConical },
 ];
 
