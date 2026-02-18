@@ -6,7 +6,7 @@ import LibraryView from "@/components/library/LibraryView";
 import { Database } from "lucide-react";
 
 type IntegrationConfig = {
-    source: "claromentis" | "google-drive" | "google-drive-shared";
+    source: "claromentis" | "google-drive";
     rootId?: number;
     connectionType?: "personal" | "agency";
     name: string;
@@ -17,10 +17,9 @@ function KnowledgeContent() {
     const integration = searchParams.get("integration");
 
     const integrationConfig: Record<string, IntegrationConfig> = {
-        claromentis: { source: "claromentis", rootId: 0, name: "Claromentis (Intranet)" },
+        claromentis: { source: "claromentis", name: "Claromentis (Intranet)" },
         "google-drive-personal": { source: "google-drive", connectionType: "personal", name: "My Google Drive" },
         "google-drive-agency": { source: "google-drive", connectionType: "agency", name: "Admin Google Drive" },
-        "google-drive-shared": { source: "google-drive-shared", connectionType: "agency", name: "Google Drive Shared" },
     };
 
     const config = integration ? integrationConfig[integration] : null;
@@ -41,10 +40,6 @@ function KnowledgeContent() {
         );
     }
 
-    if (config.source === "google-drive-shared") {
-        return <LibraryView source="google-drive-shared" />;
-    }
-
     if (config.source === "google-drive") {
         return (
             <LibraryView
@@ -54,7 +49,7 @@ function KnowledgeContent() {
         );
     }
 
-    return <LibraryView initialRootId={config.rootId} source="claromentis" />;
+    return <LibraryView source="claromentis" />;
 }
 
 export default function KnowledgePage() {

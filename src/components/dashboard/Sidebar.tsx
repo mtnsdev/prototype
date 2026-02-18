@@ -273,14 +273,6 @@ export default function Sidebar({
                                         active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("google-drive-agency")}
                                     />
                                 )}
-                                {agencyDriveStatus?.connected && (
-                                    <IntegrationItem
-                                        name="Google Drive Shared"
-                                        status="active"
-                                        onClick={() => router.push("/dashboard/knowledge?integration=google-drive-shared")}
-                                        active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("google-drive-shared")}
-                                    />
-                                )}
                                 <IntegrationItem
                                     name="Virtuoso"
                                     status="coming_soon"

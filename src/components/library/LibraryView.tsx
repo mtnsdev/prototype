@@ -5,6 +5,7 @@ import { useFolderChildren } from "@/hooks/useFolderChildren";
 import { useProxyUrl } from "@/hooks/useProxyUrl";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 import { useDriveFiles } from "@/hooks/useDriveFiles";
+import { usePages, type PageItem } from "@/hooks/usePages";
 import { Folder, FileText, ChevronRight, ChevronDown, Eye, Loader2, Search, Cloud, Shield, Lock, Globe } from "lucide-react";
 import PdfModal from "@/components/dashboard/PdfModal";
 import SyncStatusButton from "@/components/library/SyncStatusButton";
@@ -15,7 +16,8 @@ import type { DriveFile } from "@/types/google-drive";
 // ---------------------------------------------------------------------------
 type TLItem =
     | { kind: "folder"; id: number; parent_id: number; title: string; has_children?: boolean; URI?: string }
-    | { kind: "document"; doc_id: number; parent_id: number; title: string; version_num: number; URI?: string };
+    | { kind: "document"; doc_id: number; parent_id: number; title: string; version_num: number; URI?: string }
+    | PageItem;
 
 type TLSearchResult = {
     items: TLItem[];
@@ -39,7 +41,7 @@ type PdfModalState = {
 // ---------------------------------------------------------------------------
 type LibraryViewProps = {
     initialRootId?: number;
-    source?: "claromentis" | "google-drive" | "google-drive-shared";
+    source?: "claromentis" | "google-drive";
     connectionType?: "personal" | "agency";
 };
 
@@ -483,9 +485,11 @@ function DriveLibraryContent({
                         <div className="px-5 py-10 text-center">
                             <div className="flex flex-col items-center gap-2">
                                 <Cloud size={32} className="text-[rgba(245,245,245,0.2)]" />
-                                <span className="text-[14px] text-[rgba(245,245,245,0.5)]">No synced files yet</span>
+                                <span className="text-[14px] text-[rgba(245,245,245,0.5)]">No available files</span>
                                 <span className="text-[12px] text-[rgba(245,245,245,0.35)]">
-                                    Files will appear here after syncing your Google Drive folder.
+                                    {connectionType === "agency"
+                                        ? "No folders have been shared with you yet. Contact your admin for access."
+                                        : "Files will appear here after syncing your Google Drive folder."}
                                 </span>
                             </div>
                         </div>
@@ -713,11 +717,11 @@ function TreeNode({
                         "text-[13px] truncate",
                         isFolder ? "text-[#F5F5F5] font-medium" : "text-[rgba(245,245,245,0.8)]",
                     ].join(" ")}>
-                        {item.title}
+                        {item.kind === "page" ? item.name : item.title}
                     </p>
                 </div>
 
-                {/* Preview button for documents */}
+                {/* Preview button for documents only (not pages) */}
                 {item.kind === "document" && (
                     <PreviewButton doc={item} onOpenPreview={onOpenPreview} />
                 )}
@@ -805,8 +809,9 @@ function SearchResultItem({
     onOpenPreview: (filename: string, proxyUrl: string) => void;
 }) {
     const isFolder = item.kind === "folder";
+    const isPage = item.kind === "page";
 
-    // Build preview URL for documents
+    // Build preview URL for documents (not for pages)
     const getPreviewUrl = (): string | null => {
         if (item.kind !== "document") return null;
 
@@ -825,6 +830,9 @@ function SearchResultItem({
     };
 
     const previewUrl = getPreviewUrl();
+
+    // Get title based on item type
+    const title = item.kind === "page" ? item.name : item.title;
 
     return (
         <div
@@ -847,21 +855,23 @@ function SearchResultItem({
             {/* Content */}
             <div className="flex-1 min-w-0">
                 <p className="text-[13px] text-[#F5F5F5] truncate font-medium">
-                    {item.title}
+                    {title}
                 </p>
                 <p className="text-[11px] text-[rgba(245,245,245,0.45)] mt-0.5">
                     {isFolder
                         ? `Folder • ID ${item.id}`
-                        : `Document • ID ${item.doc_id}`
+                        : isPage
+                            ? `Page • ${(item.size / 1024).toFixed(1)} KB`
+                            : `Document • ID ${item.doc_id}`
                     }
                 </p>
             </div>
 
-            {/* Preview button for documents */}
+            {/* Preview button for documents only (not for pages) */}
             {item.kind === "document" && previewUrl && (
                 <button
                     type="button"
-                    onClick={() => onOpenPreview(item.title, previewUrl)}
+                    onClick={() => onOpenPreview(title, previewUrl)}
                     className={[
                         "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md",
                         "text-[11px] font-medium",
@@ -882,7 +892,18 @@ function SearchResultItem({
 // ===========================================================================
 // CLAROMENTIS: Content view (existing, extracted into sub-component)
 // ===========================================================================
+type NavigationMode = "knowledge-root" | "documents" | "pages";
+
+type BreadcrumbItem = {
+    label: string;
+    path: NavigationMode;
+};
+
 function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }) {
+    // Navigation mode state
+    const [navigationMode, setNavigationMode] = useState<NavigationMode>(initialRootId !== undefined ? "documents" : "knowledge-root");
+    const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([{ label: "Knowledge", path: "knowledge-root" }]);
+    
     const [rootId, setRootId] = useState<number | undefined>(initialRootId);
     const [draftRootId, setDraftRootId] = useState<string>("");
     const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
@@ -904,6 +925,9 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
     const showSearchLoader = useDelayedLoading(searchLoading);
 
     const clientCache = useRef<Map<number, TLItem[]>>(new Map());
+    
+    // Pages data - only fetch when in pages mode
+    const { data: pagesData, isLoading: pagesLoading, error: pagesError } = usePages(undefined, { enabled: navigationMode === "pages" });
 
     // Debounced search effect
     useEffect(() => {
@@ -1051,7 +1075,112 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
         });
     }
 
-    if (rootId === undefined) {
+    // Navigation handlers
+    const handleNavigateToKnowledgeRoot = useCallback(() => {
+        setNavigationMode("knowledge-root");
+        setBreadcrumbs([{ label: "Knowledge", path: "knowledge-root" }]);
+        setSearchQuery("");
+    }, []);
+
+    const handleNavigateToDocuments = useCallback(() => {
+        setNavigationMode("documents");
+        setBreadcrumbs([
+            { label: "Knowledge", path: "knowledge-root" },
+            { label: "Documents", path: "documents" }
+        ]);
+        setRootId(0); // Load Claromentis root
+        setExpandedIds(new Set());
+        setSearchQuery("");
+    }, []);
+
+    const handleNavigateToPages = useCallback(() => {
+        setNavigationMode("pages");
+        setBreadcrumbs([
+            { label: "Knowledge", path: "knowledge-root" },
+            { label: "Pages", path: "pages" }
+        ]);
+        setSearchQuery("");
+    }, []);
+
+    const handleBreadcrumbClick = useCallback((path: NavigationMode) => {
+        switch (path) {
+            case "knowledge-root":
+                handleNavigateToKnowledgeRoot();
+                break;
+            case "documents":
+                handleNavigateToDocuments();
+                break;
+            case "pages":
+                handleNavigateToPages();
+                break;
+        }
+    }, [handleNavigateToKnowledgeRoot, handleNavigateToDocuments, handleNavigateToPages]);
+
+    // Knowledge Root view - show Documents and Pages options
+    if (navigationMode === "knowledge-root") {
+        return (
+            <div className="h-full flex items-center justify-center bg-[#0C0C0C] p-6">
+                <div className="w-full max-w-lg rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] p-8">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center mb-5 border border-white/10">
+                        <Folder size={22} className="text-[rgba(245,245,245,0.6)]" />
+                    </div>
+                    <h2 className="text-[18px] font-semibold text-[#F5F5F5]">Knowledge</h2>
+                    <p className="mt-2 text-[14px] text-[rgba(245,245,245,0.5)] leading-relaxed">
+                        Choose a knowledge source to browse.
+                    </p>
+
+                    <div className="mt-6 space-y-3">
+                        {/* Documents Option */}
+                        <button
+                            type="button"
+                            onClick={handleNavigateToDocuments}
+                            className={[
+                                "w-full flex items-center gap-4 p-4 rounded-xl",
+                                "bg-[#0C0C0C] hover:bg-[rgba(255,255,255,0.02)]",
+                                "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)]",
+                                "transition-all duration-150",
+                                "text-left group",
+                            ].join(" ")}
+                        >
+                            <div className="w-10 h-10 rounded-lg bg-[rgba(122,163,200,0.1)] border border-[rgba(122,163,200,0.2)] flex items-center justify-center group-hover:bg-[rgba(122,163,200,0.15)] transition-colors">
+                                <Folder size={18} className="text-[#7AA3C8]" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-[14px] font-medium text-[#F5F5F5] group-hover:text-white transition-colors">Documents</h3>
+                                <p className="text-[12px] text-[rgba(245,245,245,0.5)] mt-0.5">Browse Claromentis documents and folders</p>
+                            </div>
+                            <ChevronRight size={18} className="text-[rgba(245,245,245,0.3)] group-hover:text-[rgba(245,245,245,0.5)] transition-colors" />
+                        </button>
+
+                        {/* Pages Option */}
+                        <button
+                            type="button"
+                            onClick={handleNavigateToPages}
+                            className={[
+                                "w-full flex items-center gap-4 p-4 rounded-xl",
+                                "bg-[#0C0C0C] hover:bg-[rgba(255,255,255,0.02)]",
+                                "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)]",
+                                "transition-all duration-150",
+                                "text-left group",
+                            ].join(" ")}
+                        >
+                            <div className="w-10 h-10 rounded-lg bg-[rgba(122,163,200,0.1)] border border-[rgba(122,163,200,0.2)] flex items-center justify-center group-hover:bg-[rgba(122,163,200,0.15)] transition-colors">
+                                <FileText size={18} className="text-[#7AA3C8]" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-[14px] font-medium text-[#F5F5F5] group-hover:text-white transition-colors">Pages</h3>
+                                <p className="text-[12px] text-[rgba(245,245,245,0.5)] mt-0.5">View knowledge base pages from S3</p>
+                            </div>
+                            <ChevronRight size={18} className="text-[rgba(245,245,245,0.3)] group-hover:text-[rgba(245,245,245,0.5)] transition-colors" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // If in documents mode but no root ID set, show folder ID input
+    if (navigationMode === "documents" && rootId === undefined) {
         return (
             <div className="h-full flex items-center justify-center bg-[#0C0C0C] p-6">
                 <div className="w-full max-w-md rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] p-8">
@@ -1092,6 +1221,13 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                             Load
                         </button>
                     </div>
+                    <button
+                        type="button"
+                        onClick={handleNavigateToKnowledgeRoot}
+                        className="mt-4 text-[12px] text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors"
+                    >
+                        ← Back to Knowledge
+                    </button>
                 </div>
             </div>
         );
@@ -1101,75 +1237,150 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
         <div className="h-full p-6 flex flex-col min-h-0 bg-[#0C0C0C]">
             {/* Main Content Card */}
             <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden flex flex-col min-h-0 flex-1">
-                {/* Header */}
-                <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between shrink-0">
-                    <div>
-                        <h1 className="text-[15px] font-semibold text-[#F5F5F5]">Knowledge Library</h1>
-                        <p className="text-[12px] text-[rgba(245,245,245,0.45)] mt-0.5">
-                            {rootId !== undefined ? `Folder ID: ${rootId}` : "Browse documents"}
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        {showRootLoading && (
-                            <div className="flex items-center gap-2 text-[12px] text-[rgba(245,245,245,0.5)]">
-                                <Loader2 size={14} className="animate-spin" />
-                                <span>Loading...</span>
+                {/* Header with Breadcrumbs */}
+                <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] shrink-0">
+                    <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                            <h1 className="text-[15px] font-semibold text-[#F5F5F5]">Knowledge Library</h1>
+                            {/* Breadcrumbs */}
+                            <div className="flex items-center gap-2 mt-1.5">
+                                {breadcrumbs.map((crumb, idx) => (
+                                    <div key={crumb.path} className="flex items-center gap-2">
+                                        {idx > 0 && <ChevronRight size={12} className="text-[rgba(245,245,245,0.3)]" />}
+                                        <button
+                                            type="button"
+                                            onClick={() => handleBreadcrumbClick(crumb.path)}
+                                            className={[
+                                                "text-[12px] transition-colors",
+                                                idx === breadcrumbs.length - 1
+                                                    ? "text-[#7AA3C8] font-medium cursor-default"
+                                                    : "text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5]",
+                                            ].join(" ")}
+                                            disabled={idx === breadcrumbs.length - 1}
+                                        >
+                                            {crumb.label}
+                                        </button>
+                                    </div>
+                                ))}
+                                {navigationMode === "documents" && rootId !== undefined && (
+                                    <span className="text-[12px] text-[rgba(245,245,245,0.4)]">
+                                        {" "} • Folder {rootId}
+                                    </span>
+                                )}
                             </div>
-                        )}
-                        <SyncStatusButton />
+                        </div>
+                        <div className="flex items-center gap-4">
+                            {((navigationMode === "documents" && showRootLoading) || (navigationMode === "pages" && pagesLoading)) && (
+                                <div className="flex items-center gap-2 text-[12px] text-[rgba(245,245,245,0.5)]">
+                                    <Loader2 size={14} className="animate-spin" />
+                                    <span>Loading...</span>
+                                </div>
+                            )}
+                            <SyncStatusButton />
+                        </div>
                     </div>
                 </div>
 
-                {/* Search Input */}
-                <div className="px-5 py-3 border-b border-[rgba(255,255,255,0.08)] shrink-0">
-                    <div className="relative">
-                        <Search
-                            size={16}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(245,245,245,0.4)]"
-                        />
-                        <input
-                            type="text"
-                            placeholder="Search documents and folders..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className={[
-                                "w-full rounded-lg pl-10 pr-4 py-2.5 text-[13px]",
-                                "bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.4)]",
-                                "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
-                                "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
-                                "transition-all duration-150",
-                            ].join(" ")}
-                        />
+                {/* Search Input - Only show for documents mode */}
+                {navigationMode === "documents" && (
+                    <div className="px-5 py-3 border-b border-[rgba(255,255,255,0.08)] shrink-0">
+                        <div className="relative">
+                            <Search
+                                size={16}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(245,245,245,0.4)]"
+                            />
+                            <input
+                                type="text"
+                                placeholder="Search documents and folders..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className={[
+                                    "w-full rounded-lg pl-10 pr-4 py-2.5 text-[13px]",
+                                    "bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.4)]",
+                                    "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
+                                    "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
+                                    "transition-all duration-150",
+                                ].join(" ")}
+                            />
+                        </div>
+                        <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-2">
+                            {searchQuery.trim().length < 2
+                                ? "Type at least 2 characters to search all documents and folders."
+                                : `Searching across all folders${searchTotal !== null ? ` • ${searchResults.length}${searchTotal > searchResults.length ? ` of ${searchTotal}` : ""} results` : ""}`
+                            }
+                        </p>
+                        <div className="flex items-center gap-2 mt-2 text-[12px]">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setRootId(initialRootId ?? 0);
+                                    setExpandedIds(new Set());
+                                    setSearchQuery("");
+                                }}
+                                className="text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors"
+                            >
+                                Back to root
+                            </button>
+                            <span className="text-[rgba(245,245,245,0.3)]">|</span>
+                            <span className="text-[rgba(245,245,245,0.6)] font-medium">
+                                Root ({displayItems.length})
+                            </span>
+                        </div>
                     </div>
-                    <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-2">
-                        {searchQuery.trim().length < 2
-                            ? "Type at least 2 characters to search all documents and folders."
-                            : `Searching across all folders${searchTotal !== null ? ` • ${searchResults.length}${searchTotal > searchResults.length ? ` of ${searchTotal}` : ""} results` : ""}`
-                        }
-                    </p>
-                    <div className="flex items-center gap-2 mt-2 text-[12px]">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setRootId(initialRootId ?? 0);
-                                setExpandedIds(new Set());
-                                setSearchQuery("");
-                            }}
-                            className="text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors"
-                        >
-                            Back to root
-                        </button>
-                        <span className="text-[rgba(245,245,245,0.3)]">|</span>
-                        <span className="text-[rgba(245,245,245,0.6)] font-medium">
-                            Root ({displayItems.length})
-                        </span>
-                    </div>
-                </div>
+                )}
 
-                {/* Tree View / Search Results */}
+                {/* Content Area */}
                 <div className="min-h-0 flex-1 overflow-y-auto py-2">
-                    {isSearchMode ? (
-                        // Search Results Mode
+                    {navigationMode === "pages" ? (
+                        // Pages Mode
+                        <>
+                            {pagesError ? (
+                                <div className="px-5 py-6 text-[14px] text-[#C87A7A] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
+                                    Failed to load pages: {(pagesError as Error).message}
+                                </div>
+                            ) : pagesLoading ? (
+                                <div className="px-5 py-10 text-center">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)]" />
+                                        <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Loading pages...</span>
+                                    </div>
+                                </div>
+                            ) : !pagesData || pagesData.items.length === 0 ? (
+                                <div className="px-5 py-10 text-center">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <FileText size={32} className="text-[rgba(245,245,245,0.2)]" />
+                                        <span className="text-[14px] text-[rgba(245,245,245,0.5)]">No pages available</span>
+                                        <span className="text-[12px] text-[rgba(245,245,245,0.35)]">Pages will appear here when uploaded to S3</span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div>
+                                    {pagesData.items.map((page) => (
+                                        <div
+                                            key={page.id}
+                                            className={[
+                                                "flex items-center gap-3 px-5 py-3 transition-all duration-150",
+                                                "hover:bg-white/2",
+                                            ].join(" ")}
+                                        >
+                                            <div className="w-5 flex items-center justify-center">
+                                                <FileText size={16} className="text-[rgba(245,245,245,0.4)]" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-[13px] text-[#F5F5F5] truncate">
+                                                    {page.name}
+                                                </div>
+                                                <div className="text-[11px] text-[rgba(245,245,245,0.4)] mt-0.5">
+                                                    {(page.size / 1024).toFixed(1)} KB • {new Date(page.last_modified).toLocaleDateString()}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </>
+                    ) : isSearchMode ? (
+                        // Search Results Mode (Documents)
                         <>
                             {searchError ? (
                                 <div className="px-5 py-6 text-[14px] text-[#C87A7A] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
@@ -1283,503 +1494,9 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
 }
 
 // ===========================================================================
-// GOOGLE DRIVE SHARED: Types
-// ===========================================================================
-type SharedRoot = {
-    id: string;
-    name: string;
-    rule_id: number;
-    shared_by: number | null;
-    shared_at: string | null;
-};
-
-type SharedDriveItem = {
-    id: string;
-    name: string;
-    mime_type: string;
-    is_folder: boolean;
-    modified_time?: string;
-    size?: string;
-    drive_id?: string;
-};
-
-type SharedBreadcrumb = {
-    id: string;
-    name: string;
-};
-
-// ===========================================================================
-// GOOGLE DRIVE SHARED: Main content view
-// ===========================================================================
-function SharedDriveLibraryContent() {
-    const [roots, setRoots] = useState<SharedRoot[]>([]);
-    const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
-    const [items, setItems] = useState<SharedDriveItem[]>([]);
-    const [breadcrumbs, setBreadcrumbs] = useState<SharedBreadcrumb[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [searchResults, setSearchResults] = useState<SharedDriveItem[]>([]);
-    const [isSearching, setIsSearching] = useState(false);
-    const [nextPageToken, setNextPageToken] = useState<string | null>(null);
-    const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    // Preview modal
-    const [previewModal, setPreviewModal] = useState<{
-        isOpen: boolean;
-        filename: string;
-        blobUrl: string;
-        loading: boolean;
-        error: string | null;
-    }>({ isOpen: false, filename: "", blobUrl: "", loading: false, error: null });
-    const blobUrlRef = useRef<string | null>(null);
-
-    const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-    // Fetch shared roots
-    const fetchRoots = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const res = await fetch("/api/knowledge/google-drive/shared/roots", { headers });
-            if (!res.ok) throw new Error("Failed to load shared folders");
-            const data = await res.json();
-            setRoots(data.roots);
-        } catch (e) {
-            setError(e instanceof Error ? e.message : "Failed to load");
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    // Fetch folder contents
-    const fetchFolder = useCallback(async (folderId: string, pageToken?: string) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const params = new URLSearchParams({ parent_id: folderId });
-            if (pageToken) params.set("page_token", pageToken);
-            const res = await fetch(`/api/knowledge/google-drive/shared/list?${params}`, { headers });
-            if (res.status === 403) {
-                setError("Access denied to this folder.");
-                setItems([]);
-                return;
-            }
-            if (!res.ok) throw new Error("Failed to load folder contents");
-            const data = await res.json();
-            setItems(data.items);
-            setBreadcrumbs(data.breadcrumbs || []);
-            setNextPageToken(data.next_page_token || null);
-        } catch (e) {
-            setError(e instanceof Error ? e.message : "Failed to load");
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (currentFolderId) {
-            fetchFolder(currentFolderId);
-        } else {
-            fetchRoots();
-        }
-    }, [currentFolderId]);
-
-    // Search with debounce
-    useEffect(() => {
-        if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-        const q = searchQuery.trim();
-        if (q.length < 2) {
-            setSearchResults([]);
-            setIsSearching(false);
-            return;
-        }
-        setIsSearching(true);
-        searchTimerRef.current = setTimeout(async () => {
-            try {
-                const params = new URLSearchParams({ q });
-                if (currentFolderId) params.set("root_id", currentFolderId);
-                const res = await fetch(`/api/knowledge/google-drive/shared/search?${params}`, { headers });
-                if (res.ok) {
-                    const data = await res.json();
-                    setSearchResults(data.items);
-                }
-            } catch {
-                /* ignore search errors */
-            } finally {
-                setIsSearching(false);
-            }
-        }, 300);
-        return () => {
-            if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-        };
-    }, [searchQuery, currentFolderId]);
-
-    // Navigation
-    const navigateTo = (folderId: string) => {
-        setSearchQuery("");
-        setCurrentFolderId(folderId);
-    };
-
-    const navigateToRoots = () => {
-        setSearchQuery("");
-        setCurrentFolderId(null);
-        setItems([]);
-        setBreadcrumbs([]);
-    };
-
-    // Preview
-    const handlePreview = useCallback(async (fileId: string, filename: string) => {
-        if (blobUrlRef.current) {
-            URL.revokeObjectURL(blobUrlRef.current);
-            blobUrlRef.current = null;
-        }
-        setPreviewModal({ isOpen: true, filename, blobUrl: "", loading: true, error: null });
-        try {
-            const res = await fetch(`/api/knowledge/google-drive/shared/file/${fileId}/preview`, { headers });
-            if (!res.ok) throw new Error(`Failed to load file (${res.status})`);
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
-            blobUrlRef.current = url;
-            setPreviewModal((prev) => ({ ...prev, blobUrl: url, loading: false }));
-        } catch (e) {
-            setPreviewModal((prev) => ({
-                ...prev,
-                loading: false,
-                error: e instanceof Error ? e.message : "Failed to load file",
-            }));
-        }
-    }, []);
-
-    const closePreview = useCallback(() => {
-        if (blobUrlRef.current) {
-            URL.revokeObjectURL(blobUrlRef.current);
-            blobUrlRef.current = null;
-        }
-        setPreviewModal({ isOpen: false, filename: "", blobUrl: "", loading: false, error: null });
-    }, []);
-
-    const isSearchMode = searchQuery.trim().length >= 2;
-    const displayItems = isSearchMode ? searchResults : (currentFolderId ? items : []);
-
-    return (
-        <div className="h-full p-6 flex flex-col min-h-0 bg-[#0C0C0C]">
-            <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden flex flex-col min-h-0 flex-1">
-                {/* Header */}
-                <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between shrink-0">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-white/10">
-                            <Cloud size={16} className="text-[rgba(245,245,245,0.6)]" />
-                        </div>
-                        <div>
-                            <h1 className="text-[15px] font-semibold text-[#F5F5F5]">Google Drive Shared</h1>
-                            <p className="text-[12px] text-[rgba(245,245,245,0.45)] mt-0.5">
-                                {currentFolderId ? "Browsing shared folder" : `${roots.length} shared folder${roots.length !== 1 ? "s" : ""}`}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {loading && (
-                            <div className="flex items-center gap-2 text-[12px] text-[rgba(245,245,245,0.5)]">
-                                <Loader2 size={14} className="animate-spin" />
-                                <span>Loading...</span>
-                            </div>
-                        )}
-                        <button
-                            type="button"
-                            onClick={() => currentFolderId ? fetchFolder(currentFolderId) : fetchRoots()}
-                            className="text-[12px] text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors px-2 py-1 rounded-md hover:bg-white/6"
-                        >
-                            Refresh
-                        </button>
-                    </div>
-                </div>
-
-                {/* Breadcrumbs */}
-                {breadcrumbs.length > 0 && (
-                    <div className="px-5 py-2.5 border-b border-[rgba(255,255,255,0.06)] flex items-center gap-1 text-[12px] shrink-0 overflow-x-auto">
-                        <button
-                            type="button"
-                            onClick={navigateToRoots}
-                            className="text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors shrink-0"
-                        >
-                            Shared
-                        </button>
-                        {breadcrumbs.map((crumb, idx) => (
-                            <span key={crumb.id} className="flex items-center gap-1 shrink-0">
-                                <ChevronRight size={12} className="text-[rgba(245,245,245,0.3)]" />
-                                {idx === breadcrumbs.length - 1 ? (
-                                    <span className="text-[#F5F5F5] font-medium">{crumb.name}</span>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        onClick={() => navigateTo(crumb.id)}
-                                        className="text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors"
-                                    >
-                                        {crumb.name}
-                                    </button>
-                                )}
-                            </span>
-                        ))}
-                    </div>
-                )}
-
-                {/* Search */}
-                <div className="px-5 py-3 border-b border-[rgba(255,255,255,0.08)] shrink-0">
-                    <div className="relative">
-                        <Search
-                            size={16}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(245,245,245,0.4)]"
-                        />
-                        <input
-                            type="text"
-                            placeholder="Search shared files and folders..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className={[
-                                "w-full rounded-lg pl-10 pr-4 py-2.5 text-[13px]",
-                                "bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.4)]",
-                                "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
-                                "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
-                                "transition-all duration-150",
-                            ].join(" ")}
-                        />
-                    </div>
-                    {isSearchMode && (
-                        <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-2">
-                            {isSearching ? "Searching..." : `${searchResults.length} result${searchResults.length !== 1 ? "s" : ""}`}
-                        </p>
-                    )}
-                </div>
-
-                {/* Content */}
-                <div className="min-h-0 flex-1 overflow-y-auto py-2">
-                    {error ? (
-                        <div className="px-5 py-6 text-[14px] text-[#C87A7A] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
-                            {error}
-                        </div>
-                    ) : loading && !currentFolderId && roots.length === 0 ? (
-                        <div className="px-5 py-10 text-center">
-                            <div className="flex flex-col items-center gap-3">
-                                <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)]" />
-                                <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Loading shared folders...</span>
-                            </div>
-                        </div>
-                    ) : !currentFolderId && !isSearchMode ? (
-                        // Show roots list
-                        roots.length === 0 ? (
-                            <div className="px-5 py-10 text-center">
-                                <div className="flex flex-col items-center gap-2">
-                                    <Cloud size={32} className="text-[rgba(245,245,245,0.2)]" />
-                                    <span className="text-[14px] text-[rgba(245,245,245,0.5)]">No shared folders</span>
-                                    <span className="text-[12px] text-[rgba(245,245,245,0.35)]">
-                                        Ask your admin to share a Google Drive folder with you.
-                                    </span>
-                                </div>
-                            </div>
-                        ) : (
-                            <div>
-                                {roots.map((root) => (
-                                    <div
-                                        key={root.id}
-                                        className="flex items-center gap-3 px-5 py-3 border-b border-[rgba(255,255,255,0.06)] hover:bg-white/4 transition-colors cursor-pointer"
-                                        onClick={() => navigateTo(root.id)}
-                                    >
-                                        <div className="w-8 h-8 rounded-lg bg-[rgba(122,163,200,0.1)] text-[#7AA3C8] flex items-center justify-center shrink-0">
-                                            <Folder size={16} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[13px] text-[#F5F5F5] truncate font-medium">
-                                                {root.name}
-                                            </p>
-                                            {root.shared_at && (
-                                                <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-0.5">
-                                                    Shared {new Date(root.shared_at).toLocaleDateString()}
-                                                </p>
-                                            )}
-                                        </div>
-                                        <ChevronRight size={16} className="text-[rgba(245,245,245,0.3)]" />
-                                    </div>
-                                ))}
-                            </div>
-                        )
-                    ) : isSearchMode ? (
-                        // Search results
-                        <div>
-                            {searchResults.length === 0 && !isSearching ? (
-                                <div className="px-5 py-10 text-center">
-                                    <div className="flex flex-col items-center gap-2">
-                                        <Search size={32} className="text-[rgba(245,245,245,0.2)]" />
-                                        <span className="text-[14px] text-[rgba(245,245,245,0.5)]">No results found</span>
-                                    </div>
-                                </div>
-                            ) : (
-                                searchResults.map((item) => (
-                                    <SharedDriveItemRow
-                                        key={item.id}
-                                        item={item}
-                                        onNavigate={navigateTo}
-                                        onPreview={handlePreview}
-                                    />
-                                ))
-                            )}
-                        </div>
-                    ) : (
-                        // Folder contents
-                        <div>
-                            {items.length === 0 && !loading ? (
-                                <div className="px-5 py-10 text-center">
-                                    <div className="flex flex-col items-center gap-2">
-                                        <Folder size={32} className="text-[rgba(245,245,245,0.2)]" />
-                                        <span className="text-[14px] text-[rgba(245,245,245,0.5)]">Empty folder</span>
-                                    </div>
-                                </div>
-                            ) : (
-                                items.map((item) => (
-                                    <SharedDriveItemRow
-                                        key={item.id}
-                                        item={item}
-                                        onNavigate={navigateTo}
-                                        onPreview={handlePreview}
-                                    />
-                                ))
-                            )}
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Preview modal */}
-            {previewModal.isOpen && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm transition-opacity duration-200"
-                    onClick={closePreview}
-                >
-                    <div
-                        className="relative w-full h-full max-w-6xl max-h-[90vh] m-4 bg-[#F5F5F5] rounded-2xl shadow-2xl flex flex-col overflow-hidden"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(0,0,0,0.08)] bg-white">
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <div className="w-10 h-10 rounded-lg bg-[rgba(0,0,0,0.05)] flex items-center justify-center shrink-0">
-                                    <FileText size={20} className="text-[rgba(0,0,0,0.5)]" />
-                                </div>
-                                <div className="min-w-0">
-                                    <h2 className="text-[15px] font-semibold text-[#0C0C0C] truncate">
-                                        {previewModal.filename}
-                                    </h2>
-                                    <p className="text-[12px] text-[rgba(0,0,0,0.5)] mt-0.5">Google Drive Shared Preview</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={closePreview}
-                                className="ml-4 w-9 h-9 flex items-center justify-center hover:bg-[rgba(0,0,0,0.05)] rounded-lg transition-colors duration-150"
-                                aria-label="Close"
-                            >
-                                <span className="text-[rgba(0,0,0,0.5)] text-lg">&times;</span>
-                            </button>
-                        </div>
-                        <div className="flex-1 overflow-hidden bg-[#e5e5e5] relative">
-                            {previewModal.loading && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-[#e5e5e5] z-10">
-                                    <Loader2 className="w-10 h-10 animate-spin text-[rgba(0,0,0,0.4)]" />
-                                </div>
-                            )}
-                            {previewModal.error && (
-                                <div className="absolute inset-0 flex items-center justify-center p-6 bg-[#e5e5e5] z-10">
-                                    <p className="text-[15px] text-[rgba(0,0,0,0.7)]">{previewModal.error}</p>
-                                </div>
-                            )}
-                            {previewModal.blobUrl && !previewModal.error && (
-                                <iframe
-                                    src={previewModal.blobUrl}
-                                    className="w-full h-full border-0"
-                                    title={`Preview - ${previewModal.filename}`}
-                                    style={{ minHeight: "600px" }}
-                                />
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-}
-
-// Shared Drive item row
-function SharedDriveItemRow({
-    item,
-    onNavigate,
-    onPreview,
-}: {
-    item: SharedDriveItem;
-    onNavigate: (folderId: string) => void;
-    onPreview: (fileId: string, filename: string) => void;
-}) {
-    return (
-        <div
-            className={[
-                "flex items-center gap-3 px-5 py-3 border-b border-[rgba(255,255,255,0.06)] hover:bg-white/4 transition-colors",
-                item.is_folder ? "cursor-pointer" : "",
-            ].join(" ")}
-            onClick={() => item.is_folder && onNavigate(item.id)}
-        >
-            <div
-                className={[
-                    "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                    item.is_folder
-                        ? "bg-[rgba(122,163,200,0.1)] text-[#7AA3C8]"
-                        : "bg-[rgba(245,245,245,0.06)] text-[rgba(245,245,245,0.5)]",
-                ].join(" ")}
-            >
-                {item.is_folder ? <Folder size={16} /> : <FileText size={16} />}
-            </div>
-            <div className="flex-1 min-w-0">
-                <p className="text-[13px] text-[#F5F5F5] truncate font-medium">
-                    {item.name}
-                </p>
-                {item.modified_time && (
-                    <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-0.5">
-                        Modified {new Date(item.modified_time).toLocaleDateString()}
-                    </p>
-                )}
-            </div>
-            {!item.is_folder && (
-                <button
-                    type="button"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onPreview(item.id, item.name);
-                    }}
-                    className={[
-                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md",
-                        "text-[11px] font-medium",
-                        "bg-[rgba(122,163,200,0.1)] hover:bg-[rgba(122,163,200,0.18)]",
-                        "border border-[rgba(122,163,200,0.2)] hover:border-[rgba(122,163,200,0.35)]",
-                        "text-[#7AA3C8] hover:text-[#9BBDD8]",
-                        "transition-all duration-150",
-                    ].join(" ")}
-                >
-                    <Eye className="w-3 h-3" />
-                    Preview
-                </button>
-            )}
-            {item.is_folder && (
-                <ChevronRight size={16} className="text-[rgba(245,245,245,0.3)]" />
-            )}
-        </div>
-    );
-}
-
-// ===========================================================================
 // LibraryView: Main export -- delegates to Claromentis or Drive content
 // ===========================================================================
 export default function LibraryView({ initialRootId, source = "claromentis", connectionType }: LibraryViewProps) {
-    if (source === "google-drive-shared") {
-        return <SharedDriveLibraryContent />;
-    }
-
     if (source === "google-drive") {
         return <DriveLibraryContent connectionType={connectionType} />;
     }

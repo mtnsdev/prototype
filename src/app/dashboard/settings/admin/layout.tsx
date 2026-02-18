@@ -4,13 +4,12 @@ import { ReactNode, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/contexts/UserContext";
-import { Shield, Users, FolderLock, RefreshCw, ArrowLeft, Loader2, Share2, FlaskConical } from "lucide-react";
+import { Shield, Users, FolderLock, RefreshCw, ArrowLeft, Loader2, FlaskConical } from "lucide-react";
 
 const ADMIN_NAV_ITEMS = [
     { href: "/dashboard/settings/admin", label: "Overview", icon: Shield, exact: true },
     { href: "/dashboard/settings/admin/users", label: "Users", icon: Users },
     { href: "/dashboard/settings/admin/permissions", label: "Permissions", icon: FolderLock },
-    { href: "/dashboard/settings/admin/shared-folders", label: "Shared Folders", icon: Share2 },
     { href: "/dashboard/settings/admin/sync", label: "Sync Health", icon: RefreshCw },
     { href: "/dashboard/settings/admin/bulk-test", label: "Bulk Test", icon: FlaskConical },
 ];

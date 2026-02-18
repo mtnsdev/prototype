@@ -17,10 +17,19 @@ async function proxy(req: Request, pathParts: string[]) {
   const headers = new Headers(req.headers);
   headers.delete("host");
 
+  let body: Buffer | undefined;
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    try {
+      body = Buffer.from(await req.arrayBuffer());
+    } catch {
+      body = undefined;
+    }
+  }
+
   const res = await fetch(targetUrl.toString(), {
     method: req.method,
     headers,
-    body: req.method === "GET" || req.method === "HEAD" ? undefined : await req.arrayBuffer(),
+    body,
   });
 
   return new NextResponse(res.body, {

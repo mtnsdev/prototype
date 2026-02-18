@@ -28,6 +28,7 @@
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
     "tailwind-merge": "^3.4.1",
+    "tailwindcss-animate": "^1.0.7",
     "validator": "^13.15.26",
     "zod": "^4.3.5"
   },
