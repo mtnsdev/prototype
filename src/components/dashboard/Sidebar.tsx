@@ -257,19 +257,27 @@ export default function Sidebar({
                                     onClick={() => router.push("/dashboard/knowledge?integration=claromentis")}
                                     active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("claromentis")}
                                 />
-                                {personalDriveStatus?.connected && (
-                                    <IntegrationItem
-                                        name="My Google Drive"
-                                        status="active"
-                                        onClick={() => router.push("/dashboard/knowledge?integration=google-drive-personal")}
-                                        active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("google-drive-personal")}
-                                    />
-                                )}
-                                {agencyDriveStatus?.connected && (
+                                <IntegrationItem
+                                    name="My Google Drive"
+                                    status="active"
+                                    connected={personalDriveStatus?.connected ?? false}
+                                    onClick={
+                                        personalDriveStatus?.connected
+                                            ? () => router.push("/dashboard/knowledge?integration=google-drive-personal")
+                                            : () => router.push("/dashboard/settings/integrations")
+                                    }
+                                    active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("google-drive-personal")}
+                                />
+                                {userContext?.user?.role === "admin" && (
                                     <IntegrationItem
                                         name="Admin Google Drive"
                                         status="active"
-                                        onClick={() => router.push("/dashboard/knowledge?integration=google-drive-agency")}
+                                        connected={agencyDriveStatus?.connected ?? false}
+                                        onClick={
+                                            agencyDriveStatus?.connected
+                                                ? () => router.push("/dashboard/knowledge?integration=google-drive-agency")
+                                                : () => router.push("/dashboard/settings/integrations")
+                                        }
                                         active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("google-drive-agency")}
                                     />
                                 )}
@@ -408,15 +416,18 @@ function NavLink({
 function IntegrationItem({
     name,
     status,
+    connected,
     onClick,
     active,
 }: {
     name: string;
     status: "active" | "coming_soon";
+    connected?: boolean;
     onClick?: () => void;
     active?: boolean;
 }) {
     const isClickable = status === "active" && onClick;
+    const showInactive = status === "active" && connected === false;
 
     return (
         <button
@@ -434,9 +445,15 @@ function IntegrationItem({
                 {name}
             </span>
             {status === "active" ? (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-[rgba(122,200,137,0.15)] text-[#7AC889]">
-                    Active
-                </span>
+                showInactive ? (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[rgba(245,245,245,0.08)] text-[rgba(245,245,245,0.45)]">
+                        Inactive
+                    </span>
+                ) : (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[rgba(122,200,137,0.15)] text-[#7AC889]">
+                        Active
+                    </span>
+                )
             ) : (
                 <span className="text-[10px] text-[rgba(245,245,245,0.35)]">
                     Coming soon

@@ -925,9 +925,35 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
     const showSearchLoader = useDelayedLoading(searchLoading);
 
     const clientCache = useRef<Map<number, TLItem[]>>(new Map());
-    
-    // Pages data - only fetch when in pages mode
-    const { data: pagesData, isLoading: pagesLoading, error: pagesError } = usePages(undefined, { enabled: navigationMode === "pages" });
+
+    // Root accordion state (knowledge-root view: Documents + Pages)
+    const [documentsOpen, setDocumentsOpen] = useState(false);
+    const [pagesOpen, setPagesOpen] = useState(false);
+    const [rootAccordionExpandedIds, setRootAccordionExpandedIds] = useState<Set<number>>(new Set());
+    const rootAccordionCache = useRef<Map<number, TLItem[]>>(new Map());
+
+    const handleRootAccordionToggle = useCallback((id: number) => {
+        setRootAccordionExpandedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) { next.delete(id); } else { next.add(id); }
+            return next;
+        });
+    }, []);
+
+    const accordionRootOptions = useMemo(() => ({
+        enabled: navigationMode === "knowledge-root" && documentsOpen,
+        onSuccess: (items: TLItem[]) => { rootAccordionCache.current.set(0, items); },
+    }), [navigationMode, documentsOpen]);
+    const { items: accordionRootItems, loading: accordionRootLoading } = useFolderChildren(
+        navigationMode === "knowledge-root" && documentsOpen ? 0 : undefined,
+        undefined,
+        accordionRootOptions
+    );
+    const accordionRootDisplay = rootAccordionCache.current.get(0) ?? accordionRootItems;
+
+    // Pages data - fetch when in pages mode OR when accordion pages section is open
+    const { items: pagesItems, hasMore: pagesHasMore, isLoading: pagesLoading, error: pagesError, loadMore: loadMorePages } = usePages({ enabled: navigationMode === "pages" || (navigationMode === "knowledge-root" && pagesOpen) });
+    const pagesData = pagesItems.length > 0 || !pagesLoading ? { items: pagesItems } : null;
 
     // Debounced search effect
     useEffect(() => {
@@ -1116,65 +1142,126 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
         }
     }, [handleNavigateToKnowledgeRoot, handleNavigateToDocuments, handleNavigateToPages]);
 
-    // Knowledge Root view - show Documents and Pages options
+    // Knowledge Root view — full-page tree with 2 root rows: Documents + Pages
     if (navigationMode === "knowledge-root") {
         return (
-            <div className="h-full flex items-center justify-center bg-[#0C0C0C] p-6">
-                <div className="w-full max-w-lg rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] p-8">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center mb-5 border border-white/10">
-                        <Folder size={22} className="text-[rgba(245,245,245,0.6)]" />
+            <div className="h-full p-6 flex flex-col min-h-0 bg-[#0C0C0C]">
+                <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden flex flex-col min-h-0 flex-1">
+                    {/* Header */}
+                    <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] shrink-0 flex items-center justify-between">
+                        <div>
+                            <h1 className="text-[15px] font-semibold text-[#F5F5F5]">Knowledge Library</h1>
+                            <p className="text-[12px] text-[rgba(245,245,245,0.4)] mt-0.5">Knowledge</p>
+                        </div>
+                        <SyncStatusButton />
                     </div>
-                    <h2 className="text-[18px] font-semibold text-[#F5F5F5]">Knowledge</h2>
-                    <p className="mt-2 text-[14px] text-[rgba(245,245,245,0.5)] leading-relaxed">
-                        Choose a knowledge source to browse.
-                    </p>
 
-                    <div className="mt-6 space-y-3">
-                        {/* Documents Option */}
-                        <button
-                            type="button"
-                            onClick={handleNavigateToDocuments}
-                            className={[
-                                "w-full flex items-center gap-4 p-4 rounded-xl",
-                                "bg-[#0C0C0C] hover:bg-[rgba(255,255,255,0.02)]",
-                                "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)]",
-                                "transition-all duration-150",
-                                "text-left group",
-                            ].join(" ")}
+                    {/* Tree content */}
+                    <div className="min-h-0 flex-1 overflow-y-auto py-2">
+                        {/* Documents root row */}
+                        <div
+                            className="flex items-center gap-2 py-2 pr-4 hover:bg-white/4 cursor-pointer transition-all duration-150"
+                            style={{ paddingLeft: 20 }}
+                            onClick={() => setDocumentsOpen((v) => !v)}
                         >
-                            <div className="w-10 h-10 rounded-lg bg-[rgba(122,163,200,0.1)] border border-[rgba(122,163,200,0.2)] flex items-center justify-center group-hover:bg-[rgba(122,163,200,0.15)] transition-colors">
-                                <Folder size={18} className="text-[#7AA3C8]" />
+                            <button
+                                type="button"
+                                className="w-5 h-5 flex items-center justify-center text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors"
+                                onClick={(e) => { e.stopPropagation(); setDocumentsOpen((v) => !v); }}
+                            >
+                                {accordionRootLoading && documentsOpen
+                                    ? <Loader2 size={14} className="animate-spin" />
+                                    : documentsOpen
+                                        ? <ChevronDown size={14} />
+                                        : <ChevronRight size={14} />
+                                }
+                            </button>
+                            <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 bg-[rgba(122,163,200,0.1)] text-[#7AA3C8]">
+                                <Folder size={14} />
                             </div>
-                            <div className="flex-1">
-                                <h3 className="text-[14px] font-medium text-[#F5F5F5] group-hover:text-white transition-colors">Documents</h3>
-                                <p className="text-[12px] text-[rgba(245,245,245,0.5)] mt-0.5">Browse Claromentis documents and folders</p>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-medium text-[#F5F5F5] truncate">Documents</p>
                             </div>
-                            <ChevronRight size={18} className="text-[rgba(245,245,245,0.3)] group-hover:text-[rgba(245,245,245,0.5)] transition-colors" />
-                        </button>
+                        </div>
 
-                        {/* Pages Option */}
-                        <button
-                            type="button"
-                            onClick={handleNavigateToPages}
-                            className={[
-                                "w-full flex items-center gap-4 p-4 rounded-xl",
-                                "bg-[#0C0C0C] hover:bg-[rgba(255,255,255,0.02)]",
-                                "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)]",
-                                "transition-all duration-150",
-                                "text-left group",
-                            ].join(" ")}
+                        {/* Documents children */}
+                        {documentsOpen && !accordionRootLoading && accordionRootDisplay.map((item) => (
+                            <TreeNode
+                                key={item.kind === "folder" ? `f-${item.id}` : `d-${item.doc_id}-${item.version_num}`}
+                                item={item}
+                                depth={1}
+                                expandedIds={rootAccordionExpandedIds}
+                                onToggleExpand={handleRootAccordionToggle}
+                                clientCache={rootAccordionCache}
+                                onOpenPreview={openPreview}
+                            />
+                        ))}
+
+                        {/* Pages root row */}
+                        <div
+                            className="flex items-center gap-2 py-2 pr-4 hover:bg-white/4 cursor-pointer transition-all duration-150"
+                            style={{ paddingLeft: 20 }}
+                            onClick={() => setPagesOpen((v) => !v)}
                         >
-                            <div className="w-10 h-10 rounded-lg bg-[rgba(122,163,200,0.1)] border border-[rgba(122,163,200,0.2)] flex items-center justify-center group-hover:bg-[rgba(122,163,200,0.15)] transition-colors">
-                                <FileText size={18} className="text-[#7AA3C8]" />
+                            <button
+                                type="button"
+                                className="w-5 h-5 flex items-center justify-center text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors"
+                                onClick={(e) => { e.stopPropagation(); setPagesOpen((v) => !v); }}
+                            >
+                                {pagesLoading && pagesOpen && pagesItems.length === 0
+                                    ? <Loader2 size={14} className="animate-spin" />
+                                    : pagesOpen
+                                        ? <ChevronDown size={14} />
+                                        : <ChevronRight size={14} />
+                                }
+                            </button>
+                            <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 bg-[rgba(122,163,200,0.1)] text-[#7AA3C8]">
+                                <Folder size={14} />
                             </div>
-                            <div className="flex-1">
-                                <h3 className="text-[14px] font-medium text-[#F5F5F5] group-hover:text-white transition-colors">Pages</h3>
-                                <p className="text-[12px] text-[rgba(245,245,245,0.5)] mt-0.5">View knowledge base pages from S3</p>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-medium text-[#F5F5F5] truncate">Pages</p>
                             </div>
-                            <ChevronRight size={18} className="text-[rgba(245,245,245,0.3)] group-hover:text-[rgba(245,245,245,0.5)] transition-colors" />
-                        </button>
+                        </div>
+
+                        {/* Pages children */}
+                        {pagesOpen && pagesItems.map((page) => (
+                            <div
+                                key={page.id}
+                                className="flex items-center gap-2 py-2 pr-4 hover:bg-white/2 transition-all duration-150"
+                                style={{ paddingLeft: 44 + 24 }}
+                            >
+                                <div className="w-5" />
+                                <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 bg-[rgba(245,245,245,0.06)] text-[rgba(245,245,245,0.5)]">
+                                    <FileText size={14} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[13px] text-[rgba(245,245,245,0.8)] truncate">{page.name}</p>
+                                </div>
+                            </div>
+                        ))}
+                        {pagesOpen && pagesHasMore && (
+                            <div style={{ paddingLeft: 44 + 24 }} className="pr-4 py-2">
+                                <button
+                                    type="button"
+                                    onClick={loadMorePages}
+                                    disabled={pagesLoading}
+                                    className="w-full py-1.5 rounded-lg text-[12px] text-[rgba(245,245,245,0.5)] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.06)] disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
+                                >
+                                    {pagesLoading ? <Loader2 size={12} className="animate-spin" /> : null}
+                                    Load more
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
+
+                {/* PDF Preview Modal */}
+                <PdfModal
+                    isOpen={pdfModal.isOpen}
+                    onClose={() => setPdfModal({ isOpen: false, filename: "", customUrl: "" })}
+                    filename={pdfModal.filename}
+                    customUrl={pdfModal.customUrl}
+                />
             </div>
         );
     }
@@ -1345,7 +1432,7 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                                         <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Loading pages...</span>
                                     </div>
                                 </div>
-                            ) : !pagesData || pagesData.items.length === 0 ? (
+                            ) : pagesItems.length === 0 ? (
                                 <div className="px-5 py-10 text-center">
                                     <div className="flex flex-col items-center gap-2">
                                         <FileText size={32} className="text-[rgba(245,245,245,0.2)]" />
@@ -1355,7 +1442,7 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                                 </div>
                             ) : (
                                 <div>
-                                    {pagesData.items.map((page) => (
+                                    {pagesItems.map((page) => (
                                         <div
                                             key={page.id}
                                             className={[
@@ -1376,6 +1463,19 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                                             </div>
                                         </div>
                                     ))}
+                                    {pagesHasMore && (
+                                        <div className="px-5 py-3">
+                                            <button
+                                                type="button"
+                                                onClick={loadMorePages}
+                                                disabled={pagesLoading}
+                                                className="w-full py-2 rounded-xl text-[13px] text-[rgba(245,245,245,0.6)] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.08)] transition-all duration-150 disabled:opacity-50 flex items-center justify-center gap-2"
+                                            >
+                                                {pagesLoading ? <Loader2 size={14} className="animate-spin" /> : null}
+                                                Load more
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </>

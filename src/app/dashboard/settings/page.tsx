@@ -213,8 +213,8 @@ export default function SettingsPage() {
                     </div>
                 </section>
 
-                {/* Security Section */}
-                <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
+                {/* Security Section — only for users who registered with a password */}
+                {user?.has_password && <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
                     <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center gap-3">
                         <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-white/10">
                             <Key size={18} className="text-[rgba(245,245,245,0.6)]" />
@@ -304,7 +304,7 @@ export default function SettingsPage() {
                             )}
                         </button>
                     </div>
-                </section>
+                </section>}
 
                 {/* Account Section */}
                 <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
