@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import React from "react";
 import { AlertTriangle, Loader2, ExternalLink, Send, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -480,6 +480,9 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
     /** Message id for which the comment popup is open (null = closed) */
     const [feedbackCommentPopupMessageId, setFeedbackCommentPopupMessageId] = useState<number | null>(null);
 
+    /** Ref for the bottom of the messages area; scroll here after sending so the new question is visible */
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
     // Delayed loading states to prevent flickering
     const showSendingLoader = useDelayedLoading(loading);
     const showConversationLoader = useDelayedLoading(loadingConversation);
@@ -616,6 +619,8 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
         setMessages((m) => [...m, { role: "user", text }]);
         setLoading(true);
         setThinkingSteps([]);
+        // Scroll to the new question after React commits the new message to the DOM
+        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 0);
 
         try {
             const token = localStorage.getItem("auth_token");
@@ -974,6 +979,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                             </div>
                         </div>
                     )}
+                    <div ref={messagesEndRef} aria-hidden />
                 </div>
 
                 {/* Input Area */}
