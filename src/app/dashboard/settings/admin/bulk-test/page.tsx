@@ -13,6 +13,9 @@ import {
     LayoutDashboard,
     Eye,
     X,
+    MessageSquare,
+    ThumbsUp,
+    ThumbsDown,
 } from "lucide-react";
 
 import {
@@ -44,7 +47,7 @@ function getAuthHeaders(): HeadersInit {
     };
 }
 
-type TabId = "run" | "history" | "compare" | "questions" | "dashboard";
+type TabId = "run" | "history" | "compare" | "questions" | "dashboard" | "chat-history";
 
 type FeedbackSuggestion = {
     question_text: string;
@@ -83,6 +86,21 @@ type BulkTestResult = {
     created_at: string;
 };
 
+type ChatMessagePair = {
+    user_message_id: number;
+    assistant_message_id: number;
+    question: string;
+    answer: string;
+    feedback_rating: number | null;
+    feedback_comment: string | null;
+    citations: unknown;
+    conflicts: unknown;
+    can_answer: boolean | null;
+    session_id: number;
+    user_email: string | null;
+    created_at: string;
+};
+
 type BulkTestRun = {
     id: number;
     triggered_by_id: number | null;
@@ -111,12 +129,11 @@ export default function BulkTestPage() {
     const [runsTotal, setRunsTotal] = useState(0);
     const [runsPage, setRunsPage] = useState(1);
     const RUNS_PAGE_SIZE = 20;
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // Run test state
     const [running, setRunning] = useState(false);
-    const [currentRunId, setCurrentRunId] = useState<number | null>(null);
+    const [, setCurrentRunId] = useState<number | null>(null);
     const [progress, setProgress] = useState<{ completed_count: number; total_count: number; status: string } | null>(null);
     const [lastRun, setLastRun] = useState<BulkTestRun | null>(null);
     const [geminiModel, setGeminiModel] = useState("gemini-2.5-pro");
@@ -166,6 +183,16 @@ export default function BulkTestPage() {
     const [suggestions, setSuggestions] = useState<FeedbackSuggestion[]>([]);
     const [suggestionsLoading, setSuggestionsLoading] = useState(false);
     const [addingFromFeedback, setAddingFromFeedback] = useState<number | null>(null);
+    const [latestRunForQuestions, setLatestRunForQuestions] = useState<BulkTestRun | null>(null);
+    const [questionDetailId, setQuestionDetailId] = useState<number | null>(null);
+
+    // Chat History state
+    const [chatMessages, setChatMessages] = useState<ChatMessagePair[]>([]);
+    const [chatMessagesLoading, setChatMessagesLoading] = useState(false);
+    const [chatMessagesPage, setChatMessagesPage] = useState(1);
+    const [chatMessagesTotal, setChatMessagesTotal] = useState(0);
+    const CHAT_MESSAGES_PAGE_SIZE = 50;
+    const [chatMessageDetailIndex, setChatMessageDetailIndex] = useState<number | null>(null);
 
     const fetchQuestions = useCallback(async () => {
         try {
@@ -191,6 +218,23 @@ export default function BulkTestPage() {
             setError(e instanceof Error ? e.message : "Failed to load suggestions");
         } finally {
             setSuggestionsLoading(false);
+        }
+    }, []);
+
+    const fetchLatestRunForQuestions = useCallback(async () => {
+        try {
+            const listRes = await fetch(`${API_BASE}/runs?limit=1&offset=0`, { headers: getAuthHeaders() });
+            if (!listRes.ok) return;
+            const listData = await listRes.json();
+            const runs = listData.runs ?? [];
+            const latest = runs.find((r: BulkTestRun) => r.status === "completed");
+            if (!latest) return;
+            const detailRes = await fetch(`${API_BASE}/runs/${latest.id}`, { headers: getAuthHeaders() });
+            if (!detailRes.ok) return;
+            const runDetail = await detailRes.json();
+            setLatestRunForQuestions(runDetail);
+        } catch {
+            // Ignore - latest run is optional for questions tab
         }
     }, []);
 
@@ -222,18 +266,41 @@ export default function BulkTestPage() {
         }
     }, []);
 
+    const fetchChatMessages = useCallback(async (page: number) => {
+        setChatMessagesLoading(true);
+        try {
+            const skip = (page - 1) * CHAT_MESSAGES_PAGE_SIZE;
+            const r = await fetch(`${API_BASE}/chat-messages?skip=${skip}&limit=${CHAT_MESSAGES_PAGE_SIZE}`, {
+                headers: getAuthHeaders(),
+            });
+            if (!r.ok) throw new Error("Failed to fetch chat messages");
+            const data = await r.json();
+            setChatMessages(data.items ?? []);
+            setChatMessagesTotal(data.total ?? 0);
+            setChatMessagesPage(page);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "Failed to load chat messages");
+        } finally {
+            setChatMessagesLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         if (tab === "questions") {
             fetchQuestions();
             fetchSuggestions();
+            fetchLatestRunForQuestions();
         }
         if (tab === "run") {
             fetchQuestions();
         }
+        if (tab === "chat-history") {
+            fetchChatMessages(1);
+        }
         if (tab === "history") fetchRuns(runsPage, RUNS_PAGE_SIZE);
         if (tab === "run" || tab === "compare") fetchRuns(1, 100);
         if (tab === "dashboard") fetchDashboard();
-    }, [tab, runsPage, fetchQuestions, fetchRuns, fetchDashboard, fetchSuggestions]);
+    }, [tab, runsPage, fetchQuestions, fetchRuns, fetchDashboard, fetchSuggestions, fetchLatestRunForQuestions, fetchChatMessages]);
 
     const startRun = async () => {
         setError(null);
@@ -384,6 +451,7 @@ export default function BulkTestPage() {
         { id: "history", label: "Run History", icon: History },
         { id: "compare", label: "Compare Runs", icon: GitCompare },
         { id: "questions", label: "Question Management", icon: ListChecks },
+        { id: "chat-history", label: "Chat History", icon: MessageSquare },
     ];
 
     return (
@@ -959,6 +1027,226 @@ export default function BulkTestPage() {
                 </div>
             )}
 
+            {tab === "chat-history" && (
+                <div className="space-y-6">
+                    <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] overflow-hidden">
+                        <div className="p-4 border-b border-[rgba(255,255,255,0.08)]">
+                            <h3 className="text-[16px] font-semibold text-[#F5F5F5]">Chat History</h3>
+                            <p className="text-[12px] text-[rgba(245,245,245,0.5)] mt-1">
+                                All user questions from chat_messages with answers and feedback
+                            </p>
+                        </div>
+                        {chatMessagesLoading ? (
+                            <div className="flex justify-center py-12">
+                                <Loader2 size={28} className="animate-spin text-[rgba(245,245,245,0.4)]" />
+                            </div>
+                        ) : (
+                            <>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-[14px]">
+                                        <thead>
+                                            <tr className="border-b border-[rgba(255,255,255,0.08)]">
+                                                <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Question</th>
+                                                <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Answer</th>
+                                                <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-24">Feedback</th>
+                                                <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-20">Can Answer</th>
+                                                <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-28">User</th>
+                                                <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-36">Date</th>
+                                                <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-20">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {chatMessages.map((pair, i) => {
+                                                const truncate = (s: string | null | undefined, max: number) =>
+                                                    s && s.length > max ? s.slice(0, max) + "…" : s ?? "—";
+                                                const feedbackLabel =
+                                                    pair.feedback_rating === 1
+                                                        ? "Up"
+                                                        : pair.feedback_rating === -1
+                                                          ? "Down"
+                                                          : "—";
+                                                return (
+                                                    <tr
+                                                        key={pair.assistant_message_id}
+                                                        className="border-b border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.02)]"
+                                                    >
+                                                        <td className="p-3 text-[#F5F5F5] max-w-[220px]">
+                                                            {truncate(pair.question, 80)}
+                                                        </td>
+                                                        <td className="p-3 text-[rgba(245,245,245,0.8)] max-w-[220px]">
+                                                            {truncate(pair.answer, 80)}
+                                                        </td>
+                                                        <td className="p-3">
+                                                            {pair.feedback_rating === 1 ? (
+                                                                <span className="text-green-400 inline-flex items-center gap-1">
+                                                                    <ThumbsUp size={14} /> {feedbackLabel}
+                                                                </span>
+                                                            ) : pair.feedback_rating === -1 ? (
+                                                                <span className="text-red-400 inline-flex items-center gap-1">
+                                                                    <ThumbsDown size={14} /> {feedbackLabel}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[rgba(245,245,245,0.4)]">—</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="p-3">
+                                                            {pair.can_answer === true ? (
+                                                                <span className="text-green-400">Yes</span>
+                                                            ) : pair.can_answer === false ? (
+                                                                <span className="text-red-400">No</span>
+                                                            ) : (
+                                                                <span className="text-[rgba(245,245,245,0.4)]">—</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="p-3 text-[12px] text-[rgba(245,245,245,0.7)]">
+                                                            {pair.user_email ?? "—"}
+                                                        </td>
+                                                        <td className="p-3 text-[12px] text-[rgba(245,245,245,0.6)]">
+                                                            {new Date(pair.created_at).toLocaleString()}
+                                                        </td>
+                                                        <td className="p-3">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setChatMessageDetailIndex(i)}
+                                                                className="inline-flex items-center gap-1 text-[rgba(245,245,245,0.8)] hover:text-[#F5F5F5] hover:underline text-[13px]"
+                                                                title="View full details"
+                                                            >
+                                                                <Eye size={14} /> View
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {chatMessages.length === 0 && (
+                                    <div className="p-8 text-center text-[rgba(245,245,245,0.5)] text-[14px]">
+                                        No chat messages yet.
+                                    </div>
+                                )}
+                                {chatMessagesTotal > 0 && (
+                                    <div className="p-3 border-t border-[rgba(255,255,255,0.08)] flex items-center justify-between gap-4 flex-wrap">
+                                        <span className="text-[13px] text-[rgba(245,245,245,0.6)]">
+                                            Showing {(chatMessagesPage - 1) * CHAT_MESSAGES_PAGE_SIZE + 1}–
+                                            {Math.min(chatMessagesPage * CHAT_MESSAGES_PAGE_SIZE, chatMessagesTotal)} of {chatMessagesTotal}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => fetchChatMessages(chatMessagesPage - 1)}
+                                                disabled={chatMessagesPage <= 1}
+                                                className="px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.08)] text-[#F5F5F5] hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50 disabled:pointer-events-none text-[13px]"
+                                            >
+                                                Previous
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => fetchChatMessages(chatMessagesPage + 1)}
+                                                disabled={chatMessagesPage * CHAT_MESSAGES_PAGE_SIZE >= chatMessagesTotal}
+                                                className="px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.08)] text-[#F5F5F5] hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50 disabled:pointer-events-none text-[13px]"
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+
+                    {/* Chat message detail modal */}
+                    {chatMessageDetailIndex !== null && chatMessages[chatMessageDetailIndex] && (() => {
+                        const pair = chatMessages[chatMessageDetailIndex];
+                        const citations = Array.isArray(pair.citations) ? pair.citations : [];
+                        const conflicts = Array.isArray(pair.conflicts) ? pair.conflicts : [];
+                        return (
+                            <div
+                                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+                                onClick={() => setChatMessageDetailIndex(null)}
+                            >
+                                <div
+                                    className="rounded-2xl bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <div className="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.08)]">
+                                        <h4 className="text-[16px] font-semibold text-[#F5F5F5]">Chat message details</h4>
+                                        <button
+                                            type="button"
+                                            onClick={() => setChatMessageDetailIndex(null)}
+                                            className="p-1.5 rounded-lg text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.08)] hover:text-[#F5F5F5]"
+                                        >
+                                            <X size={20} />
+                                        </button>
+                                    </div>
+                                    <div className="p-4 overflow-y-auto space-y-4 text-[14px]">
+                                        <div>
+                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Question</div>
+                                            <p className="text-[#F5F5F5] whitespace-pre-wrap">{pair.question}</p>
+                                        </div>
+                                        <div>
+                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Answer</div>
+                                            <p className="text-[#F5F5F5] whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">
+                                                {pair.answer}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Feedback</div>
+                                            <p className="text-[#F5F5F5]">
+                                                {pair.feedback_rating === 1 && (
+                                                    <span className="text-green-400 inline-flex items-center gap-1">
+                                                        <ThumbsUp size={16} /> Thumbs up
+                                                    </span>
+                                                )}
+                                                {pair.feedback_rating === -1 && (
+                                                    <span className="text-red-400 inline-flex items-center gap-1">
+                                                        <ThumbsDown size={16} /> Thumbs down
+                                                    </span>
+                                                )}
+                                                {pair.feedback_rating == null && (
+                                                    <span className="text-[rgba(245,245,245,0.5)]">—</span>
+                                                )}
+                                                {pair.feedback_comment && (
+                                                    <span className="block mt-2 text-[rgba(245,245,245,0.8)]">
+                                                        Comment: {pair.feedback_comment}
+                                                    </span>
+                                                )}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Can answer</div>
+                                            <p className="text-[#F5F5F5]">
+                                                {pair.can_answer === true ? "Yes" : pair.can_answer === false ? "No" : "—"}
+                                            </p>
+                                        </div>
+                                        {citations.length > 0 && (
+                                            <div>
+                                                <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Citations</div>
+                                                <pre className="text-[12px] text-[rgba(245,245,245,0.8)] whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3 max-h-40 overflow-y-auto">
+                                                    {JSON.stringify(citations, null, 2)}
+                                                </pre>
+                                            </div>
+                                        )}
+                                        {conflicts.length > 0 && (
+                                            <div>
+                                                <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Conflicts</div>
+                                                <pre className="text-[12px] text-[rgba(245,245,245,0.8)] whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3 max-h-40 overflow-y-auto">
+                                                    {JSON.stringify(conflicts, null, 2)}
+                                                </pre>
+                                            </div>
+                                        )}
+                                        <div className="text-[12px] text-[rgba(245,245,245,0.5)]">
+                                            User: {pair.user_email ?? "—"} · Session #{pair.session_id} ·{" "}
+                                            {new Date(pair.created_at).toLocaleString()}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
+                </div>
+            )}
+
             {tab === "questions" && (
                 <div className="space-y-6">
                     {suggestions.length > 0 && (
@@ -1060,44 +1348,89 @@ export default function BulkTestPage() {
                     <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] overflow-hidden">
                         <div className="p-4 border-b border-[rgba(255,255,255,0.08)]">
                             <h3 className="text-[16px] font-semibold text-[#F5F5F5]">Questions ({questions.length})</h3>
+                            {latestRunForQuestions && (
+                                <p className="text-[12px] text-[rgba(245,245,245,0.5)] mt-1">
+                                    Latest answers/scores from Run #{latestRunForQuestions.id} ({latestRunForQuestions.model_name ?? "—"})
+                                </p>
+                            )}
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-[14px]">
                                 <thead>
                                     <tr className="border-b border-[rgba(255,255,255,0.08)]">
                                         <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Question</th>
-                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-24">Min score</th>
-                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-20">Active</th>
-                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-28">Actions</th>
+                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium min-w-[120px]">Expected answer</th>
+                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium min-w-[120px]">Latest answer</th>
+                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-16">Score</th>
+                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-16">Pass</th>
+                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-20">Source</th>
+                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-20">Min</th>
+                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-16">Active</th>
+                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-32">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {questions.map((q) => (
-                                        <tr key={q.id} className="border-b border-[rgba(255,255,255,0.06)]">
-                                            <td className="p-3 text-[#F5F5F5] max-w-md">{q.question}</td>
-                                            <td className="p-3">{q.min_score}</td>
-                                            <td className="p-3">{q.is_active ? "Yes" : "No"}</td>
-                                            <td className="p-3 flex gap-2">
-                                                <button
-                                                    onClick={() => {
-                                                        setEditingId(q.id);
-                                                        setFormQuestion(q.question);
-                                                        setFormExpected(q.expected_answer ?? "");
-                                                        setFormMinScore(q.min_score);
-                                                    }}
-                                                    className="text-amber-400 hover:underline text-[13px]"
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    onClick={() => setDeleteQuestionId(q.id)}
-                                                    className="text-red-400 hover:underline text-[13px]"
-                                                >
-                                                    Delete
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {questions.map((q) => {
+                                        const latestResult = (latestRunForQuestions?.results ?? []).find(
+                                            (r: BulkTestResult) => r.question_id === q.id
+                                        );
+                                        const truncate = (s: string | null | undefined, max: number) =>
+                                            s && s.length > max ? s.slice(0, max) + "…" : s ?? "—";
+                                        return (
+                                            <tr key={q.id} className="border-b border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.02)]">
+                                                <td className="p-3 text-[#F5F5F5] max-w-[200px]">{truncate(q.question, 60)}</td>
+                                                <td className="p-3 text-[rgba(245,245,245,0.8)] max-w-[150px]" title={q.expected_answer ?? undefined}>
+                                                    {truncate(q.expected_answer, 50)}
+                                                </td>
+                                                <td className="p-3 text-[rgba(245,245,245,0.8)] max-w-[150px]" title={latestResult?.answer ?? undefined}>
+                                                    {truncate(latestResult?.answer, 50)}
+                                                </td>
+                                                <td className="p-3">{latestResult?.quality_score ?? "—"}</td>
+                                                <td className="p-3">
+                                                    {latestResult != null ? (
+                                                        latestResult.passed ? (
+                                                            <span className="text-green-400">Yes</span>
+                                                        ) : (
+                                                            <span className="text-red-400">No</span>
+                                                        )
+                                                    ) : (
+                                                        <span className="text-[rgba(245,245,245,0.4)]">—</span>
+                                                    )}
+                                                </td>
+                                                <td className="p-3 text-[12px] text-[rgba(245,245,245,0.6)]">
+                                                    {q.source === "user_feedback" ? "Feedback" : q.source ?? "Manual"}
+                                                </td>
+                                                <td className="p-3">{q.min_score}</td>
+                                                <td className="p-3">{q.is_active ? "Yes" : "No"}</td>
+                                                <td className="p-3 flex gap-2 flex-wrap">
+                                                    <button
+                                                        onClick={() => setQuestionDetailId(q.id)}
+                                                        className="text-[rgba(245,245,245,0.8)] hover:text-[#F5F5F5] hover:underline text-[13px] inline-flex items-center gap-1"
+                                                        title="View full details"
+                                                    >
+                                                        <Eye size={14} /> View
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingId(q.id);
+                                                            setFormQuestion(q.question);
+                                                            setFormExpected(q.expected_answer ?? "");
+                                                            setFormMinScore(q.min_score);
+                                                        }}
+                                                        className="text-amber-400 hover:underline text-[13px]"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setDeleteQuestionId(q.id)}
+                                                        className="text-red-400 hover:underline text-[13px]"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
@@ -1107,6 +1440,83 @@ export default function BulkTestPage() {
                             </div>
                         )}
                     </div>
+
+                    {/* Question detail modal */}
+                    {questionDetailId !== null && (() => {
+                        const q = questions.find((x) => x.id === questionDetailId);
+                        if (!q) return null;
+                        const latestResult = (latestRunForQuestions?.results ?? []).find(
+                            (r: BulkTestResult) => r.question_id === q.id
+                        );
+                        const reasoning = latestResult?.score_breakdown && typeof latestResult.score_breakdown === "object" && "reasoning" in latestResult.score_breakdown
+                            ? String((latestResult.score_breakdown as { reasoning?: string }).reasoning ?? "")
+                            : "";
+                        return (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setQuestionDetailId(null)}>
+                                <div className="rounded-2xl bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.08)]">
+                                        <h4 className="text-[16px] font-semibold text-[#F5F5F5]">Question details</h4>
+                                        <button type="button" onClick={() => setQuestionDetailId(null)} className="p-1.5 rounded-lg text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.08)] hover:text-[#F5F5F5]">
+                                            <X size={20} />
+                                        </button>
+                                    </div>
+                                    <div className="p-4 overflow-y-auto space-y-4 text-[14px]">
+                                        <div>
+                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Question</div>
+                                            <p className="text-[#F5F5F5] whitespace-pre-wrap">{q.question}</p>
+                                        </div>
+                                        <div>
+                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Expected answer / criteria</div>
+                                            <p className="text-[#F5F5F5] whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">
+                                                {q.expected_answer ?? "—"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Source</div>
+                                            <p className="text-[rgba(245,245,245,0.8)]">
+                                                {q.source === "user_feedback" ? (
+                                                    <span>From user feedback {q.source_message_id && `(message #${q.source_message_id})`}</span>
+                                                ) : (
+                                                    q.source ?? "Manual"
+                                                )}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Latest generated answer {latestRunForQuestions && `(Run #${latestRunForQuestions.id})`}</div>
+                                            <p className="text-[#F5F5F5] whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">
+                                                {latestResult?.answer ?? "— No run result yet —"}
+                                            </p>
+                                        </div>
+                                        {reasoning && (
+                                            <div>
+                                                <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Scoring reasoning</div>
+                                                <p className="text-[rgba(245,245,245,0.8)] whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">{reasoning}</p>
+                                            </div>
+                                        )}
+                                        <div className="flex flex-wrap gap-4 text-[13px] pt-2 border-t border-[rgba(255,255,255,0.08)]">
+                                            <span className="text-[rgba(245,245,245,0.6)]">Min score: <span className="text-[#F5F5F5]">{q.min_score}/10</span></span>
+                                            <span className="text-[rgba(245,245,245,0.6)]">Active: <span className="text-[#F5F5F5]">{q.is_active ? "Yes" : "No"}</span></span>
+                                            {latestResult != null && (
+                                                <>
+                                                    <span className="text-[rgba(245,245,245,0.6)]">Latest score: <span className="text-[#F5F5F5]">{latestResult.quality_score ?? "—"}/10</span></span>
+                                                    <span className="text-[rgba(245,245,245,0.6)]">Pass: {latestResult.passed ? <span className="text-green-400">Yes</span> : <span className="text-red-400">No</span>}</span>
+                                                    {latestResult.regression_detected && latestResult.previous_score != null && (
+                                                        <span className="text-amber-400">Regression (previous: {latestResult.previous_score})</span>
+                                                    )}
+                                                    {latestResult.response_time_ms != null && (
+                                                        <span className="text-[rgba(245,245,245,0.6)]">Response: {latestResult.response_time_ms}ms</span>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                        {latestResult?.error && (
+                                            <p className="text-[#C87A7A] text-[13px]">{latestResult.error}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
 
                     {/* Delete question confirmation modal */}
                     {deleteQuestionId !== null && (() => {
