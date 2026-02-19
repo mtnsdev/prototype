@@ -39,14 +39,24 @@ function LoginContent() {
     const [info, setInfo] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
+    // Forced password change state
+    const [showForceChangeModal, setShowForceChangeModal] = useState(false);
+    const [forceNewPassword, setForceNewPassword] = useState("");
+    const [forceConfirmPassword, setForceConfirmPassword] = useState("");
+    const [forceChangeError, setForceChangeError] = useState("");
+    const [forceChangeLoading, setForceChangeLoading] = useState(false);
+    const [forceChangeSucceeded, setForceChangeSucceeded] = useState(false);
+
     // Get redirect URL and reason from query params
     const redirectUrl = searchParams.get("redirect") || "/dashboard/chat";
     const reason = searchParams.get("reason");
 
-    // Show session expired message
+    // Show session expired / password changed messages
     useEffect(() => {
         if (reason === "session_expired") {
             setInfo("Your session has expired. Please sign in again.");
+        } else if (reason === "password_changed") {
+            setInfo("Password updated successfully. Please sign in with your new password.");
         }
     }, [reason]);
 
@@ -158,12 +168,69 @@ function LoginContent() {
             localStorage.setItem("user_data", JSON.stringify(data.user));
             setAuthCookie(data.token.access_token);
 
+            // If the user was given a temporary password, force them to change it first
+            if (data.user?.must_change_password) {
+                setShowForceChangeModal(true);
+                return;
+            }
+
             // Redirect to requested page or dashboard
             router.push(redirectUrl);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Sign in failed");
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleForcePasswordChange = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setForceChangeError("");
+
+        if (forceNewPassword !== forceConfirmPassword) {
+            setForceChangeError("Passwords do not match");
+            return;
+        }
+        if (forceNewPassword.length < 8 || !/[a-zA-Z]/.test(forceNewPassword) || !/[0-9]/.test(forceNewPassword)) {
+            setForceChangeError("Password must be at least 8 characters with at least one letter and one number");
+            return;
+        }
+
+        setForceChangeLoading(true);
+        let succeeded = false;
+        try {
+            const token = localStorage.getItem("auth_token");
+            const res = await fetch("/api/auth/me/password", {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ current_password: password, new_password: forceNewPassword }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.detail || "Failed to change password");
+            }
+
+            succeeded = true;
+            // Clear the now-invalid session and redirect to login with success message
+            localStorage.removeItem("auth_token");
+            localStorage.removeItem("user_data");
+            document.cookie = "auth_token=; Path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            setForceChangeSucceeded(true);
+            router.push("/login?reason=password_changed");
+            // Fallback: if navigation hasn't completed in 10s, show a manual button
+            setTimeout(() => setForceChangeLoading(false), 10000);
+        } catch (err) {
+            setForceChangeError(err instanceof Error ? err.message : "Failed to change password");
+        } finally {
+            // Keep button disabled after success so the user cannot re-submit
+            // while the router navigates away
+            if (!succeeded) {
+                setForceChangeLoading(false);
+            }
         }
     };
 
@@ -333,6 +400,87 @@ function LoginContent() {
                     </a>
                 </p>
             </div>
+
+            {/* Forced password change modal */}
+            {showForceChangeModal && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="w-full max-w-md rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.1)] overflow-hidden">
+                        <div className="px-6 py-5 border-b border-[rgba(255,255,255,0.08)]">
+                            <h2 className="text-[17px] font-semibold text-[#F5F5F5]">Set a new password</h2>
+                            <p className="text-[13px] text-[rgba(245,245,245,0.5)] mt-1">
+                                Your account was set up with a temporary password. You must choose a new password before continuing.
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleForcePasswordChange} className="p-6 space-y-4">
+                            {forceChangeError && (
+                                <div className="p-3.5 rounded-xl bg-[rgba(200,122,122,0.1)] border border-[rgba(200,122,122,0.2)]">
+                                    <p className="text-[13px] text-[#C87A7A]">{forceChangeError}</p>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-[13px] font-medium text-[rgba(245,245,245,0.7)] mb-2">
+                                    New Password
+                                </label>
+                                <input
+                                    type="password"
+                                    value={forceNewPassword}
+                                    onChange={(e) => setForceNewPassword(e.target.value)}
+                                    placeholder="At least 8 characters"
+                                    required
+                                    disabled={forceChangeLoading}
+                                    className="w-full px-4 py-3 rounded-xl text-[14px] bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)] border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)] focus:outline-none focus:border-[rgba(255,255,255,0.25)] disabled:opacity-50 transition-all"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-[13px] font-medium text-[rgba(245,245,245,0.7)] mb-2">
+                                    Confirm New Password
+                                </label>
+                                <input
+                                    type="password"
+                                    value={forceConfirmPassword}
+                                    onChange={(e) => setForceConfirmPassword(e.target.value)}
+                                    placeholder="Repeat new password"
+                                    required
+                                    disabled={forceChangeLoading}
+                                    className="w-full px-4 py-3 rounded-xl text-[14px] bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)] border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)] focus:outline-none focus:border-[rgba(255,255,255,0.25)] disabled:opacity-50 transition-all"
+                                />
+                            </div>
+
+                            <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
+                                Must be at least 8 characters with at least one letter and one number.
+                            </p>
+
+                            {/* Submit / fallback button */}
+                            {forceChangeSucceeded && !forceChangeLoading ? (
+                                <a
+                                    href="/login?reason=password_changed"
+                                    className="w-full py-3 px-4 rounded-xl text-[14px] font-medium bg-[#F5F5F5] hover:bg-white text-[#0C0C0C] transition-all flex items-center justify-center gap-2"
+                                >
+                                    Continue to Login →
+                                </a>
+                            ) : (
+                                <button
+                                    type="submit"
+                                    disabled={forceChangeLoading || !forceNewPassword || !forceConfirmPassword}
+                                    className="w-full py-3 px-4 rounded-xl text-[14px] font-medium bg-[#F5F5F5] hover:bg-white text-[#0C0C0C] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                                >
+                                    {forceChangeLoading ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Updating...
+                                        </>
+                                    ) : (
+                                        "Set New Password"
+                                    )}
+                                </button>
+                            )}
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

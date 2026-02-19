@@ -163,6 +163,9 @@ export default function UsersPage() {
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [actionMenuUser, setActionMenuUser] = useState<number | null>(null);
+
+    // Invite result banner
+    const [inviteMessage, setInviteMessage] = useState<{ type: "success" | "warning"; text: string } | null>(null);
     
     // Refs for action menu buttons
     const actionButtonRefs = useRef<Map<number, HTMLButtonElement | null>>(new Map());
@@ -211,7 +214,7 @@ export default function UsersPage() {
             if (password) {
                 body.password = password;
             }
-            
+
             const response = await fetch("/api/admin/users/invite", {
                 method: "POST",
                 headers: {
@@ -221,13 +224,25 @@ export default function UsersPage() {
                 body: JSON.stringify(body),
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                const data = await response.json();
                 throw new Error(data.detail || "Failed to invite user");
             }
 
             setShowInviteModal(false);
             fetchUsers();
+
+            if (data.email_sent) {
+                setInviteMessage({ type: "success", text: `Invitation email sent to ${email}` });
+            } else {
+                setInviteMessage({
+                    type: "warning",
+                    text: `User created, but invitation email failed to send. ${data.email_error ? `(${data.email_error})` : "Resend API may not be configured."}`,
+                });
+            }
+
+            setTimeout(() => setInviteMessage(null), 8000);
         } catch (err) {
             alert(err instanceof Error ? err.message : "Failed to invite user");
         }
@@ -316,6 +331,22 @@ export default function UsersPage() {
 
     return (
         <div className="space-y-6">
+            {/* Invite result banner */}
+            {inviteMessage && (
+                <div
+                    className={`p-3.5 rounded-xl border text-[13px] flex items-center justify-between gap-3 ${
+                        inviteMessage.type === "success"
+                            ? "bg-[rgba(52,211,153,0.08)] border-[rgba(52,211,153,0.2)] text-emerald-400"
+                            : "bg-[rgba(251,191,36,0.08)] border-[rgba(251,191,36,0.2)] text-amber-400"
+                    }`}
+                >
+                    <span>{inviteMessage.text}</span>
+                    <button onClick={() => setInviteMessage(null)} className="shrink-0 opacity-60 hover:opacity-100">
+                        <X size={14} />
+                    </button>
+                </div>
+            )}
+
             {/* Header with Search and Filters */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 <div className="flex items-center gap-3 flex-1 w-full sm:w-auto">
@@ -629,15 +660,23 @@ function InviteUserModal({
                                     />
                                 </div>
                             )}
-                            
+
                             {passwordError && (
                                 <p className="text-[13px] text-[#C87A7A]">{passwordError}</p>
                             )}
-                            
+
                             {password && (
                                 <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
                                     Password must be at least 8 characters with at least one letter and one number.
                                 </p>
+                            )}
+
+                            {password && (
+                                <div className="p-3 rounded-xl bg-[rgba(251,191,36,0.08)] border border-[rgba(251,191,36,0.2)]">
+                                    <p className="text-[12px] text-amber-400 leading-relaxed">
+                                        <strong>Temporary password.</strong> The user will be required to change it immediately after their first login.
+                                    </p>
+                                </div>
                             )}
                         </div>
                     </div>
