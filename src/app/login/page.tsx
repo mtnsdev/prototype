@@ -39,6 +39,13 @@ function LoginContent() {
     const [info, setInfo] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
+    // Forgot password state
+    const [showForgotModal, setShowForgotModal] = useState(false);
+    const [forgotEmail, setForgotEmail] = useState("");
+    const [forgotLoading, setForgotLoading] = useState(false);
+    const [forgotSuccess, setForgotSuccess] = useState(false);
+    const [forgotError, setForgotError] = useState("");
+
     // Forced password change state
     const [showForceChangeModal, setShowForceChangeModal] = useState(false);
     const [forceNewPassword, setForceNewPassword] = useState("");
@@ -234,6 +241,24 @@ function LoginContent() {
         }
     };
 
+    const handleForgotPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setForgotError("");
+        setForgotLoading(true);
+        try {
+            await fetch("/api/auth/forgot-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: forgotEmail }),
+            });
+            setForgotSuccess(true);
+        } catch {
+            setForgotError("Something went wrong. Please try again.");
+        } finally {
+            setForgotLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#0C0C0C] px-4">
             <div className="w-full max-w-md">
@@ -297,9 +322,23 @@ function LoginContent() {
                         </div>
 
                         <div>
-                            <label htmlFor="password" className="block text-[13px] font-medium text-[rgba(245,245,245,0.7)] mb-2">
-                                Password
-                            </label>
+                            <div className="flex items-center justify-between mb-2">
+                                <label htmlFor="password" className="block text-[13px] font-medium text-[rgba(245,245,245,0.7)]">
+                                    Password
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setForgotEmail(email);
+                                        setForgotSuccess(false);
+                                        setForgotError("");
+                                        setShowForgotModal(true);
+                                    }}
+                                    className="text-[12px] text-[rgba(245,245,245,0.45)] hover:text-[rgba(245,245,245,0.75)] transition-colors"
+                                >
+                                    Forgot password?
+                                </button>
+                            </div>
                             <input
                                 id="password"
                                 type="password"
@@ -400,6 +439,87 @@ function LoginContent() {
                     </a>
                 </p>
             </div>
+
+            {/* Forgot password modal */}
+            {showForgotModal && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="w-full max-w-md rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.1)] overflow-hidden">
+                        <div className="px-6 py-5 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between">
+                            <div>
+                                <h2 className="text-[17px] font-semibold text-[#F5F5F5]">Reset your password</h2>
+                                <p className="text-[13px] text-[rgba(245,245,245,0.5)] mt-1">
+                                    Enter your email and we&apos;ll send you a temporary password.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowForgotModal(false)}
+                                className="ml-4 text-[rgba(245,245,245,0.4)] hover:text-[rgba(245,245,245,0.8)] transition-colors text-xl leading-none"
+                                aria-label="Close"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {forgotSuccess ? (
+                            <div className="p-6 space-y-4">
+                                <div className="p-4 rounded-xl bg-[rgba(134,239,172,0.08)] border border-[rgba(134,239,172,0.2)]">
+                                    <p className="text-[14px] text-[#86EFAC] font-medium mb-1">Check your inbox</p>
+                                    <p className="text-[13px] text-[rgba(245,245,245,0.6)]">
+                                        If an account exists for that email, you&apos;ll receive a temporary password shortly.
+                                        Use it to log in, then set a new permanent password.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowForgotModal(false)}
+                                    className="w-full py-3 px-4 rounded-xl text-[14px] font-medium bg-[#F5F5F5] hover:bg-white text-[#0C0C0C] transition-all"
+                                >
+                                    Back to Login
+                                </button>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleForgotPassword} className="p-6 space-y-4">
+                                {forgotError && (
+                                    <div className="p-3.5 rounded-xl bg-[rgba(200,122,122,0.1)] border border-[rgba(200,122,122,0.2)]">
+                                        <p className="text-[13px] text-[#C87A7A]">{forgotError}</p>
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label className="block text-[13px] font-medium text-[rgba(245,245,245,0.7)] mb-2">
+                                        Email address
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={forgotEmail}
+                                        onChange={(e) => setForgotEmail(e.target.value)}
+                                        placeholder="you@example.com"
+                                        required
+                                        disabled={forgotLoading}
+                                        className="w-full px-4 py-3 rounded-xl text-[14px] bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)] border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)] focus:outline-none focus:border-[rgba(255,255,255,0.25)] disabled:opacity-50 transition-all"
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={forgotLoading || !forgotEmail}
+                                    className="w-full py-3 px-4 rounded-xl text-[14px] font-medium bg-[#F5F5F5] hover:bg-white text-[#0C0C0C] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                                >
+                                    {forgotLoading ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Sending...
+                                        </>
+                                    ) : (
+                                        "Send email"
+                                    )}
+                                </button>
+                            </form>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Forced password change modal */}
             {showForceChangeModal && (
