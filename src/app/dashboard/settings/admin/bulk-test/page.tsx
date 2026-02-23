@@ -133,7 +133,7 @@ export default function BulkTestPage() {
 
     // Run test state
     const [running, setRunning] = useState(false);
-    const [, setCurrentRunId] = useState<number | null>(null);
+    const [, _setCurrentRunId] = useState<number | null>(null);
     const [progress, setProgress] = useState<{ completed_count: number; total_count: number; status: string } | null>(null);
     const [lastRun, setLastRun] = useState<BulkTestRun | null>(null);
     const [geminiModel, setGeminiModel] = useState("gemini-2.5-pro");

@@ -4,7 +4,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/contexts/UserContext";
-import { Shield, Users, FolderLock, RefreshCw, ArrowLeft, Loader2, FlaskConical } from "lucide-react";
+import { Shield, Users, FolderLock, ArrowLeft, Loader2, FlaskConical } from "lucide-react";
 
 const ADMIN_NAV_ITEMS = [
     { href: "/dashboard/settings/admin", label: "Overview", icon: Shield, exact: true },
