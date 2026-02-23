@@ -732,7 +732,7 @@ function TreeNode({
                 <div>
                     {displayChildren.map((child) => (
                         <TreeNode
-                            key={child.kind === "folder" ? `f-${child.id}` : `d-${child.doc_id}-${child.version_num}`}
+                            key={child.kind === "folder" ? `f-${child.id}` : child.kind === "document" ? `d-${child.doc_id}-${child.version_num}` : `p-${child.key}`}
                             item={child}
                             depth={depth + 1}
                             expandedIds={expandedIds}
@@ -858,9 +858,9 @@ function SearchResultItem({
                     {title}
                 </p>
                 <p className="text-[11px] text-[rgba(245,245,245,0.45)] mt-0.5">
-                    {isFolder
+                    {item.kind === "folder"
                         ? `Folder • ID ${item.id}`
-                        : isPage
+                        : item.kind === "page"
                             ? `Page • ${(item.size / 1024).toFixed(1)} KB`
                             : `Document • ID ${item.doc_id}`
                     }
@@ -1077,7 +1077,7 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
         const query = searchQuery.trim().toLowerCase();
         if (!query) return rawDisplayItems;
         return rawDisplayItems.filter((item) =>
-            item.title.toLowerCase().includes(query)
+            (item.kind === "page" ? item.name : item.title).toLowerCase().includes(query)
         );
     }, [rawDisplayItems, searchQuery]);
 
@@ -1186,7 +1186,7 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                         {/* Documents children */}
                         {documentsOpen && !accordionRootLoading && accordionRootDisplay.map((item) => (
                             <TreeNode
-                                key={item.kind === "folder" ? `f-${item.id}` : `d-${item.doc_id}-${item.version_num}`}
+                                key={item.kind === "folder" ? `f-${item.id}` : item.kind === "document" ? `d-${item.doc_id}-${item.version_num}` : `p-${item.key}`}
                                 item={item}
                                 depth={1}
                                 expandedIds={rootAccordionExpandedIds}
@@ -1504,7 +1504,7 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                                 <div>
                                     {searchResults.map((item) => (
                                         <SearchResultItem
-                                            key={item.kind === "folder" ? `sf-${item.id}` : `sd-${item.doc_id}-${item.version_num}`}
+                                            key={item.kind === "folder" ? `sf-${item.id}` : item.kind === "document" ? `sd-${item.doc_id}-${item.version_num}` : `sp-${item.key}`}
                                             item={item}
                                             onOpenPreview={openPreview}
                                         />
@@ -1565,7 +1565,7 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                                 <div>
                                     {displayItems.map((item) => (
                                         <TreeNode
-                                            key={item.kind === "folder" ? `f-${item.id}` : `d-${item.doc_id}-${item.version_num}`}
+                                            key={item.kind === "folder" ? `f-${item.id}` : item.kind === "document" ? `d-${item.doc_id}-${item.version_num}` : `p-${item.key}`}
                                             item={item}
                                             depth={0}
                                             expandedIds={expandedIds}
