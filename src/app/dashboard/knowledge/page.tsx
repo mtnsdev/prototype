@@ -1,10 +1,210 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import LibraryView from "@/components/library/LibraryView";
-import { Database } from "lucide-react";
+import { useFolderChildren } from "@/hooks/useFolderChildren";
+import { usePages } from "@/hooks/usePages";
+import {
+    ChevronRight,
+    ChevronDown,
+    Folder,
+    FileText,
+    Loader2,
+    BookOpen,
+    FolderOpen,
+} from "lucide-react";
+import type { TLItem } from "@/lib/claromentis/types";
+import type { PageItem } from "@/hooks/usePages";
 
+// ---------------------------------------------------------------------------
+// Single tree node (folder or document)
+// ---------------------------------------------------------------------------
+function DocumentNode({ item }: { item: TLItem }) {
+    const [expanded, setExpanded] = useState(false);
+    const isFolder = item.kind === "folder";
+    const hasChildren = isFolder && (item.has_children !== false);
+    const { items: children, loading } = useFolderChildren(
+        isFolder && expanded ? item.id : undefined,
+        undefined,
+        { enabled: isFolder && expanded }
+    );
+
+    if (!isFolder) {
+        return (
+            <div className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-white/4 cursor-default group">
+                <FileText size={14} className="shrink-0 text-[rgba(245,245,245,0.4)]" />
+                <span className="text-[13px] text-[rgba(245,245,245,0.75)] truncate">{item.title}</span>
+            </div>
+        );
+    }
+
+    return (
+        <div>
+            <button
+                type="button"
+                onClick={() => hasChildren && setExpanded((v) => !v)}
+                className={[
+                    "w-full flex items-center gap-2 py-1.5 px-2 rounded-lg text-left transition-colors duration-100",
+                    hasChildren ? "hover:bg-white/4 cursor-pointer" : "cursor-default",
+                ].join(" ")}
+            >
+                <span className="shrink-0 text-[rgba(245,245,245,0.35)] w-4">
+                    {hasChildren ? (
+                        expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />
+                    ) : null}
+                </span>
+                {expanded ? (
+                    <FolderOpen size={14} className="shrink-0 text-[rgba(245,245,245,0.5)]" />
+                ) : (
+                    <Folder size={14} className="shrink-0 text-[rgba(245,245,245,0.5)]" />
+                )}
+                <span className="text-[13px] text-[rgba(245,245,245,0.8)] truncate flex-1">{item.title}</span>
+            </button>
+
+            {expanded && (
+                <div className="ml-5 pl-3 border-l border-[rgba(255,255,255,0.07)]">
+                    {loading ? (
+                        <div className="flex items-center gap-2 py-2 px-2">
+                            <Loader2 size={12} className="animate-spin text-[rgba(245,245,245,0.4)]" />
+                            <span className="text-[12px] text-[rgba(245,245,245,0.4)]">Loading…</span>
+                        </div>
+                    ) : children.length === 0 ? (
+                        <p className="py-2 px-2 text-[12px] text-[rgba(245,245,245,0.35)]">Empty folder</p>
+                    ) : (
+                        children.map((child) => (
+                            <DocumentNode key={child.kind === "folder" ? child.id : child.doc_id} item={child} />
+                        ))
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Pages root node
+// ---------------------------------------------------------------------------
+function PagesRootNode() {
+    const [expanded, setExpanded] = useState(false);
+    const { items, hasMore, isLoading, loadMore } = usePages({ enabled: expanded });
+
+    return (
+        <div>
+            <button
+                type="button"
+                onClick={() => setExpanded((v) => !v)}
+                className="w-full flex items-center gap-2 py-2 px-3 rounded-xl text-left hover:bg-white/4 transition-colors duration-100 cursor-pointer"
+            >
+                <span className="shrink-0 text-[rgba(245,245,245,0.45)] w-4">
+                    {expanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+                </span>
+                <BookOpen size={16} className="shrink-0 text-[rgba(245,245,245,0.55)]" />
+                <span className="text-[14px] font-medium text-[rgba(245,245,245,0.85)] flex-1">Pages</span>
+            </button>
+
+            {expanded && (
+                <div className="ml-5 pl-3 border-l border-[rgba(255,255,255,0.07)] mt-0.5">
+                    {isLoading && items.length === 0 ? (
+                        <div className="flex items-center gap-2 py-2 px-2">
+                            <Loader2 size={12} className="animate-spin text-[rgba(245,245,245,0.4)]" />
+                            <span className="text-[12px] text-[rgba(245,245,245,0.4)]">Loading…</span>
+                        </div>
+                    ) : items.length === 0 ? (
+                        <p className="py-2 px-2 text-[12px] text-[rgba(245,245,245,0.35)]">No pages available</p>
+                    ) : (
+                        <>
+                            {items.map((page: PageItem) => (
+                                <div key={page.id} className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-white/4">
+                                    <FileText size={14} className="shrink-0 text-[rgba(245,245,245,0.4)]" />
+                                    <span className="text-[13px] text-[rgba(245,245,245,0.75)] truncate">{page.name}</span>
+                                </div>
+                            ))}
+                            {hasMore && (
+                                <button
+                                    type="button"
+                                    onClick={loadMore}
+                                    disabled={isLoading}
+                                    className="mt-1 w-full py-1.5 px-2 rounded-lg text-[12px] text-[rgba(245,245,245,0.5)] hover:bg-white/4 flex items-center gap-2 transition-colors duration-100 disabled:opacity-50"
+                                >
+                                    {isLoading ? <Loader2 size={12} className="animate-spin" /> : null}
+                                    Load more
+                                </button>
+                            )}
+                        </>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Documents root node
+// ---------------------------------------------------------------------------
+function DocumentsRootNode() {
+    const [expanded, setExpanded] = useState(false);
+    const { items, loading } = useFolderChildren(expanded ? 0 : undefined, undefined, { enabled: expanded });
+
+    return (
+        <div>
+            <button
+                type="button"
+                onClick={() => setExpanded((v) => !v)}
+                className="w-full flex items-center gap-2 py-2 px-3 rounded-xl text-left hover:bg-white/4 transition-colors duration-100 cursor-pointer"
+            >
+                <span className="shrink-0 text-[rgba(245,245,245,0.45)] w-4">
+                    {expanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+                </span>
+                {expanded ? (
+                    <FolderOpen size={16} className="shrink-0 text-[rgba(245,245,245,0.55)]" />
+                ) : (
+                    <Folder size={16} className="shrink-0 text-[rgba(245,245,245,0.55)]" />
+                )}
+                <span className="text-[14px] font-medium text-[rgba(245,245,245,0.85)] flex-1">Documents</span>
+            </button>
+
+            {expanded && (
+                <div className="ml-5 pl-3 border-l border-[rgba(255,255,255,0.07)] mt-0.5">
+                    {loading ? (
+                        <div className="flex items-center gap-2 py-2 px-2">
+                            <Loader2 size={12} className="animate-spin text-[rgba(245,245,245,0.4)]" />
+                            <span className="text-[12px] text-[rgba(245,245,245,0.4)]">Loading…</span>
+                        </div>
+                    ) : items.length === 0 ? (
+                        <p className="py-2 px-2 text-[12px] text-[rgba(245,245,245,0.35)]">No documents available</p>
+                    ) : (
+                        items.map((item) => (
+                            <DocumentNode key={item.kind === "folder" ? item.id : item.doc_id} item={item} />
+                        ))
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// 2-root tree default view
+// ---------------------------------------------------------------------------
+function KnowledgeTreeView() {
+    return (
+        <div className="h-full overflow-y-auto bg-[#0C0C0C] p-6">
+            <div className="max-w-2xl mx-auto">
+                <h2 className="text-[18px] font-semibold text-[#F5F5F5] mb-1">Knowledge Library</h2>
+                <p className="text-[13px] text-[rgba(245,245,245,0.45)] mb-6">Browse documents and pages from your knowledge base.</p>
+                <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] p-4 space-y-1">
+                    <DocumentsRootNode />
+                    <PagesRootNode />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Integration config map
+// ---------------------------------------------------------------------------
 type IntegrationConfig = {
     source: "claromentis" | "google-drive";
     rootId?: number;
@@ -17,27 +217,15 @@ function KnowledgeContent() {
     const integration = searchParams.get("integration");
 
     const integrationConfig: Record<string, IntegrationConfig> = {
-        claromentis: { source: "claromentis", rootId: 0, name: "Claromentis (Intranet)" },
+        claromentis: { source: "claromentis", name: "Claromentis (Intranet)" },
         "google-drive-personal": { source: "google-drive", connectionType: "personal", name: "My Google Drive" },
-        "google-drive-agency": { source: "google-drive", connectionType: "agency", name: "Agency Google Drive" },
+        "google-drive-agency": { source: "google-drive", connectionType: "agency", name: "Admin Google Drive" },
     };
 
     const config = integration ? integrationConfig[integration] : null;
 
     if (!config) {
-        return (
-            <div className="h-full flex items-center justify-center bg-[#0C0C0C] p-6">
-                <div className="w-full max-w-md rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] p-8 text-center">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center mb-5 border border-white/10 mx-auto">
-                        <Database size={22} className="text-[rgba(245,245,245,0.6)]" />
-                    </div>
-                    <h2 className="text-[18px] font-semibold text-[#F5F5F5]">Knowledge Library</h2>
-                    <p className="mt-2 text-[14px] text-[rgba(245,245,245,0.5)] leading-relaxed">
-                        Select an integration from the sidebar to browse its content.
-                    </p>
-                </div>
-            </div>
-        );
+        return <KnowledgeTreeView />;
     }
 
     if (config.source === "google-drive") {
@@ -49,7 +237,7 @@ function KnowledgeContent() {
         );
     }
 
-    return <LibraryView initialRootId={config.rootId} source="claromentis" />;
+    return <LibraryView source="claromentis" />;
 }
 
 export default function KnowledgePage() {

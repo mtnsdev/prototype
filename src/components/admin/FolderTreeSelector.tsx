@@ -1,33 +1,42 @@
 "use client";
 
 import { useCallback, useState, useEffect } from "react";
-import { Folder, FileText, ChevronRight, ChevronDown, Loader2 } from "lucide-react";
+import { Folder, FileText, ChevronRight, ChevronDown, Loader2, HardDrive } from "lucide-react";
 
 export type FolderTreeNode = {
   id: number;
-  external_id: number;
+  external_id: number | string;
   title: string;
-  parent_external_id: number | null;
+  parent_external_id: number | string | null;
   node_type: string;
   has_children: boolean | null;
   is_admin_only: boolean;
+  /** Google Drive: real Drive ID */
+  drive_id?: string | null;
+  is_shared_drive?: boolean;
 };
 
 export type SelectedTarget = {
-  external_id: number;
+  external_id: number | string;
   node_type: string;
   title: string;
+  /** Real Google Drive resource ID (for Drive rules) */
+  drive_resource_id?: string;
 };
 
 type FolderTreeSelectorProps = {
+  /** Source mode: "claromentis" uses folder-tree API, "google-drive" uses Drive tree API */
+  mode?: "claromentis" | "google-drive";
   /** Single-select mode callback (legacy) */
   onSelect?: (node: SelectedTarget) => void;
-  selectedExternalId?: number | null;
+  selectedExternalId?: number | string | null;
   /** Multi-select mode */
   multiSelect?: boolean;
   selectedTargets?: SelectedTarget[];
   onSelectionChange?: (targets: SelectedTarget[]) => void;
   token: string;
+  /** Scoped root folder ID for Google Drive mode (restricts tree to this folder) */
+  rootFolderId?: string | null;
 };
 
 const API_BASE = "/api";
@@ -47,7 +56,7 @@ async function fetchWithTimeout(url: string, options: RequestInit): Promise<Resp
   }
 }
 
-async function fetchChildren(token: string, parentId: number | null): Promise<FolderTreeNode[]> {
+async function fetchClaromentisChildren(token: string, parentId: number | null): Promise<FolderTreeNode[]> {
   const pid = parentId ?? 0;
   const res = await fetchWithTimeout(
     `${API_BASE}/admin/folder-tree?parent_id=${pid}`,
@@ -63,6 +72,76 @@ async function fetchChildren(token: string, parentId: number | null): Promise<Fo
   return data.children ?? [];
 }
 
+async function fetchDriveChildren(
+  token: string,
+  parentId: string,
+  driveId?: string | null,
+  isRootLoad?: boolean,
+): Promise<FolderTreeNode[]> {
+  const params = new URLSearchParams({ parent_id: parentId });
+  if (driveId) params.set("drive_id", driveId);
+  const res = await fetchWithTimeout(
+    `${API_BASE}/admin/google-drive/tree?${params}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (res.status === 401) throw new Error("Unauthorized. Please sign in again.");
+  if (res.status === 403) {
+    const data = await res.json().catch(() => ({ detail: "Admin Drive not connected." }));
+    throw new Error(data.detail || "Admin Drive not connected.");
+  }
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to load Drive tree (${res.status}): ${text.slice(0, 100)}`);
+  }
+  const data = await res.json();
+  const children = (data.children ?? []).map((c: Record<string, unknown>) => ({
+    id: 0,
+    external_id: c.external_id as string,
+    title: c.title as string,
+    parent_external_id: parentId,
+    node_type: c.node_type as string,
+    has_children: c.has_children as boolean,
+    is_admin_only: false,
+    drive_id: (c.drive_id as string) || null,
+    is_shared_drive: (c.is_shared_drive as boolean) || false,
+  }));
+
+  // If the backend returned root folder metadata and there are no children,
+  // show the root folder itself so the tree is never empty when connected.
+  // Only apply this during the initial root load, not when expanding a node
+  // (otherwise the root folder would appear as its own child in an infinite loop).
+  if (isRootLoad && data.root_folder && children.length === 0) {
+    const rf = data.root_folder as Record<string, unknown>;
+    return [{
+      id: 0,
+      external_id: rf.external_id as string,
+      title: rf.title as string,
+      parent_external_id: null,
+      node_type: rf.node_type as string,
+      has_children: rf.has_children as boolean,
+      is_admin_only: false,
+      drive_id: (rf.drive_id as string) || null,
+      is_shared_drive: (rf.is_shared_drive as boolean) || false,
+    }];
+  }
+
+  return children;
+}
+
+/** Unified fetch dispatcher */
+function fetchChildren(
+  token: string,
+  parentId: number | string | null,
+  mode: "claromentis" | "google-drive",
+  driveId?: string | null,
+  isRootLoad?: boolean,
+): Promise<FolderTreeNode[]> {
+  if (mode === "google-drive") {
+    return fetchDriveChildren(token, String(parentId ?? "root"), driveId, isRootLoad);
+  }
+  return fetchClaromentisChildren(token, parentId as number | null);
+}
+
 function TreeNode({
   node,
   depth,
@@ -76,65 +155,81 @@ function TreeNode({
   token,
   childCache,
   setChildCache,
+  mode,
 }: {
   node: FolderTreeNode;
   depth: number;
-  expandedIds: Set<number>;
-  onToggle: (id: number) => void;
+  expandedIds: Set<number | string>;
+  onToggle: (id: number | string) => void;
   onSelect?: (node: SelectedTarget) => void;
-  selectedExternalId: number | null | undefined;
+  selectedExternalId: number | string | null | undefined;
   multiSelect?: boolean;
-  selectedIds?: Set<number>;
+  selectedIds?: Set<number | string>;
   onCheckToggle?: (node: SelectedTarget) => void;
   token: string;
-  childCache: Record<number, FolderTreeNode[]>;
-  setChildCache: (parentId: number, children: FolderTreeNode[]) => void;
+  childCache: Record<number | string, FolderTreeNode[]>;
+  setChildCache: (parentId: number | string, children: FolderTreeNode[]) => void;
+  mode: "claromentis" | "google-drive";
 }) {
-  const isFolder = node.node_type === "folder";
-  const isExpanded = isFolder && expandedIds.has(node.external_id);
+  const isExpandable = node.node_type === "folder" || node.node_type === "shared_drive";
+  const isExpanded = isExpandable && expandedIds.has(node.external_id);
   const [loading, setLoading] = useState(false);
   const cached = childCache[node.external_id];
 
   const loadChildren = useCallback(() => {
     if (cached) return;
     setLoading(true);
-    fetchChildren(token, node.external_id)
+    const driveId = node.is_shared_drive ? String(node.external_id) : node.drive_id;
+    const parentId = node.is_shared_drive ? "root" : node.external_id;
+    fetchChildren(token, parentId, mode, driveId)
       .then((children) => {
         setChildCache(node.external_id, children);
       })
       .finally(() => setLoading(false));
-  }, [token, node.external_id, cached, setChildCache]);
+  }, [token, node.external_id, node.is_shared_drive, node.drive_id, cached, setChildCache, mode]);
 
   useEffect(() => {
-    if (isFolder && isExpanded && !cached && !loading) loadChildren();
-  }, [isFolder, isExpanded, cached, loading, loadChildren]);
+    if (isExpandable && isExpanded && !cached && !loading) loadChildren();
+  }, [isExpandable, isExpanded, cached, loading, loadChildren]);
 
   const handleExpand = useCallback(() => {
-    if (!isFolder) return;
+    if (!isExpandable) return;
     onToggle(node.external_id);
     if (!cached && !loading) loadChildren();
-  }, [isFolder, node.external_id, onToggle, cached, loading, loadChildren]);
+  }, [isExpandable, node.external_id, onToggle, cached, loading, loadChildren]);
 
   const handleClick = useCallback(() => {
-    if (multiSelect && onCheckToggle) {
-      onCheckToggle({
-        external_id: node.external_id,
-        node_type: node.node_type,
-        title: node.title,
-      });
-    } else if (onSelect) {
-      onSelect({
-        external_id: node.external_id,
-        node_type: node.node_type,
-        title: node.title,
-      });
+    const target: SelectedTarget = {
+      external_id: node.external_id,
+      node_type: node.node_type === "shared_drive" ? "folder" : node.node_type,
+      title: node.title,
+    };
+    if (mode === "google-drive") {
+      target.drive_resource_id = String(node.external_id);
     }
-  }, [node, multiSelect, onCheckToggle, onSelect]);
+    if (multiSelect && onCheckToggle) {
+      onCheckToggle(target);
+    } else if (onSelect) {
+      onSelect(target);
+    }
+  }, [node, multiSelect, onCheckToggle, onSelect, mode]);
 
   const paddingLeft = 12 + depth * 20;
   const isSelected = multiSelect
     ? selectedIds?.has(node.external_id) ?? false
     : selectedExternalId === node.external_id;
+
+  const getIcon = () => {
+    if (node.is_shared_drive) return <HardDrive size={14} />;
+    if (node.node_type === "folder" || node.node_type === "shared_drive") return <Folder size={14} />;
+    return <FileText size={14} />;
+  };
+
+  const getIconClasses = () => {
+    if (node.is_shared_drive) return "bg-purple-500/10 text-purple-400";
+    if (node.node_type === "folder") return "bg-amber-500/10 text-amber-400";
+    return "bg-blue-500/10 text-blue-400";
+  };
 
   return (
     <div>
@@ -142,22 +237,21 @@ function TreeNode({
         role="button"
         tabIndex={0}
         onClick={() => {
-          if (isFolder) handleExpand();
+          if (isExpandable) handleExpand();
           handleClick();
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            if (isFolder) handleExpand();
+            if (isExpandable) handleExpand();
             handleClick();
           }
         }}
-        className={`flex items-center gap-2 py-1.5 pr-2 rounded-lg cursor-pointer transition-colors ${
-          isSelected ? "bg-[rgba(255,255,255,0.12)]" : "hover:bg-[rgba(255,255,255,0.06)]"
-        }`}
+        className={`flex items-center gap-2 py-1.5 pr-2 rounded-lg cursor-pointer transition-colors ${isSelected ? "bg-[rgba(255,255,255,0.12)]" : "hover:bg-[rgba(255,255,255,0.06)]"
+          }`}
         style={{ paddingLeft }}
       >
-        {isFolder ? (
+        {isExpandable ? (
           <button
             type="button"
             className="w-5 h-5 flex items-center justify-center text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] shrink-0"
@@ -193,19 +287,17 @@ function TreeNode({
         )}
 
         <div
-          className={`w-6 h-6 rounded flex items-center justify-center shrink-0 ${
-            isFolder ? "bg-amber-500/10 text-amber-400" : "bg-blue-500/10 text-blue-400"
-          }`}
+          className={`w-6 h-6 rounded flex items-center justify-center shrink-0 ${getIconClasses()}`}
         >
-          {isFolder ? <Folder size={14} /> : <FileText size={14} />}
+          {getIcon()}
         </div>
         <span className="text-[14px] text-[#F5F5F5] truncate flex-1">{node.title}</span>
       </div>
-      {isFolder && isExpanded && cached && (
+      {isExpandable && isExpanded && cached && (
         <div>
           {cached.map((child) => (
             <TreeNode
-              key={child.external_id}
+              key={String(child.external_id)}
               node={child}
               depth={depth + 1}
               expandedIds={expandedIds}
@@ -218,6 +310,7 @@ function TreeNode({
               token={token}
               childCache={childCache}
               setChildCache={setChildCache}
+              mode={mode}
             />
           ))}
         </div>
@@ -227,42 +320,53 @@ function TreeNode({
 }
 
 export function FolderTreeSelector({
+  mode = "claromentis",
   onSelect,
   selectedExternalId,
   multiSelect,
   selectedTargets,
   onSelectionChange,
   token,
+  rootFolderId,
 }: FolderTreeSelectorProps) {
   const [rootNodes, setRootNodes] = useState<FolderTreeNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
-  const [childCache, setChildCacheState] = useState<Record<number, FolderTreeNode[]>>({});
+  const [expandedIds, setExpandedIds] = useState<Set<number | string>>(new Set());
+  const [childCache, setChildCacheState] = useState<Record<number | string, FolderTreeNode[]>>({});
 
   const selectedIds = new Set((selectedTargets ?? []).map((t) => t.external_id));
 
-  const setChildCache = useCallback((parentId: number, children: FolderTreeNode[]) => {
-    setChildCacheState((prev) => ({ ...prev, [parentId]: children }));
+  const setChildCache = useCallback((parentId: number | string, children: FolderTreeNode[]) => {
+    setChildCacheState((prev) => ({ ...prev, [String(parentId)]: children }));
   }, []);
 
   const loadRoot = useCallback(() => {
     if (!token) return;
     setLoading(true);
     setError(null);
-    fetchChildren(token, null)
+    // For Google Drive mode, use scoped rootFolderId if available; backend will
+    // also enforce this, but starting at the right folder avoids showing "root".
+    const initialParent = mode === "google-drive"
+      ? (rootFolderId || "root")
+      : null;
+    fetchChildren(token, initialParent, mode, undefined, true)
       .then((children) => {
         setRootNodes(children);
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [token, mode, rootFolderId]);
 
+  // Reset state when mode changes
   useEffect(() => {
+    setRootNodes([]);
+    setExpandedIds(new Set());
+    setChildCacheState({});
     loadRoot();
   }, [loadRoot]);
 
-  const toggleExpand = useCallback((id: number) => {
+  const toggleExpand = useCallback((id: number | string) => {
     setExpandedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -275,9 +379,9 @@ export function FolderTreeSelector({
     (node: SelectedTarget) => {
       if (!onSelectionChange) return;
       const current = selectedTargets ?? [];
-      const exists = current.some((t) => t.external_id === node.external_id);
+      const exists = current.some((t) => String(t.external_id) === String(node.external_id));
       if (exists) {
-        onSelectionChange(current.filter((t) => t.external_id !== node.external_id));
+        onSelectionChange(current.filter((t) => String(t.external_id) !== String(node.external_id)));
       } else {
         onSelectionChange([...current, node]);
       }
@@ -289,7 +393,7 @@ export function FolderTreeSelector({
     return (
       <div className="flex items-center justify-center py-6 text-[rgba(245,245,245,0.5)] text-[14px]">
         <Loader2 size={18} className="animate-spin mr-2" />
-        Loading folder tree…
+        {mode === "google-drive" ? "Loading Google Drive folders…" : "Loading folder tree…"}
       </div>
     );
   }
@@ -310,7 +414,9 @@ export function FolderTreeSelector({
   if (rootNodes.length === 0) {
     return (
       <div className="py-4 text-[14px] text-[rgba(245,245,245,0.5)]">
-        No folders yet. Sync the folder tree from the admin panel first.
+        {mode === "google-drive"
+          ? "No folders available. The connected root folder may be empty or inaccessible."
+          : "No folders yet. Sync the folder tree from the admin panel first."}
       </div>
     );
   }
@@ -319,7 +425,7 @@ export function FolderTreeSelector({
     <div className="max-h-[280px] overflow-y-auto rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0C0C0C] p-2">
       {rootNodes.map((node) => (
         <TreeNode
-          key={node.external_id}
+          key={String(node.external_id)}
           node={node}
           depth={0}
           expandedIds={expandedIds}
@@ -332,6 +438,7 @@ export function FolderTreeSelector({
           token={token}
           childCache={childCache}
           setChildCache={setChildCache}
+          mode={mode}
         />
       ))}
     </div>

@@ -12,11 +12,15 @@ import {
     Check,
     X,
     Loader2,
+    Cloud,
+    Database,
 } from "lucide-react";
 import { FolderTreeSelector, SelectedTarget } from "@/components/admin/FolderTreeSelector";
+import ClaromentisPageSelector from "@/components/admin/ClaromentisPageSelector";
 
 type ContentRule = {
     id: number;
+    source: string;
     subject_type: string;
     subject_id: string;
     target_type: string;
@@ -41,27 +45,29 @@ type UserItem = {
     status: string;
 };
 
+type SourceTab = "claromentis" | "google_drive";
+
+const SOURCE_TABS: { key: SourceTab; label: string; icon: React.ReactNode }[] = [
+    { key: "claromentis", label: "Claromentis", icon: <Database size={16} /> },
+    { key: "google_drive", label: "Google Drive", icon: <Cloud size={16} /> },
+];
+
 export default function PermissionsPage() {
+    const [activeSource, setActiveSource] = useState<SourceTab>("claromentis");
     const [rules, setRules] = useState<ContentRule[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    // Filters
     const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
-
-    // Create rule modal
     const [showCreateModal, setShowCreateModal] = useState(false);
-
-    // Users list for dropdown
     const [users, setUsers] = useState<UserItem[]>([]);
 
     const fetchRules = useCallback(async () => {
         setIsLoading(true);
         setError(null);
-
         try {
             const token = localStorage.getItem("auth_token");
             const params = new URLSearchParams();
+            params.set("source", activeSource);
             if (subjectFilter) {
                 if (subjectFilter === "role:admin" || subjectFilter === "role:user") {
                     params.set("subject_type", "role");
@@ -71,13 +77,10 @@ export default function PermissionsPage() {
                     params.set("subject_id", subjectFilter);
                 }
             }
-
             const response = await fetch(`/api/admin/rules?${params}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-
             if (!response.ok) throw new Error("Failed to fetch rules");
-
             const data: RulesResponse = await response.json();
             setRules(data.rules);
         } catch (err) {
@@ -85,7 +88,7 @@ export default function PermissionsPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [subjectFilter]);
+    }, [activeSource, subjectFilter]);
 
     const fetchUsers = useCallback(async () => {
         try {
@@ -93,7 +96,6 @@ export default function PermissionsPage() {
             const response = await fetch("/api/admin/users?page_size=100", {
                 headers: { Authorization: `Bearer ${token}` },
             });
-
             if (response.ok) {
                 const data = await response.json();
                 setUsers(data.users);
@@ -109,9 +111,10 @@ export default function PermissionsPage() {
     }, [fetchRules, fetchUsers]);
 
     const handleCreateRules = async (payload: {
+        source: string;
         subject_type: string;
         subject_id: string;
-        targets: { target_type: string; target_id: number }[];
+        targets: { target_type: string; target_id: number; drive_resource_id?: string }[];
         effect: string;
         applies_to_descendants: boolean;
     }) => {
@@ -125,12 +128,10 @@ export default function PermissionsPage() {
                 },
                 body: JSON.stringify(payload),
             });
-
             if (!response.ok) {
                 const data = await response.json();
                 throw new Error(data.detail || "Failed to create rules");
             }
-
             setShowCreateModal(false);
             fetchRules();
         } catch (err) {
@@ -140,19 +141,16 @@ export default function PermissionsPage() {
 
     const handleDeleteRule = async (ruleId: number) => {
         if (!confirm("Are you sure you want to delete this rule?")) return;
-
         try {
             const token = localStorage.getItem("auth_token");
             const response = await fetch(`/api/admin/rules/${ruleId}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
             });
-
             if (!response.ok) {
                 const data = await response.json();
                 throw new Error(data.detail || "Failed to delete rule");
             }
-
             fetchRules();
         } catch (err) {
             alert(err instanceof Error ? err.message : "Failed to delete rule");
@@ -167,9 +165,36 @@ export default function PermissionsPage() {
         return user ? user.email : `User #${rule.subject_id}`;
     };
 
+    const getTargetIcon = (rule: ContentRule) => {
+        if (rule.target_type === "folder" || rule.target_type === "drive_folder")
+            return <Folder size={16} className="text-amber-400" />;
+        if (rule.target_type === "page")
+            return <FileText size={16} className="text-purple-400" />;
+        return <FileText size={16} className="text-blue-400" />;
+    };
+
     return (
         <div className="space-y-6">
-            {/* Header with Filters */}
+            {/* Source Tabs */}
+            <div className="flex gap-1 p-1 rounded-xl bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] w-fit">
+                {SOURCE_TABS.map((tab) => (
+                    <button
+                        key={tab.key}
+                        onClick={() => setActiveSource(tab.key)}
+                        className={[
+                            "flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-all",
+                            activeSource === tab.key
+                                ? "bg-[rgba(255,255,255,0.1)] text-[#F5F5F5] border border-[rgba(255,255,255,0.1)]"
+                                : "text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-[rgba(255,255,255,0.04)] border border-transparent",
+                        ].join(" ")}
+                    >
+                        {tab.icon}
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+
+            {/* Filters + Add Rule */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 <div className="flex items-center gap-3">
                     <select
@@ -187,7 +212,6 @@ export default function PermissionsPage() {
                         ))}
                     </select>
                 </div>
-
                 <button
                     onClick={() => setShowCreateModal(true)}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-[rgba(255,255,255,0.1)] text-[14px] font-medium text-[#F5F5F5] transition-colors"
@@ -197,16 +221,17 @@ export default function PermissionsPage() {
                 </button>
             </div>
 
-            {/* Info Card */}
+            {/* Info */}
             <div className="rounded-2xl bg-[rgba(59,130,246,0.08)] border border-[rgba(59,130,246,0.2)] p-4">
                 <div className="flex items-start gap-3">
                     <FolderLock size={20} className="text-blue-400 shrink-0 mt-0.5" />
                     <div className="text-[13px] text-[rgba(245,245,245,0.7)] space-y-1">
                         <p><strong>How permission rules work:</strong></p>
                         <ul className="list-disc ml-4 space-y-1">
+                            <li>Rules are scoped to a specific data source ({SOURCE_TABS.find(t => t.key === activeSource)?.label})</li>
                             <li>User-specific rules override role-based rules</li>
                             <li>Deny rules take precedence over allow rules at the same level</li>
-                            <li>More specific rules (direct target) override inherited rules</li>
+                            <li>If an item is not explicitly allowed, it will not be queried</li>
                             <li>Admins bypass all rules and can see all content</li>
                         </ul>
                     </div>
@@ -226,8 +251,10 @@ export default function PermissionsPage() {
                 ) : rules.length === 0 ? (
                     <div className="p-12 text-center">
                         <FolderLock size={48} className="mx-auto text-[rgba(245,245,245,0.2)] mb-4" />
-                        <p className="text-[14px] text-[rgba(245,245,245,0.5)]">No permission rules defined</p>
-                        <p className="text-[13px] text-[rgba(245,245,245,0.4)] mt-1">Add rules to control content access</p>
+                        <p className="text-[14px] text-[rgba(245,245,245,0.5)]">
+                            No {SOURCE_TABS.find(t => t.key === activeSource)?.label} permission rules
+                        </p>
+                        <p className="text-[13px] text-[rgba(245,245,245,0.4)] mt-1">Add rules to control content access for this source</p>
                     </div>
                 ) : (
                     <table className="w-full">
@@ -260,17 +287,13 @@ export default function PermissionsPage() {
                                     </td>
                                     <td className="px-5 py-4">
                                         <div className="flex items-center gap-2">
-                                            {rule.target_type === "folder" ? (
-                                                <Folder size={16} className="text-amber-400" />
-                                            ) : (
-                                                <FileText size={16} className="text-blue-400" />
-                                            )}
+                                            {getTargetIcon(rule)}
                                             <div>
                                                 <p className="text-[14px] text-[#F5F5F5]">
                                                     {rule.target_title || "Unknown target"}
                                                 </p>
                                                 <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
-                                                    {rule.target_type.charAt(0).toUpperCase() + rule.target_type.slice(1)}
+                                                    {rule.target_type.charAt(0).toUpperCase() + rule.target_type.slice(1).replace("_", " ")}
                                                     {!rule.target_title && ` (ID: ${rule.target_id})`}
                                                 </p>
                                             </div>
@@ -278,8 +301,8 @@ export default function PermissionsPage() {
                                     </td>
                                     <td className="px-5 py-4">
                                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium ${rule.effect === "allow"
-                                                ? "bg-green-500/10 text-green-400"
-                                                : "bg-red-500/10 text-red-400"
+                                            ? "bg-green-500/10 text-green-400"
+                                            : "bg-red-500/10 text-red-400"
                                             }`}>
                                             {rule.effect === "allow" ? <Check size={12} /> : <X size={12} />}
                                             {rule.effect.charAt(0).toUpperCase() + rule.effect.slice(1)}
@@ -307,6 +330,7 @@ export default function PermissionsPage() {
             {/* Create Rule Modal */}
             {showCreateModal && (
                 <CreateRuleModal
+                    source={activeSource}
                     users={users}
                     onClose={() => setShowCreateModal(false)}
                     onCreate={handleCreateRules}
@@ -316,18 +340,23 @@ export default function PermissionsPage() {
     );
 }
 
+// ---------------------------------------------------------------------------
 // Create Rule Modal Component
+// ---------------------------------------------------------------------------
 function CreateRuleModal({
+    source,
     users,
     onClose,
     onCreate,
 }: {
+    source: SourceTab;
     users: UserItem[];
     onClose: () => void;
     onCreate: (payload: {
+        source: string;
         subject_type: string;
         subject_id: string;
-        targets: { target_type: string; target_id: number }[];
+        targets: { target_type: string; target_id: number; drive_resource_id?: string }[];
         effect: string;
         applies_to_descendants: boolean;
     }) => void;
@@ -335,23 +364,74 @@ function CreateRuleModal({
     const [subjectType, setSubjectType] = useState<"user" | "role">("role");
     const [subjectId, setSubjectId] = useState("user");
     const [selectedTargets, setSelectedTargets] = useState<SelectedTarget[]>([]);
+    const [selectedPageIds, setSelectedPageIds] = useState<number[]>([]);
     const [effect, setEffect] = useState<"allow" | "deny">("allow");
     const [applyToDescendants, setApplyToDescendants] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [hasAgencyConnection, setHasAgencyConnection] = useState<boolean | null>(null);
+    const [rootFolderId, setRootFolderId] = useState<string | null>(null);
     const token = typeof localStorage !== "undefined" ? localStorage.getItem("auth_token") : null;
+
+    const sourceLabel = source === "claromentis" ? "Claromentis" : "Google Drive";
+
+    // Check agency connection status and fetch root_folder_id when in Google Drive mode
+    useEffect(() => {
+        if (source !== "google_drive" || !token) return;
+        fetch("/api/admin/google-drive/connection-status", {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                setHasAgencyConnection(data.connected === true);
+                setRootFolderId(data.root_folder_id || null);
+            })
+            .catch(() => {
+                setHasAgencyConnection(false);
+                setRootFolderId(null);
+            });
+    }, [source, token]);
+
+    const hasSelection = source === "claromentis"
+        ? selectedTargets.length > 0 || selectedPageIds.length > 0
+        : selectedTargets.length > 0;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (selectedTargets.length === 0) return;
+        if (!hasSelection) return;
 
         setIsSubmitting(true);
+
+        const targets: { target_type: string; target_id: number; drive_resource_id?: string }[] = [];
+
+        if (source === "google_drive") {
+            // Google Drive targets: use Drive IDs
+            for (const t of selectedTargets) {
+                targets.push({
+                    target_type: t.node_type === "folder" ? "drive_folder" : "drive_file",
+                    target_id: 0, // will be resolved by backend via drive_resource_id
+                    drive_resource_id: t.drive_resource_id || String(t.external_id),
+                });
+            }
+        } else {
+            // Claromentis folder/doc targets
+            for (const t of selectedTargets) {
+                targets.push({
+                    target_type: t.node_type === "folder" ? "folder" : "doc",
+                    target_id: t.external_id as number,
+                });
+            }
+
+            // Claromentis page targets (from page selector)
+            for (const pageId of selectedPageIds) {
+                targets.push({ target_type: "page", target_id: pageId });
+            }
+        }
+
         await onCreate({
+            source,
             subject_type: subjectType,
             subject_id: subjectId,
-            targets: selectedTargets.map((t) => ({
-                target_type: t.node_type === "folder" ? "folder" : "doc",
-                target_id: t.external_id,
-            })),
+            targets,
             effect,
             applies_to_descendants: applyToDescendants,
         });
@@ -362,7 +442,9 @@ function CreateRuleModal({
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
             <div className="w-full max-w-md rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.1)] overflow-hidden max-h-[90vh] flex flex-col">
                 <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between shrink-0">
-                    <h2 className="text-[16px] font-semibold text-[#F5F5F5]">Create Permission Rule</h2>
+                    <h2 className="text-[16px] font-semibold text-[#F5F5F5]">
+                        Create {sourceLabel} Rule
+                    </h2>
                     <button onClick={onClose} className="p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)]">
                         <X size={18} className="text-[rgba(245,245,245,0.5)]" />
                     </button>
@@ -377,31 +459,23 @@ function CreateRuleModal({
                         <div className="flex gap-2">
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setSubjectType("role");
-                                    setSubjectId("user");
-                                }}
+                                onClick={() => { setSubjectType("role"); setSubjectId("user"); }}
                                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium transition-colors ${subjectType === "role"
-                                        ? "bg-[rgba(255,255,255,0.08)] border-[rgba(255,255,255,0.15)] text-[#F5F5F5]"
-                                        : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
+                                    ? "bg-[rgba(255,255,255,0.08)] border-[rgba(255,255,255,0.15)] text-[#F5F5F5]"
+                                    : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
                                     }`}
                             >
-                                <Users size={16} />
-                                Role
+                                <Users size={16} /> Role
                             </button>
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setSubjectType("user");
-                                    setSubjectId(users[0]?.id.toString() || "");
-                                }}
+                                onClick={() => { setSubjectType("user"); setSubjectId(users[0]?.id.toString() || ""); }}
                                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium transition-colors ${subjectType === "user"
-                                        ? "bg-[rgba(255,255,255,0.08)] border-[rgba(255,255,255,0.15)] text-[#F5F5F5]"
-                                        : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
+                                    ? "bg-[rgba(255,255,255,0.08)] border-[rgba(255,255,255,0.15)] text-[#F5F5F5]"
+                                    : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
                                     }`}
                             >
-                                <User size={16} />
-                                User
+                                <User size={16} /> User
                             </button>
                         </div>
                     </div>
@@ -424,61 +498,131 @@ function CreateRuleModal({
                                 </>
                             ) : (
                                 users.map(user => (
-                                    <option key={user.id} value={user.id.toString()}>
-                                        {user.email}
-                                    </option>
+                                    <option key={user.id} value={user.id.toString()}>{user.email}</option>
                                 ))
                             )}
                         </select>
                     </div>
 
-                    {/* Folder / document tree selector (multi-select) */}
-                    <div>
-                        <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
-                            Content (select one or more)
-                        </label>
-                        <p className="text-[12px] text-[rgba(245,245,245,0.5)] mb-2">
-                            Check the folders or documents to apply the rule to.
-                        </p>
-                        {token ? (
-                            <FolderTreeSelector
-                                token={token}
-                                multiSelect
-                                selectedTargets={selectedTargets}
-                                onSelectionChange={setSelectedTargets}
-                            />
-                        ) : (
-                            <p className="text-[13px] text-[rgba(245,245,245,0.5)]">Sign in to load tree</p>
-                        )}
-                        {selectedTargets.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1.5">
-                                {selectedTargets.map((t) => (
-                                    <span
-                                        key={t.external_id}
-                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] text-[12px] text-[rgba(245,245,245,0.7)]"
-                                    >
-                                        {t.node_type === "folder" ? (
-                                            <Folder size={10} className="text-amber-400" />
-                                        ) : (
-                                            <FileText size={10} className="text-blue-400" />
-                                        )}
-                                        {t.title}
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setSelectedTargets((prev) =>
-                                                    prev.filter((x) => x.external_id !== t.external_id)
-                                                )
-                                            }
-                                            className="ml-0.5 hover:text-red-400"
-                                        >
-                                            <X size={10} />
-                                        </button>
-                                    </span>
-                                ))}
+                    {/* Target Selection -- source-specific */}
+                    {source === "claromentis" && (
+                        <div className="space-y-4">
+                            {/* Folder / document tree selector */}
+                            <div>
+                                <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                                    Folders / Documents
+                                </label>
+                                <p className="text-[12px] text-[rgba(245,245,245,0.5)] mb-2">
+                                    Check folders or documents to apply the rule to.
+                                </p>
+                                {token ? (
+                                    <FolderTreeSelector
+                                        token={token}
+                                        multiSelect
+                                        selectedTargets={selectedTargets}
+                                        onSelectionChange={setSelectedTargets}
+                                    />
+                                ) : (
+                                    <p className="text-[13px] text-[rgba(245,245,245,0.5)]">Sign in to load tree</p>
+                                )}
                             </div>
-                        )}
-                    </div>
+
+                            {/* Page selector (names only) */}
+                            <div>
+                                <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                                    Pages (names only, no preview)
+                                </label>
+                                {token ? (
+                                    <ClaromentisPageSelector
+                                        token={token}
+                                        selectedPageIds={selectedPageIds}
+                                        onSelectionChange={setSelectedPageIds}
+                                    />
+                                ) : (
+                                    <p className="text-[13px] text-[rgba(245,245,245,0.5)]">Sign in to load pages</p>
+                                )}
+                            </div>
+
+                            {/* Selected items badges */}
+                            {(selectedTargets.length > 0 || selectedPageIds.length > 0) && (
+                                <div className="flex flex-wrap gap-1.5">
+                                    {selectedTargets.map((t) => (
+                                        <span
+                                            key={`t-${t.external_id}`}
+                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] text-[12px] text-[rgba(245,245,245,0.7)]"
+                                        >
+                                            {t.node_type === "folder" ? <Folder size={10} className="text-amber-400" /> : <FileText size={10} className="text-blue-400" />}
+                                            {t.title}
+                                            <button type="button" onClick={() => setSelectedTargets(prev => prev.filter(x => x.external_id !== t.external_id))} className="ml-0.5 hover:text-red-400"><X size={10} /></button>
+                                        </span>
+                                    ))}
+                                    {selectedPageIds.map((id) => (
+                                        <span
+                                            key={`p-${id}`}
+                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[rgba(168,85,247,0.1)] border border-[rgba(168,85,247,0.2)] text-[12px] text-purple-300"
+                                        >
+                                            <FileText size={10} />
+                                            Page #{id}
+                                            <button type="button" onClick={() => setSelectedPageIds(prev => prev.filter(x => x !== id))} className="ml-0.5 hover:text-red-400"><X size={10} /></button>
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {source === "google_drive" && (
+                        <div>
+                            <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                                Content (select one or more)
+                            </label>
+                            <p className="text-[12px] text-[rgba(245,245,245,0.5)] mb-2">
+                                Select folders from the connected Admin Drive to apply the rule to.
+                            </p>
+                            {hasAgencyConnection === false ? (
+                                <div className="text-center py-8 rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0C0C0C]">
+                                    <Cloud size={32} className="mx-auto text-[rgba(245,245,245,0.2)] mb-3" />
+                                    <p className="text-[14px] text-[rgba(245,245,245,0.5)] mb-3">Admin Drive not connected</p>
+                                    <a
+                                        href="/dashboard/settings/integrations"
+                                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-[rgba(255,255,255,0.1)] text-[13px] font-medium text-[#F5F5F5] transition-colors"
+                                    >
+                                        Connect Admin Drive
+                                    </a>
+                                </div>
+                            ) : hasAgencyConnection === null ? (
+                                <div className="flex items-center justify-center py-6 text-[rgba(245,245,245,0.5)] text-[14px]">
+                                    <Loader2 size={18} className="animate-spin mr-2" />
+                                    Checking connection…
+                                </div>
+                            ) : token ? (
+                                <FolderTreeSelector
+                                    mode="google-drive"
+                                    token={token}
+                                    multiSelect
+                                    selectedTargets={selectedTargets}
+                                    onSelectionChange={setSelectedTargets}
+                                    rootFolderId={rootFolderId}
+                                />
+                            ) : (
+                                <p className="text-[13px] text-[rgba(245,245,245,0.5)]">Sign in to load tree</p>
+                            )}
+                            {selectedTargets.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                    {selectedTargets.map((t) => (
+                                        <span
+                                            key={String(t.external_id)}
+                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] text-[12px] text-[rgba(245,245,245,0.7)]"
+                                        >
+                                            {t.node_type === "folder" ? <Folder size={10} className="text-amber-400" /> : <FileText size={10} className="text-blue-400" />}
+                                            {t.title}
+                                            <button type="button" onClick={() => setSelectedTargets(prev => prev.filter(x => String(x.external_id) !== String(t.external_id)))} className="ml-0.5 hover:text-red-400"><X size={10} /></button>
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Effect */}
                     <div>
@@ -490,23 +634,21 @@ function CreateRuleModal({
                                 type="button"
                                 onClick={() => setEffect("allow")}
                                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium transition-colors ${effect === "allow"
-                                        ? "bg-green-500/10 border-green-500/30 text-green-400"
-                                        : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
+                                    ? "bg-green-500/10 border-green-500/30 text-green-400"
+                                    : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
                                     }`}
                             >
-                                <Check size={16} />
-                                Allow
+                                <Check size={16} /> Allow
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setEffect("deny")}
                                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium transition-colors ${effect === "deny"
-                                        ? "bg-red-500/10 border-red-500/30 text-red-400"
-                                        : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
+                                    ? "bg-red-500/10 border-red-500/30 text-red-400"
+                                    : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
                                     }`}
                             >
-                                <X size={16} />
-                                Deny
+                                <X size={16} /> Deny
                             </button>
                         </div>
                     </div>
@@ -535,14 +677,10 @@ function CreateRuleModal({
                         </button>
                         <button
                             type="submit"
-                            disabled={isSubmitting || selectedTargets.length === 0 || !token}
+                            disabled={isSubmitting || !hasSelection || !token}
                             className="flex-1 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.15)] border border-[rgba(255,255,255,0.15)] text-[14px] font-medium text-[#F5F5F5] transition-colors disabled:opacity-50"
                         >
-                            {isSubmitting
-                                ? "Creating..."
-                                : selectedTargets.length > 1
-                                    ? `Create ${selectedTargets.length} Rules`
-                                    : "Create Rule"}
+                            {isSubmitting ? "Creating..." : "Create Rule"}
                         </button>
                     </div>
                 </form>

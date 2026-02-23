@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
@@ -57,6 +57,7 @@ function LoginContent() {
     // Get redirect URL and reason from query params
     const redirectUrl = searchParams.get("redirect") || "/dashboard/chat";
     const reason = searchParams.get("reason");
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
     // Show session expired / password changed messages
     useEffect(() => {
@@ -67,49 +68,14 @@ function LoginContent() {
         }
     }, [reason]);
 
-    // Initialize Google Sign-In
-    useEffect(() => {
-        const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-        if (!googleClientId) return;
-
-        const script = document.createElement("script");
-        script.src = "https://accounts.google.com/gsi/client?hl=en";
-        script.async = true;
-        script.defer = true;
-        script.onload = () => {
-            if (window.google) {
-                window.google.accounts.id.initialize({
-                    client_id: googleClientId,
-                    callback: handleGoogleCallback,
-                });
-
-                const buttonDiv = document.getElementById("google-signin-button");
-                if (buttonDiv) {
-                    window.google.accounts.id.renderButton(buttonDiv, {
-                        theme: "outline",
-                        size: "large",
-                        width: 320,
-                        text: "signin_with",
-                        locale: "en",
-                    });
-                }
-            }
-        };
-        document.body.appendChild(script);
-
-        return () => {
-            document.body.removeChild(script);
-        };
-    }, []);
-
-    const setAuthCookie = (token: string) => {
+    const setAuthCookie = useCallback((token: string) => {
         // `src/proxy.ts` runs server-side and cannot read localStorage.
         // Mirror the token into a cookie so route protection can see it.
         const secure = window.location.protocol === "https:" ? "; Secure" : "";
         document.cookie = `auth_token=${encodeURIComponent(token)}; Path=/; SameSite=Lax${secure}`;
-    };
+    }, []);
 
-    const handleGoogleCallback = async (response: { credential: string }) => {
+    const handleGoogleCallback = useCallback(async (response: { credential: string }) => {
         setIsLoading(true);
         setError("");
         setInfo("");
@@ -144,7 +110,41 @@ function LoginContent() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [router, redirectUrl, setAuthCookie]);
+
+    // Initialize Google Sign-In
+    useEffect(() => {
+        if (!googleClientId) return;
+
+        const script = document.createElement("script");
+        script.src = "https://accounts.google.com/gsi/client?hl=en";
+        script.async = true;
+        script.defer = true;
+        script.onload = () => {
+            if (window.google) {
+                window.google.accounts.id.initialize({
+                    client_id: googleClientId,
+                    callback: handleGoogleCallback,
+                });
+
+                const buttonDiv = document.getElementById("google-signin-button");
+                if (buttonDiv) {
+                    window.google.accounts.id.renderButton(buttonDiv, {
+                        theme: "outline",
+                        size: "large",
+                        width: 320,
+                        text: "signin_with",
+                        locale: "en",
+                    });
+                }
+            }
+        };
+        document.body.appendChild(script);
+
+        return () => {
+            document.body.removeChild(script);
+        };
+    }, [googleClientId, handleGoogleCallback]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

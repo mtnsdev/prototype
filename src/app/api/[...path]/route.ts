@@ -17,11 +17,40 @@ async function proxy(req: Request, pathParts: string[]) {
   const headers = new Headers(req.headers);
   headers.delete("host");
 
-  const res = await fetch(targetUrl.toString(), {
-    method: req.method,
-    headers,
-    body: req.method === "GET" || req.method === "HEAD" ? undefined : await req.arrayBuffer(),
-  });
+  let body: Buffer | undefined;
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    try {
+      body = Buffer.from(await req.arrayBuffer());
+    } catch {
+      body = undefined;
+    }
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30_000);
+
+  let res: Response;
+  try {
+    res = await fetch(targetUrl.toString(), {
+      method: req.method,
+      headers,
+      body,
+      signal: controller.signal,
+    });
+  } catch (err: unknown) {
+    clearTimeout(timeoutId);
+    if (err instanceof Error && err.name === "AbortError") {
+      return new NextResponse(JSON.stringify({ detail: "Backend request timed out" }), {
+        status: 504,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    return new NextResponse(JSON.stringify({ detail: "Backend unreachable" }), {
+      status: 502,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  clearTimeout(timeoutId);
 
   return new NextResponse(res.body, {
     status: res.status,

@@ -9,6 +9,7 @@ export type User = {
     agency_id?: string | null;
     role: string;
     status: string;
+    has_password?: boolean;
 };
 
 type UserContextType = {

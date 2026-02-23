@@ -5,6 +5,7 @@ import { useFolderChildren } from "@/hooks/useFolderChildren";
 import { useProxyUrl } from "@/hooks/useProxyUrl";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 import { useDriveFiles } from "@/hooks/useDriveFiles";
+import { usePages, type PageItem } from "@/hooks/usePages";
 import { Folder, FileText, ChevronRight, ChevronDown, Eye, Loader2, Search, Cloud, Shield, Lock, Globe } from "lucide-react";
 import PdfModal from "@/components/dashboard/PdfModal";
 import SyncStatusButton from "@/components/library/SyncStatusButton";
@@ -15,7 +16,8 @@ import type { DriveFile } from "@/types/google-drive";
 // ---------------------------------------------------------------------------
 type TLItem =
     | { kind: "folder"; id: number; parent_id: number; title: string; has_children?: boolean; URI?: string }
-    | { kind: "document"; doc_id: number; parent_id: number; title: string; version_num: number; URI?: string };
+    | { kind: "document"; doc_id: number; parent_id: number; title: string; version_num: number; URI?: string }
+    | PageItem;
 
 type TLSearchResult = {
     items: TLItem[];
@@ -483,9 +485,11 @@ function DriveLibraryContent({
                         <div className="px-5 py-10 text-center">
                             <div className="flex flex-col items-center gap-2">
                                 <Cloud size={32} className="text-[rgba(245,245,245,0.2)]" />
-                                <span className="text-[14px] text-[rgba(245,245,245,0.5)]">No synced files yet</span>
+                                <span className="text-[14px] text-[rgba(245,245,245,0.5)]">No available files</span>
                                 <span className="text-[12px] text-[rgba(245,245,245,0.35)]">
-                                    Files will appear here after syncing your Google Drive folder.
+                                    {connectionType === "agency"
+                                        ? "No folders have been shared with you yet. Contact your admin for access."
+                                        : "Files will appear here after syncing your Google Drive folder."}
                                 </span>
                             </div>
                         </div>
@@ -713,11 +717,11 @@ function TreeNode({
                         "text-[13px] truncate",
                         isFolder ? "text-[#F5F5F5] font-medium" : "text-[rgba(245,245,245,0.8)]",
                     ].join(" ")}>
-                        {item.title}
+                        {item.kind === "page" ? item.name : item.title}
                     </p>
                 </div>
 
-                {/* Preview button for documents */}
+                {/* Preview button for documents only (not pages) */}
                 {item.kind === "document" && (
                     <PreviewButton doc={item} onOpenPreview={onOpenPreview} />
                 )}
@@ -805,8 +809,9 @@ function SearchResultItem({
     onOpenPreview: (filename: string, proxyUrl: string) => void;
 }) {
     const isFolder = item.kind === "folder";
+    const isPage = item.kind === "page";
 
-    // Build preview URL for documents
+    // Build preview URL for documents (not for pages)
     const getPreviewUrl = (): string | null => {
         if (item.kind !== "document") return null;
 
@@ -825,6 +830,9 @@ function SearchResultItem({
     };
 
     const previewUrl = getPreviewUrl();
+
+    // Get title based on item type
+    const title = item.kind === "page" ? item.name : item.title;
 
     return (
         <div
@@ -847,21 +855,23 @@ function SearchResultItem({
             {/* Content */}
             <div className="flex-1 min-w-0">
                 <p className="text-[13px] text-[#F5F5F5] truncate font-medium">
-                    {item.title}
+                    {title}
                 </p>
                 <p className="text-[11px] text-[rgba(245,245,245,0.45)] mt-0.5">
                     {isFolder
                         ? `Folder • ID ${item.id}`
-                        : `Document • ID ${item.doc_id}`
+                        : isPage
+                            ? `Page • ${(item.size / 1024).toFixed(1)} KB`
+                            : `Document • ID ${item.doc_id}`
                     }
                 </p>
             </div>
 
-            {/* Preview button for documents */}
+            {/* Preview button for documents only (not for pages) */}
             {item.kind === "document" && previewUrl && (
                 <button
                     type="button"
-                    onClick={() => onOpenPreview(item.title, previewUrl)}
+                    onClick={() => onOpenPreview(title, previewUrl)}
                     className={[
                         "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md",
                         "text-[11px] font-medium",
@@ -882,7 +892,18 @@ function SearchResultItem({
 // ===========================================================================
 // CLAROMENTIS: Content view (existing, extracted into sub-component)
 // ===========================================================================
+type NavigationMode = "knowledge-root" | "documents" | "pages";
+
+type BreadcrumbItem = {
+    label: string;
+    path: NavigationMode;
+};
+
 function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }) {
+    // Navigation mode state
+    const [navigationMode, setNavigationMode] = useState<NavigationMode>(initialRootId !== undefined ? "documents" : "knowledge-root");
+    const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([{ label: "Knowledge", path: "knowledge-root" }]);
+    
     const [rootId, setRootId] = useState<number | undefined>(initialRootId);
     const [draftRootId, setDraftRootId] = useState<string>("");
     const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
@@ -904,6 +925,34 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
     const showSearchLoader = useDelayedLoading(searchLoading);
 
     const clientCache = useRef<Map<number, TLItem[]>>(new Map());
+
+    // Root accordion state (knowledge-root view: Documents + Pages)
+    const [documentsOpen, setDocumentsOpen] = useState(false);
+    const [pagesOpen, setPagesOpen] = useState(false);
+    const [rootAccordionExpandedIds, setRootAccordionExpandedIds] = useState<Set<number>>(new Set());
+    const rootAccordionCache = useRef<Map<number, TLItem[]>>(new Map());
+
+    const handleRootAccordionToggle = useCallback((id: number) => {
+        setRootAccordionExpandedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) { next.delete(id); } else { next.add(id); }
+            return next;
+        });
+    }, []);
+
+    const accordionRootOptions = useMemo(() => ({
+        enabled: navigationMode === "knowledge-root" && documentsOpen,
+        onSuccess: (items: TLItem[]) => { rootAccordionCache.current.set(0, items); },
+    }), [navigationMode, documentsOpen]);
+    const { items: accordionRootItems, loading: accordionRootLoading } = useFolderChildren(
+        navigationMode === "knowledge-root" && documentsOpen ? 0 : undefined,
+        undefined,
+        accordionRootOptions
+    );
+    const accordionRootDisplay = rootAccordionCache.current.get(0) ?? accordionRootItems;
+
+    // Pages data - fetch when in pages mode OR when accordion pages section is open
+    const { items: pagesItems, hasMore: pagesHasMore, isLoading: pagesLoading, error: pagesError, loadMore: loadMorePages } = usePages({ enabled: navigationMode === "pages" || (navigationMode === "knowledge-root" && pagesOpen) });
 
     // Debounced search effect
     useEffect(() => {
@@ -1017,7 +1066,7 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
         onSuccess: handleRootSuccess,
     }), [rootId, handleRootSuccess]);
 
-    const { items, loading, showLoading, error } = useFolderChildren(rootId, undefined, rootHookOptions);
+    const { items, showLoading, error } = useFolderChildren(rootId, undefined, rootHookOptions);
 
     const cachedItems = rootId !== undefined ? clientCache.current.get(rootId) : undefined;
     const rawDisplayItems = cachedItems ?? items;
@@ -1051,7 +1100,173 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
         });
     }
 
-    if (rootId === undefined) {
+    // Navigation handlers
+    const handleNavigateToKnowledgeRoot = useCallback(() => {
+        setNavigationMode("knowledge-root");
+        setBreadcrumbs([{ label: "Knowledge", path: "knowledge-root" }]);
+        setSearchQuery("");
+    }, []);
+
+    const handleNavigateToDocuments = useCallback(() => {
+        setNavigationMode("documents");
+        setBreadcrumbs([
+            { label: "Knowledge", path: "knowledge-root" },
+            { label: "Documents", path: "documents" }
+        ]);
+        setRootId(0); // Load Claromentis root
+        setExpandedIds(new Set());
+        setSearchQuery("");
+    }, []);
+
+    const handleNavigateToPages = useCallback(() => {
+        setNavigationMode("pages");
+        setBreadcrumbs([
+            { label: "Knowledge", path: "knowledge-root" },
+            { label: "Pages", path: "pages" }
+        ]);
+        setSearchQuery("");
+    }, []);
+
+    const handleBreadcrumbClick = useCallback((path: NavigationMode) => {
+        switch (path) {
+            case "knowledge-root":
+                handleNavigateToKnowledgeRoot();
+                break;
+            case "documents":
+                handleNavigateToDocuments();
+                break;
+            case "pages":
+                handleNavigateToPages();
+                break;
+        }
+    }, [handleNavigateToKnowledgeRoot, handleNavigateToDocuments, handleNavigateToPages]);
+
+    // Knowledge Root view — full-page tree with 2 root rows: Documents + Pages
+    if (navigationMode === "knowledge-root") {
+        return (
+            <div className="h-full p-6 flex flex-col min-h-0 bg-[#0C0C0C]">
+                <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden flex flex-col min-h-0 flex-1">
+                    {/* Header */}
+                    <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] shrink-0 flex items-center justify-between">
+                        <div>
+                            <h1 className="text-[15px] font-semibold text-[#F5F5F5]">Knowledge Library</h1>
+                            <p className="text-[12px] text-[rgba(245,245,245,0.4)] mt-0.5">Knowledge</p>
+                        </div>
+                        <SyncStatusButton />
+                    </div>
+
+                    {/* Tree content */}
+                    <div className="min-h-0 flex-1 overflow-y-auto py-2">
+                        {/* Documents root row */}
+                        <div
+                            className="flex items-center gap-2 py-2 pr-4 hover:bg-white/4 cursor-pointer transition-all duration-150"
+                            style={{ paddingLeft: 20 }}
+                            onClick={() => setDocumentsOpen((v) => !v)}
+                        >
+                            <button
+                                type="button"
+                                className="w-5 h-5 flex items-center justify-center text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors"
+                                onClick={(e) => { e.stopPropagation(); setDocumentsOpen((v) => !v); }}
+                            >
+                                {accordionRootLoading && documentsOpen
+                                    ? <Loader2 size={14} className="animate-spin" />
+                                    : documentsOpen
+                                        ? <ChevronDown size={14} />
+                                        : <ChevronRight size={14} />
+                                }
+                            </button>
+                            <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 bg-[rgba(122,163,200,0.1)] text-[#7AA3C8]">
+                                <Folder size={14} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-medium text-[#F5F5F5] truncate">Documents</p>
+                            </div>
+                        </div>
+
+                        {/* Documents children */}
+                        {documentsOpen && !accordionRootLoading && accordionRootDisplay.map((item) => (
+                            <TreeNode
+                                key={item.kind === "folder" ? `f-${item.id}` : `d-${item.doc_id}-${item.version_num}`}
+                                item={item}
+                                depth={1}
+                                expandedIds={rootAccordionExpandedIds}
+                                onToggleExpand={handleRootAccordionToggle}
+                                clientCache={rootAccordionCache}
+                                onOpenPreview={openPreview}
+                            />
+                        ))}
+
+                        {/* Pages root row */}
+                        <div
+                            className="flex items-center gap-2 py-2 pr-4 hover:bg-white/4 cursor-pointer transition-all duration-150"
+                            style={{ paddingLeft: 20 }}
+                            onClick={() => setPagesOpen((v) => !v)}
+                        >
+                            <button
+                                type="button"
+                                className="w-5 h-5 flex items-center justify-center text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors"
+                                onClick={(e) => { e.stopPropagation(); setPagesOpen((v) => !v); }}
+                            >
+                                {pagesLoading && pagesOpen && pagesItems.length === 0
+                                    ? <Loader2 size={14} className="animate-spin" />
+                                    : pagesOpen
+                                        ? <ChevronDown size={14} />
+                                        : <ChevronRight size={14} />
+                                }
+                            </button>
+                            <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 bg-[rgba(122,163,200,0.1)] text-[#7AA3C8]">
+                                <Folder size={14} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-medium text-[#F5F5F5] truncate">Pages</p>
+                            </div>
+                        </div>
+
+                        {/* Pages children */}
+                        {pagesOpen && pagesItems.map((page) => (
+                            <div
+                                key={page.id}
+                                className="flex items-center gap-2 py-2 pr-4 hover:bg-white/2 transition-all duration-150"
+                                style={{ paddingLeft: 44 + 24 }}
+                            >
+                                <div className="w-5" />
+                                <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 bg-[rgba(245,245,245,0.06)] text-[rgba(245,245,245,0.5)]">
+                                    <FileText size={14} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[13px] text-[rgba(245,245,245,0.8)] truncate">{page.name}</p>
+                                </div>
+                            </div>
+                        ))}
+                        {pagesOpen && pagesHasMore && (
+                            <div style={{ paddingLeft: 44 + 24 }} className="pr-4 py-2">
+                                <button
+                                    type="button"
+                                    onClick={loadMorePages}
+                                    disabled={pagesLoading}
+                                    className="w-full py-1.5 rounded-lg text-[12px] text-[rgba(245,245,245,0.5)] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.06)] disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
+                                >
+                                    {pagesLoading ? <Loader2 size={12} className="animate-spin" /> : null}
+                                    Load more
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* PDF Preview Modal */}
+                <PdfModal
+                    isOpen={pdfModal.isOpen}
+                    onClose={() => setPdfModal({ isOpen: false, filename: "", customUrl: "" })}
+                    filename={pdfModal.filename}
+                    customUrl={pdfModal.customUrl}
+                />
+            </div>
+        );
+    }
+
+    // If in documents mode but no root ID set, show folder ID input
+    if (navigationMode === "documents" && rootId === undefined) {
         return (
             <div className="h-full flex items-center justify-center bg-[#0C0C0C] p-6">
                 <div className="w-full max-w-md rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] p-8">
@@ -1092,6 +1307,13 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                             Load
                         </button>
                     </div>
+                    <button
+                        type="button"
+                        onClick={handleNavigateToKnowledgeRoot}
+                        className="mt-4 text-[12px] text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors"
+                    >
+                        ← Back to Knowledge
+                    </button>
                 </div>
             </div>
         );
@@ -1101,75 +1323,163 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
         <div className="h-full p-6 flex flex-col min-h-0 bg-[#0C0C0C]">
             {/* Main Content Card */}
             <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden flex flex-col min-h-0 flex-1">
-                {/* Header */}
-                <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between shrink-0">
-                    <div>
-                        <h1 className="text-[15px] font-semibold text-[#F5F5F5]">Knowledge Library</h1>
-                        <p className="text-[12px] text-[rgba(245,245,245,0.45)] mt-0.5">
-                            {rootId !== undefined ? `Folder ID: ${rootId}` : "Browse documents"}
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        {showRootLoading && (
-                            <div className="flex items-center gap-2 text-[12px] text-[rgba(245,245,245,0.5)]">
-                                <Loader2 size={14} className="animate-spin" />
-                                <span>Loading...</span>
+                {/* Header with Breadcrumbs */}
+                <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] shrink-0">
+                    <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                            <h1 className="text-[15px] font-semibold text-[#F5F5F5]">Knowledge Library</h1>
+                            {/* Breadcrumbs */}
+                            <div className="flex items-center gap-2 mt-1.5">
+                                {breadcrumbs.map((crumb, idx) => (
+                                    <div key={crumb.path} className="flex items-center gap-2">
+                                        {idx > 0 && <ChevronRight size={12} className="text-[rgba(245,245,245,0.3)]" />}
+                                        <button
+                                            type="button"
+                                            onClick={() => handleBreadcrumbClick(crumb.path)}
+                                            className={[
+                                                "text-[12px] transition-colors",
+                                                idx === breadcrumbs.length - 1
+                                                    ? "text-[#7AA3C8] font-medium cursor-default"
+                                                    : "text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5]",
+                                            ].join(" ")}
+                                            disabled={idx === breadcrumbs.length - 1}
+                                        >
+                                            {crumb.label}
+                                        </button>
+                                    </div>
+                                ))}
+                                {navigationMode === "documents" && rootId !== undefined && (
+                                    <span className="text-[12px] text-[rgba(245,245,245,0.4)]">
+                                        {" "} • Folder {rootId}
+                                    </span>
+                                )}
                             </div>
-                        )}
-                        <SyncStatusButton />
+                        </div>
+                        <div className="flex items-center gap-4">
+                            {((navigationMode === "documents" && showRootLoading) || (navigationMode === "pages" && pagesLoading)) && (
+                                <div className="flex items-center gap-2 text-[12px] text-[rgba(245,245,245,0.5)]">
+                                    <Loader2 size={14} className="animate-spin" />
+                                    <span>Loading...</span>
+                                </div>
+                            )}
+                            <SyncStatusButton />
+                        </div>
                     </div>
                 </div>
 
-                {/* Search Input */}
-                <div className="px-5 py-3 border-b border-[rgba(255,255,255,0.08)] shrink-0">
-                    <div className="relative">
-                        <Search
-                            size={16}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(245,245,245,0.4)]"
-                        />
-                        <input
-                            type="text"
-                            placeholder="Search documents and folders..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className={[
-                                "w-full rounded-lg pl-10 pr-4 py-2.5 text-[13px]",
-                                "bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.4)]",
-                                "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
-                                "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
-                                "transition-all duration-150",
-                            ].join(" ")}
-                        />
+                {/* Search Input - Only show for documents mode */}
+                {navigationMode === "documents" && (
+                    <div className="px-5 py-3 border-b border-[rgba(255,255,255,0.08)] shrink-0">
+                        <div className="relative">
+                            <Search
+                                size={16}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(245,245,245,0.4)]"
+                            />
+                            <input
+                                type="text"
+                                placeholder="Search documents and folders..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className={[
+                                    "w-full rounded-lg pl-10 pr-4 py-2.5 text-[13px]",
+                                    "bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.4)]",
+                                    "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
+                                    "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
+                                    "transition-all duration-150",
+                                ].join(" ")}
+                            />
+                        </div>
+                        <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-2">
+                            {searchQuery.trim().length < 2
+                                ? "Type at least 2 characters to search all documents and folders."
+                                : `Searching across all folders${searchTotal !== null ? ` • ${searchResults.length}${searchTotal > searchResults.length ? ` of ${searchTotal}` : ""} results` : ""}`
+                            }
+                        </p>
+                        <div className="flex items-center gap-2 mt-2 text-[12px]">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setRootId(initialRootId ?? 0);
+                                    setExpandedIds(new Set());
+                                    setSearchQuery("");
+                                }}
+                                className="text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors"
+                            >
+                                Back to root
+                            </button>
+                            <span className="text-[rgba(245,245,245,0.3)]">|</span>
+                            <span className="text-[rgba(245,245,245,0.6)] font-medium">
+                                Root ({displayItems.length})
+                            </span>
+                        </div>
                     </div>
-                    <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-2">
-                        {searchQuery.trim().length < 2
-                            ? "Type at least 2 characters to search all documents and folders."
-                            : `Searching across all folders${searchTotal !== null ? ` • ${searchResults.length}${searchTotal > searchResults.length ? ` of ${searchTotal}` : ""} results` : ""}`
-                        }
-                    </p>
-                    <div className="flex items-center gap-2 mt-2 text-[12px]">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setRootId(initialRootId ?? 0);
-                                setExpandedIds(new Set());
-                                setSearchQuery("");
-                            }}
-                            className="text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors"
-                        >
-                            Back to root
-                        </button>
-                        <span className="text-[rgba(245,245,245,0.3)]">|</span>
-                        <span className="text-[rgba(245,245,245,0.6)] font-medium">
-                            Root ({displayItems.length})
-                        </span>
-                    </div>
-                </div>
+                )}
 
-                {/* Tree View / Search Results */}
+                {/* Content Area */}
                 <div className="min-h-0 flex-1 overflow-y-auto py-2">
-                    {isSearchMode ? (
-                        // Search Results Mode
+                    {navigationMode === "pages" ? (
+                        // Pages Mode
+                        <>
+                            {pagesError ? (
+                                <div className="px-5 py-6 text-[14px] text-[#C87A7A] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
+                                    Failed to load pages: {(pagesError as Error).message}
+                                </div>
+                            ) : pagesLoading ? (
+                                <div className="px-5 py-10 text-center">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)]" />
+                                        <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Loading pages...</span>
+                                    </div>
+                                </div>
+                            ) : pagesItems.length === 0 ? (
+                                <div className="px-5 py-10 text-center">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <FileText size={32} className="text-[rgba(245,245,245,0.2)]" />
+                                        <span className="text-[14px] text-[rgba(245,245,245,0.5)]">No pages available</span>
+                                        <span className="text-[12px] text-[rgba(245,245,245,0.35)]">Pages will appear here when uploaded to S3</span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div>
+                                    {pagesItems.map((page) => (
+                                        <div
+                                            key={page.id}
+                                            className={[
+                                                "flex items-center gap-3 px-5 py-3 transition-all duration-150",
+                                                "hover:bg-white/2",
+                                            ].join(" ")}
+                                        >
+                                            <div className="w-5 flex items-center justify-center">
+                                                <FileText size={16} className="text-[rgba(245,245,245,0.4)]" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-[13px] text-[#F5F5F5] truncate">
+                                                    {page.name}
+                                                </div>
+                                                <div className="text-[11px] text-[rgba(245,245,245,0.4)] mt-0.5">
+                                                    {(page.size / 1024).toFixed(1)} KB • {new Date(page.last_modified).toLocaleDateString()}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {pagesHasMore && (
+                                        <div className="px-5 py-3">
+                                            <button
+                                                type="button"
+                                                onClick={loadMorePages}
+                                                disabled={pagesLoading}
+                                                className="w-full py-2 rounded-xl text-[13px] text-[rgba(245,245,245,0.6)] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.08)] transition-all duration-150 disabled:opacity-50 flex items-center justify-center gap-2"
+                                            >
+                                                {pagesLoading ? <Loader2 size={14} className="animate-spin" /> : null}
+                                                Load more
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </>
+                    ) : isSearchMode ? (
+                        // Search Results Mode (Documents)
                         <>
                             {searchError ? (
                                 <div className="px-5 py-6 text-[14px] text-[#C87A7A] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
