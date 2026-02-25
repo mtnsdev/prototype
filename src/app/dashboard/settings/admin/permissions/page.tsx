@@ -32,6 +32,27 @@ type ContentRule = {
     created_at: string;
 };
 
+type ConflictInfo = {
+    target_id: number;
+    target_type: string;
+    target_title: string | null;
+    conflict_type: "exact_duplicate" | "effect_change";
+    existing_rule_id: number;
+    existing_effect: string;
+    new_effect: string;
+    message: string;
+};
+
+type BatchPayload = {
+    source: string;
+    subject_type: string;
+    subject_id: string;
+    targets: { target_type: string; target_id: number; drive_resource_id?: string }[];
+    effect: string;
+    applies_to_descendants: boolean;
+    force_update?: boolean;
+};
+
 type RulesResponse = {
     rules: ContentRule[];
     total: number;
@@ -60,6 +81,8 @@ export default function PermissionsPage() {
     const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [users, setUsers] = useState<UserItem[]>([]);
+    const [pendingConflicts, setPendingConflicts] = useState<ConflictInfo[] | null>(null);
+    const [pendingPayload, setPendingPayload] = useState<BatchPayload | null>(null);
 
     const fetchRules = useCallback(async () => {
         setIsLoading(true);
@@ -110,33 +133,57 @@ export default function PermissionsPage() {
         fetchUsers();
     }, [fetchRules, fetchUsers]);
 
-    const handleCreateRules = async (payload: {
-        source: string;
-        subject_type: string;
-        subject_id: string;
-        targets: { target_type: string; target_id: number; drive_resource_id?: string }[];
-        effect: string;
-        applies_to_descendants: boolean;
-    }) => {
+    const submitBatch = async (payload: BatchPayload) => {
+        const token = localStorage.getItem("auth_token");
+        const response = await fetch("/api/admin/rules/batch", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+        });
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.detail || "Failed to create rules");
+        }
+        return response.json() as Promise<{ created: ContentRule[]; skipped: number; conflicts: ConflictInfo[] }>;
+    };
+
+    const handleCreateRules = async (payload: BatchPayload) => {
         try {
-            const token = localStorage.getItem("auth_token");
-            const response = await fetch("/api/admin/rules/batch", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify(payload),
-            });
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.detail || "Failed to create rules");
+            const result = await submitBatch(payload);
+            if (result.conflicts && result.conflicts.length > 0) {
+                // Pause and ask admin to resolve conflicts
+                setPendingConflicts(result.conflicts);
+                setPendingPayload(payload);
+                // Don't close the create modal yet — conflicts modal will take over
+                setShowCreateModal(false);
+            } else {
+                setShowCreateModal(false);
+                fetchRules();
             }
-            setShowCreateModal(false);
-            fetchRules();
         } catch (err) {
             alert(err instanceof Error ? err.message : "Failed to create rules");
         }
+    };
+
+    const handleConflictUpdate = async () => {
+        if (!pendingPayload) return;
+        try {
+            await submitBatch({ ...pendingPayload, force_update: true });
+            setPendingConflicts(null);
+            setPendingPayload(null);
+            fetchRules();
+        } catch (err) {
+            alert(err instanceof Error ? err.message : "Failed to update rules");
+        }
+    };
+
+    const handleConflictSkip = () => {
+        setPendingConflicts(null);
+        setPendingPayload(null);
+        fetchRules();
     };
 
     const handleDeleteRule = async (ruleId: number) => {
@@ -229,9 +276,10 @@ export default function PermissionsPage() {
                         <p><strong>How permission rules work:</strong></p>
                         <ul className="list-disc ml-4 space-y-1">
                             <li>Rules are scoped to a specific data source ({SOURCE_TABS.find(t => t.key === activeSource)?.label})</li>
+                            <li>By default, users can access everything the external system allows them</li>
+                            <li>Use <strong>deny</strong> rules to restrict specific content beyond what the external system controls</li>
                             <li>User-specific rules override role-based rules</li>
-                            <li>Deny rules take precedence over allow rules at the same level</li>
-                            <li>If an item is not explicitly allowed, it will not be queried</li>
+                            <li>More specific rules (direct target) override inherited rules from parent folders</li>
                             <li>Admins bypass all rules and can see all content</li>
                         </ul>
                     </div>
@@ -336,9 +384,120 @@ export default function PermissionsPage() {
                     onCreate={handleCreateRules}
                 />
             )}
+
+            {/* Conflict Confirmation Modal */}
+            {pendingConflicts && pendingConflicts.length > 0 && (
+                <ConflictConfirmModal
+                    conflicts={pendingConflicts}
+                    onUpdate={handleConflictUpdate}
+                    onSkip={handleConflictSkip}
+                    onCancel={() => {
+                        setPendingConflicts(null);
+                        setPendingPayload(null);
+                    }}
+                />
+            )}
         </div>
     );
 }
+
+// ---------------------------------------------------------------------------
+// Conflict Confirmation Modal Component
+// ---------------------------------------------------------------------------
+function ConflictConfirmModal({
+    conflicts,
+    onUpdate,
+    onSkip,
+    onCancel,
+}: {
+    conflicts: ConflictInfo[];
+    onUpdate: () => void;
+    onSkip: () => void;
+    onCancel: () => void;
+}) {
+    const [isUpdating, setIsUpdating] = useState(false);
+
+    const handleUpdate = async () => {
+        setIsUpdating(true);
+        await onUpdate();
+        setIsUpdating(false);
+    };
+
+    const effectLabel = (effect: string) => (
+        <span className={effect === "allow" ? "text-green-400 font-semibold" : "text-red-400 font-semibold"}>
+            {effect}
+        </span>
+    );
+
+    return (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="w-full max-w-lg rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.1)] overflow-hidden max-h-[90vh] flex flex-col">
+                <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                            <X size={16} className="text-amber-400" />
+                        </div>
+                        <h2 className="text-[16px] font-semibold text-[#F5F5F5]">Conflicting Rules Found</h2>
+                    </div>
+                    <button onClick={onCancel} className="p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)]">
+                        <X size={18} className="text-[rgba(245,245,245,0.5)]" />
+                    </button>
+                </div>
+
+                <div className="p-6 overflow-y-auto space-y-3">
+                    <p className="text-[13px] text-[rgba(245,245,245,0.6)]">
+                        The following targets already have rules. Choose how to handle them:
+                    </p>
+
+                    <div className="space-y-2">
+                        {conflicts.map((c) => (
+                            <div
+                                key={c.existing_rule_id}
+                                className="rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.07)] p-4"
+                            >
+                                <p className="text-[13px] text-[#F5F5F5] font-medium mb-1">
+                                    {c.target_title || `${c.target_type} #${c.target_id}`}
+                                </p>
+                                {c.conflict_type === "exact_duplicate" ? (
+                                    <p className="text-[12px] text-[rgba(245,245,245,0.5)]">
+                                        A {effectLabel(c.existing_effect)} rule already exists — no change needed.
+                                    </p>
+                                ) : (
+                                    <p className="text-[12px] text-[rgba(245,245,245,0.5)]">
+                                        Existing rule is {effectLabel(c.existing_effect)}. This will change it to {effectLabel(c.new_effect)}.
+                                    </p>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="px-6 py-4 border-t border-[rgba(255,255,255,0.08)] flex gap-3 shrink-0">
+                    <button
+                        onClick={onCancel}
+                        className="px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.08)] text-[13px] font-medium text-[rgba(245,245,245,0.7)] transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={onSkip}
+                        className="flex-1 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.08)] text-[13px] font-medium text-[rgba(245,245,245,0.7)] transition-colors"
+                    >
+                        Skip conflicts
+                    </button>
+                    <button
+                        onClick={handleUpdate}
+                        disabled={isUpdating || conflicts.every(c => c.conflict_type === "exact_duplicate")}
+                        className="flex-1 px-4 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-[13px] font-medium text-amber-400 transition-colors disabled:opacity-40"
+                    >
+                        {isUpdating ? "Updating..." : "Update conflicting rules"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 
 // ---------------------------------------------------------------------------
 // Create Rule Modal Component
