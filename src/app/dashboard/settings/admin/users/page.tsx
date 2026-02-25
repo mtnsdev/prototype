@@ -15,7 +15,9 @@ import {
     Loader2,
     X,
     Key,
+    Eye,
 } from "lucide-react";
+import { UserPermissionsModal } from "@/components/admin/UserPermissionsModal";
 
 type User = {
     id: number;
@@ -163,6 +165,7 @@ export default function UsersPage() {
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [actionMenuUser, setActionMenuUser] = useState<number | null>(null);
+    const [permissionsUser, setPermissionsUser] = useState<User | null>(null);
 
     // Invite result banner
     const [inviteMessage, setInviteMessage] = useState<{ type: "success" | "warning"; text: string } | null>(null);
@@ -476,6 +479,16 @@ export default function UsersPage() {
                                                 >
                                                     Edit User
                                                 </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setPermissionsUser(user);
+                                                        setActionMenuUser(null);
+                                                    }}
+                                                    className="w-full px-4 py-2.5 text-left text-[14px] text-[rgba(245,245,245,0.8)] hover:bg-[rgba(255,255,255,0.06)] flex items-center gap-2"
+                                                >
+                                                    <Eye size={13} className="text-[rgba(245,245,245,0.5)]" />
+                                                    View Permissions
+                                                </button>
                                                 {user.status !== "disabled" && (
                                                     <button
                                                         onClick={() => handleDisableUser(user.id)}
@@ -542,6 +555,15 @@ export default function UsersPage() {
                     onClose={() => setEditingUser(null)}
                     onSave={(updates) => handleUpdateUser(editingUser.id, updates)}
                     onPasswordChange={handleChangePassword}
+                />
+            )}
+
+            {/* Claromentis Permissions Modal */}
+            {permissionsUser && (
+                <UserPermissionsModal
+                    userId={permissionsUser.id}
+                    userEmail={permissionsUser.email}
+                    onClose={() => setPermissionsUser(null)}
                 />
             )}
         </div>
