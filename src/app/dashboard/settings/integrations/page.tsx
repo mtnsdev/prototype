@@ -14,6 +14,7 @@ import {
     Users,
     User,
     Activity,
+    Link2,
 } from "lucide-react";
 import Link from "next/link";
 import GoogleDriveFolderPicker from "@/components/GoogleDriveFolderPicker";
@@ -341,6 +342,216 @@ function DriveConnectionCard({
 }
 
 // ---------------------------------------------------------------------------
+// ClaromentisConnectionCard -- per-user Claromentis Basic Auth connection
+// ---------------------------------------------------------------------------
+type ClaromentisStatus = {
+    status: "active" | "error" | "disconnected";
+    claromentis_username?: string | null;
+    claromentis_base_url?: string | null;
+    last_connected_at?: string | null;
+    last_error?: string | null;
+};
+
+function ClaromentisConnectionCard() {
+    const router = useRouter();
+    const [status, setStatus] = useState<ClaromentisStatus | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [baseUrl, setBaseUrl] = useState("");
+
+    const fetchStatus = useCallback(async () => {
+        try {
+            const token = localStorage.getItem("auth_token");
+            if (!token) { router.push("/login"); return; }
+            const res = await fetch("/api/integrations/claromentis/status", {
+                cache: "no-store",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.status === 401) { router.push("/login"); return; }
+            if (!res.ok) throw new Error("Failed to fetch status");
+            const data: ClaromentisStatus = await res.json();
+            setStatus(data);
+            setError(null);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "Failed to load");
+        } finally {
+            setLoading(false);
+        }
+    }, [router]);
+
+    useEffect(() => { fetchStatus(); }, [fetchStatus]);
+
+    const handleConnect = useCallback(async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+        setError(null);
+        try {
+            const token = localStorage.getItem("auth_token");
+            const res = await fetch("/api/integrations/claromentis/connect", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    claromentis_username: username,
+                    claromentis_password: password,
+                    claromentis_base_url: baseUrl || null,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || "Connection failed");
+            setPassword("");
+            await fetchStatus();
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "Connection failed");
+        } finally {
+            setSubmitting(false);
+        }
+    }, [username, password, baseUrl, fetchStatus]);
+
+    const handleDisconnect = useCallback(async () => {
+        if (!confirm("Disconnect your Claromentis account?")) return;
+        try {
+            const token = localStorage.getItem("auth_token");
+            await fetch("/api/integrations/claromentis/disconnect", {
+                method: "POST",
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            setUsername("");
+            setPassword("");
+            setBaseUrl("");
+            await fetchStatus();
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "Disconnect failed");
+        }
+    }, [fetchStatus]);
+
+    const isConnected = status?.status === "active";
+    const isError = status?.status === "error";
+    const showForm = !isConnected || isError;
+
+    if (loading) {
+        return (
+            <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
+                <div className="flex items-center justify-center py-8">
+                    <Loader2 size={20} className="animate-spin text-[rgba(245,245,245,0.5)]" />
+                </div>
+            </section>
+        );
+    }
+
+    return (
+        <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-white/10">
+                    <Link2 size={18} className="text-[rgba(245,245,245,0.6)]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <h2 className="text-[15px] font-semibold text-[#F5F5F5]">Claromentis Account</h2>
+                    <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-0.5">
+                        Connect your personal Claromentis account for search and browsing
+                    </p>
+                </div>
+                {isConnected && (
+                    <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[12px] font-medium bg-green-500/15 text-green-400 border border-green-500/25">
+                        <CheckCircle size={12} /> Connected
+                    </span>
+                )}
+                {isError && (
+                    <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[12px] font-medium bg-red-500/15 text-red-400 border border-red-500/25">
+                        <AlertCircle size={12} /> Error
+                    </span>
+                )}
+            </div>
+
+            {/* Body */}
+            <div className="p-5 space-y-4">
+                {error && (
+                    <div className="rounded-lg bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)] px-3 py-2 text-[13px] text-[#C87A7A]">
+                        {error}
+                    </div>
+                )}
+
+                {isError && status?.last_error && (
+                    <div className="rounded-lg bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)] px-3 py-2 text-[13px] text-[#C87A7A]">
+                        {status.last_error} — re-enter your credentials below to reconnect.
+                    </div>
+                )}
+
+                {isConnected && !isError && (
+                    <div className="space-y-1">
+                        <p className="text-[13px] text-[rgba(245,245,245,0.6)]">
+                            Signed in as <span className="text-[#F5F5F5] font-medium">{status?.claromentis_username}</span>
+                        </p>
+                        {status?.last_connected_at && (
+                            <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
+                                Connected {formatTime(status.last_connected_at)}
+                            </p>
+                        )}
+                        <div className="pt-2">
+                            <button
+                                onClick={handleDisconnect}
+                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-medium bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border border-[rgba(200,122,122,0.2)] text-[#C87A7A] transition-all duration-150"
+                            >
+                                <LogOut size={16} />
+                                Disconnect
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {showForm && (
+                    <form onSubmit={handleConnect} className="space-y-3">
+                        <div className="space-y-2">
+                            <input
+                                type="text"
+                                placeholder="Username"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                required
+                                autoComplete="username"
+                                className="w-full px-3 py-2 rounded-xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-[14px] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)] focus:outline-none focus:border-[rgba(255,255,255,0.25)]"
+                            />
+                            <input
+                                type="password"
+                                placeholder="Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                autoComplete="current-password"
+                                className="w-full px-3 py-2 rounded-xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-[14px] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)] focus:outline-none focus:border-[rgba(255,255,255,0.25)]"
+                            />
+                            <input
+                                type="url"
+                                placeholder="Custom URL (optional — leave blank to use default)"
+                                value={baseUrl}
+                                onChange={(e) => setBaseUrl(e.target.value)}
+                                autoComplete="off"
+                                className="w-full px-3 py-2 rounded-xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-[14px] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)] focus:outline-none focus:border-[rgba(255,255,255,0.25)]"
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={submitting}
+                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-medium bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-[rgba(255,255,255,0.1)] text-[#F5F5F5] disabled:opacity-50 transition-all duration-150"
+                        >
+                            {submitting ? <Loader2 size={16} className="animate-spin" /> : <Link2 size={16} />}
+                            {isError ? "Reconnect" : "Connect"}
+                        </button>
+                    </form>
+                )}
+            </div>
+        </section>
+    );
+}
+
+// ---------------------------------------------------------------------------
 // Sync health types
 // ---------------------------------------------------------------------------
 type IntegrationHealth = {
@@ -585,6 +796,9 @@ export default function IntegrationsPage() {
 
                 {/* My Google Drive -- available to all users */}
                 <DriveConnectionCard connectionType="personal" />
+
+                {/* Claromentis account -- available to all users */}
+                <ClaromentisConnectionCard />
 
                 {/* Admin Google Drive -- admin only */}
                 {isAdmin && (
