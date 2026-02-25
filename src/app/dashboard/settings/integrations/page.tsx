@@ -797,13 +797,13 @@ export default function IntegrationsPage() {
                 {/* My Google Drive -- available to all users */}
                 <DriveConnectionCard connectionType="personal" />
 
+                {/* Claromentis account -- available to all users */}
+                <ClaromentisConnectionCard />
+
                 {/* Admin Google Drive -- admin only */}
                 {isAdmin && (
                     <DriveConnectionCard connectionType="agency" />
                 )}
-
-                {/* Claromentis account -- available to all users */}
-                <ClaromentisConnectionCard />
 
                 {/* Claromentis sync health -- admin only */}
                 {isAdmin && <ClaromentisSync />}
