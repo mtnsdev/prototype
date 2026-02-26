@@ -20,6 +20,7 @@ import {
 import Image from "next/image";
 import { useUserOptional } from "@/contexts/UserContext";
 import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
+import { useClaromentisStatus } from "@/hooks/useClaromentisStatus";
 
 export type Conversation = {
     id: number;
@@ -55,9 +56,10 @@ export default function Sidebar({
     const popoverRef = useRef<HTMLDivElement>(null);
     const isOnChatPage = pathname.startsWith("/dashboard/chat");
 
-    // Google Drive connection status for sidebar entries
+    // Connection status for sidebar entries
     const { status: personalDriveStatus } = useGoogleDriveStatus("personal");
     const { status: agencyDriveStatus } = useGoogleDriveStatus("agency");
+    const { status: claromentisStatus } = useClaromentisStatus();
 
     // Close popover when clicking outside
     useEffect(() => {
@@ -254,6 +256,7 @@ export default function Sidebar({
                                 <IntegrationItem
                                     name="Claromentis (Intranet)"
                                     status="active"
+                                    connected={claromentisStatus?.status === "active"}
                                     onClick={() => router.push("/dashboard/knowledge?integration=claromentis")}
                                     active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("claromentis")}
                                 />
