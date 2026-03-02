@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { FileText, Loader2, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type ClaromentisPage = {
     id: number;
@@ -93,15 +94,12 @@ export default function ClaromentisPageSelector({
                         {pages.map((page) => {
                             const selected = selectedPageIds.includes(page.id);
                             return (
-                                <button
+                                <Button
                                     key={page.id}
                                     type="button"
+                                    variant="ghost"
                                     onClick={() => togglePage(page.id)}
-                                    className={[
-                                        "w-full flex items-center gap-2.5 px-3 py-2 text-left",
-                                        "hover:bg-[rgba(255,255,255,0.04)] transition-colors",
-                                        selected ? "bg-[rgba(168,85,247,0.08)]" : "",
-                                    ].join(" ")}
+                                    className={`w-full justify-start gap-2.5 px-3 py-2 font-normal h-auto ${selected ? "bg-[rgba(168,85,247,0.08)]" : ""}`}
                                 >
                                     <input
                                         type="checkbox"
@@ -116,7 +114,7 @@ export default function ClaromentisPageSelector({
                                             Admin only
                                         </span>
                                     )}
-                                </button>
+                                </Button>
                             );
                         })}
                     </div>

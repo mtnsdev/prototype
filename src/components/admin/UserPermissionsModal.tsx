@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import {
-    X,
     Folder,
     FileText,
     CheckCircle2,
@@ -13,6 +12,13 @@ import {
     ChevronDown,
     AlertCircle,
 } from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 type PermissionItem = {
     content_id: number;
@@ -193,25 +199,17 @@ export function UserPermissionsModal({
     const deniedCount = (data?.total ?? 0) - allowedCount;
 
     return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="w-full max-w-2xl rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.1)] overflow-hidden flex flex-col max-h-[85vh]">
+        <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
+            <DialogContent className="w-full max-w-2xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden border-[rgba(255,255,255,0.1)]">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between shrink-0">
-                    <div>
-                        <h2 className="text-[16px] font-semibold text-[#F5F5F5]">
-                            Claromentis Access
-                        </h2>
-                        <p className="text-[12px] text-[rgba(245,245,245,0.45)] mt-0.5">
-                            {userEmail}
-                        </p>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)]"
-                    >
-                        <X size={18} className="text-[rgba(245,245,245,0.5)]" />
-                    </button>
-                </div>
+                <DialogHeader className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] shrink-0">
+                    <DialogTitle className="text-[16px] text-[#F5F5F5]">
+                        Claromentis Access
+                    </DialogTitle>
+                    <p className="text-[12px] text-[rgba(245,245,245,0.45)] mt-0.5">
+                        {userEmail}
+                    </p>
+                </DialogHeader>
 
                 {/* Toolbar */}
                 <div className="px-6 py-3 border-b border-[rgba(255,255,255,0.06)] flex items-center justify-between shrink-0">
@@ -231,18 +229,21 @@ export function UserPermissionsModal({
                         )}
                     </div>
                     <div className="flex items-center gap-2">
-                        <button
+                        <Button
+                            variant="ghost"
+                            size="icon-sm"
                             onClick={fetchPermissions}
                             disabled={isLoading}
-                            className="p-1.5 rounded-lg hover:bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,245,0.5)] disabled:opacity-40"
                             title="Refresh"
                         >
                             <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
                             onClick={handleSync}
                             disabled={isSyncing}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.08)] text-[12px] font-medium text-[rgba(245,245,245,0.8)] disabled:opacity-50 transition-colors"
+                            className="gap-1.5"
                         >
                             {isSyncing ? (
                                 <Loader2 size={12} className="animate-spin" />
@@ -250,7 +251,7 @@ export function UserPermissionsModal({
                                 <RefreshCw size={12} />
                             )}
                             {isSyncing ? "Queuing..." : "Sync Now"}
-                        </button>
+                        </Button>
                     </div>
                 </div>
 
@@ -295,7 +296,7 @@ export function UserPermissionsModal({
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { User, LogOut, Mail, AtSign, Loader2, Shield, ChevronRight, Key, Plug } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useUser } from "@/contexts/UserContext";
 
 type UserProfile = {
@@ -278,18 +279,10 @@ export default function SettingsPage() {
                             Password must be at least 8 characters with at least one letter and one number.
                         </p>
                         
-                        <button
+                        <Button
                             onClick={handlePasswordChange}
                             disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}
-                            className={[
-                                "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
-                                "text-[14px] font-medium",
-                                "bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)]",
-                                "border border-[rgba(255,255,255,0.1)]",
-                                "text-[#F5F5F5]",
-                                "transition-all duration-150",
-                                "disabled:opacity-50 disabled:cursor-not-allowed",
-                            ].join(" ")}
+                            className="gap-2"
                         >
                             {isChangingPassword ? (
                                 <>
@@ -302,7 +295,7 @@ export default function SettingsPage() {
                                     Change Password
                                 </>
                             )}
-                        </button>
+                        </Button>
                     </div>
                 </section>}
 
@@ -319,18 +312,11 @@ export default function SettingsPage() {
                         <p className="text-[13px] text-[rgba(245,245,245,0.5)] mb-4">
                             Sign out of your account on this device.
                         </p>
-                        <button
+                        <Button
+                            variant="destructive"
                             onClick={handleSignOut}
                             disabled={isSigningOut}
-                            className={[
-                                "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
-                                "text-[14px] font-medium",
-                                "bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)]",
-                                "border border-[rgba(200,122,122,0.2)] hover:border-[rgba(200,122,122,0.35)]",
-                                "text-[#C87A7A] hover:text-[#D89A9A]",
-                                "transition-all duration-150",
-                                "disabled:opacity-50 disabled:cursor-not-allowed",
-                            ].join(" ")}
+                            className="gap-2 bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border-[rgba(200,122,122,0.2)] text-[#C87A7A] hover:text-[#D89A9A]"
                         >
                             {isSigningOut ? (
                                 <>
@@ -343,7 +329,7 @@ export default function SettingsPage() {
                                     Sign Out
                                 </>
                             )}
-                        </button>
+                        </Button>
                     </div>
                 </section>
 

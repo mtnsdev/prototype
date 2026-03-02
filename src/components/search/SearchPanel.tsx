@@ -8,6 +8,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type TLItem =
     | { kind: "folder"; id: number; parent_id: number; title: string; has_children?: boolean; URI?: string }
@@ -189,34 +191,34 @@ export default function ClaromentisSearchPanel() {
                             </SelectContent>
                         </Select>
 
-                        <button
+                        <Button
                             type="button"
                             onClick={onSearchClick}
                             disabled={!canSearch || loading}
-                            className="rounded-md bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90 disabled:opacity-60 md:ml-auto"
+                            className="md:ml-auto bg-white text-black hover:bg-white/90 border-0"
                         >
                             Search
-                        </button>
+                        </Button>
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-2">
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-white/60 w-24">Created from</span>
-                            <input
+                            <Input
                                 type="date"
                                 value={form.createdFrom}
                                 onChange={(e) => setForm((p) => ({ ...p, createdFrom: e.target.value }))}
-                                className="rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/40"
+                                className="rounded-md border-white/15 bg-black text-white focus-visible:ring-white/40"
                             />
                         </div>
 
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-white/60 w-24">Created to</span>
-                            <input
+                            <Input
                                 type="date"
                                 value={form.createdTo}
                                 onChange={(e) => setForm((p) => ({ ...p, createdTo: e.target.value }))}
-                                className="rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/40"
+                                className="rounded-md border-white/15 bg-black text-white focus-visible:ring-white/40"
                             />
                         </div>
 
@@ -235,14 +237,16 @@ export default function ClaromentisSearchPanel() {
             {/* Results (scrollable) */}
             <div className="mt-4 rounded-xl border border-white/10 bg-white/5 min-h-0 flex-1 overflow-hidden flex flex-col">
                 <div className="px-4 py-3 border-b border-white/10 flex items-center justify-end shrink-0">
-                    <button
+                    <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={onNextPage}
                         disabled={!lastPage?.next_offset || loading}
-                        className="text-xs rounded-md border border-white/20 px-3 py-1 hover:bg-white/10 disabled:opacity-60"
+                        className="text-xs border-white/20 hover:bg-white/10"
                     >
                         Next page
-                    </button>
+                    </Button>
                 </div>
 
                 <div className="min-h-0 flex-1 overflow-y-auto">
@@ -266,17 +270,19 @@ export default function ClaromentisSearchPanel() {
                                             </div>
 
                                             {it.kind === "document" ? (
-                                                <button
+                                                <Button
                                                     type="button"
+                                                    variant="outline"
+                                                    size="sm"
                                                     disabled={!previewUrl}
                                                     onClick={() => {
                                                         if (!previewUrl) return;
                                                         window.open(previewUrl, "_blank", "noopener,noreferrer");
                                                     }}
-                                                    className="text-xs rounded-md border border-white/20 px-3 py-1 hover:bg-white/10 disabled:opacity-60"
+                                                    className="text-xs border-white/20 hover:bg-white/10"
                                                 >
                                                     Preview
-                                                </button>
+                                                </Button>
                                             ) : (
                                                 <span className="text-xs text-white/50">folder</span>
                                             )}
