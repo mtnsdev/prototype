@@ -13,14 +13,12 @@ import {
     X,
     Loader2,
     Cloud,
-    Database,
     BookOpen,
     CheckSquare,
     Square,
     Search,
 } from "lucide-react";
 import { FolderTreeSelector, SelectedTarget } from "@/components/admin/FolderTreeSelector";
-import ClaromentisPageSelector from "@/components/admin/ClaromentisPageSelector";
 import {
     Select,
     SelectContent,
@@ -104,16 +102,15 @@ type ScriptPageItem = {
     index_status: string | null;
 };
 
-type SourceTab = "claromentis" | "google_drive" | "pages";
+type SourceTab = "google_drive" | "pages";
 
 const SOURCE_TABS: { key: SourceTab; label: string; icon: React.ReactNode }[] = [
-    { key: "claromentis", label: "Claromentis", icon: <Database size={16} /> },
     { key: "google_drive", label: "Google Drive", icon: <Cloud size={16} /> },
     { key: "pages", label: "Pages", icon: <BookOpen size={16} /> },
 ];
 
 export default function PermissionsPage() {
-    const [activeSource, setActiveSource] = useState<SourceTab>("claromentis");
+    const [activeSource, setActiveSource] = useState<SourceTab>("google_drive");
     const [rules, setRules] = useState<ContentRule[]>([]);
     const [scriptPages, setScriptPages] = useState<ScriptPageItem[]>([]);
     const [scriptPagesLoading, setScriptPagesLoading] = useState(false);
@@ -374,7 +371,7 @@ export default function PermissionsPage() {
                 </CardContent>
             </Card>
 
-            {/* Rules Table (Claromentis / Google Drive / Pages — same layout: show existing rules only) */}
+            {/* Rules Table (Google Drive / Pages) */}
             {(
                 <Card className="rounded-2xl bg-[#161616] border-[rgba(255,255,255,0.08)] overflow-hidden">
                     {isLoading ? (
@@ -617,7 +614,6 @@ function CreateRuleModal({
     const [subjectType, setSubjectType] = useState<"user" | "role">("role");
     const [subjectId, setSubjectId] = useState("user");
     const [selectedTargets, setSelectedTargets] = useState<SelectedTarget[]>([]);
-    const [selectedPageIds, setSelectedPageIds] = useState<number[]>([]);
     const [selectedScriptPageIds, setSelectedScriptPageIds] = useState<number[]>([]);
     const [pageSearchQuery, setPageSearchQuery] = useState("");
     const [effect, setEffect] = useState<"allow" | "deny">("allow");
@@ -627,7 +623,7 @@ function CreateRuleModal({
     const [rootFolderId, setRootFolderId] = useState<string | null>(null);
     const token = typeof localStorage !== "undefined" ? localStorage.getItem("auth_token") : null;
 
-    const sourceLabel = source === "claromentis" ? "Claromentis" : source === "pages" ? "Pages" : "Google Drive";
+    const sourceLabel = source === "pages" ? "Pages" : "Google Drive";
 
     const allScriptPages = scriptPages || [];
     const pageSearchLower = pageSearchQuery.trim().toLowerCase();
@@ -659,9 +655,7 @@ function CreateRuleModal({
 
     const hasSelection = source === "pages"
         ? selectedScriptPageIds.length > 0
-        : source === "claromentis"
-            ? selectedTargets.length > 0 || selectedPageIds.length > 0
-            : selectedTargets.length > 0;
+        : selectedTargets.length > 0;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -679,7 +673,7 @@ function CreateRuleModal({
             for (const id of selectedScriptPageIds) {
                 targets.push({ target_type: "script_page", target_id: id });
             }
-        } else if (source === "google_drive") {
+        } else {
             // Google Drive targets: use Drive IDs
             for (const t of selectedTargets) {
                 targets.push({
@@ -687,19 +681,6 @@ function CreateRuleModal({
                     target_id: 0, // will be resolved by backend via drive_resource_id
                     drive_resource_id: t.drive_resource_id || String(t.external_id),
                 });
-            }
-        } else {
-            // Claromentis folder/doc targets
-            for (const t of selectedTargets) {
-                targets.push({
-                    target_type: t.node_type === "folder" ? "folder" : "doc",
-                    target_id: t.external_id as number,
-                });
-            }
-
-            // Claromentis page targets (from page selector)
-            for (const pageId of selectedPageIds) {
-                targets.push({ target_type: "page", target_id: pageId });
             }
         }
 
@@ -871,73 +852,6 @@ function CreateRuleModal({
                                     </p>
                                 )}
                             </div>
-                        </div>
-                    )}
-
-                    {/* Target Selection -- source-specific */}
-                    {source === "claromentis" && (
-                        <div className="space-y-4">
-                            {/* Folder / document tree selector */}
-                            <div className="space-y-2">
-                                <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
-                                    Folders / Documents
-                                </Label>
-                                <p className="text-[12px] text-[rgba(245,245,245,0.5)] mb-2">
-                                    Check folders or documents to apply the rule to.
-                                </p>
-                                {token ? (
-                                    <FolderTreeSelector
-                                        token={token}
-                                        multiSelect
-                                        selectedTargets={selectedTargets}
-                                        onSelectionChange={setSelectedTargets}
-                                    />
-                                ) : (
-                                    <p className="text-[13px] text-[rgba(245,245,245,0.5)]">Sign in to load tree</p>
-                                )}
-                            </div>
-
-                            {/* Page selector (names only) */}
-                            <div className="space-y-2">
-                                <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
-                                    Pages (names only, no preview)
-                                </Label>
-                                {token ? (
-                                    <ClaromentisPageSelector
-                                        token={token}
-                                        selectedPageIds={selectedPageIds}
-                                        onSelectionChange={setSelectedPageIds}
-                                    />
-                                ) : (
-                                    <p className="text-[13px] text-[rgba(245,245,245,0.5)]">Sign in to load pages</p>
-                                )}
-                            </div>
-
-                            {/* Selected items badges */}
-                            {(selectedTargets.length > 0 || selectedPageIds.length > 0) && (
-                                <div className="flex flex-wrap gap-1.5">
-                                    {selectedTargets.map((t) => (
-                                        <span
-                                            key={`t-${t.external_id}`}
-                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] text-[12px] text-[rgba(245,245,245,0.7)]"
-                                        >
-                                            {t.node_type === "folder" ? <Folder size={10} className="text-amber-400" /> : <FileText size={10} className="text-blue-400" />}
-                                            {t.title}
-                                                    <Button type="button" variant="ghost" size="icon-xs" className="ml-0.5 h-auto w-auto p-0 hover:text-red-400" onClick={() => setSelectedTargets(prev => prev.filter(x => x.external_id !== t.external_id))}><X size={10} /></Button>
-                                        </span>
-                                    ))}
-                                    {selectedPageIds.map((id) => (
-                                        <span
-                                            key={`p-${id}`}
-                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[rgba(168,85,247,0.1)] border border-[rgba(168,85,247,0.2)] text-[12px] text-purple-300"
-                                        >
-                                            <FileText size={10} />
-                                            Page #{id}
-                                            <Button type="button" variant="ghost" size="icon-xs" className="ml-0.5 h-auto w-auto p-0 hover:text-red-400" onClick={() => setSelectedPageIds(prev => prev.filter(x => x !== id))}><X size={10} /></Button>
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
                         </div>
                     )}
 
