@@ -807,16 +807,16 @@ function CreateRuleModal({
                                         }}
                                         disabled={filteredScriptPageIds.length === 0}
                                         title={allFilteredSelected ? "Clear all" : "Select all"}
-                                        className="shrink-0 gap-2 bg-[rgba(255,255,255,0.06)] border-[rgba(255,255,255,0.08)] text-[#F5F5F5]"
+                                        className="shrink-0"
                                     >
                                         {allFilteredSelected ? (
                                             <>
-                                                <Square size={16} className="shrink-0" />
+                                                <Square size={16} />
                                                 <span>Clear all</span>
                                             </>
                                         ) : (
                                             <>
-                                                <CheckSquare size={16} className="shrink-0" />
+                                                <CheckSquare size={16} />
                                                 <span>Select all</span>
                                             </>
                                         )}
