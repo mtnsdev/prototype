@@ -422,16 +422,12 @@ function IntegrationItem({
     const showInactive = status === "active" && connected === false;
 
     return (
-        <button
+        <Button
             type="button"
+            variant="ghost"
             onClick={isClickable ? onClick : undefined}
             disabled={!isClickable}
-            className={[
-                "w-full flex items-center justify-between py-1.5 px-2 rounded-md text-[12px]",
-                "transition-all duration-150",
-                isClickable ? "cursor-pointer hover:bg-white/6" : "cursor-default",
-                active ? "bg-white/8" : "",
-            ].join(" ")}
+            className={`w-full justify-between py-1.5 px-2 rounded-md text-[12px] font-normal h-auto ${isClickable ? "cursor-pointer hover:bg-white/6" : "cursor-default"} ${active ? "bg-white/8" : ""}`}
         >
             <span className={status === "active" ? "text-[rgba(245,245,245,0.8)]" : "text-[rgba(245,245,245,0.45)]"}>
                 {name}
@@ -451,6 +447,6 @@ function IntegrationItem({
                     Coming soon
                 </span>
             )}
-        </button>
+        </Button>
     );
 }

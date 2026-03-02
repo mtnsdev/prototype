@@ -17,6 +17,8 @@ import {
     Link2,
 } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import GoogleDriveFolderPicker from "@/components/GoogleDriveFolderPicker";
 import { useUser } from "@/contexts/UserContext";
 import type { DriveStatus } from "@/types/google-drive";
@@ -269,20 +271,10 @@ function DriveConnectionCard({
                     {!driveStatus?.connected ? (
                         <>
                             <p className="text-[13px] text-[rgba(245,245,245,0.5)]">{description}</p>
-                            <button
-                                onClick={handleConnect}
-                                className={[
-                                    "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
-                                    "text-[14px] font-medium",
-                                    "bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)]",
-                                    "border border-[rgba(255,255,255,0.1)]",
-                                    "text-[#F5F5F5]",
-                                    "transition-all duration-150",
-                                ].join(" ")}
-                            >
+                            <Button onClick={handleConnect} className="gap-2">
                                 <Cloud size={16} />
                                 Connect {connectionType === "personal" ? "Personal" : "Admin"} Drive
-                            </button>
+                            </Button>
                         </>
                     ) : (
                         <>
@@ -298,32 +290,22 @@ function DriveConnectionCard({
                                 <p className="text-[13px] text-[#C87A7A]">{driveStatus.sync_error}</p>
                             )}
                             <div className="flex flex-wrap gap-2">
-                                <button
-                                    onClick={handleSyncNow}
-                                    disabled={syncing || driveStatus.sync_status === "running"}
-                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-medium bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-[rgba(255,255,255,0.1)] text-[#F5F5F5] disabled:opacity-50"
-                                >
+                                <Button onClick={handleSyncNow} disabled={syncing || driveStatus.sync_status === "running"} className="gap-2">
                                     {syncing || driveStatus.sync_status === "running" ? (
                                         <Loader2 size={16} className="animate-spin" />
                                     ) : (
                                         <RefreshCw size={16} />
                                     )}
                                     Sync now
-                                </button>
-                                <button
-                                    onClick={openChangeFolder}
-                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-medium bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-[rgba(255,255,255,0.1)] text-[#F5F5F5]"
-                                >
+                                </Button>
+                                <Button variant="outline" onClick={openChangeFolder} className="gap-2">
                                     <FolderOpen size={16} />
                                     Change folder
-                                </button>
-                                <button
-                                    onClick={handleDisconnect}
-                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-medium bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border border-[rgba(200,122,122,0.2)] text-[#C87A7A]"
-                                >
+                                </Button>
+                                <Button variant="destructive" onClick={handleDisconnect} className="gap-2 bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border-[rgba(200,122,122,0.2)] text-[#C87A7A]">
                                     <LogOut size={16} />
                                     Disconnect
-                                </button>
+                                </Button>
                             </div>
                         </>
                     )}
@@ -495,13 +477,10 @@ function ClaromentisConnectionCard() {
                             </p>
                         )}
                         <div className="pt-2">
-                            <button
-                                onClick={handleDisconnect}
-                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-medium bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border border-[rgba(200,122,122,0.2)] text-[#C87A7A] transition-all duration-150"
-                            >
+                            <Button variant="destructive" onClick={handleDisconnect} className="gap-2 bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border-[rgba(200,122,122,0.2)] text-[#C87A7A]">
                                 <LogOut size={16} />
                                 Disconnect
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 )}
@@ -509,41 +488,37 @@ function ClaromentisConnectionCard() {
                 {showForm && (
                     <form onSubmit={handleConnect} className="space-y-3">
                         <div className="space-y-2">
-                            <input
+                            <Input
                                 type="text"
                                 placeholder="Username"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 required
                                 autoComplete="username"
-                                className="w-full px-3 py-2 rounded-xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-[14px] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)] focus:outline-none focus:border-[rgba(255,255,255,0.25)]"
+                                className="rounded-xl bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]"
                             />
-                            <input
+                            <Input
                                 type="password"
                                 placeholder="Password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
                                 autoComplete="current-password"
-                                className="w-full px-3 py-2 rounded-xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-[14px] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)] focus:outline-none focus:border-[rgba(255,255,255,0.25)]"
+                                className="rounded-xl bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]"
                             />
-                            <input
+                            <Input
                                 type="url"
                                 placeholder="Custom URL (optional — leave blank to use default)"
                                 value={baseUrl}
                                 onChange={(e) => setBaseUrl(e.target.value)}
                                 autoComplete="off"
-                                className="w-full px-3 py-2 rounded-xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-[14px] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)] focus:outline-none focus:border-[rgba(255,255,255,0.25)]"
+                                className="rounded-xl bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]"
                             />
                         </div>
-                        <button
-                            type="submit"
-                            disabled={submitting}
-                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-medium bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-[rgba(255,255,255,0.1)] text-[#F5F5F5] disabled:opacity-50 transition-all duration-150"
-                        >
+                        <Button type="submit" disabled={submitting} className="gap-2">
                             {submitting ? <Loader2 size={16} className="animate-spin" /> : <Link2 size={16} />}
                             {isError ? "Reconnect" : "Connect"}
-                        </button>
+                        </Button>
                     </form>
                 )}
             </div>
@@ -697,20 +672,17 @@ function ClaromentisSync() {
                 {health && (
                     <div className="flex items-center gap-3">
                         <SyncStatusBadge status={health.overall_status} />
-                        <button
+                        <Button
                             type="button"
+                            variant="outline"
                             onClick={triggerSync}
                             disabled={triggering}
-                            className={[
-                                "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-medium",
-                                "bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)]",
-                                "border border-[rgba(255,255,255,0.1)] text-[#F5F5F5]",
-                                "disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150",
-                            ].join(" ")}
+                            size="sm"
+                            className="gap-2"
                         >
                             {triggering ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                             Sync Now
-                        </button>
+                        </Button>
                     </div>
                 )}
             </div>

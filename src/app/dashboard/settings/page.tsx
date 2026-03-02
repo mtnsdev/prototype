@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { User, LogOut, Mail, AtSign, Loader2, Shield, ChevronRight, Key, Plug } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useUser } from "@/contexts/UserContext";
 
 type UserProfile = {
@@ -188,9 +190,9 @@ export default function SettingsPage() {
                                 <Mail size={18} className="text-[rgba(245,245,245,0.4)]" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <label className="text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                                <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                                     Email
-                                </label>
+                                </Label>
                                 <p className="text-[15px] text-[#F5F5F5] mt-1 truncate">
                                     {profile?.email}
                                 </p>
@@ -203,9 +205,9 @@ export default function SettingsPage() {
                                 <AtSign size={18} className="text-[rgba(245,245,245,0.4)]" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <label className="text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                                <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                                     Username
-                                </label>
+                                </Label>
                                 <p className="text-[15px] text-[#F5F5F5] mt-1 truncate">
                                     {profile?.username}
                                 </p>
@@ -228,42 +230,42 @@ export default function SettingsPage() {
                             Change your password. You will be signed out after changing your password.
                         </p>
                         
-                        <div>
-                            <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                        <div className="space-y-2">
+                            <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                                 Current Password
-                            </label>
-                            <input
+                            </Label>
+                            <Input
                                 type="password"
                                 value={currentPassword}
                                 onChange={(e) => setCurrentPassword(e.target.value)}
                                 placeholder="Enter current password"
-                                className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                                className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)]"
                             />
                         </div>
                         
-                        <div>
-                            <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                        <div className="space-y-2">
+                            <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                                 New Password
-                            </label>
-                            <input
+                            </Label>
+                            <Input
                                 type="password"
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
                                 placeholder="Enter new password"
-                                className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                                className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)]"
                             />
                         </div>
                         
-                        <div>
-                            <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                        <div className="space-y-2">
+                            <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                                 Confirm New Password
-                            </label>
-                            <input
+                            </Label>
+                            <Input
                                 type="password"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 placeholder="Confirm new password"
-                                className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                                className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)]"
                             />
                         </div>
                         

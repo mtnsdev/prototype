@@ -14,6 +14,7 @@ import {
     BookOpen,
     FolderOpen,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { TLItem } from "@/lib/claromentis/types";
 import type { PageItem } from "@/hooks/usePages";
 
@@ -41,13 +42,11 @@ function DocumentNode({ item }: { item: TLItem }) {
 
     return (
         <div>
-            <button
+            <Button
                 type="button"
+                variant="ghost"
                 onClick={() => hasChildren && setExpanded((v) => !v)}
-                className={[
-                    "w-full flex items-center gap-2 py-1.5 px-2 rounded-lg text-left transition-colors duration-100",
-                    hasChildren ? "hover:bg-white/4 cursor-pointer" : "cursor-default",
-                ].join(" ")}
+                className={`w-full justify-start gap-2 py-1.5 px-2 rounded-lg font-normal h-auto ${hasChildren ? "hover:bg-white/4 cursor-pointer" : "cursor-default"}`}
             >
                 <span className="shrink-0 text-[rgba(245,245,245,0.35)] w-4">
                     {hasChildren ? (
@@ -60,7 +59,7 @@ function DocumentNode({ item }: { item: TLItem }) {
                     <Folder size={14} className="shrink-0 text-[rgba(245,245,245,0.5)]" />
                 )}
                 <span className="text-[13px] text-[rgba(245,245,245,0.8)] truncate flex-1">{item.title}</span>
-            </button>
+            </Button>
 
             {expanded && (
                 <div className="ml-5 pl-3 border-l border-[rgba(255,255,255,0.07)]">
@@ -91,17 +90,18 @@ function PagesRootNode() {
 
     return (
         <div>
-            <button
+            <Button
                 type="button"
+                variant="ghost"
                 onClick={() => setExpanded((v) => !v)}
-                className="w-full flex items-center gap-2 py-2 px-3 rounded-xl text-left hover:bg-white/4 transition-colors duration-100 cursor-pointer"
+                className="w-full justify-start gap-2 py-2 px-3 rounded-xl font-normal h-auto hover:bg-white/4"
             >
                 <span className="shrink-0 text-[rgba(245,245,245,0.45)] w-4">
                     {expanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
                 </span>
                 <BookOpen size={16} className="shrink-0 text-[rgba(245,245,245,0.55)]" />
                 <span className="text-[14px] font-medium text-[rgba(245,245,245,0.85)] flex-1">Pages</span>
-            </button>
+            </Button>
 
             {expanded && (
                 <div className="ml-5 pl-3 border-l border-[rgba(255,255,255,0.07)] mt-0.5">
@@ -121,15 +121,17 @@ function PagesRootNode() {
                                 </div>
                             ))}
                             {hasMore && (
-                                <button
+                                <Button
                                     type="button"
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={loadMore}
                                     disabled={isLoading}
-                                    className="mt-1 w-full py-1.5 px-2 rounded-lg text-[12px] text-[rgba(245,245,245,0.5)] hover:bg-white/4 flex items-center gap-2 transition-colors duration-100 disabled:opacity-50"
+                                    className="mt-1 w-full justify-start gap-2 font-normal text-[12px] text-[rgba(245,245,245,0.5)] hover:bg-white/4 h-auto py-1.5"
                                 >
                                     {isLoading ? <Loader2 size={12} className="animate-spin" /> : null}
                                     Load more
-                                </button>
+                                </Button>
                             )}
                         </>
                     )}
@@ -148,10 +150,11 @@ function DocumentsRootNode() {
 
     return (
         <div>
-            <button
+            <Button
                 type="button"
+                variant="ghost"
                 onClick={() => setExpanded((v) => !v)}
-                className="w-full flex items-center gap-2 py-2 px-3 rounded-xl text-left hover:bg-white/4 transition-colors duration-100 cursor-pointer"
+                className="w-full justify-start gap-2 py-2 px-3 rounded-xl font-normal h-auto hover:bg-white/4"
             >
                 <span className="shrink-0 text-[rgba(245,245,245,0.45)] w-4">
                     {expanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
@@ -162,7 +165,7 @@ function DocumentsRootNode() {
                     <Folder size={16} className="shrink-0 text-[rgba(245,245,245,0.55)]" />
                 )}
                 <span className="text-[14px] font-medium text-[rgba(245,245,245,0.85)] flex-1">Documents</span>
-            </button>
+            </Button>
 
             {expanded && (
                 <div className="ml-5 pl-3 border-l border-[rgba(255,255,255,0.07)] mt-0.5">

@@ -4,6 +4,15 @@ import { useState, useEffect, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 
 declare global {
     interface Window {
@@ -298,11 +307,11 @@ function LoginContent() {
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label htmlFor="email" className="block text-[13px] font-medium text-[rgba(245,245,245,0.7)] mb-2">
+                        <div className="space-y-2">
+                            <Label htmlFor="email" className="text-[13px] text-[rgba(245,245,245,0.7)]">
                                 Email
-                            </label>
-                            <input
+                            </Label>
+                            <Input
                                 id="email"
                                 type="email"
                                 value={email}
@@ -310,36 +319,30 @@ function LoginContent() {
                                 placeholder="you@example.com"
                                 required
                                 disabled={isLoading}
-                                className={[
-                                    "w-full px-4 py-3 rounded-xl text-[14px]",
-                                    "bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)]",
-                                    "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
-                                    "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
-                                    "disabled:opacity-50 disabled:cursor-not-allowed",
-                                    "transition-all duration-150",
-                                ].join(" ")}
+                                className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.1)] py-3"
                             />
                         </div>
 
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <label htmlFor="password" className="block text-[13px] font-medium text-[rgba(245,245,245,0.7)]">
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="password" className="text-[13px] text-[rgba(245,245,245,0.7)]">
                                     Password
-                                </label>
-                                <button
+                                </Label>
+                                <Button
                                     type="button"
+                                    variant="link"
+                                    className="text-[12px] text-[rgba(245,245,245,0.45)] hover:text-[rgba(245,245,245,0.75)] p-0 h-auto font-normal"
                                     onClick={() => {
                                         setForgotEmail(email);
                                         setForgotSuccess(false);
                                         setForgotError("");
                                         setShowForgotModal(true);
                                     }}
-                                    className="text-[12px] text-[rgba(245,245,245,0.45)] hover:text-[rgba(245,245,245,0.75)] transition-colors"
                                 >
                                     Forgot password?
-                                </button>
+                                </Button>
                             </div>
-                            <input
+                            <Input
                                 id="password"
                                 type="password"
                                 value={password}
@@ -347,28 +350,14 @@ function LoginContent() {
                                 placeholder="••••••••"
                                 required
                                 disabled={isLoading}
-                                className={[
-                                    "w-full px-4 py-3 rounded-xl text-[14px]",
-                                    "bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)]",
-                                    "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
-                                    "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
-                                    "disabled:opacity-50 disabled:cursor-not-allowed",
-                                    "transition-all duration-150",
-                                ].join(" ")}
+                                className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.1)] py-3"
                             />
                         </div>
 
-                        <button
+                        <Button
                             type="submit"
                             disabled={isLoading}
-                            className={[
-                                "w-full py-3 px-4 rounded-xl text-[14px] font-medium",
-                                "bg-[#F5F5F5] hover:bg-white text-[#0C0C0C]",
-                                "disabled:opacity-50 disabled:cursor-not-allowed",
-                                "transition-all duration-150",
-                                "shadow-sm hover:shadow-md",
-                                "flex items-center justify-center gap-2",
-                            ].join(" ")}
+                            className="w-full py-3 bg-[#F5F5F5] hover:bg-white text-[#0C0C0C]"
                         >
                             {isLoading ? (
                                 <>
@@ -378,7 +367,7 @@ function LoginContent() {
                             ) : (
                                 "Sign In"
                             )}
-                        </button>
+                        </Button>
                     </form>
 
                     {/* Divider */}
@@ -398,15 +387,11 @@ function LoginContent() {
 
                     {/* Fallback Google Button (if script fails to load) */}
                     {!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
-                        <button
+                        <Button
                             type="button"
                             disabled
-                            className={[
-                                "w-full py-3 px-4 rounded-xl text-[14px] font-medium",
-                                "bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)]",
-                                "text-[rgba(245,245,245,0.4)]",
-                                "flex items-center justify-center gap-3 cursor-not-allowed",
-                            ].join(" ")}
+                            variant="outline"
+                            className="w-full py-3 bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.4)] cursor-not-allowed"
                         >
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
                                 <path
@@ -427,7 +412,7 @@ function LoginContent() {
                                 />
                             </svg>
                             Google Sign-In not configured
-                        </button>
+                        </Button>
                     )}
                 </div>
 
@@ -441,166 +426,142 @@ function LoginContent() {
             </div>
 
             {/* Forgot password modal */}
-            {showForgotModal && (
-                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-                    <div className="w-full max-w-md rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.1)] overflow-hidden">
-                        <div className="px-6 py-5 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between">
-                            <div>
-                                <h2 className="text-[17px] font-semibold text-[#F5F5F5]">Reset your password</h2>
-                                <p className="text-[13px] text-[rgba(245,245,245,0.5)] mt-1">
-                                    Enter your email and we&apos;ll send you a temporary password.
+            <Dialog open={showForgotModal} onOpenChange={setShowForgotModal}>
+                <DialogContent className="max-w-md border-[rgba(255,255,255,0.1)] bg-[#161616]">
+                    <DialogHeader>
+                        <DialogTitle className="text-[17px] text-[#F5F5F5]">Reset your password</DialogTitle>
+                        <p className="text-[13px] text-[rgba(245,245,245,0.5)] mt-1">
+                            Enter your email and we&apos;ll send you a temporary password.
+                        </p>
+                    </DialogHeader>
+
+                    {forgotSuccess ? (
+                        <div className="space-y-4">
+                            <div className="p-4 rounded-xl bg-[rgba(134,239,172,0.08)] border border-[rgba(134,239,172,0.2)]">
+                                <p className="text-[14px] text-[#86EFAC] font-medium mb-1">Check your inbox</p>
+                                <p className="text-[13px] text-[rgba(245,245,245,0.6)]">
+                                    If an account exists for that email, you&apos;ll receive a temporary password shortly.
+                                    Use it to log in, then set a new permanent password.
                                 </p>
                             </div>
-                            <button
+                            <Button
                                 type="button"
                                 onClick={() => setShowForgotModal(false)}
-                                className="ml-4 text-[rgba(245,245,245,0.4)] hover:text-[rgba(245,245,245,0.8)] transition-colors text-xl leading-none"
-                                aria-label="Close"
+                                className="w-full py-3 bg-[#F5F5F5] hover:bg-white text-[#0C0C0C]"
                             >
-                                ×
-                            </button>
+                                Back to Login
+                            </Button>
                         </div>
-
-                        {forgotSuccess ? (
-                            <div className="p-6 space-y-4">
-                                <div className="p-4 rounded-xl bg-[rgba(134,239,172,0.08)] border border-[rgba(134,239,172,0.2)]">
-                                    <p className="text-[14px] text-[#86EFAC] font-medium mb-1">Check your inbox</p>
-                                    <p className="text-[13px] text-[rgba(245,245,245,0.6)]">
-                                        If an account exists for that email, you&apos;ll receive a temporary password shortly.
-                                        Use it to log in, then set a new permanent password.
-                                    </p>
+                    ) : (
+                        <form onSubmit={handleForgotPassword} className="space-y-4">
+                            {forgotError && (
+                                <div className="p-3.5 rounded-xl bg-[rgba(200,122,122,0.1)] border border-[rgba(200,122,122,0.2)]">
+                                    <p className="text-[13px] text-[#C87A7A]">{forgotError}</p>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowForgotModal(false)}
-                                    className="w-full py-3 px-4 rounded-xl text-[14px] font-medium bg-[#F5F5F5] hover:bg-white text-[#0C0C0C] transition-all"
-                                >
-                                    Back to Login
-                                </button>
+                            )}
+
+                            <div className="space-y-2">
+                                <Label className="text-[13px] text-[rgba(245,245,245,0.7)]">Email address</Label>
+                                <Input
+                                    type="email"
+                                    value={forgotEmail}
+                                    onChange={(e) => setForgotEmail(e.target.value)}
+                                    placeholder="you@example.com"
+                                    required
+                                    disabled={forgotLoading}
+                                    className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.1)] py-3"
+                                />
                             </div>
-                        ) : (
-                            <form onSubmit={handleForgotPassword} className="p-6 space-y-4">
-                                {forgotError && (
-                                    <div className="p-3.5 rounded-xl bg-[rgba(200,122,122,0.1)] border border-[rgba(200,122,122,0.2)]">
-                                        <p className="text-[13px] text-[#C87A7A]">{forgotError}</p>
-                                    </div>
+
+                            <Button
+                                type="submit"
+                                disabled={forgotLoading || !forgotEmail}
+                                className="w-full py-3 bg-[#F5F5F5] hover:bg-white text-[#0C0C0C]"
+                            >
+                                {forgotLoading ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Sending...
+                                    </>
+                                ) : (
+                                    "Send email"
                                 )}
-
-                                <div>
-                                    <label className="block text-[13px] font-medium text-[rgba(245,245,245,0.7)] mb-2">
-                                        Email address
-                                    </label>
-                                    <input
-                                        type="email"
-                                        value={forgotEmail}
-                                        onChange={(e) => setForgotEmail(e.target.value)}
-                                        placeholder="you@example.com"
-                                        required
-                                        disabled={forgotLoading}
-                                        className="w-full px-4 py-3 rounded-xl text-[14px] bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)] border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)] focus:outline-none focus:border-[rgba(255,255,255,0.25)] disabled:opacity-50 transition-all"
-                                    />
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    disabled={forgotLoading || !forgotEmail}
-                                    className="w-full py-3 px-4 rounded-xl text-[14px] font-medium bg-[#F5F5F5] hover:bg-white text-[#0C0C0C] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-                                >
-                                    {forgotLoading ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            Sending...
-                                        </>
-                                    ) : (
-                                        "Send email"
-                                    )}
-                                </button>
-                            </form>
-                        )}
-                    </div>
-                </div>
-            )}
+                            </Button>
+                        </form>
+                    )}
+                </DialogContent>
+            </Dialog>
 
             {/* Forced password change modal */}
-            {showForceChangeModal && (
-                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-                    <div className="w-full max-w-md rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.1)] overflow-hidden">
-                        <div className="px-6 py-5 border-b border-[rgba(255,255,255,0.08)]">
-                            <h2 className="text-[17px] font-semibold text-[#F5F5F5]">Set a new password</h2>
-                            <p className="text-[13px] text-[rgba(245,245,245,0.5)] mt-1">
-                                Your account was set up with a temporary password. You must choose a new password before continuing.
-                            </p>
+            <Dialog open={showForceChangeModal} onOpenChange={() => {}}>
+                <DialogContent className="max-w-md border-[rgba(255,255,255,0.1)] bg-[#161616]" showCloseButton={false}>
+                    <DialogHeader>
+                        <DialogTitle className="text-[17px] text-[#F5F5F5]">Set a new password</DialogTitle>
+                        <p className="text-[13px] text-[rgba(245,245,245,0.5)] mt-1">
+                            Your account was set up with a temporary password. You must choose a new password before continuing.
+                        </p>
+                    </DialogHeader>
+
+                    <form onSubmit={handleForcePasswordChange} className="space-y-4">
+                        {forceChangeError && (
+                            <div className="p-3.5 rounded-xl bg-[rgba(200,122,122,0.1)] border border-[rgba(200,122,122,0.2)]">
+                                <p className="text-[13px] text-[#C87A7A]">{forceChangeError}</p>
+                            </div>
+                        )}
+
+                        <div className="space-y-2">
+                            <Label className="text-[13px] text-[rgba(245,245,245,0.7)]">New Password</Label>
+                            <Input
+                                type="password"
+                                value={forceNewPassword}
+                                onChange={(e) => setForceNewPassword(e.target.value)}
+                                placeholder="At least 8 characters"
+                                required
+                                disabled={forceChangeLoading}
+                                className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.1)] py-3"
+                            />
                         </div>
 
-                        <form onSubmit={handleForcePasswordChange} className="p-6 space-y-4">
-                            {forceChangeError && (
-                                <div className="p-3.5 rounded-xl bg-[rgba(200,122,122,0.1)] border border-[rgba(200,122,122,0.2)]">
-                                    <p className="text-[13px] text-[#C87A7A]">{forceChangeError}</p>
-                                </div>
-                            )}
+                        <div className="space-y-2">
+                            <Label className="text-[13px] text-[rgba(245,245,245,0.7)]">Confirm New Password</Label>
+                            <Input
+                                type="password"
+                                value={forceConfirmPassword}
+                                onChange={(e) => setForceConfirmPassword(e.target.value)}
+                                placeholder="Repeat new password"
+                                required
+                                disabled={forceChangeLoading}
+                                className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.1)] py-3"
+                            />
+                        </div>
 
-                            <div>
-                                <label className="block text-[13px] font-medium text-[rgba(245,245,245,0.7)] mb-2">
-                                    New Password
-                                </label>
-                                <input
-                                    type="password"
-                                    value={forceNewPassword}
-                                    onChange={(e) => setForceNewPassword(e.target.value)}
-                                    placeholder="At least 8 characters"
-                                    required
-                                    disabled={forceChangeLoading}
-                                    className="w-full px-4 py-3 rounded-xl text-[14px] bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)] border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)] focus:outline-none focus:border-[rgba(255,255,255,0.25)] disabled:opacity-50 transition-all"
-                                />
-                            </div>
+                        <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
+                            Must be at least 8 characters with at least one letter and one number.
+                        </p>
 
-                            <div>
-                                <label className="block text-[13px] font-medium text-[rgba(245,245,245,0.7)] mb-2">
-                                    Confirm New Password
-                                </label>
-                                <input
-                                    type="password"
-                                    value={forceConfirmPassword}
-                                    onChange={(e) => setForceConfirmPassword(e.target.value)}
-                                    placeholder="Repeat new password"
-                                    required
-                                    disabled={forceChangeLoading}
-                                    className="w-full px-4 py-3 rounded-xl text-[14px] bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)] border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)] focus:outline-none focus:border-[rgba(255,255,255,0.25)] disabled:opacity-50 transition-all"
-                                />
-                            </div>
-
-                            <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
-                                Must be at least 8 characters with at least one letter and one number.
-                            </p>
-
-                            {/* Submit / fallback button */}
-                            {forceChangeSucceeded && !forceChangeLoading ? (
-                                <a
-                                    href="/login?reason=password_changed"
-                                    className="w-full py-3 px-4 rounded-xl text-[14px] font-medium bg-[#F5F5F5] hover:bg-white text-[#0C0C0C] transition-all flex items-center justify-center gap-2"
-                                >
-                                    Continue to Login →
-                                </a>
-                            ) : (
-                                <button
-                                    type="submit"
-                                    disabled={forceChangeLoading || !forceNewPassword || !forceConfirmPassword}
-                                    className="w-full py-3 px-4 rounded-xl text-[14px] font-medium bg-[#F5F5F5] hover:bg-white text-[#0C0C0C] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-                                >
-                                    {forceChangeLoading ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            Updating...
-                                        </>
-                                    ) : (
-                                        "Set New Password"
-                                    )}
-                                </button>
-                            )}
-                        </form>
-                    </div>
-                </div>
-            )}
+                        {forceChangeSucceeded && !forceChangeLoading ? (
+                            <Button asChild className="w-full py-3 bg-[#F5F5F5] hover:bg-white text-[#0C0C0C]">
+                                <a href="/login?reason=password_changed">Continue to Login →</a>
+                            </Button>
+                        ) : (
+                            <Button
+                                type="submit"
+                                disabled={forceChangeLoading || !forceNewPassword || !forceConfirmPassword}
+                                className="w-full py-3 bg-[#F5F5F5] hover:bg-white text-[#0C0C0C]"
+                            >
+                                {forceChangeLoading ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Updating...
+                                    </>
+                                ) : (
+                                    "Set New Password"
+                                )}
+                            </Button>
+                        )}
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

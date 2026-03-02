@@ -155,11 +155,11 @@ export default function ClaromentisSearchPanel() {
             <div className="rounded-xl border border-white/10 bg-white/5 p-4 shrink-0">
                 <div className="flex flex-col gap-3">
                     <div className="flex flex-col md:flex-row gap-2">
-                        <input
+                        <Input
                             value={form.q}
                             onChange={(e) => setForm((p) => ({ ...p, q: e.target.value }))}
                             placeholder="Search…"
-                            className="flex-1 rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40"
+                            className="flex-1 rounded-md border-white/15 bg-black text-white placeholder-white/40 focus-visible:ring-white/40"
                         />
 
                         <Select
