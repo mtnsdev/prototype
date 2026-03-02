@@ -15,6 +15,9 @@ import {
     Cloud,
     Database,
     BookOpen,
+    CheckSquare,
+    Square,
+    Search,
 } from "lucide-react";
 import { FolderTreeSelector, SelectedTarget } from "@/components/admin/FolderTreeSelector";
 import ClaromentisPageSelector from "@/components/admin/ClaromentisPageSelector";
@@ -99,7 +102,6 @@ export default function PermissionsPage() {
     const [error, setError] = useState<string | null>(null);
     const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [createModalPreselectedPage, setCreateModalPreselectedPage] = useState<ScriptPageItem | null>(null);
     const [users, setUsers] = useState<UserItem[]>([]);
     const [pendingConflicts, setPendingConflicts] = useState<ConflictInfo[] | null>(null);
     const [pendingPayload, setPendingPayload] = useState<BatchPayload | null>(null);
@@ -270,15 +272,6 @@ export default function PermissionsPage() {
         return <FileText size={16} className="text-blue-400" />;
     };
 
-    const rulesByPageId = activeSource === "pages"
-        ? rules.reduce<Record<number, ContentRule[]>>((acc, r) => {
-            if (r.target_type === "script_page") {
-                (acc[r.target_id] = acc[r.target_id] || []).push(r);
-            }
-            return acc;
-        }, {})
-        : {};
-
     return (
         <div className="space-y-6">
             {/* Source Tabs */}
@@ -325,10 +318,7 @@ export default function PermissionsPage() {
                     )}
                 </div>
                 <button
-                    onClick={() => {
-                        setCreateModalPreselectedPage(null);
-                        setShowCreateModal(true);
-                    }}
+                    onClick={() => setShowCreateModal(true)}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-[rgba(255,255,255,0.1)] text-[14px] font-medium text-[#F5F5F5] transition-colors"
                 >
                     <Plus size={16} />
@@ -363,98 +353,8 @@ export default function PermissionsPage() {
                 </div>
             </div>
 
-            {/* Pages view (script pages) */}
-            {activeSource === "pages" && (
-                <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] overflow-hidden">
-                    {scriptPagesLoading || isLoading ? (
-                        <div className="flex items-center justify-center py-12">
-                            <Loader2 className="w-6 h-6 animate-spin text-[rgba(245,245,245,0.4)]" />
-                        </div>
-                    ) : error ? (
-                        <div className="p-6 text-center">
-                            <p className="text-[14px] text-[#C87A7A]">{error}</p>
-                        </div>
-                    ) : scriptPages.length === 0 ? (
-                        <div className="p-12 text-center">
-                            <BookOpen size={48} className="mx-auto text-[rgba(245,245,245,0.2)] mb-4" />
-                            <p className="text-[14px] text-[rgba(245,245,245,0.5)]">No script pages found</p>
-                            <p className="text-[13px] text-[rgba(245,245,245,0.4)] mt-1">Script pages are source_document rows with source_type SCRIPT</p>
-                        </div>
-                    ) : (
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-[rgba(255,255,255,0.08)]">
-                                    <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Page</th>
-                                    <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Rules</th>
-                                    <th className="w-32"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {scriptPages.map((page) => {
-                                    const pageRules = rulesByPageId[page.id] || [];
-                                    const pageName = page.filename || page.s3_key || page.original_filename || `Page #${page.id}`;
-                                    return (
-                                        <tr key={page.id} className="border-b border-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.02)]">
-                                            <td className="px-5 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <FileText size={16} className="text-purple-400 shrink-0" />
-                                                    <span className="text-[14px] text-[#F5F5F5] truncate max-w-[280px]" title={pageName}>{pageName}</span>
-                                                    {page.index_status && (
-                                                        <span className="text-[11px] text-[rgba(245,245,245,0.4)]">({page.index_status})</span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-5 py-4">
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {pageRules.length === 0 ? (
-                                                        <span className="text-[13px] text-[rgba(245,245,245,0.4)]">No rules</span>
-                                                    ) : (
-                                                        pageRules.map((rule) => (
-                                                            <span
-                                                                key={rule.id}
-                                                                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[12px] bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.08)]"
-                                                            >
-                                                                {rule.subject_type === "role" ? <Users size={12} /> : <User size={12} />}
-                                                                {getSubjectLabel(rule)}
-                                                                <span className={rule.effect === "allow" ? "text-green-400" : "text-red-400"}>
-                                                                    {rule.effect}
-                                                                </span>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleDeleteRule(rule.id)}
-                                                                    className="ml-0.5 p-0.5 rounded hover:bg-[rgba(200,122,122,0.2)] text-[rgba(245,245,245,0.5)] hover:text-[#C87A7A]"
-                                                                    title="Delete rule"
-                                                                >
-                                                                    <X size={12} />
-                                                                </button>
-                                                            </span>
-                                                        ))
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-2 py-4">
-                                                <button
-                                                    onClick={() => {
-                                                        setCreateModalPreselectedPage(page);
-                                                        setShowCreateModal(true);
-                                                    }}
-                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.08)] text-[13px] font-medium text-[#F5F5F5] transition-colors"
-                                                >
-                                                    <Plus size={14} />
-                                                    Add rule
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    )}
-                </div>
-            )}
-
-            {/* Rules Table (Claromentis / Google Drive) */}
-            {activeSource !== "pages" && (
+            {/* Rules Table (Claromentis / Google Drive / Pages — same layout: show existing rules only) */}
+            {(
                 <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] overflow-hidden">
                     {isLoading ? (
                         <div className="flex items-center justify-center py-12">
@@ -466,7 +366,11 @@ export default function PermissionsPage() {
                         </div>
                     ) : rules.length === 0 ? (
                         <div className="p-12 text-center">
-                            <FolderLock size={48} className="mx-auto text-[rgba(245,245,245,0.2)] mb-4" />
+                            {activeSource === "pages" ? (
+                                <BookOpen size={48} className="mx-auto text-[rgba(245,245,245,0.2)] mb-4" />
+                            ) : (
+                                <FolderLock size={48} className="mx-auto text-[rgba(245,245,245,0.2)] mb-4" />
+                            )}
                             <p className="text-[14px] text-[rgba(245,245,245,0.5)]">
                                 No {SOURCE_TABS.find(t => t.key === activeSource)?.label} permission rules
                             </p>
@@ -525,7 +429,7 @@ export default function PermissionsPage() {
                                             </span>
                                         </td>
                                         <td className="px-5 py-4 text-[13px] text-[rgba(245,245,245,0.5)]">
-                                            {rule.applies_to_descendants ? "Including children" : "This item only"}
+                                            {activeSource === "pages" ? "This item only" : (rule.applies_to_descendants ? "Including children" : "This item only")}
                                         </td>
                                         <td className="px-2 py-4">
                                             <button
@@ -550,11 +454,7 @@ export default function PermissionsPage() {
                     source={activeSource}
                     users={users}
                     scriptPages={activeSource === "pages" ? scriptPages : []}
-                    preselectedScriptPage={createModalPreselectedPage}
-                    onClose={() => {
-                        setShowCreateModal(false);
-                        setCreateModalPreselectedPage(null);
-                    }}
+                    onClose={() => setShowCreateModal(false)}
                     onCreate={handleCreateRules}
                 />
             )}
@@ -680,14 +580,12 @@ function CreateRuleModal({
     source,
     users,
     scriptPages,
-    preselectedScriptPage,
     onClose,
     onCreate,
 }: {
     source: SourceTab;
     users: UserItem[];
     scriptPages?: ScriptPageItem[];
-    preselectedScriptPage?: ScriptPageItem | null;
     onClose: () => void;
     onCreate: (payload: {
         source: string;
@@ -702,9 +600,8 @@ function CreateRuleModal({
     const [subjectId, setSubjectId] = useState("user");
     const [selectedTargets, setSelectedTargets] = useState<SelectedTarget[]>([]);
     const [selectedPageIds, setSelectedPageIds] = useState<number[]>([]);
-    const [selectedScriptPageId, setSelectedScriptPageId] = useState<number | null>(
-        preselectedScriptPage?.id ?? null
-    );
+    const [selectedScriptPageIds, setSelectedScriptPageIds] = useState<number[]>([]);
+    const [pageSearchQuery, setPageSearchQuery] = useState("");
     const [effect, setEffect] = useState<"allow" | "deny">("allow");
     const [applyToDescendants, setApplyToDescendants] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -714,9 +611,17 @@ function CreateRuleModal({
 
     const sourceLabel = source === "claromentis" ? "Claromentis" : source === "pages" ? "Pages" : "Google Drive";
 
-    useEffect(() => {
-        setSelectedScriptPageId(preselectedScriptPage?.id ?? null);
-    }, [preselectedScriptPage]);
+    const allScriptPages = scriptPages || [];
+    const allScriptPageIds = allScriptPages.map((p) => p.id);
+    const pageSearchLower = pageSearchQuery.trim().toLowerCase();
+    const filteredScriptPages = pageSearchLower
+        ? allScriptPages.filter((p) => {
+            const name = (p.filename || p.s3_key || p.original_filename || `Page #${p.id}`).toLowerCase();
+            return name.includes(pageSearchLower);
+        })
+        : allScriptPages;
+    const filteredScriptPageIds = filteredScriptPages.map((p) => p.id);
+    const allFilteredSelected = source === "pages" && filteredScriptPageIds.length > 0 && filteredScriptPageIds.every((id) => selectedScriptPageIds.includes(id));
 
     // Check agency connection status and fetch root_folder_id when in Google Drive mode
     useEffect(() => {
@@ -736,7 +641,7 @@ function CreateRuleModal({
     }, [source, token]);
 
     const hasSelection = source === "pages"
-        ? selectedScriptPageId != null
+        ? selectedScriptPageIds.length > 0
         : source === "claromentis"
             ? selectedTargets.length > 0 || selectedPageIds.length > 0
             : selectedTargets.length > 0;
@@ -754,8 +659,8 @@ function CreateRuleModal({
         if (source === "pages") {
             payloadSource = "script";
             appliesToDescendants = false;
-            if (selectedScriptPageId != null) {
-                targets.push({ target_type: "script_page", target_id: selectedScriptPageId });
+            for (const id of selectedScriptPageIds) {
+                targets.push({ target_type: "script_page", target_id: id });
             }
         } else if (source === "google_drive") {
             // Google Drive targets: use Drive IDs
@@ -858,37 +763,95 @@ function CreateRuleModal({
                         </Select>
                     </div>
 
-                    {/* Target Selection -- Pages (script pages) */}
+                    {/* Target Selection -- Pages (script pages): list all pages, multi-select with Select all / Deselect all */}
                     {source === "pages" && (
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
-                                    Page
+                                    Pages
                                 </label>
-                                {preselectedScriptPage ? (
-                                    <div className="px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] flex items-center gap-2">
-                                        <FileText size={16} className="text-purple-400 shrink-0" />
-                                        <span className="text-[14px] text-[#F5F5F5]">
-                                            {preselectedScriptPage.filename || preselectedScriptPage.s3_key || preselectedScriptPage.original_filename || `Page #${preselectedScriptPage.id}`}
-                                        </span>
+                                <p className="text-[12px] text-[rgba(245,245,245,0.5)] mb-2">
+                                    Select one or more pages to apply the rule to.
+                                </p>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)]">
+                                        <Search size={16} className="text-[rgba(245,245,245,0.4)] shrink-0" />
+                                        <input
+                                            type="text"
+                                            value={pageSearchQuery}
+                                            onChange={(e) => setPageSearchQuery(e.target.value)}
+                                            placeholder="Search pages..."
+                                            className="flex-1 min-w-0 bg-transparent text-[13px] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] outline-none"
+                                        />
                                     </div>
-                                ) : (
-                                    <Select
-                                        value={selectedScriptPageId != null ? String(selectedScriptPageId) : "__none__"}
-                                        onValueChange={(v) => setSelectedScriptPageId(v === "__none__" ? null : Number(v))}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (allFilteredSelected) {
+                                                setSelectedScriptPageIds((prev) => prev.filter((id) => !filteredScriptPageIds.includes(id)));
+                                            } else {
+                                                setSelectedScriptPageIds((prev) => [...new Set([...prev, ...filteredScriptPageIds])].sort((a, b) => a - b));
+                                            }
+                                        }}
+                                        disabled={filteredScriptPageIds.length === 0}
+                                        title={allFilteredSelected ? "Clear all" : "Select all"}
+                                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.08)] text-[12px] font-medium text-[#F5F5F5] disabled:opacity-50 disabled:pointer-events-none shrink-0"
                                     >
-                                        <SelectTrigger className="w-full rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
-                                            <SelectValue placeholder="Select a page" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="__none__">Select a page</SelectItem>
-                                            {(scriptPages || []).map((p) => (
-                                                <SelectItem key={p.id} value={String(p.id)}>
-                                                    {p.filename || p.s3_key || p.original_filename || `Page #${p.id}`}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                        {allFilteredSelected ? (
+                                            <>
+                                                <Square size={16} className="text-[rgba(245,245,245,0.7)] shrink-0" />
+                                                <span>Clear all</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckSquare size={16} className="text-[rgba(245,245,245,0.7)] shrink-0" />
+                                                <span>Select all</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                                <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0C0C0C] max-h-[240px] overflow-y-auto p-1">
+                                    {allScriptPages.length === 0 ? (
+                                        <p className="text-[13px] text-[rgba(245,245,245,0.4)] px-3 py-4 text-center">No script pages found</p>
+                                    ) : filteredScriptPages.length === 0 ? (
+                                        <p className="text-[13px] text-[rgba(245,245,245,0.4)] px-3 py-4 text-center">No pages match your search</p>
+                                    ) : (
+                                        filteredScriptPages.map((p) => {
+                                            const checked = selectedScriptPageIds.includes(p.id);
+                                            const name = p.filename || p.s3_key || p.original_filename || `Page #${p.id}`;
+                                            return (
+                                                <button
+                                                    key={p.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (checked) {
+                                                            setSelectedScriptPageIds((prev) => prev.filter((id) => id !== p.id));
+                                                        } else {
+                                                            setSelectedScriptPageIds((prev) => [...prev, p.id].sort((a, b) => a - b));
+                                                        }
+                                                    }}
+                                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-left rounded-lg hover:bg-[rgba(255,255,255,0.04)] transition-colors"
+                                                >
+                                                    <span
+                                                        className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                                                            checked
+                                                                ? "bg-purple-500 border-purple-500 text-white"
+                                                                : "border-[rgba(255,255,255,0.2)] bg-transparent"
+                                                        }`}
+                                                    >
+                                                        {checked ? <Check size={12} /> : null}
+                                                    </span>
+                                                    <FileText size={14} className="text-purple-400 shrink-0" />
+                                                    <span className="text-[13px] text-[#F5F5F5] truncate">{name}</span>
+                                                </button>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                                {selectedScriptPageIds.length > 0 && (
+                                    <p className="text-[12px] text-[rgba(245,245,245,0.5)] mt-2">
+                                        {selectedScriptPageIds.length} page{selectedScriptPageIds.length !== 1 ? "s" : ""} selected
+                                    </p>
                                 )}
                             </div>
                         </div>
