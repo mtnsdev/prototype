@@ -2,6 +2,7 @@
 
 import { useCallback, useState, useEffect } from "react";
 import { Folder, FileText, ChevronRight, ChevronDown, Loader2, HardDrive } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export type FolderTreeNode = {
   id: number;
@@ -252,14 +253,16 @@ function TreeNode({
         style={{ paddingLeft }}
       >
         {isExpandable ? (
-          <button
-            type="button"
-            className="w-5 h-5 flex items-center justify-center text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] shrink-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleExpand();
-            }}
-          >
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          className="w-5 h-5 shrink-0 text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5]"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleExpand();
+          }}
+        >
             {loading ? (
               <Loader2 size={14} className="animate-spin" />
             ) : isExpanded ? (
@@ -267,7 +270,7 @@ function TreeNode({
             ) : (
               <ChevronRight size={14} />
             )}
-          </button>
+          </Button>
         ) : (
           <div className="w-5 shrink-0" />
         )}
@@ -401,13 +404,9 @@ export function FolderTreeSelector({
     return (
       <div className="py-4">
         <p className="text-[14px] text-red-400 mb-2">{error}</p>
-        <button
-          type="button"
-          onClick={loadRoot}
-          className="px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.08)] text-[13px] text-[#F5F5F5] hover:bg-[rgba(255,255,255,0.12)]"
-        >
+        <Button type="button" variant="outline" size="sm" onClick={loadRoot}>
           Retry
-        </button>
+        </Button>
       </div>
     );
   }

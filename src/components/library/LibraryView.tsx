@@ -7,6 +7,8 @@ import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 import { useDriveFiles } from "@/hooks/useDriveFiles";
 import { usePages, type PageItem } from "@/hooks/usePages";
 import { Folder, FileText, ChevronRight, ChevronDown, Eye, Loader2, Search, Cloud, Shield, Lock, Globe } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import PdfModal from "@/components/dashboard/PdfModal";
 import SyncStatusButton from "@/components/library/SyncStatusButton";
 import type { DriveFile } from "@/types/google-drive";
@@ -447,18 +449,12 @@ function DriveLibraryContent({
                             size={16}
                             className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(245,245,245,0.4)]"
                         />
-                        <input
+                        <Input
                             type="text"
                             placeholder="Search files and folders..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className={[
-                                "w-full rounded-lg pl-10 pr-4 py-2.5 text-[13px]",
-                                "bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.4)]",
-                                "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
-                                "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
-                                "transition-all duration-150",
-                            ].join(" ")}
+                            className="w-full rounded-lg pl-10 bg-[#0C0C0C] border-[rgba(255,255,255,0.1)]"
                         />
                     </div>
                     {isSearchMode && (
@@ -1279,41 +1275,32 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                     </p>
 
                     <div className="mt-6 flex gap-3">
-                        <input
+                        <Input
                             type="number"
                             placeholder="Folder ID (e.g., 0)"
                             value={draftRootId}
-                            className={[
-                                "flex-1 rounded-xl px-4 py-2.5 text-[14px]",
-                                "bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.35)]",
-                                "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
-                                "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
-                                "transition-all duration-150",
-                            ].join(" ")}
+                            className="flex-1 rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.1)]"
                             onChange={(e) => setDraftRootId(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && commitRootId()}
                         />
-                        <button
+                        <Button
                             type="button"
-                            className={[
-                                "px-5 py-2.5 rounded-xl text-[14px] font-medium",
-                                "bg-[#F5F5F5] hover:bg-white text-[#0C0C0C]",
-                                "disabled:opacity-40 disabled:cursor-not-allowed",
-                                "transition-all duration-150",
-                            ].join(" ")}
                             onClick={commitRootId}
                             disabled={!draftRootId.trim()}
+                            className="bg-[#F5F5F5] hover:bg-white text-[#0C0C0C]"
                         >
                             Load
-                        </button>
+                        </Button>
                     </div>
-                    <button
+                    <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={handleNavigateToKnowledgeRoot}
-                        className="mt-4 text-[12px] text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors"
+                        className="mt-4 text-[12px] text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5]"
                     >
                         ← Back to Knowledge
-                    </button>
+                    </Button>
                 </div>
             </div>
         );

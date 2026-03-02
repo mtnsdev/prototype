@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function GoogleDriveOAuthCallbackPage() {
     const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
@@ -107,13 +108,14 @@ export default function GoogleDriveOAuthCallbackPage() {
                     <>
                         <AlertCircle size={32} className="text-[#C87A7A] mx-auto mb-4" />
                         <p className="text-[15px] text-[#F5F5F5]">{message}</p>
-                        <button
+                        <Button
                             type="button"
+                            variant="ghost"
                             onClick={() => window.close()}
                             className="mt-4 text-[13px] text-[rgba(245,245,245,0.6)] hover:text-[#F5F5F5]"
                         >
                             Close window
-                        </button>
+                        </Button>
                     </>
                 )}
             </div>

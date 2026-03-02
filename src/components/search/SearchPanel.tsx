@@ -1,6 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type TLItem =
     | { kind: "folder"; id: number; parent_id: number; title: string; has_children?: boolean; URI?: string }
@@ -146,62 +155,70 @@ export default function ClaromentisSearchPanel() {
             <div className="rounded-xl border border-white/10 bg-white/5 p-4 shrink-0">
                 <div className="flex flex-col gap-3">
                     <div className="flex flex-col md:flex-row gap-2">
-                        <input
+                        <Input
                             value={form.q}
                             onChange={(e) => setForm((p) => ({ ...p, q: e.target.value }))}
                             placeholder="Search…"
-                            className="flex-1 rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40"
+                            className="flex-1 rounded-md border-white/15 bg-black text-white placeholder-white/40 focus-visible:ring-white/40"
                         />
 
-                        <select
+                        <Select
                             value={form.objectType}
-                            onChange={(e) => setForm((p) => ({ ...p, objectType: e.target.value as ObjectType }))}
-                            className="rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/40"
+                            onValueChange={(v) => setForm((p) => ({ ...p, objectType: v as ObjectType }))}
                         >
-                            <option value="document,folder">Documents + Folders</option>
-                            <option value="document">Documents only</option>
-                            <option value="folder">Folders only</option>
-                        </select>
+                            <SelectTrigger className="rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white focus:ring-2 focus:ring-white/40 w-fit">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="document,folder">Documents + Folders</SelectItem>
+                                <SelectItem value="document">Documents only</SelectItem>
+                                <SelectItem value="folder">Folders only</SelectItem>
+                            </SelectContent>
+                        </Select>
 
-                        <select
-                            value={form.limit}
-                            onChange={(e) => setForm((p) => ({ ...p, limit: Number(e.target.value) }))}
-                            className="rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/40"
+                        <Select
+                            value={String(form.limit)}
+                            onValueChange={(v) => setForm((p) => ({ ...p, limit: Number(v) }))}
                         >
-                            <option value={10}>10 / page</option>
-                            <option value={20}>20 / page</option>
-                            <option value={50}>50 / page</option>
-                            <option value={100}>100 / page</option>
-                        </select>
+                            <SelectTrigger className="rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white focus:ring-2 focus:ring-white/40 w-fit">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="10">10 / page</SelectItem>
+                                <SelectItem value="20">20 / page</SelectItem>
+                                <SelectItem value="50">50 / page</SelectItem>
+                                <SelectItem value="100">100 / page</SelectItem>
+                            </SelectContent>
+                        </Select>
 
-                        <button
+                        <Button
                             type="button"
                             onClick={onSearchClick}
                             disabled={!canSearch || loading}
-                            className="rounded-md bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90 disabled:opacity-60 md:ml-auto"
+                            className="md:ml-auto bg-white text-black hover:bg-white/90 border-0"
                         >
                             Search
-                        </button>
+                        </Button>
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-2">
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-white/60 w-24">Created from</span>
-                            <input
+                            <Input
                                 type="date"
                                 value={form.createdFrom}
                                 onChange={(e) => setForm((p) => ({ ...p, createdFrom: e.target.value }))}
-                                className="rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/40"
+                                className="rounded-md border-white/15 bg-black text-white focus-visible:ring-white/40"
                             />
                         </div>
 
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-white/60 w-24">Created to</span>
-                            <input
+                            <Input
                                 type="date"
                                 value={form.createdTo}
                                 onChange={(e) => setForm((p) => ({ ...p, createdTo: e.target.value }))}
-                                className="rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/40"
+                                className="rounded-md border-white/15 bg-black text-white focus-visible:ring-white/40"
                             />
                         </div>
 
@@ -220,14 +237,16 @@ export default function ClaromentisSearchPanel() {
             {/* Results (scrollable) */}
             <div className="mt-4 rounded-xl border border-white/10 bg-white/5 min-h-0 flex-1 overflow-hidden flex flex-col">
                 <div className="px-4 py-3 border-b border-white/10 flex items-center justify-end shrink-0">
-                    <button
+                    <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={onNextPage}
                         disabled={!lastPage?.next_offset || loading}
-                        className="text-xs rounded-md border border-white/20 px-3 py-1 hover:bg-white/10 disabled:opacity-60"
+                        className="text-xs border-white/20 hover:bg-white/10"
                     >
                         Next page
-                    </button>
+                    </Button>
                 </div>
 
                 <div className="min-h-0 flex-1 overflow-y-auto">
@@ -251,17 +270,19 @@ export default function ClaromentisSearchPanel() {
                                             </div>
 
                                             {it.kind === "document" ? (
-                                                <button
+                                                <Button
                                                     type="button"
+                                                    variant="outline"
+                                                    size="sm"
                                                     disabled={!previewUrl}
                                                     onClick={() => {
                                                         if (!previewUrl) return;
                                                         window.open(previewUrl, "_blank", "noopener,noreferrer");
                                                     }}
-                                                    className="text-xs rounded-md border border-white/20 px-3 py-1 hover:bg-white/10 disabled:opacity-60"
+                                                    className="text-xs border-white/20 hover:bg-white/10"
                                                 >
                                                     Preview
-                                                </button>
+                                                </Button>
                                             ) : (
                                                 <span className="text-xs text-white/50">folder</span>
                                             )}

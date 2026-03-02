@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { User, LogOut, Mail, AtSign, Loader2, Shield, ChevronRight, Key, Plug } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useUser } from "@/contexts/UserContext";
 
 type UserProfile = {
@@ -187,9 +190,9 @@ export default function SettingsPage() {
                                 <Mail size={18} className="text-[rgba(245,245,245,0.4)]" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <label className="text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                                <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                                     Email
-                                </label>
+                                </Label>
                                 <p className="text-[15px] text-[#F5F5F5] mt-1 truncate">
                                     {profile?.email}
                                 </p>
@@ -202,9 +205,9 @@ export default function SettingsPage() {
                                 <AtSign size={18} className="text-[rgba(245,245,245,0.4)]" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <label className="text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                                <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                                     Username
-                                </label>
+                                </Label>
                                 <p className="text-[15px] text-[#F5F5F5] mt-1 truncate">
                                     {profile?.username}
                                 </p>
@@ -227,42 +230,42 @@ export default function SettingsPage() {
                             Change your password. You will be signed out after changing your password.
                         </p>
                         
-                        <div>
-                            <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                        <div className="space-y-2">
+                            <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                                 Current Password
-                            </label>
-                            <input
+                            </Label>
+                            <Input
                                 type="password"
                                 value={currentPassword}
                                 onChange={(e) => setCurrentPassword(e.target.value)}
                                 placeholder="Enter current password"
-                                className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                                className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)]"
                             />
                         </div>
                         
-                        <div>
-                            <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                        <div className="space-y-2">
+                            <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                                 New Password
-                            </label>
-                            <input
+                            </Label>
+                            <Input
                                 type="password"
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
                                 placeholder="Enter new password"
-                                className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                                className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)]"
                             />
                         </div>
                         
-                        <div>
-                            <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                        <div className="space-y-2">
+                            <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                                 Confirm New Password
-                            </label>
-                            <input
+                            </Label>
+                            <Input
                                 type="password"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 placeholder="Confirm new password"
-                                className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                                className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)]"
                             />
                         </div>
                         
@@ -278,18 +281,10 @@ export default function SettingsPage() {
                             Password must be at least 8 characters with at least one letter and one number.
                         </p>
                         
-                        <button
+                        <Button
                             onClick={handlePasswordChange}
                             disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}
-                            className={[
-                                "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
-                                "text-[14px] font-medium",
-                                "bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)]",
-                                "border border-[rgba(255,255,255,0.1)]",
-                                "text-[#F5F5F5]",
-                                "transition-all duration-150",
-                                "disabled:opacity-50 disabled:cursor-not-allowed",
-                            ].join(" ")}
+                            className="gap-2"
                         >
                             {isChangingPassword ? (
                                 <>
@@ -302,7 +297,7 @@ export default function SettingsPage() {
                                     Change Password
                                 </>
                             )}
-                        </button>
+                        </Button>
                     </div>
                 </section>}
 
@@ -319,18 +314,11 @@ export default function SettingsPage() {
                         <p className="text-[13px] text-[rgba(245,245,245,0.5)] mb-4">
                             Sign out of your account on this device.
                         </p>
-                        <button
+                        <Button
+                            variant="destructive"
                             onClick={handleSignOut}
                             disabled={isSigningOut}
-                            className={[
-                                "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
-                                "text-[14px] font-medium",
-                                "bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)]",
-                                "border border-[rgba(200,122,122,0.2)] hover:border-[rgba(200,122,122,0.35)]",
-                                "text-[#C87A7A] hover:text-[#D89A9A]",
-                                "transition-all duration-150",
-                                "disabled:opacity-50 disabled:cursor-not-allowed",
-                            ].join(" ")}
+                            className="gap-2 bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border-[rgba(200,122,122,0.2)] text-[#C87A7A] hover:text-[#D89A9A]"
                         >
                             {isSigningOut ? (
                                 <>
@@ -343,7 +331,7 @@ export default function SettingsPage() {
                                     Sign Out
                                 </>
                             )}
-                        </button>
+                        </Button>
                     </div>
                 </section>
 

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, FolderOpen, ChevronRight, Check, HardDrive, Users } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 type FolderItem = { id: string; name: string; mimeType: string; driveId?: string };
 type SharedDrive = { id: string; name: string };
@@ -146,44 +148,33 @@ export default function GoogleDriveFolderPicker({ open, onClose, onSelect, mode 
     const canSelect = view === "shared_drive" || (currentParent && currentParent.id !== "root");
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
-            <div
-                className="w-full max-w-md rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] shadow-xl"
+        <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+            <DialogContent
+                className="w-full max-w-md rounded-2xl border-[rgba(255,255,255,0.08)] bg-[#161616] shadow-xl"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between">
                     <h3 className="text-[15px] font-semibold text-[#F5F5F5]">
                         {mode === "change" ? "Change folder" : "Select a folder"}
                     </h3>
-                    <button
-                        onClick={onClose}
-                        className="text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] text-[14px]"
-                    >
+                    <Button variant="ghost" size="sm" onClick={onClose} className="text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5]">
                         Close
-                    </button>
+                    </Button>
                 </div>
 
                 <div className="p-4">
                     {/* Breadcrumb */}
                     {view !== "root" && (
                         <div className="flex flex-wrap items-center gap-1 text-[13px] text-[rgba(245,245,245,0.6)] mb-4">
-                            <button
-                                type="button"
-                                onClick={() => handleBreadcrumbClick(-1)}
-                                className="hover:text-[#F5F5F5]"
-                            >
+                            <Button type="button" variant="ghost" size="sm" onClick={() => handleBreadcrumbClick(-1)} className="hover:text-[#F5F5F5] h-auto p-0 font-normal text-[13px]">
                                 Drives
-                            </button>
+                            </Button>
                             {breadcrumb.map((f, i) => (
                                 <span key={`${f.id}-${i}`} className="flex items-center gap-1">
                                     <ChevronRight size={14} />
-                                    <button
-                                        type="button"
-                                        onClick={() => handleBreadcrumbClick(i)}
-                                        className="hover:text-[#F5F5F5] truncate max-w-[120px]"
-                                    >
+                                    <Button type="button" variant="ghost" size="sm" onClick={() => handleBreadcrumbClick(i)} className="hover:text-[#F5F5F5] truncate max-w-[120px] h-auto p-0 font-normal text-[13px]">
                                         {f.name}
-                                    </button>
+                                    </Button>
                                 </span>
                             ))}
                         </div>
@@ -196,14 +187,10 @@ export default function GoogleDriveFolderPicker({ open, onClose, onSelect, mode 
                     {/* Root view: show My Drive + Shared Drives */}
                     {view === "root" && (
                         <div className="space-y-1 max-h-[320px] overflow-y-auto">
-                            <button
-                                type="button"
-                                onClick={enterMyDrive}
-                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[rgba(255,255,255,0.06)] text-left"
-                            >
+                            <Button type="button" variant="ghost" onClick={enterMyDrive} className="w-full justify-start gap-3 px-3 py-2.5 rounded-xl hover:bg-[rgba(255,255,255,0.06)] font-normal h-auto">
                                 <HardDrive size={20} className="text-[rgba(245,245,245,0.5)] shrink-0" />
                                 <span className="text-[14px] text-[#F5F5F5]">My Drive</span>
-                            </button>
+                            </Button>
 
                             {sharedDrives.length > 0 && (
                                 <>
@@ -236,15 +223,16 @@ export default function GoogleDriveFolderPicker({ open, onClose, onSelect, mode 
                             ) : (
                                 <div className="space-y-1 max-h-[280px] overflow-y-auto">
                                     {folders.map((f) => (
-                                        <button
+                                        <Button
                                             key={f.id}
                                             type="button"
+                                            variant="ghost"
                                             onClick={() => handleNavigate(f)}
-                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[rgba(255,255,255,0.06)] text-left"
+                                            className="w-full justify-start gap-3 px-3 py-2.5 rounded-xl hover:bg-[rgba(255,255,255,0.06)] font-normal h-auto"
                                         >
                                             <FolderOpen size={20} className="text-[rgba(245,245,245,0.5)] shrink-0" />
                                             <span className="text-[14px] text-[#F5F5F5] truncate">{f.name}</span>
-                                        </button>
+                                        </Button>
                                     ))}
                                     {!loading && folders.length === 0 && (
                                         <p className="text-[13px] text-[rgba(245,245,245,0.5)] py-2">No subfolders.</p>
@@ -254,21 +242,21 @@ export default function GoogleDriveFolderPicker({ open, onClose, onSelect, mode 
 
                             {canSelect && (
                                 <div className="mt-4 pt-4 border-t border-[rgba(255,255,255,0.08)]">
-                                    <button
+                                    <Button
                                         type="button"
                                         disabled={selecting}
                                         onClick={handleSelectThisFolder}
-                                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-medium bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-[rgba(255,255,255,0.1)] text-[#F5F5F5] disabled:opacity-50"
+                                        className="w-full gap-2"
                                     >
                                         {selecting ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                                         Select &quot;{currentParent?.name}&quot;
-                                    </button>
+                                    </Button>
                                 </div>
                             )}
                         </>
                     )}
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }

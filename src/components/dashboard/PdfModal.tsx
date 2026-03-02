@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X, FileText, Loader2 } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface PdfModalProps {
     isOpen: boolean;
@@ -97,19 +99,16 @@ export default function PdfModal({ isOpen, onClose, filename, pageNumber = 1, pd
             ? `${pdfObjectUrl}#page=${pageNumber}`
             : "";
 
-    if (!isOpen) return null;
-
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm transition-opacity duration-200"
-            onClick={onClose}
-        >
-            <div
-                className="relative w-full h-full max-w-6xl max-h-[90vh] m-4 bg-[#F5F5F5] rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+            <DialogContent
+                className="relative w-full max-w-6xl max-h-[90vh] m-4 bg-[#F5F5F5] rounded-2xl shadow-2xl flex flex-col overflow-hidden p-0 border-0"
                 onClick={(e) => e.stopPropagation()}
+                onPointerDownOutside={onClose}
+                onInteractOutside={onClose}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(0,0,0,0.08)] bg-white">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(0,0,0,0.08)] bg-white shrink-0">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className="w-10 h-10 rounded-lg bg-[rgba(0,0,0,0.05)] flex items-center justify-center shrink-0">
                             <FileText size={20} className="text-[rgba(0,0,0,0.5)]" />
@@ -123,13 +122,15 @@ export default function PdfModal({ isOpen, onClose, filename, pageNumber = 1, pd
                             </p>
                         </div>
                     </div>
-                    <button
+                    <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={onClose}
-                        className="ml-4 w-9 h-9 flex items-center justify-center hover:bg-[rgba(0,0,0,0.05)] rounded-lg transition-colors duration-150"
+                        className="ml-4 w-9 h-9 bg-transparent hover:bg-[rgba(0,0,0,0.05)] text-[rgba(0,0,0,0.5)]"
                         aria-label="Close"
                     >
-                        <X className="w-5 h-5 text-[rgba(0,0,0,0.5)]" />
-                    </button>
+                        <X className="w-5 h-5" />
+                    </Button>
                 </div>
 
                 {/* PDF Viewer */}
@@ -154,7 +155,7 @@ export default function PdfModal({ isOpen, onClose, filename, pageNumber = 1, pd
                         />
                     )}
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }

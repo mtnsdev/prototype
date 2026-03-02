@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { FileText, Loader2, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type ClaromentisPage = {
     id: number;
@@ -67,12 +69,12 @@ export default function ClaromentisPageSelector({
             {/* Search */}
             <div className="flex items-center gap-2 px-3 py-2 border-b border-[rgba(255,255,255,0.06)]">
                 <Search size={14} className="text-[rgba(245,245,245,0.4)] shrink-0" />
-                <input
+                <Input
                     type="text"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search pages..."
-                    className="flex-1 bg-transparent text-[13px] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)] outline-none"
+                    className="flex-1 h-auto py-1.5 border-0 bg-transparent text-[13px] shadow-none focus-visible:ring-0"
                 />
             </div>
 
@@ -93,15 +95,12 @@ export default function ClaromentisPageSelector({
                         {pages.map((page) => {
                             const selected = selectedPageIds.includes(page.id);
                             return (
-                                <button
+                                <Button
                                     key={page.id}
                                     type="button"
+                                    variant="ghost"
                                     onClick={() => togglePage(page.id)}
-                                    className={[
-                                        "w-full flex items-center gap-2.5 px-3 py-2 text-left",
-                                        "hover:bg-[rgba(255,255,255,0.04)] transition-colors",
-                                        selected ? "bg-[rgba(168,85,247,0.08)]" : "",
-                                    ].join(" ")}
+                                    className={`w-full justify-start gap-2.5 px-3 py-2 font-normal h-auto ${selected ? "bg-[rgba(168,85,247,0.08)]" : ""}`}
                                 >
                                     <input
                                         type="checkbox"
@@ -116,7 +115,7 @@ export default function ClaromentisPageSelector({
                                             Admin only
                                         </span>
                                     )}
-                                </button>
+                                </Button>
                             );
                         })}
                     </div>

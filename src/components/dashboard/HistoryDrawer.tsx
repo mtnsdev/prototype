@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { X, Search, MessageSquare, Trash2, Loader2, Clock, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { Conversation } from "./Sidebar";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
@@ -167,12 +169,14 @@ export default function HistoryDrawer({
                             </p>
                         </div>
                     </div>
-                    <button
+                    <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={onClose}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/8 transition-colors duration-150 text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5]"
+                        className="w-8 h-8 rounded-lg text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] hover:bg-white/8"
                     >
                         <X size={18} />
-                    </button>
+                    </Button>
                 </div>
 
                 {/* Search */}
@@ -182,18 +186,12 @@ export default function HistoryDrawer({
                             size={16}
                             className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[rgba(245,245,245,0.35)]"
                         />
-                        <input
+                        <Input
                             type="text"
                             placeholder="Search conversations..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className={[
-                                "w-full pl-10 pr-4 py-2.5 rounded-xl text-[14px]",
-                                "bg-[#161616] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.35)]",
-                                "border border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.12)]",
-                                "focus:outline-none focus:border-[rgba(255,255,255,0.2)] focus:ring-1 focus:ring-[rgba(255,255,255,0.08)]",
-                                "transition-all duration-150",
-                            ].join(" ")}
+                            className="w-full pl-10 rounded-xl bg-[#161616] border-[rgba(255,255,255,0.08)] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.35)]"
                         />
                     </div>
                 </div>
@@ -206,12 +204,14 @@ export default function HistoryDrawer({
                                 <AlertCircle size={24} className="text-[#C87A7A]" />
                             </div>
                             <p className="text-[14px] text-[rgba(245,245,245,0.7)]">{error}</p>
-                            <button
+                            <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={() => fetchConversations(searchQuery || undefined)}
-                                className="mt-4 px-4 py-2 text-[13px] rounded-lg bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] text-[rgba(245,245,245,0.7)] transition-colors"
+                                className="mt-4"
                             >
                                 Try again
-                            </button>
+                            </Button>
                         </div>
                     ) : showLoader ? (
                         <div className="flex flex-col items-center justify-center py-12">
@@ -320,13 +320,15 @@ function ConversationGroup({
                         ].join(" ")}>
                             {conv.title}
                         </span>
-                        <button
+                        <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={(e) => onDelete(e, conv.id)}
-                            className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-[rgba(200,122,122,0.15)] transition-all duration-150"
+                            className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-[rgba(200,122,122,0.15)] h-auto w-auto"
                             title="Delete conversation"
                         >
                             <Trash2 size={14} className="text-[rgba(245,245,245,0.4)] hover:text-[#C87A7A]" />
-                        </button>
+                        </Button>
                     </div>
                 ))}
             </div>

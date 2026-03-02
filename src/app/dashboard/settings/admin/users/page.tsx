@@ -18,6 +18,31 @@ import {
     Eye,
 } from "lucide-react";
 import { UserPermissionsModal } from "@/components/admin/UserPermissionsModal";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 
 type User = {
     id: number;
@@ -344,9 +369,9 @@ export default function UsersPage() {
                     }`}
                 >
                     <span>{inviteMessage.text}</span>
-                    <button onClick={() => setInviteMessage(null)} className="shrink-0 opacity-60 hover:opacity-100">
+                    <Button variant="ghost" size="icon-xs" onClick={() => setInviteMessage(null)} className="shrink-0 opacity-60 hover:opacity-100">
                         <X size={14} />
-                    </button>
+                    </Button>
                 </div>
             )}
 
@@ -355,46 +380,51 @@ export default function UsersPage() {
                 <div className="flex items-center gap-3 flex-1 w-full sm:w-auto">
                     <div className="relative flex-1 sm:max-w-xs">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(245,245,245,0.4)]" />
-                        <input
+                        <Input
                             type="text"
                             placeholder="Search users..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-[#161616] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                            className="w-full pl-9 rounded-xl bg-[#161616] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5]"
                         />
                     </div>
 
                     {/* Role Filter */}
-                    <select
-                        value={roleFilter || ""}
-                        onChange={(e) => setRoleFilter(e.target.value || null)}
-                        className="px-3 py-2.5 rounded-xl bg-[#161616] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                    <Select
+                        value={roleFilter ?? "__all__"}
+                        onValueChange={(v) => setRoleFilter(v === "__all__" ? null : v)}
                     >
-                        <option value="">All Roles</option>
-                        <option value="admin">Admin</option>
-                        <option value="user">User</option>
-                    </select>
+                        <SelectTrigger className="w-[140px] rounded-xl bg-[#161616] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                            <SelectValue placeholder="All Roles" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="__all__">All Roles</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="user">User</SelectItem>
+                        </SelectContent>
+                    </Select>
 
                     {/* Status Filter */}
-                    <select
-                        value={statusFilter || ""}
-                        onChange={(e) => setStatusFilter(e.target.value || null)}
-                        className="px-3 py-2.5 rounded-xl bg-[#161616] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                    <Select
+                        value={statusFilter ?? "__all__"}
+                        onValueChange={(v) => setStatusFilter(v === "__all__" ? null : v)}
                     >
-                        <option value="">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="invited">Invited</option>
-                        <option value="disabled">Disabled</option>
-                    </select>
+                        <SelectTrigger className="w-[140px] rounded-xl bg-[#161616] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                            <SelectValue placeholder="All Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="__all__">All Status</SelectItem>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="invited">Invited</SelectItem>
+                            <SelectItem value="disabled">Disabled</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
 
-                <button
-                    onClick={() => setShowInviteModal(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-[rgba(255,255,255,0.1)] text-[14px] font-medium text-[#F5F5F5] transition-colors"
-                >
+                <Button onClick={() => setShowInviteModal(true)} variant="outline" className="gap-2">
                     <Plus size={16} />
                     Invite User
-                </button>
+                </Button>
             </div>
 
             {/* Users Table */}
@@ -413,105 +443,111 @@ export default function UsersPage() {
                         <p className="text-[14px] text-[rgba(245,245,245,0.5)]">No users found</p>
                     </div>
                 ) : (
-                    <table className="w-full">
-                        <thead>
-                            <tr className="border-b border-[rgba(255,255,255,0.08)]">
-                                <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">User</th>
-                                <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Role</th>
-                                <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Status</th>
-                                <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Last Login</th>
-                                <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Created</th>
-                                <th className="w-12"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="border-b border-[rgba(255,255,255,0.08)] hover:bg-transparent">
+                                <TableHead className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">User</TableHead>
+                                <TableHead className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Role</TableHead>
+                                <TableHead className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Status</TableHead>
+                                <TableHead className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Last Login</TableHead>
+                                <TableHead className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Created</TableHead>
+                                <TableHead className="w-12"></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {users.map((user) => {
                                 const statusStyle = STATUS_COLORS[user.status] || STATUS_COLORS.active;
                                 const roleStyle = ROLE_COLORS[user.role] || ROLE_COLORS.user;
                                 const StatusIcon = statusStyle.icon;
 
                                 return (
-                                    <tr key={user.id} className="border-b border-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.02)]">
-                                        <td className="px-5 py-4">
+                                    <TableRow key={user.id} className="border-b border-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.02)]">
+                                        <TableCell className="px-5 py-4">
                                             <div>
                                                 <p className="text-[14px] font-medium text-[#F5F5F5]">{user.username}</p>
                                                 <p className="text-[13px] text-[rgba(245,245,245,0.5)]">{user.email}</p>
                                             </div>
-                                        </td>
-                                        <td className="px-5 py-4">
+                                        </TableCell>
+                                        <TableCell className="px-5 py-4">
                                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium ${roleStyle.bg} ${roleStyle.text}`}>
                                                 {user.role === "admin" && <Shield size={12} />}
                                                 {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                                             </span>
-                                        </td>
-                                        <td className="px-5 py-4">
+                                        </TableCell>
+                                        <TableCell className="px-5 py-4">
                                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium ${statusStyle.bg} ${statusStyle.text}`}>
                                                 <StatusIcon size={12} />
                                                 {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
                                             </span>
-                                        </td>
-                                        <td className="px-5 py-4 text-[13px] text-[rgba(245,245,245,0.5)]">
+                                        </TableCell>
+                                        <TableCell className="px-5 py-4 text-[13px] text-[rgba(245,245,245,0.5)]">
                                             {formatDate(user.last_login_at)}
-                                        </td>
-                                        <td className="px-5 py-4 text-[13px] text-[rgba(245,245,245,0.5)]">
+                                        </TableCell>
+                                        <TableCell className="px-5 py-4 text-[13px] text-[rgba(245,245,245,0.5)]">
                                             {formatDate(user.created_at)}
-                                        </td>
-                                        <td className="px-2 py-4">
-                                            <button
+                                        </TableCell>
+                                        <TableCell className="px-2 py-4">
+                                            <Button
                                                 ref={(el) => { actionButtonRefs.current.set(user.id, el); }}
+                                                variant="ghost"
+                                                size="icon"
                                                 onClick={() => setActionMenuUser(actionMenuUser === user.id ? null : user.id)}
-                                                className="p-2 rounded-lg hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+                                                className="p-2"
                                             >
                                                 <MoreVertical size={16} className="text-[rgba(245,245,245,0.5)]" />
-                                            </button>
+                                            </Button>
 
                                             <ActionMenu
                                                 isOpen={actionMenuUser === user.id}
                                                 onClose={() => setActionMenuUser(null)}
                                                 triggerRef={getButtonRef(user.id)}
                                             >
-                                                <button
+                                                <Button
+                                                    variant="ghost"
+                                                    className="w-full justify-start font-normal text-[rgba(245,245,245,0.8)]"
                                                     onClick={() => {
                                                         setEditingUser(user);
                                                         setActionMenuUser(null);
                                                     }}
-                                                    className="w-full px-4 py-2.5 text-left text-[14px] text-[rgba(245,245,245,0.8)] hover:bg-[rgba(255,255,255,0.06)]"
                                                 >
                                                     Edit User
-                                                </button>
-                                                <button
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    className="w-full justify-start font-normal gap-2 text-[rgba(245,245,245,0.8)]"
                                                     onClick={() => {
                                                         setPermissionsUser(user);
                                                         setActionMenuUser(null);
                                                     }}
-                                                    className="w-full px-4 py-2.5 text-left text-[14px] text-[rgba(245,245,245,0.8)] hover:bg-[rgba(255,255,255,0.06)] flex items-center gap-2"
                                                 >
                                                     <Eye size={13} className="text-[rgba(245,245,245,0.5)]" />
                                                     View Permissions
-                                                </button>
+                                                </Button>
                                                 {user.status !== "disabled" && (
-                                                    <button
+                                                    <Button
+                                                        variant="ghost"
+                                                        className="w-full justify-start font-normal text-[#C87A7A]"
                                                         onClick={() => handleDisableUser(user.id)}
-                                                        className="w-full px-4 py-2.5 text-left text-[14px] text-[#C87A7A] hover:bg-[rgba(255,255,255,0.06)]"
                                                     >
                                                         Disable User
-                                                    </button>
+                                                    </Button>
                                                 )}
                                                 {user.status === "disabled" && (
-                                                    <button
+                                                    <Button
+                                                        variant="ghost"
+                                                        className="w-full justify-start font-normal text-green-400"
                                                         onClick={() => handleUpdateUser(user.id, { status: "active" })}
-                                                        className="w-full px-4 py-2.5 text-left text-[14px] text-green-400 hover:bg-[rgba(255,255,255,0.06)]"
                                                     >
                                                         Reactivate User
-                                                    </button>
+                                                    </Button>
                                                 )}
                                             </ActionMenu>
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 );
                             })}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                 )}
             </div>
 
@@ -522,20 +558,20 @@ export default function UsersPage() {
                         Showing {((page - 1) * 20) + 1} to {Math.min(page * 20, total)} of {total} users
                     </p>
                     <div className="flex gap-2">
-                        <button
+                        <Button
+                            variant="outline"
                             onClick={() => setPage(p => Math.max(1, p - 1))}
                             disabled={page === 1}
-                            className="px-4 py-2 rounded-xl bg-[#161616] border border-[rgba(255,255,255,0.08)] text-[14px] text-[rgba(245,245,245,0.7)] disabled:opacity-50 hover:bg-[rgba(255,255,255,0.06)]"
                         >
                             Previous
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="outline"
                             onClick={() => setPage(p => p + 1)}
                             disabled={page * 20 >= total}
-                            className="px-4 py-2 rounded-xl bg-[#161616] border border-[rgba(255,255,255,0.08)] text-[14px] text-[rgba(245,245,245,0.7)] disabled:opacity-50 hover:bg-[rgba(255,255,255,0.06)]"
                         >
                             Next
-                        </button>
+                        </Button>
                     </div>
                 </div>
             )}
@@ -610,42 +646,40 @@ function InviteUserModal({
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="w-full max-w-md rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.1)] overflow-hidden max-h-[90vh] overflow-y-auto">
-                <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between">
-                    <h2 className="text-[16px] font-semibold text-[#F5F5F5]">Invite User</h2>
-                    <button onClick={onClose} className="p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)]">
-                        <X size={18} className="text-[rgba(245,245,245,0.5)]" />
-                    </button>
-                </div>
+        <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto border-[rgba(255,255,255,0.1)]">
+                <DialogHeader>
+                    <DialogTitle className="text-[16px] text-[#F5F5F5]">Invite User</DialogTitle>
+                </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                        <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                             Email Address
-                        </label>
-                        <input
+                        </Label>
+                        <Input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="user@example.com"
                             required
-                            className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                            className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)]"
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                    <div className="space-y-2">
+                        <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                             Role
-                        </label>
-                        <select
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
-                        >
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
-                        </select>
+                        </Label>
+                        <Select value={role} onValueChange={setRole}>
+                            <SelectTrigger className="w-full rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="user">User</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     {/* Password Section */}
@@ -655,30 +689,30 @@ function InviteUserModal({
                         </p>
                         
                         <div className="space-y-4">
-                            <div>
-                                <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                            <div className="space-y-2">
+                                <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                                     Password (Optional)
-                                </label>
-                                <input
+                                </Label>
+                                <Input
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="Enter password"
-                                    className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                                    className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)]"
                                 />
                             </div>
                             
                             {password && (
-                                <div>
-                                    <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                                <div className="space-y-2">
+                                    <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                                         Confirm Password
-                                    </label>
-                                    <input
+                                    </Label>
+                                    <Input
                                         type="password"
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         placeholder="Confirm password"
-                                        className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                                        className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)]"
                                     />
                                 </div>
                             )}
@@ -703,25 +737,17 @@ function InviteUserModal({
                         </div>
                     </div>
 
-                    <div className="flex gap-3 pt-2">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.08)] text-[14px] font-medium text-[rgba(245,245,245,0.7)] transition-colors"
-                        >
+                    <DialogFooter className="flex gap-3 pt-2">
+                        <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
                             Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isSubmitting || !email.trim()}
-                            className="flex-1 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.15)] border border-[rgba(255,255,255,0.15)] text-[14px] font-medium text-[#F5F5F5] transition-colors disabled:opacity-50"
-                        >
+                        </Button>
+                        <Button type="submit" className="flex-1" disabled={isSubmitting || !email.trim()}>
                             {isSubmitting ? "Inviting..." : "Send Invite"}
-                        </button>
-                    </div>
+                        </Button>
+                    </DialogFooter>
                 </form>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }
 
@@ -788,76 +814,68 @@ function EditUserModal({
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="w-full max-w-md rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.1)] overflow-hidden max-h-[90vh] overflow-y-auto">
-                <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between">
-                    <h2 className="text-[16px] font-semibold text-[#F5F5F5]">Edit User</h2>
-                    <button onClick={onClose} className="p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)]">
-                        <X size={18} className="text-[rgba(245,245,245,0.5)]" />
-                    </button>
-                </div>
+        <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto border-[rgba(255,255,255,0.1)]">
+                <DialogHeader>
+                    <DialogTitle className="text-[16px] text-[#F5F5F5]">Edit User</DialogTitle>
+                </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                        <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                             Email
-                        </label>
+                        </Label>
                         <p className="text-[14px] text-[rgba(245,245,245,0.7)]">{user.email}</p>
                     </div>
 
-                    <div>
-                        <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                    <div className="space-y-2">
+                        <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                             Role
-                        </label>
-                        <select
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
-                        >
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
-                        </select>
+                        </Label>
+                        <Select value={role} onValueChange={setRole}>
+                            <SelectTrigger className="w-full rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="user">User</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
-                    <div>
-                        <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                    <div className="space-y-2">
+                        <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                             Status
-                        </label>
-                        <select
-                            value={status}
-                            onChange={(e) => setStatus(e.target.value)}
-                            className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
-                        >
-                            <option value="active">Active</option>
-                            <option value="invited">Invited</option>
-                            <option value="disabled">Disabled</option>
-                        </select>
+                        </Label>
+                        <Select value={status} onValueChange={setStatus}>
+                            <SelectTrigger className="w-full rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="active">Active</SelectItem>
+                                <SelectItem value="invited">Invited</SelectItem>
+                                <SelectItem value="disabled">Disabled</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
-                    <div className="flex gap-3 pt-2">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.08)] text-[14px] font-medium text-[rgba(245,245,245,0.7)] transition-colors"
-                        >
+                    <DialogFooter className="flex gap-3 pt-2">
+                        <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
                             Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="flex-1 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.15)] border border-[rgba(255,255,255,0.15)] text-[14px] font-medium text-[#F5F5F5] transition-colors disabled:opacity-50"
-                        >
+                        </Button>
+                        <Button type="submit" className="flex-1" disabled={isSubmitting}>
                             {isSubmitting ? "Saving..." : "Save Changes"}
-                        </button>
-                    </div>
+                        </Button>
+                    </DialogFooter>
                 </form>
 
                 {/* Change Password Section */}
-                <div className="px-6 pb-6">
-                    <button
+                <div className="pb-6">
+                    <Button
                         type="button"
+                        variant="ghost"
                         onClick={() => setShowPasswordSection(!showPasswordSection)}
-                        className="flex items-center gap-2 text-[14px] text-[rgba(245,245,245,0.6)] hover:text-[rgba(245,245,245,0.8)] transition-colors"
+                        className="gap-2 font-normal text-[rgba(245,245,245,0.6)] hover:text-[rgba(245,245,245,0.8)]"
                     >
                         <Key size={14} />
                         {showPasswordSection ? "Hide Password Options" : "Change Password"}
@@ -865,33 +883,33 @@ function EditUserModal({
                             size={14} 
                             className={`transition-transform ${showPasswordSection ? "rotate-180" : ""}`} 
                         />
-                    </button>
+                    </Button>
                     
                     {showPasswordSection && (
                         <div className="mt-4 p-4 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] space-y-4">
-                            <div>
-                                <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                            <div className="space-y-2">
+                                <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                                     New Password
-                                </label>
-                                <input
+                                </Label>
+                                <Input
                                     type="password"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
                                     placeholder="Enter new password"
-                                    className="w-full px-4 py-2.5 rounded-xl bg-[#161616] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                                    className="rounded-xl bg-[#161616] border-[rgba(255,255,255,0.08)]"
                                 />
                             </div>
                             
-                            <div>
-                                <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                            <div className="space-y-2">
+                                <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                                     Confirm Password
-                                </label>
-                                <input
+                                </Label>
+                                <Input
                                     type="password"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     placeholder="Confirm new password"
-                                    className="w-full px-4 py-2.5 rounded-xl bg-[#161616] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                                    className="rounded-xl bg-[#161616] border-[rgba(255,255,255,0.08)]"
                                 />
                             </div>
                             
@@ -903,18 +921,18 @@ function EditUserModal({
                                 Password must be at least 8 characters with at least one letter and one number.
                             </p>
                             
-                            <button
+                            <Button
                                 type="button"
                                 onClick={handlePasswordChange}
                                 disabled={isChangingPassword || !newPassword || !confirmPassword}
-                                className="w-full px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-[14px] font-medium text-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/30 text-amber-400"
                             >
                                 {isChangingPassword ? "Changing Password..." : "Change Password"}
-                            </button>
+                            </Button>
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }

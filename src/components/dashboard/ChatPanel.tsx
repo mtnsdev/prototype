@@ -6,6 +6,8 @@ import { AlertTriangle, Loader2, ExternalLink, Send, ArrowLeft, ThumbsUp, Thumbs
 import ReactMarkdown from "react-markdown";
 import Image from "next/image";
 import PdfModal from "./PdfModal";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useUserOptional } from "@/contexts/UserContext";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
@@ -88,22 +90,23 @@ function InlineCitationMarker({
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}
         >
-            <button
+            <Button
                 type="button"
+                size="icon"
                 onClick={(e) => {
                     e.preventDefault();
                     onCitationClick(filename, pageNumber, pdf_path);
                 }}
                 className={[
-                    "inline-flex items-center justify-center min-w-[1.25em] h-[1.25em] rounded-full text-white text-[11px] font-semibold",
+                    "inline-flex items-center justify-center w-[1.35em] h-[1.35em] shrink-0 rounded-full text-white text-[10px] font-semibold p-1 leading-none",
                     "bg-[#3C4472] hover:bg-[#4a5285] border border-[rgba(255,255,255,0.15)]",
-                    "cursor-pointer transition-colors duration-150 align-[0.2em] ml-1.5",
+                    "cursor-pointer align-[0.15em] ml-1",
                 ].join(" ")}
                 title={`${filename}, page ${pageNumber}`}
                 aria-label={`Citation ${displayNumber}: ${filename} page ${pageNumber}`}
             >
                 {displayNumber}
-            </button>
+            </Button>
             {hover && (
                 <>
                     {/* Invisible bridge so moving mouse to the panel doesn't trigger onMouseLeave (span to avoid <div> inside <p>) */}
@@ -160,9 +163,9 @@ function InlineCitationMarkerEllipsis({
                         setExpanded(false);
                     }}
                     className={[
-                        "inline-flex items-center justify-center min-w-[1.25em] h-[1.25em] rounded-full text-[11px] font-semibold",
+                        "inline-flex items-center justify-center w-[1.35em] h-[1.35em] shrink-0 rounded-full text-[10px] font-semibold p-1 leading-none",
                         "bg-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.3)] text-white border border-[rgba(255,255,255,0.2)]",
-                        "cursor-pointer transition-colors duration-150 align-[0.2em] ml-1.5",
+                        "cursor-pointer transition-colors duration-150 align-[0.15em] ml-1",
                     ].join(" ")}
                     title="Collapse citations"
                     aria-label="Collapse citations"
@@ -181,9 +184,9 @@ function InlineCitationMarkerEllipsis({
                 setExpanded(true);
             }}
             className={[
-                "inline-flex items-center justify-center min-w-[1.25em] h-[1.25em] rounded-full text-white text-[11px] font-semibold",
+                "inline-flex items-center justify-center w-[1.35em] h-[1.35em] shrink-0 rounded-full text-white text-[10px] font-semibold p-1 leading-none",
                 "bg-[#3C4472] hover:bg-[#4a5285] border border-[rgba(255,255,255,0.15)]",
-                "cursor-pointer transition-colors duration-150 align-[0.2em] ml-1.5",
+                "cursor-pointer transition-colors duration-150 align-[0.15em] ml-1",
             ].join(" ")}
             title="Show all citations"
             aria-label="Show all citations"
@@ -1037,34 +1040,23 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                 <div className="shrink-0 p-4 bg-[#0C0C0C]">
                     <div className="flex gap-3 items-center max-w-4xl mx-auto">
                         <div className="flex-1 relative">
-                            <input
+                            <Input
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={(e) => (e.key === "Enter" && !e.shiftKey ? send() : null)}
                                 placeholder="Ask Enable a question..."
-                                className={[
-                                    "w-full rounded-xl px-4 py-3 text-[14px]",
-                                    "bg-[#161616] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.35)]",
-                                    "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(174,133,80,0.3)]",
-                                    "focus:outline-none focus:border-[rgba(174,133,80,0.5)] focus:ring-1 focus:ring-[rgba(174,133,80,0.2)]",
-                                    "transition-all duration-150",
-                                ].join(" ")}
+                                className="w-full rounded-xl px-4 py-3 bg-[#161616] border-[rgba(255,255,255,0.1)] focus-visible:border-[rgba(174,133,80,0.5)] focus-visible:ring-[rgba(174,133,80,0.2)]"
                             />
                         </div>
-                        <button
+                        <Button
                             type="button"
+                            size="icon"
                             onClick={() => send()}
                             disabled={loading || !input.trim()}
-                            className={[
-                                "h-11 w-11 rounded-xl flex items-center justify-center",
-                                "bg-[#AE8550] hover:bg-[#C4975E] text-white",
-                                "disabled:opacity-40 disabled:cursor-not-allowed",
-                                "transition-all duration-150",
-                                "shadow-sm hover:shadow-md",
-                            ].join(" ")}
+                            className="h-11 w-11 rounded-xl bg-[#AE8550] hover:bg-[#C4975E] text-white border-0"
                         >
                             <Send size={18} />
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </section>
@@ -1108,24 +1100,27 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                             autoFocus
                         />
                         <div className="flex justify-end gap-2">
-                            <button
+                            <Button
                                 type="button"
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => setFeedbackCommentPopupMessageId(null)}
-                                className="px-3 py-1.5 rounded-lg text-[12px] font-medium text-[rgba(245,245,245,0.7)] hover:bg-white/10 transition-colors"
+                                className="text-[rgba(245,245,245,0.7)]"
                             >
                                 Cancel
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 type="button"
+                                size="sm"
                                 onClick={() => {
                                     const comment = feedbackCommentDraft[feedbackCommentPopupMessageId]?.trim() ?? "";
                                     submitFeedback(feedbackCommentPopupMessageId, { comment: comment || null });
                                 }}
                                 disabled={feedbackSubmitting === feedbackCommentPopupMessageId}
-                                className="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-[rgba(174,133,80,0.2)] text-[#D4A574] hover:bg-[rgba(174,133,80,0.3)] border border-[rgba(174,133,80,0.3)] transition-colors disabled:opacity-50"
+                                className="bg-[rgba(174,133,80,0.2)] text-[#D4A574] hover:bg-[rgba(174,133,80,0.3)] border-[rgba(174,133,80,0.3)]"
                             >
                                 {feedbackSubmitting === feedbackCommentPopupMessageId ? "Saving…" : "Submit"}
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>
