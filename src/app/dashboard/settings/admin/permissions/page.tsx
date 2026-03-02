@@ -28,6 +28,25 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { Label } from "@/components/ui/label";
 
 type ContentRule = {
     id: number;
@@ -277,19 +296,18 @@ export default function PermissionsPage() {
             {/* Source Tabs */}
             <div className="flex gap-1 p-1 rounded-xl bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] w-fit">
                 {SOURCE_TABS.map((tab) => (
-                    <button
+                    <Button
                         key={tab.key}
+                        variant={activeSource === tab.key ? "secondary" : "ghost"}
+                        size="sm"
                         onClick={() => setActiveSource(tab.key)}
-                        className={[
-                            "flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium transition-all",
-                            activeSource === tab.key
-                                ? "bg-[rgba(255,255,255,0.1)] text-[#F5F5F5] border border-[rgba(255,255,255,0.1)]"
-                                : "text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-[rgba(255,255,255,0.04)] border border-transparent",
-                        ].join(" ")}
+                        className={activeSource === tab.key
+                            ? "bg-[rgba(255,255,255,0.1)] text-[#F5F5F5] border border-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.12)]"
+                            : "text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-[rgba(255,255,255,0.04)] border border-transparent"}
                     >
                         {tab.icon}
                         {tab.label}
-                    </button>
+                    </Button>
                 ))}
             </div>
 
@@ -317,17 +335,19 @@ export default function PermissionsPage() {
                         </Select>
                     )}
                 </div>
-                <button
+                <Button
                     onClick={() => setShowCreateModal(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-[rgba(255,255,255,0.1)] text-[14px] font-medium text-[#F5F5F5] transition-colors"
+                    variant="outline"
+                    className="gap-2 bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border-[rgba(255,255,255,0.1)] text-[#F5F5F5]"
                 >
                     <Plus size={16} />
                     Add Rule
-                </button>
+                </Button>
             </div>
 
             {/* Info */}
-            <div className="rounded-2xl bg-[rgba(59,130,246,0.08)] border border-[rgba(59,130,246,0.2)] p-4">
+            <Card className="rounded-2xl bg-[rgba(59,130,246,0.08)] border-[rgba(59,130,246,0.2)] p-4">
+                <CardContent className="p-0">
                 <div className="flex items-start gap-3">
                     <FolderLock size={20} className="text-blue-400 shrink-0 mt-0.5" />
                     <div className="text-[13px] text-[rgba(245,245,245,0.7)] space-y-1">
@@ -351,11 +371,12 @@ export default function PermissionsPage() {
                         </ul>
                     </div>
                 </div>
-            </div>
+                </CardContent>
+            </Card>
 
             {/* Rules Table (Claromentis / Google Drive / Pages — same layout: show existing rules only) */}
             {(
-                <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] overflow-hidden">
+                <Card className="rounded-2xl bg-[#161616] border-[rgba(255,255,255,0.08)] overflow-hidden">
                     {isLoading ? (
                         <div className="flex items-center justify-center py-12">
                             <Loader2 className="w-6 h-6 animate-spin text-[rgba(245,245,245,0.4)]" />
@@ -377,20 +398,20 @@ export default function PermissionsPage() {
                             <p className="text-[13px] text-[rgba(245,245,245,0.4)] mt-1">Add rules to control content access for this source</p>
                         </div>
                     ) : (
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-[rgba(255,255,255,0.08)]">
-                                    <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Subject</th>
-                                    <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Target</th>
-                                    <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Effect</th>
-                                    <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Scope</th>
-                                    <th className="w-12"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="border-b border-[rgba(255,255,255,0.08)] hover:bg-transparent">
+                                    <TableHead className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Subject</TableHead>
+                                    <TableHead className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Target</TableHead>
+                                    <TableHead className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Effect</TableHead>
+                                    <TableHead className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Scope</TableHead>
+                                    <TableHead className="w-12"></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {rules.map((rule) => (
-                                    <tr key={rule.id} className="border-b border-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.02)]">
-                                        <td className="px-5 py-4">
+                                    <TableRow key={rule.id} className="border-b border-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.02)]">
+                                        <TableCell className="px-5 py-4">
                                             <div className="flex items-center gap-2">
                                                 {rule.subject_type === "role" ? (
                                                     <Users size={16} className="text-[rgba(245,245,245,0.5)]" />
@@ -404,8 +425,8 @@ export default function PermissionsPage() {
                                                     </p>
                                                 </div>
                                             </div>
-                                        </td>
-                                        <td className="px-5 py-4">
+                                        </TableCell>
+                                        <TableCell className="px-5 py-4">
                                             <div className="flex items-center gap-2">
                                                 {getTargetIcon(rule)}
                                                 <div>
@@ -418,8 +439,8 @@ export default function PermissionsPage() {
                                                     </p>
                                                 </div>
                                             </div>
-                                        </td>
-                                        <td className="px-5 py-4">
+                                        </TableCell>
+                                        <TableCell className="px-5 py-4">
                                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium ${rule.effect === "allow"
                                                 ? "bg-green-500/10 text-green-400"
                                                 : "bg-red-500/10 text-red-400"
@@ -427,50 +448,49 @@ export default function PermissionsPage() {
                                                 {rule.effect === "allow" ? <Check size={12} /> : <X size={12} />}
                                                 {rule.effect.charAt(0).toUpperCase() + rule.effect.slice(1)}
                                             </span>
-                                        </td>
-                                        <td className="px-5 py-4 text-[13px] text-[rgba(245,245,245,0.5)]">
+                                        </TableCell>
+                                        <TableCell className="px-5 py-4 text-[13px] text-[rgba(245,245,245,0.5)]">
                                             {activeSource === "pages" ? "This item only" : (rule.applies_to_descendants ? "Including children" : "This item only")}
-                                        </td>
-                                        <td className="px-2 py-4">
-                                            <button
+                                        </TableCell>
+                                        <TableCell className="px-2 py-4">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
                                                 onClick={() => handleDeleteRule(rule.id)}
-                                                className="p-2 rounded-lg hover:bg-[rgba(200,122,122,0.1)] text-[rgba(245,245,245,0.5)] hover:text-[#C87A7A] transition-colors"
+                                                className="p-2 hover:bg-[rgba(200,122,122,0.1)] text-[rgba(245,245,245,0.5)] hover:text-[#C87A7A]"
                                                 title="Delete rule"
                                             >
                                                 <Trash2 size={16} />
-                                            </button>
-                                        </td>
-                                    </tr>
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
                                 ))}
-                            </tbody>
-                        </table>
+                            </TableBody>
+                        </Table>
                     )}
-                </div>
+                </Card>
             )}
 
             {/* Create Rule Modal */}
-            {showCreateModal && (
-                <CreateRuleModal
-                    source={activeSource}
-                    users={users}
-                    scriptPages={activeSource === "pages" ? scriptPages : []}
-                    onClose={() => setShowCreateModal(false)}
-                    onCreate={handleCreateRules}
-                />
-            )}
+            <CreateRuleModal
+                open={showCreateModal}
+                onOpenChange={setShowCreateModal}
+                source={activeSource}
+                users={users}
+                scriptPages={activeSource === "pages" ? scriptPages : []}
+                scriptPagesLoading={activeSource === "pages" ? scriptPagesLoading : false}
+                onCreate={handleCreateRules}
+            />
 
             {/* Conflict Confirmation Modal */}
-            {pendingConflicts && pendingConflicts.length > 0 && (
-                <ConflictConfirmModal
-                    conflicts={pendingConflicts}
-                    onUpdate={handleConflictUpdate}
-                    onSkip={handleConflictSkip}
-                    onCancel={() => {
-                        setPendingConflicts(null);
-                        setPendingPayload(null);
-                    }}
-                />
-            )}
+            <ConflictConfirmModal
+                open={pendingConflicts != null && pendingConflicts.length > 0}
+                onOpenChange={(open) => { if (!open) { setPendingConflicts(null); setPendingPayload(null); } }}
+                conflicts={pendingConflicts ?? []}
+                onUpdate={handleConflictUpdate}
+                onSkip={handleConflictSkip}
+                onCancel={() => { setPendingConflicts(null); setPendingPayload(null); }}
+            />
         </div>
     );
 }
@@ -479,11 +499,15 @@ export default function PermissionsPage() {
 // Conflict Confirmation Modal Component
 // ---------------------------------------------------------------------------
 function ConflictConfirmModal({
+    open,
+    onOpenChange,
     conflicts,
     onUpdate,
     onSkip,
     onCancel,
 }: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
     conflicts: ConflictInfo[];
     onUpdate: () => void;
     onSkip: () => void;
@@ -504,71 +528,61 @@ function ConflictConfirmModal({
     );
 
     return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="w-full max-w-lg rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.1)] overflow-hidden max-h-[90vh] flex flex-col">
-                <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between shrink-0">
+        <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) onCancel(); }}>
+            <DialogContent className="max-w-lg max-h-[90vh] flex flex-col bg-[#161616] border-[rgba(255,255,255,0.1)]">
+                <DialogHeader>
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
                             <X size={16} className="text-amber-400" />
                         </div>
-                        <h2 className="text-[16px] font-semibold text-[#F5F5F5]">Conflicting Rules Found</h2>
+                        <DialogTitle className="text-[16px] text-[#F5F5F5]">Conflicting Rules Found</DialogTitle>
                     </div>
-                    <button onClick={onCancel} className="p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)]">
-                        <X size={18} className="text-[rgba(245,245,245,0.5)]" />
-                    </button>
-                </div>
+                </DialogHeader>
 
-                <div className="p-6 overflow-y-auto space-y-3">
+                <div className="overflow-y-auto space-y-3">
                     <p className="text-[13px] text-[rgba(245,245,245,0.6)]">
                         The following targets already have rules. Choose how to handle them:
                     </p>
 
                     <div className="space-y-2">
                         {conflicts.map((c) => (
-                            <div
-                                key={c.existing_rule_id}
-                                className="rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.07)] p-4"
-                            >
-                                <p className="text-[13px] text-[#F5F5F5] font-medium mb-1">
-                                    {c.target_title || `${c.target_type} #${c.target_id}`}
-                                </p>
-                                {c.conflict_type === "exact_duplicate" ? (
-                                    <p className="text-[12px] text-[rgba(245,245,245,0.5)]">
-                                        A {effectLabel(c.existing_effect)} rule already exists — no change needed.
+                            <Card key={c.existing_rule_id} className="rounded-xl bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.07)] p-4">
+                                <CardContent className="p-0">
+                                    <p className="text-[13px] text-[#F5F5F5] font-medium mb-1">
+                                        {c.target_title || `${c.target_type} #${c.target_id}`}
                                     </p>
-                                ) : (
-                                    <p className="text-[12px] text-[rgba(245,245,245,0.5)]">
-                                        Existing rule is {effectLabel(c.existing_effect)}. This will change it to {effectLabel(c.new_effect)}.
-                                    </p>
-                                )}
-                            </div>
+                                    {c.conflict_type === "exact_duplicate" ? (
+                                        <p className="text-[12px] text-[rgba(245,245,245,0.5)]">
+                                            A {effectLabel(c.existing_effect)} rule already exists — no change needed.
+                                        </p>
+                                    ) : (
+                                        <p className="text-[12px] text-[rgba(245,245,245,0.5)]">
+                                            Existing rule is {effectLabel(c.existing_effect)}. This will change it to {effectLabel(c.new_effect)}.
+                                        </p>
+                                    )}
+                                </CardContent>
+                            </Card>
                         ))}
                     </div>
                 </div>
 
-                <div className="px-6 py-4 border-t border-[rgba(255,255,255,0.08)] flex gap-3 shrink-0">
-                    <button
-                        onClick={onCancel}
-                        className="px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.08)] text-[13px] font-medium text-[rgba(245,245,245,0.7)] transition-colors"
-                    >
+                <DialogFooter className="flex gap-3 sm:justify-end">
+                    <Button variant="outline" onClick={onCancel} className="bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.7)]">
                         Cancel
-                    </button>
-                    <button
-                        onClick={onSkip}
-                        className="flex-1 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.08)] text-[13px] font-medium text-[rgba(245,245,245,0.7)] transition-colors"
-                    >
+                    </Button>
+                    <Button variant="outline" onClick={onSkip} className="flex-1 sm:flex-initial bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.7)]">
                         Skip conflicts
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         onClick={handleUpdate}
                         disabled={isUpdating || conflicts.every(c => c.conflict_type === "exact_duplicate")}
-                        className="flex-1 px-4 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-[13px] font-medium text-amber-400 transition-colors disabled:opacity-40"
+                        className="flex-1 sm:flex-initial bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400"
                     >
                         {isUpdating ? "Updating..." : "Update conflicting rules"}
-                    </button>
-                </div>
-            </div>
-        </div>
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 
@@ -577,16 +591,20 @@ function ConflictConfirmModal({
 // Create Rule Modal Component
 // ---------------------------------------------------------------------------
 function CreateRuleModal({
+    open,
+    onOpenChange,
     source,
     users,
     scriptPages,
-    onClose,
+    scriptPagesLoading = false,
     onCreate,
 }: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
     source: SourceTab;
     users: UserItem[];
     scriptPages?: ScriptPageItem[];
-    onClose: () => void;
+    scriptPagesLoading?: boolean;
     onCreate: (payload: {
         source: string;
         subject_type: string;
@@ -612,7 +630,6 @@ function CreateRuleModal({
     const sourceLabel = source === "claromentis" ? "Claromentis" : source === "pages" ? "Pages" : "Google Drive";
 
     const allScriptPages = scriptPages || [];
-    const allScriptPageIds = allScriptPages.map((p) => p.id);
     const pageSearchLower = pageSearchQuery.trim().toLowerCase();
     const filteredScriptPages = pageSearchLower
         ? allScriptPages.filter((p) => {
@@ -653,7 +670,7 @@ function CreateRuleModal({
         setIsSubmitting(true);
 
         const targets: { target_type: string; target_id: number; drive_resource_id?: string }[] = [];
-        let payloadSource = source;
+        let payloadSource: string = source;
         let appliesToDescendants = applyToDescendants;
 
         if (source === "pages") {
@@ -698,52 +715,45 @@ function CreateRuleModal({
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="w-full max-w-md rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.1)] overflow-hidden max-h-[90vh] flex flex-col">
-                <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between shrink-0">
-                    <h2 className="text-[16px] font-semibold text-[#F5F5F5]">
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="w-full max-w-md max-h-[90vh] flex flex-col bg-[#161616] border-[rgba(255,255,255,0.1)]">
+                <DialogHeader>
+                    <DialogTitle className="text-[16px] text-[#F5F5F5]">
                         Create {sourceLabel} Rule
-                    </h2>
-                    <button onClick={onClose} className="p-1 rounded-lg hover:bg-[rgba(255,255,255,0.06)]">
-                        <X size={18} className="text-[rgba(245,245,245,0.5)]" />
-                    </button>
-                </div>
+                    </DialogTitle>
+                </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
+                <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto">
                     {/* Subject Type */}
-                    <div>
-                        <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                    <div className="space-y-2">
+                        <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                             Apply To
-                        </label>
+                        </Label>
                         <div className="flex gap-2">
-                            <button
+                            <Button
                                 type="button"
+                                variant={subjectType === "role" ? "secondary" : "outline"}
+                                className="flex-1 gap-2"
                                 onClick={() => { setSubjectType("role"); setSubjectId("user"); }}
-                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium transition-colors ${subjectType === "role"
-                                    ? "bg-[rgba(255,255,255,0.08)] border-[rgba(255,255,255,0.15)] text-[#F5F5F5]"
-                                    : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
-                                    }`}
                             >
                                 <Users size={16} /> Role
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 type="button"
+                                variant={subjectType === "user" ? "secondary" : "outline"}
+                                className="flex-1 gap-2"
                                 onClick={() => { setSubjectType("user"); setSubjectId(users[0]?.id.toString() || ""); }}
-                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium transition-colors ${subjectType === "user"
-                                    ? "bg-[rgba(255,255,255,0.08)] border-[rgba(255,255,255,0.15)] text-[#F5F5F5]"
-                                    : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
-                                    }`}
                             >
                                 <User size={16} /> User
-                            </button>
+                            </Button>
                         </div>
                     </div>
 
                     {/* Subject Selection */}
-                    <div>
-                        <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                    <div className="space-y-2">
+                        <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                             {subjectType === "role" ? "Select Role" : "Select User"}
-                        </label>
+                        </Label>
                         <Select value={subjectId} onValueChange={setSubjectId}>
                             <SelectTrigger className="w-full rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
                                 <SelectValue />
@@ -766,26 +776,28 @@ function CreateRuleModal({
                     {/* Target Selection -- Pages (script pages): list all pages, multi-select with Select all / Deselect all */}
                     {source === "pages" && (
                         <div className="space-y-4">
-                            <div>
-                                <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                            <div className="space-y-2">
+                                <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                                     Pages
-                                </label>
-                                <p className="text-[12px] text-[rgba(245,245,245,0.5)] mb-2">
+                                </Label>
+                                <p className="text-[12px] text-[rgba(245,245,245,0.5)]">
                                     Select one or more pages to apply the rule to.
                                 </p>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)]">
+                                <div className="flex items-center gap-2">
+                                    <div className="flex-1 flex items-center gap-2">
                                         <Search size={16} className="text-[rgba(245,245,245,0.4)] shrink-0" />
-                                        <input
+                                        <Input
                                             type="text"
                                             value={pageSearchQuery}
                                             onChange={(e) => setPageSearchQuery(e.target.value)}
                                             placeholder="Search pages..."
-                                            className="flex-1 min-w-0 bg-transparent text-[13px] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] outline-none"
+                                            className="bg-[#0C0C0C] border-[rgba(255,255,255,0.08)] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)]"
                                         />
                                     </div>
-                                    <button
+                                    <Button
                                         type="button"
+                                        variant="outline"
+                                        size="sm"
                                         onClick={() => {
                                             if (allFilteredSelected) {
                                                 setSelectedScriptPageIds((prev) => prev.filter((id) => !filteredScriptPageIds.includes(id)));
@@ -795,23 +807,27 @@ function CreateRuleModal({
                                         }}
                                         disabled={filteredScriptPageIds.length === 0}
                                         title={allFilteredSelected ? "Clear all" : "Select all"}
-                                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.08)] text-[12px] font-medium text-[#F5F5F5] disabled:opacity-50 disabled:pointer-events-none shrink-0"
+                                        className="shrink-0 gap-2 bg-[rgba(255,255,255,0.06)] border-[rgba(255,255,255,0.08)] text-[#F5F5F5]"
                                     >
                                         {allFilteredSelected ? (
                                             <>
-                                                <Square size={16} className="text-[rgba(245,245,245,0.7)] shrink-0" />
+                                                <Square size={16} className="shrink-0" />
                                                 <span>Clear all</span>
                                             </>
                                         ) : (
                                             <>
-                                                <CheckSquare size={16} className="text-[rgba(245,245,245,0.7)] shrink-0" />
+                                                <CheckSquare size={16} className="shrink-0" />
                                                 <span>Select all</span>
                                             </>
                                         )}
-                                    </button>
+                                    </Button>
                                 </div>
                                 <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0C0C0C] max-h-[240px] overflow-y-auto p-1">
-                                    {allScriptPages.length === 0 ? (
+                                    {scriptPagesLoading ? (
+                                        <div className="flex items-center justify-center gap-2 px-3 py-4 text-[13px] text-[rgba(245,245,245,0.5)]">
+                                            <Loader2 size={16} className="animate-spin" /> Loading pages…
+                                        </div>
+                                    ) : allScriptPages.length === 0 ? (
                                         <p className="text-[13px] text-[rgba(245,245,245,0.4)] px-3 py-4 text-center">No script pages found</p>
                                     ) : filteredScriptPages.length === 0 ? (
                                         <p className="text-[13px] text-[rgba(245,245,245,0.4)] px-3 py-4 text-center">No pages match your search</p>
@@ -820,9 +836,11 @@ function CreateRuleModal({
                                             const checked = selectedScriptPageIds.includes(p.id);
                                             const name = p.filename || p.s3_key || p.original_filename || `Page #${p.id}`;
                                             return (
-                                                <button
+                                                <Button
                                                     key={p.id}
                                                     type="button"
+                                                    variant="ghost"
+                                                    className="w-full justify-start gap-2.5 px-3 py-2 h-auto font-normal rounded-lg hover:bg-[rgba(255,255,255,0.04)]"
                                                     onClick={() => {
                                                         if (checked) {
                                                             setSelectedScriptPageIds((prev) => prev.filter((id) => id !== p.id));
@@ -830,7 +848,6 @@ function CreateRuleModal({
                                                             setSelectedScriptPageIds((prev) => [...prev, p.id].sort((a, b) => a - b));
                                                         }
                                                     }}
-                                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-left rounded-lg hover:bg-[rgba(255,255,255,0.04)] transition-colors"
                                                 >
                                                     <span
                                                         className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
@@ -843,7 +860,7 @@ function CreateRuleModal({
                                                     </span>
                                                     <FileText size={14} className="text-purple-400 shrink-0" />
                                                     <span className="text-[13px] text-[#F5F5F5] truncate">{name}</span>
-                                                </button>
+                                                </Button>
                                             );
                                         })
                                     )}
@@ -861,10 +878,10 @@ function CreateRuleModal({
                     {source === "claromentis" && (
                         <div className="space-y-4">
                             {/* Folder / document tree selector */}
-                            <div>
-                                <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                            <div className="space-y-2">
+                                <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                                     Folders / Documents
-                                </label>
+                                </Label>
                                 <p className="text-[12px] text-[rgba(245,245,245,0.5)] mb-2">
                                     Check folders or documents to apply the rule to.
                                 </p>
@@ -881,10 +898,10 @@ function CreateRuleModal({
                             </div>
 
                             {/* Page selector (names only) */}
-                            <div>
-                                <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                            <div className="space-y-2">
+                                <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                                     Pages (names only, no preview)
-                                </label>
+                                </Label>
                                 {token ? (
                                     <ClaromentisPageSelector
                                         token={token}
@@ -906,7 +923,7 @@ function CreateRuleModal({
                                         >
                                             {t.node_type === "folder" ? <Folder size={10} className="text-amber-400" /> : <FileText size={10} className="text-blue-400" />}
                                             {t.title}
-                                            <button type="button" onClick={() => setSelectedTargets(prev => prev.filter(x => x.external_id !== t.external_id))} className="ml-0.5 hover:text-red-400"><X size={10} /></button>
+                                                    <Button type="button" variant="ghost" size="icon-xs" className="ml-0.5 h-auto w-auto p-0 hover:text-red-400" onClick={() => setSelectedTargets(prev => prev.filter(x => x.external_id !== t.external_id))}><X size={10} /></Button>
                                         </span>
                                     ))}
                                     {selectedPageIds.map((id) => (
@@ -916,7 +933,7 @@ function CreateRuleModal({
                                         >
                                             <FileText size={10} />
                                             Page #{id}
-                                            <button type="button" onClick={() => setSelectedPageIds(prev => prev.filter(x => x !== id))} className="ml-0.5 hover:text-red-400"><X size={10} /></button>
+                                            <Button type="button" variant="ghost" size="icon-xs" className="ml-0.5 h-auto w-auto p-0 hover:text-red-400" onClick={() => setSelectedPageIds(prev => prev.filter(x => x !== id))}><X size={10} /></Button>
                                         </span>
                                     ))}
                                 </div>
@@ -925,10 +942,10 @@ function CreateRuleModal({
                     )}
 
                     {source === "google_drive" && (
-                        <div>
-                            <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                        <div className="space-y-2">
+                            <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                                 Content (select one or more)
-                            </label>
+                            </Label>
                             <p className="text-[12px] text-[rgba(245,245,245,0.5)] mb-2">
                                 Select folders from the connected Admin Drive to apply the rule to.
                             </p>
@@ -936,12 +953,9 @@ function CreateRuleModal({
                                 <div className="text-center py-8 rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0C0C0C]">
                                     <Cloud size={32} className="mx-auto text-[rgba(245,245,245,0.2)] mb-3" />
                                     <p className="text-[14px] text-[rgba(245,245,245,0.5)] mb-3">Admin Drive not connected</p>
-                                    <a
-                                        href="/dashboard/settings/integrations"
-                                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-[rgba(255,255,255,0.1)] text-[13px] font-medium text-[#F5F5F5] transition-colors"
-                                    >
-                                        Connect Admin Drive
-                                    </a>
+                                    <Button asChild variant="outline" className="gap-2 bg-[rgba(255,255,255,0.08)] border-[rgba(255,255,255,0.1)] text-[#F5F5F5]">
+                                        <a href="/dashboard/settings/integrations">Connect Admin Drive</a>
+                                    </Button>
                                 </div>
                             ) : hasAgencyConnection === null ? (
                                 <div className="flex items-center justify-center py-6 text-[rgba(245,245,245,0.5)] text-[14px]">
@@ -969,7 +983,7 @@ function CreateRuleModal({
                                         >
                                             {t.node_type === "folder" ? <Folder size={10} className="text-amber-400" /> : <FileText size={10} className="text-blue-400" />}
                                             {t.title}
-                                            <button type="button" onClick={() => setSelectedTargets(prev => prev.filter(x => String(x.external_id) !== String(t.external_id)))} className="ml-0.5 hover:text-red-400"><X size={10} /></button>
+                                            <Button type="button" variant="ghost" size="icon-xs" className="ml-0.5 h-auto w-auto p-0 hover:text-red-400" onClick={() => setSelectedTargets(prev => prev.filter(x => String(x.external_id) !== String(t.external_id)))}><X size={10} /></Button>
                                         </span>
                                     ))}
                                 </div>
@@ -978,31 +992,27 @@ function CreateRuleModal({
                     )}
 
                     {/* Effect */}
-                    <div>
-                        <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                    <div className="space-y-2">
+                        <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
                             Permission
-                        </label>
+                        </Label>
                         <div className="flex gap-2">
-                            <button
+                            <Button
                                 type="button"
+                                variant="outline"
+                                className={`flex-1 gap-2 ${effect === "allow" ? "bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20" : ""}`}
                                 onClick={() => setEffect("allow")}
-                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium transition-colors ${effect === "allow"
-                                    ? "bg-green-500/10 border-green-500/30 text-green-400"
-                                    : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
-                                    }`}
                             >
                                 <Check size={16} /> Allow
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 type="button"
+                                variant="outline"
+                                className={`flex-1 gap-2 ${effect === "deny" ? "bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20" : ""}`}
                                 onClick={() => setEffect("deny")}
-                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-[14px] font-medium transition-colors ${effect === "deny"
-                                    ? "bg-red-500/10 border-red-500/30 text-red-400"
-                                    : "bg-transparent border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.5)]"
-                                    }`}
                             >
                                 <X size={16} /> Deny
-                            </button>
+                            </Button>
                         </div>
                     </div>
 
@@ -1016,30 +1026,31 @@ function CreateRuleModal({
                                 onChange={(e) => setApplyToDescendants(e.target.checked)}
                                 className="w-4 h-4 rounded border-[rgba(255,255,255,0.2)] bg-[#0C0C0C] text-blue-500 focus:ring-0 focus:ring-offset-0"
                             />
-                            <label htmlFor="descendants" className="text-[14px] text-[rgba(245,245,245,0.7)]">
+                            <Label htmlFor="descendants" className="text-[14px] text-[rgba(245,245,245,0.7)] font-normal cursor-pointer">
                                 Apply to all children (folders and documents inside)
-                            </label>
+                            </Label>
                         </div>
                     )}
 
-                    <div className="flex gap-3 pt-2">
-                        <button
+                    <DialogFooter className="flex gap-3 pt-2">
+                        <Button
                             type="button"
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.08)] text-[14px] font-medium text-[rgba(245,245,245,0.7)] transition-colors"
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => onOpenChange(false)}
                         >
                             Cancel
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="submit"
+                            className="flex-1 bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.15)] text-[#F5F5F5]"
                             disabled={isSubmitting || !hasSelection || !token}
-                            className="flex-1 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.15)] border border-[rgba(255,255,255,0.15)] text-[14px] font-medium text-[#F5F5F5] transition-colors disabled:opacity-50"
                         >
                             {isSubmitting ? "Creating..." : "Create Rule"}
-                        </button>
-                    </div>
+                        </Button>
+                    </DialogFooter>
                 </form>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }
