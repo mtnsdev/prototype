@@ -1,6 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 type TLItem =
     | { kind: "folder"; id: number; parent_id: number; title: string; has_children?: boolean; URI?: string }
@@ -153,26 +160,34 @@ export default function ClaromentisSearchPanel() {
                             className="flex-1 rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40"
                         />
 
-                        <select
+                        <Select
                             value={form.objectType}
-                            onChange={(e) => setForm((p) => ({ ...p, objectType: e.target.value as ObjectType }))}
-                            className="rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/40"
+                            onValueChange={(v) => setForm((p) => ({ ...p, objectType: v as ObjectType }))}
                         >
-                            <option value="document,folder">Documents + Folders</option>
-                            <option value="document">Documents only</option>
-                            <option value="folder">Folders only</option>
-                        </select>
+                            <SelectTrigger className="rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white focus:ring-2 focus:ring-white/40 w-fit">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="document,folder">Documents + Folders</SelectItem>
+                                <SelectItem value="document">Documents only</SelectItem>
+                                <SelectItem value="folder">Folders only</SelectItem>
+                            </SelectContent>
+                        </Select>
 
-                        <select
-                            value={form.limit}
-                            onChange={(e) => setForm((p) => ({ ...p, limit: Number(e.target.value) }))}
-                            className="rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/40"
+                        <Select
+                            value={String(form.limit)}
+                            onValueChange={(v) => setForm((p) => ({ ...p, limit: Number(v) }))}
                         >
-                            <option value={10}>10 / page</option>
-                            <option value={20}>20 / page</option>
-                            <option value={50}>50 / page</option>
-                            <option value={100}>100 / page</option>
-                        </select>
+                            <SelectTrigger className="rounded-md border border-white/15 bg-black px-3 py-2 text-sm text-white focus:ring-2 focus:ring-white/40 w-fit">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="10">10 / page</SelectItem>
+                                <SelectItem value="20">20 / page</SelectItem>
+                                <SelectItem value="50">50 / page</SelectItem>
+                                <SelectItem value="100">100 / page</SelectItem>
+                            </SelectContent>
+                        </Select>
 
                         <button
                             type="button"

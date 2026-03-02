@@ -14,9 +14,17 @@ import {
     Loader2,
     Cloud,
     Database,
+    BookOpen,
 } from "lucide-react";
 import { FolderTreeSelector, SelectedTarget } from "@/components/admin/FolderTreeSelector";
 import ClaromentisPageSelector from "@/components/admin/ClaromentisPageSelector";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 type ContentRule = {
     id: number;
@@ -66,20 +74,32 @@ type UserItem = {
     status: string;
 };
 
-type SourceTab = "claromentis" | "google_drive";
+type ScriptPageItem = {
+    id: number;
+    filename: string | null;
+    s3_key: string | null;
+    original_filename: string | null;
+    index_status: string | null;
+};
+
+type SourceTab = "claromentis" | "google_drive" | "pages";
 
 const SOURCE_TABS: { key: SourceTab; label: string; icon: React.ReactNode }[] = [
     { key: "claromentis", label: "Claromentis", icon: <Database size={16} /> },
     { key: "google_drive", label: "Google Drive", icon: <Cloud size={16} /> },
+    { key: "pages", label: "Pages", icon: <BookOpen size={16} /> },
 ];
 
 export default function PermissionsPage() {
     const [activeSource, setActiveSource] = useState<SourceTab>("claromentis");
     const [rules, setRules] = useState<ContentRule[]>([]);
+    const [scriptPages, setScriptPages] = useState<ScriptPageItem[]>([]);
+    const [scriptPagesLoading, setScriptPagesLoading] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [createModalPreselectedPage, setCreateModalPreselectedPage] = useState<ScriptPageItem | null>(null);
     const [users, setUsers] = useState<UserItem[]>([]);
     const [pendingConflicts, setPendingConflicts] = useState<ConflictInfo[] | null>(null);
     const [pendingPayload, setPendingPayload] = useState<BatchPayload | null>(null);
@@ -90,7 +110,11 @@ export default function PermissionsPage() {
         try {
             const token = localStorage.getItem("auth_token");
             const params = new URLSearchParams();
-            params.set("source", activeSource);
+            const sourceParam = activeSource === "pages" ? "script" : activeSource;
+            params.set("source", sourceParam);
+            if (activeSource === "pages") {
+                params.set("target_type", "script_page");
+            }
             if (subjectFilter) {
                 if (subjectFilter === "role:admin" || subjectFilter === "role:user") {
                     params.set("subject_type", "role");
@@ -113,6 +137,26 @@ export default function PermissionsPage() {
         }
     }, [activeSource, subjectFilter]);
 
+    const fetchScriptPages = useCallback(async (search?: string) => {
+        setScriptPagesLoading(true);
+        try {
+            const token = localStorage.getItem("auth_token");
+            const params = new URLSearchParams();
+            if (search) params.set("search", search);
+            const response = await fetch(`/api/admin/script/pages?${params}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!response.ok) throw new Error("Failed to fetch script pages");
+            const data = await response.json();
+            setScriptPages(data.pages || []);
+        } catch (err) {
+            console.error("Failed to fetch script pages", err);
+            setScriptPages([]);
+        } finally {
+            setScriptPagesLoading(false);
+        }
+    }, []);
+
     const fetchUsers = useCallback(async () => {
         try {
             const token = localStorage.getItem("auth_token");
@@ -132,6 +176,12 @@ export default function PermissionsPage() {
         fetchRules();
         fetchUsers();
     }, [fetchRules, fetchUsers]);
+
+    useEffect(() => {
+        if (activeSource === "pages") {
+            fetchScriptPages();
+        }
+    }, [activeSource, fetchScriptPages]);
 
     const submitBatch = async (payload: BatchPayload) => {
         const token = localStorage.getItem("auth_token");
@@ -215,10 +265,19 @@ export default function PermissionsPage() {
     const getTargetIcon = (rule: ContentRule) => {
         if (rule.target_type === "folder" || rule.target_type === "drive_folder")
             return <Folder size={16} className="text-amber-400" />;
-        if (rule.target_type === "page")
+        if (rule.target_type === "page" || rule.target_type === "script_page")
             return <FileText size={16} className="text-purple-400" />;
         return <FileText size={16} className="text-blue-400" />;
     };
+
+    const rulesByPageId = activeSource === "pages"
+        ? rules.reduce<Record<number, ContentRule[]>>((acc, r) => {
+            if (r.target_type === "script_page") {
+                (acc[r.target_id] = acc[r.target_id] || []).push(r);
+            }
+            return acc;
+        }, {})
+        : {};
 
     return (
         <div className="space-y-6">
@@ -244,23 +303,32 @@ export default function PermissionsPage() {
             {/* Filters + Add Rule */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <select
-                        value={subjectFilter || ""}
-                        onChange={(e) => setSubjectFilter(e.target.value || null)}
-                        className="px-3 py-2.5 rounded-xl bg-[#161616] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
-                    >
-                        <option value="">All Subjects</option>
-                        <option value="role:admin">Role: Admin</option>
-                        <option value="role:user">Role: User</option>
-                        {users.map(user => (
-                            <option key={user.id} value={user.id.toString()}>
-                                {user.email}
-                            </option>
-                        ))}
-                    </select>
+                    {activeSource !== "pages" && (
+                        <Select
+                            value={subjectFilter ?? "__all__"}
+                            onValueChange={(v) => setSubjectFilter(v === "__all__" ? null : v)}
+                        >
+                            <SelectTrigger className="w-[200px] rounded-xl bg-[#161616] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                                <SelectValue placeholder="All Subjects" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="__all__">All Subjects</SelectItem>
+                                <SelectItem value="role:admin">Role: Admin</SelectItem>
+                                <SelectItem value="role:user">Role: User</SelectItem>
+                                {users.map(user => (
+                                    <SelectItem key={user.id} value={user.id.toString()}>
+                                        {user.email}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
                 </div>
                 <button
-                    onClick={() => setShowCreateModal(true)}
+                    onClick={() => {
+                        setCreateModalPreselectedPage(null);
+                        setShowCreateModal(true);
+                    }}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-[rgba(255,255,255,0.1)] text-[14px] font-medium text-[#F5F5F5] transition-colors"
                 >
                     <Plus size={16} />
@@ -276,111 +344,217 @@ export default function PermissionsPage() {
                         <p><strong>How permission rules work:</strong></p>
                         <ul className="list-disc ml-4 space-y-1">
                             <li>Rules are scoped to a specific data source ({SOURCE_TABS.find(t => t.key === activeSource)?.label})</li>
-                            <li>By default, users can access everything the external system allows them</li>
-                            <li>Use <strong>deny</strong> rules to restrict specific content beyond what the external system controls</li>
+                            {activeSource === "pages" ? (
+                                <>
+                                    <li>Pages are script-ingested documents (source_document with source_type SCRIPT)</li>
+                                    <li>By default, all users can access all pages; use <strong>deny</strong> rules to restrict access</li>
+                                </>
+                            ) : (
+                                <>
+                                    <li>By default, users can access everything the external system allows them</li>
+                                    <li>Use <strong>deny</strong> rules to restrict specific content beyond what the external system controls</li>
+                                </>
+                            )}
                             <li>User-specific rules override role-based rules</li>
-                            <li>More specific rules (direct target) override inherited rules from parent folders</li>
+                            {activeSource !== "pages" && <li>More specific rules (direct target) override inherited rules from parent folders</li>}
                             <li>Admins bypass all rules and can see all content</li>
                         </ul>
                     </div>
                 </div>
             </div>
 
-            {/* Rules Table */}
-            <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] overflow-hidden">
-                {isLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                        <Loader2 className="w-6 h-6 animate-spin text-[rgba(245,245,245,0.4)]" />
-                    </div>
-                ) : error ? (
-                    <div className="p-6 text-center">
-                        <p className="text-[14px] text-[#C87A7A]">{error}</p>
-                    </div>
-                ) : rules.length === 0 ? (
-                    <div className="p-12 text-center">
-                        <FolderLock size={48} className="mx-auto text-[rgba(245,245,245,0.2)] mb-4" />
-                        <p className="text-[14px] text-[rgba(245,245,245,0.5)]">
-                            No {SOURCE_TABS.find(t => t.key === activeSource)?.label} permission rules
-                        </p>
-                        <p className="text-[13px] text-[rgba(245,245,245,0.4)] mt-1">Add rules to control content access for this source</p>
-                    </div>
-                ) : (
-                    <table className="w-full">
-                        <thead>
-                            <tr className="border-b border-[rgba(255,255,255,0.08)]">
-                                <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Subject</th>
-                                <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Target</th>
-                                <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Effect</th>
-                                <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Scope</th>
-                                <th className="w-12"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {rules.map((rule) => (
-                                <tr key={rule.id} className="border-b border-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.02)]">
-                                    <td className="px-5 py-4">
-                                        <div className="flex items-center gap-2">
-                                            {rule.subject_type === "role" ? (
-                                                <Users size={16} className="text-[rgba(245,245,245,0.5)]" />
-                                            ) : (
-                                                <User size={16} className="text-[rgba(245,245,245,0.5)]" />
-                                            )}
-                                            <div>
-                                                <p className="text-[14px] text-[#F5F5F5]">{getSubjectLabel(rule)}</p>
-                                                <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
-                                                    {rule.subject_type === "role" ? "Role" : "User"}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-5 py-4">
-                                        <div className="flex items-center gap-2">
-                                            {getTargetIcon(rule)}
-                                            <div>
-                                                <p className="text-[14px] text-[#F5F5F5]">
-                                                    {rule.target_title || "Unknown target"}
-                                                </p>
-                                                <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
-                                                    {rule.target_type.charAt(0).toUpperCase() + rule.target_type.slice(1).replace("_", " ")}
-                                                    {!rule.target_title && ` (ID: ${rule.target_id})`}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-5 py-4">
-                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium ${rule.effect === "allow"
-                                            ? "bg-green-500/10 text-green-400"
-                                            : "bg-red-500/10 text-red-400"
-                                            }`}>
-                                            {rule.effect === "allow" ? <Check size={12} /> : <X size={12} />}
-                                            {rule.effect.charAt(0).toUpperCase() + rule.effect.slice(1)}
-                                        </span>
-                                    </td>
-                                    <td className="px-5 py-4 text-[13px] text-[rgba(245,245,245,0.5)]">
-                                        {rule.applies_to_descendants ? "Including children" : "This item only"}
-                                    </td>
-                                    <td className="px-2 py-4">
-                                        <button
-                                            onClick={() => handleDeleteRule(rule.id)}
-                                            className="p-2 rounded-lg hover:bg-[rgba(200,122,122,0.1)] text-[rgba(245,245,245,0.5)] hover:text-[#C87A7A] transition-colors"
-                                            title="Delete rule"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </td>
+            {/* Pages view (script pages) */}
+            {activeSource === "pages" && (
+                <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] overflow-hidden">
+                    {scriptPagesLoading || isLoading ? (
+                        <div className="flex items-center justify-center py-12">
+                            <Loader2 className="w-6 h-6 animate-spin text-[rgba(245,245,245,0.4)]" />
+                        </div>
+                    ) : error ? (
+                        <div className="p-6 text-center">
+                            <p className="text-[14px] text-[#C87A7A]">{error}</p>
+                        </div>
+                    ) : scriptPages.length === 0 ? (
+                        <div className="p-12 text-center">
+                            <BookOpen size={48} className="mx-auto text-[rgba(245,245,245,0.2)] mb-4" />
+                            <p className="text-[14px] text-[rgba(245,245,245,0.5)]">No script pages found</p>
+                            <p className="text-[13px] text-[rgba(245,245,245,0.4)] mt-1">Script pages are source_document rows with source_type SCRIPT</p>
+                        </div>
+                    ) : (
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-[rgba(255,255,255,0.08)]">
+                                    <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Page</th>
+                                    <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Rules</th>
+                                    <th className="w-32"></th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
-            </div>
+                            </thead>
+                            <tbody>
+                                {scriptPages.map((page) => {
+                                    const pageRules = rulesByPageId[page.id] || [];
+                                    const pageName = page.filename || page.s3_key || page.original_filename || `Page #${page.id}`;
+                                    return (
+                                        <tr key={page.id} className="border-b border-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.02)]">
+                                            <td className="px-5 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <FileText size={16} className="text-purple-400 shrink-0" />
+                                                    <span className="text-[14px] text-[#F5F5F5] truncate max-w-[280px]" title={pageName}>{pageName}</span>
+                                                    {page.index_status && (
+                                                        <span className="text-[11px] text-[rgba(245,245,245,0.4)]">({page.index_status})</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {pageRules.length === 0 ? (
+                                                        <span className="text-[13px] text-[rgba(245,245,245,0.4)]">No rules</span>
+                                                    ) : (
+                                                        pageRules.map((rule) => (
+                                                            <span
+                                                                key={rule.id}
+                                                                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[12px] bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.08)]"
+                                                            >
+                                                                {rule.subject_type === "role" ? <Users size={12} /> : <User size={12} />}
+                                                                {getSubjectLabel(rule)}
+                                                                <span className={rule.effect === "allow" ? "text-green-400" : "text-red-400"}>
+                                                                    {rule.effect}
+                                                                </span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleDeleteRule(rule.id)}
+                                                                    className="ml-0.5 p-0.5 rounded hover:bg-[rgba(200,122,122,0.2)] text-[rgba(245,245,245,0.5)] hover:text-[#C87A7A]"
+                                                                    title="Delete rule"
+                                                                >
+                                                                    <X size={12} />
+                                                                </button>
+                                                            </span>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-2 py-4">
+                                                <button
+                                                    onClick={() => {
+                                                        setCreateModalPreselectedPage(page);
+                                                        setShowCreateModal(true);
+                                                    }}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.08)] text-[13px] font-medium text-[#F5F5F5] transition-colors"
+                                                >
+                                                    <Plus size={14} />
+                                                    Add rule
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            )}
+
+            {/* Rules Table (Claromentis / Google Drive) */}
+            {activeSource !== "pages" && (
+                <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] overflow-hidden">
+                    {isLoading ? (
+                        <div className="flex items-center justify-center py-12">
+                            <Loader2 className="w-6 h-6 animate-spin text-[rgba(245,245,245,0.4)]" />
+                        </div>
+                    ) : error ? (
+                        <div className="p-6 text-center">
+                            <p className="text-[14px] text-[#C87A7A]">{error}</p>
+                        </div>
+                    ) : rules.length === 0 ? (
+                        <div className="p-12 text-center">
+                            <FolderLock size={48} className="mx-auto text-[rgba(245,245,245,0.2)] mb-4" />
+                            <p className="text-[14px] text-[rgba(245,245,245,0.5)]">
+                                No {SOURCE_TABS.find(t => t.key === activeSource)?.label} permission rules
+                            </p>
+                            <p className="text-[13px] text-[rgba(245,245,245,0.4)] mt-1">Add rules to control content access for this source</p>
+                        </div>
+                    ) : (
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-[rgba(255,255,255,0.08)]">
+                                    <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Subject</th>
+                                    <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Target</th>
+                                    <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Effect</th>
+                                    <th className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Scope</th>
+                                    <th className="w-12"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {rules.map((rule) => (
+                                    <tr key={rule.id} className="border-b border-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.02)]">
+                                        <td className="px-5 py-4">
+                                            <div className="flex items-center gap-2">
+                                                {rule.subject_type === "role" ? (
+                                                    <Users size={16} className="text-[rgba(245,245,245,0.5)]" />
+                                                ) : (
+                                                    <User size={16} className="text-[rgba(245,245,245,0.5)]" />
+                                                )}
+                                                <div>
+                                                    <p className="text-[14px] text-[#F5F5F5]">{getSubjectLabel(rule)}</p>
+                                                    <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
+                                                        {rule.subject_type === "role" ? "Role" : "User"}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-4">
+                                            <div className="flex items-center gap-2">
+                                                {getTargetIcon(rule)}
+                                                <div>
+                                                    <p className="text-[14px] text-[#F5F5F5]">
+                                                        {rule.target_title || "Unknown target"}
+                                                    </p>
+                                                    <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
+                                                        {rule.target_type.charAt(0).toUpperCase() + rule.target_type.slice(1).replace("_", " ")}
+                                                        {!rule.target_title && ` (ID: ${rule.target_id})`}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-4">
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium ${rule.effect === "allow"
+                                                ? "bg-green-500/10 text-green-400"
+                                                : "bg-red-500/10 text-red-400"
+                                                }`}>
+                                                {rule.effect === "allow" ? <Check size={12} /> : <X size={12} />}
+                                                {rule.effect.charAt(0).toUpperCase() + rule.effect.slice(1)}
+                                            </span>
+                                        </td>
+                                        <td className="px-5 py-4 text-[13px] text-[rgba(245,245,245,0.5)]">
+                                            {rule.applies_to_descendants ? "Including children" : "This item only"}
+                                        </td>
+                                        <td className="px-2 py-4">
+                                            <button
+                                                onClick={() => handleDeleteRule(rule.id)}
+                                                className="p-2 rounded-lg hover:bg-[rgba(200,122,122,0.1)] text-[rgba(245,245,245,0.5)] hover:text-[#C87A7A] transition-colors"
+                                                title="Delete rule"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            )}
 
             {/* Create Rule Modal */}
             {showCreateModal && (
                 <CreateRuleModal
                     source={activeSource}
                     users={users}
-                    onClose={() => setShowCreateModal(false)}
+                    scriptPages={activeSource === "pages" ? scriptPages : []}
+                    preselectedScriptPage={createModalPreselectedPage}
+                    onClose={() => {
+                        setShowCreateModal(false);
+                        setCreateModalPreselectedPage(null);
+                    }}
                     onCreate={handleCreateRules}
                 />
             )}
@@ -505,11 +679,15 @@ function ConflictConfirmModal({
 function CreateRuleModal({
     source,
     users,
+    scriptPages,
+    preselectedScriptPage,
     onClose,
     onCreate,
 }: {
     source: SourceTab;
     users: UserItem[];
+    scriptPages?: ScriptPageItem[];
+    preselectedScriptPage?: ScriptPageItem | null;
     onClose: () => void;
     onCreate: (payload: {
         source: string;
@@ -524,6 +702,9 @@ function CreateRuleModal({
     const [subjectId, setSubjectId] = useState("user");
     const [selectedTargets, setSelectedTargets] = useState<SelectedTarget[]>([]);
     const [selectedPageIds, setSelectedPageIds] = useState<number[]>([]);
+    const [selectedScriptPageId, setSelectedScriptPageId] = useState<number | null>(
+        preselectedScriptPage?.id ?? null
+    );
     const [effect, setEffect] = useState<"allow" | "deny">("allow");
     const [applyToDescendants, setApplyToDescendants] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -531,7 +712,11 @@ function CreateRuleModal({
     const [rootFolderId, setRootFolderId] = useState<string | null>(null);
     const token = typeof localStorage !== "undefined" ? localStorage.getItem("auth_token") : null;
 
-    const sourceLabel = source === "claromentis" ? "Claromentis" : "Google Drive";
+    const sourceLabel = source === "claromentis" ? "Claromentis" : source === "pages" ? "Pages" : "Google Drive";
+
+    useEffect(() => {
+        setSelectedScriptPageId(preselectedScriptPage?.id ?? null);
+    }, [preselectedScriptPage]);
 
     // Check agency connection status and fetch root_folder_id when in Google Drive mode
     useEffect(() => {
@@ -550,9 +735,11 @@ function CreateRuleModal({
             });
     }, [source, token]);
 
-    const hasSelection = source === "claromentis"
-        ? selectedTargets.length > 0 || selectedPageIds.length > 0
-        : selectedTargets.length > 0;
+    const hasSelection = source === "pages"
+        ? selectedScriptPageId != null
+        : source === "claromentis"
+            ? selectedTargets.length > 0 || selectedPageIds.length > 0
+            : selectedTargets.length > 0;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -561,8 +748,16 @@ function CreateRuleModal({
         setIsSubmitting(true);
 
         const targets: { target_type: string; target_id: number; drive_resource_id?: string }[] = [];
+        let payloadSource = source;
+        let appliesToDescendants = applyToDescendants;
 
-        if (source === "google_drive") {
+        if (source === "pages") {
+            payloadSource = "script";
+            appliesToDescendants = false;
+            if (selectedScriptPageId != null) {
+                targets.push({ target_type: "script_page", target_id: selectedScriptPageId });
+            }
+        } else if (source === "google_drive") {
             // Google Drive targets: use Drive IDs
             for (const t of selectedTargets) {
                 targets.push({
@@ -587,12 +782,12 @@ function CreateRuleModal({
         }
 
         await onCreate({
-            source,
+            source: payloadSource,
             subject_type: subjectType,
             subject_id: subjectId,
             targets,
             effect,
-            applies_to_descendants: applyToDescendants,
+            applies_to_descendants: appliesToDescendants,
         });
         setIsSubmitting(false);
     };
@@ -644,24 +839,60 @@ function CreateRuleModal({
                         <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
                             {subjectType === "role" ? "Select Role" : "Select User"}
                         </label>
-                        <select
-                            value={subjectId}
-                            onChange={(e) => setSubjectId(e.target.value)}
-                            style={{ colorScheme: "dark" }}
-                            className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
-                        >
-                            {subjectType === "role" ? (
-                                <>
-                                    <option value="user">All Users (role: user)</option>
-                                    <option value="admin">All Admins (role: admin)</option>
-                                </>
-                            ) : (
-                                users.map(user => (
-                                    <option key={user.id} value={user.id.toString()}>{user.email}</option>
-                                ))
-                            )}
-                        </select>
+                        <Select value={subjectId} onValueChange={setSubjectId}>
+                            <SelectTrigger className="w-full rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {subjectType === "role" ? (
+                                    <>
+                                        <SelectItem value="user">All Users (role: user)</SelectItem>
+                                        <SelectItem value="admin">All Admins (role: admin)</SelectItem>
+                                    </>
+                                ) : (
+                                    users.map(user => (
+                                        <SelectItem key={user.id} value={user.id.toString()}>{user.email}</SelectItem>
+                                    ))
+                                )}
+                            </SelectContent>
+                        </Select>
                     </div>
+
+                    {/* Target Selection -- Pages (script pages) */}
+                    {source === "pages" && (
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
+                                    Page
+                                </label>
+                                {preselectedScriptPage ? (
+                                    <div className="px-4 py-2.5 rounded-xl bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] flex items-center gap-2">
+                                        <FileText size={16} className="text-purple-400 shrink-0" />
+                                        <span className="text-[14px] text-[#F5F5F5]">
+                                            {preselectedScriptPage.filename || preselectedScriptPage.s3_key || preselectedScriptPage.original_filename || `Page #${preselectedScriptPage.id}`}
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <Select
+                                        value={selectedScriptPageId != null ? String(selectedScriptPageId) : "__none__"}
+                                        onValueChange={(v) => setSelectedScriptPageId(v === "__none__" ? null : Number(v))}
+                                    >
+                                        <SelectTrigger className="w-full rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                                            <SelectValue placeholder="Select a page" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__none__">Select a page</SelectItem>
+                                            {(scriptPages || []).map((p) => (
+                                                <SelectItem key={p.id} value={String(p.id)}>
+                                                    {p.filename || p.s3_key || p.original_filename || `Page #${p.id}`}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Target Selection -- source-specific */}
                     {source === "claromentis" && (
@@ -812,19 +1043,21 @@ function CreateRuleModal({
                         </div>
                     </div>
 
-                    {/* Apply to Descendants */}
-                    <div className="flex items-center gap-3">
-                        <input
-                            type="checkbox"
-                            id="descendants"
-                            checked={applyToDescendants}
-                            onChange={(e) => setApplyToDescendants(e.target.checked)}
-                            className="w-4 h-4 rounded border-[rgba(255,255,255,0.2)] bg-[#0C0C0C] text-blue-500 focus:ring-0 focus:ring-offset-0"
-                        />
-                        <label htmlFor="descendants" className="text-[14px] text-[rgba(245,245,245,0.7)]">
-                            Apply to all children (folders and documents inside)
-                        </label>
-                    </div>
+                    {/* Apply to Descendants (not shown for Pages - script pages have no children) */}
+                    {source !== "pages" && (
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="checkbox"
+                                id="descendants"
+                                checked={applyToDescendants}
+                                onChange={(e) => setApplyToDescendants(e.target.checked)}
+                                className="w-4 h-4 rounded border-[rgba(255,255,255,0.2)] bg-[#0C0C0C] text-blue-500 focus:ring-0 focus:ring-offset-0"
+                            />
+                            <label htmlFor="descendants" className="text-[14px] text-[rgba(245,245,245,0.7)]">
+                                Apply to all children (folders and documents inside)
+                            </label>
+                        </div>
+                    )}
 
                     <div className="flex gap-3 pt-2">
                         <button

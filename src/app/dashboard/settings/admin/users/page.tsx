@@ -18,6 +18,13 @@ import {
     Eye,
 } from "lucide-react";
 import { UserPermissionsModal } from "@/components/admin/UserPermissionsModal";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 type User = {
     id: number;
@@ -365,27 +372,35 @@ export default function UsersPage() {
                     </div>
 
                     {/* Role Filter */}
-                    <select
-                        value={roleFilter || ""}
-                        onChange={(e) => setRoleFilter(e.target.value || null)}
-                        className="px-3 py-2.5 rounded-xl bg-[#161616] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                    <Select
+                        value={roleFilter ?? "__all__"}
+                        onValueChange={(v) => setRoleFilter(v === "__all__" ? null : v)}
                     >
-                        <option value="">All Roles</option>
-                        <option value="admin">Admin</option>
-                        <option value="user">User</option>
-                    </select>
+                        <SelectTrigger className="w-[140px] rounded-xl bg-[#161616] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                            <SelectValue placeholder="All Roles" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="__all__">All Roles</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="user">User</SelectItem>
+                        </SelectContent>
+                    </Select>
 
                     {/* Status Filter */}
-                    <select
-                        value={statusFilter || ""}
-                        onChange={(e) => setStatusFilter(e.target.value || null)}
-                        className="px-3 py-2.5 rounded-xl bg-[#161616] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
+                    <Select
+                        value={statusFilter ?? "__all__"}
+                        onValueChange={(v) => setStatusFilter(v === "__all__" ? null : v)}
                     >
-                        <option value="">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="invited">Invited</option>
-                        <option value="disabled">Disabled</option>
-                    </select>
+                        <SelectTrigger className="w-[140px] rounded-xl bg-[#161616] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                            <SelectValue placeholder="All Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="__all__">All Status</SelectItem>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="invited">Invited</SelectItem>
+                            <SelectItem value="disabled">Disabled</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 <button
@@ -638,14 +653,15 @@ function InviteUserModal({
                         <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
                             Role
                         </label>
-                        <select
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
-                        >
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
-                        </select>
+                        <Select value={role} onValueChange={setRole}>
+                            <SelectTrigger className="w-full rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="user">User</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     {/* Password Section */}
@@ -809,29 +825,31 @@ function EditUserModal({
                         <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
                             Role
                         </label>
-                        <select
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
-                        >
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
-                        </select>
+                        <Select value={role} onValueChange={setRole}>
+                            <SelectTrigger className="w-full rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="user">User</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <div>
                         <label className="block text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider mb-2">
                             Status
                         </label>
-                        <select
-                            value={status}
-                            onChange={(e) => setStatus(e.target.value)}
-                            className="w-full px-4 py-2.5 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:outline-none focus:border-[rgba(255,255,255,0.2)]"
-                        >
-                            <option value="active">Active</option>
-                            <option value="invited">Invited</option>
-                            <option value="disabled">Disabled</option>
-                        </select>
+                        <Select value={status} onValueChange={setStatus}>
+                            <SelectTrigger className="w-full rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="active">Active</SelectItem>
+                                <SelectItem value="invited">Invited</SelectItem>
+                                <SelectItem value="disabled">Disabled</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <div className="flex gap-3 pt-2">
