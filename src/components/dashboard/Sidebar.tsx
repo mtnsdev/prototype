@@ -133,35 +133,65 @@ export default function Sidebar({
         >
             <div className="h-full flex flex-col">
                 {/* Header */}
-                <div className="flex items-center justify-between px-3 py-3 border-b border-[rgba(255,255,255,0.08)]">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center border border-white/10 shadow-sm">
-                            <Image
-                                src="/TL_logo.svg"
-                                alt="Travel Lustre Logo"
-                                width={18}
-                                height={18}
-                                className="opacity-90"
-                            />
-                        </div>
-                        {!collapsed && (
-                            <div className="truncate">
-                                <p className="text-sm font-semibold leading-none text-[#F5F5F5]">TRAVELLUSTRE</p>
-                                <p className="text-[11px] text-[rgba(245,245,245,0.5)] mt-1">Created by Enable VIC</p>
+                <div
+                    className={[
+                        "flex border-b border-[rgba(255,255,255,0.08)]",
+                        collapsed
+                            ? "flex-col items-center gap-2 py-3 px-2"
+                            : "items-center justify-between px-3 py-3",
+                    ].join(" ")}
+                >
+                    {collapsed ? (
+                        <>
+                            <div className="h-8 w-8 shrink-0 rounded-md bg-white/5 flex items-center justify-center border border-white/10">
+                                <Image
+                                    src="/TL_logo.svg"
+                                    alt="Travel Lustre Logo"
+                                    width={18}
+                                    height={18}
+                                    className="opacity-90"
+                                />
                             </div>
-                        )}
-                    </div>
-
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={onToggle}
-                        className="h-8 w-8 rounded-md hover:bg-white/8 text-white/60 hover:text-white/90"
-                        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-                    >
-                        {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-                    </Button>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={onToggle}
+                                className="h-8 w-8 shrink-0 rounded-md hover:bg-white/8 text-white/60 hover:text-white/90"
+                                aria-label="Expand sidebar"
+                            >
+                                <PanelLeftOpen size={16} />
+                            </Button>
+                        </>
+                    ) : (
+                        <>
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="h-8 w-8 shrink-0 rounded-md bg-white/5 flex items-center justify-center border border-white/10">
+                                    <Image
+                                        src="/TL_logo.svg"
+                                        alt="Travel Lustre Logo"
+                                        width={18}
+                                        height={18}
+                                        className="opacity-90"
+                                    />
+                                </div>
+                                <div className="truncate min-w-0">
+                                    <p className="text-sm font-semibold leading-none text-[#F5F5F5]">TRAVELLUSTRE</p>
+                                    <p className="text-[11px] text-[rgba(245,245,245,0.5)] mt-1">Created by Enable VIC</p>
+                                </div>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={onToggle}
+                                className="h-8 w-8 shrink-0 rounded-md hover:bg-white/8 text-white/60 hover:text-white/90"
+                                aria-label="Collapse sidebar"
+                            >
+                                <PanelLeftClose size={16} />
+                            </Button>
+                        </>
+                    )}
                 </div>
 
                 {/* New Chat Button (only on chat page) */}
