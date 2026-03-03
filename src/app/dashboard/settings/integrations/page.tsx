@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
     Loader2,
@@ -339,6 +339,7 @@ function ClaromentisConnectionCard() {
     const [status, setStatus] = useState<ClaromentisStatus | null>(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [syncing, setSyncing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const [username, setUsername] = useState("");
@@ -395,6 +396,27 @@ function ClaromentisConnectionCard() {
             setSubmitting(false);
         }
     }, [username, password, baseUrl, fetchStatus]);
+
+    const handleSyncNow = useCallback(async () => {
+        setSyncing(true);
+        setError(null);
+        try {
+            const token = localStorage.getItem("auth_token");
+            const res = await fetch("/api/sync/trigger-safe", {
+                method: "POST",
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || "Sync failed");
+            if (data.status === "already_running") {
+                setError("Sync already in progress — check back in a moment.");
+            }
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "Sync failed");
+        } finally {
+            setSyncing(false);
+        }
+    }, []);
 
     const handleDisconnect = useCallback(async () => {
         if (!confirm("Disconnect your Claromentis account?")) return;
@@ -476,7 +498,17 @@ function ClaromentisConnectionCard() {
                                 Connected {formatTime(status.last_connected_at)}
                             </p>
                         )}
-                        <div className="pt-2">
+                        <div className="pt-2 flex flex-wrap gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleSyncNow}
+                                disabled={syncing}
+                                className="gap-2"
+                            >
+                                {syncing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                                Sync now
+                            </Button>
                             <Button variant="destructive" onClick={handleDisconnect} className="gap-2 bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border-[rgba(200,122,122,0.2)] text-[#C87A7A]">
                                 <LogOut size={16} />
                                 Disconnect
@@ -579,15 +611,12 @@ function SyncStatusBadge({ status }: { status: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// ClaromentisSync — admin-only: Claromentis sync health + Sync Now (Claromentis only)
+// ClaromentisSync — admin-only: Claromentis sync health only (Sync now is in Claromentis Account card)
 // ---------------------------------------------------------------------------
 function ClaromentisSync() {
     const [health, setHealth] = useState<SyncHealthResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [triggering, setTriggering] = useState(false);
-    const [syncMessage, setSyncMessage] = useState<string | null>(null);
-    const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const fetchHealth = useCallback(async (): Promise<SyncHealthResponse | null> => {
         try {
@@ -621,50 +650,6 @@ function ClaromentisSync() {
                     : "healthy"
             : "error";
 
-    const startPolling = useCallback(() => {
-        if (pollRef.current) return;
-        const tick = async () => {
-            const data = await fetchHealth();
-            const running = data?.integrations.some(
-                (i) => i.integration === "claromentis" && i.last_run_status === "running"
-            );
-            if (running) {
-                pollRef.current = setTimeout(tick, 3000);
-            } else {
-                pollRef.current = null;
-            }
-        };
-        pollRef.current = setTimeout(tick, 3000);
-    }, [fetchHealth]);
-
-    useEffect(() => () => { if (pollRef.current) clearTimeout(pollRef.current); }, []);
-
-    const triggerSync = useCallback(async () => {
-        setTriggering(true);
-        setSyncMessage(null);
-        try {
-            const token = localStorage.getItem("auth_token");
-            const res = await fetch("/api/sync/trigger-safe", {
-                method: "POST",
-                headers: token ? { Authorization: `Bearer ${token}` } : {},
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.detail || "Trigger failed");
-
-            if (data.status === "already_running") {
-                setSyncMessage("Claromentis sync already in progress — check back in a moment.");
-            } else {
-                setSyncMessage("Claromentis sync started.");
-                startPolling();
-            }
-            await fetchHealth();
-        } catch (e) {
-            setError(e instanceof Error ? e.message : "Trigger failed");
-        } finally {
-            setTriggering(false);
-        }
-    }, [fetchHealth, startPolling]);
-
     return (
         <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
             <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between">
@@ -674,33 +659,13 @@ function ClaromentisSync() {
                     </div>
                     <div>
                         <h2 className="text-[15px] font-semibold text-[#F5F5F5]">Claromentis Sync</h2>
-                        <p className="text-[12px] text-[rgba(245,245,245,0.45)] mt-0.5">Sync Claromentis documents to the knowledge base. Health and manual sync.</p>
+                        <p className="text-[12px] text-[rgba(245,245,245,0.45)] mt-0.5">Sync health for Claromentis documents</p>
                     </div>
                 </div>
-                {claromentisOnly.length > 0 && (
-                    <div className="flex items-center gap-3">
-                        <SyncStatusBadge status={claromentisStatus} />
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={triggerSync}
-                            disabled={triggering}
-                            size="sm"
-                            className="gap-2"
-                        >
-                            {triggering ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                            Sync Claromentis Now
-                        </Button>
-                    </div>
-                )}
+                {claromentisOnly.length > 0 && <SyncStatusBadge status={claromentisStatus} />}
             </div>
 
             <div className="p-5">
-                {syncMessage && (
-                    <div className="mb-4 rounded-xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] px-4 py-2.5 text-[12px] text-[rgba(245,245,245,0.65)]">
-                        {syncMessage}
-                    </div>
-                )}
                 {isLoading ? (
                     <div className="flex items-center gap-2 py-4 justify-center">
                         <Loader2 size={18} className="animate-spin text-[rgba(245,245,245,0.4)]" />
