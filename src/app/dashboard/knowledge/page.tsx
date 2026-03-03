@@ -1,8 +1,9 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import LibraryView from "@/components/library/LibraryView";
+import { useClaromentisStatus } from "@/hooks/useClaromentisStatus";
 import { useFolderChildren } from "@/hooks/useFolderChildren";
 import { usePages } from "@/hooks/usePages";
 import {
@@ -226,6 +227,16 @@ function KnowledgeContent() {
     };
 
     const config = integration ? integrationConfig[integration] : null;
+    const router = useRouter();
+    const { status: claromentisStatus, loading: claromentisLoading } = useClaromentisStatus();
+
+    // When Claromentis is selected and connection is inactive, redirect to settings integrations
+    useEffect(() => {
+        if (!config || config.source !== "claromentis" || claromentisLoading) return;
+        if (claromentisStatus?.status !== "active") {
+            router.replace("/dashboard/settings/integrations");
+        }
+    }, [config, claromentisStatus?.status, claromentisLoading, router]);
 
     if (!config) {
         return <KnowledgeTreeView />;
@@ -237,6 +248,15 @@ function KnowledgeContent() {
                 source="google-drive"
                 connectionType={config.connectionType}
             />
+        );
+    }
+
+    // Claromentis: show loading while checking status, or LibraryView once active
+    if (claromentisLoading || claromentisStatus?.status !== "active") {
+        return (
+            <div className="h-full flex items-center justify-center bg-[#0C0C0C] text-[rgba(245,245,245,0.5)]">
+                <p className="text-[14px]">Checking connection…</p>
+            </div>
         );
     }
 

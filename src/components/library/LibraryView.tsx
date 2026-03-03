@@ -6,7 +6,7 @@ import { useProxyUrl } from "@/hooks/useProxyUrl";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 import { useDriveFiles } from "@/hooks/useDriveFiles";
 import { usePages, type PageItem } from "@/hooks/usePages";
-import { Folder, FileText, ChevronRight, ChevronDown, Eye, Loader2, Search, Cloud, Shield, Lock, Globe } from "lucide-react";
+import { Folder, FileText, BookOpen, ChevronRight, ChevronDown, Eye, Loader2, Search, Cloud, Shield, Lock, Globe, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PdfModal from "@/components/dashboard/PdfModal";
@@ -22,7 +22,8 @@ type TLItem =
     | PageItem;
 
 type TLSearchResult = {
-    items: TLItem[];
+    documents: Exclude<TLItem, PageItem>[];
+    pages: PageItem[];
     limit: number;
     offset: number;
     next_offset?: number | null;
@@ -314,6 +315,15 @@ function DriveTreeNodeItem({
 // ===========================================================================
 // GOOGLE DRIVE: Main content view
 // ===========================================================================
+/** Format timestamp to match SyncStatusButton (HH:MM DD/MM) for consistent refresh UI across integrations */
+function formatRefreshTimestamp(date: Date): string {
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    return `${hours}:${minutes} ${day}/${month}`;
+}
+
 function DriveLibraryContent({
     connectionType = "personal",
 }: {
@@ -322,9 +332,15 @@ function DriveLibraryContent({
     const { files, loading, error, refetch } = useDriveFiles(connectionType, { includeFolders: true });
     const [searchQuery, setSearchQuery] = useState("");
     const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
+    const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
     const showAccessLevel = connectionType === "agency";
 
     const showLoading = useDelayedLoading(loading);
+
+    const handleRefresh = useCallback(async () => {
+        await refetch();
+        setLastRefreshedAt(new Date());
+    }, [refetch]);
 
     // Preview modal state
     const [previewModal, setPreviewModal] = useState<{
@@ -426,20 +442,31 @@ function DriveLibraryContent({
                             </p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        {showLoading && (
-                            <div className="flex items-center gap-2 text-[12px] text-[rgba(245,245,245,0.5)]">
-                                <Loader2 size={14} className="animate-spin" />
-                                <span>Loading...</span>
-                            </div>
-                        )}
-                        <button
+                    <div className="flex flex-col items-end gap-0.5">
+                        <Button
                             type="button"
-                            onClick={refetch}
-                            className="text-[12px] text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors px-2 py-1 rounded-md hover:bg-white/6"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleRefresh}
+                            disabled={loading}
+                            className="gap-2 text-[13px]"
                         >
-                            Refresh
-                        </button>
+                            {loading ? (
+                                <>
+                                    <Loader2 size={14} className="animate-spin shrink-0" />
+                                    <span>Refreshing…</span>
+                                </>
+                            ) : (
+                                <>
+                                    <RefreshCw size={14} className="shrink-0" />
+                                    <span>
+                                        {lastRefreshedAt
+                                            ? `Last update was at: ${formatRefreshTimestamp(lastRefreshedAt)}`
+                                            : "Refresh"}
+                                    </span>
+                                </>
+                            )}
+                        </Button>
                     </div>
                 </div>
 
@@ -797,18 +824,18 @@ function buildProxyUrl(path: string, filename: string): string {
     return url.toString();
 }
 
-// Search result item component
+// Search result item component — distinguishes documents (Claromentis) vs pages (knowledge library)
 function SearchResultItem({
     item,
     onOpenPreview,
 }: {
     item: TLItem;
-    onOpenPreview: (filename: string, proxyUrl: string) => void;
+    onOpenPreview: (filename: string, proxyUrl?: string, pdfPath?: string) => void;
 }) {
     const isFolder = item.kind === "folder";
     const isPage = item.kind === "page";
 
-    // Build preview URL for documents (not for pages)
+    // Build preview URL for Claromentis documents (not for pages)
     const getPreviewUrl = (): string | null => {
         if (item.kind !== "document") return null;
 
@@ -831,6 +858,15 @@ function SearchResultItem({
     // Get title based on item type
     const title = item.kind === "page" ? item.name : item.title;
 
+    // Icon and styling: folder = folder icon; page = BookOpen (knowledge library); document = FileText (Claromentis)
+    const iconEl = isFolder ? <Folder size={16} /> : isPage ? <BookOpen size={16} /> : <FileText size={16} />;
+    const iconBg =
+        isFolder
+            ? "bg-[rgba(122,163,200,0.1)] text-[#7AA3C8]"
+            : isPage
+                ? "bg-[rgba(156,163,175,0.12)] text-[#9CA3AF]"
+                : "bg-[rgba(245,245,245,0.06)] text-[rgba(245,245,245,0.5)]";
+
     return (
         <div
             className={[
@@ -839,14 +875,9 @@ function SearchResultItem({
                 "hover:bg-white/4 transition-colors",
             ].join(" ")}
         >
-            {/* Icon */}
-            <div className={[
-                "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                isFolder
-                    ? "bg-[rgba(122,163,200,0.1)] text-[#7AA3C8]"
-                    : "bg-[rgba(245,245,245,0.06)] text-[rgba(245,245,245,0.5)]",
-            ].join(" ")}>
-                {isFolder ? <Folder size={16} /> : <FileText size={16} />}
+            {/* Icon — folder / page (knowledge library) / document (Claromentis) */}
+            <div className={["w-8 h-8 rounded-lg flex items-center justify-center shrink-0", iconBg].join(" ")}>
+                {iconEl}
             </div>
 
             {/* Content */}
@@ -864,7 +895,7 @@ function SearchResultItem({
                 </p>
             </div>
 
-            {/* Preview button for documents only (not for pages) */}
+            {/* Preview: Claromentis documents use proxy URL; pages use pdf_path */}
             {item.kind === "document" && previewUrl && (
                 <button
                     type="button"
@@ -875,6 +906,23 @@ function SearchResultItem({
                         "bg-[rgba(122,163,200,0.1)] hover:bg-[rgba(122,163,200,0.18)]",
                         "border border-[rgba(122,163,200,0.2)] hover:border-[rgba(122,163,200,0.35)]",
                         "text-[#7AA3C8] hover:text-[#9BBDD8]",
+                        "transition-all duration-150",
+                    ].join(" ")}
+                >
+                    <Eye className="w-3 h-3" />
+                    Preview
+                </button>
+            )}
+            {item.kind === "page" && item.pdf_path && (
+                <button
+                    type="button"
+                    onClick={() => onOpenPreview(title, undefined, item.pdf_path ?? undefined)}
+                    className={[
+                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md",
+                        "text-[11px] font-medium",
+                        "bg-[rgba(156,163,175,0.1)] hover:bg-[rgba(156,163,175,0.18)]",
+                        "border border-[rgba(156,163,175,0.2)] hover:border-[rgba(156,163,175,0.35)]",
+                        "text-[#9CA3AF] hover:text-[#D1D5DB]",
                         "transition-all duration-150",
                     ].join(" ")}
                 >
@@ -912,8 +960,10 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
         pdfPath: undefined,
     });
 
-    // Search state
-    const [searchResults, setSearchResults] = useState<TLItem[]>([]);
+    // Search state — documents (Claromentis) and pages (knowledge library) kept separately
+    const [searchDocuments, setSearchDocuments] = useState<Exclude<TLItem, PageItem>[]>([]);
+    const [searchPages, setSearchPages] = useState<PageItem[]>([]);
+    const [rootViewTab, setRootViewTab] = useState<"documents" | "pages">("documents");
     const [searchLoading, setSearchLoading] = useState(false);
     const [searchError, setSearchError] = useState<string | null>(null);
     const [searchTotal, setSearchTotal] = useState<number | null>(null);
@@ -924,9 +974,8 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
 
     const clientCache = useRef<Map<number, TLItem[]>>(new Map());
 
-    // Root accordion state (knowledge-root view: Documents + Pages)
-    const [documentsOpen, setDocumentsOpen] = useState(false);
-    const [pagesOpen, setPagesOpen] = useState(false);
+    const isSearchMode = searchQuery.trim().length >= 2;
+
     const [rootAccordionExpandedIds, setRootAccordionExpandedIds] = useState<Set<number>>(new Set());
     const rootAccordionCache = useRef<Map<number, TLItem[]>>(new Map());
 
@@ -939,18 +988,18 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
     }, []);
 
     const accordionRootOptions = useMemo(() => ({
-        enabled: navigationMode === "knowledge-root" && documentsOpen,
+        enabled: navigationMode === "knowledge-root" && rootViewTab === "documents" && !isSearchMode,
         onSuccess: (items: TLItem[]) => { rootAccordionCache.current.set(0, items); },
-    }), [navigationMode, documentsOpen]);
+    }), [navigationMode, rootViewTab, isSearchMode]);
     const { items: accordionRootItems, loading: accordionRootLoading } = useFolderChildren(
-        navigationMode === "knowledge-root" && documentsOpen ? 0 : undefined,
+        navigationMode === "knowledge-root" && rootViewTab === "documents" && !isSearchMode ? 0 : undefined,
         undefined,
         accordionRootOptions
     );
     const accordionRootDisplay = rootAccordionCache.current.get(0) ?? accordionRootItems;
 
-    // Pages data - fetch when in pages mode OR when accordion pages section is open
-    const { items: pagesItems, hasMore: pagesHasMore, isLoading: pagesLoading, error: pagesError, loadMore: loadMorePages } = usePages({ enabled: navigationMode === "pages" || (navigationMode === "knowledge-root" && pagesOpen) });
+    // Pages data - fetch when in pages mode OR when on Pages tab in knowledge-root
+    const { items: pagesItems, hasMore: pagesHasMore, isLoading: pagesLoading, error: pagesError, loadMore: loadMorePages } = usePages({ enabled: navigationMode === "pages" || (navigationMode === "knowledge-root" && rootViewTab === "pages") });
 
     // Debounced search effect
     useEffect(() => {
@@ -958,7 +1007,8 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
 
         // Reset search if query is too short
         if (query.length < 2) {
-            setSearchResults([]);
+            setSearchDocuments([]);
+            setSearchPages([]);
             setSearchError(null);
             setSearchTotal(null);
             setSearchNextOffset(null);
@@ -988,14 +1038,16 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                 }
 
                 const data: TLSearchResult = await res.json();
-                setSearchResults(data.items);
+                setSearchDocuments(data.documents ?? []);
+                setSearchPages(data.pages ?? []);
                 setSearchTotal(data.total ?? null);
                 setSearchNextOffset(data.next_offset ?? null);
             } catch (e: unknown) {
                 if (e instanceof Error && e.name === "AbortError") return;
                 const message = e instanceof Error ? e.message : "Search failed";
                 setSearchError(message);
-                setSearchResults([]);
+                setSearchDocuments([]);
+                setSearchPages([]);
             } finally {
                 setSearchLoading(false);
             }
@@ -1029,7 +1081,7 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
             }
 
             const data: TLSearchResult = await res.json();
-            setSearchResults(prev => [...prev, ...data.items]);
+            setSearchDocuments(prev => [...prev, ...(data.documents ?? [])]);
             setSearchNextOffset(data.next_offset ?? null);
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : "Failed to load more";
@@ -1038,9 +1090,6 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
             setSearchLoading(false);
         }
     }, [searchNextOffset, searchLoading, searchQuery]);
-
-    // Check if we're in search mode
-    const isSearchMode = searchQuery.trim().length >= 2;
 
     // PDF modal handlers
     const openPreview = useCallback((filename: string, customUrl?: string, pdfPath?: string) => {
@@ -1139,7 +1188,7 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
         }
     }, [handleNavigateToKnowledgeRoot, handleNavigateToDocuments, handleNavigateToPages]);
 
-    // Knowledge Root view — full-page tree with 2 root rows: Documents + Pages
+    // Knowledge Root view — full-page tree with 2 root rows: Documents + Pages (and search)
     if (navigationMode === "knowledge-root") {
         return (
             <div className="h-full p-6 flex flex-col min-h-0 bg-[#0C0C0C]">
@@ -1153,36 +1202,193 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                         <SyncStatusButton />
                     </div>
 
-                    {/* Tree content */}
-                    <div className="min-h-0 flex-1 overflow-y-auto py-2">
-                        {/* Documents root row */}
-                        <div
-                            className="flex items-center gap-2 py-2 pr-4 hover:bg-white/4 cursor-pointer transition-all duration-150"
-                            style={{ paddingLeft: 20 }}
-                            onClick={() => setDocumentsOpen((v) => !v)}
-                        >
-                            <button
-                                type="button"
-                                className="w-5 h-5 flex items-center justify-center text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors"
-                                onClick={(e) => { e.stopPropagation(); setDocumentsOpen((v) => !v); }}
-                            >
-                                {accordionRootLoading && documentsOpen
-                                    ? <Loader2 size={14} className="animate-spin" />
-                                    : documentsOpen
-                                        ? <ChevronDown size={14} />
-                                        : <ChevronRight size={14} />
-                                }
-                            </button>
-                            <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 bg-[rgba(122,163,200,0.1)] text-[#7AA3C8]">
-                                <Folder size={14} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-[13px] font-medium text-[#F5F5F5] truncate">Documents</p>
-                            </div>
+                    {/* Search bar for Claromentis */}
+                    <div className="px-5 py-3 border-b border-[rgba(255,255,255,0.08)] shrink-0">
+                        <div className="relative">
+                            <Search
+                                size={16}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(245,245,245,0.4)]"
+                            />
+                            <input
+                                type="text"
+                                placeholder="Search files and folders..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className={[
+                                    "w-full rounded-lg pl-10 pr-4 py-2.5 text-[13px]",
+                                    "bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.4)]",
+                                    "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
+                                    "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
+                                    "transition-all duration-150",
+                                ].join(" ")}
+                            />
                         </div>
+                        <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-2">
+                            {searchQuery.trim().length < 2
+                                ? "Type at least 2 characters to search all documents and folders."
+                                : `Searching documents and pages${searchDocuments.length + searchPages.length > 0 ? ` • ${searchDocuments.length} document(s), ${searchPages.length} page(s)` : searchTotal !== null ? ` • ${searchTotal} document(s)` : ""}`}
+                        </p>
+                    </div>
 
-                        {/* Documents children */}
-                        {documentsOpen && !accordionRootLoading && accordionRootDisplay.map((item) => (
+                    {/* Tree content or search results */}
+                    <div className="min-h-0 flex-1 overflow-y-auto py-2">
+                        {isSearchMode ? (
+                            <>
+                                {searchError ? (
+                                    <div className="px-5 py-6 text-[14px] text-[#C87A7A] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
+                                        {searchError}
+                                    </div>
+                                ) : showSearchLoader && searchDocuments.length === 0 && searchPages.length === 0 ? (
+                                    <div className="px-5 py-10 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)]" />
+                                            <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Searching...</span>
+                                        </div>
+                                    </div>
+                                ) : searchDocuments.length === 0 && searchPages.length === 0 ? (
+                                    <div className="px-5 py-10 text-center">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <Search size={32} className="text-[rgba(245,245,245,0.2)]" />
+                                            <span className="text-[14px] text-[rgba(245,245,245,0.5)]">No results found</span>
+                                            <span className="text-[12px] text-[rgba(245,245,245,0.35)]">Try a different search term</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col h-full min-h-0">
+                                        {/* Tabs */}
+                                        <div className="flex shrink-0 border-b border-[rgba(255,255,255,0.08)]">
+                                            <button
+                                                type="button"
+                                                onClick={() => setRootViewTab("documents")}
+                                                className={[
+                                                    "flex-1 px-4 py-3 text-[13px] font-medium transition-colors",
+                                                    rootViewTab === "documents"
+                                                        ? "text-[#7AA3C8] border-b-2 border-[#7AA3C8] bg-[rgba(122,163,200,0.06)]"
+                                                        : "text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-[rgba(255,255,255,0.03)]",
+                                                ].join(" ")}
+                                            >
+                                                Documents ({searchDocuments.length}{searchTotal != null && searchTotal > searchDocuments.length ? ` of ${searchTotal}` : ""})
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setRootViewTab("pages")}
+                                                className={[
+                                                    "flex-1 px-4 py-3 text-[13px] font-medium transition-colors",
+                                                    rootViewTab === "pages"
+                                                        ? "text-[#9CA3AF] border-b-2 border-[#9CA3AF] bg-[rgba(156,163,175,0.06)]"
+                                                        : "text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-[rgba(255,255,255,0.03)]",
+                                                ].join(" ")}
+                                            >
+                                                Pages ({searchPages.length})
+                                            </button>
+                                        </div>
+                                        {/* Tab content */}
+                                        <div className="min-h-0 flex-1 overflow-y-auto">
+                                            {rootViewTab === "documents" ? (
+                                                <>
+                                                    {searchDocuments.length === 0 ? (
+                                                        <div className="px-5 py-8 text-center text-[12px] text-[rgba(245,245,245,0.4)]">No documents match your search.</div>
+                                                    ) : (
+                                                        <>
+                                                            {searchDocuments.map((item) => (
+                                                                <SearchResultItem
+                                                                    key={item.kind === "folder" ? `sf-${item.id}` : `sd-${item.doc_id}-${item.version_num}`}
+                                                                    item={item}
+                                                                    onOpenPreview={openPreview}
+                                                                />
+                                                            ))}
+                                                            {searchNextOffset !== null && (
+                                                                <div className="px-5 py-4 flex justify-center border-t border-[rgba(255,255,255,0.06)]">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={loadMoreResults}
+                                                                        disabled={searchLoading}
+                                                                        className={[
+                                                                            "inline-flex items-center gap-2 px-4 py-2 rounded-lg",
+                                                                            "text-[12px] font-medium",
+                                                                            "bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)]",
+                                                                            "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
+                                                                            "text-[rgba(245,245,245,0.7)] hover:text-[#F5F5F5]",
+                                                                            "transition-all duration-150",
+                                                                            "disabled:opacity-50 disabled:cursor-not-allowed",
+                                                                        ].join(" ")}
+                                                                    >
+                                                                        {searchLoading ? (
+                                                                            <>
+                                                                                <Loader2 size={14} className="animate-spin" />
+                                                                                Loading...
+                                                                            </>
+                                                                        ) : (
+                                                                            "Load more documents"
+                                                                        )}
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {searchPages.length === 0 ? (
+                                                        <div className="px-5 py-8 text-center text-[12px] text-[rgba(245,245,245,0.4)]">No pages match your search.</div>
+                                                    ) : (
+                                                        searchPages.map((page) => (
+                                                            <SearchResultItem
+                                                                key={`sp-${page.id}`}
+                                                                item={page}
+                                                                onOpenPreview={openPreview}
+                                                            />
+                                                        ))
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                                    <div className="flex flex-col h-full min-h-0">
+                                        <div className="flex shrink-0 border-b border-[rgba(255,255,255,0.08)]">
+                                            <button
+                                                type="button"
+                                                onClick={() => setRootViewTab("documents")}
+                                                className={[
+                                                    "flex-1 px-4 py-3 text-[13px] font-medium transition-colors",
+                                                    rootViewTab === "documents"
+                                                        ? "text-[#7AA3C8] border-b-2 border-[#7AA3C8] bg-[rgba(122,163,200,0.06)]"
+                                                        : "text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-[rgba(255,255,255,0.03)]",
+                                                ].join(" ")}
+                                            >
+                                                Documents ({accordionRootDisplay.length})
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setRootViewTab("pages")}
+                                                className={[
+                                                    "flex-1 px-4 py-3 text-[13px] font-medium transition-colors",
+                                                    rootViewTab === "pages"
+                                                        ? "text-[#9CA3AF] border-b-2 border-[#9CA3AF] bg-[rgba(156,163,175,0.06)]"
+                                                        : "text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-[rgba(255,255,255,0.03)]",
+                                                ].join(" ")}
+                                            >
+                                                Pages ({pagesItems.length}{pagesHasMore ? "+" : ""})
+                                            </button>
+                                        </div>
+                                        <div className="min-h-0 flex-1 overflow-y-auto">
+                                            {rootViewTab === "documents" ? (
+                                                <>
+                                                    {accordionRootLoading && accordionRootDisplay.length === 0 ? (
+                                                        <div className="px-5 py-10 text-center">
+                                                            <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)] mx-auto" />
+                                                            <span className="text-[13px] text-[rgba(245,245,245,0.5)] block mt-3">Loading documents...</span>
+                                                        </div>
+                                                    ) : accordionRootDisplay.length === 0 ? (
+                                                        <div className="px-5 py-10 text-center">
+                                                            <Folder size={32} className="text-[rgba(245,245,245,0.2)] mx-auto" />
+                                                            <span className="text-[14px] text-[rgba(245,245,245,0.5)] block mt-3">No documents in root folder</span>
+                                                        </div>
+                                                    ) : (
+                                                        accordionRootDisplay.map((item) => (
                             <TreeNode
                                 key={item.kind === "folder" ? `f-${item.id}` : item.kind === "document" ? `d-${item.doc_id}-${item.version_num}` : `p-${item.key}`}
                                 item={item}
@@ -1192,81 +1398,74 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                                 clientCache={rootAccordionCache}
                                 onOpenPreview={openPreview}
                             />
-                        ))}
-
-                        {/* Pages root row */}
-                        <div
-                            className="flex items-center gap-2 py-2 pr-4 hover:bg-white/4 cursor-pointer transition-all duration-150"
-                            style={{ paddingLeft: 20 }}
-                            onClick={() => setPagesOpen((v) => !v)}
-                        >
-                            <button
-                                type="button"
-                                className="w-5 h-5 flex items-center justify-center text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors"
-                                onClick={(e) => { e.stopPropagation(); setPagesOpen((v) => !v); }}
-                            >
-                                {pagesLoading && pagesOpen && pagesItems.length === 0
-                                    ? <Loader2 size={14} className="animate-spin" />
-                                    : pagesOpen
-                                        ? <ChevronDown size={14} />
-                                        : <ChevronRight size={14} />
-                                }
-                            </button>
-                            <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 bg-[rgba(122,163,200,0.1)] text-[#7AA3C8]">
-                                <Folder size={14} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-[13px] font-medium text-[#F5F5F5] truncate">Pages</p>
-                            </div>
-                        </div>
-
-                        {/* Pages children */}
-                        {pagesOpen && pagesItems.map((page) => (
-                            <div
-                                key={page.id}
-                                className="flex items-center gap-2 py-2 pr-4 hover:bg-white/2 transition-all duration-150"
-                                style={{ paddingLeft: 44 + 24 }}
-                            >
-                                <div className="w-5" />
-                                <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 bg-[rgba(245,245,245,0.06)] text-[rgba(245,245,245,0.5)]">
-                                    <FileText size={14} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-[13px] text-[rgba(245,245,245,0.8)] truncate">{page.name}</p>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        const path = page.pdf_path ?? page.key;
-                                        if (path) openPreview(page.name, undefined, path);
-                                    }}
-                                    className={[
-                                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md",
-                                        "text-[11px] font-medium",
-                                        "bg-[rgba(122,163,200,0.1)] hover:bg-[rgba(122,163,200,0.18)]",
-                                        "border border-[rgba(122,163,200,0.2)] hover:border-[rgba(122,163,200,0.35)]",
-                                        "text-[#7AA3C8] hover:text-[#9BBDD8]",
-                                    ].join(" ")}
-                                >
-                                    <Eye className="w-3 h-3" />
-                                    Preview
-                                </button>
-                            </div>
-                        ))}
-                        {pagesOpen && pagesHasMore && (
-                            <div style={{ paddingLeft: 44 + 24 }} className="pr-4 py-2">
-                                <button
-                                    type="button"
-                                    onClick={loadMorePages}
-                                    disabled={pagesLoading}
-                                    className="w-full py-1.5 rounded-lg text-[12px] text-[rgba(245,245,245,0.5)] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.06)] disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
-                                >
-                                    {pagesLoading ? <Loader2 size={12} className="animate-spin" /> : null}
-                                    Load more
-                                </button>
-                            </div>
-                        )}
+                                                        ))
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {pagesLoading && pagesItems.length === 0 ? (
+                                                        <div className="px-5 py-10 text-center">
+                                                            <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)] mx-auto" />
+                                                            <span className="text-[13px] text-[rgba(245,245,245,0.5)] block mt-3">Loading pages...</span>
+                                                        </div>
+                                                    ) : pagesItems.length === 0 ? (
+                                                        <div className="px-5 py-10 text-center">
+                                                            <FileText size={32} className="text-[rgba(245,245,245,0.2)] mx-auto" />
+                                                            <span className="text-[14px] text-[rgba(245,245,245,0.5)] block mt-3">No pages</span>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            {pagesItems.map((page) => (
+                                                                <div
+                                                                    key={page.id}
+                                                                    className="flex items-center gap-2 py-2 pr-4 hover:bg-white/2 transition-all duration-150 px-5"
+                                                                >
+                                                                    <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 bg-[rgba(245,245,245,0.06)] text-[rgba(245,245,245,0.5)]">
+                                                                        <FileText size={14} />
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="text-[13px] text-[rgba(245,245,245,0.8)] truncate">{page.name}</p>
+                                                                    </div>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            const path = page.pdf_path ?? page.key;
+                                                                            if (path) openPreview(page.name, undefined, path);
+                                                                        }}
+                                                                        className={[
+                                                                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md",
+                                                                            "text-[11px] font-medium",
+                                                                            "bg-[rgba(122,163,200,0.1)] hover:bg-[rgba(122,163,200,0.18)]",
+                                                                            "border border-[rgba(122,163,200,0.2)] hover:border-[rgba(122,163,200,0.35)]",
+                                                                            "text-[#7AA3C8] hover:text-[#9BBDD8]",
+                                                                        ].join(" ")}
+                                                                    >
+                                                                        <Eye className="w-3 h-3" />
+                                                                        Preview
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                            {pagesHasMore && (
+                                                                <div className="px-5 py-4 flex justify-center border-t border-[rgba(255,255,255,0.06)]">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={loadMorePages}
+                                                                        disabled={pagesLoading}
+                                                                        className="w-full max-w-xs py-2 rounded-lg text-[12px] text-[rgba(245,245,245,0.5)] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.06)] disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
+                                                                    >
+                                                                        {pagesLoading ? <Loader2 size={12} className="animate-spin" /> : null}
+                                                                        Load more
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                     </div>
                 </div>
 
@@ -1400,7 +1599,7 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                         <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-2">
                             {searchQuery.trim().length < 2
                                 ? "Type at least 2 characters to search all documents and folders."
-                                : `Searching across all folders${searchTotal !== null ? ` • ${searchResults.length}${searchTotal > searchResults.length ? ` of ${searchTotal}` : ""} results` : ""}`
+                                : `Searching documents and pages${searchDocuments.length + searchPages.length > 0 ? ` • ${searchDocuments.length} document(s), ${searchPages.length} page(s)` : searchTotal !== null ? ` • ${searchTotal} document(s)` : ""}`
                             }
                         </p>
                         <div className="flex items-center gap-2 mt-2 text-[12px]">
@@ -1510,14 +1709,14 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                                 <div className="px-5 py-6 text-[14px] text-[#C87A7A] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
                                     {searchError}
                                 </div>
-                            ) : showSearchLoader && searchResults.length === 0 ? (
+                            ) : showSearchLoader && searchDocuments.length === 0 && searchPages.length === 0 ? (
                                 <div className="px-5 py-10 text-center">
                                     <div className="flex flex-col items-center gap-3">
                                         <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)]" />
                                         <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Searching...</span>
                                     </div>
                                 </div>
-                            ) : searchResults.length === 0 ? (
+                            ) : searchDocuments.length === 0 && searchPages.length === 0 ? (
                                 <div className="px-5 py-10 text-center">
                                     <div className="flex flex-col items-center gap-2">
                                         <Search size={32} className="text-[rgba(245,245,245,0.2)]" />
@@ -1526,42 +1725,95 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                                     </div>
                                 </div>
                             ) : (
-                                <div>
-                                    {searchResults.map((item) => (
-                                        <SearchResultItem
-                                            key={item.kind === "folder" ? `sf-${item.id}` : item.kind === "document" ? `sd-${item.doc_id}-${item.version_num}` : `sp-${item.key}`}
-                                            item={item}
-                                            onOpenPreview={openPreview}
-                                        />
-                                    ))}
-                                    {/* Load more button */}
-                                    {searchNextOffset !== null && (
-                                        <div className="px-5 py-4 flex justify-center">
-                                            <button
-                                                type="button"
-                                                onClick={loadMoreResults}
-                                                disabled={searchLoading}
-                                                className={[
-                                                    "inline-flex items-center gap-2 px-4 py-2 rounded-lg",
-                                                    "text-[12px] font-medium",
-                                                    "bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)]",
-                                                    "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
-                                                    "text-[rgba(245,245,245,0.7)] hover:text-[#F5F5F5]",
-                                                    "transition-all duration-150",
-                                                    "disabled:opacity-50 disabled:cursor-not-allowed",
-                                                ].join(" ")}
-                                            >
-                                                {showSearchLoader ? (
-                                                    <>
-                                                        <Loader2 size={14} className="animate-spin" />
-                                                        Loading...
-                                                    </>
+                                <div className="flex flex-col h-full min-h-0">
+                                    {/* Tabs */}
+                                    <div className="flex shrink-0 border-b border-[rgba(255,255,255,0.08)]">
+                                        <button
+                                            type="button"
+                                            onClick={() => setRootViewTab("documents")}
+                                            className={[
+                                                "flex-1 px-4 py-3 text-[13px] font-medium transition-colors",
+                                                rootViewTab === "documents"
+                                                    ? "text-[#7AA3C8] border-b-2 border-[#7AA3C8] bg-[rgba(122,163,200,0.06)]"
+                                                    : "text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-[rgba(255,255,255,0.03)]",
+                                            ].join(" ")}
+                                        >
+                                            Documents ({searchDocuments.length}{searchTotal != null && searchTotal > searchDocuments.length ? ` of ${searchTotal}` : ""})
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setRootViewTab("pages")}
+                                            className={[
+                                                "flex-1 px-4 py-3 text-[13px] font-medium transition-colors",
+                                                rootViewTab === "pages"
+                                                    ? "text-[#9CA3AF] border-b-2 border-[#9CA3AF] bg-[rgba(156,163,175,0.06)]"
+                                                    : "text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-[rgba(255,255,255,0.03)]",
+                                            ].join(" ")}
+                                        >
+                                            Pages ({searchPages.length})
+                                        </button>
+                                    </div>
+                                    {/* Tab content */}
+                                    <div className="min-h-0 flex-1 overflow-y-auto">
+                                        {rootViewTab === "documents" ? (
+                                            <>
+                                                {searchDocuments.length === 0 ? (
+                                                    <div className="px-5 py-8 text-center text-[12px] text-[rgba(245,245,245,0.4)]">No documents match your search.</div>
                                                 ) : (
-                                                    "Load more results"
+                                                    <>
+                                                        {searchDocuments.map((item) => (
+                                                            <SearchResultItem
+                                                                key={item.kind === "folder" ? `sf-${item.id}` : `sd-${item.doc_id}-${item.version_num}`}
+                                                                item={item}
+                                                                onOpenPreview={openPreview}
+                                                            />
+                                                        ))}
+                                                        {searchNextOffset !== null && (
+                                                            <div className="px-5 py-4 flex justify-center border-t border-[rgba(255,255,255,0.06)]">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={loadMoreResults}
+                                                                    disabled={searchLoading}
+                                                                    className={[
+                                                                        "inline-flex items-center gap-2 px-4 py-2 rounded-lg",
+                                                                        "text-[12px] font-medium",
+                                                                        "bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)]",
+                                                                        "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
+                                                                        "text-[rgba(245,245,245,0.7)] hover:text-[#F5F5F5]",
+                                                                        "transition-all duration-150",
+                                                                        "disabled:opacity-50 disabled:cursor-not-allowed",
+                                                                    ].join(" ")}
+                                                                >
+                                                                    {showSearchLoader ? (
+                                                                        <>
+                                                                            <Loader2 size={14} className="animate-spin" />
+                                                                            Loading...
+                                                                        </>
+                                                                    ) : (
+                                                                        "Load more documents"
+                                                                    )}
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </>
                                                 )}
-                                            </button>
-                                        </div>
-                                    )}
+                                            </>
+                                        ) : (
+                                            <>
+                                                {searchPages.length === 0 ? (
+                                                    <div className="px-5 py-8 text-center text-[12px] text-[rgba(245,245,245,0.4)]">No pages match your search.</div>
+                                                ) : (
+                                                    searchPages.map((page) => (
+                                                        <SearchResultItem
+                                                            key={`sp-${page.id}`}
+                                                            item={page}
+                                                            onOpenPreview={openPreview}
+                                                        />
+                                                    ))
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </>

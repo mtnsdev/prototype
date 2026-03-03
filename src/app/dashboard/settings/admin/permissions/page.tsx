@@ -311,26 +311,24 @@ export default function PermissionsPage() {
             {/* Filters + Add Rule */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 <div className="flex items-center gap-3">
-                    {activeSource !== "pages" && (
-                        <Select
-                            value={subjectFilter ?? "__all__"}
-                            onValueChange={(v) => setSubjectFilter(v === "__all__" ? null : v)}
-                        >
-                            <SelectTrigger className="w-[200px] rounded-xl bg-[#161616] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
-                                <SelectValue placeholder="All Subjects" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="__all__">All Subjects</SelectItem>
-                                <SelectItem value="role:admin">Role: Admin</SelectItem>
-                                <SelectItem value="role:user">Role: User</SelectItem>
-                                {users.map(user => (
-                                    <SelectItem key={user.id} value={user.id.toString()}>
-                                        {user.email}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    )}
+                    <Select
+                        value={subjectFilter ?? "__all__"}
+                        onValueChange={(v) => setSubjectFilter(v === "__all__" ? null : v)}
+                    >
+                        <SelectTrigger className="w-[200px] rounded-xl bg-[#161616] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                            <SelectValue placeholder="All Subjects" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="__all__">All Subjects</SelectItem>
+                            <SelectItem value="role:admin">Role: Admin</SelectItem>
+                            <SelectItem value="role:user">Role: User</SelectItem>
+                            {users.map(user => (
+                                <SelectItem key={user.id} value={user.id.toString()}>
+                                    {user.email}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
                 <Button
                     onClick={() => setShowCreateModal(true)}
