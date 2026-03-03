@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RefreshCw, Loader2, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type SyncStatus = {
     last_successful_sync_at: string | null;
@@ -163,18 +164,13 @@ export default function SyncStatusButton() {
 
     return (
         <div className="flex flex-col items-end gap-0.5">
-            <button
+            <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={handleClick}
                 disabled={isRunning}
-                className={[
-                    "flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-medium",
-                    "bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.1)]",
-                    "border border-[rgba(255,255,255,0.08)]",
-                    "text-[rgba(245,245,245,0.9)]",
-                    "transition-all duration-150",
-                    "disabled:opacity-70 disabled:cursor-not-allowed",
-                ].join(" ")}
+                className="gap-2 text-[13px]"
             >
                 {isRunning ? (
                     <>
@@ -193,7 +189,7 @@ export default function SyncStatusButton() {
                         </span>
                     </>
                 )}
-            </button>
+            </Button>
             {hasError && (
                 <p
                     className="text-[11px] text-[#C87A7A] max-w-[220px] truncate"

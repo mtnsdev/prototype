@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X, FileText, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface PdfModalProps {
     isOpen: boolean;
@@ -97,43 +99,42 @@ export default function PdfModal({ isOpen, onClose, filename, pageNumber = 1, pd
             ? `${pdfObjectUrl}#page=${pageNumber}`
             : "";
 
-    if (!isOpen) return null;
-
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm transition-opacity duration-200"
-            onClick={onClose}
-        >
-            <div
-                className="relative w-full h-full max-w-6xl max-h-[90vh] m-4 bg-[#F5F5F5] rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+            <DialogContent
+                className="!fixed top-1/2 left-1/2 !w-[95vw] !max-w-[1400px] sm:!max-w-[1400px] h-[90vh] -translate-x-1/2 -translate-y-1/2 m-4 bg-[#F5F5F5] rounded-2xl shadow-2xl flex flex-col overflow-hidden p-0 border-0 z-50"
                 onClick={(e) => e.stopPropagation()}
+                onPointerDownOutside={onClose}
+                onInteractOutside={onClose}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(0,0,0,0.08)] bg-white">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(0,0,0,0.08)] bg-white shrink-0">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className="w-10 h-10 rounded-lg bg-[rgba(0,0,0,0.05)] flex items-center justify-center shrink-0">
                             <FileText size={20} className="text-[rgba(0,0,0,0.5)]" />
                         </div>
                         <div className="min-w-0">
-                            <h2 className="text-[15px] font-semibold text-[#0C0C0C] truncate">
+                            <DialogTitle className="text-[15px] font-semibold text-[#0C0C0C] truncate">
                                 {filename}
-                            </h2>
+                            </DialogTitle>
                             <p className="text-[12px] text-[rgba(0,0,0,0.5)] mt-0.5">
                                 {customUrl ? "Document Preview" : `Page ${pageNumber}`}
                             </p>
                         </div>
                     </div>
-                    <button
+                    <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={onClose}
-                        className="ml-4 w-9 h-9 flex items-center justify-center hover:bg-[rgba(0,0,0,0.05)] rounded-lg transition-colors duration-150"
+                        className="ml-4 w-9 h-9 bg-transparent hover:bg-[rgba(0,0,0,0.05)] text-[rgba(0,0,0,0.5)]"
                         aria-label="Close"
                     >
-                        <X className="w-5 h-5 text-[rgba(0,0,0,0.5)]" />
-                    </button>
+                        <X className="w-5 h-5" />
+                    </Button>
                 </div>
 
-                {/* PDF Viewer */}
-                <div className="flex-1 overflow-hidden bg-[#e5e5e5] relative">
+                {/* PDF Viewer - min-h-0 allows flex item to shrink; fills remaining height */}
+                <div className="flex-1 min-h-0 overflow-hidden bg-[#e5e5e5] relative flex flex-col">
                     {!customUrl && loading && (
                         <div className="absolute inset-0 flex items-center justify-center bg-[#e5e5e5] z-10">
                             <Loader2 className="w-10 h-10 animate-spin text-[rgba(0,0,0,0.4)]" />
@@ -148,13 +149,12 @@ export default function PdfModal({ isOpen, onClose, filename, pageNumber = 1, pd
                         <iframe
                             ref={iframeRef}
                             src={iframeSrc}
-                            className="w-full h-full border-0"
+                            className="w-full flex-1 min-h-0 border-0 block"
                             title={`PDF Viewer - ${filename} - Page ${pageNumber}`}
-                            style={{ minHeight: "600px" }}
                         />
                     )}
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
     Loader2,
@@ -9,11 +9,16 @@ import {
     LogOut,
     AlertCircle,
     CheckCircle,
+    XCircle,
     Cloud,
     Users,
     User,
+    Activity,
+    Link2,
 } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import GoogleDriveFolderPicker from "@/components/GoogleDriveFolderPicker";
 import { useUser } from "@/contexts/UserContext";
 import type { DriveStatus } from "@/types/google-drive";
@@ -32,14 +37,12 @@ function formatTime(iso: string | null | undefined): string {
 }
 
 // ---------------------------------------------------------------------------
-// DriveConnectionCard -- renders one Google Drive connection (personal or agency)
+// DriveConnectionCard -- renders one Google Drive connection (personal or admin)
 // ---------------------------------------------------------------------------
 function DriveConnectionCard({
     connectionType,
-    isAdmin,
 }: {
     connectionType: "personal" | "agency";
-    isAdmin: boolean;
 }) {
     const router = useRouter();
     const [driveStatus, setDriveStatus] = useState<DriveStatus | null>(null);
@@ -49,7 +52,7 @@ function DriveConnectionCard({
     const [pickerOpen, setPickerOpen] = useState(false);
     const [pickerMode, setPickerMode] = useState<"connect" | "change">("connect");
 
-    const label = connectionType === "personal" ? "Personal Google Drive" : "Agency Google Drive";
+    const label = connectionType === "personal" ? "My Google Drive" : "Admin Google Drive";
     const description =
         connectionType === "personal"
             ? "Connect your personal Google Drive folder. Only you can see its content in search and answers."
@@ -268,20 +271,10 @@ function DriveConnectionCard({
                     {!driveStatus?.connected ? (
                         <>
                             <p className="text-[13px] text-[rgba(245,245,245,0.5)]">{description}</p>
-                            <button
-                                onClick={handleConnect}
-                                className={[
-                                    "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
-                                    "text-[14px] font-medium",
-                                    "bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)]",
-                                    "border border-[rgba(255,255,255,0.1)]",
-                                    "text-[#F5F5F5]",
-                                    "transition-all duration-150",
-                                ].join(" ")}
-                            >
+                            <Button onClick={handleConnect} className="gap-2">
                                 <Cloud size={16} />
-                                Connect {connectionType === "personal" ? "Personal" : "Agency"} Drive
-                            </button>
+                                Connect {connectionType === "personal" ? "Personal" : "Admin"} Drive
+                            </Button>
                         </>
                     ) : (
                         <>
@@ -297,32 +290,22 @@ function DriveConnectionCard({
                                 <p className="text-[13px] text-[#C87A7A]">{driveStatus.sync_error}</p>
                             )}
                             <div className="flex flex-wrap gap-2">
-                                <button
-                                    onClick={handleSyncNow}
-                                    disabled={syncing || driveStatus.sync_status === "running"}
-                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-medium bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-[rgba(255,255,255,0.1)] text-[#F5F5F5] disabled:opacity-50"
-                                >
+                                <Button onClick={handleSyncNow} disabled={syncing || driveStatus.sync_status === "running"} className="gap-2">
                                     {syncing || driveStatus.sync_status === "running" ? (
                                         <Loader2 size={16} className="animate-spin" />
                                     ) : (
                                         <RefreshCw size={16} />
                                     )}
                                     Sync now
-                                </button>
-                                <button
-                                    onClick={openChangeFolder}
-                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-medium bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-[rgba(255,255,255,0.1)] text-[#F5F5F5]"
-                                >
+                                </Button>
+                                <Button variant="outline" onClick={openChangeFolder} className="gap-2">
                                     <FolderOpen size={16} />
                                     Change folder
-                                </button>
-                                <button
-                                    onClick={handleDisconnect}
-                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[14px] font-medium bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border border-[rgba(200,122,122,0.2)] text-[#C87A7A]"
-                                >
+                                </Button>
+                                <Button variant="destructive" onClick={handleDisconnect} className="gap-2 bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border-[rgba(200,122,122,0.2)] text-[#C87A7A]">
                                     <LogOut size={16} />
                                     Disconnect
-                                </button>
+                                </Button>
                             </div>
                         </>
                     )}
@@ -337,6 +320,428 @@ function DriveConnectionCard({
                 connectionType={connectionType}
             />
         </>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// ClaromentisConnectionCard -- per-user Claromentis Basic Auth connection
+// ---------------------------------------------------------------------------
+type ClaromentisStatus = {
+    status: "active" | "error" | "disconnected";
+    claromentis_username?: string | null;
+    claromentis_base_url?: string | null;
+    last_connected_at?: string | null;
+    last_error?: string | null;
+};
+
+function ClaromentisConnectionCard() {
+    const router = useRouter();
+    const [status, setStatus] = useState<ClaromentisStatus | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [baseUrl, setBaseUrl] = useState("");
+
+    const fetchStatus = useCallback(async () => {
+        try {
+            const token = localStorage.getItem("auth_token");
+            if (!token) { router.push("/login"); return; }
+            const res = await fetch("/api/integrations/claromentis/status", {
+                cache: "no-store",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.status === 401) { router.push("/login"); return; }
+            if (!res.ok) throw new Error("Failed to fetch status");
+            const data: ClaromentisStatus = await res.json();
+            setStatus(data);
+            setError(null);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "Failed to load");
+        } finally {
+            setLoading(false);
+        }
+    }, [router]);
+
+    useEffect(() => { fetchStatus(); }, [fetchStatus]);
+
+    const handleConnect = useCallback(async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+        setError(null);
+        try {
+            const token = localStorage.getItem("auth_token");
+            const res = await fetch("/api/integrations/claromentis/connect", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    claromentis_username: username,
+                    claromentis_password: password,
+                    claromentis_base_url: baseUrl || null,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || "Connection failed");
+            setPassword("");
+            await fetchStatus();
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "Connection failed");
+        } finally {
+            setSubmitting(false);
+        }
+    }, [username, password, baseUrl, fetchStatus]);
+
+    const handleDisconnect = useCallback(async () => {
+        if (!confirm("Disconnect your Claromentis account?")) return;
+        try {
+            const token = localStorage.getItem("auth_token");
+            await fetch("/api/integrations/claromentis/disconnect", {
+                method: "POST",
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            setUsername("");
+            setPassword("");
+            setBaseUrl("");
+            await fetchStatus();
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "Disconnect failed");
+        }
+    }, [fetchStatus]);
+
+    const isConnected = status?.status === "active";
+    const isError = status?.status === "error";
+    const showForm = !isConnected || isError;
+
+    if (loading) {
+        return (
+            <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
+                <div className="flex items-center justify-center py-8">
+                    <Loader2 size={20} className="animate-spin text-[rgba(245,245,245,0.5)]" />
+                </div>
+            </section>
+        );
+    }
+
+    return (
+        <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-white/10">
+                    <Link2 size={18} className="text-[rgba(245,245,245,0.6)]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <h2 className="text-[15px] font-semibold text-[#F5F5F5]">Claromentis Account</h2>
+                    <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-0.5">
+                        Connect your personal Claromentis account for search and browsing
+                    </p>
+                </div>
+                {isConnected && (
+                    <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[12px] font-medium bg-green-500/15 text-green-400 border border-green-500/25">
+                        <CheckCircle size={12} /> Connected
+                    </span>
+                )}
+                {isError && (
+                    <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[12px] font-medium bg-red-500/15 text-red-400 border border-red-500/25">
+                        <AlertCircle size={12} /> Error
+                    </span>
+                )}
+            </div>
+
+            {/* Body */}
+            <div className="p-5 space-y-4">
+                {error && (
+                    <div className="rounded-lg bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)] px-3 py-2 text-[13px] text-[#C87A7A]">
+                        {error}
+                    </div>
+                )}
+
+                {isError && status?.last_error && (
+                    <div className="rounded-lg bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)] px-3 py-2 text-[13px] text-[#C87A7A]">
+                        {status.last_error} — re-enter your credentials below to reconnect.
+                    </div>
+                )}
+
+                {isConnected && !isError && (
+                    <div className="space-y-1">
+                        <p className="text-[13px] text-[rgba(245,245,245,0.6)]">
+                            Signed in as <span className="text-[#F5F5F5] font-medium">{status?.claromentis_username}</span>
+                        </p>
+                        {status?.last_connected_at && (
+                            <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
+                                Connected {formatTime(status.last_connected_at)}
+                            </p>
+                        )}
+                        <div className="pt-2">
+                            <Button variant="destructive" onClick={handleDisconnect} className="gap-2 bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border-[rgba(200,122,122,0.2)] text-[#C87A7A]">
+                                <LogOut size={16} />
+                                Disconnect
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                {showForm && (
+                    <form onSubmit={handleConnect} className="space-y-3">
+                        <div className="space-y-2">
+                            <Input
+                                type="text"
+                                placeholder="Username"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                required
+                                autoComplete="username"
+                                className="rounded-xl bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]"
+                            />
+                            <Input
+                                type="password"
+                                placeholder="Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                autoComplete="current-password"
+                                className="rounded-xl bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]"
+                            />
+                            <Input
+                                type="url"
+                                placeholder="Custom URL (optional — leave blank to use default)"
+                                value={baseUrl}
+                                onChange={(e) => setBaseUrl(e.target.value)}
+                                autoComplete="off"
+                                className="rounded-xl bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]"
+                            />
+                        </div>
+                        <Button type="submit" disabled={submitting} className="gap-2">
+                            {submitting ? <Loader2 size={16} className="animate-spin" /> : <Link2 size={16} />}
+                            {isError ? "Reconnect" : "Connect"}
+                        </Button>
+                    </form>
+                )}
+            </div>
+        </section>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Sync health types
+// ---------------------------------------------------------------------------
+type IntegrationHealth = {
+    integration: string;
+    last_successful_sync_at: string | null;
+    last_run_status: string | null;
+    last_run_error: string | null;
+    triggered_by: string | null;
+    total_docs_synced: number;
+    total_docs_failed: number;
+    total_docs_indexed: number;
+    pending_indexing: number;
+};
+
+type SyncHealthResponse = {
+    integrations: IntegrationHealth[];
+    overall_status: string;
+};
+
+function formatSyncTime(iso: string | null): string {
+    if (!iso) return "—";
+    try {
+        const d = new Date(iso);
+        return d.toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" });
+    } catch {
+        return "—";
+    }
+}
+
+function SyncStatusBadge({ status }: { status: string }) {
+    if (status === "healthy") {
+        return (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[12px] font-medium bg-green-500/15 text-green-400 border border-green-500/25">
+                <CheckCircle size={12} /> Healthy
+            </span>
+        );
+    }
+    if (status === "degraded") {
+        return (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[12px] font-medium bg-amber-500/15 text-amber-400 border border-amber-500/25">
+                <AlertCircle size={12} /> Degraded
+            </span>
+        );
+    }
+    return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[12px] font-medium bg-red-500/15 text-red-400 border border-red-500/25">
+            <XCircle size={12} /> Error
+        </span>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// ClaromentisSync — admin-only sync health card
+// ---------------------------------------------------------------------------
+function ClaromentisSync() {
+    const [health, setHealth] = useState<SyncHealthResponse | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [triggering, setTriggering] = useState(false);
+    const [syncMessage, setSyncMessage] = useState<string | null>(null);
+    const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const fetchHealth = useCallback(async (): Promise<SyncHealthResponse | null> => {
+        try {
+            const token = localStorage.getItem("auth_token");
+            const res = await fetch("/api/sync/health", {
+                cache: "no-store",
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            if (!res.ok) throw new Error("Failed to fetch sync health");
+            const data: SyncHealthResponse = await res.json();
+            setHealth(data);
+            setError(null);
+            return data;
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "Failed to load");
+            return null;
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => { fetchHealth(); }, [fetchHealth]);
+
+    // Poll health every 3 s while any integration is running, then stop.
+    const startPolling = useCallback(() => {
+        if (pollRef.current) return;
+        const tick = async () => {
+            const data = await fetchHealth();
+            const anyRunning = data?.integrations.some(
+                (i) => i.last_run_status === "running"
+            );
+            if (anyRunning) {
+                pollRef.current = setTimeout(tick, 3000);
+            } else {
+                pollRef.current = null;
+            }
+        };
+        pollRef.current = setTimeout(tick, 3000);
+    }, [fetchHealth]);
+
+    useEffect(() => () => { if (pollRef.current) clearTimeout(pollRef.current); }, []);
+
+    const triggerSync = useCallback(async () => {
+        setTriggering(true);
+        setSyncMessage(null);
+        try {
+            const token = localStorage.getItem("auth_token");
+            const res = await fetch("/api/sync/trigger-safe", {
+                method: "POST",
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || "Trigger failed");
+
+            if (data.status === "already_running") {
+                setSyncMessage("Sync already in progress — check back in a moment.");
+            } else {
+                setSyncMessage("Sync started.");
+                startPolling();
+            }
+            await fetchHealth();
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "Trigger failed");
+        } finally {
+            setTriggering(false);
+        }
+    }, [fetchHealth, startPolling]);
+
+    return (
+        <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-white/10">
+                        <Activity size={18} className="text-[rgba(245,245,245,0.6)]" />
+                    </div>
+                    <div>
+                        <h2 className="text-[15px] font-semibold text-[#F5F5F5]">Claromentis Sync</h2>
+                        <p className="text-[12px] text-[rgba(245,245,245,0.45)] mt-0.5">Admin — sync health and controls</p>
+                    </div>
+                </div>
+                {health && (
+                    <div className="flex items-center gap-3">
+                        <SyncStatusBadge status={health.overall_status} />
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={triggerSync}
+                            disabled={triggering}
+                            size="sm"
+                            className="gap-2"
+                        >
+                            {triggering ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                            Sync Now
+                        </Button>
+                    </div>
+                )}
+            </div>
+
+            {/* Body */}
+            <div className="p-5">
+                {syncMessage && (
+                    <div className="mb-4 rounded-xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] px-4 py-2.5 text-[12px] text-[rgba(245,245,245,0.65)]">
+                        {syncMessage}
+                    </div>
+                )}
+                {isLoading ? (
+                    <div className="flex items-center gap-2 py-4 justify-center">
+                        <Loader2 size={18} className="animate-spin text-[rgba(245,245,245,0.4)]" />
+                        <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Loading sync status…</span>
+                    </div>
+                ) : error && !health ? (
+                    <div className="rounded-xl bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)] p-4">
+                        <p className="text-[13px] text-[#C87A7A]">{error}</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {health?.integrations.map((int) => (
+                            <div key={int.integration} className="rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.07)] p-4">
+                                <div className="flex items-start justify-between mb-3">
+                                    <div>
+                                        <h3 className="text-[13px] font-semibold text-[#F5F5F5] capitalize">{int.integration}</h3>
+                                        <p className="text-[11px] text-[rgba(245,245,245,0.45)] mt-0.5">
+                                            Last sync: {formatSyncTime(int.last_successful_sync_at)}
+                                        </p>
+                                    </div>
+                                    <span className="text-[11px] text-[rgba(245,245,245,0.35)]">
+                                        {int.triggered_by === "manual" ? "Manual" : "Scheduled"}
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-y-1.5 text-[12px] mb-3">
+                                    <span className="text-[rgba(245,245,245,0.45)]">Synced</span>
+                                    <span className="text-[#F5F5F5] font-medium text-right">{int.total_docs_synced}</span>
+                                    <span className="text-[rgba(245,245,245,0.45)]">Failed</span>
+                                    <span className="text-[#F5F5F5] font-medium text-right">{int.total_docs_failed}</span>
+                                    <span className="text-[rgba(245,245,245,0.45)]">Indexed</span>
+                                    <span className="text-[#F5F5F5] font-medium text-right">{int.total_docs_indexed}</span>
+                                    <span className="text-[rgba(245,245,245,0.45)]">Pending index</span>
+                                    <span className="text-[#F5F5F5] font-medium text-right">{int.pending_indexing}</span>
+                                </div>
+                                {int.last_run_error && (
+                                    <div className="p-2.5 rounded-lg bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)]">
+                                        <p className="text-[11px] text-[#C87A7A]">{int.last_run_error}</p>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+                {error && health && (
+                    <p className="mt-3 text-[12px] text-[#C87A7A]">{error}</p>
+                )}
+            </div>
+        </div>
     );
 }
 
@@ -361,13 +766,19 @@ export default function IntegrationsPage() {
                     <p className="text-[14px] text-[rgba(245,245,245,0.5)] mt-1">Connect data sources for search and RAG</p>
                 </div>
 
-                {/* Personal Google Drive -- available to all users */}
-                <DriveConnectionCard connectionType="personal" isAdmin={isAdmin} />
+                {/* My Google Drive -- available to all users */}
+                <DriveConnectionCard connectionType="personal" />
 
-                {/* Agency Google Drive -- admin only */}
+                {/* Claromentis account -- available to all users */}
+                <ClaromentisConnectionCard />
+
+                {/* Admin Google Drive -- admin only */}
                 {isAdmin && (
-                    <DriveConnectionCard connectionType="agency" isAdmin={isAdmin} />
+                    <DriveConnectionCard connectionType="agency" />
                 )}
+
+                {/* Claromentis sync health -- admin only */}
+                {isAdmin && <ClaromentisSync />}
             </div>
         </div>
     );

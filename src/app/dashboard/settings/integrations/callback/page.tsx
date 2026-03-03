@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function GoogleDriveOAuthCallbackPage() {
     const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
@@ -12,7 +13,8 @@ export default function GoogleDriveOAuthCallbackPage() {
         const code = params.get("code");
         const errorParam = params.get("error");
 
-        // Extract connection_type from the OAuth state parameter or query string
+        // Extract connection_type from the OAuth state parameter or query string.
+        // Backend encodes state as "user_id:connection_type" (e.g. "123:agency").
         let connectionType = "personal";
         const stateParam = params.get("state");
         if (stateParam) {
@@ -22,8 +24,15 @@ export default function GoogleDriveOAuthCallbackPage() {
                     connectionType = stateData.connection_type;
                 }
             } catch {
-                // state might be a plain string, not JSON -- check if it's directly the connection_type
-                if (stateParam === "agency" || stateParam === "personal") {
+                // State is not JSON. Try "user_id:connection_type" format first,
+                // then fall back to plain string match.
+                const colonIdx = stateParam.lastIndexOf(":");
+                if (colonIdx !== -1) {
+                    const ct = stateParam.slice(colonIdx + 1);
+                    if (ct === "agency" || ct === "personal") {
+                        connectionType = ct;
+                    }
+                } else if (stateParam === "agency" || stateParam === "personal") {
                     connectionType = stateParam;
                 }
             }
@@ -99,13 +108,14 @@ export default function GoogleDriveOAuthCallbackPage() {
                     <>
                         <AlertCircle size={32} className="text-[#C87A7A] mx-auto mb-4" />
                         <p className="text-[15px] text-[#F5F5F5]">{message}</p>
-                        <button
+                        <Button
                             type="button"
+                            variant="ghost"
                             onClick={() => window.close()}
                             className="mt-4 text-[13px] text-[rgba(245,245,245,0.6)] hover:text-[#F5F5F5]"
                         >
                             Close window
-                        </button>
+                        </Button>
                     </>
                 )}
             </div>

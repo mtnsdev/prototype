@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import React from "react";
-import { AlertTriangle, Loader2, ExternalLink, Send, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare } from "lucide-react";
+import { AlertTriangle, Loader2, ExternalLink, Send, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, ChevronDown } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Image from "next/image";
 import PdfModal from "./PdfModal";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useUserOptional } from "@/contexts/UserContext";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
@@ -88,22 +90,23 @@ function InlineCitationMarker({
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}
         >
-            <button
+            <Button
                 type="button"
+                size="icon"
                 onClick={(e) => {
                     e.preventDefault();
                     onCitationClick(filename, pageNumber, pdf_path);
                 }}
                 className={[
-                    "inline-flex items-center justify-center min-w-[1.25em] h-[1.25em] rounded-full text-white text-[11px] font-semibold",
+                    "inline-flex items-center justify-center w-[1.35em] h-[1.35em] shrink-0 rounded-full text-white text-[10px] font-semibold p-1 leading-none",
                     "bg-[#3C4472] hover:bg-[#4a5285] border border-[rgba(255,255,255,0.15)]",
-                    "cursor-pointer transition-colors duration-150 align-[0.2em] ml-1.5",
+                    "cursor-pointer align-[0.15em] ml-1",
                 ].join(" ")}
                 title={`${filename}, page ${pageNumber}`}
                 aria-label={`Citation ${displayNumber}: ${filename} page ${pageNumber}`}
             >
                 {displayNumber}
-            </button>
+            </Button>
             {hover && (
                 <>
                     {/* Invisible bridge so moving mouse to the panel doesn't trigger onMouseLeave (span to avoid <div> inside <p>) */}
@@ -160,9 +163,9 @@ function InlineCitationMarkerEllipsis({
                         setExpanded(false);
                     }}
                     className={[
-                        "inline-flex items-center justify-center min-w-[1.25em] h-[1.25em] rounded-full text-[11px] font-semibold",
+                        "inline-flex items-center justify-center w-[1.35em] h-[1.35em] shrink-0 rounded-full text-[10px] font-semibold p-1 leading-none",
                         "bg-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.3)] text-white border border-[rgba(255,255,255,0.2)]",
-                        "cursor-pointer transition-colors duration-150 align-[0.2em] ml-1.5",
+                        "cursor-pointer transition-colors duration-150 align-[0.15em] ml-1",
                     ].join(" ")}
                     title="Collapse citations"
                     aria-label="Collapse citations"
@@ -181,9 +184,9 @@ function InlineCitationMarkerEllipsis({
                 setExpanded(true);
             }}
             className={[
-                "inline-flex items-center justify-center min-w-[1.25em] h-[1.25em] rounded-full text-white text-[11px] font-semibold",
+                "inline-flex items-center justify-center w-[1.35em] h-[1.35em] shrink-0 rounded-full text-white text-[10px] font-semibold p-1 leading-none",
                 "bg-[#3C4472] hover:bg-[#4a5285] border border-[rgba(255,255,255,0.15)]",
-                "cursor-pointer transition-colors duration-150 align-[0.2em] ml-1.5",
+                "cursor-pointer transition-colors duration-150 align-[0.15em] ml-1",
             ].join(" ")}
             title="Show all citations"
             aria-label="Show all citations"
@@ -480,6 +483,13 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
     /** Message id for which the comment popup is open (null = closed) */
     const [feedbackCommentPopupMessageId, setFeedbackCommentPopupMessageId] = useState<number | null>(null);
 
+    /** Ref for the bottom of the messages area; scroll here after sending so the new question is visible */
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    /** Ref for the scrollable messages container; used for scroll-to-bottom button and scroll detection */
+    const messagesScrollRef = useRef<HTMLDivElement>(null);
+    /** Show "scroll to bottom" button when user has scrolled up and content overflows */
+    const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+
     // Delayed loading states to prevent flickering
     const showSendingLoader = useDelayedLoading(loading);
     const showConversationLoader = useDelayedLoading(loadingConversation);
@@ -616,6 +626,8 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
         setMessages((m) => [...m, { role: "user", text }]);
         setLoading(true);
         setThinkingSteps([]);
+        // Scroll to the new question after React commits the new message to the DOM
+        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 0);
 
         try {
             const token = localStorage.getItem("auth_token");
@@ -731,6 +743,28 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
         send(suggestion);
     };
 
+    const checkShowScrollToBottom = useCallback(() => {
+        const el = messagesScrollRef.current;
+        if (!el) return;
+        const { scrollTop, scrollHeight, clientHeight } = el;
+        const threshold = 80;
+        const isOverflowing = scrollHeight > clientHeight;
+        const isNearBottom = scrollHeight - scrollTop - clientHeight <= threshold;
+        setShowScrollToBottom(isOverflowing && !isNearBottom);
+    }, []);
+
+    const scrollToBottom = useCallback(() => {
+        messagesScrollRef.current?.scrollTo({ top: messagesScrollRef.current.scrollHeight, behavior: "smooth" });
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, []);
+
+    // Re-check scroll position when messages or loading state changes (layout may have changed)
+    useEffect(() => {
+        if (messages.length === 0 && !loadingConversation) return;
+        const t = setTimeout(checkShowScrollToBottom, 100);
+        return () => clearTimeout(t);
+    }, [messages.length, loading, showConversationLoader, loadingConversation, checkShowScrollToBottom]);
+
     const isEmptyState = messages.length === 0 && !loadingConversation;
 
     return (
@@ -768,7 +802,12 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                 </div>
 
                 {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-6 space-y-6" style={{ minHeight: 0 }}>
+                <div
+                    ref={messagesScrollRef}
+                    className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-6 space-y-6"
+                    style={{ minHeight: 0 }}
+                    onScroll={checkShowScrollToBottom}
+                >
                     {/* Empty State */}
                     {isEmptyState && (
                         <div className="flex flex-col items-center justify-center h-full text-center px-4">
@@ -974,40 +1013,50 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                             </div>
                         </div>
                     )}
+                    <div ref={messagesEndRef} aria-hidden />
                 </div>
+
+                {/* Scroll to bottom button - above input when messages overflow and user has scrolled up */}
+                {showScrollToBottom && !isEmptyState && (
+                    <div className="shrink-0 flex justify-center py-1 bg-[#0C0C0C]">
+                        <button
+                            type="button"
+                            onClick={scrollToBottom}
+                            className={[
+                                "flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium",
+                                "bg-[#161616] hover:bg-[#1e1e1e] text-[rgba(245,245,245,0.9)]",
+                                "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(174,133,80,0.3)]",
+                                "shadow-md hover:shadow-lg transition-all duration-150",
+                            ].join(" ")}
+                            title="Scroll to bottom"
+                            aria-label="Scroll to bottom"
+                        >
+                            <ChevronDown className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
 
                 {/* Input Area */}
                 <div className="shrink-0 p-4 bg-[#0C0C0C]">
                     <div className="flex gap-3 items-center max-w-4xl mx-auto">
                         <div className="flex-1 relative">
-                            <input
+                            <Input
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={(e) => (e.key === "Enter" && !e.shiftKey ? send() : null)}
                                 placeholder="Ask Enable a question..."
-                                className={[
-                                    "w-full rounded-xl px-4 py-3 text-[14px]",
-                                    "bg-[#161616] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.35)]",
-                                    "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(174,133,80,0.3)]",
-                                    "focus:outline-none focus:border-[rgba(174,133,80,0.5)] focus:ring-1 focus:ring-[rgba(174,133,80,0.2)]",
-                                    "transition-all duration-150",
-                                ].join(" ")}
+                                className="w-full rounded-xl px-4 py-3 bg-[#161616] border-[rgba(255,255,255,0.1)] focus-visible:border-[rgba(174,133,80,0.5)] focus-visible:ring-[rgba(174,133,80,0.2)]"
                             />
                         </div>
-                        <button
+                        <Button
                             type="button"
+                            size="icon"
                             onClick={() => send()}
                             disabled={loading || !input.trim()}
-                            className={[
-                                "h-11 w-11 rounded-xl flex items-center justify-center",
-                                "bg-[#AE8550] hover:bg-[#C4975E] text-white",
-                                "disabled:opacity-40 disabled:cursor-not-allowed",
-                                "transition-all duration-150",
-                                "shadow-sm hover:shadow-md",
-                            ].join(" ")}
+                            className="h-11 w-11 rounded-xl bg-[#AE8550] hover:bg-[#C4975E] text-white border-0"
                         >
                             <Send size={18} />
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </section>
@@ -1051,24 +1100,27 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                             autoFocus
                         />
                         <div className="flex justify-end gap-2">
-                            <button
+                            <Button
                                 type="button"
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => setFeedbackCommentPopupMessageId(null)}
-                                className="px-3 py-1.5 rounded-lg text-[12px] font-medium text-[rgba(245,245,245,0.7)] hover:bg-white/10 transition-colors"
+                                className="text-[rgba(245,245,245,0.7)]"
                             >
                                 Cancel
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 type="button"
+                                size="sm"
                                 onClick={() => {
                                     const comment = feedbackCommentDraft[feedbackCommentPopupMessageId]?.trim() ?? "";
                                     submitFeedback(feedbackCommentPopupMessageId, { comment: comment || null });
                                 }}
                                 disabled={feedbackSubmitting === feedbackCommentPopupMessageId}
-                                className="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-[rgba(174,133,80,0.2)] text-[#D4A574] hover:bg-[rgba(174,133,80,0.3)] border border-[rgba(174,133,80,0.3)] transition-colors disabled:opacity-50"
+                                className="bg-[rgba(174,133,80,0.2)] text-[#D4A574] hover:bg-[rgba(174,133,80,0.3)] border-[rgba(174,133,80,0.3)]"
                             >
                                 {feedbackSubmitting === feedbackCommentPopupMessageId ? "Saving…" : "Submit"}
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>

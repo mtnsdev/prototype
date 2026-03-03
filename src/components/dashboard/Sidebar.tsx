@@ -18,8 +18,10 @@ import {
     // Search
 } from "lucide-react";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
 import { useUserOptional } from "@/contexts/UserContext";
 import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
+import { useClaromentisStatus } from "@/hooks/useClaromentisStatus";
 
 export type Conversation = {
     id: number;
@@ -55,9 +57,10 @@ export default function Sidebar({
     const popoverRef = useRef<HTMLDivElement>(null);
     const isOnChatPage = pathname.startsWith("/dashboard/chat");
 
-    // Google Drive connection status for sidebar entries
+    // Connection status for sidebar entries
     const { status: personalDriveStatus } = useGoogleDriveStatus("personal");
     const { status: agencyDriveStatus } = useGoogleDriveStatus("agency");
+    const { status: claromentisStatus } = useClaromentisStatus();
 
     // Close popover when clicking outside
     useEffect(() => {
@@ -130,52 +133,81 @@ export default function Sidebar({
         >
             <div className="h-full flex flex-col">
                 {/* Header */}
-                <div className="flex items-center justify-between px-3 py-3 border-b border-[rgba(255,255,255,0.08)]">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center border border-white/10 shadow-sm">
-                            <Image
-                                src="/TL_logo.svg"
-                                alt="Travel Lustre Logo"
-                                width={18}
-                                height={18}
-                                className="opacity-90"
-                            />
-                        </div>
-                        {!collapsed && (
-                            <div className="truncate">
-                                <p className="text-sm font-semibold leading-none text-[#F5F5F5]">TRAVELLUSTRE</p>
-                                <p className="text-[11px] text-[rgba(245,245,245,0.5)] mt-1">Created by Enable VIC</p>
+                <div
+                    className={[
+                        "flex border-b border-[rgba(255,255,255,0.08)]",
+                        collapsed
+                            ? "flex-col items-center gap-2 py-3 px-2"
+                            : "items-center justify-between px-3 py-3",
+                    ].join(" ")}
+                >
+                    {collapsed ? (
+                        <>
+                            <div className="h-8 w-8 shrink-0 rounded-md bg-white/5 flex items-center justify-center border border-white/10">
+                                <Image
+                                    src="/TL_logo.svg"
+                                    alt="Travel Lustre Logo"
+                                    width={18}
+                                    height={18}
+                                    className="opacity-90"
+                                />
                             </div>
-                        )}
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={onToggle}
-                        className="h-8 w-8 rounded-md hover:bg-white/8 flex items-center justify-center transition-colors duration-150 text-white/60 hover:text-white/90"
-                        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-                    >
-                        {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-                    </button>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={onToggle}
+                                className="h-8 w-8 shrink-0 rounded-md hover:bg-white/8 text-white/60 hover:text-white/90"
+                                aria-label="Expand sidebar"
+                            >
+                                <PanelLeftOpen size={16} />
+                            </Button>
+                        </>
+                    ) : (
+                        <>
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="h-8 w-8 shrink-0 rounded-md bg-white/5 flex items-center justify-center border border-white/10">
+                                    <Image
+                                        src="/TL_logo.svg"
+                                        alt="Travel Lustre Logo"
+                                        width={18}
+                                        height={18}
+                                        className="opacity-90"
+                                    />
+                                </div>
+                                <div className="truncate min-w-0">
+                                    <p className="text-sm font-semibold leading-none text-[#F5F5F5]">TRAVELLUSTRE</p>
+                                    <p className="text-[11px] text-[rgba(245,245,245,0.5)] mt-1">Created by Enable VIC</p>
+                                </div>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={onToggle}
+                                className="h-8 w-8 shrink-0 rounded-md hover:bg-white/8 text-white/60 hover:text-white/90"
+                                aria-label="Collapse sidebar"
+                            >
+                                <PanelLeftClose size={16} />
+                            </Button>
+                        </>
+                    )}
                 </div>
 
                 {/* New Chat Button (only on chat page) */}
                 {isOnChatPage && (
                     <div className="p-2.5 border-b border-[rgba(255,255,255,0.08)]">
-                        <button
+                        <Button
+                            variant="outline"
                             onClick={handleNewChat}
                             className={[
-                                "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg",
-                                "bg-white/8 hover:bg-white/12 active:bg-white/16",
-                                "transition-all duration-150 ease-out",
-                                "border border-white/10 hover:border-white/15",
-                                "group",
+                                "w-full gap-2.5 rounded-lg bg-white/8 hover:bg-white/12 border-white/10 hover:border-white/15",
                                 collapsed ? "justify-center" : "",
                             ].join(" ")}
                         >
                             <Plus size={16} className="text-white/70 group-hover:text-white/90 transition-colors" />
                             {!collapsed && <span className="text-sm font-medium text-[#F5F5F5]">New Chat</span>}
-                        </button>
+                        </Button>
                     </div>
                 )}
 
@@ -185,30 +217,26 @@ export default function Sidebar({
                         <p className="text-[11px] font-medium uppercase tracking-wider text-[rgba(245,245,245,0.4)] px-2 mb-2">Recent</p>
                         <div className="space-y-0.5">
                             {recentConversations.map((conv) => (
-                                <button
+                                <Button
                                     key={conv.id}
+                                    variant="ghost"
                                     onClick={() => onSelectConversation?.(conv.id)}
-                                    className={[
-                                        "w-full text-left px-3 py-2 rounded-md text-[13px] truncate",
-                                        "transition-all duration-150 ease-out",
-                                        selectedConversationId === conv.id
-                                            ? "bg-white/10 text-[#F5F5F5]"
-                                            : "text-[rgba(245,245,245,0.7)] hover:bg-white/6 hover:text-[#F5F5F5]",
-                                    ].join(" ")}
+                                    className={`w-full justify-start px-3 py-2 rounded-md text-[13px] truncate font-normal h-auto ${selectedConversationId === conv.id ? "bg-white/10 text-[#F5F5F5]" : "text-[rgba(245,245,245,0.7)] hover:bg-white/6 hover:text-[#F5F5F5]"}`}
                                     title={conv.title}
                                 >
                                     {conv.title}
-                                </button>
+                                </Button>
                             ))}
                         </div>
                         {/* History Button */}
-                        <button
+                        <Button
+                            variant="ghost"
                             onClick={onOpenHistory}
-                            className="w-full flex items-center gap-2 px-3 py-2 mt-2 rounded-md text-[13px] text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-white/5 transition-all duration-150"
+                            className="w-full justify-start gap-2 px-3 py-2 mt-2 rounded-md text-[13px] font-normal h-auto text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-white/5"
                         >
                             <History size={14} />
                             <span>View all history</span>
-                        </button>
+                        </Button>
                     </div>
                 )}
 
@@ -224,14 +252,11 @@ export default function Sidebar({
 
                     {/* Knowledge Section - Expandable */}
                     <div>
-                        <button
+                        <Button
                             type="button"
+                            variant="ghost"
                             onClick={() => setKnowledgeExpanded(!knowledgeExpanded)}
-                            className={[
-                                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px]",
-                                "transition-all duration-150 ease-out",
-                                "text-[rgba(245,245,245,0.65)] hover:bg-white/6 hover:text-[#F5F5F5]",
-                            ].join(" ")}
+                            className="w-full justify-start gap-3 px-3 py-2.5 rounded-lg text-[13px] font-normal h-auto text-[rgba(245,245,245,0.65)] hover:bg-white/6 hover:text-[#F5F5F5]"
                         >
                             <span className="shrink-0 text-white/50">
                                 <Database size={18} />
@@ -246,7 +271,7 @@ export default function Sidebar({
                                     )}
                                 </>
                             )}
-                        </button>
+                        </Button>
 
                         {/* Integrations list when expanded */}
                         {knowledgeExpanded && !collapsed && (
@@ -254,22 +279,31 @@ export default function Sidebar({
                                 <IntegrationItem
                                     name="Claromentis (Intranet)"
                                     status="active"
+                                    connected={claromentisStatus?.status === "active"}
                                     onClick={() => router.push("/dashboard/knowledge?integration=claromentis")}
                                     active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("claromentis")}
                                 />
-                                {personalDriveStatus?.connected && (
+                                <IntegrationItem
+                                    name="My Google Drive"
+                                    status="active"
+                                    connected={personalDriveStatus?.connected ?? false}
+                                    onClick={
+                                        personalDriveStatus?.connected
+                                            ? () => router.push("/dashboard/knowledge?integration=google-drive-personal")
+                                            : () => router.push("/dashboard/settings/integrations")
+                                    }
+                                    active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("google-drive-personal")}
+                                />
+                                {userContext?.user?.role === "admin" && (
                                     <IntegrationItem
-                                        name="My Google Drive"
+                                        name="Admin Google Drive"
                                         status="active"
-                                        onClick={() => router.push("/dashboard/knowledge?integration=google-drive-personal")}
-                                        active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("google-drive-personal")}
-                                    />
-                                )}
-                                {agencyDriveStatus?.connected && (
-                                    <IntegrationItem
-                                        name="Agency Google Drive"
-                                        status="active"
-                                        onClick={() => router.push("/dashboard/knowledge?integration=google-drive-agency")}
+                                        connected={agencyDriveStatus?.connected ?? false}
+                                        onClick={
+                                            agencyDriveStatus?.connected
+                                                ? () => router.push("/dashboard/knowledge?integration=google-drive-agency")
+                                                : () => router.push("/dashboard/settings/integrations")
+                                        }
                                         active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("google-drive-agency")}
                                     />
                                 )}
@@ -300,15 +334,10 @@ export default function Sidebar({
 
                 {/* Footer - User Popover */}
                 <div className="mt-auto p-2.5 border-t border-[rgba(255,255,255,0.08)] relative" ref={popoverRef}>
-                    <button
+                    <Button
+                        variant="ghost"
                         onClick={() => setUserPopoverOpen(!userPopoverOpen)}
-                        className={[
-                            "w-full rounded-lg p-2.5",
-                            "bg-white/4 hover:bg-white/8 active:bg-white/10",
-                            "transition-all duration-150 ease-out",
-                            "border border-transparent hover:border-white/8",
-                            "cursor-pointer text-left group",
-                        ].join(" ")}
+                        className="w-full rounded-lg p-2.5 bg-white/4 hover:bg-white/8 h-auto justify-start gap-2.5 font-normal border border-transparent hover:border-white/8 text-left group"
                         title="User menu"
                     >
                         {!collapsed ? (
@@ -337,7 +366,7 @@ export default function Sidebar({
                                 <User size={16} className="text-[rgba(245,245,245,0.4)] group-hover:text-[rgba(245,245,245,0.7)] transition-colors" />
                             </div>
                         )}
-                    </button>
+                    </Button>
 
                     {/* User Popover Menu */}
                     {userPopoverOpen && (
@@ -357,16 +386,17 @@ export default function Sidebar({
                                 <span>Settings</span>
                             </Link>
                             <div className="h-px bg-[rgba(255,255,255,0.08)]" />
-                            <button
+                            <Button
+                                variant="ghost"
                                 onClick={() => {
                                     setUserPopoverOpen(false);
                                     handleSignOut();
                                 }}
-                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[rgba(245,245,245,0.8)] hover:bg-white/8 hover:text-[#F5F5F5] transition-colors"
+                                className="w-full justify-start gap-2.5 px-3 py-2.5 text-[13px] font-normal text-[rgba(245,245,245,0.8)] hover:bg-white/8 hover:text-[#F5F5F5] rounded-none"
                             >
                                 <LogOut size={14} className="text-[rgba(245,245,245,0.5)]" />
                                 <span>Sign out</span>
-                            </button>
+                            </Button>
                         </div>
                     )}
                 </div>
@@ -408,40 +438,45 @@ function NavLink({
 function IntegrationItem({
     name,
     status,
+    connected,
     onClick,
     active,
 }: {
     name: string;
     status: "active" | "coming_soon";
+    connected?: boolean;
     onClick?: () => void;
     active?: boolean;
 }) {
     const isClickable = status === "active" && onClick;
+    const showInactive = status === "active" && connected === false;
 
     return (
-        <button
+        <Button
             type="button"
+            variant="ghost"
             onClick={isClickable ? onClick : undefined}
             disabled={!isClickable}
-            className={[
-                "w-full flex items-center justify-between py-1.5 px-2 rounded-md text-[12px]",
-                "transition-all duration-150",
-                isClickable ? "cursor-pointer hover:bg-white/6" : "cursor-default",
-                active ? "bg-white/8" : "",
-            ].join(" ")}
+            className={`w-full justify-between py-1.5 px-2 rounded-md text-[12px] font-normal h-auto ${isClickable ? "cursor-pointer hover:bg-white/6" : "cursor-default"} ${active ? "bg-white/8" : ""}`}
         >
             <span className={status === "active" ? "text-[rgba(245,245,245,0.8)]" : "text-[rgba(245,245,245,0.45)]"}>
                 {name}
             </span>
             {status === "active" ? (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-[rgba(122,200,137,0.15)] text-[#7AC889]">
-                    Active
-                </span>
+                showInactive ? (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[rgba(245,245,245,0.08)] text-[rgba(245,245,245,0.45)]">
+                        Inactive
+                    </span>
+                ) : (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[rgba(122,200,137,0.15)] text-[#7AC889]">
+                        Active
+                    </span>
+                )
             ) : (
                 <span className="text-[10px] text-[rgba(245,245,245,0.35)]">
                     Coming soon
                 </span>
             )}
-        </button>
+        </Button>
     );
 }

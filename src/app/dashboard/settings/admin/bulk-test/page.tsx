@@ -25,7 +25,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 const API_BASE = "/api/admin/bulk-test";
 
 const GEMINI_MODEL_OPTIONS = [
@@ -133,7 +135,7 @@ export default function BulkTestPage() {
 
     // Run test state
     const [running, setRunning] = useState(false);
-    const [, setCurrentRunId] = useState<number | null>(null);
+    const [, _setCurrentRunId] = useState<number | null>(null);
     const [progress, setProgress] = useState<{ completed_count: number; total_count: number; status: string } | null>(null);
     const [lastRun, setLastRun] = useState<BulkTestRun | null>(null);
     const [geminiModel, setGeminiModel] = useState("gemini-2.5-pro");
@@ -305,7 +307,6 @@ export default function BulkTestPage() {
     const startRun = async () => {
         setError(null);
         setRunning(true);
-        setCurrentRunId(null);
         setProgress(null);
         setLastRun(null);
         try {
@@ -319,7 +320,6 @@ export default function BulkTestPage() {
                 throw new Error(err.detail || "Failed to start run");
             }
             const data = await r.json();
-            setCurrentRunId(data.run_id);
             setProgress({ completed_count: 0, total_count: 0, status: "pending" });
             const poll = async () => {
                 const pr = await fetch(`${API_BASE}/runs/${data.run_id}/progress`, { headers: getAuthHeaders() });
@@ -332,7 +332,6 @@ export default function BulkTestPage() {
                 });
                 if (prog.status === "completed" || prog.status === "failed") {
                     setRunning(false);
-                    setCurrentRunId(null);
                     const runDetail = await fetch(`${API_BASE}/runs/${data.run_id}`, { headers: getAuthHeaders() });
                     if (runDetail.ok) setLastRun(await runDetail.json());
                     fetchRuns(1, 100);
@@ -460,19 +459,15 @@ export default function BulkTestPage() {
                 {tabs.map((t) => {
                     const Icon = t.icon;
                     return (
-                        <button
+                        <Button
                             key={t.id}
+                            variant="ghost"
                             onClick={() => setTab(t.id)}
-                            className={[
-                                "flex items-center gap-2 px-4 py-2.5 rounded-lg text-[14px] font-medium transition-all",
-                                tab === t.id
-                                    ? "bg-[rgba(255,255,255,0.08)] text-[#F5F5F5]"
-                                    : "text-[rgba(245,245,245,0.5)] hover:bg-[rgba(255,255,255,0.04)]",
-                            ].join(" ")}
+                            className={`gap-2 font-medium ${tab === t.id ? "bg-[rgba(255,255,255,0.08)] text-[#F5F5F5]" : "text-[rgba(245,245,245,0.5)] hover:bg-[rgba(255,255,255,0.04)]"}`}
                         >
                             <Icon size={16} />
                             {t.label}
-                        </button>
+                        </Button>
                     );
                 })}
             </div>
@@ -589,10 +584,10 @@ export default function BulkTestPage() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <button
+                        <Button
                             onClick={startRun}
                             disabled={running || questions.filter((q) => q.is_active).length === 0}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="gap-2 bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500/30"
                         >
                             {running ? (
                                 <>
@@ -605,7 +600,7 @@ export default function BulkTestPage() {
                                     Run Bulk Test
                                 </>
                             )}
-                        </button>
+                        </Button>
                         {running && progress != null && progress.total_count > 0 && (
                             <div className="mt-4">
                                 <div className="h-2 rounded-full bg-[rgba(255,255,255,0.1)] overflow-hidden max-w-xs">
@@ -666,14 +661,16 @@ export default function BulkTestPage() {
                                                     )}
                                                 </td>
                                                 <td className="p-3">
-                                                    <button
+                                                    <Button
                                                         type="button"
+                                                        variant="outline"
+                                                        size="icon"
                                                         onClick={() => setRunResultDetailId(res.id)}
                                                         title="More detail"
-                                                        className="inline-flex items-center justify-center p-2 rounded-lg bg-[rgba(255,255,255,0.08)] text-[#F5F5F5] hover:bg-[rgba(255,255,255,0.12)]"
+                                                        className="bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border-0"
                                                     >
                                                         <Eye size={18} />
-                                                    </button>
+                                                    </Button>
                                                 </td>
                                             </tr>
                                         ))}
@@ -695,9 +692,9 @@ export default function BulkTestPage() {
                                 <div className="rounded-2xl bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
                                     <div className="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.08)]">
                                         <h4 className="text-[16px] font-semibold text-[#F5F5F5]">Test detail</h4>
-                                        <button type="button" onClick={() => setRunResultDetailId(null)} className="p-1.5 rounded-lg text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.08)] hover:text-[#F5F5F5]">
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => setRunResultDetailId(null)} className="p-1.5 text-[rgba(245,245,245,0.6)] hover:text-[#F5F5F5]">
                                             <X size={20} />
-                                        </button>
+                                        </Button>
                                     </div>
                                     <div className="p-4 overflow-y-auto space-y-4 text-[14px]">
                                         <div>
@@ -1291,16 +1288,16 @@ export default function BulkTestPage() {
                         </h3>
                         <div className="space-y-3 max-w-2xl">
                             <div>
-                                <label className="block text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Question</label>
-                                <input
+                                <Label className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Question</Label>
+                                <Input
                                     value={formQuestion}
                                     onChange={(e) => setFormQuestion(e.target.value)}
                                     placeholder="e.g. What is the policy on annual leave?"
-                                    className="w-full bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] rounded-lg px-3 py-2 text-[14px] text-[#F5F5F5]"
+                                    className="w-full bg-[rgba(255,255,255,0.06)] border-[rgba(255,255,255,0.1)] rounded-lg"
                                 />
                             </div>
                             <div>
-                                <label className="block text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Expected answer / criteria (optional)</label>
+                                <Label className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Expected answer / criteria (optional)</Label>
                                 <textarea
                                     value={formExpected}
                                     onChange={(e) => setFormExpected(e.target.value)}
@@ -1310,7 +1307,7 @@ export default function BulkTestPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Min score (1–10) to pass</label>
+                                <Label className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Min score (1–10) to pass</Label>
                                 <input
                                     type="number"
                                     min={1}
@@ -1321,25 +1318,26 @@ export default function BulkTestPage() {
                                 />
                             </div>
                             <div className="flex gap-2">
-                                <button
+                                <Button
                                     onClick={saveQuestion}
                                     disabled={saving || !formQuestion.trim()}
-                                    className="px-4 py-2 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30 disabled:opacity-50"
+                                    className="bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500/30"
                                 >
                                     {saving ? "Saving…" : editingId != null ? "Update" : "Add"}
-                                </button>
+                                </Button>
                                 {editingId != null && (
-                                    <button
+                                    <Button
+                                        variant="outline"
                                         onClick={() => {
                                             setEditingId(null);
                                             setFormQuestion("");
                                             setFormExpected("");
                                             setFormMinScore(7);
                                         }}
-                                        className="px-4 py-2 rounded-lg bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,245,0.8)]"
+                                        className="bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,245,0.8)]"
                                     >
                                         Cancel
-                                    </button>
+                                    </Button>
                                 )}
                             </div>
                         </div>
