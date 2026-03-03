@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import LibraryView from "@/components/library/LibraryView";
 import { useClaromentisStatus } from "@/hooks/useClaromentisStatus";
+import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
 import { useFolderChildren } from "@/hooks/useFolderChildren";
 import { usePages } from "@/hooks/usePages";
 import {
@@ -229,12 +230,47 @@ function KnowledgeContent() {
     const config = integration ? integrationConfig[integration] : null;
     const router = useRouter();
     const { status: claromentisStatus, loading: claromentisLoading } = useClaromentisStatus();
+    const driveConnectionType: "personal" | "agency" =
+        config?.source === "google-drive" && config.connectionType ? config.connectionType : "personal";
+    const { status: driveStatus, loading: driveLoading } = useGoogleDriveStatus(driveConnectionType);
 
     if (!config) {
         return <KnowledgeTreeView />;
     }
 
     if (config.source === "google-drive") {
+        if (driveLoading) {
+            return (
+                <div className="h-full flex items-center justify-center bg-[#0C0C0C] text-[rgba(245,245,245,0.5)]">
+                    <p className="text-[14px]">Checking connection…</p>
+                </div>
+            );
+        }
+
+        if (!driveStatus?.connected) {
+            const driveLabel = config.connectionType === "agency" ? "Admin Google Drive" : "My Google Drive";
+            return (
+                <div className="h-full flex items-center justify-center bg-[#0C0C0C] p-6">
+                    <div className="w-full max-w-md rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] p-6 text-center space-y-3">
+                        <h2 className="text-[18px] font-semibold text-[#F5F5F5]">
+                            Connect {driveLabel} to use the Knowledge Library
+                        </h2>
+                        <p className="text-[13px] text-[rgba(245,245,245,0.6)]">
+                            Your {driveLabel.toLowerCase()} integration is not connected. To browse files and folders from
+                            Google Drive, connect it in Integrations.
+                        </p>
+                        <Button
+                            type="button"
+                            onClick={() => router.push("/dashboard/settings/integrations")}
+                            className="mt-2 gap-2"
+                        >
+                            Go to Integrations
+                        </Button>
+                    </div>
+                </div>
+            );
+        }
+
         return (
             <LibraryView
                 source="google-drive"
