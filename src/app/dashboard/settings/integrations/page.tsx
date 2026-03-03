@@ -579,7 +579,7 @@ function SyncStatusBadge({ status }: { status: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// ClaromentisSync — admin-only sync health card
+// ClaromentisSync — admin-only: Claromentis sync health + Sync Now (Claromentis only)
 // ---------------------------------------------------------------------------
 function ClaromentisSync() {
     const [health, setHealth] = useState<SyncHealthResponse | null>(null);
@@ -611,15 +611,24 @@ function ClaromentisSync() {
 
     useEffect(() => { fetchHealth(); }, [fetchHealth]);
 
-    // Poll health every 3 s while any integration is running, then stop.
+    const claromentisOnly = health?.integrations.filter((i) => i.integration === "claromentis") ?? [];
+    const claromentisStatus =
+        claromentisOnly.length > 0
+            ? claromentisOnly[0].last_run_status === "failed" || (claromentisOnly[0].total_docs_failed ?? 0) > 0
+                ? "error"
+                : claromentisOnly[0].last_run_status === "running" || (claromentisOnly[0].pending_indexing ?? 0) > 0
+                    ? "degraded"
+                    : "healthy"
+            : "error";
+
     const startPolling = useCallback(() => {
         if (pollRef.current) return;
         const tick = async () => {
             const data = await fetchHealth();
-            const anyRunning = data?.integrations.some(
-                (i) => i.last_run_status === "running"
+            const running = data?.integrations.some(
+                (i) => i.integration === "claromentis" && i.last_run_status === "running"
             );
-            if (anyRunning) {
+            if (running) {
                 pollRef.current = setTimeout(tick, 3000);
             } else {
                 pollRef.current = null;
@@ -643,9 +652,9 @@ function ClaromentisSync() {
             if (!res.ok) throw new Error(data.detail || "Trigger failed");
 
             if (data.status === "already_running") {
-                setSyncMessage("Sync already in progress — check back in a moment.");
+                setSyncMessage("Claromentis sync already in progress — check back in a moment.");
             } else {
-                setSyncMessage("Sync started.");
+                setSyncMessage("Claromentis sync started.");
                 startPolling();
             }
             await fetchHealth();
@@ -658,7 +667,6 @@ function ClaromentisSync() {
 
     return (
         <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
-            {/* Header */}
             <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-white/10">
@@ -666,12 +674,12 @@ function ClaromentisSync() {
                     </div>
                     <div>
                         <h2 className="text-[15px] font-semibold text-[#F5F5F5]">Claromentis Sync</h2>
-                        <p className="text-[12px] text-[rgba(245,245,245,0.45)] mt-0.5">Admin — sync health and controls</p>
+                        <p className="text-[12px] text-[rgba(245,245,245,0.45)] mt-0.5">Sync Claromentis documents to the knowledge base. Health and manual sync.</p>
                     </div>
                 </div>
-                {health && (
+                {claromentisOnly.length > 0 && (
                     <div className="flex items-center gap-3">
-                        <SyncStatusBadge status={health.overall_status} />
+                        <SyncStatusBadge status={claromentisStatus} />
                         <Button
                             type="button"
                             variant="outline"
@@ -681,13 +689,12 @@ function ClaromentisSync() {
                             className="gap-2"
                         >
                             {triggering ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                            Sync Now
+                            Sync Claromentis Now
                         </Button>
                     </div>
                 )}
             </div>
 
-            {/* Body */}
             <div className="p-5">
                 {syncMessage && (
                     <div className="mb-4 rounded-xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] px-4 py-2.5 text-[12px] text-[rgba(245,245,245,0.65)]">
@@ -697,48 +704,140 @@ function ClaromentisSync() {
                 {isLoading ? (
                     <div className="flex items-center gap-2 py-4 justify-center">
                         <Loader2 size={18} className="animate-spin text-[rgba(245,245,245,0.4)]" />
+                        <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Loading Claromentis sync status…</span>
+                    </div>
+                ) : error && claromentisOnly.length === 0 ? (
+                    <div className="rounded-xl bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)] p-4">
+                        <p className="text-[13px] text-[#C87A7A]">{error}</p>
+                    </div>
+                ) : claromentisOnly.length > 0 ? (
+                    <div className="rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.07)] p-4">
+                        <div className="flex items-start justify-between mb-3">
+                            <div>
+                                <h3 className="text-[13px] font-semibold text-[#F5F5F5]">Claromentis</h3>
+                                <p className="text-[11px] text-[rgba(245,245,245,0.45)] mt-0.5">
+                                    Last sync: {formatSyncTime(claromentisOnly[0].last_successful_sync_at)}
+                                </p>
+                            </div>
+                            <span className="text-[11px] text-[rgba(245,245,245,0.35)]">
+                                {claromentisOnly[0].triggered_by === "manual" ? "Manual" : "Scheduled"}
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-y-1.5 text-[12px] mb-3">
+                            <span className="text-[rgba(245,245,245,0.45)]">Synced</span>
+                            <span className="text-[#F5F5F5] font-medium text-right">{claromentisOnly[0].total_docs_synced}</span>
+                            <span className="text-[rgba(245,245,245,0.45)]">Failed</span>
+                            <span className="text-[#F5F5F5] font-medium text-right">{claromentisOnly[0].total_docs_failed}</span>
+                            <span className="text-[rgba(245,245,245,0.45)]">Indexed</span>
+                            <span className="text-[#F5F5F5] font-medium text-right">{claromentisOnly[0].total_docs_indexed}</span>
+                            <span className="text-[rgba(245,245,245,0.45)]">Pending index</span>
+                            <span className="text-[#F5F5F5] font-medium text-right">{claromentisOnly[0].pending_indexing}</span>
+                        </div>
+                        {claromentisOnly[0].last_run_error && (
+                            <div className="p-2.5 rounded-lg bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)]">
+                                <p className="text-[11px] text-[#C87A7A]">{claromentisOnly[0].last_run_error}</p>
+                            </div>
+                        )}
+                    </div>
+                ) : null}
+                {error && health && (
+                    <p className="mt-3 text-[12px] text-[#C87A7A]">{error}</p>
+                )}
+            </div>
+        </div>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// GoogleDriveSync — Google Drive sync health only (no trigger; sync is per connection)
+// ---------------------------------------------------------------------------
+function GoogleDriveSync() {
+    const [health, setHealth] = useState<SyncHealthResponse | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchHealth = useCallback(async () => {
+        try {
+            const token = localStorage.getItem("auth_token");
+            const res = await fetch("/api/sync/health", {
+                cache: "no-store",
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            if (!res.ok) throw new Error("Failed to fetch sync health");
+            const data: SyncHealthResponse = await res.json();
+            setHealth(data);
+            setError(null);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "Failed to load");
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => { fetchHealth(); }, [fetchHealth]);
+
+    const driveOnly = health?.integrations.filter((i) => i.integration === "google_drive") ?? [];
+    if (driveOnly.length === 0) return null;
+
+    const int = driveOnly[0];
+    const status =
+        int.last_run_status === "failed" || (int.total_docs_failed ?? 0) > 0
+            ? "error"
+            : int.last_run_status === "running" || (int.pending_indexing ?? 0) > 0
+                ? "degraded"
+                : "healthy";
+
+    return (
+        <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-white/10">
+                        <Cloud size={18} className="text-[rgba(245,245,245,0.6)]" />
+                    </div>
+                    <div>
+                        <h2 className="text-[15px] font-semibold text-[#F5F5F5]">Google Drive Sync</h2>
+                        <p className="text-[12px] text-[rgba(245,245,245,0.45)] mt-0.5">Sync health for connected Drive folders</p>
+                    </div>
+                </div>
+                {!isLoading && <SyncStatusBadge status={status} />}
+            </div>
+
+            <div className="p-5">
+                {isLoading ? (
+                    <div className="flex items-center gap-2 py-4 justify-center">
+                        <Loader2 size={18} className="animate-spin text-[rgba(245,245,245,0.4)]" />
                         <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Loading sync status…</span>
                     </div>
-                ) : error && !health ? (
+                ) : error ? (
                     <div className="rounded-xl bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)] p-4">
                         <p className="text-[13px] text-[#C87A7A]">{error}</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {health?.integrations.map((int) => (
-                            <div key={int.integration} className="rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.07)] p-4">
-                                <div className="flex items-start justify-between mb-3">
-                                    <div>
-                                        <h3 className="text-[13px] font-semibold text-[#F5F5F5] capitalize">{int.integration}</h3>
-                                        <p className="text-[11px] text-[rgba(245,245,245,0.45)] mt-0.5">
-                                            Last sync: {formatSyncTime(int.last_successful_sync_at)}
-                                        </p>
-                                    </div>
-                                    <span className="text-[11px] text-[rgba(245,245,245,0.35)]">
-                                        {int.triggered_by === "manual" ? "Manual" : "Scheduled"}
-                                    </span>
-                                </div>
-                                <div className="grid grid-cols-2 gap-y-1.5 text-[12px] mb-3">
-                                    <span className="text-[rgba(245,245,245,0.45)]">Synced</span>
-                                    <span className="text-[#F5F5F5] font-medium text-right">{int.total_docs_synced}</span>
-                                    <span className="text-[rgba(245,245,245,0.45)]">Failed</span>
-                                    <span className="text-[#F5F5F5] font-medium text-right">{int.total_docs_failed}</span>
-                                    <span className="text-[rgba(245,245,245,0.45)]">Indexed</span>
-                                    <span className="text-[#F5F5F5] font-medium text-right">{int.total_docs_indexed}</span>
-                                    <span className="text-[rgba(245,245,245,0.45)]">Pending index</span>
-                                    <span className="text-[#F5F5F5] font-medium text-right">{int.pending_indexing}</span>
-                                </div>
-                                {int.last_run_error && (
-                                    <div className="p-2.5 rounded-lg bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)]">
-                                        <p className="text-[11px] text-[#C87A7A]">{int.last_run_error}</p>
-                                    </div>
-                                )}
+                    <div className="rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.07)] p-4">
+                        <div className="flex items-start justify-between mb-3">
+                            <div>
+                                <h3 className="text-[13px] font-semibold text-[#F5F5F5]">Google Drive</h3>
+                                <p className="text-[11px] text-[rgba(245,245,245,0.45)] mt-0.5">
+                                    Last sync: {formatSyncTime(int.last_successful_sync_at)}
+                                </p>
                             </div>
-                        ))}
+                        </div>
+                        <div className="grid grid-cols-2 gap-y-1.5 text-[12px] mb-3">
+                            <span className="text-[rgba(245,245,245,0.45)]">Synced</span>
+                            <span className="text-[#F5F5F5] font-medium text-right">{int.total_docs_synced}</span>
+                            <span className="text-[rgba(245,245,245,0.45)]">Failed</span>
+                            <span className="text-[#F5F5F5] font-medium text-right">{int.total_docs_failed}</span>
+                            <span className="text-[rgba(245,245,245,0.45)]">Indexed</span>
+                            <span className="text-[#F5F5F5] font-medium text-right">{int.total_docs_indexed}</span>
+                            <span className="text-[rgba(245,245,245,0.45)]">Pending index</span>
+                            <span className="text-[#F5F5F5] font-medium text-right">{int.pending_indexing}</span>
+                        </div>
+                        {int.last_run_error && (
+                            <div className="p-2.5 rounded-lg bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)]">
+                                <p className="text-[11px] text-[#C87A7A]">{int.last_run_error}</p>
+                            </div>
+                        )}
                     </div>
-                )}
-                {error && health && (
-                    <p className="mt-3 text-[12px] text-[#C87A7A]">{error}</p>
                 )}
             </div>
         </div>
@@ -766,18 +865,19 @@ export default function IntegrationsPage() {
                     <p className="text-[14px] text-[rgba(245,245,245,0.5)] mt-1">Connect data sources for search and RAG</p>
                 </div>
 
-                {/* My Google Drive -- available to all users */}
-                <DriveConnectionCard connectionType="personal" />
-
-                {/* Claromentis account -- available to all users */}
+                {/* Claromentis first, then personal drive, then admin drive (when applicable) */}
                 <ClaromentisConnectionCard />
 
-                {/* Admin Google Drive -- admin only */}
+                <DriveConnectionCard connectionType="personal" />
+
                 {isAdmin && (
                     <DriveConnectionCard connectionType="agency" />
                 )}
 
-                {/* Claromentis sync health -- admin only */}
+                {/* Google Drive sync health — shown when any Drive is connected */}
+                <GoogleDriveSync />
+
+                {/* Claromentis sync health + Sync Now — admin only */}
                 {isAdmin && <ClaromentisSync />}
             </div>
         </div>
