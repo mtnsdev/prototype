@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X, FileText, Loader2 } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 interface PdfModalProps {
@@ -102,7 +102,7 @@ export default function PdfModal({ isOpen, onClose, filename, pageNumber = 1, pd
     return (
         <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
             <DialogContent
-                className="relative w-full max-w-6xl max-h-[90vh] m-4 bg-[#F5F5F5] rounded-2xl shadow-2xl flex flex-col overflow-hidden p-0 border-0"
+                className="!fixed top-1/2 left-1/2 !w-[95vw] !max-w-[1400px] sm:!max-w-[1400px] h-[90vh] -translate-x-1/2 -translate-y-1/2 m-4 bg-[#F5F5F5] rounded-2xl shadow-2xl flex flex-col overflow-hidden p-0 border-0 z-50"
                 onClick={(e) => e.stopPropagation()}
                 onPointerDownOutside={onClose}
                 onInteractOutside={onClose}
@@ -114,9 +114,9 @@ export default function PdfModal({ isOpen, onClose, filename, pageNumber = 1, pd
                             <FileText size={20} className="text-[rgba(0,0,0,0.5)]" />
                         </div>
                         <div className="min-w-0">
-                            <h2 className="text-[15px] font-semibold text-[#0C0C0C] truncate">
+                            <DialogTitle className="text-[15px] font-semibold text-[#0C0C0C] truncate">
                                 {filename}
-                            </h2>
+                            </DialogTitle>
                             <p className="text-[12px] text-[rgba(0,0,0,0.5)] mt-0.5">
                                 {customUrl ? "Document Preview" : `Page ${pageNumber}`}
                             </p>
@@ -133,8 +133,8 @@ export default function PdfModal({ isOpen, onClose, filename, pageNumber = 1, pd
                     </Button>
                 </div>
 
-                {/* PDF Viewer */}
-                <div className="flex-1 overflow-hidden bg-[#e5e5e5] relative">
+                {/* PDF Viewer - min-h-0 allows flex item to shrink; fills remaining height */}
+                <div className="flex-1 min-h-0 overflow-hidden bg-[#e5e5e5] relative flex flex-col">
                     {!customUrl && loading && (
                         <div className="absolute inset-0 flex items-center justify-center bg-[#e5e5e5] z-10">
                             <Loader2 className="w-10 h-10 animate-spin text-[rgba(0,0,0,0.4)]" />
@@ -149,9 +149,8 @@ export default function PdfModal({ isOpen, onClose, filename, pageNumber = 1, pd
                         <iframe
                             ref={iframeRef}
                             src={iframeSrc}
-                            className="w-full h-full border-0"
+                            className="w-full flex-1 min-h-0 border-0 block"
                             title={`PDF Viewer - ${filename} - Page ${pageNumber}`}
-                            style={{ minHeight: "600px" }}
                         />
                     )}
                 </div>

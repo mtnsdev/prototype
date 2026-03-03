@@ -10,6 +10,8 @@ export interface PageItem {
   key: string;
   size: number;
   last_modified: string;
+  /** Set when the page can be previewed (path for document API); only show Preview button when present */
+  pdf_path?: string | null;
 }
 
 export interface PagesListResponse {

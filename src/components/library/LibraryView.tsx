@@ -36,6 +36,7 @@ type PdfModalState = {
     isOpen: boolean;
     filename: string;
     customUrl: string;
+    pdfPath?: string; // S3 key for knowledge library pages (fetched via POST /api/document/pdf)
 };
 
 // ---------------------------------------------------------------------------
@@ -908,6 +909,7 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
         isOpen: false,
         filename: "",
         customUrl: "",
+        pdfPath: undefined,
     });
 
     // Search state
@@ -1041,12 +1043,12 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
     const isSearchMode = searchQuery.trim().length >= 2;
 
     // PDF modal handlers
-    const openPreview = useCallback((filename: string, customUrl: string) => {
-        setPdfModal({ isOpen: true, filename, customUrl });
+    const openPreview = useCallback((filename: string, customUrl?: string, pdfPath?: string) => {
+        setPdfModal({ isOpen: true, filename, customUrl: customUrl ?? "", pdfPath });
     }, []);
 
     const closePreview = useCallback(() => {
-        setPdfModal({ isOpen: false, filename: "", customUrl: "" });
+        setPdfModal({ isOpen: false, filename: "", customUrl: "", pdfPath: undefined });
     }, []);
 
     // Memoize the onSuccess callback to prevent re-renders
@@ -1232,6 +1234,24 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[13px] text-[rgba(245,245,245,0.8)] truncate">{page.name}</p>
                                 </div>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const path = page.pdf_path ?? page.key;
+                                        if (path) openPreview(page.name, undefined, path);
+                                    }}
+                                    className={[
+                                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md",
+                                        "text-[11px] font-medium",
+                                        "bg-[rgba(122,163,200,0.1)] hover:bg-[rgba(122,163,200,0.18)]",
+                                        "border border-[rgba(122,163,200,0.2)] hover:border-[rgba(122,163,200,0.35)]",
+                                        "text-[#7AA3C8] hover:text-[#9BBDD8]",
+                                    ].join(" ")}
+                                >
+                                    <Eye className="w-3 h-3" />
+                                    Preview
+                                </button>
                             </div>
                         ))}
                         {pagesOpen && pagesHasMore && (
@@ -1253,9 +1273,10 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                 {/* PDF Preview Modal */}
                 <PdfModal
                     isOpen={pdfModal.isOpen}
-                    onClose={() => setPdfModal({ isOpen: false, filename: "", customUrl: "" })}
+                    onClose={() => setPdfModal({ isOpen: false, filename: "", customUrl: "", pdfPath: undefined })}
                     filename={pdfModal.filename}
-                    customUrl={pdfModal.customUrl}
+                    customUrl={pdfModal.customUrl || undefined}
+                    pdfPath={pdfModal.pdfPath}
                 />
             </div>
         );
@@ -1447,6 +1468,23 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                                                     {(page.size / 1024).toFixed(1)} KB • {new Date(page.last_modified).toLocaleDateString()}
                                                 </div>
                                             </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const path = page.pdf_path ?? page.key;
+                                                    if (path) openPreview(page.name, undefined, path);
+                                                }}
+                                                className={[
+                                                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md shrink-0",
+                                                    "text-[11px] font-medium",
+                                                    "bg-[rgba(122,163,200,0.1)] hover:bg-[rgba(122,163,200,0.18)]",
+                                                    "border border-[rgba(122,163,200,0.2)] hover:border-[rgba(122,163,200,0.35)]",
+                                                    "text-[#7AA3C8] hover:text-[#9BBDD8]",
+                                                ].join(" ")}
+                                            >
+                                                <Eye className="w-3 h-3" />
+                                                Preview
+                                            </button>
                                         </div>
                                     ))}
                                     {pagesHasMore && (
@@ -1573,7 +1611,8 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                 isOpen={pdfModal.isOpen}
                 onClose={closePreview}
                 filename={pdfModal.filename}
-                customUrl={pdfModal.customUrl}
+                customUrl={pdfModal.customUrl || undefined}
+                pdfPath={pdfModal.pdfPath}
             />
         </div>
     );
