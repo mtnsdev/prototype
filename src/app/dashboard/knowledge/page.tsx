@@ -230,14 +230,6 @@ function KnowledgeContent() {
     const router = useRouter();
     const { status: claromentisStatus, loading: claromentisLoading } = useClaromentisStatus();
 
-    // When Claromentis is selected and connection is inactive, redirect to settings integrations
-    useEffect(() => {
-        if (!config || config.source !== "claromentis" || claromentisLoading) return;
-        if (claromentisStatus?.status !== "active") {
-            router.replace("/dashboard/settings/integrations");
-        }
-    }, [config, claromentisStatus?.status, claromentisLoading, router]);
-
     if (!config) {
         return <KnowledgeTreeView />;
     }
@@ -251,11 +243,34 @@ function KnowledgeContent() {
         );
     }
 
-    // Claromentis: show loading while checking status, or LibraryView once active
-    if (claromentisLoading || claromentisStatus?.status !== "active") {
+    // Claromentis: if not connected, explain what's missing and offer a redirect to Integrations
+    if (claromentisLoading) {
         return (
             <div className="h-full flex items-center justify-center bg-[#0C0C0C] text-[rgba(245,245,245,0.5)]">
                 <p className="text-[14px]">Checking connection…</p>
+            </div>
+        );
+    }
+
+    if (claromentisStatus?.status !== "active") {
+        return (
+            <div className="h-full flex items-center justify-center bg-[#0C0C0C] p-6">
+                <div className="w-full max-w-md rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] p-6 text-center space-y-3">
+                    <h2 className="text-[18px] font-semibold text-[#F5F5F5]">
+                        Connect Claromentis to use the Knowledge Library
+                    </h2>
+                    <p className="text-[13px] text-[rgba(245,245,245,0.6)]">
+                        Your Claromentis account is not connected. To browse documents and pages from your intranet,
+                        connect your Claromentis account in Integrations.
+                    </p>
+                    <Button
+                        type="button"
+                        onClick={() => router.push("/dashboard/settings/integrations")}
+                        className="mt-2 gap-2"
+                    >
+                        Go to Integrations
+                    </Button>
+                </div>
             </div>
         );
     }
