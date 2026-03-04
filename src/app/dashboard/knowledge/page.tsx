@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import LibraryView from "@/components/library/LibraryView";
 import { useClaromentisStatus } from "@/hooks/useClaromentisStatus";
@@ -229,10 +229,19 @@ function KnowledgeContent() {
 
     const config = integration ? integrationConfig[integration] : null;
     const router = useRouter();
-    const { status: claromentisStatus, loading: claromentisLoading } = useClaromentisStatus();
+    const { status: claromentisStatus, loading: claromentisLoading, refetch: refetchClaromentis } = useClaromentisStatus();
     const driveConnectionType: "personal" | "agency" =
         config?.source === "google-drive" && config.connectionType ? config.connectionType : "personal";
-    const { status: driveStatus, loading: driveLoading } = useGoogleDriveStatus(driveConnectionType);
+    const { status: driveStatus, loading: driveLoading, refetch: refetchDrive } = useGoogleDriveStatus(driveConnectionType);
+
+    // Refetch integration status when navigating to that integration so we show loading while deciding active state
+    const prevIntegrationRef = useRef<string | null>(null);
+    useEffect(() => {
+        const prev = prevIntegrationRef.current;
+        prevIntegrationRef.current = integration ?? null;
+        if (integration === "claromentis" && prev !== "claromentis") refetchClaromentis();
+        if ((integration === "google-drive-personal" || integration === "google-drive-agency") && prev !== integration) refetchDrive();
+    }, [integration, refetchClaromentis, refetchDrive]);
 
     if (!config) {
         return <KnowledgeTreeView />;

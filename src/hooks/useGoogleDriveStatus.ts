@@ -9,6 +9,7 @@ export function useGoogleDriveStatus(connectionType: "personal" | "agency") {
     const [error, setError] = useState<string | null>(null);
 
     const fetchStatus = useCallback(async () => {
+        setLoading(true);
         try {
             const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
             if (!token) {

@@ -14,6 +14,7 @@ export function useClaromentisStatus() {
     const [loading, setLoading] = useState(true);
 
     const fetchStatus = useCallback(async () => {
+        setLoading(true);
         try {
             const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
             if (!token) {
