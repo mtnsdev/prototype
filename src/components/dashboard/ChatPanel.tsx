@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import React from "react";
-import { AlertTriangle, Loader2, ExternalLink, Send, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, ChevronDown } from "lucide-react";
+import { AlertTriangle, Loader2, ExternalLink, Send, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, ChevronDown, MapPin } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Image from "next/image";
 import PdfModal from "./PdfModal";
@@ -34,6 +34,19 @@ type Conflict = {
     claims: ConflictClaim[];
 };
 
+type PlaceCard = {
+    name: string;
+    address: string;
+    city: string;
+    country: string;
+    google_maps_url: string;
+    google_rating?: number | null;
+    google_types?: string[];
+    contact_phone: string;
+    website: string;
+    primary_image_url: string;
+};
+
 type BotResponse = {
     session_id?: number;
     message_id?: number;
@@ -41,6 +54,7 @@ type BotResponse = {
     can_answer: boolean;
     citations: Citation[];
     conflicts: Conflict[];
+    cards?: PlaceCard[];
     open_source?: boolean;
 };
 
@@ -482,6 +496,8 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
     const [feedbackSubmitting, setFeedbackSubmitting] = useState<number | null>(null);
     /** Message id for which the comment popup is open (null = closed) */
     const [feedbackCommentPopupMessageId, setFeedbackCommentPopupMessageId] = useState<number | null>(null);
+    /** When true, backend routes to B4 (Facts & Logistics) and includes Google Places in the answer */
+    const [externalSearchMode, setExternalSearchMode] = useState(false);
 
     /** Ref for the bottom of the messages area; scroll here after sending so the new question is visible */
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -521,6 +537,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                     can_answer?: boolean;
                     feedback_rating?: number | null;
                     feedback_comment?: string | null;
+                    cards?: PlaceCard[];
                 }) => ({
                     role: msg.role === "assistant" ? "bot" : "user",
                     text: msg.role === "user" ? msg.answer : "",
@@ -532,6 +549,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                         can_answer: msg.can_answer ?? true,
                         citations: msg.citations || [],
                         conflicts: msg.conflicts || [],
+                        cards: msg.cards || [],
                         message_id: msg.id,
                     } : undefined,
                 }));
@@ -640,6 +658,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                 body: JSON.stringify({
                     query: text,
                     session_id: currentSessionId || undefined,
+                    external_search: externalSearchMode,
                 }),
             });
 
@@ -880,7 +899,70 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                             </div>
                                         )}
 
-                                     
+                                        {/* Product / Place cards (Google Places) */}
+                                        {m.response.cards && m.response.cards.length > 0 && (
+                                            <div className="space-y-3 pt-2">
+                                                <h4 className="text-[12px] font-medium uppercase tracking-wider text-[#D4A574]">Places</h4>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    {m.response.cards.map((card, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            className="bg-[#1a1a1a] border border-[rgba(255,255,255,0.1)] rounded-xl overflow-hidden hover:border-[rgba(174,133,80,0.3)] transition-colors"
+                                                        >
+                                                            {card.primary_image_url ? (
+                                                                <div className="aspect-video relative bg-[#0C0C0C]">
+                                                                    <img
+                                                                        src={card.primary_image_url}
+                                                                        alt={card.name}
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                </div>
+                                                            ) : null}
+                                                            <div className="p-3 space-y-2">
+                                                                <h5 className="font-semibold text-[#F5F5F5] text-[13px] line-clamp-2">{card.name}</h5>
+                                                                {card.google_rating != null && (
+                                                                    <span className="text-[12px] text-[#D4A574]">Rating: {card.google_rating}</span>
+                                                                )}
+                                                                {(card.address || card.city || card.country) && (
+                                                                    <p className="text-[12px] text-[rgba(245,245,245,0.7)] flex items-start gap-1.5">
+                                                                        <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                                                                        <span className="line-clamp-2">{[card.address, card.city, card.country].filter(Boolean).join(", ")}</span>
+                                                                    </p>
+                                                                )}
+                                                                {card.contact_phone && (
+                                                                    <a href={`tel:${card.contact_phone}`} className="text-[12px] text-[#7AA3C8] hover:underline block truncate">
+                                                                        {card.contact_phone}
+                                                                    </a>
+                                                                )}
+                                                                <div className="flex flex-wrap gap-2 pt-1">
+                                                                    {card.google_maps_url && (
+                                                                        <a
+                                                                            href={card.google_maps_url}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="inline-flex items-center gap-1 text-[11px] font-medium text-[#7AA3C8] hover:text-[#9BBDD8]"
+                                                                        >
+                                                                            Map <ExternalLink className="w-3 h-3" />
+                                                                        </a>
+                                                                    )}
+                                                                    {card.website && (
+                                                                        <a
+                                                                            href={card.website}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="inline-flex items-center gap-1 text-[11px] font-medium text-[#7AA3C8] hover:text-[#9BBDD8]"
+                                                                        >
+                                                                            Website <ExternalLink className="w-3 h-3" />
+                                                                        </a>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {/* Conflicts / Disagreements Section */}
                                         {m.response.conflicts && m.response.conflicts.length > 0 && (
                                             <div className="space-y-3 pt-2">
@@ -1038,7 +1120,32 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
 
                 {/* Input Area */}
                 <div className="shrink-0 p-4 bg-[#0C0C0C]">
-                    <div className="flex gap-3 items-center max-w-4xl mx-auto">
+                    <div className="max-w-4xl mx-auto space-y-3">
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                role="switch"
+                                aria-checked={externalSearchMode}
+                                onClick={() => setExternalSearchMode((v) => !v)}
+                                className={[
+                                    "relative inline-flex h-6 w-11 shrink-0 rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-[#AE8550] focus:ring-offset-2 focus:ring-offset-[#0C0C0C]",
+                                    externalSearchMode ? "bg-[#AE8550] border-[#AE8550]" : "bg-[#161616] border-[rgba(255,255,255,0.15)]",
+                                ].join(" ")}
+                            >
+                                <span
+                                    className={[
+                                        "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition",
+                                        externalSearchMode ? "translate-x-5" : "translate-x-0.5",
+                                    ].join(" ")}
+                                    style={{ marginTop: 2 }}
+                                />
+                            </button>
+                            <span className="text-[13px] text-[rgba(245,245,245,0.8)]">External search</span>
+                            {externalSearchMode && (
+                                <span className="text-[11px] text-[rgba(245,245,245,0.5)]">(routes to B4, includes places)</span>
+                            )}
+                        </div>
+                        <div className="flex gap-3 items-center">
                         <div className="flex-1 relative">
                             <Input
                                 value={input}
@@ -1057,6 +1164,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                         >
                             <Send size={18} />
                         </Button>
+                        </div>
                     </div>
                 </div>
             </section>
