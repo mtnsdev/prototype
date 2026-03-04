@@ -240,9 +240,10 @@ function KnowledgeContent() {
 
     if (config.source === "google-drive") {
         if (driveLoading) {
+            const driveLabel = config.connectionType === "agency" ? "Admin Google Drive" : "My Google Drive";
             return (
                 <div className="h-full flex items-center justify-center bg-[#0C0C0C] text-[rgba(245,245,245,0.5)]">
-                    <p className="text-[14px]">Checking connection…</p>
+                    <p className="text-[14px]">Checking {driveLabel} connection…</p>
                 </div>
             );
         }
@@ -283,7 +284,7 @@ function KnowledgeContent() {
     if (claromentisLoading) {
         return (
             <div className="h-full flex items-center justify-center bg-[#0C0C0C] text-[rgba(245,245,245,0.5)]">
-                <p className="text-[14px]">Checking connection…</p>
+                <p className="text-[14px]">Checking Claromentis connection…</p>
             </div>
         );
     }
