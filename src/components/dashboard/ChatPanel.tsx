@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import React from "react";
-import { AlertTriangle, Loader2, ExternalLink, Send, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, ChevronDown, MapPin } from "lucide-react";
+import { AlertTriangle, Loader2, ExternalLink, Send, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, ChevronDown, MapPin, Plus, Globe, X, Star } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Image from "next/image";
 import PdfModal from "./PdfModal";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useUserOptional } from "@/contexts/UserContext";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 
@@ -82,6 +81,30 @@ const SUGGESTION_CHIPS = [
     "What's the GDS code for FSPP?",
 ];
 
+/** Displays a 0–5 rating as stars; supports float (e.g. 4.2 = 4 full + 1 partial). */
+function StarRating({ value, max = 5, size = 12, className = "" }: { value: number; max?: number; size?: number; className?: string }) {
+    const full = Math.floor(value);
+    const fraction = value - full;
+    const empty = max - Math.ceil(value);
+    return (
+        <div className={`flex items-center gap-0.5 ${className}`} aria-label={`Rating: ${value} out of ${max}`}>
+            {Array.from({ length: full }, (_, i) => (
+                <Star key={`f-${i}`} size={size} className="shrink-0 fill-current" strokeWidth={1.5} />
+            ))}
+            {fraction > 0 && (
+                <span className="relative inline-flex shrink-0" style={{ width: size, height: size }}>
+                    <Star size={size} className="fill-none stroke-current opacity-40" strokeWidth={1.5} />
+                    <span className="absolute inset-0 overflow-hidden" style={{ width: `${fraction * 100}%` }}>
+                        <Star size={size} className="fill-current" strokeWidth={1.5} />
+                    </span>
+                </span>
+            )}
+            {Array.from({ length: empty }, (_, i) => (
+                <Star key={`e-${i}`} size={size} className="shrink-0 fill-none stroke-current opacity-40" strokeWidth={1.5} />
+            ))}
+        </div>
+    );
+}
 
 // Inline citation marker: dark blue circle with number, hover = popover (excerpt + source), click = PDF modal
 function InlineCitationMarker({
@@ -503,6 +526,9 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
     const messagesEndRef = useRef<HTMLDivElement>(null);
     /** Ref for the scrollable messages container; used for scroll-to-bottom button and scroll detection */
     const messagesScrollRef = useRef<HTMLDivElement>(null);
+    /** Ref for tools (plus) menu; used for click-outside to close */
+    const toolsMenuRef = useRef<HTMLDivElement>(null);
+    const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
     /** Show "scroll to bottom" button when user has scrolled up and content overflows */
     const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
@@ -576,6 +602,18 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
             setSessionTitle("");
         }
     }, [conversationId, loadSession]);
+
+    // Close tools menu when clicking outside
+    useEffect(() => {
+        if (!toolsMenuOpen) return;
+        const handleClick = (e: MouseEvent) => {
+            if (toolsMenuRef.current && !toolsMenuRef.current.contains(e.target as Node)) {
+                setToolsMenuOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClick);
+        return () => document.removeEventListener("mousedown", handleClick);
+    }, [toolsMenuOpen]);
 
     const openPdfModal = (filename: string, pageNumber: number | string, pdfPath?: string) => {
         setPdfModal({
@@ -921,7 +959,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                                             <div className="p-3 space-y-2">
                                                                 <h5 className="font-semibold text-[#F5F5F5] text-[13px] line-clamp-2">{card.name}</h5>
                                                                 {card.google_rating != null && (
-                                                                    <span className="text-[12px] text-[#D4A574]">Rating: {card.google_rating}</span>
+                                                                    <StarRating value={Math.min(5, Math.max(0, Number(card.google_rating)))} max={5} className="text-[#D4A574]" size={12} />
                                                                 )}
                                                                 {(card.address || card.city || card.country) && (
                                                                     <p className="text-[12px] text-[rgba(245,245,245,0.7)] flex items-start gap-1.5">
@@ -1118,52 +1156,89 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                     </div>
                 )}
 
-                {/* Input Area */}
+                {/* Input Area - OpenAI-style: plus opens tools, Web search shows as icon when on */}
                 <div className="shrink-0 p-4 bg-[#0C0C0C]">
-                    <div className="max-w-4xl mx-auto space-y-3">
-                        <div className="flex items-center gap-2">
-                            <button
-                                type="button"
-                                role="switch"
-                                aria-checked={externalSearchMode}
-                                onClick={() => setExternalSearchMode((v) => !v)}
-                                className={[
-                                    "relative inline-flex h-6 w-11 shrink-0 rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-[#AE8550] focus:ring-offset-2 focus:ring-offset-[#0C0C0C]",
-                                    externalSearchMode ? "bg-[#AE8550] border-[#AE8550]" : "bg-[#161616] border-[rgba(255,255,255,0.15)]",
-                                ].join(" ")}
-                            >
-                                <span
-                                    className={[
-                                        "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition",
-                                        externalSearchMode ? "translate-x-5" : "translate-x-0.5",
-                                    ].join(" ")}
-                                    style={{ marginTop: 2 }}
-                                />
-                            </button>
-                            <span className="text-[13px] text-[rgba(245,245,245,0.8)]">External search</span>
-                            {externalSearchMode && (
-                                <span className="text-[11px] text-[rgba(245,245,245,0.5)]">(routes to B4, includes places)</span>
-                            )}
-                        </div>
+                    <div className="max-w-4xl mx-auto" ref={toolsMenuRef}>
                         <div className="flex gap-3 items-center">
-                        <div className="flex-1 relative">
-                            <Input
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={(e) => (e.key === "Enter" && !e.shiftKey ? send() : null)}
-                                placeholder="Ask Enable a question..."
-                                className="w-full rounded-xl px-4 py-3 bg-[#161616] border-[rgba(255,255,255,0.1)] focus-visible:border-[rgba(174,133,80,0.5)] focus-visible:ring-[rgba(174,133,80,0.2)]"
-                            />
-                        </div>
-                        <Button
-                            type="button"
-                            size="icon"
-                            onClick={() => send()}
-                            disabled={loading || !input.trim()}
-                            className="h-11 w-11 rounded-xl bg-[#AE8550] hover:bg-[#C4975E] text-white border-0"
-                        >
-                            <Send size={18} />
-                        </Button>
+                            <div className="flex-1 flex items-center gap-2 rounded-xl bg-[#161616] border border-[rgba(255,255,255,0.1)] pl-1.5 pr-1 py-1 focus-within:border-[rgba(174,133,80,0.5)] focus-within:ring-1 focus-within:ring-[rgba(174,133,80,0.2)] transition-shadow relative">
+                                {/* Plus button - opens tools menu */}
+                                <button
+                                    type="button"
+                                    aria-label="Add tools"
+                                    aria-expanded={toolsMenuOpen}
+                                    aria-haspopup="true"
+                                    onClick={() => setToolsMenuOpen((v) => !v)}
+                                    className={[
+                                        "flex items-center justify-center h-8 w-8 rounded-lg shrink-0 transition-colors",
+                                        toolsMenuOpen ? "bg-[rgba(255,255,255,0.12)] text-[#F5F5F5]" : "text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.08)] hover:text-[rgba(245,245,245,0.9)]",
+                                    ].join(" ")}
+                                >
+                                    <Plus size={18} strokeWidth={2.25} />
+                                </button>
+                                {/* Tools dropdown (Web search option) */}
+                                {toolsMenuOpen && (
+                                    <div
+                                        className="absolute left-0 bottom-full mb-2 z-50 min-w-[200px] rounded-xl bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] shadow-xl py-1.5"
+                                        role="menu"
+                                        aria-label="Tools"
+                                    >
+                                        <button
+                                            type="button"
+                                            role="menuitemcheckbox"
+                                            aria-checked={externalSearchMode}
+                                            onClick={() => {
+                                                setExternalSearchMode((v) => !v);
+                                                setToolsMenuOpen(false);
+                                            }}
+                                            className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-[13px] text-[rgba(245,245,245,0.9)] hover:bg-[rgba(255,255,255,0.08)] transition-colors"
+                                        >
+                                            <div className={[
+                                                "flex items-center justify-center h-8 w-8 rounded-lg shrink-0",
+                                                externalSearchMode ? "bg-[rgba(174,133,80,0.25)] text-[#AE8550]" : "bg-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.6)]",
+                                            ].join(" ")}>
+                                                <Globe size={16} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <span className="font-medium">Web search</span>
+                                                <p className="text-[11px] text-[rgba(245,245,245,0.5)] mt-0.5">Search the web and places</p>
+                                            </div>
+                                            {externalSearchMode && (
+                                                <span className="ml-auto text-[#AE8550]" aria-hidden>✓</span>
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
+                                {/* Web search icon when enabled - hover shows X to remove */}
+                                {externalSearchMode && (
+                                    <button
+                                        type="button"
+                                        aria-label="Web search on (click to turn off)"
+                                        title="Web search on — click to turn off"
+                                        onClick={() => setExternalSearchMode(false)}
+                                        className="group/ws flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-[rgba(174,133,80,0.2)] text-[#AE8550] hover:bg-[rgba(174,133,80,0.3)] transition-colors relative"
+                                    >
+                                        <Globe size={16} className="opacity-100 group-hover/ws:opacity-0 transition-opacity" aria-hidden />
+                                        <X size={14} className="absolute inset-0 m-auto opacity-0 group-hover/ws:opacity-100 transition-opacity pointer-events-none" aria-hidden />
+                                    </button>
+                                )}
+                                <input
+                                    type="text"
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    onKeyDown={(e) => (e.key === "Enter" && !e.shiftKey ? send() : null)}
+                                    placeholder="Ask Enable a question..."
+                                    className="chat-input-no-focus-outline flex-1 min-w-0 rounded-lg border-0 bg-transparent px-2 py-2.5 text-sm text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] outline-none focus:ring-0 focus:border-0 focus:shadow-none"
+                                />
+                            </div>
+                            <Button
+                                type="button"
+                                size="icon"
+                                onClick={() => send()}
+                                disabled={loading || !input.trim()}
+                                className="h-11 w-11 rounded-xl bg-[#AE8550] hover:bg-[#C4975E] text-white border-0 shrink-0"
+                            >
+                                <Send size={18} />
+                            </Button>
                         </div>
                     </div>
                 </div>
