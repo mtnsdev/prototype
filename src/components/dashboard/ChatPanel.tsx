@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import React from "react";
-import { AlertTriangle, Loader2, ExternalLink, Send, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, ChevronDown, Plus, Globe, X, Star } from "lucide-react";
+import { AlertTriangle, Loader2, ExternalLink, Send, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, ChevronDown, Plus, Globe, X, Star, LayoutGrid, MapPin } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Image from "next/image";
 import PdfModal from "./PdfModal";
@@ -144,7 +144,7 @@ function InlineCitationMarker({
                 }}
                 className={[
                     "inline-flex items-center justify-center w-[1.35em] h-[1.35em] shrink-0 rounded-full text-white text-[10px] font-semibold p-1 leading-none",
-                    "bg-[#3C4472] hover:bg-[#4a5285] border border-[rgba(255,255,255,0.15)]",
+                    "bg-[rgba(212,165,116,0.4)] hover:bg-[rgba(212,165,116,0.6)] border border-[rgba(212,165,116,0.5)]",
                     "cursor-pointer align-[0.15em] ml-1",
                 ].join(" ")}
                 title={`${filename}, page ${pageNumber}`}
@@ -209,7 +209,7 @@ function InlineCitationMarkerEllipsis({
                     }}
                     className={[
                         "inline-flex items-center justify-center w-[1.35em] h-[1.35em] shrink-0 rounded-full text-[10px] font-semibold p-1 leading-none",
-                        "bg-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.3)] text-white border border-[rgba(255,255,255,0.2)]",
+                        "bg-[rgba(212,165,116,0.4)] hover:bg-[rgba(212,165,116,0.6)] text-white border border-[rgba(212,165,116,0.5)]",
                         "cursor-pointer transition-colors duration-150 align-[0.15em] ml-1",
                     ].join(" ")}
                     title="Collapse citations"
@@ -230,7 +230,7 @@ function InlineCitationMarkerEllipsis({
             }}
             className={[
                 "inline-flex items-center justify-center w-[1.35em] h-[1.35em] shrink-0 rounded-full text-white text-[10px] font-semibold p-1 leading-none",
-                "bg-[#3C4472] hover:bg-[#4a5285] border border-[rgba(255,255,255,0.15)]",
+                "bg-[rgba(212,165,116,0.4)] hover:bg-[rgba(212,165,116,0.6)] border border-[rgba(212,165,116,0.5)]",
                 "cursor-pointer transition-colors duration-150 align-[0.15em] ml-1",
             ].join(" ")}
             title="Show all citations"
@@ -424,7 +424,7 @@ function AnswerWithCitations({
                     <React.Fragment key={`page-${pageIdx}`}>
                         <button
                             onClick={() => onCitationClick(filename, pageNum, pdfPath)}
-                            className="text-[#7AA3C8] hover:text-[#9BBDD8] hover:bg-[rgba(122,163,200,0.12)] px-1.5 py-0.5 rounded-md cursor-pointer transition-all duration-150 inline-flex items-center gap-1 text-xs font-semibold border border-[rgba(122,163,200,0.2)] hover:border-[rgba(122,163,200,0.4)]"
+                            className="text-[#D4A574] hover:text-[#E5B87A] hover:bg-[rgba(212,165,116,0.12)] px-1.5 py-0.5 rounded-md cursor-pointer transition-all duration-150 inline-flex items-center gap-1 text-xs font-semibold border border-[rgba(212,165,116,0.3)] hover:border-[rgba(212,165,116,0.5)]"
                             title={`View ${filename} page ${pageNum}`}
                         >
                             {pageNum}
@@ -622,6 +622,12 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
             setSessionTitle("");
         }
     }, [conversationId, loadSession]);
+
+    // Deactivate right panel when switching chat session
+    useEffect(() => {
+        setRightPanelMessageIndex(null);
+        setRightPanelMode(null);
+    }, [conversationId]);
 
     // Close tools menu when clicking outside
     useEffect(() => {
@@ -1057,14 +1063,42 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                             cardsMessageRefs.current.delete(i);
                                         }
                                     }}
-                                    className="mr-auto max-w-[85%]"
+                                    className={
+                                        "mr-auto max-w-[85%]" +
+                                        ((m.response?.cards?.length ?? 0) > 0 || (m.response?.web_citations?.length ?? 0) > 0
+                                            ? " group"
+                                            : "")
+                                    }
                                 >
                                     <div
+                                        onClick={
+                                            ((m.response?.cards?.length ?? 0) > 0 || (m.response?.web_citations?.length ?? 0) > 0)
+                                                ? (e: React.MouseEvent) => {
+                                                      if ((e.target as HTMLElement).closest("a, button")) return;
+                                                      if (rightPanelMessageIndex === i && rightPanelMode !== null) {
+                                                          closeRightPanel();
+                                                          return;
+                                                      }
+                                                      if ((m.response?.cards?.length ?? 0) > 0) {
+                                                          setRightPanelMessageIndex(i);
+                                                          setRightPanelMode("places");
+                                                      } else if ((m.response?.web_citations?.length ?? 0) > 0) {
+                                                          setRightPanelMessageIndex(i);
+                                                          setRightPanelMode("sources");
+                                                      }
+                                                  }
+                                                : undefined
+                                        }
                                         className={[
                                             "bg-[#161616] rounded-2xl rounded-bl-md p-5 space-y-5 shadow-lg border transition-colors duration-200",
+                                            (m.response?.cards?.length ?? 0) > 0 || (m.response?.web_citations?.length ?? 0) > 0
+                                                ? "cursor-pointer"
+                                                : "",
                                             rightPanelMessageIndex === i && rightPanelMode !== null
                                                 ? "border-[rgba(174,133,80,0.6)]"
-                                                : "border-[rgba(255,255,255,0.08)]",
+                                                : (m.response?.cards?.length ?? 0) > 0 || (m.response?.web_citations?.length ?? 0) > 0
+                                                    ? "border-[rgba(255,255,255,0.08)] group-hover:border-[rgba(174,133,80,0.6)]"
+                                                    : "border-[rgba(255,255,255,0.08)]",
                                         ].join(" ")}
                                     >
                                         {/* Header: badge (left) + View/Hide hint (right) when places or web sources exist */}
@@ -1093,19 +1127,28 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                                         </span>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center gap-2 shrink-0">
+                                                <div
+                                                    className={[
+                                                        "flex items-center gap-2 shrink-0 transition-opacity duration-150",
+                                                        rightPanelMessageIndex === i && rightPanelMode !== null
+                                                            ? "opacity-100"
+                                                            : "opacity-0 group-hover:opacity-100",
+                                                    ].join(" ")}
+                                                >
                                                     {(m.response?.cards?.length ?? 0) > 0 && (
                                                         <button
                                                             type="button"
-                                                            onClick={() =>
-                                                                rightPanelMessageIndex === i &&
-                                                                rightPanelMode === "places"
-                                                                    ? closeRightPanel()
-                                                                    : (setRightPanelMessageIndex(i),
-                                                                      setRightPanelMode("places"))
-                                                            }
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (rightPanelMessageIndex === i && rightPanelMode === "places") {
+                                                                    closeRightPanel();
+                                                                } else {
+                                                                    setRightPanelMessageIndex(i);
+                                                                    setRightPanelMode("places");
+                                                                }
+                                                            }}
                                                             className={[
-                                                                "text-[12px] font-medium text-[rgba(212,165,116,0.95)] hover:text-[#D4A574] transition-colors",
+                                                                "inline-flex items-center gap-2 text-[12px] font-medium text-[rgba(212,165,116,0.95)] hover:text-[#D4A574] transition-colors",
                                                                 !hintPulseSeen.has(i) &&
                                                                 (m.response?.cards?.length ?? 0) > 0
                                                                     ? "animate-places-hint-pulse"
@@ -1114,24 +1157,27 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                                                 .filter(Boolean)
                                                                 .join(" ")}
                                                         >
+                                                            <LayoutGrid className="w-3.5 h-3.5 shrink-0" aria-hidden />
                                                             {rightPanelMessageIndex === i &&
                                                             rightPanelMode === "places"
-                                                                ? `Hide ${m.response?.cards?.length ?? 0} place${(m.response?.cards?.length ?? 0) !== 1 ? "s" : ""}`
+                                                                ? `Hide place${(m.response?.cards?.length ?? 0) !== 1 ? "s" : ""}`
                                                                 : `View ${m.response?.cards?.length ?? 0} place${(m.response?.cards?.length ?? 0) !== 1 ? "s" : ""}`}
                                                         </button>
                                                     )}
                                                     {(m.response?.web_citations?.length ?? 0) > 0 && (
                                                         <button
                                                             type="button"
-                                                            onClick={() =>
-                                                                rightPanelMessageIndex === i &&
-                                                                rightPanelMode === "sources"
-                                                                    ? closeRightPanel()
-                                                                    : (setRightPanelMessageIndex(i),
-                                                                      setRightPanelMode("sources"))
-                                                            }
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (rightPanelMessageIndex === i && rightPanelMode === "sources") {
+                                                                    closeRightPanel();
+                                                                } else {
+                                                                    setRightPanelMessageIndex(i);
+                                                                    setRightPanelMode("sources");
+                                                                }
+                                                            }}
                                                             className={[
-                                                                "text-[12px] font-medium text-[rgba(212,165,116,0.95)] hover:text-[#D4A574] transition-colors",
+                                                                "inline-flex items-center gap-2 text-[12px] font-medium text-[rgba(212,165,116,0.95)] hover:text-[#D4A574] transition-colors",
                                                                 !hintPulseSeen.has(i) &&
                                                                 (m.response?.web_citations?.length ??
                                                                     0) > 0
@@ -1141,9 +1187,10 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                                                 .filter(Boolean)
                                                                 .join(" ")}
                                                         >
+                                                            <LayoutGrid className="w-3.5 h-3.5 shrink-0" aria-hidden />
                                                             {rightPanelMessageIndex === i &&
                                                             rightPanelMode === "sources"
-                                                                ? `Hide ${m.response?.web_citations?.length ?? 0} web source${(m.response?.web_citations?.length ?? 0) !== 1 ? "s" : ""}`
+                                                                ? `Hide web source${(m.response?.web_citations?.length ?? 0) !== 1 ? "s" : ""}`
                                                                 : `View ${m.response?.web_citations?.length ?? 0} web source${(m.response?.web_citations?.length ?? 0) !== 1 ? "s" : ""}`}
                                                         </button>
                                                     )}
@@ -1471,7 +1518,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                                             href={wc.url}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            className="font-semibold text-[13px] leading-snug line-clamp-2 text-[#F5F5F5] hover:text-[#7AA3C8] hover:underline block"
+                                                            className="font-semibold text-[13px] leading-snug line-clamp-2 text-[#F5F5F5] hover:text-[#D4A574] hover:underline block"
                                                         >
                                                             {wc.title || wc.url || "Web source"}
                                                         </a>
@@ -1486,10 +1533,14 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                         {panelPlaceCards.map((card, idx) => {
                                             const placeUrl =
                                                 card.google_maps_url || card.website || null;
+                                            const placeType =
+                                                card.google_types?.[0] != null && card.google_types[0] !== ""
+                                                    ? card.google_types[0].charAt(0).toUpperCase() + card.google_types[0].slice(1).toLowerCase().replace(/_/g, " ")
+                                                    : null;
                                             const cardContent = (
                                                 <>
                                                     {card.primary_image_url ? (
-                                                        <div className="aspect-video relative bg-[#0C0C0C]">
+                                                        <div className="aspect-video relative bg-[#0C0C0C] overflow-hidden rounded-t-xl">
                                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                                             <img
                                                                 src={card.primary_image_url}
@@ -1499,38 +1550,49 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                                         </div>
                                                     ) : null}
                                                     <div className="p-3 space-y-2">
-                                                        <h4 className="font-semibold text-[#F5F5F5] text-[13px] leading-snug line-clamp-2">{card.name}</h4>
-                                                        {card.google_rating != null && (
-                                                            <StarRating
-                                                                value={Math.min(5, Math.max(0, Number(card.google_rating)))}
-                                                                max={5}
-                                                                className="text-[#D4A574]"
-                                                                size={12}
-                                                            />
-                                                        )}
+                                                        <div>
+                                                            <h4 className="font-semibold text-[#F5F5F5] text-[14px] leading-snug line-clamp-2">{card.name}</h4>
+                                                            <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                                                                {placeType && (
+                                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[rgba(212,165,116,0.2)] text-[rgba(212,165,116,0.95)]">
+                                                                        {placeType}
+                                                                    </span>
+                                                                )}
+                                                                {card.google_rating != null && (
+                                                                    <StarRating
+                                                                        value={Math.min(5, Math.max(0, Number(card.google_rating)))}
+                                                                        max={5}
+                                                                        className="text-[#D4A574]"
+                                                                        size={12}
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                         {(card.address || card.city || card.country) && (
-                                                            <p className="text-[12px] text-[rgba(245,245,245,0.7)] line-clamp-2">
-                                                                {[card.address, card.city, card.country].filter(Boolean).join(", ")}
+                                                            <p className="text-[12px] text-[rgba(245,245,245,0.7)] flex items-start gap-1.5 line-clamp-2">
+                                                                <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[rgba(245,245,245,0.5)]" aria-hidden />
+                                                                <span>{[card.address, card.city, card.country].filter(Boolean).join(", ")}</span>
                                                             </p>
                                                         )}
                                                         {card.contact_phone && (
                                                             <a
                                                                 href={`tel:${card.contact_phone}`}
                                                                 onClick={(e) => e.stopPropagation()}
-                                                                className="text-[12px] text-[#7AA3C8] hover:underline block truncate"
+                                                                className="text-[12px] text-[#D4A574] hover:text-[#E5B87A] hover:underline block truncate"
                                                             >
                                                                 {card.contact_phone}
                                                             </a>
                                                         )}
-                                                        <div className="flex flex-wrap gap-2 pt-1">
+                                                        <div className="flex flex-wrap gap-3 pt-1">
                                                             {card.google_maps_url && (
                                                                 <a
                                                                     href={card.google_maps_url}
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"
                                                                     onClick={(e) => e.stopPropagation()}
-                                                                    className="text-[11px] font-medium text-[#7AA3C8] hover:text-[#9BBDD8]"
+                                                                    className="inline-flex items-center gap-1 text-[12px] text-[#D4A574] hover:text-[#E5B87A]"
                                                                 >
+                                                                    <ExternalLink className="w-3 h-3 shrink-0" aria-hidden />
                                                                     Map
                                                                 </a>
                                                             )}
@@ -1540,8 +1602,9 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                                                     target="_blank"
                                                                     rel="noopener noreferrer"
                                                                     onClick={(e) => e.stopPropagation()}
-                                                                    className="text-[11px] font-medium text-[#7AA3C8] hover:text-[#9BBDD8]"
+                                                                    className="inline-flex items-center gap-1 text-[12px] text-[#D4A574] hover:text-[#E5B87A]"
                                                                 >
+                                                                    <ExternalLink className="w-3 h-3 shrink-0" aria-hidden />
                                                                     Website
                                                                 </a>
                                                             )}
@@ -1551,26 +1614,33 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                             );
                                             const cardClass =
                                                 "bg-[#161616] border border-[rgba(255,255,255,0.1)] rounded-xl overflow-hidden hover:border-[rgba(174,133,80,0.5)] transition-colors relative group block cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(174,133,80,0.5)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161616] animate-card-slide-in";
-                                            return placeUrl ? (
-                                                <a
-                                                    key={`${card.google_maps_url || card.website || card.name}-${idx}`}
-                                                    href={placeUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className={cardClass}
-                                                    style={{
-                                                        animationDelay: `${idx * 60}ms`,
-                                                    }}
-                                                >
-                                                    {cardContent}
-                                                </a>
-                                            ) : (
+                                            return (
                                                 <div
-                                                    key={`${card.name}-${idx}`}
+                                                    key={`${card.google_maps_url || card.website || card.name}-${idx}`}
                                                     className={cardClass}
                                                     style={{
                                                         animationDelay: `${idx * 60}ms`,
                                                     }}
+                                                    role={placeUrl ? "link" : undefined}
+                                                    tabIndex={placeUrl ? 0 : undefined}
+                                                    onClick={
+                                                        placeUrl
+                                                            ? (e: React.MouseEvent) => {
+                                                                  if ((e.target as HTMLElement).closest("a, button")) return;
+                                                                  window.open(placeUrl, "_blank", "noopener,noreferrer");
+                                                              }
+                                                            : undefined
+                                                    }
+                                                    onKeyDown={
+                                                        placeUrl
+                                                            ? (e: React.KeyboardEvent) => {
+                                                                  if (e.key === "Enter" || e.key === " ") {
+                                                                      e.preventDefault();
+                                                                      window.open(placeUrl, "_blank", "noopener,noreferrer");
+                                                                  }
+                                                              }
+                                                            : undefined
+                                                    }
                                                 >
                                                     {cardContent}
                                                 </div>
