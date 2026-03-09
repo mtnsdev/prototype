@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import React from "react";
-import { AlertTriangle, Loader2, ExternalLink, Send, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, ChevronDown, MapPin, Plus, Globe, X, Star } from "lucide-react";
+import { AlertTriangle, Loader2, ExternalLink, Send, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, ChevronDown, Plus, Globe, X, Star } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Image from "next/image";
 import PdfModal from "./PdfModal";
@@ -46,12 +46,20 @@ type PlaceCard = {
     primary_image_url: string;
 };
 
+type WebCitation = {
+    url: string;
+    title: string;
+    snippet?: string;
+    favicon?: string;
+};
+
 type BotResponse = {
     session_id?: number;
     message_id?: number;
     answer: string;
     can_answer: boolean;
     citations: Citation[];
+    web_citations?: WebCitation[];
     conflicts: Conflict[];
     cards?: PlaceCard[];
     open_source?: boolean;
@@ -526,11 +534,21 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
     const messagesEndRef = useRef<HTMLDivElement>(null);
     /** Ref for the scrollable messages container; used for scroll-to-bottom button and scroll detection */
     const messagesScrollRef = useRef<HTMLDivElement>(null);
+    /** Track bot messages that have cards so we can scroll-link the right panel */
+    const cardsMessageRefs = useRef<Map<number, HTMLDivElement | null>>(new Map());
+    /** The message index (in `messages`) whose cards should be shown based on scroll position */
+    const [scrollActiveCardsMessageIndex, setScrollActiveCardsMessageIndex] = useState<number | null>(null);
+    /** Right panel: opened by "View web sources" / "View places" buttons; which message and which mode */
+    const [rightPanelMessageIndex, setRightPanelMessageIndex] = useState<number | null>(null);
+    const [rightPanelMode, setRightPanelMode] = useState<"places" | "sources" | null>(null);
     /** Ref for tools (plus) menu; used for click-outside to close */
     const toolsMenuRef = useRef<HTMLDivElement>(null);
     const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
     /** Show "scroll to bottom" button when user has scrolled up and content overflows */
     const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+    /** Message indices for which the "View N places/sources" hint has already pulsed (or panel was opened) */
+    const [hintPulseSeen, setHintPulseSeen] = useState<Set<number>>(new Set());
+    const hintPulseStartedRef = useRef<Set<number>>(new Set());
 
     // Delayed loading states to prevent flickering
     const showSendingLoader = useDelayedLoading(loading);
@@ -559,6 +577,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                     role: string;
                     answer: string;
                     citations?: Citation[];
+                    web_citations?: WebCitation[];
                     conflicts?: Conflict[];
                     can_answer?: boolean;
                     feedback_rating?: number | null;
@@ -574,6 +593,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                         answer: msg.answer,
                         can_answer: msg.can_answer ?? true,
                         citations: msg.citations || [],
+                        web_citations: msg.web_citations || [],
                         conflicts: msg.conflicts || [],
                         cards: msg.cards || [],
                         message_id: msg.id,
@@ -614,6 +634,53 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
         document.addEventListener("mousedown", handleClick);
         return () => document.removeEventListener("mousedown", handleClick);
     }, [toolsMenuOpen]);
+
+    // Scroll-linked cards selection: observe only bot messages that contain cards and pick the most-visible one.
+    useEffect(() => {
+        const root = messagesScrollRef.current;
+        if (!root) return;
+
+        // Only observe currently-mounted refs (bot messages with cards).
+        const entriesByIndex = new Map<number, IntersectionObserverEntry>();
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                for (const entry of entries) {
+                    const idxAttr = (entry.target as HTMLElement).getAttribute("data-cards-message-index");
+                    const idx = idxAttr ? Number(idxAttr) : NaN;
+                    if (!Number.isFinite(idx)) continue;
+                    entriesByIndex.set(idx, entry);
+                }
+
+                let bestIdx: number | null = null;
+                let bestRatio = 0;
+                for (const [idx, entry] of entriesByIndex.entries()) {
+                    if (!entry.isIntersecting) continue;
+                    if (entry.intersectionRatio > bestRatio) {
+                        bestRatio = entry.intersectionRatio;
+                        bestIdx = idx;
+                    }
+                }
+
+                setScrollActiveCardsMessageIndex(bestIdx);
+            },
+            {
+                root,
+                threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
+            }
+        );
+
+        // Observe all current elements.
+        for (const [idx, el] of cardsMessageRefs.current.entries()) {
+            if (!el) continue;
+            el.setAttribute("data-cards-message-index", String(idx));
+            observer.observe(el);
+        }
+
+        return () => {
+            observer.disconnect();
+        };
+    }, [messages.length]);
 
     const openPdfModal = (filename: string, pageNumber: number | string, pdfPath?: string) => {
         setPdfModal({
@@ -824,9 +891,63 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
 
     const isEmptyState = messages.length === 0 && !loadingConversation;
 
+    const latestCards: PlaceCard[] = (() => {
+        for (let i = messages.length - 1; i >= 0; i--) {
+            const msg = messages[i];
+            if (msg.role !== "bot") continue;
+            const cards = msg.response?.cards;
+            if (cards && cards.length > 0) return cards;
+        }
+        return [];
+    })();
+
+    const _activeCards: PlaceCard[] = (() => {
+        if (scrollActiveCardsMessageIndex != null) {
+            const msg = messages[scrollActiveCardsMessageIndex];
+            const cards = msg?.role === "bot" ? msg.response?.cards : undefined;
+            if (cards && cards.length > 0) return cards;
+        }
+        return latestCards;
+    })();
+    void _activeCards; // reserved for scroll-linked display if needed
+
+    /** Right panel content: when opened via button, show that message's places or web sources */
+    const panelMessage = rightPanelMessageIndex != null ? messages[rightPanelMessageIndex] : null;
+    const panelPlaceCards: PlaceCard[] = rightPanelMode === "places" && panelMessage?.role === "bot" ? (panelMessage.response?.cards || []) : [];
+    const panelWebCitations: WebCitation[] = rightPanelMode === "sources" && panelMessage?.role === "bot" ? (panelMessage.response?.web_citations || []) : [];
+    const isRightPanelOpen = rightPanelMessageIndex != null && rightPanelMode != null;
+    const closeRightPanel = () => {
+        setRightPanelMessageIndex(null);
+        setRightPanelMode(null);
+    };
+
+    // Stop hint pulse when user opens the panel for a message
+    useEffect(() => {
+        if (rightPanelMessageIndex != null) {
+            setHintPulseSeen((prev) => new Set(prev).add(rightPanelMessageIndex));
+        }
+    }, [rightPanelMessageIndex]);
+
+    // One-time pulse for "View N places/sources" hint: mark as seen after 2.5s
+    useEffect(() => {
+        const timeouts: ReturnType<typeof setTimeout>[] = [];
+        messages.forEach((m, i) => {
+            if (m.role !== "bot" || !m.response) return;
+            const hasHint =
+                (m.response.cards?.length ?? 0) > 0 || (m.response.web_citations?.length ?? 0) > 0;
+            if (!hasHint || hintPulseSeen.has(i) || hintPulseStartedRef.current.has(i)) return;
+            hintPulseStartedRef.current.add(i);
+            timeouts.push(
+                setTimeout(() => setHintPulseSeen((prev) => new Set(prev).add(i)), 2500)
+            );
+        });
+        return () => timeouts.forEach((t) => clearTimeout(t));
+    }, [messages, hintPulseSeen]);
+
     return (
         <>
-            <section className="h-full flex flex-col overflow-hidden bg-[#0C0C0C]">
+            <div className="h-full flex flex-col lg:flex-row overflow-hidden bg-[#0C0C0C]">
+                <section className="h-full flex flex-col overflow-hidden flex-1 min-w-0">
                 {/* Header */}
                 <div className="shrink-0 px-5 py-4 border-b border-[rgba(255,255,255,0.08)]">
                     {isEmptyState ? (
@@ -922,8 +1043,114 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
 
                             {/* Bot Response */}
                             {m.role === "bot" && m.response && (
-                                <div className="mr-auto max-w-[85%]">
-                                    <div className="bg-[#161616] border border-[rgba(255,255,255,0.08)] rounded-2xl rounded-bl-md p-5 space-y-5 shadow-lg">
+                                <div
+                                    ref={(el) => {
+                                        const hasCards = (m.response?.cards?.length ?? 0) > 0;
+                                        if (!hasCards) {
+                                            cardsMessageRefs.current.delete(i);
+                                            return;
+                                        }
+                                        if (el) {
+                                            cardsMessageRefs.current.set(i, el);
+                                            el.setAttribute("data-cards-message-index", String(i));
+                                        } else {
+                                            cardsMessageRefs.current.delete(i);
+                                        }
+                                    }}
+                                    className="mr-auto max-w-[85%]"
+                                >
+                                    <div
+                                        className={[
+                                            "bg-[#161616] rounded-2xl rounded-bl-md p-5 space-y-5 shadow-lg border transition-colors duration-200",
+                                            rightPanelMessageIndex === i && rightPanelMode !== null
+                                                ? "border-[rgba(174,133,80,0.6)]"
+                                                : "border-[rgba(255,255,255,0.08)]",
+                                        ].join(" ")}
+                                    >
+                                        {/* Header: badge (left) + View/Hide hint (right) when places or web sources exist */}
+                                        {((m.response?.cards?.length ?? 0) > 0 ||
+                                            (m.response?.web_citations?.length ?? 0) > 0) && (
+                                            <div className="flex items-center justify-between gap-3 pb-3 border-b border-[rgba(255,255,255,0.08)]">
+                                                <div className="flex flex-wrap gap-2">
+                                                    {(m.response?.cards?.length ?? 0) > 0 && (
+                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-[rgba(212,165,116,0.2)] text-[rgba(212,165,116,0.95)]">
+                                                            {m.response.cards!.length} place
+                                                            {(m.response.cards!.length ?? 0) !== 1
+                                                                ? "s"
+                                                                : ""}{" "}
+                                                            found
+                                                        </span>
+                                                    )}
+                                                    {(m.response?.web_citations?.length ?? 0) > 0 && (
+                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-[rgba(212,165,116,0.2)] text-[rgba(212,165,116,0.95)]">
+                                                            {m.response.web_citations!.length} web
+                                                            source
+                                                            {(m.response.web_citations!.length ?? 0) !==
+                                                            1
+                                                                ? "s"
+                                                                : ""}{" "}
+                                                            found
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    {(m.response?.cards?.length ?? 0) > 0 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                rightPanelMessageIndex === i &&
+                                                                rightPanelMode === "places"
+                                                                    ? closeRightPanel()
+                                                                    : (setRightPanelMessageIndex(i),
+                                                                      setRightPanelMode("places"))
+                                                            }
+                                                            className={[
+                                                                "text-[12px] font-medium text-[rgba(212,165,116,0.95)] hover:text-[#D4A574] transition-colors",
+                                                                !hintPulseSeen.has(i) &&
+                                                                (m.response?.cards?.length ?? 0) > 0
+                                                                    ? "animate-places-hint-pulse"
+                                                                    : "",
+                                                            ]
+                                                                .filter(Boolean)
+                                                                .join(" ")}
+                                                        >
+                                                            {rightPanelMessageIndex === i &&
+                                                            rightPanelMode === "places"
+                                                                ? `Hide ${m.response?.cards?.length ?? 0} place${(m.response?.cards?.length ?? 0) !== 1 ? "s" : ""}`
+                                                                : `View ${m.response?.cards?.length ?? 0} place${(m.response?.cards?.length ?? 0) !== 1 ? "s" : ""}`}
+                                                        </button>
+                                                    )}
+                                                    {(m.response?.web_citations?.length ?? 0) > 0 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                rightPanelMessageIndex === i &&
+                                                                rightPanelMode === "sources"
+                                                                    ? closeRightPanel()
+                                                                    : (setRightPanelMessageIndex(i),
+                                                                      setRightPanelMode("sources"))
+                                                            }
+                                                            className={[
+                                                                "text-[12px] font-medium text-[rgba(212,165,116,0.95)] hover:text-[#D4A574] transition-colors",
+                                                                !hintPulseSeen.has(i) &&
+                                                                (m.response?.web_citations?.length ??
+                                                                    0) > 0
+                                                                    ? "animate-places-hint-pulse"
+                                                                    : "",
+                                                            ]
+                                                                .filter(Boolean)
+                                                                .join(" ")}
+                                                        >
+                                                            {rightPanelMessageIndex === i &&
+                                                            rightPanelMode === "sources"
+                                                                ? `Hide ${m.response?.web_citations?.length ?? 0} web source${(m.response?.web_citations?.length ?? 0) !== 1 ? "s" : ""}`
+                                                                : `View ${m.response?.web_citations?.length ?? 0} web source${(m.response?.web_citations?.length ?? 0) !== 1 ? "s" : ""}`}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {/* Answer Section */}
                                         {m.response.answer && (
                                             <div className="space-y-3">
@@ -933,70 +1160,6 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                                         citations={m.response.citations || []}
                                                         onCitationClick={openPdfModal}
                                                     />
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Product / Place cards (Google Places) */}
-                                        {m.response.cards && m.response.cards.length > 0 && (
-                                            <div className="space-y-3 pt-2">
-                                                <h4 className="text-[12px] font-medium uppercase tracking-wider text-[#D4A574]">Places</h4>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                    {m.response.cards.map((card, idx) => (
-                                                        <div
-                                                            key={idx}
-                                                            className="bg-[#1a1a1a] border border-[rgba(255,255,255,0.1)] rounded-xl overflow-hidden hover:border-[rgba(174,133,80,0.3)] transition-colors"
-                                                        >
-                                                            {card.primary_image_url ? (
-                                                                <div className="aspect-video relative bg-[#0C0C0C]">
-                                                                    <img
-                                                                        src={card.primary_image_url}
-                                                                        alt={card.name}
-                                                                        className="w-full h-full object-cover"
-                                                                    />
-                                                                </div>
-                                                            ) : null}
-                                                            <div className="p-3 space-y-2">
-                                                                <h5 className="font-semibold text-[#F5F5F5] text-[13px] line-clamp-2">{card.name}</h5>
-                                                                {card.google_rating != null && (
-                                                                    <StarRating value={Math.min(5, Math.max(0, Number(card.google_rating)))} max={5} className="text-[#D4A574]" size={12} />
-                                                                )}
-                                                                {(card.address || card.city || card.country) && (
-                                                                    <p className="text-[12px] text-[rgba(245,245,245,0.7)] flex items-start gap-1.5">
-                                                                        <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                                                                        <span className="line-clamp-2">{[card.address, card.city, card.country].filter(Boolean).join(", ")}</span>
-                                                                    </p>
-                                                                )}
-                                                                {card.contact_phone && (
-                                                                    <a href={`tel:${card.contact_phone}`} className="text-[12px] text-[#7AA3C8] hover:underline block truncate">
-                                                                        {card.contact_phone}
-                                                                    </a>
-                                                                )}
-                                                                <div className="flex flex-wrap gap-2 pt-1">
-                                                                    {card.google_maps_url && (
-                                                                        <a
-                                                                            href={card.google_maps_url}
-                                                                            target="_blank"
-                                                                            rel="noopener noreferrer"
-                                                                            className="inline-flex items-center gap-1 text-[11px] font-medium text-[#7AA3C8] hover:text-[#9BBDD8]"
-                                                                        >
-                                                                            Map <ExternalLink className="w-3 h-3" />
-                                                                        </a>
-                                                                    )}
-                                                                    {card.website && (
-                                                                        <a
-                                                                            href={card.website}
-                                                                            target="_blank"
-                                                                            rel="noopener noreferrer"
-                                                                            className="inline-flex items-center gap-1 text-[11px] font-medium text-[#7AA3C8] hover:text-[#9BBDD8]"
-                                                                        >
-                                                                            Website <ExternalLink className="w-3 h-3" />
-                                                                        </a>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    ))}
                                                 </div>
                                             </div>
                                         )}
@@ -1242,7 +1405,183 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                         </div>
                     </div>
                 </div>
-            </section>
+                </section>
+
+                {/* Right panel: Places or Web sources — 350ms slide transition; always in DOM for animation */}
+                <aside
+                    className={[
+                        "shrink-0 overflow-hidden border-[rgba(255,255,255,0.08)] bg-[#0C0C0C] ease-out",
+                        "w-full border-t lg:border-t-0 lg:border-l",
+                        "max-h-[38vh] lg:max-h-none",
+                        isRightPanelOpen
+                            ? "lg:w-[420px] xl:w-[460px] min-w-0"
+                            : "w-0 min-w-0 lg:w-0 border-l-0",
+                    ].join(" ")}
+                    style={{ transition: "width 350ms ease-out" }}
+                    aria-hidden={!isRightPanelOpen}
+                    aria-label={rightPanelMode === "sources" ? "Web sources panel" : "Places panel"}
+                >
+                        <div className="h-full flex flex-col">
+                            <div className="shrink-0 px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between gap-2">
+                                <div>
+                                    <h3 className="text-[14px] font-semibold text-[#F5F5F5]">
+                                        {rightPanelMode === "sources" ? "Web sources" : "Places"}
+                                    </h3>
+                                    <p className="text-[12px] text-[rgba(245,245,245,0.5)] mt-0.5">
+                                        {rightPanelMode === "sources"
+                                            ? `${panelWebCitations.length} result${panelWebCitations.length !== 1 ? "s" : ""}`
+                                            : `${panelPlaceCards.length} result${panelPlaceCards.length !== 1 ? "s" : ""}`}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={closeRightPanel}
+                                    className="shrink-0 p-2 rounded-lg text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.08)] hover:text-[#F5F5F5] transition-colors"
+                                    aria-label="Close panel"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-5" style={{ minHeight: 0 }}>
+                                {rightPanelMode === "sources" && (
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {panelWebCitations.map((wc, idx) => (
+                                            <div
+                                                key={`${wc.url}-${idx}`}
+                                                className="bg-[#161616] border border-[rgba(255,255,255,0.1)] rounded-xl p-3 hover:border-[rgba(174,133,80,0.3)] transition-colors relative group"
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    {wc.favicon ? (
+                                                        /* eslint-disable-next-line @next/next/no-img-element */
+                                                        <img
+                                                            src={wc.favicon}
+                                                            alt=""
+                                                            className="w-8 h-8 shrink-0 rounded object-contain"
+                                                            width={32}
+                                                            height={32}
+                                                        />
+                                                    ) : (
+                                                        <div className="w-8 h-8 shrink-0 rounded bg-[rgba(255,255,255,0.08)] flex items-center justify-center">
+                                                            <Globe className="w-4 h-4 text-[rgba(245,245,245,0.5)]" aria-hidden />
+                                                        </div>
+                                                    )}
+                                                    <div className="min-w-0 flex-1">
+                                                        <a
+                                                            href={wc.url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="font-semibold text-[13px] leading-snug line-clamp-2 text-[#F5F5F5] hover:text-[#7AA3C8] hover:underline block"
+                                                        >
+                                                            {wc.title || wc.url || "Web source"}
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                {rightPanelMode === "places" && (
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {panelPlaceCards.map((card, idx) => {
+                                            const placeUrl =
+                                                card.google_maps_url || card.website || null;
+                                            const cardContent = (
+                                                <>
+                                                    {card.primary_image_url ? (
+                                                        <div className="aspect-video relative bg-[#0C0C0C]">
+                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                            <img
+                                                                src={card.primary_image_url}
+                                                                alt={card.name}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        </div>
+                                                    ) : null}
+                                                    <div className="p-3 space-y-2">
+                                                        <h4 className="font-semibold text-[#F5F5F5] text-[13px] leading-snug line-clamp-2">{card.name}</h4>
+                                                        {card.google_rating != null && (
+                                                            <StarRating
+                                                                value={Math.min(5, Math.max(0, Number(card.google_rating)))}
+                                                                max={5}
+                                                                className="text-[#D4A574]"
+                                                                size={12}
+                                                            />
+                                                        )}
+                                                        {(card.address || card.city || card.country) && (
+                                                            <p className="text-[12px] text-[rgba(245,245,245,0.7)] line-clamp-2">
+                                                                {[card.address, card.city, card.country].filter(Boolean).join(", ")}
+                                                            </p>
+                                                        )}
+                                                        {card.contact_phone && (
+                                                            <a
+                                                                href={`tel:${card.contact_phone}`}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="text-[12px] text-[#7AA3C8] hover:underline block truncate"
+                                                            >
+                                                                {card.contact_phone}
+                                                            </a>
+                                                        )}
+                                                        <div className="flex flex-wrap gap-2 pt-1">
+                                                            {card.google_maps_url && (
+                                                                <a
+                                                                    href={card.google_maps_url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    className="text-[11px] font-medium text-[#7AA3C8] hover:text-[#9BBDD8]"
+                                                                >
+                                                                    Map
+                                                                </a>
+                                                            )}
+                                                            {card.website && (
+                                                                <a
+                                                                    href={card.website}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    className="text-[11px] font-medium text-[#7AA3C8] hover:text-[#9BBDD8]"
+                                                                >
+                                                                    Website
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            );
+                                            const cardClass =
+                                                "bg-[#161616] border border-[rgba(255,255,255,0.1)] rounded-xl overflow-hidden hover:border-[rgba(174,133,80,0.5)] transition-colors relative group block cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(174,133,80,0.5)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161616] animate-card-slide-in";
+                                            return placeUrl ? (
+                                                <a
+                                                    key={`${card.google_maps_url || card.website || card.name}-${idx}`}
+                                                    href={placeUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className={cardClass}
+                                                    style={{
+                                                        animationDelay: `${idx * 60}ms`,
+                                                    }}
+                                                >
+                                                    {cardContent}
+                                                </a>
+                                            ) : (
+                                                <div
+                                                    key={`${card.name}-${idx}`}
+                                                    className={cardClass}
+                                                    style={{
+                                                        animationDelay: `${idx * 60}ms`,
+                                                    }}
+                                                >
+                                                    {cardContent}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </aside>
+            </div>
 
             {/* PDF Modal */}
             <PdfModal

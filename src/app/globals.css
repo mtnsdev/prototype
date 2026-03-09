@@ -300,6 +300,57 @@ input.chat-input-no-focus-outline:focus-visible {
 }
 
 /* ==========================================
+   Chat: View places/sources hint pulse (respects reduced-motion)
+   ========================================== */
+
+@keyframes places-hint-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+.animate-places-hint-pulse {
+    animation: places-hint-pulse 1.25s ease-in-out 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-places-hint-pulse {
+        animation: none;
+    }
+}
+
+/* ==========================================
+   Chat: Place cards staggered slide-in (respects reduced-motion)
+   ========================================== */
+
+@keyframes card-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.animate-card-slide-in {
+    animation: card-slide-in 0.3s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-card-slide-in {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* ==========================================
    Reduced Motion
    ========================================== */
 
