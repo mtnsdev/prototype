@@ -529,6 +529,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
     const [feedbackCommentPopupMessageId, setFeedbackCommentPopupMessageId] = useState<number | null>(null);
     /** When true, backend routes to B4 (Facts & Logistics) and includes Google Places in the answer */
     const [externalSearchMode, setExternalSearchMode] = useState(false);
+    const [searchPlacesMode, setSearchPlacesMode] = useState(false);
 
     /** Ref for the bottom of the messages area; scroll here after sending so the new question is visible */
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -770,6 +771,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                     query: text,
                     session_id: currentSessionId || undefined,
                     external_search: externalSearchMode,
+                    search_places: searchPlacesMode,
                 }),
             });
 
@@ -1252,40 +1254,27 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                             </div>
                                         )}
 
-                                        {/* Feedback: thumbs up/down + optional comment */}
-                                        {m.id != null && currentSessionId != null && (
-                                            <div className="pt-3 mt-3 border-t border-[rgba(255,255,255,0.08)] space-y-2">
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className="text-[11px] uppercase tracking-wider text-[rgba(245,245,245,0.45)] mr-1">Was this helpful?</span>
+                                        {/* Feedback: icon-only thumbs up/down + comment; hidden when feedback already exists */}
+                                        {m.id != null && currentSessionId != null && m.feedback_rating == null && (m.feedback_comment == null || m.feedback_comment === "") && (
+                                            <div className="pt-3 mt-3 border-t border-[rgba(255,255,255,0.08)]">
+                                                <div className="flex items-center gap-1">
                                                     <button
                                                         type="button"
-                                                        onClick={() => submitFeedback(m.id!, { rating: m.feedback_rating === 1 ? null : 1 })}
+                                                        onClick={() => submitFeedback(m.id!, { rating: 1 })}
                                                         disabled={feedbackSubmitting === m.id}
-                                                        className={[
-                                                            "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors",
-                                                            m.feedback_rating === 1
-                                                                ? "bg-[#2d4a2d] text-[#86ef86] border border-[rgba(134,239,134,0.3)]"
-                                                                : "bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.1)] border border-transparent",
-                                                        ].join(" ")}
+                                                        className="inline-flex items-center justify-center p-2 rounded-lg bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.1)] border border-transparent transition-colors"
                                                         title="Thumbs up"
                                                     >
                                                         <ThumbsUp className="w-3.5 h-3.5" />
-                                                        Yes
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        onClick={() => submitFeedback(m.id!, { rating: m.feedback_rating === -1 ? null : -1 })}
+                                                        onClick={() => submitFeedback(m.id!, { rating: -1 })}
                                                         disabled={feedbackSubmitting === m.id}
-                                                        className={[
-                                                            "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors",
-                                                            m.feedback_rating === -1
-                                                                ? "bg-[#4a2d2d] text-[#f87171] border border-[rgba(248,113,113,0.3)]"
-                                                                : "bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.1)] border border-transparent",
-                                                        ].join(" ")}
+                                                        className="inline-flex items-center justify-center p-2 rounded-lg bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.1)] border border-transparent transition-colors"
                                                         title="Thumbs down"
                                                     >
                                                         <ThumbsDown className="w-3.5 h-3.5" />
-                                                        No
                                                     </button>
                                                     <button
                                                         type="button"
@@ -1293,22 +1282,15 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                                             setFeedbackCommentPopupMessageId(m.id!);
                                                             setFeedbackCommentDraft((d) => ({
                                                                 ...d,
-                                                                [m.id!]: d[m.id!] ?? m.feedback_comment ?? "",
+                                                                [m.id!]: d[m.id!] ?? "",
                                                             }));
                                                         }}
-                                                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.1)] border border-transparent transition-colors"
+                                                        className="inline-flex items-center justify-center p-2 rounded-lg bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.1)] border border-transparent transition-colors"
                                                         title="Add a comment"
                                                     >
                                                         <MessageSquare className="w-3.5 h-3.5" />
-                                                        {m.feedback_comment ? "Edit comment" : "Comment"}
                                                     </button>
                                                 </div>
-                                                {m.feedback_comment != null && m.feedback_comment !== "" && (
-                                                    <div className="flex items-start gap-2 text-[12px] text-[rgba(245,245,245,0.7)] mt-2">
-                                                        <MessageSquare className="w-3.5 h-3.5 mt-0.5 shrink-0 text-[rgba(245,245,245,0.5)]" />
-                                                        <span className="italic">&ldquo;{m.feedback_comment}&rdquo;</span>
-                                                    </div>
-                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -1385,10 +1367,10 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                 >
                                     <Plus size={18} strokeWidth={2.25} />
                                 </button>
-                                {/* Tools dropdown (Web search option) */}
+                                {/* Tools dropdown: Search web + Search Google Places */}
                                 {toolsMenuOpen && (
                                     <div
-                                        className="absolute left-0 bottom-full mb-2 z-50 min-w-[200px] rounded-xl bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] shadow-xl py-1.5"
+                                        className="absolute left-0 bottom-full mb-2 z-50 min-w-[220px] rounded-xl bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] shadow-xl py-1.5"
                                         role="menu"
                                         aria-label="Tools"
                                     >
@@ -1398,6 +1380,7 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                             aria-checked={externalSearchMode}
                                             onClick={() => {
                                                 setExternalSearchMode((v) => !v);
+                                                if (!externalSearchMode) setSearchPlacesMode(false);
                                                 setToolsMenuOpen(false);
                                             }}
                                             className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-[13px] text-[rgba(245,245,245,0.9)] hover:bg-[rgba(255,255,255,0.08)] transition-colors"
@@ -1409,26 +1392,64 @@ export default function ChatPanel({ conversationId, onConversationCreated, userN
                                                 <Globe size={16} />
                                             </div>
                                             <div className="min-w-0">
-                                                <span className="font-medium">Web search</span>
-                                                <p className="text-[11px] text-[rgba(245,245,245,0.5)] mt-0.5">Search the web and places</p>
+                                                <span className="font-medium">Search web</span>
+                                                <p className="text-[11px] text-[rgba(245,245,245,0.5)] mt-0.5">Include external web search</p>
                                             </div>
                                             {externalSearchMode && (
                                                 <span className="ml-auto text-[#AE8550]" aria-hidden>✓</span>
                                             )}
                                         </button>
+                                        <button
+                                            type="button"
+                                            role="menuitemcheckbox"
+                                            aria-checked={searchPlacesMode}
+                                            onClick={() => {
+                                                setSearchPlacesMode((v) => !v);
+                                                if (!searchPlacesMode) setExternalSearchMode(false);
+                                                setToolsMenuOpen(false);
+                                            }}
+                                            className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-[13px] text-[rgba(245,245,245,0.9)] hover:bg-[rgba(255,255,255,0.08)] transition-colors"
+                                        >
+                                            <div className={[
+                                                "flex items-center justify-center h-8 w-8 rounded-lg shrink-0",
+                                                searchPlacesMode ? "bg-[rgba(174,133,80,0.25)] text-[#AE8550]" : "bg-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.6)]",
+                                            ].join(" ")}>
+                                                <MapPin size={16} />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <span className="font-medium">Search Google Places</span>
+                                                <p className="text-[11px] text-[rgba(245,245,245,0.5)] mt-0.5">Include place recommendations</p>
+                                            </div>
+                                            {searchPlacesMode && (
+                                                <span className="ml-auto text-[#AE8550]" aria-hidden>✓</span>
+                                            )}
+                                        </button>
                                     </div>
                                 )}
-                                {/* Web search icon when enabled - hover shows X to remove */}
+                                {/* Search web icon when enabled */}
                                 {externalSearchMode && (
                                     <button
                                         type="button"
-                                        aria-label="Web search on (click to turn off)"
-                                        title="Web search on — click to turn off"
+                                        aria-label="Search web on (click to turn off)"
+                                        title="Search web on — click to turn off"
                                         onClick={() => setExternalSearchMode(false)}
                                         className="group/ws flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-[rgba(174,133,80,0.2)] text-[#AE8550] hover:bg-[rgba(174,133,80,0.3)] transition-colors relative"
                                     >
                                         <Globe size={16} className="opacity-100 group-hover/ws:opacity-0 transition-opacity" aria-hidden />
                                         <X size={14} className="absolute inset-0 m-auto opacity-0 group-hover/ws:opacity-100 transition-opacity pointer-events-none" aria-hidden />
+                                    </button>
+                                )}
+                                {/* Search Google Places icon when enabled */}
+                                {searchPlacesMode && (
+                                    <button
+                                        type="button"
+                                        aria-label="Search Google Places on (click to turn off)"
+                                        title="Search Google Places on — click to turn off"
+                                        onClick={() => setSearchPlacesMode(false)}
+                                        className="group/pl flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-[rgba(174,133,80,0.2)] text-[#AE8550] hover:bg-[rgba(174,133,80,0.3)] transition-colors relative"
+                                    >
+                                        <MapPin size={16} className="opacity-100 group-hover/pl:opacity-0 transition-opacity" aria-hidden />
+                                        <X size={14} className="absolute inset-0 m-auto opacity-0 group-hover/pl:opacity-100 transition-opacity pointer-events-none" aria-hidden />
                                     </button>
                                 )}
                                 <input
