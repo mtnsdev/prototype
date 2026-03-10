@@ -41,8 +41,6 @@ export default function ChatPanel({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
-  const cardsMessageRefs = useRef<Map<number, HTMLDivElement | null>>(new Map());
-  const [scrollActiveCardsMessageIndex, setScrollActiveCardsMessageIndex] = useState<number | null>(null);
   const [rightPanelMessageIndex, setRightPanelMessageIndex] = useState<number | null>(null);
   const [rightPanelMode, setRightPanelMode] = useState<"places" | "sources" | null>(null);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
@@ -120,39 +118,6 @@ export default function ChatPanel({
     setRightPanelMessageIndex(null);
     setRightPanelMode(null);
   }, [conversationId]);
-
-  useEffect(() => {
-    const root = messagesScrollRef.current;
-    if (!root) return;
-    const entriesByIndex = new Map<number, IntersectionObserverEntry>();
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          const idxAttr = (entry.target as HTMLElement).getAttribute("data-cards-message-index");
-          const idx = idxAttr ? Number(idxAttr) : NaN;
-          if (!Number.isFinite(idx)) continue;
-          entriesByIndex.set(idx, entry);
-        }
-        let bestIdx: number | null = null;
-        let bestRatio = 0;
-        for (const [idx, entry] of entriesByIndex.entries()) {
-          if (!entry.isIntersecting) continue;
-          if (entry.intersectionRatio > bestRatio) {
-            bestRatio = entry.intersectionRatio;
-            bestIdx = idx;
-          }
-        }
-        setScrollActiveCardsMessageIndex(bestIdx);
-      },
-      { root, threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] }
-    );
-    for (const [idx, el] of cardsMessageRefs.current.entries()) {
-      if (!el) continue;
-      el.setAttribute("data-cards-message-index", String(idx));
-      observer.observe(el);
-    }
-    return () => observer.disconnect();
-  }, [messages.length]);
 
   const openPdfModalFn = useCallback((filename: string, pageNumber: number | string, pdfPath?: string) => {
     setPdfModal({ isOpen: true, filename, pageNumber, pdfPath });
@@ -422,19 +387,6 @@ export default function ChatPanel({
 
                   {m.role === "bot" && m.response && (
                     <div
-                      ref={(el) => {
-                        const hasCards = (m.response?.cards?.length ?? 0) > 0;
-                        if (!hasCards) {
-                          cardsMessageRefs.current.delete(i);
-                          return;
-                        }
-                        if (el) {
-                          cardsMessageRefs.current.set(i, el);
-                          el.setAttribute("data-cards-message-index", String(i));
-                        } else {
-                          cardsMessageRefs.current.delete(i);
-                        }
-                      }}
                       className={
                         "mr-auto max-w-[85%]" +
                         ((m.response?.cards?.length ?? 0) > 0 || (m.response?.web_citations?.length ?? 0) > 0 ? " group" : "")
