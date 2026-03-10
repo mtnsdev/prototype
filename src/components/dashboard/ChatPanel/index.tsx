@@ -306,6 +306,14 @@ export default function ChatPanel({
           feedback_comment: null,
         };
         setMessages((m) => [...m, botMessage]);
+        // Auto-open right panel for the new message when it has cards or web sources
+        const hasCards = (data.cards?.length ?? 0) > 0;
+        const hasSources = (data.web_citations?.length ?? 0) > 0;
+        if (hasCards || hasSources) {
+          // +1: user message was already appended at the start of send(), so bot is at next index
+          setRightPanelMessageIndex(messages.length + 1);
+          setRightPanelMode(hasCards ? "places" : "sources");
+        }
       } else if (!streamErrorReceived) {
         setMessages((m) => [...m, { role: "bot", text: "Sorry, I encountered an error processing your request. Please try again." }]);
       }
