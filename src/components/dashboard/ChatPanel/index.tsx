@@ -427,8 +427,18 @@ export default function ChatPanel({
                           setRightPanelMode("knowledge");
                         }}
                         onCitationHover={
-                          rightPanelMessageIndex === i && rightPanelMode === "knowledge"
-                            ? setHighlightedKbCitationNumber
+                          (m.response?.citations?.length ?? 0) > 0
+                            ? (num: number | null) => {
+                                if (
+                                  num !== null &&
+                                  rightPanelMessageIndex === i &&
+                                  rightPanelMode !== "knowledge"
+                                ) {
+                                  setRightPanelMessageIndex(i);
+                                  setRightPanelMode("knowledge");
+                                }
+                                setHighlightedKbCitationNumber(num);
+                              }
                             : undefined
                         }
                         onCloseRightPanel={closeRightPanel}
