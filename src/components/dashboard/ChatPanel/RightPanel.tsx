@@ -1,19 +1,42 @@
 "use client";
 
 import React from "react";
-import { X, Globe, ExternalLink, MapPin } from "lucide-react";
+import { X, Globe, ExternalLink, MapPin, FileText } from "lucide-react";
 import { StarRating } from "./StarRating";
-import type { PlaceCard, WebCitation } from "./types";
+import type { PlaceCard, WebCitation, Citation } from "./types";
 
 type RightPanelProps = {
   isOpen: boolean;
-  mode: "places" | "sources" | null;
+  mode: "places" | "sources" | "knowledge" | null;
   placeCards: PlaceCard[];
   webCitations: WebCitation[];
+  kbCitations?: Citation[];
   onClose: () => void;
+  onCitationClick?: (filename: string, pageNumber: number | string, pdfPath?: string) => void;
+  highlightedKbCitationNumber?: number | null;
 };
 
-export function RightPanel({ isOpen, mode, placeCards, webCitations, onClose }: RightPanelProps) {
+export function RightPanel({
+  isOpen,
+  mode,
+  placeCards,
+  webCitations,
+  kbCitations = [],
+  onClose,
+  onCitationClick,
+  highlightedKbCitationNumber = null,
+}: RightPanelProps) {
+  const panelTitle =
+    mode === "sources" ? "Web sources" : mode === "knowledge" ? "Knowledge Sources" : "Places";
+  const panelCount =
+    mode === "sources"
+      ? webCitations.length
+      : mode === "knowledge"
+        ? kbCitations.length
+        : placeCards.length;
+  const ariaLabel =
+    mode === "sources" ? "Web sources panel" : mode === "knowledge" ? "Knowledge sources panel" : "Places panel";
+
   return (
     <aside
       className={[
@@ -24,18 +47,14 @@ export function RightPanel({ isOpen, mode, placeCards, webCitations, onClose }: 
       ].join(" ")}
       style={{ transition: "width 350ms ease-out" }}
       aria-hidden={!isOpen}
-      aria-label={mode === "sources" ? "Web sources panel" : "Places panel"}
+      aria-label={ariaLabel}
     >
       <div className="h-full flex flex-col">
         <div className="shrink-0 px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between gap-2">
           <div>
-            <h3 className="text-[14px] font-semibold text-[#F5F5F5]">
-              {mode === "sources" ? "Web sources" : "Places"}
-            </h3>
+            <h3 className="text-[14px] font-semibold text-[#F5F5F5]">{panelTitle}</h3>
             <p className="text-[12px] text-[rgba(245,245,245,0.5)] mt-0.5">
-              {mode === "sources"
-                ? `${webCitations.length} result${webCitations.length !== 1 ? "s" : ""}`
-                : `${placeCards.length} result${placeCards.length !== 1 ? "s" : ""}`}
+              {panelCount} result{panelCount !== 1 ? "s" : ""}
             </p>
           </div>
           <button
@@ -49,6 +68,60 @@ export function RightPanel({ isOpen, mode, placeCards, webCitations, onClose }: 
         </div>
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-5" style={{ minHeight: 0 }}>
+          {mode === "knowledge" && (
+            <div className="grid grid-cols-1 gap-3">
+              {kbCitations.map((cit, idx) => {
+                const displayNum = idx + 1;
+                const isHighlighted = highlightedKbCitationNumber === displayNum;
+                const filename = cit.filename || cit.source || "Document";
+                const sourceLabel = cit.source_label || "Knowledge base";
+                const pageRef =
+                  cit.page_number != null && cit.page_number !== ""
+                    ? `Page ${cit.page_number}`
+                    : null;
+                const excerpt = (cit.excerpt || "").slice(0, 120);
+                return (
+                  <button
+                    key={cit.chunk_id ?? idx}
+                    type="button"
+                    onClick={() => onCitationClick?.(filename, cit.page_number ?? 1, cit.pdf_path)}
+                    className={[
+                      "w-full text-left bg-[#161616] border rounded-xl p-3 transition-colors",
+                      isHighlighted
+                        ? "border-[rgba(174,133,80,0.6)] bg-[rgba(174,133,80,0.08)]"
+                        : "border-[rgba(255,255,255,0.1)] hover:border-[rgba(174,133,80,0.3)]",
+                    ].join(" ")}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 shrink-0 rounded bg-[rgba(255,255,255,0.08)] flex items-center justify-center">
+                        <FileText className="w-4 h-4 text-[rgba(245,245,245,0.5)]" aria-hidden />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-semibold text-[rgba(212,165,116,0.95)]">
+                            {displayNum}
+                          </span>
+                          <span className="font-semibold text-[13px] leading-snug text-[#F5F5F5] truncate block">
+                            {filename}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[rgba(245,245,245,0.6)] mt-0.5">{sourceLabel}</p>
+                        {pageRef && (
+                          <p className="text-[11px] text-[rgba(245,245,245,0.5)] mt-1">{pageRef}</p>
+                        )}
+                        {excerpt && (
+                          <p className="text-[12px] text-[rgba(245,245,245,0.7)] mt-2 line-clamp-2">
+                            {excerpt}
+                            {excerpt.length >= 120 ? "…" : ""}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
           {mode === "sources" && (
             <div className="grid grid-cols-1 gap-3">
               {webCitations.map((wc, idx) => (

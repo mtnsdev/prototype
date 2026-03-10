@@ -4,8 +4,37 @@ import React from "react";
 import ReactMarkdown from "react-markdown";
 import { ExternalLink } from "lucide-react";
 import { InlineCitationMarker } from "./InlineCitationMarker";
-import { InlineCitationMarkerEllipsis } from "./InlineCitationMarker";
 import type { Citation } from "./types";
+
+const citationBlockPattern = /\[\^([^\]]+)\]/gi;
+
+function parseCitationIds(inner: string): string[] {
+  return inner
+    .split(",")
+    .map((s) => s.trim().replace(/^\^/, "").trim().toLowerCase())
+    .filter((id) => /^[a-f0-9-]{36}$/.test(id));
+}
+
+/** Returns citations in display order (1-based index matches inline ①②③). */
+export function getOrderedCitations(answer: string, citations: Citation[]): Citation[] {
+  const citationByChunkId = new Map<string, Citation>(
+    (citations || []).filter((c): c is Citation & { chunk_id: string } => !!c.chunk_id).map((c) => [c.chunk_id!.toLowerCase(), c])
+  );
+  const orderedChunkIds: string[] = [];
+  const seen = new Set<string>();
+  let match;
+  citationBlockPattern.lastIndex = 0;
+  while ((match = citationBlockPattern.exec(answer)) !== null) {
+    const ids = parseCitationIds(match[1]);
+    for (const id of ids) {
+      if (!seen.has(id) && citationByChunkId.has(id)) {
+        seen.add(id);
+        orderedChunkIds.push(id);
+      }
+    }
+  }
+  return orderedChunkIds.map((id) => citationByChunkId.get(id)!).filter(Boolean);
+}
 
 const markdownComponentsBase = {
   p: ({ children }: { children?: React.ReactNode }) => <p className="mb-3 text-[rgba(245,245,245,0.88)] leading-relaxed">{children}</p>,
@@ -22,26 +51,25 @@ type AnswerWithCitationsProps = {
   answer: string;
   citations: Citation[];
   onCitationClick: (filename: string, pageNumber: number | string, pdfPath?: string) => void;
+  onCitationHover?: (displayNumber: number | null) => void;
+  onOpenKnowledgePanel?: () => void;
 };
 
 /** Renders answer text with inline citation markers (new [^chunk_id] format and legacy [Source: ..., Page: ...] format). */
-export function AnswerWithCitations({ answer, citations, onCitationClick }: AnswerWithCitationsProps) {
-  const citationBlockPattern = /\[\^([^\]]+)\]/gi;
+export function AnswerWithCitations({
+  answer,
+  citations,
+  onCitationClick,
+  onCitationHover,
+}: AnswerWithCitationsProps) {
   const citationByChunkId = new Map<string, Citation>(
     (citations || []).filter((c): c is Citation & { chunk_id: string } => !!c.chunk_id).map((c) => [c.chunk_id!.toLowerCase(), c])
   );
 
-  function parseCitationIds(inner: string): string[] {
-    return inner
-      .split(",")
-      .map((s) => s.trim().replace(/^\^/, "").trim().toLowerCase())
-      .filter((id) => /^[a-f0-9-]{36}$/.test(id));
-  }
-
   const allMatches: { index: number; ids: string[] }[] = [];
+  const pattern = /\[\^([^\]]+)\]/gi;
   let match;
-  citationBlockPattern.lastIndex = 0;
-  while ((match = citationBlockPattern.exec(answer)) !== null) {
+  while ((match = pattern.exec(answer)) !== null) {
     const ids = parseCitationIds(match[1]);
     if (ids.length > 0) allMatches.push({ index: match.index, ids });
   }
@@ -85,41 +113,29 @@ export function AnswerWithCitations({ answer, citations, onCitationClick }: Answ
           const payload = href.slice("#citation-group:".length);
           const allIds = payload.split(";").map((id) => id.trim().toLowerCase()).filter(Boolean);
           if (allIds.length >= 2) {
-            const firstId = allIds[0];
-            const restIds = allIds.slice(1);
-            const firstCitation = citationByChunkId.get(firstId);
-            const firstNum = chunkIdToDisplayNumber.get(firstId);
-            if (firstCitation != null && firstNum != null) {
-              return (
-                <span className="inline-flex items-center flex-nowrap align-baseline">
+            const markers = allIds
+              .map((id) => {
+                const citation = citationByChunkId.get(id);
+                const displayNumber = chunkIdToDisplayNumber.get(id);
+                if (citation == null || displayNumber == null) return null;
+                return (
                   <InlineCitationMarker
-                    citation={firstCitation}
-                    displayNumber={firstNum}
+                    key={id}
+                    citation={citation}
+                    displayNumber={displayNumber}
                     onCitationClick={onCitationClick}
+                    onHover={onCitationHover}
                   />
-                  <InlineCitationMarkerEllipsis
-                    chunkIds={restIds}
-                    citationByChunkId={citationByChunkId}
-                    chunkIdToDisplayNumber={chunkIdToDisplayNumber}
-                    onCitationClick={onCitationClick}
-                  />
+                );
+              })
+              .filter(Boolean);
+            if (markers.length > 0) {
+              return (
+                <span className="inline-flex items-center flex-nowrap align-baseline gap-0">
+                  {markers}
                 </span>
               );
             }
-          }
-        }
-        if (href?.startsWith("#citation-more:")) {
-          const payload = href.slice("#citation-more:".length);
-          const chunkIds = payload.split(";").map((id) => id.trim().toLowerCase()).filter(Boolean);
-          if (chunkIds.length > 0) {
-            return (
-              <InlineCitationMarkerEllipsis
-                chunkIds={chunkIds}
-                citationByChunkId={citationByChunkId}
-                chunkIdToDisplayNumber={chunkIdToDisplayNumber}
-                onCitationClick={onCitationClick}
-              />
-            );
           }
         }
         if (href?.startsWith("#citation:")) {
@@ -132,6 +148,7 @@ export function AnswerWithCitations({ answer, citations, onCitationClick }: Answ
                 citation={citation}
                 displayNumber={displayNumber}
                 onCitationClick={onCitationClick}
+                onHover={onCitationHover}
               />
             );
           }

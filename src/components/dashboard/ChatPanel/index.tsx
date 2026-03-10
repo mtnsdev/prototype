@@ -12,6 +12,7 @@ import { BotMessageCard } from "./BotMessageCard";
 import { ChatInput } from "./ChatInput";
 import { RightPanel } from "./RightPanel";
 import { FeedbackCommentModal } from "./FeedbackCommentModal";
+import { getOrderedCitations } from "./AnswerWithCitations";
 
 export default function ChatPanel({
   conversationId,
@@ -42,7 +43,8 @@ export default function ChatPanel({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const [rightPanelMessageIndex, setRightPanelMessageIndex] = useState<number | null>(null);
-  const [rightPanelMode, setRightPanelMode] = useState<"places" | "sources" | null>(null);
+  const [rightPanelMode, setRightPanelMode] = useState<"places" | "sources" | "knowledge" | null>(null);
+  const [highlightedKbCitationNumber, setHighlightedKbCitationNumber] = useState<number | null>(null);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [hintPulseSeen, setHintPulseSeen] = useState<Set<number>>(new Set());
   const hintPulseStartedRef = useRef<Set<number>>(new Set());
@@ -271,13 +273,14 @@ export default function ChatPanel({
           feedback_comment: null,
         };
         setMessages((m) => [...m, botMessage]);
-        // Auto-open right panel for the new message when it has cards or web sources
+        // Auto-open right panel for the new message when it has cards, web sources, or KB citations
         const hasCards = (data.cards?.length ?? 0) > 0;
         const hasSources = (data.web_citations?.length ?? 0) > 0;
-        if (hasCards || hasSources) {
-          // +1: user message was already appended at the start of send(), so bot is at next index
-          setRightPanelMessageIndex(messages.length + 1);
-          setRightPanelMode(hasCards ? "places" : "sources");
+        const hasCitations = (data.citations?.length ?? 0) > 0;
+        if (hasCards || hasSources || hasCitations) {
+          const nextIdx = messages.length + 1;
+          setRightPanelMessageIndex(nextIdx);
+          setRightPanelMode(hasCards ? "places" : hasSources ? "sources" : "knowledge");
         }
       } else if (!streamErrorReceived) {
         setMessages((m) => [...m, { role: "bot", text: "Sorry, I encountered an error processing your request. Please try again." }]);
@@ -315,10 +318,15 @@ export default function ChatPanel({
     rightPanelMode === "places" && panelMessage?.role === "bot" ? (panelMessage.response?.cards || []) : [];
   const panelWebCitations =
     rightPanelMode === "sources" && panelMessage?.role === "bot" ? (panelMessage.response?.web_citations || []) : [];
+  const panelKbCitations =
+    rightPanelMode === "knowledge" && panelMessage?.role === "bot" && panelMessage.response
+      ? getOrderedCitations(panelMessage.response.answer ?? "", panelMessage.response.citations ?? [])
+      : [];
   const isRightPanelOpen = rightPanelMessageIndex != null && rightPanelMode != null;
   const closeRightPanel = useCallback(() => {
     setRightPanelMessageIndex(null);
     setRightPanelMode(null);
+    setHighlightedKbCitationNumber(null);
   }, []);
 
   useEffect(() => {
@@ -331,7 +339,10 @@ export default function ChatPanel({
     const timeouts: ReturnType<typeof setTimeout>[] = [];
     messages.forEach((m, i) => {
       if (m.role !== "bot" || !m.response) return;
-      const hasHint = (m.response.cards?.length ?? 0) > 0 || (m.response.web_citations?.length ?? 0) > 0;
+      const hasHint =
+        (m.response.cards?.length ?? 0) > 0 ||
+        (m.response.web_citations?.length ?? 0) > 0 ||
+        (m.response.citations?.length ?? 0) > 0;
       if (!hasHint || hintPulseSeen.has(i) || hintPulseStartedRef.current.has(i)) return;
       hintPulseStartedRef.current.add(i);
       timeouts.push(setTimeout(() => setHintPulseSeen((prev) => new Set(prev).add(i)), 2500));
@@ -389,7 +400,7 @@ export default function ChatPanel({
                     <div
                       className={
                         "mr-auto max-w-[85%]" +
-                        ((m.response?.cards?.length ?? 0) > 0 || (m.response?.web_citations?.length ?? 0) > 0 ? " group" : "")
+                        ((m.response?.cards?.length ?? 0) > 0 || (m.response?.web_citations?.length ?? 0) > 0 || (m.response?.citations?.length ?? 0) > 0 ? " group" : "")
                       }
                     >
                       <BotMessageCard
@@ -404,11 +415,22 @@ export default function ChatPanel({
                         onViewPlaces={(idx) => {
                           setRightPanelMessageIndex(idx);
                           setRightPanelMode("places");
+                          setHighlightedKbCitationNumber(null);
                         }}
                         onViewSources={(idx) => {
                           setRightPanelMessageIndex(idx);
                           setRightPanelMode("sources");
+                          setHighlightedKbCitationNumber(null);
                         }}
+                        onViewKnowledge={(idx) => {
+                          setRightPanelMessageIndex(idx);
+                          setRightPanelMode("knowledge");
+                        }}
+                        onCitationHover={
+                          rightPanelMessageIndex === i && rightPanelMode === "knowledge"
+                            ? setHighlightedKbCitationNumber
+                            : undefined
+                        }
                         onCloseRightPanel={closeRightPanel}
                         onSubmitFeedback={submitFeedback}
                         onOpenFeedbackComment={(messageId) => {
@@ -485,7 +507,10 @@ export default function ChatPanel({
           mode={rightPanelMode}
           placeCards={panelPlaceCards}
           webCitations={panelWebCitations}
+          kbCitations={panelKbCitations}
           onClose={closeRightPanel}
+          onCitationClick={openPdfModalFn}
+          highlightedKbCitationNumber={rightPanelMode === "knowledge" ? highlightedKbCitationNumber : null}
         />
       </div>
 

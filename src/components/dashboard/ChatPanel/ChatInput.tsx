@@ -43,7 +43,7 @@ export function ChatInput({
     <div className="shrink-0 p-4 bg-[#0C0C0C]">
       <div className="max-w-4xl mx-auto" ref={toolsMenuRef}>
         <div className="flex gap-3 items-center">
-          <div className="flex-1 flex items-center gap-2 rounded-xl bg-[#161616] border border-[rgba(255,255,255,0.1)] pl-1.5 pr-1 py-1 focus-within:border-[rgba(174,133,80,0.5)] focus-within:ring-1 focus-within:ring-[rgba(174,133,80,0.2)] transition-shadow relative">
+          <div className="chat-input-bar flex-1 flex items-center gap-2 rounded-xl bg-[#161616] border border-[rgba(255,255,255,0.1)] pl-1.5 pr-1 py-1 focus-within:border-[rgba(174,133,80,0.5)] transition-colors relative">
             <button
               type="button"
               aria-label="Add tools"
@@ -145,7 +145,7 @@ export function ChatInput({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => (e.key === "Enter" && !e.shiftKey ? onSend() : null)}
               placeholder="Ask Enable a question..."
-              className="chat-input-no-focus-outline flex-1 min-w-0 rounded-lg border-0 bg-transparent px-2 py-2.5 text-sm text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] outline-none focus:ring-0 focus:border-0 focus:shadow-none"
+              className="flex-1 min-w-0 rounded-lg border-0 bg-transparent px-2 py-2.5 text-sm text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)]"
             />
           </div>
           <Button

@@ -275,10 +275,13 @@ select:focus-visible {
 }
 
 /* Chat input: no inner focus outline (outer bar has focus-within border only) */
-input.chat-input-no-focus-outline:focus-visible {
+input.chat-input-no-focus-outline:focus-visible,
+.chat-input-bar input:focus,
+.chat-input-bar input:focus-visible {
     outline: none !important;
     outline-offset: 0 !important;
     box-shadow: none !important;
+    border: none !important;
 }
 
 /* ==========================================

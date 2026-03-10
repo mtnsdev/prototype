@@ -8,20 +8,30 @@ type InlineCitationMarkerProps = {
   citation: Citation;
   displayNumber: number;
   onCitationClick: (filename: string, pageNumber: number | string, pdfPath?: string) => void;
+  onHover?: (displayNumber: number | null) => void;
 };
 
 /** Inline citation marker: dark blue circle with number, hover = popover (excerpt + source), click = PDF modal */
-export function InlineCitationMarker({ citation, displayNumber, onCitationClick }: InlineCitationMarkerProps) {
+export function InlineCitationMarker({ citation, displayNumber, onCitationClick, onHover }: InlineCitationMarkerProps) {
   const [hover, setHover] = useState(false);
   const filename = citation.filename || citation.source;
   const pageNumber = citation.page_number;
   const pdf_path = citation.pdf_path;
 
+  const handleEnter = () => {
+    setHover(true);
+    onHover?.(displayNumber);
+  };
+  const handleLeave = () => {
+    setHover(false);
+    onHover?.(null);
+  };
+
   return (
     <span
       className="relative inline-flex align-baseline"
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
     >
       <Button
         type="button"

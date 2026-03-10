@@ -10,12 +10,14 @@ type BotMessageCardProps = {
   messageIndex: number;
   currentSessionId: number | null;
   rightPanelMessageIndex: number | null;
-  rightPanelMode: "places" | "sources" | null;
+  rightPanelMode: "places" | "sources" | "knowledge" | null;
   hintPulseSeen: Set<number>;
   feedbackSubmitting: number | null;
   onCitationClick: (filename: string, pageNumber: number | string, pdfPath?: string) => void;
   onViewPlaces: (index: number) => void;
   onViewSources: (index: number) => void;
+  onViewKnowledge: (index: number) => void;
+  onCitationHover?: (displayNumber: number | null) => void;
   onCloseRightPanel: () => void;
   onSubmitFeedback: (messageId: number, update: { rating?: number | null; comment?: string | null }) => void;
   onOpenFeedbackComment: (messageId: number) => void;
@@ -32,6 +34,8 @@ export function BotMessageCard({
   onCitationClick,
   onViewPlaces,
   onViewSources,
+  onViewKnowledge,
+  onCitationHover,
   onCloseRightPanel,
   onSubmitFeedback,
   onOpenFeedbackComment,
@@ -40,8 +44,10 @@ export function BotMessageCard({
 
   const hasCards = (message.response?.cards?.length ?? 0) > 0;
   const hasWebCitations = (message.response?.web_citations?.length ?? 0) > 0;
-  const hasPanelContent = hasCards || hasWebCitations;
+  const hasCitations = (message.response?.citations?.length ?? 0) > 0;
+  const hasPanelContent = hasCards || hasWebCitations || hasCitations;
   const isPanelOpen = rightPanelMessageIndex === messageIndex && rightPanelMode !== null;
+  const citationCount = message.response?.citations?.length ?? 0;
 
   return (
     <div
@@ -57,6 +63,8 @@ export function BotMessageCard({
                 onViewPlaces(messageIndex);
               } else if (hasWebCitations) {
                 onViewSources(messageIndex);
+              } else if (hasCitations) {
+                onViewKnowledge(messageIndex);
               }
             }
           : undefined
@@ -79,6 +87,11 @@ export function BotMessageCard({
             {hasWebCitations && (
               <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-[rgba(212,165,116,0.2)] text-[rgba(212,165,116,0.95)]">
                 {message.response!.web_citations!.length} web source{message.response!.web_citations!.length !== 1 ? "s" : ""} found
+              </span>
+            )}
+            {hasCitations && (
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-[rgba(212,165,116,0.2)] text-[rgba(212,165,116,0.95)]">
+                {citationCount} knowledge source{citationCount !== 1 ? "s" : ""} found
               </span>
             )}
           </div>
@@ -136,6 +149,30 @@ export function BotMessageCard({
                   : `View ${message.response!.web_citations!.length ?? 0} web source${message.response!.web_citations!.length !== 1 ? "s" : ""}`}
               </button>
             )}
+            {hasCitations && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (rightPanelMessageIndex === messageIndex && rightPanelMode === "knowledge") {
+                    onCloseRightPanel();
+                  } else {
+                    onViewKnowledge(messageIndex);
+                  }
+                }}
+                className={[
+                  "inline-flex items-center gap-2 text-[12px] font-medium text-[rgba(212,165,116,0.95)] hover:text-[#D4A574] transition-colors",
+                  !hintPulseSeen.has(messageIndex) && hasCitations ? "animate-places-hint-pulse" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                <LayoutGrid className="w-3.5 h-3.5 shrink-0" aria-hidden />
+                {rightPanelMessageIndex === messageIndex && rightPanelMode === "knowledge"
+                  ? `Hide knowledge source${citationCount !== 1 ? "s" : ""}`
+                  : `View ${citationCount} knowledge source${citationCount !== 1 ? "s" : ""}`}
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -148,6 +185,8 @@ export function BotMessageCard({
               answer={message.response.answer}
               citations={message.response.citations || []}
               onCitationClick={onCitationClick}
+              onCitationHover={onCitationHover}
+              onOpenKnowledgePanel={hasCitations ? () => onViewKnowledge(messageIndex) : undefined}
             />
           </div>
         </div>

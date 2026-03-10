@@ -5,6 +5,7 @@ export type Citation = {
   excerpt: string;
   filename: string;
   pdf_path: string;
+  source_label?: string;
 };
 
 export type ConflictClaim = {
