@@ -11,14 +11,21 @@ type InlineCitationMarkerProps = {
   onHover?: (displayNumber: number | null) => void;
 };
 
-/** Inline citation marker: circle with number, click = PDF modal (no hover tooltip) */
+/** Inline citation marker: circle with number, hover = panel (excerpt + source), click = PDF modal. No native title tooltip. */
 export function InlineCitationMarker({ citation, displayNumber, onCitationClick, onHover }: InlineCitationMarkerProps) {
+  const [hover, setHover] = useState(false);
   const filename = citation.filename || citation.source;
   const pageNumber = citation.page_number;
   const pdf_path = citation.pdf_path;
 
-  const handleEnter = () => onHover?.(displayNumber);
-  const handleLeave = () => onHover?.(null);
+  const handleEnter = () => {
+    setHover(true);
+    onHover?.(displayNumber);
+  };
+  const handleLeave = () => {
+    setHover(false);
+    onHover?.(null);
+  };
 
   return (
     <span
@@ -41,6 +48,23 @@ export function InlineCitationMarker({ citation, displayNumber, onCitationClick,
       >
         {displayNumber}
       </Button>
+      {hover && (
+        <>
+          <span className="absolute left-0 top-full min-w-[540px] w-full h-3 z-40 block" aria-hidden style={{ width: "max(100%, 240px)" }} />
+          <span
+            className="absolute left-0 top-full mt-1.5 z-50 min-w-[540px] max-w-[580px] max-h-[320px] rounded-lg shadow-xl border border-[rgba(255,255,255,0.12)] bg-[#1a1a1a] p-4 flex flex-col"
+            role="tooltip"
+          >
+            <span className="text-[13px] text-[rgba(245,245,245,0.9)] leading-relaxed whitespace-pre-wrap overflow-y-auto min-h-0 flex-1 pr-1 block">
+              {citation.excerpt}
+            </span>
+            <span className="mt-3 pt-3 border-t border-[rgba(255,255,255,0.08)] text-[11px] text-[rgba(245,245,245,0.55)] shrink-0 block">
+              {filename}
+              {pageNumber != null && ` · Page ${pageNumber}`}
+            </span>
+          </span>
+        </>
+      )}
     </span>
   );
 }
