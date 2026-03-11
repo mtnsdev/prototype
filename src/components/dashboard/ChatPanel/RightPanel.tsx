@@ -76,9 +76,7 @@ export function RightPanel({
                 const filename = cit.filename || cit.source || "Document";
                 const sourceLabel = cit.source_label || "Knowledge base";
                 const pageRef =
-                  cit.page_number != null && cit.page_number !== ""
-                    ? `Page ${cit.page_number}`
-                    : null;
+                  cit.page_number != null ? `Page ${cit.page_number}` : null;
                 const excerpt = (cit.excerpt || "").slice(0, 120);
                 return (
                   <button
