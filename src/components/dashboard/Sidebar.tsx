@@ -287,11 +287,7 @@ export default function Sidebar({
                                     name="My Google Drive"
                                     status="active"
                                     connected={personalDriveStatus?.connected ?? false}
-                                    onClick={
-                                        personalDriveStatus?.connected
-                                            ? () => router.push("/dashboard/knowledge?integration=google-drive-personal")
-                                            : () => router.push("/dashboard/settings/integrations")
-                                    }
+                                    onClick={() => router.push("/dashboard/knowledge?integration=google-drive-personal")}
                                     active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("google-drive-personal")}
                                 />
                                 {userContext?.user?.role === "admin" && (
@@ -299,11 +295,7 @@ export default function Sidebar({
                                         name="Admin Google Drive"
                                         status="active"
                                         connected={agencyDriveStatus?.connected ?? false}
-                                        onClick={
-                                            agencyDriveStatus?.connected
-                                                ? () => router.push("/dashboard/knowledge?integration=google-drive-agency")
-                                                : () => router.push("/dashboard/settings/integrations")
-                                        }
+                                        onClick={() => router.push("/dashboard/knowledge?integration=google-drive-agency")}
                                         active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("google-drive-agency")}
                                     />
                                 )}
