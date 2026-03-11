@@ -64,7 +64,12 @@ export default function GoogleDriveOAuthCallbackPage() {
                 "Content-Type": "application/json",
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
-            body: JSON.stringify({ code, redirect_uri: redirectUri, connection_type: connectionType }),
+            body: JSON.stringify({
+                code,
+                redirect_uri: redirectUri,
+                connection_type: connectionType,
+                ...(stateParam ? { state: stateParam } : {}),
+            }),
         })
             .then(async (res) => {
                 const data = await res.json().catch(() => ({}));
