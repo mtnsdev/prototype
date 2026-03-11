@@ -46,7 +46,6 @@ export function InlineCitationMarker({ citation, displayNumber, onCitationClick,
           "cursor-pointer align-[0.15em] ml-1",
         ].join(" ")}
         title={`${filename}, page ${pageNumber}`}
-        aria-label={`Citation ${displayNumber}: ${filename} page ${pageNumber}`}
       >
         {displayNumber}
       </Button>
