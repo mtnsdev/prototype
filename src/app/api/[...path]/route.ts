@@ -2,13 +2,19 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL;
-if (!BACKEND) {
-  throw new Error("NEXT_PUBLIC_BACKEND_URL is not set");
-}
-
 async function proxy(req: Request, pathParts: string[]) {
-  const targetUrl = new URL(`${BACKEND}/api/${pathParts.join("/")}`);
+  const backend = process.env.NEXT_PUBLIC_BACKEND_URL?.trim();
+  if (!backend) {
+    return new NextResponse(
+      JSON.stringify({
+        detail:
+          "NEXT_PUBLIC_BACKEND_URL is not configured. Set it in your environment (e.g. Vercel Project → Settings → Environment Variables).",
+      }),
+      { status: 503, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  const targetUrl = new URL(`${backend}/api/${pathParts.join("/")}`);
 
   // Preserve query string (?a=b)
   const incomingUrl = new URL(req.url);
