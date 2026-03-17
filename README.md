@@ -1,3 +1,7 @@
+# Enable — Prototype
+
+Prototype app for Briefing Room, VICs, Products, Itineraries, and Knowledge Vault. Sections marked **Sample data** or **Under construction** in the sidebar use demo/placeholder data.
+
 ## Getting Started
 
 First, run the development server:
@@ -6,7 +10,7 @@ First, run the development server:
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:4001](http://localhost:4001) with your browser to see the result.
 
 to create a user run this in the terminal:
 
