@@ -1,10 +1,9 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useUser } from "@/contexts/UserContext";
-import { Shield, Users, FolderLock, ArrowLeft, Loader2, FlaskConical, Sparkles } from "lucide-react";
+import { Shield, Users, FolderLock, ArrowLeft, FlaskConical, Sparkles } from "lucide-react";
 
 const ADMIN_NAV_ITEMS = [
     { href: "/dashboard/settings/admin", label: "Overview", icon: Shield, exact: true },
@@ -15,33 +14,7 @@ const ADMIN_NAV_ITEMS = [
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-    const router = useRouter();
     const pathname = usePathname();
-    const { user, isLoading } = useUser();
-    const [isAuthorized, setIsAuthorized] = useState(false);
-
-    useEffect(() => {
-        if (!isLoading) {
-            if (!user) {
-                router.push("/login");
-            } else if (user.role !== "admin") {
-                router.push("/dashboard");
-            } else {
-                setIsAuthorized(true);
-            }
-        }
-    }, [user, isLoading, router]);
-
-    if (isLoading || !isAuthorized) {
-        return (
-            <div className="h-full flex items-center justify-center bg-[#0C0C0C]">
-                <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-[rgba(245,245,245,0.4)]" />
-                    <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Loading...</span>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="h-full overflow-y-auto bg-[#0C0C0C]">

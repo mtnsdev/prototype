@@ -78,8 +78,7 @@ function LoginContent() {
     }, [reason]);
 
     const setAuthCookie = useCallback((token: string) => {
-        // `src/proxy.ts` runs server-side and cannot read localStorage.
-        // Mirror the token into a cookie so route protection can see it.
+        // Mirror the token into a cookie for any server-side use.
         const secure = window.location.protocol === "https:" ? "; Secure" : "";
         document.cookie = `auth_token=${encodeURIComponent(token)}; Path=/; SameSite=Lax${secure}`;
     }, []);

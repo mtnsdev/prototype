@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
     Loader2,
     RefreshCw,
@@ -42,7 +41,6 @@ function DriveConnectionCard({
 }: {
     connectionType: "personal" | "agency";
 }) {
-    const router = useRouter();
     const [driveStatus, setDriveStatus] = useState<DriveStatus | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -60,19 +58,16 @@ function DriveConnectionCard({
     const fetchStatus = useCallback(async () => {
         try {
             const token = localStorage.getItem("auth_token");
-            if (!token) {
-                router.push("/login");
-                return;
-            }
             const res = await fetch(
                 `/api/integrations/google-drive/status?connection_type=${connectionType}`,
                 {
                     cache: "no-store",
-                    headers: { Authorization: `Bearer ${token}` },
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
                 }
             );
             if (res.status === 401) {
-                router.push("/login");
+                setDriveStatus(null);
+                setError("Sign in required for this integration (backend).");
                 return;
             }
             if (!res.ok) throw new Error("Failed to fetch status");
@@ -84,7 +79,7 @@ function DriveConnectionCard({
         } finally {
             setLoading(false);
         }
-    }, [router, connectionType]);
+    }, [connectionType]);
 
     useEffect(() => {
         fetchStatus();
@@ -333,7 +328,6 @@ type ClaromentisStatus = {
 };
 
 function ClaromentisConnectionCard() {
-    const router = useRouter();
     const [status, setStatus] = useState<ClaromentisStatus | null>(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -347,12 +341,15 @@ function ClaromentisConnectionCard() {
     const fetchStatus = useCallback(async () => {
         try {
             const token = localStorage.getItem("auth_token");
-            if (!token) { router.push("/login"); return; }
             const res = await fetch("/api/integrations/claromentis/status", {
                 cache: "no-store",
-                headers: { Authorization: `Bearer ${token}` },
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
             });
-            if (res.status === 401) { router.push("/login"); return; }
+            if (res.status === 401) {
+                setStatus(null);
+                setError("Sign in required (backend).");
+                return;
+            }
             if (!res.ok) throw new Error("Failed to fetch status");
             const data: ClaromentisStatus = await res.json();
             setStatus(data);
@@ -362,7 +359,7 @@ function ClaromentisConnectionCard() {
         } finally {
             setLoading(false);
         }
-    }, [router]);
+    }, []);
 
     useEffect(() => { fetchStatus(); }, [fetchStatus]);
 
@@ -372,12 +369,11 @@ function ClaromentisConnectionCard() {
         setError(null);
         try {
             const token = localStorage.getItem("auth_token");
+            const headers: Record<string, string> = { "Content-Type": "application/json" };
+            if (token) headers.Authorization = `Bearer ${token}`;
             const res = await fetch("/api/integrations/claromentis/connect", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
+                headers,
                 body: JSON.stringify({
                     claromentis_username: username,
                     claromentis_password: password,
