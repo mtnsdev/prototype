@@ -4,12 +4,13 @@ import { ReactNode, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/contexts/UserContext";
-import { Shield, Users, FolderLock, ArrowLeft, Loader2, FlaskConical } from "lucide-react";
+import { Shield, Users, FolderLock, ArrowLeft, Loader2, FlaskConical, Sparkles } from "lucide-react";
 
 const ADMIN_NAV_ITEMS = [
     { href: "/dashboard/settings/admin", label: "Overview", icon: Shield, exact: true },
     { href: "/dashboard/settings/admin/users", label: "Users", icon: Users },
     { href: "/dashboard/settings/admin/permissions", label: "Permissions", icon: FolderLock },
+    { href: "/dashboard/settings/admin/acuity-settings", label: "VIC Intelligence", icon: Sparkles },
     { href: "/dashboard/settings/admin/bulk-test", label: "Bulk Test", icon: FlaskConical },
 ];
 

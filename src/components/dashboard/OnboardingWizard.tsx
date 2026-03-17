@@ -1,0 +1,245 @@
+"use client";
+
+import { useState, useCallback } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Database, Check } from "lucide-react";
+import { useUserOptional } from "@/contexts/UserContext";
+import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
+import { useClaromentisStatus } from "@/hooks/useClaromentisStatus";
+import { INTEGRATION_DEFINITIONS } from "@/lib/integrations/registry";
+
+const ONBOARDING_KEY = "travellustre_onboarding_complete";
+
+type WizardScreen = "overview" | "connect" | "confirmation";
+
+type SourceSlot = {
+  key: string;
+  label: string;
+  description: string;
+  connected: boolean;
+  connectHref?: string;
+};
+
+export type OnboardingWizardProps = {
+  onComplete: () => void;
+};
+
+export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
+  const user = useUserOptional();
+  const { status: personalDriveStatus } = useGoogleDriveStatus("personal");
+  const { status: agencyDriveStatus } = useGoogleDriveStatus("agency");
+  const claromentisStatus = useClaromentisStatus();
+
+  const [screen, setScreen] = useState<WizardScreen>("overview");
+  const [currentSourceIndex, setCurrentSourceIndex] = useState(0);
+  const [skippedKeys, setSkippedKeys] = useState<Set<string>>(new Set());
+  const [connectedKeys, setConnectedKeys] = useState<Set<string>>(new Set());
+
+  const claromentisActive = claromentisStatus?.status?.status === "active";
+
+  const inactiveSources: SourceSlot[] = INTEGRATION_DEFINITIONS.filter((d) => {
+    if (d.visibleTo === "admin" && user?.user?.role !== "admin") return false;
+    if (d.key === "claromentis") return !claromentisActive;
+    if (d.key === "google-drive-personal") return !personalDriveStatus?.connected;
+    if (d.key === "google-drive-agency") return !agencyDriveStatus?.connected;
+    return false;
+  }).map((d) => {
+    let connected = false;
+    let connectHref: string | undefined;
+    if (d.key === "claromentis") {
+      connected = claromentisActive;
+      connectHref = "/dashboard/settings/integrations";
+    }
+    if (d.key === "google-drive-personal") {
+      connected = personalDriveStatus?.connected ?? false;
+      connectHref = "/dashboard/settings/integrations";
+    }
+    if (d.key === "google-drive-agency") {
+      connected = agencyDriveStatus?.connected ?? false;
+      connectHref = "/dashboard/settings/integrations";
+    }
+    const descriptions: Record<string, string> = {
+      claromentis: "Your intranet knowledge base for policies and content.",
+      "google-drive-personal": "Your personal Google Drive documents and PDFs.",
+      "google-drive-agency": "Shared agency Google Drive for team content.",
+    };
+    return {
+      key: d.key,
+      label: d.label,
+      description: descriptions[d.key] ?? "Connect this source for better answers.",
+      connected,
+      connectHref,
+    };
+  });
+
+  const notYetConnected = inactiveSources.filter((s) => !s.connected && !skippedKeys.has(s.key));
+  const currentSource = notYetConnected[currentSourceIndex];
+
+  const handleContinue = useCallback(() => {
+    if (notYetConnected.length === 0) {
+      setScreen("confirmation");
+      return;
+    }
+    setScreen("connect");
+    setCurrentSourceIndex(0);
+  }, [notYetConnected.length]);
+
+  const handleSkipSetup = useCallback(() => {
+    if (typeof window !== "undefined") localStorage.setItem(ONBOARDING_KEY, "true");
+    onComplete();
+  }, [onComplete]);
+
+  const handleSkipSource = useCallback(() => {
+    if (currentSource) setSkippedKeys((prev) => new Set(prev).add(currentSource.key));
+    if (currentSourceIndex >= notYetConnected.length - 1) {
+      setScreen("confirmation");
+    } else {
+      setCurrentSourceIndex((i) => i + 1);
+    }
+  }, [currentSource, currentSourceIndex, notYetConnected.length]);
+
+  const handleConnectLater = useCallback(() => {
+    if (typeof window !== "undefined") localStorage.setItem(ONBOARDING_KEY, "true");
+    onComplete();
+  }, [onComplete]);
+
+  const handleStartChatting = useCallback(() => {
+    if (typeof window !== "undefined") localStorage.setItem(ONBOARDING_KEY, "true");
+    onComplete();
+  }, [onComplete]);
+
+  // Screen 1 — Overview
+  if (screen === "overview") {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0C0C0C]/95 backdrop-blur-sm p-4">
+        <div className="max-w-lg w-full">
+          <div className="text-center mb-8">
+            <h1 className="text-[24px] font-semibold text-[#F5F5F5] mb-2">
+              Connect your knowledge sources
+            </h1>
+            <p className="text-[14px] text-[rgba(245,245,245,0.6)]">
+              TravelLustre&apos;s answers are only as good as the sources behind them. Let&apos;s set yours up.
+            </p>
+          </div>
+          <div className="space-y-3 mb-8">
+            {inactiveSources.map((src) => (
+              <div
+                key={src.key}
+                className="flex items-center justify-between gap-3 p-4 rounded-xl bg-[#161616] border border-[rgba(255,255,255,0.08)]"
+              >
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                    <Database className="w-5 h-5 text-[rgba(245,245,245,0.6)]" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-[#F5F5F5] truncate">{src.label}</p>
+                    <p className="text-[12px] text-[rgba(245,245,245,0.5)] truncate">{src.description}</p>
+                  </div>
+                </div>
+                {src.connectHref ? (
+                  <Link href={src.connectHref} className="shrink-0">
+                    <Button size="sm" variant="outline" className="border-white/20">
+                      Connect
+                    </Button>
+                  </Link>
+                ) : (
+                  <span className="text-[11px] text-[rgba(245,245,245,0.4)] shrink-0">Coming soon</span>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-col gap-2">
+            <Button onClick={handleContinue} className="w-full bg-[#AE8550] hover:bg-[#C4975E]">
+              Continue →
+            </Button>
+            <button
+              type="button"
+              onClick={handleSkipSetup}
+              className="text-[13px] text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] underline"
+            >
+              Skip setup
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Screen 2 — Per-source (one screen per inactive source)
+  if (screen === "connect" && currentSource) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0C0C0C]/95 backdrop-blur-sm p-4">
+        <div className="max-w-md w-full">
+          <p className="text-[12px] text-[rgba(245,245,245,0.5)] mb-4">
+            Source {currentSourceIndex + 1} of {notYetConnected.length}
+          </p>
+          <div className="p-6 rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.1)] mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
+                <Database className="w-6 h-6 text-[#AE8550]" />
+              </div>
+              <h2 className="text-[18px] font-semibold text-[#F5F5F5]">{currentSource.label}</h2>
+            </div>
+            <p className="text-[14px] text-[rgba(245,245,245,0.7)] mb-6">{currentSource.description}</p>
+            {currentSource.connectHref ? (
+              <div className="flex flex-col gap-2">
+                <Link href={currentSource.connectHref} className="block" onClick={() => setConnectedKeys((s) => new Set(s).add(currentSource.key))}>
+                  <Button className="w-full bg-[#AE8550] hover:bg-[#C4975E]">
+                    Connect {currentSource.label}
+                  </Button>
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleSkipSource}
+                  className="text-[13px] text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] underline"
+                >
+                  Skip for now
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* TODO: wire OAuth */}
+                <Button disabled className="w-full opacity-60">Coming soon</Button>
+                <button type="button" onClick={handleSkipSource} className="mt-2 text-[13px] text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] underline">
+                  Skip for now
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Screen 3 — Confirmation
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0C0C0C]/95 backdrop-blur-sm p-4">
+      <div className="max-w-md w-full">
+        <h1 className="text-[24px] font-semibold text-[#F5F5F5] mb-2 text-center">You&apos;re all set</h1>
+        <p className="text-[14px] text-[rgba(245,245,245,0.6)] mb-6 text-center">
+          Start asking questions — you can connect more sources anytime in Settings.
+        </p>
+        <div className="space-y-2 mb-8">
+          {inactiveSources.filter((s) => s.connected).map((s) => (
+            <div key={s.key} className="flex items-center gap-3 p-3 rounded-lg bg-[#161616]">
+              <Check className="w-5 h-5 text-[#7AC889] shrink-0" />
+              <span className="text-[14px] text-[#F5F5F5]">{s.label}</span>
+            </div>
+          ))}
+          {inactiveSources.filter((s) => !s.connected).map((s) => (
+            <div key={s.key} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-[#161616]/60">
+              <span className="text-[14px] text-[rgba(245,245,245,0.6)]">{s.label}</span>
+              <Link href="/dashboard/settings/integrations" className="text-[12px] text-[#AE8550] hover:underline">
+                Connect later
+              </Link>
+            </div>
+          ))}
+        </div>
+        <Button onClick={handleStartChatting} className="w-full bg-[#AE8550] hover:bg-[#C4975E] text-white">
+          Start chatting →
+        </Button>
+      </div>
+    </div>
+  );
+}

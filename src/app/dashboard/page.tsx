@@ -1,5 +1,7 @@
-import { redirect } from "next/navigation";
+"use client";
 
-export default function DashboardIndex() {
-    redirect("/dashboard/chat");
+import BriefingRoomPage from "@/components/briefing/BriefingRoomPage";
+
+export default function DashboardPage() {
+  return <BriefingRoomPage />;
 }

@@ -12,16 +12,22 @@ import {
     Plus,
     History,
     User,
+    Users,
+    Package,
+    Route,
     ChevronRight,
     ChevronDown,
     Database,
-    // Search
+    LayoutDashboard,
+    BookMarked,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useUserOptional } from "@/contexts/UserContext";
 import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
 import { useClaromentisStatus } from "@/hooks/useClaromentisStatus";
+import { IS_PREVIEW_MODE } from "@/config/preview";
+import { cn } from "@/lib/utils";
 
 export type Conversation = {
     id: number;
@@ -53,14 +59,8 @@ export default function Sidebar({
     const userContext = useUserOptional();
     const [recentConversations, setRecentConversations] = useState<Conversation[]>([]);
     const [userPopoverOpen, setUserPopoverOpen] = useState(false);
-    const [knowledgeExpanded, setKnowledgeExpanded] = useState(false);
     const popoverRef = useRef<HTMLDivElement>(null);
     const isOnChatPage = pathname.startsWith("/dashboard/chat");
-
-    // Connection status for sidebar entries
-    const { status: personalDriveStatus } = useGoogleDriveStatus("personal");
-    const { status: agencyDriveStatus } = useGoogleDriveStatus("agency");
-    const { status: claromentisStatus } = useClaromentisStatus();
 
     // Close popover when clicking outside
     useEffect(() => {
@@ -104,8 +104,6 @@ export default function Sidebar({
         };
     }, [isOnChatPage, refreshTrigger]);
 
-   
-
     const handleSignOut = () => {
         // Local-only logout - clear user data and token
         if (userContext?.clearUser) {
@@ -119,6 +117,9 @@ export default function Sidebar({
     };
 
     const handleNewChat = () => {
+        if (!pathname.startsWith("/dashboard/chat")) {
+            router.push("/dashboard/chat");
+        }
         onSelectConversation?.(null);
     };
 
@@ -194,22 +195,20 @@ export default function Sidebar({
                     )}
                 </div>
 
-                {/* New Chat Button (only on chat page) */}
-                {isOnChatPage && (
-                    <div className="p-2.5 border-b border-[rgba(255,255,255,0.08)]">
-                        <Button
-                            variant="outline"
-                            onClick={handleNewChat}
-                            className={[
-                                "w-full gap-2.5 rounded-lg bg-white/8 hover:bg-white/12 border-white/10 hover:border-white/15",
-                                collapsed ? "justify-center" : "",
-                            ].join(" ")}
-                        >
-                            <Plus size={16} className="text-white/70 group-hover:text-white/90 transition-colors" />
-                            {!collapsed && <span className="text-sm font-medium text-[#F5F5F5]">New Chat</span>}
-                        </Button>
-                    </div>
-                )}
+                {/* New Chat Button — always visible so user can start a chat from any page */}
+                <div className="p-2.5 border-b border-[rgba(255,255,255,0.08)]">
+                    <Button
+                        variant="outline"
+                        onClick={handleNewChat}
+                        className={[
+                            "w-full gap-2.5 rounded-lg bg-white/8 hover:bg-white/12 border-white/10 hover:border-white/15",
+                            collapsed ? "justify-center" : "",
+                        ].join(" ")}
+                    >
+                        <Plus size={16} className="text-white/70 group-hover:text-white/90 transition-colors" />
+                        {!collapsed && <span className="text-sm font-medium text-[#F5F5F5]">New Chat</span>}
+                    </Button>
+                </div>
 
                 {/* Recent Conversations (only on chat page) */}
                 {isOnChatPage && !collapsed && recentConversations.length > 0 && (
@@ -243,6 +242,14 @@ export default function Sidebar({
                 {/* Nav */}
                 <nav className="p-2.5 space-y-1 flex-1 overflow-y-auto">
                     <NavLink
+                        href="/dashboard"
+                        collapsed={collapsed}
+                        icon={<LayoutDashboard size={18} />}
+                        label="Briefing Room"
+                        active={pathname === "/dashboard"}
+                        navTag={IS_PREVIEW_MODE ? "sample" : undefined}
+                    />
+                    <NavLink
                         href="/dashboard/chat"
                         collapsed={collapsed}
                         icon={<MessageSquare size={18} />}
@@ -250,70 +257,41 @@ export default function Sidebar({
                         active={pathname.startsWith("/dashboard/chat")}
                     />
 
-                    {/* Knowledge Section - Expandable */}
-                    <div>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={() => setKnowledgeExpanded(!knowledgeExpanded)}
-                            className="w-full justify-start gap-3 px-3 py-2.5 rounded-lg text-[13px] font-normal h-auto text-[rgba(245,245,245,0.65)] hover:bg-white/6 hover:text-[#F5F5F5]"
-                        >
-                            <span className="shrink-0 text-white/50">
-                                <Database size={18} />
-                            </span>
-                            {!collapsed && (
-                                <>
-                                    <span className="truncate flex-1 text-left">Knowledge</span>
-                                    {knowledgeExpanded ? (
-                                        <ChevronDown size={14} className="text-[rgba(245,245,245,0.4)]" />
-                                    ) : (
-                                        <ChevronRight size={14} className="text-[rgba(245,245,245,0.4)]" />
-                                    )}
-                                </>
-                            )}
-                        </Button>
+                    <NavLink
+                        href="/dashboard/vics"
+                        collapsed={collapsed}
+                        icon={<Users size={18} />}
+                        label="VICs"
+                        active={pathname.startsWith("/dashboard/vics")}
+                        navTag={IS_PREVIEW_MODE ? "sample" : undefined}
+                    />
 
-                        {/* Integrations list when expanded */}
-                        {knowledgeExpanded && !collapsed && (
-                            <div className="ml-4 mt-1 space-y-0.5 border-l border-[rgba(255,255,255,0.08)] pl-3">
-                                <IntegrationItem
-                                    name="Claromentis (Intranet)"
-                                    status="active"
-                                    connected={claromentisStatus?.status === "active"}
-                                    onClick={() => router.push("/dashboard/knowledge?integration=claromentis")}
-                                    active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("claromentis")}
-                                />
-                                <IntegrationItem
-                                    name="My Google Drive"
-                                    status="active"
-                                    connected={personalDriveStatus?.connected ?? false}
-                                    onClick={() => router.push("/dashboard/knowledge?integration=google-drive-personal")}
-                                    active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("google-drive-personal")}
-                                />
-                                {userContext?.user?.role === "admin" && (
-                                    <IntegrationItem
-                                        name="Admin Google Drive"
-                                        status="active"
-                                        connected={agencyDriveStatus?.connected ?? false}
-                                        onClick={() => router.push("/dashboard/knowledge?integration=google-drive-agency")}
-                                        active={pathname.startsWith("/dashboard/knowledge") && pathname.includes("google-drive-agency")}
-                                    />
-                                )}
-                                <IntegrationItem
-                                    name="Virtuoso"
-                                    status="coming_soon"
-                                />
-                                <IntegrationItem
-                                    name="Axus"
-                                    status="coming_soon"
-                                />
-                                <IntegrationItem
-                                    name="Partner Portals"
-                                    status="coming_soon"
-                                />
-                            </div>
-                        )}
-                    </div>
+                    <NavLink
+                        href="/dashboard/products"
+                        collapsed={collapsed}
+                        icon={<Package size={18} />}
+                        label="Products"
+                        active={pathname.startsWith("/dashboard/products")}
+                        navTag={IS_PREVIEW_MODE ? "sample" : undefined}
+                    />
+
+                    <NavLink
+                        href="/dashboard/itineraries"
+                        collapsed={collapsed}
+                        icon={<Route size={18} />}
+                        label="Itineraries"
+                        active={pathname.startsWith("/dashboard/itineraries")}
+                        navTag={IS_PREVIEW_MODE ? "sample" : undefined}
+                    />
+
+                    <NavLink
+                        href="/dashboard/knowledge"
+                        collapsed={collapsed}
+                        icon={<BookMarked size={18} />}
+                        label="Knowledge Vault"
+                        active={pathname.startsWith("/dashboard/knowledge")}
+                        navTag={IS_PREVIEW_MODE ? "construction" : undefined}
+                    />
 
                     {/* <NavLink
                         href="/dashboard/search"
@@ -397,18 +375,44 @@ export default function Sidebar({
     );
 }
 
+function NavTag({ variant }: { variant: "sample" | "construction" }) {
+    const isSample = variant === "sample";
+    const label = isSample ? "Sample data" : "Under construction";
+    const title = isSample
+        ? "Everything here is sample data for demonstration."
+        : "This section is under active development.";
+    return (
+        <span
+            className={cn(
+                "shrink-0 ml-auto rounded-md px-2 py-0.5 text-[10px] font-medium",
+                isSample
+                    ? "bg-[var(--muted-amber-bg)] text-[var(--muted-amber-text)] border border-[var(--muted-amber-border)]"
+                    : "bg-[var(--muted-info-bg)] text-[var(--muted-info-text)] border border-[var(--muted-info-border)]"
+            )}
+            title={title}
+        >
+            {label}
+        </span>
+    );
+}
+
 function NavLink({
     href,
     collapsed,
     icon,
     label,
     active,
+    badge,
+    navTag,
 }: {
     href: string;
     collapsed: boolean;
     icon: React.ReactNode;
     label: string;
     active?: boolean;
+    badge?: string;
+    /** Shown when IS_PREVIEW_MODE; "sample" = Sample data, "construction" = Under construction */
+    navTag?: "sample" | "construction";
 }) {
     return (
         <Link
@@ -422,7 +426,20 @@ function NavLink({
             ].join(" ")}
         >
             <span className={`shrink-0 ${active ? 'text-white/90' : 'text-white/50'}`}>{icon}</span>
-            {!collapsed && <span className="truncate">{label}</span>}
+            {!collapsed && (
+                <>
+                    <span className="truncate flex-1 min-w-0">{label}</span>
+                    {navTag && <NavTag variant={navTag} />}
+                    {badge && !navTag && (
+                        <span
+                            className="shrink-0 ml-auto rounded-md px-2 py-0.5 text-[11px] font-normal text-[rgba(245,245,245,0.4)] bg-white/[0.05] border border-white/[0.08]"
+                            title="This feature is not fully implemented yet"
+                        >
+                            {badge}
+                        </span>
+                    )}
+                </>
+            )}
         </Link>
     );
 }

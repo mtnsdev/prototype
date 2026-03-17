@@ -33,7 +33,7 @@
     --brand-primary: #A0A0A0;
     --brand-accent: #E8E8E8;
 
-    /* Semantic Colors */
+    /* Semantic Colors (muted, elegant) */
     --color-success: #7CB889;
     --color-success-muted: rgba(124, 184, 137, 0.12);
     --color-warning: #D4A574;
@@ -42,6 +42,26 @@
     --color-error-muted: rgba(200, 122, 122, 0.12);
     --color-info: #7AA3C8;
     --color-info-muted: rgba(122, 163, 200, 0.12);
+
+    /* Muted accent palette (low saturation, elegant) */
+    --muted-success-bg: rgba(148, 163, 148, 0.14);
+    --muted-success-text: #94A394;
+    --muted-success-border: rgba(148, 163, 148, 0.25);
+    --muted-warning-bg: rgba(180, 170, 150, 0.14);
+    --muted-warning-text: #B4AA96;
+    --muted-warning-border: rgba(180, 170, 150, 0.25);
+    --muted-error-bg: rgba(170, 140, 140, 0.14);
+    --muted-error-text: #AA8C8C;
+    --muted-error-border: rgba(170, 140, 140, 0.25);
+    --muted-info-bg: rgba(140, 155, 175, 0.14);
+    --muted-info-text: #8C9BAF;
+    --muted-info-border: rgba(140, 155, 175, 0.25);
+    --muted-accent-bg: rgba(155, 150, 170, 0.12);
+    --muted-accent-text: #9B96AA;
+    --muted-accent-border: rgba(155, 150, 170, 0.22);
+    --muted-amber-bg: rgba(175, 165, 140, 0.14);
+    --muted-amber-text: #AFA58C;
+    --muted-amber-border: rgba(175, 165, 140, 0.25);
 
     /* Spacing (4px grid) */
     --space-0: 0;
@@ -164,6 +184,25 @@
 }
 
 @theme inline {
+    /* Muted palette (elegant, low saturation) */
+    --color-muted-success-bg: var(--muted-success-bg);
+    --color-muted-success-text: var(--muted-success-text);
+    --color-muted-success-border: var(--muted-success-border);
+    --color-muted-warning-bg: var(--muted-warning-bg);
+    --color-muted-warning-text: var(--muted-warning-text);
+    --color-muted-warning-border: var(--muted-warning-border);
+    --color-muted-error-bg: var(--muted-error-bg);
+    --color-muted-error-text: var(--muted-error-text);
+    --color-muted-error-border: var(--muted-error-border);
+    --color-muted-info-bg: var(--muted-info-bg);
+    --color-muted-info-text: var(--muted-info-text);
+    --color-muted-info-border: var(--muted-info-border);
+    --color-muted-accent-bg: var(--muted-accent-bg);
+    --color-muted-accent-text: var(--muted-accent-text);
+    --color-muted-accent-border: var(--muted-accent-border);
+    --color-muted-amber-bg: var(--muted-amber-bg);
+    --color-muted-amber-text: var(--muted-amber-text);
+    --color-muted-amber-border: var(--muted-amber-border);
     --color-background: var(--background);
     --color-foreground: var(--foreground);
     --font-sans: var(--font-sans);
