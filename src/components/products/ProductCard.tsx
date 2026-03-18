@@ -9,13 +9,13 @@ import {
   CATEGORY_LABELS,
   CATEGORY_ACCENT_COLORS,
   COUNTRY_NAMES,
-  DATA_LAYER_BADGES,
   PARTNERSHIP_TIER_LABELS,
   PRICE_RANGE_DISPLAY,
   PRICE_RANGE_SYMBOLS,
   VERIFICATION_BADGES,
-  CATEGORY_METRICS,
 } from "@/config/productCategoryConfig";
+import ImageWithFallback from "@/components/ui/ImageWithFallback";
+import type { ProductCategory } from "@/types/product";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,29 +26,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { highlightSearch } from "@/utils/searchHighlight";
 import { DemoBadge } from "@/components/ui/DemoBadge";
-
-function keyMetricDisplay(p: Product): string {
-  const cat = p.category;
-  const meta = CATEGORY_METRICS[cat];
-  if (cat === "accommodation" && (p as unknown as { star_rating?: number }).star_rating != null)
-    return `${(p as unknown as { star_rating: number }).star_rating}★`;
-  if (cat === "dmc" && (p as unknown as { destinations_covered?: string[] }).destinations_covered?.length)
-    return `${(p as unknown as { destinations_covered: string[] }).destinations_covered.length} destinations`;
-  if (cat === "cruise" && (p as unknown as { ship_name?: string }).ship_name)
-    return (p as unknown as { ship_name: string }).ship_name;
-  if (cat === "service_provider" && (p as unknown as { service_types?: string[] }).service_types?.length)
-    return `${(p as unknown as { service_types: string[] }).service_types.length} services`;
-  if (cat === "activity" && (p as unknown as { duration?: string }).duration)
-    return (p as unknown as { duration: string }).duration;
-  if (cat === "restaurant") {
-    const r = p as unknown as { michelin_stars?: number; cuisine_type?: string };
-    if (r.michelin_stars != null) return `${r.michelin_stars}★`;
-    if (r.cuisine_type) return r.cuisine_type;
-  }
-  if (cat === "transportation" && (p as unknown as { vehicle_types?: string[] }).vehicle_types?.length)
-    return (p as unknown as { vehicle_types: string[] }).vehicle_types.slice(0, 2).join(", ");
-  return meta?.label ? `${meta.label}: —` : "—";
-}
 
 type Props = {
   product: Product;
@@ -76,13 +53,12 @@ export default function ProductCard({
   const id = getProductId(product);
   const Icon = CATEGORY_ICONS[product.category];
   const accent = CATEGORY_ACCENT_COLORS[product.category];
-  const layer = (product.data_ownership_level ?? "Advisor") as keyof typeof DATA_LAYER_BADGES;
   const ver = (product.verification_status ?? "unverified") as keyof typeof VERIFICATION_BADGES;
   const location = [product.city, (product.country && COUNTRY_NAMES[product.country]) || product.country].filter(Boolean).join(", ") || "—";
 
   if (compact) {
     return (
-      <div className={cn("rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-3 flex items-center gap-3 border-l-4", accent)}>
+      <div className={cn("rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-3 flex items-center gap-3", accent)}>
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-[#F5F5F5]">
           <Icon size={18} />
         </div>
@@ -98,17 +74,18 @@ export default function ProductCard({
   }
 
   return (
-    <div className={cn("relative rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] overflow-hidden border-l-4 flex flex-col min-h-[200px] hover:border-[rgba(255,255,255,0.12)] transition-colors", accent)}>
+    <div className={cn("relative rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] overflow-hidden flex flex-col min-h-[200px] hover:border-[rgba(255,255,255,0.14)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 transition-all duration-200", accent)}>
       <DemoBadge />
-      {product.hero_image_url ? (
-        <div className="h-28 bg-white/5 relative">
-          <img src={product.hero_image_url} alt="" className="w-full h-full object-cover" />
-        </div>
-      ) : (
-        <div className="h-20 flex items-center justify-center bg-white/5">
-          <Icon className="h-10 w-10 text-[rgba(245,245,245,0.4)]" />
-        </div>
-      )}
+      <div className="aspect-video w-full relative overflow-hidden rounded-t-xl bg-zinc-900">
+        <ImageWithFallback
+          fallbackType="product"
+          src={product.hero_image_url}
+          alt={product.name}
+          productCategory={product.category as ProductCategory}
+          className="w-full h-full object-cover opacity-95"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[rgba(12,12,12,0.4)] to-transparent pointer-events-none rounded-t-xl" />
+      </div>
       <div className="p-4 flex-1 flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
           <Link href={`/dashboard/products/${id}`} className="font-semibold text-[#F5F5F5] hover:underline line-clamp-2 flex-1 min-w-0">
@@ -142,34 +119,25 @@ export default function ProductCard({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <p className="text-sm text-[rgba(245,245,245,0.6)] truncate">{location}</p>
-        <div className="flex flex-wrap gap-1.5">
-          <span className="text-xs px-1.5 py-0.5 rounded bg-white/10 text-[rgba(245,245,245,0.8)]">
-            {CATEGORY_LABELS[product.category]}
-          </span>
+        <p className="text-sm text-[rgba(245,245,245,0.5)]">{location}</p>
+        {product.description && (
+          <p className="text-sm text-[rgba(245,245,245,0.7)] line-clamp-2">{product.description}</p>
+        )}
+        <div className="flex flex-wrap gap-1.5 mt-auto">
           {product.price_range && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-white/10 text-[rgba(245,245,245,0.8)]" title={PRICE_RANGE_DISPLAY[product.price_range]}>
+            <span className="text-xs text-[rgba(245,245,245,0.7)]" title={PRICE_RANGE_DISPLAY[product.price_range]}>
               {PRICE_RANGE_SYMBOLS[product.price_range] ?? PRICE_RANGE_DISPLAY[product.price_range]}
             </span>
           )}
           {product.partnership_tier && product.partnership_tier !== "none" && (
-            <span className="text-xs px-1.5 py-0.5 rounded border border-white/20 text-[rgba(245,245,245,0.8)]">
+            <span className="text-xs px-1.5 py-0.5 rounded border border-[rgba(255,255,255,0.2)] text-[rgba(245,245,245,0.8)]">
               {PARTNERSHIP_TIER_LABELS[product.partnership_tier]}
             </span>
           )}
-          <span className={cn("text-xs px-1.5 py-0.5 rounded border", VERIFICATION_BADGES[ver]?.variant === "default" && "bg-green-500/20 text-green-400 border-green-500/30")}>
+          <span className={cn("text-xs px-1.5 py-0.5 rounded border border-white/10", VERIFICATION_BADGES[ver]?.variant === "default" && "bg-[var(--muted-success-bg)] text-[var(--muted-success-text)] border-[var(--muted-success-border)]")}>
             {VERIFICATION_BADGES[ver]?.label ?? ver}
           </span>
-          <span className={cn("text-xs px-1.5 py-0.5 rounded border", DATA_LAYER_BADGES[layer]?.className)}>
-            {DATA_LAYER_BADGES[layer]?.label}
-          </span>
-          {(product.is_agency_copy ?? product.enable_product_id) && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-[var(--muted-info-bg)] text-[var(--muted-info-text)] border border-[var(--muted-info-border)]">
-              Source: Enable
-            </span>
-          )}
         </div>
-        <p className="text-xs text-[rgba(245,245,245,0.5)] mt-auto">{keyMetricDisplay(product)}</p>
       </div>
     </div>
   );

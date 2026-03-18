@@ -20,7 +20,7 @@ export const FAKE_VICS: VIC[] = [
     _id: "fake-vic-1",
     full_name: "Jean-Christophe Chopin",
     preferred_name: "JC",
-    title: "Mr",
+    title: "CEO, Maison Laurent Group",
     email: "jc@example.com",
     email_secondary: "jc.work@xyz.com",
     phone_primary: "+33 6 12 34 56 78",
@@ -35,8 +35,8 @@ export const FAKE_VICS: VIC[] = [
     languages_spoken: ["French", "English"],
     city: "Paris",
     country: "France",
-    company: "XYZ Capital",
-    role: "Founder",
+    company: "Maison Laurent Group",
+    role: "CEO",
     tags: ["vip", "wine", "gastronomy"],
     customTags: ["vip", "wine", "gastronomy"],
     assigned_advisor_id: "2",
@@ -51,29 +51,158 @@ export const FAKE_VICS: VIC[] = [
     acuityLastRun: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)),
     acuity_provider: "Gemini",
     acuity_confidence: "high",
-    field_provenance: {
-      nationality: { source: "acuity", provider: "Gemini", confidence: "high", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)), verified: false },
-      date_of_birth: { source: "acuity", provider: "Gemini", confidence: "high", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)), verified: true },
-      home_city: { source: "acuity", provider: "Gemini", confidence: "high", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)), verified: false },
-      home_country: { source: "acuity", provider: "Gemini", confidence: "high", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)), verified: false },
-      time_zone: { source: "acuity", provider: "Gemini", confidence: "high", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)), verified: false },
-      language_primary: { source: "acuity", provider: "Gemini", confidence: "high", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)), verified: false },
-      languages_spoken: { source: "acuity", provider: "Gemini", confidence: "high", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)), verified: false },
-      preferred_name: { source: "manual" },
-    },
+    field_provenance: (() => {
+      const t = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+      const t1 = new Date(t.getTime() + 60 * 1000);
+      const t2 = new Date(t.getTime() + 2 * 60 * 1000);
+      const isoT = iso(t);
+      const isoT1 = iso(t1);
+      const isoT2 = iso(t2);
+      return {
+        preferred_name: {
+          source: "acuity" as const,
+          provider: "gemini",
+          confidence: "high" as const,
+          sourced_at: isoT,
+          verified: true,
+          raw_excerpt: 'Known as "JC" in Virtuoso adviser circles',
+        },
+        title: {
+          source: "acuity" as const,
+          provider: "gemini",
+          confidence: "high" as const,
+          sourced_at: isoT,
+          verified: true,
+          raw_excerpt: "CEO, Maison Laurent Group — LinkedIn profile",
+        },
+        nationality: { source: "manual" as const, verified: true },
+        home_city: {
+          source: "acuity" as const,
+          provider: "gemini",
+          confidence: "high" as const,
+          sourced_at: isoT,
+          verified: true,
+          raw_excerpt: "Based in Paris — LinkedIn location, company HQ",
+        },
+        home_country: { source: "acuity" as const, provider: "gemini", confidence: "high" as const, sourced_at: isoT, verified: true },
+        time_zone: { source: "acuity" as const, provider: "gemini", confidence: "high" as const, sourced_at: isoT, verified: true },
+        language_primary: { source: "acuity" as const, provider: "gemini", confidence: "high" as const, sourced_at: isoT, verified: true },
+        languages_spoken: {
+          source: "acuity" as const,
+          provider: "gemini",
+          confidence: "medium" as const,
+          sourced_at: isoT,
+          verified: false,
+          raw_excerpt: "Posts in French and English; interviewed in Italian for Corriere della Sera",
+        },
+        "leisure.accommodation_types": {
+          source: "acuity" as const,
+          provider: "perplexity",
+          confidence: "high" as const,
+          sourced_at: isoT2,
+          verified: true,
+          raw_excerpt: "Instagram posts at Aman Tokyo, Cheval Blanc St-Barth, Four Seasons Bora Bora",
+        },
+        "leisure.cuisine_preferences": {
+          source: "acuity" as const,
+          provider: "perplexity",
+          confidence: "medium" as const,
+          sourced_at: isoT2,
+          verified: true,
+          raw_excerpt: "Multiple posts from Michelin-starred restaurants; wine tasting events",
+        },
+        "leisure.dining_style": { source: "acuity" as const, provider: "perplexity", confidence: "high" as const, sourced_at: isoT2, verified: true },
+        "leisure.experience_themes": {
+          source: "acuity" as const,
+          provider: "gemini",
+          confidence: "high" as const,
+          sourced_at: isoT1,
+          verified: true,
+          raw_excerpt: "Wine, motorsport (F1 paddock photos), contemporary art (gallery openings)",
+        },
+        "leisure.activities_loved": {
+          source: "acuity" as const,
+          provider: "gemini",
+          confidence: "medium" as const,
+          sourced_at: isoT1,
+          verified: true,
+          raw_excerpt: "Sailing, F1, gallery openings, wine tastings",
+        },
+        "leisure.budget_range": {
+          source: "acuity" as const,
+          provider: "perplexity",
+          confidence: "high" as const,
+          sourced_at: isoT2,
+          verified: true,
+          raw_excerpt: "Properties visited are consistently ultra-luxury tier (Aman, Cheval Blanc, One&Only)",
+        },
+        "leisure.preferred_airlines": {
+          source: "acuity" as const,
+          provider: "perplexity",
+          confidence: "medium" as const,
+          sourced_at: isoT2,
+          verified: false,
+          raw_excerpt: "Air France La Première lounge check-in (Instagram story)",
+        },
+        "leisure.destinations_visited": {
+          source: "acuity" as const,
+          provider: "perplexity",
+          confidence: "high" as const,
+          sourced_at: isoT2,
+          verified: true,
+          raw_excerpt: "Geotagged: Tokyo, Bora Bora, St-Barth, Monaco, Tuscany, Marrakech, Maldives",
+        },
+        "leisure.destinations_preferred": {
+          source: "acuity" as const,
+          provider: "gemini",
+          confidence: "medium" as const,
+          sourced_at: isoT1,
+          verified: true,
+          raw_excerpt: "Asia-Pacific islands, Mediterranean coast, Alpine winter",
+        },
+        loyalty_programs: {
+          source: "acuity" as const,
+          provider: "perplexity",
+          confidence: "medium" as const,
+          sourced_at: isoT2,
+          verified: false,
+          raw_excerpt: "Aman Junkies reference in travel forum; Air France Flying Blue Platinum mentioned in lounge post",
+        },
+        customTags: {
+          source: "acuity" as const,
+          provider: "gemini",
+          confidence: "high" as const,
+          sourced_at: isoT1,
+          verified: true,
+          raw_excerpt: "wine, motorsport, art collector, gastronomy",
+        },
+        familyContext: {
+          source: "acuity" as const,
+          provider: "gemini",
+          confidence: "low" as const,
+          sourced_at: isoT1,
+          verified: false,
+          raw_excerpt: "Family photos on Instagram suggest spouse + 2 children (school-age). Anniversary trip post from St-Barth.",
+        },
+      };
+    })(),
     relationship_insights: [
-      { id: "ri1", text: "Board member at Kering Group (source: LinkedIn via Gemini)", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
-      { id: "ri2", text: "Mentioned in Virtuoso Life Magazine, March 2025", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
-      { id: "ri3", text: "Connected to Sophie Laurent via Rothschild & Co network", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
-      { id: "ri4", text: "XYZ Capital founder; luxury and gastronomy focus", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
+      { id: "ri1", text: "CEO at Maison Laurent, luxury fashion group", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
+      { id: "ri2", text: "Board member at Kering Group", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
+      { id: "ri3", text: "Featured in Forbes France \"Les 500\" list", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
+      { id: "ri4", text: "Connected to Sophie Laurent via Rothschild & Co", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
+      { id: "ri5", text: "Patron of Fondation Louis Vuitton", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
+      { id: "ri6", text: "Mentioned in Virtuoso Life Magazine, March 2025", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
+      { id: "ri7", text: "Industry: luxury goods, fashion, wine & spirits", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
+      { id: "ri8", text: "Education: INSEAD MBA, Sciences Po Paris", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
+      { id: "ri9", text: "Active on Instagram (~12K followers), wine & travel content", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
     ],
     travel_discovered_preferences: [
-      { id: "td1", text: "Prefers overwater villas", profile_type: "leisure", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
-      { id: "td2", text: "Frequent Aman guest", profile_type: "leisure", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
-      { id: "td3", text: "Wine enthusiast — Barolo region", profile_type: "leisure", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
-      { id: "td4", text: "City hotels, direct flights", profile_type: "business", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
-      { id: "td5", text: "Helicopter transfers for short hops", profile_type: "business", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
-      { id: "td6", text: "Alain Ducasse dining preference", profile_type: "leisure", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
+      { id: "td1", text: "Overwater villas & Aman-class resorts", profile_type: "leisure", provider: "Perplexity", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
+      { id: "td2", text: "Michelin dining & wine regions (Barolo, Burgundy)", profile_type: "leisure", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
+      { id: "td3", text: "F1 & motorsport events", profile_type: "leisure", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
+      { id: "td4", text: "Contemporary art & gallery openings", profile_type: "leisure", provider: "Gemini", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
+      { id: "td5", text: "Air France La Première / long-haul first", profile_type: "business", provider: "Perplexity", sourced_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)) },
     ],
     created_by: "2",
     createdBy: "2",
@@ -99,7 +228,9 @@ export const FAKE_VICS: VIC[] = [
       { id: "tp1", profile_type: "business", is_primary: true, preferences_summary: "City hotels, direct flights", pace: "fast", created_at: iso(now), updated_at: iso(now) },
       { id: "tp2", profile_type: "leisure", is_primary: false, preferences_summary: "Wine regions, gastronomy", pace: "moderate", created_at: iso(now), updated_at: iso(now) },
     ],
-    acuityProfile: "## SNAPSHOT\nJean-Christophe Chopin · Founder, XYZ Capital · Paris, France\nWealth tier: HIGH · Data availability: Rich\n\n## ACTIONABLE INSIGHTS\nGastronomy & Wine Enthusiast | Confidence: HIGH",
+    linked_product_ids: ["fake-enable-1", "fake-agency-4", "fake-advisor-2"],
+    acuityProfile:
+      "## SNAPSHOT\nJean-Christophe Chopin · CEO, Maison Laurent Group · Paris, France\nWealth tier: HIGH · Data availability: Rich\n\n## ACTIONABLE INSIGHTS\nWine, motorsport, contemporary art, ultra-luxury travel | Confidence: HIGH",
     edit_history: [
       { by: "Marie Limousis", at: iso(new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)), change: "Updated contact details" },
       { by: "Marie Limousis", at: iso(new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)), change: "Created VIC" },
@@ -169,6 +300,7 @@ export const FAKE_VICS: VIC[] = [
     relationship_status: "inactive",
     acuity_status: "not_run",
     acuityStatus: "not_run",
+    field_provenance: {},
     date_of_birth: birthdaySoon,
     created_by: "1",
     createdBy: "1",
@@ -184,6 +316,9 @@ export const FAKE_VICS: VIC[] = [
     id: "fake-vic-4",
     _id: "fake-vic-4",
     full_name: "Eric Tournier",
+    title: "Wealth Advisor",
+    home_city: "Geneva",
+    home_country: "Switzerland",
     city: "Geneva",
     country: "Switzerland",
     company: "Private Bank SA",
@@ -197,12 +332,51 @@ export const FAKE_VICS: VIC[] = [
     acuity_provider: "Perplexity",
     acuity_confidence: "medium",
     field_provenance: {
-      home_city: { source: "acuity", provider: "Perplexity", confidence: "medium", sourced_at: iso(new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)), verified: false },
-      home_country: { source: "acuity", provider: "Perplexity", confidence: "medium", sourced_at: iso(new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)), verified: false },
-      company: { source: "acuity", provider: "Perplexity", confidence: "medium", sourced_at: iso(new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)), verified: false },
-      role: { source: "acuity", provider: "Perplexity", confidence: "medium", sourced_at: iso(new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)), verified: false },
-      time_zone: { source: "acuity", provider: "Perplexity", confidence: "medium", sourced_at: iso(new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)), verified: false },
-      language_primary: { source: "acuity", provider: "Perplexity", confidence: "medium", sourced_at: iso(new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)), verified: false },
+      title: {
+        source: "acuity",
+        provider: "perplexity",
+        confidence: "medium",
+        sourced_at: iso(new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)),
+        verified: true,
+      },
+      home_city: {
+        source: "acuity",
+        provider: "perplexity",
+        confidence: "medium",
+        sourced_at: iso(new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)),
+        verified: true,
+      },
+      home_country: {
+        source: "acuity",
+        provider: "perplexity",
+        confidence: "high",
+        sourced_at: iso(new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)),
+        verified: true,
+      },
+      "leisure.experience_themes": {
+        source: "acuity",
+        provider: "perplexity",
+        confidence: "medium",
+        sourced_at: iso(new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000 + 60 * 1000)),
+        verified: false,
+        raw_excerpt: "Swiss Alps ski, discreet luxury events, Geneva private banking circuit",
+      },
+      "leisure.destinations_visited": {
+        source: "acuity",
+        provider: "perplexity",
+        confidence: "medium",
+        sourced_at: iso(new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000 + 60 * 1000)),
+        verified: false,
+        raw_excerpt: "Zermatt, St. Moritz, Courchevel; occasional London & NYC",
+      },
+      "leisure.cuisine_preferences": {
+        source: "acuity",
+        provider: "perplexity",
+        confidence: "low",
+        sourced_at: iso(new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000 + 60 * 1000)),
+        verified: false,
+        raw_excerpt: "Limited public dining posts — inferred from event attendance only",
+      },
     },
     relationship_insights: [
       { id: "er1", text: "Wealth advisor at Private Bank SA; UHNW focus", provider: "Perplexity", sourced_at: iso(new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)) },
@@ -269,6 +443,8 @@ export const FAKE_VICS: VIC[] = [
     id: "fake-vic-6",
     _id: "fake-vic-6",
     full_name: "Jacques Veyrat",
+    email: "j.veyrat@example.com",
+    phone_primary: "+44 20 XXXX XXXX",
     city: "London",
     country: "United Kingdom",
     company: "Veyrat Holdings",
@@ -380,13 +556,29 @@ export const FAKE_VICS: VIC[] = [
     shared_with: [{ advisor_id: "1", advisor_name: "Marie Limousis", access_level: "view", shared_at: iso(now) }],
     sharing_level: "basic",
   } as VIC,
+  // —— More VICs for richer list/demo ——
+  { id: "fake-vic-10", _id: "fake-vic-10", full_name: "Claire Mérigot", email: "claire@example.com", city: "Geneva", country: "Switzerland", company: "Mérigot & Associés", role: "Director", customTags: ["vip", "corporate"], tags: ["vip", "corporate"], acuity_status: "complete", acuityStatus: "complete", acuity_last_run: iso(new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)), acuityLastRun: iso(new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)), relationship_status: "active", created_by: "2", createdBy: "2", created_by_name: "Pierre Duval", createdByName: "Pierre Duval", updated_by: "2", updated_by_name: "Pierre Duval", created_at: iso(new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)), createdAt: iso(new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)), updated_at: iso(now), assigned_advisor_id: "2", assigned_advisor_name: "Pierre Duval", client_since: "2022-01-15", notes: "Luxury ski and city breaks." } as VIC,
+  { id: "fake-vic-11", _id: "fake-vic-11", full_name: "Thomas Bresson", email: "thomas.b@firm.fr", city: "Lyon", country: "France", company: "Bresson Industries", role: "CEO", customTags: ["luxury", "wine"], tags: ["luxury", "wine"], acuity_status: "running", acuityStatus: "running", relationship_status: "prospect", created_by: "2", createdBy: "2", created_by_name: "Pierre Duval", createdByName: "Pierre Duval", updated_by: "2", updated_by_name: "Pierre Duval", created_at: iso(new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)), createdAt: iso(new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)), updated_at: iso(now), notes: "Wine enthusiast, Burgundy focus." } as VIC,
+  { id: "fake-vic-12", _id: "fake-vic-12", full_name: "Anne-Sophie Durand", city: "Cannes", country: "France", company: "—", role: "—", customTags: ["vip", "gastronomy", "luxury"], tags: ["vip", "gastronomy", "luxury"], acuity_status: "complete", acuityStatus: "complete", acuity_last_run: iso(new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000)), acuityLastRun: iso(new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000)), relationship_status: "active", created_by: "2", createdBy: "2", created_by_name: "Pierre Duval", createdByName: "Pierre Duval", updated_by: "2", updated_by_name: "Pierre Duval", created_at: iso(new Date(now.getTime() - 45 * 24 * 60 * 60 * 1000)), createdAt: iso(new Date(now.getTime() - 45 * 24 * 60 * 60 * 1000)), updated_at: iso(now), assigned_advisor_id: "2", assigned_advisor_name: "Pierre Duval", client_since: "2023-06-01", preferences: "Riviera, Michelin dining, yachting." } as VIC,
+  { id: "fake-vic-13", _id: "fake-vic-13", full_name: "Marc Lefebvre", email: "marc@lefebvre.co", city: "Brussels", country: "Belgium", company: "Lefebvre Capital", role: "Partner", customTags: ["corporate", "new"], tags: ["corporate", "new"], acuity_status: "not_run", acuityStatus: "not_run", relationship_status: "prospect", created_by: "2", createdBy: "2", created_by_name: "Pierre Duval", createdByName: "Pierre Duval", updated_by: "2", updated_by_name: "Pierre Duval", created_at: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)), createdAt: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)), updated_at: iso(now), notes: "MICE and incentive travel interest." } as VIC,
+  { id: "fake-vic-14", _id: "fake-vic-14", full_name: "Valérie Rousseau", email: "valerie.r@example.com", phone_primary: "+33 1 XX XX XX XX", city: "Paris", country: "France", company: "Rousseau Art", role: "Founder", customTags: ["vip", "luxury"], tags: ["vip", "luxury"], acuity_status: "complete", acuityStatus: "complete", acuity_last_run: iso(new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)), acuityLastRun: iso(new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)), relationship_status: "active", created_by: "2", createdBy: "2", created_by_name: "Pierre Duval", createdByName: "Pierre Duval", updated_by: "2", updated_by_name: "Pierre Duval", created_at: iso(new Date(now.getTime() - 120 * 24 * 60 * 60 * 1000)), createdAt: iso(new Date(now.getTime() - 120 * 24 * 60 * 60 * 1000)), updated_at: iso(now), assigned_advisor_id: "2", assigned_advisor_name: "Pierre Duval", client_since: "2021-04-01", preferences: "Art-focused travel, private viewings." } as VIC,
+  { id: "fake-vic-15", _id: "fake-vic-15", full_name: "Philippe Moreau", email: "p.moreau@group.com", city: "Marseille", country: "France", company: "Moreau Group", role: "Managing Director", customTags: ["corporate"], tags: ["corporate"], acuity_status: "failed", acuityStatus: "failed", relationship_status: "active", created_by: "2", createdBy: "2", created_by_name: "Pierre Duval", createdByName: "Pierre Duval", updated_by: "2", updated_by_name: "Pierre Duval", created_at: iso(new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)), createdAt: iso(new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)), updated_at: iso(now), assigned_advisor_id: "2", assigned_advisor_name: "Pierre Duval", notes: "Corporate retreats, Provence and Côte d'Azur." } as VIC,
+  { id: "fake-vic-16", _id: "fake-vic-16", full_name: "Hélène Petit", city: "Bordeaux", country: "France", company: "—", role: "—", customTags: ["wine", "gastronomy"], tags: ["wine", "gastronomy"], acuity_status: "complete", acuityStatus: "complete", acuity_last_run: iso(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)), acuityLastRun: iso(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)), relationship_status: "active", created_by: "2", createdBy: "2", created_by_name: "Pierre Duval", createdByName: "Pierre Duval", updated_by: "2", updated_by_name: "Pierre Duval", created_at: iso(new Date(now.getTime() - 200 * 24 * 60 * 60 * 1000)), createdAt: iso(new Date(now.getTime() - 200 * 24 * 60 * 60 * 1000)), updated_at: iso(now), assigned_advisor_id: "2", client_since: "2020-09-01", preferences: "Wine tours, châteaux stays." } as VIC,
+  { id: "fake-vic-17", _id: "fake-vic-17", full_name: "Nicolas Bernard", email: "n.bernard@example.com", phone_primary: "+41 44 XXX XX XX", city: "Zurich", country: "Switzerland", company: "Bernard Wealth", role: "Advisor", customTags: ["vip", "luxury", "corporate"], tags: ["vip", "luxury", "corporate"], acuity_status: "complete", acuityStatus: "complete", acuity_last_run: iso(new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)), acuityLastRun: iso(new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)), relationship_status: "active", created_by: "2", createdBy: "2", created_by_name: "Pierre Duval", createdByName: "Pierre Duval", updated_by: "2", updated_by_name: "Pierre Duval", created_at: iso(new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)), createdAt: iso(new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)), updated_at: iso(now), assigned_advisor_id: "2", client_since: "2024-02-01", is_shared_to_agency: true, notes: "Alpine and city luxury." } as VIC,
+  { id: "fake-vic-18", _id: "fake-vic-18", full_name: "Sandra Müller", city: "Munich", country: "Germany", company: "Müller GmbH", role: "Owner", customTags: ["new", "corporate"], tags: ["new", "corporate"], acuity_status: "not_run", acuityStatus: "not_run", relationship_status: "prospect", created_by: "2", createdBy: "2", created_by_name: "Pierre Duval", createdByName: "Pierre Duval", updated_by: "2", updated_by_name: "Pierre Duval", created_at: iso(new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000)), createdAt: iso(new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000)), updated_at: iso(now), email: "sandra@mueller.de", notes: "Incoming lead, DACH travel." } as VIC,
+  { id: "fake-vic-19", _id: "fake-vic-19", full_name: "Laurent Dubois", city: "Monaco", country: "Monaco", company: "Dubois & Fils", role: "Director", customTags: ["vip", "luxury"], tags: ["vip", "luxury"], acuity_status: "complete", acuityStatus: "complete", acuity_last_run: iso(new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000)), acuityLastRun: iso(new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000)), relationship_status: "active", created_by: "2", createdBy: "2", created_by_name: "Pierre Duval", createdByName: "Pierre Duval", updated_by: "2", updated_by_name: "Pierre Duval", created_at: iso(new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000)), createdAt: iso(new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000)), updated_at: iso(now), assigned_advisor_id: "2", client_since: "2019-11-01", preferences: "Grand Prix, yacht, fine dining." } as VIC,
+  { id: "fake-vic-20", _id: "fake-vic-20", full_name: "Catherine Leroy", email: "catherine.leroy@example.com", phone_primary: "+33 4 93 XX XX XX", city: "Nice", country: "France", company: "—", role: "—", customTags: ["gastronomy", "luxury"], tags: ["gastronomy", "luxury"], acuity_status: "complete", acuityStatus: "complete", acuity_last_run: iso(new Date(now.getTime() - 21 * 24 * 60 * 60 * 1000)), acuityLastRun: iso(new Date(now.getTime() - 21 * 24 * 60 * 60 * 1000)), relationship_status: "inactive", created_by: "2", createdBy: "2", created_by_name: "Pierre Duval", createdByName: "Pierre Duval", updated_by: "2", updated_by_name: "Pierre Duval", created_at: iso(new Date(now.getTime() - 400 * 24 * 60 * 60 * 1000)), createdAt: iso(new Date(now.getTime() - 400 * 24 * 60 * 60 * 1000)), updated_at: iso(now), assigned_advisor_id: "2", client_since: "2018-05-01", notes: "Long-standing client, low recent activity." } as VIC,
+  { id: "fake-vic-21", _id: "fake-vic-21", full_name: "Olivier Martin", email: "olivier.m@consulting.fr", city: "Paris", country: "France", company: "Martin Consulting", role: "Partner", customTags: ["corporate", "new"], tags: ["corporate", "new"], acuity_status: "not_run", acuityStatus: "not_run", relationship_status: "prospect", created_by: "2", createdBy: "2", created_by_name: "Pierre Duval", createdByName: "Pierre Duval", updated_by: "2", updated_by_name: "Pierre Duval", created_at: iso(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)), createdAt: iso(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)), updated_at: iso(now), notes: "Incentive travel, team offsites." } as VIC,
+  { id: "fake-vic-22", _id: "fake-vic-22", full_name: "Isabelle Blanc", email: "isabelle.blanc@example.com", phone_primary: "+41 21 XXX XX XX", city: "Lausanne", country: "Switzerland", company: "Blanc Foundation", role: "Trustee", customTags: ["vip", "luxury", "wine"], tags: ["vip", "luxury", "wine"], acuity_status: "complete", acuityStatus: "complete", acuity_last_run: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)), acuityLastRun: iso(new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)), relationship_status: "active", created_by: "2", createdBy: "2", created_by_name: "Pierre Duval", createdByName: "Pierre Duval", updated_by: "2", updated_by_name: "Pierre Duval", created_at: iso(new Date(now.getTime() - 70 * 24 * 60 * 60 * 1000)), createdAt: iso(new Date(now.getTime() - 70 * 24 * 60 * 60 * 1000)), updated_at: iso(now), assigned_advisor_id: "2", client_since: "2023-01-10", is_shared_to_agency: true, preferences: "Lake Geneva, Alps, wellness." } as VIC,
+  { id: "fake-vic-23", _id: "fake-vic-23", full_name: "Pierre Garnier", city: "London", country: "United Kingdom", company: "Garnier Holdings", role: "CEO", customTags: ["vip", "corporate"], tags: ["vip", "corporate"], acuity_status: "complete", acuityStatus: "complete", acuity_last_run: iso(new Date(now.getTime() - 9 * 24 * 60 * 60 * 1000)), acuityLastRun: iso(new Date(now.getTime() - 9 * 24 * 60 * 60 * 1000)), relationship_status: "active", created_by: "2", createdBy: "2", created_by_name: "Pierre Duval", createdByName: "Pierre Duval", updated_by: "2", updated_by_name: "Pierre Duval", created_at: iso(new Date(now.getTime() - 100 * 24 * 60 * 60 * 1000)), createdAt: iso(new Date(now.getTime() - 100 * 24 * 60 * 60 * 1000)), updated_at: iso(now), assigned_advisor_id: "2", client_since: "2022-08-01", email: "p.garnier@garnier.co.uk", notes: "UK and Europe business travel." } as VIC,
+  { id: "fake-vic-24", _id: "fake-vic-24", full_name: "Marie-Claire Fontaine", city: "Cannes", country: "France", company: "—", role: "—", customTags: ["vip", "gastronomy", "luxury"], tags: ["vip", "gastronomy", "luxury"], acuity_status: "complete", acuityStatus: "complete", acuity_last_run: iso(new Date(now.getTime() - 0 * 24 * 60 * 60 * 1000)), acuityLastRun: iso(new Date(now.getTime() - 0 * 24 * 60 * 60 * 1000)), relationship_status: "active", created_by: "2", createdBy: "2", created_by_name: "Pierre Duval", createdByName: "Pierre Duval", updated_by: "2", updated_by_name: "Pierre Duval", created_at: iso(new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)), createdAt: iso(new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)), updated_at: iso(now), assigned_advisor_id: "2", client_since: "2025-02-01", preferences: "Film festival, Riviera, private events." } as VIC,
 ];
 
 /** All unique tag values used in fake data (for filter dropdown). */
 export const FAKE_VIC_TAG_OPTIONS = ["vip", "wine", "gastronomy", "luxury", "new", "corporate"];
 
 /** All unique countries in fake data. */
-export const FAKE_VIC_COUNTRIES = ["France", "Switzerland", "Monaco", "United Kingdom", "United States"];
+export const FAKE_VIC_COUNTRIES = ["France", "Switzerland", "Monaco", "United Kingdom", "United States", "Germany", "Belgium"];
 
 export interface FilterParams {
   tab?: "mine" | "shared" | "agency";
@@ -417,7 +609,8 @@ export function filterAndPaginateFakeVics(
   params: FilterParams
 ): { vics: VIC[]; total: number } {
   let out = [...list];
-  const uid = params.userId != null ? String(params.userId) : null;
+  // When tab is "mine" and no user (e.g. preview), use "1" so My VICs shows owned subset, not all.
+  const uid = params.userId != null ? String(params.userId) : params.tab === "mine" ? "1" : null;
   if (params.tab && uid) {
     switch (params.tab) {
       case "mine":

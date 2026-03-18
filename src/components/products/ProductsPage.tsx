@@ -95,7 +95,7 @@ export default function ProductsPage() {
     try {
       const data = await fetchProductList(params);
       const apiEmpty = !data.products?.length && (data.total ?? 0) === 0;
-      if (apiEmpty) {
+      if (IS_PREVIEW_MODE || apiEmpty) {
         const fake = filterAndPaginateFakeProducts(FAKE_PRODUCTS, {
           tab: activeTab,
           userId: user?.id != null ? String(user.id) : undefined,

@@ -7,7 +7,6 @@ export type DetailTabId =
   | "identity"
   | "relationship"
   | "preferences"
-  | "travel"
   | "linked_entities"
   | "sharing"
   | "governance";
@@ -17,7 +16,6 @@ export const DETAIL_TABS: { id: DetailTabId; label: string }[] = [
   { id: "identity", label: "Identity" },
   { id: "relationship", label: "Relationship" },
   { id: "preferences", label: "Preferences & documents" },
-  { id: "travel", label: "Travel" },
   { id: "linked_entities", label: "Linked Entities" },
   { id: "sharing", label: "Sharing" },
   { id: "governance", label: "Governance" },

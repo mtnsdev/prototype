@@ -20,6 +20,8 @@ import {
     Database,
     LayoutDashboard,
     BookMarked,
+    BarChart3,
+    Zap,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -288,9 +290,27 @@ export default function Sidebar({
                         href="/dashboard/knowledge"
                         collapsed={collapsed}
                         icon={<BookMarked size={18} />}
-                        label="Knowledge Vault"
+                        label="Knowledge"
                         active={pathname.startsWith("/dashboard/knowledge")}
-                        navTag={IS_PREVIEW_MODE ? "construction" : undefined}
+                        navTag={IS_PREVIEW_MODE ? "sample" : undefined}
+                    />
+
+                    <NavLink
+                        href="/dashboard/analytics"
+                        collapsed={collapsed}
+                        icon={<BarChart3 size={18} />}
+                        label="Analytics"
+                        active={pathname.startsWith("/dashboard/analytics")}
+                        navTag={IS_PREVIEW_MODE ? "sample" : undefined}
+                    />
+
+                    <NavLink
+                        href="/dashboard/automations"
+                        collapsed={collapsed}
+                        icon={<Zap size={18} />}
+                        label="Automations"
+                        active={pathname.startsWith("/dashboard/automations")}
+                        navTag={IS_PREVIEW_MODE ? "sample" : undefined}
                     />
 
                     {/* <NavLink
@@ -375,7 +395,17 @@ export default function Sidebar({
     );
 }
 
-function NavTag({ variant }: { variant: "sample" | "construction" }) {
+function NavTag({ variant }: { variant: "sample" | "construction" | "coming_soon" }) {
+    if (variant === "coming_soon") {
+        return (
+            <span
+                className="shrink-0 ml-auto rounded-md px-2 py-0.5 text-[10px] font-medium text-violet-400 border border-violet-400/30"
+                title="Planned feature — preview coming soon."
+            >
+                Coming soon
+            </span>
+        );
+    }
     const isSample = variant === "sample";
     const label = isSample ? "Sample data" : "Under construction";
     const title = isSample
@@ -412,7 +442,7 @@ function NavLink({
     active?: boolean;
     badge?: string;
     /** Shown when IS_PREVIEW_MODE; "sample" = Sample data, "construction" = Under construction */
-    navTag?: "sample" | "construction";
+    navTag?: "sample" | "construction" | "coming_soon";
 }) {
     return (
         <Link

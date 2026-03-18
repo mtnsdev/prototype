@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import type { VIC } from "@/types/vic";
+import ImageWithFallback from "@/components/ui/ImageWithFallback";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,7 +68,7 @@ export default function VICListRow({
   showRequestFullAccess,
   onRequestFullAccess,
 }: Props) {
-  const leg = vic as unknown as { city?: string; country?: string; phone?: string; acuityStatus?: string; customTags?: string[] };
+  const leg = vic as unknown as { city?: string; country?: string; phone?: string; acuityStatus?: string };
   const isBasic = viewLevel === "basic";
   const cityCountry = [vic.home_city ?? leg.city, vic.home_country ?? leg.country].filter(Boolean).join(", ") || "—";
   const email = vic.email ?? "—";
@@ -75,10 +76,9 @@ export default function VICListRow({
   const status = vic.relationship_status ? (STATUS_LABELS[vic.relationship_status] ?? vic.relationship_status) : "—";
   const acuityVal = vic.acuity_status ?? leg.acuityStatus;
   const acuityLabel = acuityVal ? (ACUITY_LABELS[acuityVal] ?? acuityVal) : "—";
-  const tagList = vic.tags ?? leg.customTags ?? [];
 
   return (
-    <tr className="border-b border-[rgba(255,255,255,0.06)] hover:bg-white/[0.03]">
+    <tr className="border-b border-[rgba(255,255,255,0.06)] hover:bg-white/5">
       <td className="w-10 py-3 pl-4">
         <input
           type="checkbox"
@@ -88,7 +88,8 @@ export default function VICListRow({
         />
       </td>
       <td className="py-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <ImageWithFallback fallbackType="avatar" alt={vic.full_name ?? "VIC"} name={vic.full_name ?? "?"} className="w-10 h-10 shrink-0" />
           <LifecycleIndicators vic={vic} className="shrink-0 hidden sm:flex" />
           <Link href={`/dashboard/vics/${vicId}`} className="font-medium text-[#F5F5F5] hover:underline">
             {vic.full_name}
@@ -108,17 +109,6 @@ export default function VICListRow({
             {acuityLabel.replace(/_/g, " ")}
           </span>
         ) : "—"}
-      </td>
-      <td className="py-3 text-sm max-w-[160px]">
-        {isBasic ? "—" : tagList.length === 0 ? "—" : (
-          <div className="flex flex-wrap gap-1">
-            {tagList.slice(0, 3).map((t) => (
-              <span key={t} className="rounded bg-white/10 px-1.5 py-0.5 text-xs text-[rgba(245,245,245,0.8)]">
-                {t}
-              </span>
-            ))}
-          </div>
-        )}
       </td>
       <td className="py-2 pr-4">
         <div className="flex items-center gap-2 justify-end">

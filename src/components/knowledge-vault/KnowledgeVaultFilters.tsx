@@ -1,11 +1,10 @@
 "use client";
 
-import { ChevronDown, ChevronRight, Plus } from "lucide-react";
-import { useState } from "react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { DataSource } from "@/types/knowledge-vault";
-import type { DataLayer, DocumentType, Freshness, IngestionStatus } from "@/types/knowledge-vault";
-import { DocumentType as DocTypeEnum } from "@/types/knowledge-vault";
+import type { DataLayer, IngestionStatus } from "@/types/knowledge-vault";
+import { DataSourceType } from "@/types/knowledge-vault";
 import { cn } from "@/lib/utils";
 
 const DATA_LAYER_LABELS: Record<DataLayer, string> = {
@@ -16,62 +15,34 @@ const DATA_LAYER_LABELS: Record<DataLayer, string> = {
 
 const DATA_LAYER_COLORS: Record<DataLayer, string> = {
   enable: "bg-[var(--muted-info-bg)] text-[var(--muted-info-text)] border-[var(--muted-info-border)]",
-  agency: "bg-[var(--muted-success-bg)] text-[var(--muted-success-text)] border-[var(--muted-success-border)]",
-  advisor: "bg-[var(--muted-amber-bg)] text-[var(--muted-amber-text)] border-[var(--muted-amber-border)]",
+  agency: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  advisor: "bg-violet-500/10 text-violet-400 border-violet-500/20",
 };
 
-const FRESHNESS_LABELS: Record<Freshness, string> = {
-  fresh: "Fresh (<7d)",
-  recent: "Recent (7–30d)",
-  aging: "Aging (30–90d)",
-  stale: "Stale (>90d)",
-};
-
-const FRESHNESS_COLORS: Record<Freshness, string> = {
-  fresh: "bg-[var(--muted-success-bg)] text-[var(--muted-success-text)]",
-  recent: "bg-[var(--muted-info-bg)] text-[var(--muted-info-text)]",
-  aging: "bg-[var(--muted-amber-bg)] text-[var(--muted-amber-text)]",
-  stale: "bg-[var(--muted-error-bg)] text-[var(--muted-error-text)]",
-};
-
-const DOC_TYPE_LABELS: Record<DocumentType, string> = {
-  [DocTypeEnum.DestinationGuide]: "Destination Guide",
-  [DocTypeEnum.PropertyProfile]: "Property Profile",
-  [DocTypeEnum.RateSheet]: "Rate Sheet",
-  [DocTypeEnum.Policy]: "Policy",
-  [DocTypeEnum.Contract]: "Contract",
-  [DocTypeEnum.TrainingMaterial]: "Training Material",
-  [DocTypeEnum.Newsletter]: "Newsletter",
-  [DocTypeEnum.ClientReport]: "Client Report",
-  [DocTypeEnum.MarketingCollateral]: "Marketing Collateral",
-  [DocTypeEnum.InternalMemo]: "Internal Memo",
-  [DocTypeEnum.PartnerDirectory]: "Partner Directory",
-  [DocTypeEnum.TravelAdvisory]: "Travel Advisory",
-};
-
-const COMMON_TAGS = [
-  "luxury",
-  "wellness",
-  "family",
-  "adventure",
-  "beach",
-  "city",
-  "Europe",
-  "Asia",
-  "Virtuoso",
-  "commission",
-  "rates",
-  "policy",
-];
+function sourceDataLayerLabel(sourceType: DataSourceType): "Agency" | "Advisor" | "Enable" {
+  const m: Partial<Record<DataSourceType, "Agency" | "Advisor" | "Enable">> = {
+    [DataSourceType.GoogleDriveAdmin]: "Agency",
+    [DataSourceType.GoogleDrivePersonal]: "Advisor",
+    [DataSourceType.ClaromentisDocuments]: "Agency",
+    [DataSourceType.ClaromentisPages]: "Agency",
+    [DataSourceType.ManualUpload]: "Advisor",
+    [DataSourceType.Virtuoso]: "Agency",
+    [DataSourceType.WebScrape]: "Advisor",
+    [DataSourceType.EmailTemplate]: "Agency",
+    [DataSourceType.Email]: "Agency",
+    [DataSourceType.APIStream]: "Agency",
+  };
+  return m[sourceType] ?? "Agency";
+}
 
 export type KnowledgeVaultFiltersState = {
-  source_id?: string;
+  source_ids?: string[];
   data_layer?: DataLayer;
-  document_type?: DocumentType;
-  freshness?: Freshness;
   ingestion_status?: IngestionStatus;
   tags?: string[];
 };
+
+type TagFacet = { name: string; count: number };
 
 type Props = {
   sources: DataSource[];
@@ -80,6 +51,7 @@ type Props = {
   onConnectSource: () => void;
   hasActiveFilters: boolean;
   onClearFilters: () => void;
+  tagFacets: TagFacet[];
 };
 
 export default function KnowledgeVaultFilters({
@@ -89,9 +61,9 @@ export default function KnowledgeVaultFilters({
   onConnectSource,
   hasActiveFilters,
   onClearFilters,
+  tagFacets,
 }: Props) {
-  const [docTypeOpen, setDocTypeOpen] = useState(true);
-  const [tagsOpen, setTagsOpen] = useState(false);
+  const selected = filters.source_ids ?? [];
 
   const toggleFilter = <K extends keyof KnowledgeVaultFiltersState>(
     key: K,
@@ -103,11 +75,17 @@ export default function KnowledgeVaultFilters({
     });
   };
 
-  const toggleTag = (tag: string) => {
+  const toggleSourceId = (id: string) => {
+    const next = selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id];
+    onFiltersChange({
+      ...filters,
+      source_ids: next.length ? next : undefined,
+    });
+  };
+
+  const toggleTagFilter = (tag: string) => {
     const current = filters.tags ?? [];
-    const next = current.includes(tag)
-      ? current.filter((t) => t !== tag)
-      : [...current, tag];
+    const next = current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag];
     onFiltersChange({ ...filters, tags: next.length ? next : undefined });
   };
 
@@ -128,31 +106,61 @@ export default function KnowledgeVaultFilters({
           Data sources
         </h3>
         <ul className="space-y-1">
-          {sources.filter((s) => s.status === "connected").map((s) => (
-            <li key={s.id}>
-              <button
-                type="button"
-                onClick={() =>
-                  toggleFilter("source_id", filters.source_id === s.id ? undefined : s.id)
-                }
-                className={cn(
-                  "w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm",
-                  filters.source_id === s.id ? "bg-white/10 text-[#F5F5F5]" : "text-[rgba(245,245,245,0.8)] hover:bg-white/5"
-                )}
-              >
-                <span
+          {sources.map((s) => {
+            const connected = s.status === "connected";
+            const active = selected.includes(s.id);
+            const layer = sourceDataLayerLabel(s.source_type);
+            const layerCls =
+              layer === "Agency"
+                ? "text-blue-400/90"
+                : layer === "Advisor"
+                  ? "text-violet-400/90"
+                  : "text-emerald-400/90";
+            return (
+              <li key={s.id}>
+                <button
+                  type="button"
+                  disabled={!connected}
+                  onClick={() => connected && toggleSourceId(s.id)}
                   className={cn(
-                    "w-2 h-2 rounded-full shrink-0",
-                    s.health_score >= 80 && "bg-[var(--muted-success-text)]",
-                    s.health_score >= 50 && s.health_score < 80 && "bg-[var(--muted-amber-text)]",
-                    s.health_score < 50 && s.health_score > 0 && "bg-[var(--muted-error-text)]"
+                    "w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm",
+                    !connected && "opacity-45 cursor-not-allowed",
+                    connected && active && "bg-white/10 text-[#F5F5F5]",
+                    connected && !active && "text-[rgba(245,245,245,0.8)] hover:bg-white/5"
                   )}
-                />
-                <span className="truncate flex-1">{s.name}</span>
-                <span className="text-xs text-[rgba(245,245,245,0.5)]">{s.document_count}</span>
-              </button>
-            </li>
-          ))}
+                >
+                  <span
+                    className={cn(
+                      "w-2 h-2 rounded-full shrink-0",
+                      !connected && "bg-[rgba(255,255,255,0.25)]",
+                      connected && s.health_score >= 80 && "bg-[var(--muted-success-text)]",
+                      connected &&
+                        s.health_score >= 50 &&
+                        s.health_score < 80 &&
+                        "bg-[var(--muted-amber-text)]",
+                      connected && s.health_score < 50 && s.health_score > 0 && "bg-[var(--muted-error-text)]",
+                      connected && s.health_score === 0 && "bg-[rgba(255,255,255,0.3)]",
+                      s.source_type === DataSourceType.WebScrape && connected && "bg-blue-400"
+                    )}
+                  />
+                  <span className="truncate flex-1 min-w-0">{s.name}</span>
+                  {s.document_visible_count != null &&
+                  (s.source_type === DataSourceType.ClaromentisDocuments ||
+                    s.source_type === DataSourceType.ClaromentisPages) ? (
+                    <span className="text-xs shrink-0 tabular-nums">
+                      <span className="text-[rgba(245,245,245,0.5)]">{s.document_visible_count}</span>
+                      <span className="text-gray-600">/{s.document_count}</span>
+                    </span>
+                  ) : (
+                    <span className="text-xs text-[rgba(245,245,245,0.5)] shrink-0 tabular-nums">
+                      {s.document_count}
+                    </span>
+                  )}
+                  <span className={cn("text-[10px] shrink-0 font-medium", layerCls)}>{layer}</span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
         <Button
           variant="ghost"
@@ -187,55 +195,29 @@ export default function KnowledgeVaultFilters({
         </div>
       </section>
 
-      <section>
-        <button
-          type="button"
-          onClick={() => setDocTypeOpen(!docTypeOpen)}
-          className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2"
-        >
-          {docTypeOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          Document type
-        </button>
-        {docTypeOpen && (
-          <ul className="space-y-1">
-            {(Object.values(DocTypeEnum) as DocumentType[]).slice(0, 8).map((type) => (
-              <li key={type}>
-                <button
-                  type="button"
-                  onClick={() => toggleFilter("document_type", type)}
-                  className={cn(
-                    "w-full text-left px-2 py-1 rounded text-sm",
-                    filters.document_type === type ? "bg-white/10 text-[#F5F5F5]" : "text-[rgba(245,245,245,0.7)] hover:bg-white/5"
-                  )}
-                >
-                  {DOC_TYPE_LABELS[type]}
-                </button>
-              </li>
+      {tagFacets.length > 0 && (
+        <div className="mt-4">
+          <p className="text-[10px] font-semibold tracking-wider text-gray-500 uppercase mb-2">Tags</p>
+          <div className="flex flex-wrap gap-1.5">
+            {tagFacets.map((tag) => (
+              <button
+                key={tag.name}
+                type="button"
+                onClick={() => toggleTagFilter(tag.name)}
+                className={cn(
+                  "text-[10px] px-2 py-0.5 rounded-full transition-all border",
+                  filters.tags?.includes(tag.name)
+                    ? "bg-blue-500/15 text-blue-400 border-blue-500/30"
+                    : "bg-white/5 text-gray-500 border-white/[0.06] hover:border-white/10"
+                )}
+              >
+                {tag.name}
+                <span className="ml-1 text-gray-600">{tag.count}</span>
+              </button>
             ))}
-          </ul>
-        )}
-      </section>
-
-      <section>
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2">
-          Freshness
-        </h3>
-        <div className="flex flex-wrap gap-1.5">
-          {(Object.keys(FRESHNESS_LABELS) as Freshness[]).map((f) => (
-            <button
-              key={f}
-              type="button"
-              onClick={() => toggleFilter("freshness", f)}
-              className={cn(
-                "text-xs px-2 py-1 rounded",
-                filters.freshness === f ? FRESHNESS_COLORS[f] : "bg-white/5 text-[rgba(245,245,245,0.6)] hover:bg-white/10"
-              )}
-            >
-              {FRESHNESS_LABELS[f]}
-            </button>
-          ))}
+          </div>
         </div>
-      </section>
+      )}
 
       <section>
         <h3 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2">
@@ -260,34 +242,6 @@ export default function KnowledgeVaultFilters({
             </button>
           ))}
         </div>
-      </section>
-
-      <section>
-        <button
-          type="button"
-          onClick={() => setTagsOpen(!tagsOpen)}
-          className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2"
-        >
-          {tagsOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          Tags
-        </button>
-        {tagsOpen && (
-          <div className="flex flex-wrap gap-1.5">
-            {COMMON_TAGS.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                onClick={() => toggleTag(tag)}
-                className={cn(
-                  "text-xs px-2 py-0.5 rounded bg-white/5 hover:bg-white/10",
-                  filters.tags?.includes(tag) ? "ring-1 ring-white/20 text-[#F5F5F5]" : "text-[rgba(245,245,245,0.7)]"
-                )}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
-        )}
       </section>
     </div>
   );

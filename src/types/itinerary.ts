@@ -28,6 +28,7 @@ export interface ItineraryEvent {
   event_type: EventType;
   title: string;
   description?: string;
+  thumbnail_url?: string;
   start_time?: string;
   end_time?: string;
   duration_minutes?: number;
@@ -63,11 +64,43 @@ export interface ItineraryDay {
   notes?: string;
 }
 
+/** Alternative trip build (e.g. Budget vs Luxury) — frontend mock */
+export interface ItineraryTripOption {
+  id: string;
+  name: string;
+  days: ItineraryDay[];
+  total_client_price?: number;
+}
+
+export type ItineraryPublishState = "never" | "published_clean" | "unpublished_changes";
+
+/** LTA sales cycle — single workflow for trip lifecycle */
+export type PipelineStage =
+  | "lead"
+  | "discovery"
+  | "proposal"
+  | "revision"
+  | "committed"
+  | "preparing"
+  | "final_review"
+  | "traveling"
+  | "post_travel"
+  | "archived";
+
+export interface PipelineEvent {
+  from_stage: PipelineStage;
+  to_stage: PipelineStage;
+  changed_at: string;
+  changed_by: string;
+  note?: string;
+}
+
 export interface Itinerary {
   id: string;
   agency_id: string;
   trip_name: string;
   description?: string;
+  hero_image_url?: string;
   primary_vic_id: string;
   primary_vic_name?: string;
   primary_advisor_id: string;
@@ -79,6 +112,8 @@ export interface Itinerary {
   destinations: string[];
   traveler_count?: number;
   days: ItineraryDay[];
+  /** When set (draft/proposed multi-option trips), tabs switch between option day plans */
+  trip_options?: ItineraryTripOption[];
   tags: string[];
   notes?: string;
   total_client_price?: number;
@@ -93,6 +128,13 @@ export interface Itinerary {
   updated_at: string;
   last_edited_by?: string;
   last_edited_by_name?: string;
+  /** Client-facing publish — mock */
+  publish_state?: ItineraryPublishState;
+  published_version?: number;
+  last_published_at?: string;
+  /** Sales cycle position */
+  pipeline_stage: PipelineStage;
+  pipeline_history?: PipelineEvent[];
 }
 
 export interface ItineraryListParams {

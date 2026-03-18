@@ -3,29 +3,38 @@
  * Frontend-only types; backend built separately.
  */
 
+import type { PipelineStage } from "@/types/itinerary";
+
 export type DataSourceStatus = "connected" | "disconnected" | "syncing" | "error";
 
 export type SyncFrequency = "real_time" | "hourly" | "daily" | "weekly" | "manual";
 
 export enum DataSourceType {
-  GoogleDrive = "google_drive",
-  Claromentis = "claromentis",
+  GoogleDriveAdmin = "google_drive_admin",
+  GoogleDrivePersonal = "google_drive_personal",
+  ClaromentisDocuments = "claromentis_documents",
+  ClaromentisPages = "claromentis_pages",
   ManualUpload = "manual_upload",
   APIStream = "api_stream",
   Email = "email",
   Virtuoso = "virtuoso",
   WebScrape = "web_scrape",
+  EmailTemplate = "email_template",
 }
 
 export interface DataSource {
   id: string;
   name: string;
   source_type: DataSourceType;
+  /** Lucide icon key for base icon; badges differentiate variants */
   icon: string;
   description: string;
   status: DataSourceStatus;
-  last_sync: string;
+  last_sync: string | null;
+  /** Total documents in source (synced corpus) */
   document_count: number;
+  /** Advisor-visible subset (e.g. Claromentis ACL); omit for full visibility */
+  document_visible_count?: number;
   total_size_mb: number;
   sync_frequency: SyncFrequency;
   health_score: number;
@@ -61,7 +70,8 @@ export interface KnowledgeDocument {
   source_type: DataSourceType;
   source_name: string;
   data_layer: DataLayer;
-  document_type: DocumentType;
+  /** @deprecated UI uses tags only; optional for legacy mocks */
+  document_type?: DocumentType;
   file_type: string;
   file_size_kb: number;
   content_summary?: string;
@@ -69,13 +79,19 @@ export interface KnowledgeDocument {
   ingestion_status: IngestionStatus;
   ingested_at?: string;
   last_updated: string;
-  freshness: Freshness;
+  freshness?: Freshness;
   quality_score?: number;
+  /** Saved-from-web source URL hostname */
+  source_url?: string;
   linked_products: { id: string; name: string }[];
   linked_vics: { id: string; name: string }[];
   url?: string;
   uploaded_by?: string;
   uploaded_by_name?: string;
+  /** Claromentis wiki-style pages */
+  is_wiki_page?: boolean;
+  /** Email template → sales cycle stage */
+  pipeline_stage?: PipelineStage;
 }
 
 export interface IngestionHealth {
@@ -91,9 +107,9 @@ export interface IngestionHealth {
 
 export interface KnowledgeDocumentListParams {
   source_id?: string;
+  /** Comma-separated source IDs for additive filter */
+  source_ids?: string;
   data_layer?: DataLayer;
-  document_type?: DocumentType;
-  freshness?: Freshness;
   ingestion_status?: IngestionStatus;
   tags?: string[];
   search?: string;

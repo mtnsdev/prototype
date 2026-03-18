@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Pencil, Trash2, Share2, Play, ChevronDown, Loader2 } from "lucide-react";
@@ -26,8 +26,9 @@ import TravelProfileModal from "../Modals/TravelProfileModal";
 import type { TravelProfile } from "@/types/vic";
 import PreviewBanner from "@/components/ui/PreviewBanner";
 import { IS_PREVIEW_MODE } from "@/config/preview";
+import ImageWithFallback from "@/components/ui/ImageWithFallback";
 
-const VALID_TABS: DetailTabId[] = ["overview", "identity", "relationship", "preferences", "travel", "linked_entities", "sharing", "governance"];
+const VALID_TABS: DetailTabId[] = ["overview", "identity", "relationship", "preferences", "linked_entities", "sharing", "governance"];
 
 type Props = { vicId: string };
 
@@ -35,8 +36,10 @@ export default function VICDetailPage({ vicId }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useUser();
-  const tabParam = searchParams.get("tab") as DetailTabId | null;
-  const activeTab: DetailTabId = tabParam && VALID_TABS.includes(tabParam) ? tabParam : "overview";
+  const tabParam = searchParams.get("tab") as DetailTabId | string | null;
+  const activeTab: DetailTabId =
+    tabParam && VALID_TABS.includes(tabParam as DetailTabId) ? (tabParam as DetailTabId) : "overview";
+  const openTravelFromQuery = tabParam === "travel";
 
   const [vic, setVic] = useState<VIC | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,6 +50,8 @@ export default function VICDetailPage({ vicId }: Props) {
   const [acuityRunning, setAcuityRunning] = useState(false);
   const [travelModalOpen, setTravelModalOpen] = useState(false);
   const [travelProfilesOverride, setTravelProfilesOverride] = useState<TravelProfile[] | null>(null);
+  const [showTravelProfiles, setShowTravelProfiles] = useState(false);
+  const travelSectionRef = useRef<HTMLDivElement>(null);
 
   const setTab = (tab: DetailTabId) => {
     const next = new URLSearchParams(searchParams?.toString() ?? "");
@@ -79,6 +84,16 @@ export default function VICDetailPage({ vicId }: Props) {
   useEffect(() => {
     load();
   }, [vicId]);
+
+  useEffect(() => {
+    if (openTravelFromQuery && vic) {
+      setShowTravelProfiles(true);
+      const next = new URLSearchParams(searchParams?.toString() ?? "");
+      next.set("tab", "overview");
+      router.replace(`/dashboard/vics/${vicId}?${next.toString()}`, { scroll: false });
+      setTimeout(() => travelSectionRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    }
+  }, [openTravelFromQuery, vic, vicId, router, searchParams]);
 
   const currentUser = user ? { id: user.id, role: user.role, agency_id: user.agency_id } : null;
   const canEdit = vic ? canEditVIC(currentUser, vic) : false;
@@ -169,7 +184,11 @@ export default function VICDetailPage({ vicId }: Props) {
   const leg = vic as unknown as { city?: string; country?: string; company?: string; role?: string; customTags?: string[] };
   const location = [vic.home_city ?? leg.city, vic.home_country ?? leg.country].filter(Boolean).join(", ");
   const companyRole = [leg.company, leg.role].filter(Boolean).join(" · ");
-  const tags = vic.tags ?? leg.customTags ?? [];
+  const line2Parts = [
+    vic.preferred_name && vic.preferred_name !== vic.full_name ? `Preferred: ${vic.preferred_name}` : null,
+    location,
+    companyRole,
+  ].filter(Boolean);
 
   return (
     <div className="h-full overflow-y-auto bg-[#0C0C0C]">
@@ -184,26 +203,17 @@ export default function VICDetailPage({ vicId }: Props) {
         </Link>
 
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-[#F5F5F5]">{vic.full_name}</h1>
-            {vic.preferred_name && vic.preferred_name !== vic.full_name && (
-              <p className="text-sm text-[rgba(245,245,245,0.5)]">Preferred: {vic.preferred_name}</p>
+          <div className="flex items-start gap-4 min-w-0">
+            <ImageWithFallback fallbackType="avatar" alt={vic.full_name ?? "VIC"} name={vic.full_name ?? "?"} className="w-16 h-16 shrink-0" />
+            <div className="min-w-0">
+              <h1 className="text-2xl font-semibold text-[#F5F5F5] tracking-tight">{vic.full_name}</h1>
+            {line2Parts.length > 0 && (
+              <p className="text-sm text-[rgba(245,245,245,0.55)] mt-1">
+                {line2Parts.join(" · ")}
+              </p>
             )}
-            {location && <p className="text-sm text-[rgba(245,245,245,0.6)]">{location}</p>}
-            {companyRole && <p className="text-sm text-[rgba(245,245,245,0.5)]">{companyRole}</p>}
             <p className={"text-xs mt-1 " + acuityStatusColor}>{acuityStatusText}</p>
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {tags.map((t) => (
-                  <span
-                    key={t}
-                    className="rounded bg-white/10 px-2 py-0.5 text-xs text-[rgba(245,245,245,0.8)]"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            )}
+            </div>
           </div>
           <div className="flex items-center gap-1">
             {canEdit && (
@@ -260,9 +270,24 @@ export default function VICDetailPage({ vicId }: Props) {
               onUpdate={load}
               travelProfiles={travelProfilesOverride ?? vic.travel_profiles ?? undefined}
               onAddTravelProfile={() => setTravelModalOpen(true)}
+              showTravelProfiles={showTravelProfiles}
+              onShowTravelProfilesChange={setShowTravelProfiles}
+              travelSectionRef={travelSectionRef}
             />
           </div>
-          <DetailSidebar vic={vic} className="lg:order-2 order-first" />
+          <DetailSidebar
+            vic={vic}
+            className="lg:order-2 order-first"
+            onShowTravelProfiles={() => {
+              setShowTravelProfiles(true);
+              if (activeTab !== "overview") {
+                const next = new URLSearchParams(searchParams?.toString() ?? "");
+                next.set("tab", "overview");
+                router.replace(`/dashboard/vics/${vicId}?${next.toString()}`, { scroll: false });
+              }
+              setTimeout(() => travelSectionRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+            }}
+          />
         </div>
       </div>
 
