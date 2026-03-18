@@ -62,18 +62,29 @@ export interface TravelProfile {
   special_requests?: string;
   created_at?: string;
   updated_at?: string;
+  // Optional detail fields for inline card
+  accommodation_types?: string[];
+  cuisine_preferences?: string[];
+  cabin_class?: string;
+  travel_pace?: string;
+  budget_range?: string;
+  destinations_preferred?: string[];
+  source?: "acuity" | "manual";
 }
 
 // ─── Acuity / field provenance (Section 3) ──────────────────────────────────
 
-export type FieldProvenanceSource = "acuity" | "manual" | "import";
+export type FieldProvenanceSource = "acuity" | "manual" | "import" | "inferred_from_trip";
 
+/** Per-field provenance: Acuity-enriched fields use source acuity; manual/import never show Acuity badge */
 export interface FieldProvenance {
   source: FieldProvenanceSource;
-  provider?: string; // e.g. "Gemini", "Perplexity", "Claude"
+  provider?: string; // gemini | perplexity | claude (display-capitalized)
   confidence?: "high" | "medium" | "low";
   sourced_at?: string; // ISO
   verified?: boolean;
+  /** Original source snippet shown in badge detail */
+  raw_excerpt?: string;
 }
 
 export interface RelationshipInsight {

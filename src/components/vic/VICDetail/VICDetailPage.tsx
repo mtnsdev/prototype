@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Pencil, Trash2, Share2, Play, ChevronDown, Loader2 } from "lucide-react";
@@ -28,7 +28,7 @@ import PreviewBanner from "@/components/ui/PreviewBanner";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 import ImageWithFallback from "@/components/ui/ImageWithFallback";
 
-const VALID_TABS: DetailTabId[] = ["overview", "identity", "relationship", "preferences", "travel", "linked_entities", "sharing", "governance"];
+const VALID_TABS: DetailTabId[] = ["overview", "identity", "relationship", "preferences", "linked_entities", "sharing", "governance"];
 
 type Props = { vicId: string };
 
@@ -36,8 +36,10 @@ export default function VICDetailPage({ vicId }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useUser();
-  const tabParam = searchParams.get("tab") as DetailTabId | null;
-  const activeTab: DetailTabId = tabParam && VALID_TABS.includes(tabParam) ? tabParam : "overview";
+  const tabParam = searchParams.get("tab") as DetailTabId | string | null;
+  const activeTab: DetailTabId =
+    tabParam && VALID_TABS.includes(tabParam as DetailTabId) ? (tabParam as DetailTabId) : "overview";
+  const openTravelFromQuery = tabParam === "travel";
 
   const [vic, setVic] = useState<VIC | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,6 +50,8 @@ export default function VICDetailPage({ vicId }: Props) {
   const [acuityRunning, setAcuityRunning] = useState(false);
   const [travelModalOpen, setTravelModalOpen] = useState(false);
   const [travelProfilesOverride, setTravelProfilesOverride] = useState<TravelProfile[] | null>(null);
+  const [showTravelProfiles, setShowTravelProfiles] = useState(false);
+  const travelSectionRef = useRef<HTMLDivElement>(null);
 
   const setTab = (tab: DetailTabId) => {
     const next = new URLSearchParams(searchParams?.toString() ?? "");
@@ -80,6 +84,16 @@ export default function VICDetailPage({ vicId }: Props) {
   useEffect(() => {
     load();
   }, [vicId]);
+
+  useEffect(() => {
+    if (openTravelFromQuery && vic) {
+      setShowTravelProfiles(true);
+      const next = new URLSearchParams(searchParams?.toString() ?? "");
+      next.set("tab", "overview");
+      router.replace(`/dashboard/vics/${vicId}?${next.toString()}`, { scroll: false });
+      setTimeout(() => travelSectionRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    }
+  }, [openTravelFromQuery, vic, vicId, router, searchParams]);
 
   const currentUser = user ? { id: user.id, role: user.role, agency_id: user.agency_id } : null;
   const canEdit = vic ? canEditVIC(currentUser, vic) : false;
@@ -256,9 +270,24 @@ export default function VICDetailPage({ vicId }: Props) {
               onUpdate={load}
               travelProfiles={travelProfilesOverride ?? vic.travel_profiles ?? undefined}
               onAddTravelProfile={() => setTravelModalOpen(true)}
+              showTravelProfiles={showTravelProfiles}
+              onShowTravelProfilesChange={setShowTravelProfiles}
+              travelSectionRef={travelSectionRef}
             />
           </div>
-          <DetailSidebar vic={vic} className="lg:order-2 order-first" />
+          <DetailSidebar
+            vic={vic}
+            className="lg:order-2 order-first"
+            onShowTravelProfiles={() => {
+              setShowTravelProfiles(true);
+              if (activeTab !== "overview") {
+                const next = new URLSearchParams(searchParams?.toString() ?? "");
+                next.set("tab", "overview");
+                router.replace(`/dashboard/vics/${vicId}?${next.toString()}`, { scroll: false });
+              }
+              setTimeout(() => travelSectionRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+            }}
+          />
         </div>
       </div>
 

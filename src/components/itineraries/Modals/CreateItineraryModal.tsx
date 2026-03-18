@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { Itinerary, ItineraryDay } from "@/types/itinerary";
+import type { Itinerary, ItineraryDay, PipelineEvent } from "@/types/itinerary";
 import type { VIC } from "@/types/vic";
 import { createItinerary } from "@/lib/itineraries-api";
 import { getVICId } from "@/lib/vic-api";
@@ -134,6 +134,8 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
         days,
         data_ownership_level: "Advisor",
         agency_id: "agency-1",
+        pipeline_stage: "lead",
+        pipeline_history: [] as PipelineEvent[],
       };
 
       const it = await createItinerary(body);
@@ -167,6 +169,8 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
           created_by: "1",
           created_at: iso(now),
           updated_at: iso(now),
+          pipeline_stage: "lead",
+          pipeline_history: [],
         };
         onCreated(fakeIt);
         onClose();

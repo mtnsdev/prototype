@@ -47,6 +47,9 @@ export default function CalendarWidget({ content, staggerIndex = 0 }: Props) {
         <div className="flex flex-col items-center justify-center py-10 text-center">
           <CalendarIcon size={28} className="text-gray-600 mb-2" />
           <p className="text-sm text-gray-500">Clear schedule today</p>
+          <p className="text-[10px] text-gray-600 mt-2 text-center">
+            Google Calendar sync — coming soon
+          </p>
         </div>
       </AppleWidgetCard>
     );
@@ -105,6 +108,9 @@ export default function CalendarWidget({ content, staggerIndex = 0 }: Props) {
           +{moreCount} more this month →
         </p>
       )}
+      <p className="text-[10px] text-gray-600 mt-2 text-center">
+        Google Calendar sync — coming soon
+      </p>
     </AppleWidgetCard>
   );
 }

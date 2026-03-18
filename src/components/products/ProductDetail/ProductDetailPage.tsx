@@ -30,6 +30,9 @@ import PreviewBanner from "@/components/ui/PreviewBanner";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 import ImageWithFallback from "@/components/ui/ImageWithFallback";
 import type { ProductCategory } from "@/types/product";
+import { ProductDetailLayers } from "./ProductDetailLayers";
+import { getProductLayerMock } from "./productLayerMock";
+import { useToast } from "@/contexts/ToastContext";
 
 const TAB_IDS = ["overview", "location", "commercial", "content", "suitability", "category", "governance"] as const;
 
@@ -39,6 +42,7 @@ export default function ProductDetailPage({ productId }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useUser();
+  const toast = useToast();
   const tabParam = searchParams.get("tab");
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -111,6 +115,8 @@ export default function ProductDetailPage({ productId }: Props) {
   }
 
   const Icon = CATEGORY_ICONS[product.category] ?? CATEGORY_ICONS.accommodation;
+  const isAdmin = user?.role === "admin" || user?.role === "agency_admin";
+  const pendingSuggestions = isAdmin ? getProductLayerMock(getProductId(product)).pendingSuggestions : 0;
 
   return (
     <div className="h-full flex flex-col bg-[#0C0C0C] overflow-hidden">
@@ -125,7 +131,18 @@ export default function ProductDetailPage({ productId }: Props) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0C0C0C] via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-4">
-          <h1 className="text-xl font-semibold text-white drop-shadow-sm">{product.name}</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-xl font-semibold text-white drop-shadow-sm">{product.name}</h1>
+            {isAdmin && pendingSuggestions > 0 && (
+              <button
+                type="button"
+                onClick={() => toast("Suggestion review — coming in v2")}
+                className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full hover:bg-amber-500/20"
+              >
+                {pendingSuggestions} suggestion{pendingSuggestions > 1 ? "s" : ""}
+              </button>
+            )}
+          </div>
           <p className="text-sm text-white/90 mt-0.5">
             {[product.city, (product.country && COUNTRY_NAMES[product.country]) || product.country].filter(Boolean).join(", ") || "—"}
           </p>
@@ -246,6 +263,16 @@ export default function ProductDetailPage({ productId }: Props) {
                   </dl>
                 </section>
               )}
+              {product.category === "dmc" && (
+                <section>
+                  <h2 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2">DMC</h2>
+                  <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                    <div className="col-span-2"><dt className="text-[rgba(245,245,245,0.5)]">Destinations</dt><dd className="text-[#F5F5F5]">{(product as { destinations_covered?: string[] }).destinations_covered?.join(", ") ?? "—"}</dd></div>
+                    <div className="col-span-2"><dt className="text-[rgba(245,245,245,0.5)]">Services</dt><dd className="text-[#F5F5F5]">{(product as { service_types?: string[] }).service_types?.join(", ") ?? "—"}</dd></div>
+                  </dl>
+                </section>
+              )}
+              <ProductDetailLayers key={product.id} product={product} />
             </div>
           )}
         {activeTab === "location" && (

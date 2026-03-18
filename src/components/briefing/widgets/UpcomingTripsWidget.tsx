@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plane } from "lucide-react";
+import { Plane, Compass } from "lucide-react";
 import AppleWidgetCard from "../AppleWidgetCard";
 import type { UpcomingTripsContent } from "@/types/briefing";
 import { cn } from "@/lib/utils";
@@ -25,9 +25,10 @@ function statusLabel(status: string) {
 type Props = {
   content: UpcomingTripsContent;
   staggerIndex?: number;
+  isAdmin?: boolean;
 };
 
-export default function UpcomingTripsWidget({ content, staggerIndex = 0 }: Props) {
+export default function UpcomingTripsWidget({ content, staggerIndex = 0, isAdmin = false }: Props) {
   const items = (content.items ?? [])
     .sort((a, b) => a.days_until_departure - b.days_until_departure)
     .slice(0, 3);
@@ -37,15 +38,25 @@ export default function UpcomingTripsWidget({ content, staggerIndex = 0 }: Props
     return (
       <AppleWidgetCard
         accent="emerald"
-        icon={<Plane size={20} />}
-        title="Upcoming Trips"
+        icon={isAdmin ? <Compass size={20} /> : <Plane size={20} />}
+        title={isAdmin ? "Agency Trips" : "Upcoming Trips"}
         staggerIndex={staggerIndex}
       >
         <div className="flex flex-col items-center justify-center py-10 text-center">
-          <Plane size={28} className="text-gray-600 mb-2" />
+          {isAdmin ? (
+            <Compass size={28} className="text-gray-600 mb-2" />
+          ) : (
+            <Plane size={28} className="text-gray-600 mb-2" />
+          )}
+          {isAdmin && (
+            <p className="text-[10px] text-gray-600 mb-1">Across all advisors</p>
+          )}
           <p className="text-sm text-gray-500">No upcoming trips — create one?</p>
-          <Link href="/dashboard/itineraries" className="text-sm text-emerald-400 hover:text-emerald-300 mt-1">
-            Create itinerary →
+          <Link
+            href="/dashboard/itineraries?filter=upcoming"
+            className="text-sm text-emerald-400 hover:text-emerald-300 mt-1"
+          >
+            View itineraries →
           </Link>
         </div>
       </AppleWidgetCard>
@@ -55,15 +66,18 @@ export default function UpcomingTripsWidget({ content, staggerIndex = 0 }: Props
   return (
     <AppleWidgetCard
       accent="emerald"
-      icon={<Plane size={20} />}
-      title="Upcoming Trips"
+      icon={isAdmin ? <Compass size={20} /> : <Plane size={20} />}
+      title={isAdmin ? "Agency Trips" : "Upcoming Trips"}
       rightElement={
-        <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
+        <span className="text-[10px] text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded-full font-medium">
           {total}
         </span>
       }
       staggerIndex={staggerIndex}
     >
+      {isAdmin && (
+        <p className="text-[10px] text-gray-600 mt-0.5 -mb-1">Across all advisors</p>
+      )}
       <ul className="space-y-2">
         {items.map((trip) => {
           const maxDays = Math.max(...items.map((t) => t.days_until_departure), 1);
@@ -80,7 +94,12 @@ export default function UpcomingTripsWidget({ content, staggerIndex = 0 }: Props
                     {formatDeparture(trip.departure_date)}
                   </span>
                 </div>
-                <p className="text-xs text-gray-400 mt-0.5">{trip.vic_name}</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {trip.vic_name}
+                  {isAdmin && trip.advisor_name && (
+                    <span className="text-gray-600"> · {trip.advisor_name}</span>
+                  )}
+                </p>
                 <div className="flex items-center gap-2 mt-1.5">
                   <span className="text-xs text-gray-500">
                     {trip.destinations.slice(0, 2).join(", ")}
@@ -116,14 +135,12 @@ export default function UpcomingTripsWidget({ content, staggerIndex = 0 }: Props
           );
         })}
       </ul>
-      {total > 3 && (
-        <Link
-          href="/dashboard/itineraries"
-          className="inline-block mt-4 text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
-        >
-          View all trips →
-        </Link>
-      )}
+      <Link
+        href="/dashboard/itineraries?filter=upcoming"
+        className="inline-block mt-4 text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+      >
+        View all trips →
+      </Link>
     </AppleWidgetCard>
   );
 }

@@ -1,6 +1,6 @@
 /**
  * Dev-only fake Product data for list, filters, and detail when API is not ready.
- * 12 products: My Products (Advisor) = 2, Agency Library = 5, Enable Directory = 5 (incl. one DMC).
+ * 13 products: My Products (Advisor) = 2, Agency Library = 6 (incl. Bali DMC), Enable Directory = 5.
  */
 
 import type { Product } from "@/types/product";
@@ -23,6 +23,7 @@ const IMG = {
   nobu: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&h=400&fit=crop",
   helicopter: "https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=600&h=400&fit=crop",
   tuscany: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop",
+  bali: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&h=400&fit=crop",
 };
 
 export const FAKE_PRODUCTS: Product[] = [
@@ -297,6 +298,32 @@ export const FAKE_PRODUCTS: Product[] = [
     agency_id: "agency-1",
     created_by: "1",
     tags: ["wine", "tuscany", "culture"],
+    created_at: iso(now),
+    updated_at: iso(now),
+  } as Product,
+  // 13. Agency — Bali DMC (layered notes demo)
+  {
+    id: "prod-dmc-001",
+    name: "Bali Luxury Concierge — Dima",
+    description:
+      "High-end destination management in Bali. Specializes in cliff-edge villas, private temple tours, and luxury wellness retreats.",
+    category: "dmc",
+    subcategory: "Incoming",
+    status: "active",
+    hero_image_url: IMG.bali,
+    country: "ID",
+    city: "Seminyak",
+    region: "Bali",
+    destinations_covered: ["Bali", "Nusa Penida", "Ubud", "Uluwatu"],
+    service_types: ["villas", "private tours", "wellness", "MICE"],
+    price_range: "ultra_luxury",
+    partnership_tier: "preferred",
+    verification_status: "verified",
+    data_ownership_level: "Agency",
+    agency_id: "agency-1",
+    created_by: "1",
+    commission_rate: 12,
+    tags: ["dmc", "bali", "luxury"],
     created_at: iso(now),
     updated_at: iso(now),
   } as Product,

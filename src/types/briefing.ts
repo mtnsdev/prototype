@@ -3,6 +3,8 @@
  * Frontend-only; backend built separately.
  */
 
+import type { PipelineStage } from "@/types/itinerary";
+
 export enum WidgetType {
   NewsAlerts = "news_alerts",
   PartnerUpdates = "partner_updates",
@@ -30,6 +32,8 @@ export interface NewsAlertItem {
   url?: string;
   affects_products?: string[];
   affects_vics?: string[];
+  /** Destination / partner tags for relevance */
+  tags?: string[];
 }
 
 export interface NewsAlertContent {
@@ -64,6 +68,8 @@ export interface ActionItemEntry {
   related_entity_id?: string;
   related_entity_name?: string;
   status: "pending" | "in_progress" | "done";
+  pipeline_stage?: PipelineStage | null;
+  advisor_name?: string;
 }
 
 export interface ActionItemsContent {
@@ -82,6 +88,7 @@ export interface UpcomingTripItem {
   status: string;
   days_until_departure: number;
   pending_confirmations: number;
+  advisor_name?: string;
 }
 
 export interface UpcomingTripsContent {

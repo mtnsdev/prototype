@@ -62,7 +62,10 @@ export default function NewsAlertsWidget({ content, staggerIndex = 0 }: Props) {
         title="News & Alerts"
         staggerIndex={staggerIndex}
       >
-        <div className="flex flex-col items-center justify-center py-12 text-center">
+        <p className="text-[10px] text-gray-600 -mt-2 mb-3 text-center md:text-left">
+          Based on your destinations and partners
+        </p>
+        <div className="flex flex-col items-center justify-center py-8 text-center">
           <Bell size={28} className="text-gray-600 mb-2" />
           <p className="text-sm text-gray-500">No alerts right now — your world is quiet</p>
         </div>
@@ -82,6 +85,9 @@ export default function NewsAlertsWidget({ content, staggerIndex = 0 }: Props) {
       }
       staggerIndex={staggerIndex}
     >
+      <p className="text-[10px] text-gray-600 -mt-2 mb-3">
+        Based on your destinations and partners
+      </p>
       <div className="space-y-2">
         {top3.map((item) => (
           <div
@@ -98,7 +104,12 @@ export default function NewsAlertsWidget({ content, staggerIndex = 0 }: Props) {
               <p className="text-xs text-gray-400 truncate mt-0.5">{item.summary}</p>
               <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-gray-500">
                 <span className="bg-white/[0.04] rounded px-1.5 py-0.5">{item.source}</span>
-                {item.destination && <span>{item.destination}</span>}
+                {item.tags?.map((tag) => (
+                  <span key={tag} className="text-[10px] text-gray-600">
+                    {tag}
+                  </span>
+                ))}
+                {!item.tags?.length && item.destination && <span>{item.destination}</span>}
                 <span>{timeAgo(item.published_at)}</span>
               </div>
             </div>

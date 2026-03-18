@@ -10,6 +10,7 @@ function entityLink(item: RecentActivityContent["items"][0]): string {
   if (item.entity_type === "itinerary") return `/dashboard/itineraries/${item.entity_id}`;
   if (item.entity_type === "vic") return `/dashboard/vics/${item.entity_id}`;
   if (item.entity_type === "product") return `/dashboard/products/${item.entity_id}`;
+  if (item.entity_type === "acuity") return `/dashboard/vics/${item.entity_id}`;
   return "#";
 }
 
@@ -33,9 +34,10 @@ function dotColor(entity_type: string): string {
 type Props = {
   content: RecentActivityContent;
   staggerIndex?: number;
+  isAdmin?: boolean;
 };
 
-export default function RecentActivityWidget({ content, staggerIndex = 0 }: Props) {
+export default function RecentActivityWidget({ content, staggerIndex = 0, isAdmin = false }: Props) {
   const items = (content.items ?? []).slice(0, 5);
 
   if (items.length === 0) {
@@ -71,6 +73,9 @@ export default function RecentActivityWidget({ content, staggerIndex = 0 }: Prop
       compact
       staggerIndex={staggerIndex}
     >
+      {isAdmin && (
+        <p className="text-[10px] text-gray-600 -mt-1 mb-2">Agency-wide activity</p>
+      )}
       <ul className="space-y-0">
         {items.map((item) => (
           <li

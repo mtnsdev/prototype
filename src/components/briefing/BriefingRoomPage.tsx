@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import {
   Settings,
@@ -16,8 +16,13 @@ import { useUser } from "@/contexts/UserContext";
 import { fetchBriefingWidgets } from "@/lib/briefing-api";
 import type { BriefingWidget, QuickStartContent } from "@/types/briefing";
 import BriefingGrid from "./BriefingGrid";
+import {
+  getMockUpcomingTripsContentAgency,
+  getMockRecentActivityContentAgency,
+} from "./briefingMockData";
 import PreviewBanner from "@/components/ui/PreviewBanner";
-import { IS_PREVIEW_MODE } from "@/config/preview";
+import { IS_PREVIEW_MODE, BRIEFING_PREVIEW_DEFAULT_ADMIN } from "@/config/preview";
+import { cn } from "@/lib/utils";
 
 const QUICK_START_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   UserPlus,
@@ -34,7 +39,8 @@ const QUICK_START_ROUTES: Record<string, string> = {
   "Create Itinerary": "/dashboard/itineraries?create=1",
   "Browse Products": "/dashboard/products",
   "Search Knowledge": "/dashboard/knowledge",
-  "Run Acuity": "/dashboard/chat",
+  "Acuity Lookup": "/dashboard/vics",
+  "Run Acuity on VIC": "/dashboard/vics",
   "Import CSV": "/dashboard/vics",
 };
 
@@ -80,7 +86,31 @@ export default function BriefingRoomPage() {
     return () => clearInterval(t);
   }, []);
 
-  const firstName = user?.username?.split(/[\s@.]/)[0] || user?.email?.split("@")[0] || "Test";
+  /**
+   * Admin: agency announcements (+ New), agency trips, advisor tags on actions, agency activity.
+   * Real app: role from auth. Demo user shape: { username: "Kristin", role: "agency_admin", agency_id: "travellustre" }.
+   * Switch to advisor view: set user_data role to "advisor", or set BRIEFING_PREVIEW_DEFAULT_ADMIN = false when not logged in.
+   */
+  const isAdmin =
+    user?.role === "agency_admin" ||
+    user?.role === "admin" ||
+    (IS_PREVIEW_MODE && BRIEFING_PREVIEW_DEFAULT_ADMIN && user == null);
+
+  const widgetsForGrid = useMemo(() => {
+    if (!isAdmin) return widgets;
+    return widgets.map((w) => {
+      if (w.id === "w-trips")
+        return { ...w, content: getMockUpcomingTripsContentAgency() };
+      if (w.id === "w-activity")
+        return { ...w, content: getMockRecentActivityContentAgency() };
+      return w;
+    });
+  }, [widgets, isAdmin]);
+
+  const firstName =
+    user?.username?.split(/[\s@.]/)[0] ||
+    user?.email?.split("@")[0] ||
+    (IS_PREVIEW_MODE && BRIEFING_PREVIEW_DEFAULT_ADMIN && user == null ? "Kristin" : "there");
   const quickStartContent = widgets.find((w) => w.id === "w-quick")?.content as QuickStartContent | undefined;
   const quickActions = quickStartContent?.actions?.slice(0, 6) ?? [];
 
@@ -122,15 +152,22 @@ export default function BriefingRoomPage() {
               {quickActions.map((action) => {
                 const Icon = QUICK_START_ICONS[action.icon] ?? Zap;
                 const href = QUICK_START_ROUTES[action.label] ?? action.route ?? "#";
+                const acuityVic =
+                  action.label === "Acuity Lookup" || action.label === "Run Acuity on VIC";
                 return (
                   <Link
                     key={action.label}
                     href={href}
                     title={action.description}
-                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-[rgba(245,245,245,0.6)] hover:text-[#F5F5F5] hover:bg-white/[0.06] transition-colors"
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg px-3 py-2 transition-colors",
+                      acuityVic
+                        ? "text-violet-300 hover:text-violet-200 bg-violet-500/10 hover:bg-violet-500/15 border border-violet-500/20"
+                        : "text-[rgba(245,245,245,0.6)] hover:text-[#F5F5F5] hover:bg-white/[0.06]"
+                    )}
                   >
-                    <Icon size={18} />
-                    <span className="text-sm">{action.label}</span>
+                    <Icon size={18} className={acuityVic ? "text-violet-400" : undefined} />
+                    <span className="text-sm">{acuityVic ? "Acuity Lookup" : action.label}</span>
                   </Link>
                 );
               })}
@@ -152,7 +189,7 @@ export default function BriefingRoomPage() {
               ))}
             </div>
           ) : (
-            <BriefingGrid widgets={widgets} />
+            <BriefingGrid widgets={widgetsForGrid} isAdmin={isAdmin} />
           )}
         </div>
       </div>

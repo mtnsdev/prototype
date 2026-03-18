@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { CheckSquare, Circle, Check } from "lucide-react";
 import AppleWidgetCard from "../AppleWidgetCard";
 import type { ActionItemsContent, ActionItemEntry } from "@/types/briefing";
+import { PIPELINE_STAGE_LABEL_MAP } from "@/config/pipelineStages";
+import type { PipelineStage } from "@/types/itinerary";
 import { cn } from "@/lib/utils";
 
 function isOverdue(due?: string): boolean {
@@ -27,9 +28,10 @@ function formatDue(due: string): string {
 type Props = {
   content: ActionItemsContent;
   staggerIndex?: number;
+  isAdmin?: boolean;
 };
 
-export default function ActionItemsWidget({ content, staggerIndex = 0 }: Props) {
+export default function ActionItemsWidget({ content, staggerIndex = 0, isAdmin = false }: Props) {
   const [items, setItems] = useState(content.items ?? []);
   const [newTitle, setNewTitle] = useState("");
 
@@ -141,8 +143,16 @@ export default function ActionItemsWidget({ content, staggerIndex = 0 }: Props) 
                 )}
               </button>
               <div className="min-w-0 flex-1">
-                <p className={cn("text-sm font-medium text-white truncate", item.status === "done" && "line-through")}>
-                  {item.title}
+                <p className={cn("text-sm font-medium text-white", item.status === "done" && "line-through")}>
+                  <span className="truncate inline align-middle max-w-full">{item.title}</span>
+                  {item.related_entity_type === "itinerary" && item.pipeline_stage && (
+                    <span className="text-[10px] text-emerald-400/50 bg-emerald-500/5 px-1.5 py-0.5 rounded ml-1 align-middle whitespace-nowrap">
+                      {PIPELINE_STAGE_LABEL_MAP[item.pipeline_stage as PipelineStage]}
+                    </span>
+                  )}
+                  {isAdmin && item.advisor_name && (
+                    <span className="text-[10px] text-gray-500 ml-1">— {item.advisor_name}</span>
+                  )}
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">
                   {item.due_date ? (
