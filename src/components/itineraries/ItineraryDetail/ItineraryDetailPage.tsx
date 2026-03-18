@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Pencil, Trash2, Copy } from "lucide-react";
-import type { Itinerary, ItineraryStatus } from "@/types/itinerary";
+import { ArrowLeft, Pencil, Trash2, Copy, Share2, MoreHorizontal, Globe, Plus } from "lucide-react";
+import type { Itinerary, ItineraryDay, ItineraryEvent } from "@/types/itinerary";
 import { fetchItinerary } from "@/lib/itineraries-api";
 import { FAKE_ITINERARIES } from "../fakeData";
 import { useUser } from "@/contexts/UserContext";
@@ -19,8 +19,34 @@ import StatusChangeDropdown from "./StatusChangeDropdown";
 import { cn } from "@/lib/utils";
 import PreviewBanner from "@/components/ui/PreviewBanner";
 import { IS_PREVIEW_MODE } from "@/config/preview";
+import ImageWithFallback from "@/components/ui/ImageWithFallback";
+import EventDetailPanel from "./EventDetailPanel";
+import ClientProposalModal from "./ClientProposalModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  PublishItineraryModal,
+  CompareOptionsModal,
+  GuestPortalPreviewModal,
+  InvoiceModal,
+  ImportItineraryModal,
+  DestinationGuideModal,
+  ActivitySuggestModal,
+} from "../CompetitorFeatureModals";
 
 type Props = { itineraryId: string };
+
+function daysAgoShort(iso?: string): string {
+  if (!iso) return "";
+  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  if (d === 0) return "today";
+  if (d === 1) return "1 day ago";
+  return `${d} days ago`;
+}
 
 export default function ItineraryDetailPage({ itineraryId }: Props) {
   const router = useRouter();
@@ -30,6 +56,22 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [guestPortalOpen, setGuestPortalOpen] = useState(false);
+  const [invoiceOpen, setInvoiceOpen] = useState(false);
+  const [publishModalOpen, setPublishModalOpen] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<{ day: ItineraryDay; event: ItineraryEvent } | null>(null);
+  const [editEvent, setEditEvent] = useState<{ day: ItineraryDay; event: ItineraryEvent } | null>(null);
+  const [optionIndex, setOptionIndex] = useState(0);
+  const [publishLocal, setPublishLocal] = useState<{
+    state: "published_clean" | "unpublished_changes" | "never";
+    version: number;
+    at: string;
+  } | null>(null);
 
   const load = async () => {
     if (!itineraryId) {
@@ -40,7 +82,9 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
     }
     setLoading(true);
     setError(null);
-    if (typeof process !== "undefined" && process.env.NODE_ENV === "development") {
+    const useFakeFirst =
+      (typeof process !== "undefined" && process.env.NODE_ENV === "development") || IS_PREVIEW_MODE;
+    if (useFakeFirst) {
       const fake = FAKE_ITINERARIES.find((i) => i.id === itineraryId);
       if (fake) {
         setItinerary(fake);
@@ -52,7 +96,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
       const it = await fetchItinerary(itineraryId);
       setItinerary(it);
     } catch (err) {
-      if (typeof process !== "undefined" && process.env.NODE_ENV === "development") {
+      if (useFakeFirst) {
         const fake = FAKE_ITINERARIES.find((i) => i.id === itineraryId);
         if (fake) {
           setItinerary(fake);
@@ -77,6 +121,58 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
   const canViewFinancials_ = canViewFinancials(currentUser);
   const statusBadge = itinerary ? ITINERARY_STATUS_BADGES[itinerary.status] : null;
 
+  const tripOpts = itinerary?.trip_options ?? [];
+  const hasMultiOption =
+    (itinerary?.status === "draft" || itinerary?.status === "proposed") && tripOpts.length > 0;
+
+  const displayItinerary = useMemo(() => {
+    if (!itinerary) return null;
+    if (!hasMultiOption || optionIndex === 0) return itinerary;
+    const opt = tripOpts[optionIndex - 1];
+    if (!opt) return itinerary;
+    return {
+      ...itinerary,
+      days: opt.days,
+      total_client_price: opt.total_client_price ?? itinerary.total_client_price,
+    };
+  }, [itinerary, hasMultiOption, optionIndex, tripOpts]);
+
+  const effPublish = publishLocal ?? {
+    state: (itinerary?.publish_state ?? "never") as "never" | "published_clean" | "unpublished_changes",
+    version: itinerary?.published_version ?? 0,
+    at: itinerary?.last_published_at ?? "",
+  };
+
+  const nextPublishVersion = Math.max(1, effPublish.version + (effPublish.state === "never" ? 0 : 1));
+
+  const handlePublishConfirm = () => {
+    const v = effPublish.state === "never" ? 1 : effPublish.version + 1;
+    setPublishLocal({
+      state: "published_clean",
+      version: v,
+      at: new Date().toISOString(),
+    });
+    setPublishModalOpen(false);
+    showToast(`Published v${v} — Client view updated`);
+  };
+
+  const openPublishFlow = () => {
+    if (effPublish.state === "published_clean" && !publishLocal && itinerary?.publish_state === "published_clean") {
+      showToast("Client view is up to date");
+      return;
+    }
+    setPublishModalOpen(true);
+  };
+
+  const publishBtnClass =
+    effPublish.state === "unpublished_changes" || itinerary?.publish_state === "unpublished_changes"
+      ? "bg-amber-500 text-white hover:bg-amber-600"
+      : effPublish.state === "never" || (!effPublish.version && itinerary?.publish_state === "never")
+        ? "bg-emerald-600 text-white hover:bg-emerald-700"
+        : "bg-gray-700 text-gray-400 hover:bg-gray-600";
+
+  const isMonaco = itinerary?.id === "fake-it-1";
+
   if (loading) {
     return (
       <div className="h-full flex flex-col bg-[#0C0C0C] overflow-hidden">
@@ -99,7 +195,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
     );
   }
 
-  if (error || !itinerary) {
+  if (error || !itinerary || !displayItinerary) {
     return (
       <div className="p-6">
         <p className="text-red-400">{error ?? "Itinerary not found"}</p>
@@ -113,44 +209,57 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
   return (
     <div className="h-full flex flex-col bg-[#0C0C0C] overflow-hidden">
       {IS_PREVIEW_MODE && <PreviewBanner feature="Itinerary" variant="compact" sampleDataOnly />}
-      <header className="shrink-0 border-b border-[rgba(255,255,255,0.08)] p-4 flex flex-wrap items-center gap-3">
-        <Button variant="ghost" size="sm" asChild className="shrink-0 text-[rgba(245,245,245,0.7)] hover:text-[#F5F5F5]">
-          <Link href="/dashboard/itineraries" className="inline-flex items-center gap-1">
-            <ArrowLeft size={18} /> Back to Itineraries
-          </Link>
-        </Button>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-semibold text-[#F5F5F5] truncate">{itinerary.trip_name}</h1>
-          <div className="flex flex-wrap items-center gap-2 mt-1">
-            <span
-              className={cn(
-                "text-xs px-1.5 py-0.5 rounded border",
-                statusBadge?.className ?? "bg-white/10 border-white/20"
-              )}
-            >
-              {statusBadge?.label ?? itinerary.status}
-            </span>
-            {(itinerary.destinations ?? []).length > 0 && (
-              <>
-                {(itinerary.destinations ?? []).map((d) => (
-                  <span key={d} className="text-xs px-2 py-0.5 rounded bg-white/10 text-[rgba(245,245,245,0.8)]">
-                    {d}
-                  </span>
-                ))}
-              </>
-            )}
-            <span className="text-xs text-[rgba(245,245,245,0.5)]">
-              {formatDateRange(itinerary.trip_start_date, itinerary.trip_end_date)}
-            </span>
-            <Link
-              href={`/dashboard/vics/${itinerary.primary_vic_id}`}
-              className="text-xs text-[rgba(245,245,245,0.7)] hover:text-[#F5F5F5] hover:underline"
-            >
-              {itinerary.primary_vic_name ?? itinerary.primary_vic_id}
+      <div className="shrink-0 flex flex-col">
+        <div className="px-4 pt-3">
+          <Button variant="ghost" size="sm" asChild className="text-[rgba(245,245,245,0.7)] hover:text-[#F5F5F5]">
+            <Link href="/dashboard/itineraries" className="inline-flex items-center gap-1">
+              <ArrowLeft size={18} /> Back to Itineraries
             </Link>
+          </Button>
+        </div>
+        <div className="relative h-[200px] w-full overflow-hidden bg-zinc-900">
+          <ImageWithFallback
+            fallbackType="trip"
+            src={itinerary.hero_image_url}
+            alt={itinerary.trip_name}
+            className="w-full h-full object-cover opacity-95"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0C0C0C] via-transparent to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            <h1 className="text-xl font-semibold text-white drop-shadow-sm">{itinerary.trip_name}</h1>
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              <span className={cn("text-xs px-1.5 py-0.5 rounded border", statusBadge?.className ?? "bg-white/10 border-white/20")}>
+                {statusBadge?.label ?? itinerary.status}
+              </span>
+              {effPublish.state === "published_clean" && effPublish.version > 0 && (
+                <span className="flex items-center gap-1.5 text-xs text-gray-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  Published · v{effPublish.version} · {daysAgoShort(effPublish.at)}
+                </span>
+              )}
+              {effPublish.state === "unpublished_changes" && (
+                <span className="flex items-center gap-1.5 text-xs text-amber-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  Unpublished changes
+                </span>
+              )}
+              {(effPublish.state === "never" || effPublish.version === 0) && itinerary.publish_state !== "published_clean" && publishLocal?.state !== "published_clean" && (
+                <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
+                  Not yet published
+                </span>
+              )}
+              <span className="text-sm text-white/90">{formatDateRange(itinerary.trip_start_date, itinerary.trip_end_date)}</span>
+              <span className="text-sm text-white/80">·</span>
+              <Link href={`/dashboard/vics/${itinerary.primary_vic_id}`} className="text-sm text-white/90 hover:text-white hover:underline">
+                {itinerary.primary_vic_name ?? itinerary.primary_vic_id}
+              </Link>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+      </div>
+      <header className="shrink-0 border-b border-[rgba(255,255,255,0.08)] px-4 py-2 flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {canEdit && (
             <Button variant="outline" size="sm" asChild className="border-white/10 text-[#F5F5F5]">
               <Link href={`/dashboard/itineraries/${itineraryId}/edit`}>
@@ -158,6 +267,16 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
               </Link>
             </Button>
           )}
+          <Button
+            size="sm"
+            className="bg-white text-gray-900 hover:bg-gray-100 rounded-lg px-4 py-2 font-medium"
+            onClick={() => setShareModalOpen(true)}
+          >
+            <Share2 size={14} className="mr-1" /> Share with Client
+          </Button>
+          <Button size="sm" variant="outline" className="border-white/10 text-[#F5F5F5]" onClick={() => setGuestPortalOpen(true)}>
+            <Globe size={14} className="mr-1" /> Guest Portal
+          </Button>
           <StatusChangeDropdown
             itinerary={itinerary}
             onStatusChange={(newStatus) => {
@@ -165,6 +284,9 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
               else load();
             }}
           />
+          <Button size="sm" className={publishBtnClass} onClick={openPublishFlow}>
+            Publish
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -182,6 +304,16 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
           >
             <Copy size={14} className="mr-1" /> Duplicate
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="border-white/10 text-[#F5F5F5] px-2">
+                <MoreHorizontal size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-white/10">
+              <DropdownMenuItem onClick={() => setInvoiceOpen(true)}>Generate Invoice</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {canDelete && (
             <Button variant="outline" size="sm" onClick={() => setDeleteModalOpen(true)} className="border-white/10 text-red-400">
               <Trash2 size={14} className="mr-1" /> Delete
@@ -190,16 +322,83 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
         </div>
       </header>
 
+      {hasMultiOption && (
+        <div className="shrink-0 px-4 py-2 border-b border-white/[0.06] flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setOptionIndex(0)}
+            className={cn(
+              "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+              optionIndex === 0 ? "bg-white/10 text-[#F5F5F5]" : "text-gray-500 hover:text-gray-300"
+            )}
+          >
+            Option 1 — Classic Tuscany (current)
+          </button>
+          {tripOpts.map((opt, i) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setOptionIndex(i + 1)}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                optionIndex === i + 1 ? "bg-violet-500/20 text-violet-300 border border-violet-500/30" : "text-gray-500 hover:text-gray-300"
+              )}
+            >
+              Option {i + 2} — {opt.name}
+            </button>
+          ))}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-500"
+            onClick={() => showToast("Option creation — coming soon")}
+          >
+            <Plus size={14} className="mr-1" /> Add Option
+          </Button>
+          <Button variant="outline" size="sm" className="border-white/10 ml-auto" onClick={() => setCompareOpen(true)}>
+            Compare Options
+          </Button>
+        </div>
+      )}
+
       <div className="flex-1 flex min-h-0 flex-col max-md:flex-col md:flex-row">
         <main className="flex-1 overflow-auto min-w-0 order-first">
           <ItineraryTimeline
-            itinerary={itinerary}
+            itinerary={displayItinerary}
             canEdit={canEdit}
             canViewFinancials={canViewFinancials_}
             onEventChange={() => load()}
+            onEventSelect={(day, ev) => setSelectedEvent({ day, event: ev })}
+            editEvent={editEvent}
+            onEditEventClose={() => setEditEvent(null)}
+            onEditEventRequest={(day, ev) => setEditEvent({ day, event: ev })}
           />
         </main>
-        <ItineraryDetailSidebar itinerary={itinerary} canViewFinancials={canViewFinancials_} />
+        <ItineraryDetailSidebar
+          itinerary={itinerary}
+          financialItinerary={displayItinerary}
+          canViewFinancials={canViewFinancials_}
+          onAIImport={() => setImportOpen(true)}
+          onAIGuide={() => setGuideOpen(true)}
+          onAISuggest={() => setSuggestOpen(true)}
+        />
+        {selectedEvent && (
+          <EventDetailPanel
+            event={selectedEvent.event}
+            day={selectedEvent.day}
+            itineraryId={itinerary.id}
+            allDays={displayItinerary.days ?? []}
+            onClose={() => setSelectedEvent(null)}
+            onEdit={() => {
+              setEditEvent({ day: selectedEvent.day, event: selectedEvent.event });
+              setSelectedEvent(null);
+            }}
+            onRemove={() => {
+              load();
+              setSelectedEvent(null);
+            }}
+          />
+        )}
       </div>
 
       <DeleteItineraryModal
@@ -207,6 +406,73 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
         onClose={() => setDeleteModalOpen(false)}
         itinerary={itinerary}
         onDeleted={() => router.push("/dashboard/itineraries")}
+      />
+
+      <ClientProposalModal open={shareModalOpen} onClose={() => setShareModalOpen(false)} itinerary={itinerary} />
+
+      <PublishItineraryModal
+        open={publishModalOpen}
+        onClose={() => setPublishModalOpen(false)}
+        itinerary={{
+          ...itinerary,
+          published_version: effPublish.version,
+          last_published_at: effPublish.at,
+          publish_state: effPublish.state,
+        }}
+        nextVersion={effPublish.state === "never" ? 1 : effPublish.version + 1}
+        onPublish={handlePublishConfirm}
+      />
+
+      {tripOpts[0] && (
+        <CompareOptionsModal
+          open={compareOpen}
+          onClose={() => setCompareOpen(false)}
+          classicLabel="Classic Tuscany"
+          luxuryOption={tripOpts[0]}
+          onToast={showToast}
+        />
+      )}
+
+      <GuestPortalPreviewModal
+        open={guestPortalOpen}
+        onClose={() => setGuestPortalOpen(false)}
+        itinerary={itinerary}
+        isMonaco={isMonaco}
+      />
+
+      <InvoiceModal
+        open={invoiceOpen}
+        onClose={() => setInvoiceOpen(false)}
+        itinerary={itinerary}
+        onGenerate={() => {
+          showToast("Invoice generated (mock) — PDF export coming in v2.");
+          setInvoiceOpen(false);
+        }}
+      />
+
+      <ImportItineraryModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onParse={() => showToast("AI Import — launching in v2. Events will appear here automatically.")}
+      />
+
+      <DestinationGuideModal
+        open={guideOpen}
+        onClose={() => setGuideOpen(false)}
+        vicName={itinerary.primary_vic_name ?? ""}
+        dest={(itinerary.destinations ?? [])[0] ?? "Monaco"}
+        dates={formatDateRange(itinerary.trip_start_date, itinerary.trip_end_date)}
+        onGenerate={() => {
+          showToast("Destination Guides — launching in v2.");
+          setGuideOpen(false);
+        }}
+      />
+
+      <ActivitySuggestModal
+        open={suggestOpen}
+        onClose={() => setSuggestOpen(false)}
+        vicName={itinerary.primary_vic_name ?? "Client"}
+        onAdd={() => showToast("Activity added (mock)")}
       />
     </div>
   );

@@ -12,6 +12,7 @@ import ItineraryTabBar from "./ItineraryTabBar";
 import ItineraryToolbar from "./ItineraryToolbar";
 import ItineraryListView from "./ItineraryListView";
 import ItineraryCardView from "./ItineraryCardView";
+import ItineraryKanbanView from "./ItineraryKanbanView";
 import ItinerariesEmptyState from "./ItinerariesEmptyState";
 import CreateItineraryModal from "./Modals/CreateItineraryModal";
 import PreviewBanner from "@/components/ui/PreviewBanner";
@@ -44,7 +45,7 @@ export default function ItinerariesPage() {
   const [vicFilter, setVicFilter] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [viewMode, setViewMode] = useState<"list" | "cards">("list");
+  const [viewMode, setViewMode] = useState<"list" | "cards" | "board">("list");
   const [sortBy, setSortBy] = useState("updated_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
@@ -78,7 +79,7 @@ export default function ItinerariesPage() {
     try {
       const data = await fetchItineraryList(params);
       const apiEmpty = !data.itineraries?.length && (data.total ?? 0) === 0;
-      if (apiEmpty) {
+      if (IS_PREVIEW_MODE || apiEmpty) {
         const fake = filterAndPaginateFakeItineraries(FAKE_ITINERARIES, {
           tab: activeTab,
           userId: user?.id != null ? String(user.id) : undefined,
@@ -143,8 +144,8 @@ export default function ItinerariesPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const v = localStorage.getItem(VIEW_KEY) as "list" | "cards" | null;
-    if (v === "list" || v === "cards") setViewMode(v);
+    const v = localStorage.getItem(VIEW_KEY) as "list" | "cards" | "board" | null;
+    if (v === "list" || v === "cards" || v === "board") setViewMode(v);
     const s = localStorage.getItem(SORT_KEY);
     const o = localStorage.getItem(SORT_ORDER_KEY) as "asc" | "desc" | null;
     if (s) setSortBy(s);
@@ -227,6 +228,9 @@ export default function ItinerariesPage() {
 
       {!isEmpty && !noResults && (
         <>
+          {viewMode === "board" && (
+            <ItineraryKanbanView itineraries={itineraries} />
+          )}
           {viewMode === "list" && (
             <div className="flex-1 overflow-auto">
               <ItineraryListView

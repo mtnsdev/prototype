@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { Itinerary } from "@/types/itinerary";
 import { getItineraryId } from "@/lib/itineraries-api";
 import { ITINERARY_STATUS_BADGES, formatDateRange } from "./statusConfig";
@@ -47,6 +48,7 @@ export default function ItineraryListView({
   canDelete,
   canViewFinancials,
 }: Props) {
+  const router = useRouter();
   if (isLoading && itineraries.length === 0) {
     return (
       <div className="p-4 space-y-2">
@@ -74,10 +76,13 @@ export default function ItineraryListView({
             const id = getItineraryId(it);
             const statusBadge = ITINERARY_STATUS_BADGES[it.status];
             const eventCount = it.days?.reduce((acc, d) => acc + (d.events?.length ?? 0), 0) ?? 0;
+            const totalPrice = it.total_client_price ?? it.days?.reduce((sum, d) => sum + (d.events ?? []).reduce((s, e) => s + (e.client_price ?? 0), 0), 0) ?? 0;
+            const currencySym = it.currency === "EUR" ? "€" : it.currency ?? "€";
             return (
               <tr
                 key={id}
-                className="border-b border-[rgba(255,255,255,0.06)] hover:bg-white/[0.04]"
+                className="border-b border-[rgba(255,255,255,0.06)] hover:bg-white/[0.05] cursor-pointer"
+                onClick={() => router.push(`/dashboard/itineraries/${id}`)}
               >
                 <td className="py-2 px-2">
                   <Link
@@ -87,7 +92,7 @@ export default function ItineraryListView({
                     {it.trip_name || "—"}
                   </Link>
                 </td>
-                <td className="py-2 px-2 text-sm text-[rgba(245,245,245,0.8)]">
+                <td className="py-2 px-2 text-sm text-[rgba(245,245,245,0.8)]" onClick={(e) => e.stopPropagation()}>
                   <Link
                     href={`/dashboard/vics/${it.primary_vic_id}`}
                     className="hover:underline text-[#F5F5F5]"
@@ -118,11 +123,9 @@ export default function ItineraryListView({
                   {eventCount}
                 </td>
                 <td className="py-2 px-2 text-sm text-[rgba(245,245,245,0.8)]">
-                  {canViewFinancials && it.total_client_price != null
-                    ? `${it.currency === "EUR" ? "€" : it.currency} ${it.total_client_price.toLocaleString()}`
-                    : "—"}
+                  {totalPrice > 0 ? `${currencySym}${totalPrice.toLocaleString()}` : "—"}
                 </td>
-                <td className="py-2 px-2">
+                <td className="py-2 px-2" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-[rgba(245,245,245,0.6)]">

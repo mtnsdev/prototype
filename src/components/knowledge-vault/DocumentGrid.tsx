@@ -236,7 +236,7 @@ export default function DocumentGrid({
                       {doc.tags.slice(0, 3).map((t) => (
                         <span
                           key={t}
-                          className="text-xs px-1.5 py-0.5 rounded bg-white/10 text-[rgba(245,245,245,0.7)]"
+                          className="text-xs lowercase border border-gray-600 text-gray-400 rounded-full px-2 py-0.5"
                         >
                           {t}
                         </span>

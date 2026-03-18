@@ -6,7 +6,10 @@ import { Lock, X } from "lucide-react";
 import type { VIC, SharedAccess } from "@/types/vic";
 import { getVICId } from "@/lib/vic-api";
 import { FAKE_ITINERARIES } from "@/components/itineraries/fakeData";
+import { FAKE_PRODUCTS } from "@/components/products/fakeData";
+import type { Product } from "@/types/product";
 import type { Itinerary } from "@/types/itinerary";
+import { CATEGORY_ICONS } from "@/config/productCategoryConfig";
 import type { DetailTabId } from "./DetailTabBar";
 import type { FieldProvenance } from "@/types/vic";
 import AcuitySourceBadge from "./AcuitySourceBadge";
@@ -20,6 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/contexts/ToastContext";
+import { SendFormModal } from "@/components/itineraries/CompetitorFeatureModals";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -44,7 +49,8 @@ function Row({
   const showEmpty = emptyLabel != null;
   const isEmpty = value == null || value === "";
   if (isEmpty && !showEmpty) return null;
-  const display = isEmpty ? (showEmpty ? <span className="text-[rgba(245,245,245,0.4)]">{emptyLabel}</span> : null) : value;
+  const emptyClass = emptyLabel === "Not set" ? "text-gray-600 italic" : "text-[rgba(245,245,245,0.4)]";
+  const display = isEmpty ? (showEmpty ? <span className={emptyClass}>{emptyLabel}</span> : null) : value;
   if (display == null) return null;
   return (
     <div className="flex gap-2 py-1.5 border-b border-[rgba(255,255,255,0.06)] last:border-0 items-center flex-wrap">
@@ -101,6 +107,37 @@ function TravelDiscoveredPreferences({ discovered }: { discovered: import("@/typ
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function RelationshipInsightsWithActions({ insights }: { insights: import("@/types/vic").RelationshipInsight[] }) {
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const list = insights.filter((i) => !dismissed.has(i.id));
+  if (list.length === 0) return null;
+  return (
+    <div className="rounded-xl border border-violet-400/25 bg-violet-500/10 p-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-violet-300 mb-3">Acuity Intelligence Insights</h3>
+      <ul className="space-y-2 text-sm">
+        {list.map((insight) => (
+          <li key={insight.id} className="flex flex-wrap items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
+            <span className="text-[#F5F5F5] flex-1 min-w-0">• {insight.text}</span>
+            {insight.provider && (
+              <AcuitySourceBadge
+                provenance={{ source: "acuity", provider: insight.provider, sourced_at: insight.sourced_at }}
+              />
+            )}
+            <div className="flex gap-1">
+              <Button variant="ghost" size="sm" className="h-7 text-xs text-[var(--muted-success-text)]" onClick={() => setDismissed((s) => new Set(s).add(insight.id))}>
+                Accept
+              </Button>
+              <Button variant="ghost" size="sm" className="h-7 text-xs text-[rgba(245,245,245,0.6)]" onClick={() => setDismissed((s) => new Set(s).add(insight.id))}>
+                Dismiss
+              </Button>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -261,6 +298,8 @@ type Props = {
 };
 
 export default function DetailTabContent({ vic, activeTab, canViewSensitive, onUpdate, travelProfiles: travelProfilesProp, onAddTravelProfile }: Props) {
+  const showToast = useToast();
+  const [sendFormOpen, setSendFormOpen] = useState(false);
   const leg = vic as unknown as { city?: string; country?: string; company?: string; role?: string; phone?: string; customTags?: string[]; notes?: string; familyContext?: string; preferences?: string; loyaltyPrograms?: string; additionalContext?: string };
   const vicId = getVICId(vic);
 
@@ -288,10 +327,10 @@ export default function DetailTabContent({ vic, activeTab, canViewSensitive, onU
                 <span className="text-[rgba(245,245,245,0.8)]">Confidence: {String(acuityConfidence).charAt(0).toUpperCase() + String(acuityConfidence).slice(1)}</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden max-w-[120px]">
-                  <div className="h-full rounded-full bg-[var(--muted-accent-text)]/60" style={{ width: completeness + "%" }} />
+                <div className="flex-1 h-2 rounded-full border border-gray-600 bg-white/10 overflow-hidden max-w-[120px]">
+                  <div className="h-full rounded-full bg-violet-500" style={{ width: completeness + "%" }} />
                 </div>
-                <span className="text-xs text-[rgba(245,245,245,0.7)]">{enrichedCount} of {totalFields} profile fields enriched</span>
+                <span className="text-xs text-white">{enrichedCount} of {totalFields} profile fields enriched</span>
               </div>
               {acuityDaysAgo != null && acuityDaysAgo > 30 && (
                 <Button variant="outline" size="sm" className="border-[var(--muted-accent-border)] text-[var(--muted-accent-text)]" onClick={onUpdate}>Refresh</Button>
@@ -301,20 +340,22 @@ export default function DetailTabContent({ vic, activeTab, canViewSensitive, onU
             <p className="text-sm text-[rgba(245,245,245,0.7)] mb-2">Acuity has not been run yet. Run Acuity from the header to enrich this profile.</p>
           )}
         </div>
-        <Section title="Summary">
-          <div className="space-y-1.5">
+        <Section title="At a Glance">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
             <Row label="Preferred name" value={vic.preferred_name} acuityProvenance={provenance.preferred_name} />
-            <Row label="Contact" value={contact || undefined} />
+            <Row label="Primary contact" value={contact || undefined} />
             <Row label="Location" value={location || undefined} acuityProvenance={provenance.home_city || provenance.home_country} />
+            <Row label="Company & Role" value={[vic.company ?? leg.company, vic.title ?? leg.role].filter(Boolean).join(" · ") || undefined} />
+            <Row label="Client since" value={vic.client_since ? formatDate(vic.client_since) ?? vic.client_since : undefined} />
             <Row label="Relationship status" value={vic.relationship_status?.replace(/_/g, " ") ?? undefined} />
-            <Row label="Acuity" value={vic.acuity_status ?? (vic as unknown as { acuityStatus?: string }).acuityStatus ?? undefined} />
+            <Row label="Last Acuity run" value={acuityLastRun ? (formatDate(acuityLastRun) ?? acuityLastRun) : undefined} />
           </div>
         </Section>
         {tags.length > 0 && (
           <Section title="Tags">
             <div className="flex flex-wrap gap-2">
               {tags.map((t) => (
-                <span key={t} className="rounded bg-white/10 px-2 py-0.5 text-xs text-[rgba(245,245,245,0.8)]">
+                <span key={t} className="text-xs lowercase border border-gray-600 text-gray-400 rounded-full px-2 py-0.5">
                   {t}
                 </span>
               ))}
@@ -355,11 +396,12 @@ export default function DetailTabContent({ vic, activeTab, canViewSensitive, onU
         </Section>
         <Section title="Personal">
           <div className="space-y-0">
-            <Row label="Title" value={vic.title} emptyLabel="Not set" />
-            <Row label="Preferred name" value={vic.preferred_name} emptyLabel="Not set" />
+            <Row label="Company" value={vic.company ?? leg.company} emptyLabel="Not set" acuityProvenance={prov.company} />
+            <Row label="Title" value={vic.title} emptyLabel="Not set" acuityProvenance={prov.title} />
+            <Row label="Preferred name" value={vic.preferred_name} emptyLabel="Not set" acuityProvenance={prov.preferred_name} />
             <Row label="Nationality" value={vic.nationality} emptyLabel="Not set" acuityProvenance={prov.nationality} />
             <Row label="Date of birth" value={dobValue} emptyLabel="Not set" acuityProvenance={prov.date_of_birth} />
-            <Row label="Primary language" value={vic.language_primary} emptyLabel="Not set" />
+            <Row label="Primary language" value={vic.language_primary} emptyLabel="Not set" acuityProvenance={prov.language_primary} />
             <Row
               label="Languages spoken"
               value={vic.languages_spoken?.length ? vic.languages_spoken.join(", ") : undefined}
@@ -408,34 +450,20 @@ export default function DetailTabContent({ vic, activeTab, canViewSensitive, onU
             <Row label="Assigned advisor" value={vic.assigned_advisor_name ?? vic.assigned_advisor_id} emptyLabel="Not set" />
             <Row label="Secondary advisor" value={vic.secondary_advisor_name ?? vic.secondary_advisor_id} emptyLabel="Not set" />
             <Row label="Client since" value={vic.client_since ? formatDate(vic.client_since) ?? vic.client_since : undefined} emptyLabel="Not set" />
-            <Row label="Referral source" value={vic.referral_source} emptyLabel="Not set" />
+            <Row label="Referral source" value={vic.referral_source} emptyLabel="Not set" acuityProvenance={vic.field_provenance?.referral_source} />
             <Row label="Referred by VIC" value={referredByLink} emptyLabel="Not set" />
             <div className="flex gap-2 py-1.5 border-b border-[rgba(255,255,255,0.06)] items-center">
               <span className="text-[rgba(245,245,245,0.5)] shrink-0 w-36">Relationship status</span>
-              {statusBadge ?? <span className="text-[rgba(245,245,245,0.4)]">Not set</span>}
+              {statusBadge ?? <span className="text-gray-600 italic">Not set</span>}
             </div>
             <div className="py-1.5 border-b border-[rgba(255,255,255,0.06)] last:border-0">
               <span className="text-[rgba(245,245,245,0.5)] block w-36 mb-1">VIP notes</span>
-              <p className="whitespace-pre-wrap text-[#F5F5F5]">{vic.vip_notes || <span className="text-[rgba(245,245,245,0.4)]">Not set</span>}</p>
+              <p className="whitespace-pre-wrap text-[#F5F5F5]">{vic.vip_notes || <span className="text-gray-600 italic">Not set</span>}</p>
             </div>
           </div>
         </Section>
         {insights.length > 0 && (
-          <div className="rounded-xl border border-[var(--muted-accent-border)] bg-[var(--muted-accent-bg)] p-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-accent-text)] mb-3">Acuity Intelligence Insights</h3>
-            <ul className="space-y-2 text-sm">
-              {insights.map((insight) => (
-                <li key={insight.id} className="flex items-start gap-2">
-                  <span className="text-[#F5F5F5] flex-1">• {insight.text}</span>
-                  {insight.provider && (
-                    <AcuitySourceBadge
-                      provenance={{ source: "acuity", provider: insight.provider, sourced_at: insight.sourced_at }}
-                    />
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <RelationshipInsightsWithActions insights={insights} />
         )}
       </div>
     );
@@ -452,13 +480,13 @@ export default function DetailTabContent({ vic, activeTab, canViewSensitive, onU
                 <span className="text-[rgba(245,245,245,0.5)] block w-36 mb-1">Tags</span>
                 <div className="flex flex-wrap gap-2">
                   {(vic.tags ?? leg.customTags ?? []).map((t: string) => (
-                    <span key={t} className="rounded bg-white/10 px-2 py-0.5 text-xs">{t}</span>
+                    <span key={t} className="text-xs lowercase border border-gray-600 text-gray-400 rounded-full px-2 py-0.5">{t}</span>
                   ))}
                 </div>
               </div>
             )}
-            <Row label="Dietary restrictions" value={vic.dietary_restrictions} />
-            <Row label="Accessibility needs" value={vic.accessibility_needs} />
+            <Row label="Dietary restrictions" value={vic.dietary_restrictions} acuityProvenance={vic.field_provenance?.dietary_restrictions} />
+            <Row label="Accessibility needs" value={vic.accessibility_needs} acuityProvenance={vic.field_provenance?.accessibility_needs} />
             <Row label="GDPR consent" value={vic.gdpr_consent_given == null ? undefined : vic.gdpr_consent_given ? "Yes" : "No"} />
             <Row label="Marketing consent" value={vic.marketing_consent == null ? undefined : vic.marketing_consent ? "Yes" : "No"} />
           </div>
@@ -471,11 +499,6 @@ export default function DetailTabContent({ vic, activeTab, canViewSensitive, onU
         {leg.familyContext && (
           <Section title="Family context">
             <p className="whitespace-pre-wrap">{leg.familyContext}</p>
-          </Section>
-        )}
-        {leg.preferences && (
-          <Section title="Preferences (legacy)">
-            <p className="whitespace-pre-wrap">{leg.preferences}</p>
           </Section>
         )}
         <Section title="Documents">
@@ -532,6 +555,58 @@ export default function DetailTabContent({ vic, activeTab, canViewSensitive, onU
             <p className="text-[rgba(245,245,245,0.5)]">Document details are restricted. You need full access to view.</p>
           )}
         </Section>
+
+        <Section title="Client forms">
+          {vicId === "fake-vic-1" ? (
+            <div className="space-y-3">
+              <div className="rounded-lg border border-white/[0.08] p-3">
+                <div className="flex justify-between items-start gap-2">
+                  <span className="text-sm font-medium text-[#F5F5F5]">📋 Travel Preferences Form</span>
+                  <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-500/30 text-emerald-400">Completed</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Submitted 12 Mar 2026</p>
+                <Button type="button" variant="outline" size="sm" className="mt-2 border-white/10 text-xs h-8">
+                  View Responses
+                </Button>
+              </div>
+              <div className="rounded-lg border border-white/[0.08] p-3">
+                <div className="flex justify-between items-start gap-2">
+                  <span className="text-sm font-medium text-[#F5F5F5]">📋 Passport & Documents</span>
+                  <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-amber-500/30 text-amber-400">Pending</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Sent 10 Mar 2026 · Not yet submitted</p>
+                <div className="flex gap-2 mt-2">
+                  <Button type="button" variant="outline" size="sm" className="border-white/10 text-xs h-8">
+                    Resend
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" className="border-white/10 text-xs h-8">
+                    View Form
+                  </Button>
+                </div>
+              </div>
+              <Button type="button" variant="outline" size="sm" className="border-white/10" onClick={() => setSendFormOpen(true)}>
+                + Send New Form
+              </Button>
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-sm text-gray-500 mb-3">No forms sent yet</p>
+              <Button type="button" variant="outline" size="sm" className="border-white/10" onClick={() => setSendFormOpen(true)}>
+                Send a form
+              </Button>
+            </div>
+          )}
+        </Section>
+
+        <SendFormModal
+          open={sendFormOpen}
+          onClose={() => setSendFormOpen(false)}
+          vicName={vic.full_name ?? "VIC"}
+          onSend={() => {
+            showToast("Form sent to jc@example.com");
+            setSendFormOpen(false);
+          }}
+        />
       </div>
     );
   }
@@ -579,24 +654,40 @@ export default function DetailTabContent({ vic, activeTab, canViewSensitive, onU
   if (activeTab === "linked_entities") {
     const legVic = vic as { assigned_product_ids?: string[]; itinerary_ids?: string[] };
     const productIds = vic.linked_product_ids ?? legVic.assigned_product_ids ?? [];
-    const products = productIds.length ? productIds : (legVic.assigned_product_ids ?? []);
+    const resolvedProducts: Product[] = productIds.length
+      ? productIds
+          .map((id) => FAKE_PRODUCTS.find((p) => p.id === id))
+          .filter((p): p is Product => p != null)
+      : [];
     const vicId = getVICId(vic);
     const linkedItineraries = FAKE_ITINERARIES.filter((it: Itinerary) => it.primary_vic_id === vicId);
     return (
       <div className="space-y-4">
         <Section title="Linked Products">
-          {products.length === 0 ? (
+          {resolvedProducts.length === 0 ? (
             <>
               <p className="text-[rgba(245,245,245,0.6)] text-sm">No products linked yet. Link products to track this VIC&apos;s preferred properties.</p>
               <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => {}}>Link Product</Button>
             </>
           ) : (
             <div className="space-y-2">
-              {products.map((id) => (
-                <div key={id} className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-3 text-sm">
-                  <span className="text-[#F5F5F5]">Product · {id}</span>
-                </div>
-              ))}
+              {resolvedProducts.map((p) => {
+                const Icon = CATEGORY_ICONS[p.category] ?? CATEGORY_ICONS.accommodation;
+                const location = [p.city, p.country].filter(Boolean).join(", ") || "—";
+                return (
+                  <Link
+                    key={p.id}
+                    href={`/dashboard/products/${p.id}`}
+                    className="flex items-center gap-3 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-3 text-sm hover:bg-white/[0.04]"
+                  >
+                    <Icon size={18} className="text-[rgba(245,245,245,0.6)] shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-medium text-[#F5F5F5]">{p.name}</p>
+                      <p className="text-[rgba(245,245,245,0.6)] text-xs">{location}</p>
+                    </div>
+                  </Link>
+                );
+              })}
               <Button type="button" variant="outline" size="sm" onClick={() => {}}>Link Product</Button>
             </div>
           )}

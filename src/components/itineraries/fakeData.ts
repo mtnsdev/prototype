@@ -3,10 +3,102 @@
  * Monaco Grand Prix (JC), Tuscany Wine & Culture (Eric), Maldives Family Retreat (Camille).
  */
 
-import type { Itinerary, ItineraryDay, ItineraryEvent } from "@/types/itinerary";
+import type { Itinerary, ItineraryDay, ItineraryEvent, ItineraryTripOption } from "@/types/itinerary";
+
+const LUXURY_TUSCANY_OPTION: ItineraryTripOption = {
+  id: "luxury",
+  name: "Luxury Tuscany",
+  total_client_price: 35000,
+  days: [
+    {
+      day_number: 1,
+      title: "Florence",
+      location: "Florence",
+      events: [
+        ev({ id: "lx1-1", event_type: "transfer", title: "Helicopter Florence Airport → Rosewood Castiglion", client_price: 2800, status: "tentative" }),
+        ev({ id: "lx1-2", event_type: "stay", title: "Rosewood Castiglion del Bosco — Estate Villa (6 nights)", client_price: 18500, status: "tentative" }),
+        ev({ id: "lx1-3", event_type: "meal", title: "Private chef welcome dinner — villa", client_price: 2200, status: "tentative" }),
+      ],
+    },
+    {
+      day_number: 2,
+      title: "Florence",
+      location: "Florence",
+      events: [
+        ev({ id: "lx2-1", event_type: "activity", title: "Private Uffizi before-hours tour", client_price: 1200, status: "tentative" }),
+        ev({ id: "lx2-2", event_type: "transfer", title: "Helicopter Florence → Chianti estates", client_price: 3200, status: "tentative" }),
+        ev({ id: "lx2-3", event_type: "meal", title: "Private chef lunch — vineyard pavilion", client_price: 1800, status: "tentative" }),
+        ev({ id: "lx2-4", event_type: "meal", title: "Michelin private dining — closed restaurant buyout", client_price: 4500, status: "tentative" }),
+      ],
+    },
+    {
+      day_number: 3,
+      title: "Chianti",
+      location: "Chianti",
+      events: [
+        ev({ id: "lx3-1", event_type: "experience", title: "Helicopter Antinori + exclusive cellar + vertical tasting", client_price: 5500, status: "tentative" }),
+        ev({ id: "lx3-2", event_type: "meal", title: "Private chef farm lunch — organic estate", client_price: 1600, status: "tentative" }),
+      ],
+    },
+    {
+      day_number: 4,
+      title: "Siena",
+      location: "Siena",
+      events: [
+        ev({ id: "lx4-1", event_type: "transfer", title: "Helicopter Chianti → Siena", client_price: 2400, status: "tentative" }),
+        ev({ id: "lx4-2", event_type: "activity", title: "Private Palazzo + Duomo rooftop experience", client_price: 900, status: "tentative" }),
+        ev({ id: "lx4-3", event_type: "meal", title: "Private chef dinner — Rosewood terrace", client_price: 2100, status: "tentative" }),
+      ],
+    },
+    {
+      day_number: 5,
+      title: "Val d'Orcia",
+      location: "Val d'Orcia",
+      events: [
+        ev({ id: "lx5-1", event_type: "activity", title: "Hot air balloon + helicopter Brunello circuit", client_price: 4800, status: "tentative" }),
+        ev({ id: "lx5-2", event_type: "meal", title: "Truffle hunt + private chef lunch", client_price: 2200, status: "tentative" }),
+      ],
+    },
+    {
+      day_number: 6,
+      title: "Departure",
+      location: "Florence",
+      events: [
+        ev({ id: "lx6-1", event_type: "free_time", title: "Spa morning — Rosewood" }),
+        ev({ id: "lx6-2", event_type: "transfer", title: "Helicopter Rosewood → Florence Airport", client_price: 2200, status: "tentative" }),
+      ],
+    },
+  ],
+};
 
 const now = new Date();
 const iso = (d: Date) => d.toISOString();
+
+/** Hero images for itinerary detail (1200×400) */
+const HERO = {
+  monaco: "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?w=1200&h=400&fit=crop",
+  tuscany: "https://images.unsplash.com/photo-1523531294919-4bcd7c65e216?w=1200&h=400&fit=crop",
+  maldives: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=1200&h=400&fit=crop",
+  paris: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200&h=400&fit=crop",
+  lyon: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&h=400&fit=crop",
+  rome: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1200&h=400&fit=crop",
+};
+
+/** Event thumbnails (Unsplash) */
+const THUMB = {
+  helicopter: "https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=200&h=200&fit=crop",
+  hotel: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=200&h=200&fit=crop",
+  dining: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=200&h=200&fit=crop",
+  f1: "https://images.unsplash.com/photo-1541443131876-44b03de101c5?w=200&h=200&fit=crop",
+  yacht: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=200&fit=crop",
+  cafe: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=200&h=200&fit=crop",
+  nobu: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=200&h=200&fit=crop",
+  transfer: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=200&h=200&fit=crop",
+  villa: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=200&h=200&fit=crop",
+  maldivesVilla: "https://images.unsplash.com/photo-1573843981267-be1999ff37cd?w=200&h=200&fit=crop",
+  snorkel: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=200&fit=crop",
+  wine: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&fit=crop",
+};
 
 function ev(
   overrides: Partial<ItineraryEvent> & { id: string; event_type: ItineraryEvent["event_type"]; title: string }
@@ -20,6 +112,7 @@ export const FAKE_ITINERARIES: Itinerary[] = [
     agency_id: "agency-1",
     trip_name: "Monaco Grand Prix Weekend",
     description: "F1 weekend with luxury hotel, dining, and helicopter transfer.",
+    hero_image_url: HERO.monaco,
     primary_vic_id: "fake-vic-1",
     primary_vic_name: "Jean-Christophe Chopin",
     primary_advisor_id: "1",
@@ -44,9 +137,12 @@ export const FAKE_ITINERARIES: Itinerary[] = [
             start_time: "15:30",
             status: "confirmed",
             client_price: 2200,
+            thumbnail_url: THUMB.helicopter,
+            description: "7-minute scenic flight along the Côte d'Azur coastline. VIP arrival at Monaco helipad with private car transfer to hotel.",
             source_product_id: "fake-advisor-2",
             source_product_name: "Luxury Helicopter Transfers Monaco",
             source_product_category: "Transportation",
+            confirmation_number: "HTLDP-2026-7834",
           }),
           ev({
             id: "e1-3",
@@ -55,7 +151,9 @@ export const FAKE_ITINERARIES: Itinerary[] = [
             start_time: "17:00",
             status: "confirmed",
             client_price: 4800,
-            description: "3 nights",
+            thumbnail_url: THUMB.hotel,
+            description: "Junior Suite with Casino Square view. Welcome amenities arranged. Late checkout confirmed for Day 4.",
+            custom_notes: "Confirmed with helipad team. VIP arrival protocol.",
           }),
           ev({
             id: "e1-4",
@@ -64,6 +162,8 @@ export const FAKE_ITINERARIES: Itinerary[] = [
             start_time: "20:00",
             status: "confirmed",
             client_price: 850,
+            thumbnail_url: THUMB.dining,
+            description: "Alain Ducasse's three Michelin star restaurant. Chef's tasting menu reserved. Window table confirmed.",
           }),
         ],
       },
@@ -104,6 +204,7 @@ export const FAKE_ITINERARIES: Itinerary[] = [
             start_time: "20:30",
             status: "confirmed",
             client_price: 650,
+            thumbnail_url: THUMB.nobu,
             source_product_id: "fake-agency-4",
             source_product_name: "Nobu Matsuhisa Monaco",
             source_product_category: "Restaurant",
@@ -124,6 +225,8 @@ export const FAKE_ITINERARIES: Itinerary[] = [
             start_time: "14:00",
             status: "confirmed",
             client_price: 8500,
+            thumbnail_url: THUMB.f1,
+            description: "Paddock Club Suite with open bar, gourmet lunch, and pit lane access. Seats 71-72, Turn 1 view.",
           }),
           ev({
             id: "e3-3",
@@ -174,12 +277,16 @@ export const FAKE_ITINERARIES: Itinerary[] = [
     created_by_name: "Marie Limousis",
     created_at: iso(now),
     updated_at: iso(now),
+    publish_state: "published_clean",
+    published_version: 2,
+    last_published_at: iso(new Date(Date.now() - 3 * 86400000)),
   } as Itinerary,
   {
     id: "fake-it-2",
     agency_id: "agency-1",
     trip_name: "Tuscany Wine & Culture",
     description: "Six days in Florence, Siena, and Montepulciano.",
+    hero_image_url: HERO.tuscany,
     primary_vic_id: "fake-vic-4",
     primary_vic_name: "Eric Tournier",
     primary_advisor_id: "1",
@@ -257,12 +364,15 @@ export const FAKE_ITINERARIES: Itinerary[] = [
     created_by: "1",
     created_at: iso(now),
     updated_at: iso(now),
+    publish_state: "never",
+    trip_options: [LUXURY_TUSCANY_OPTION],
   } as Itinerary,
   {
     id: "fake-it-3",
     agency_id: "agency-1",
     trip_name: "Maldives Family Retreat",
     description: "Eight nights at One&Only Reethi Rah.",
+    hero_image_url: HERO.maldives,
     primary_vic_id: "fake-vic-3",
     primary_vic_name: "Camille Signoles",
     primary_advisor_id: "1",
@@ -272,6 +382,9 @@ export const FAKE_ITINERARIES: Itinerary[] = [
     trip_end_date: "2026-07-22",
     destinations: ["Malé, Maldives"],
     traveler_count: 5,
+    publish_state: "unpublished_changes",
+    published_version: 1,
+    last_published_at: iso(new Date(Date.now() - 14 * 86400000)),
     days: [
       {
         day_number: 1,
@@ -376,6 +489,90 @@ export const FAKE_ITINERARIES: Itinerary[] = [
     created_by: "1",
     created_at: iso(now),
     updated_at: iso(now),
+  } as Itinerary,
+  {
+    id: "fake-it-4",
+    agency_id: "agency-1",
+    trip_name: "Paris Weekend — Valérie Rousseau",
+    description: "Two-night art and dining weekend.",
+    hero_image_url: HERO.paris,
+    primary_vic_id: "fake-vic-14",
+    primary_vic_name: "Valérie Rousseau",
+    primary_advisor_id: "2",
+    primary_advisor_name: "Pierre Duval",
+    status: "confirmed",
+    trip_start_date: "2026-04-10",
+    trip_end_date: "2026-04-12",
+    destinations: ["Paris"],
+    traveler_count: 2,
+    days: [
+      { day_number: 1, date: "2026-04-10", title: "Arrival", location: "Paris", events: [ev({ id: "p1-1", event_type: "flight", title: "Arrival Paris CDG", start_time: "14:00", status: "confirmed" }), ev({ id: "p1-2", event_type: "stay", title: "Check-in Four Seasons George V", start_time: "16:00", status: "confirmed", client_price: 2400 }), ev({ id: "p1-3", event_type: "meal", title: "Dinner Alain Ducasse au Plaza Athénée", start_time: "20:00", status: "confirmed", client_price: 720 })] },
+      { day_number: 2, date: "2026-04-11", title: "Art & Culture", location: "Paris", events: [ev({ id: "p2-1", event_type: "experience", title: "Private viewing — Musée d'Orsay", start_time: "10:00", status: "confirmed", client_price: 400 }), ev({ id: "p2-2", event_type: "meal", title: "Lunch Le Cinq", start_time: "13:00", status: "confirmed", client_price: 450 }), ev({ id: "p2-3", event_type: "free_time", title: "Afternoon at leisure", start_time: "15:00" })] },
+      { day_number: 3, date: "2026-04-12", title: "Departure", location: "Paris", events: [ev({ id: "p3-1", event_type: "note", title: "Check-out", start_time: "11:00" }), ev({ id: "p3-2", event_type: "flight", title: "Departure Paris CDG", start_time: "14:00", status: "confirmed" })] },
+    ],
+    currency: "EUR",
+    data_ownership_level: "Advisor",
+    created_by: "2",
+    created_at: iso(now),
+    updated_at: iso(now),
+    publish_state: "published_clean",
+    published_version: 1,
+    last_published_at: iso(new Date(Date.now() - 20 * 86400000)),
+  } as Itinerary,
+  {
+    id: "fake-it-5",
+    agency_id: "agency-1",
+    trip_name: "Rome & Amalfi Short Break",
+    hero_image_url: HERO.rome,
+    description: "Four nights: Rome then Amalfi coast.",
+    primary_vic_id: "fake-vic-23",
+    primary_vic_name: "Pierre Garnier",
+    primary_advisor_id: "1",
+    primary_advisor_name: "Marie Limousis",
+    status: "in_progress",
+    trip_start_date: "2026-06-01",
+    trip_end_date: "2026-06-05",
+    destinations: ["Rome", "Amalfi Coast"],
+    traveler_count: 2,
+    days: [
+      { day_number: 1, date: "2026-06-01", title: "Rome", location: "Rome", events: [ev({ id: "r1-1", event_type: "flight", title: "Arrival Rome FCO", status: "confirmed" }), ev({ id: "r1-2", event_type: "stay", title: "Hotel Hassler Roma", status: "confirmed", client_price: 1800 }), ev({ id: "r1-3", event_type: "meal", title: "Dinner La Pergola", status: "tentative", client_price: 650 })] },
+      { day_number: 2, date: "2026-06-02", title: "Rome", location: "Rome", events: [ev({ id: "r2-1", event_type: "experience", title: "Vatican private tour", status: "confirmed", client_price: 550 }), ev({ id: "r2-2", event_type: "transfer", title: "Private car Rome → Amalfi", status: "confirmed", client_price: 800 })] },
+      { day_number: 3, date: "2026-06-03", title: "Amalfi", location: "Amalfi", events: [ev({ id: "r3-1", event_type: "stay", title: "Belmond Hotel Caruso", status: "confirmed", client_price: 2200, description: "2 nights" }), ev({ id: "r3-2", event_type: "meal", title: "Dinner at hotel", status: "tentative", client_price: 380 })] },
+      { day_number: 4, date: "2026-06-04", title: "Amalfi", location: "Ravello", events: [ev({ id: "r4-1", event_type: "activity", title: "Boat trip Positano & Capri", status: "tentative", client_price: 1200 })] },
+      { day_number: 5, date: "2026-06-05", title: "Departure", location: "Naples", events: [ev({ id: "r5-1", event_type: "transfer", title: "Car to Naples airport", status: "confirmed", client_price: 350 }), ev({ id: "r5-2", event_type: "flight", title: "Departure Naples", status: "confirmed" })] },
+    ],
+    currency: "EUR",
+    data_ownership_level: "Advisor",
+    created_by: "1",
+    created_at: iso(now),
+    updated_at: iso(now),
+  } as Itinerary,
+  {
+    id: "fake-it-6",
+    agency_id: "agency-1",
+    trip_name: "Lyon Gastronomy — Thomas Bresson",
+    description: "Two-night wine and dining trip.",
+    hero_image_url: HERO.lyon,
+    primary_vic_id: "fake-vic-11",
+    primary_vic_name: "Thomas Bresson",
+    primary_advisor_id: "2",
+    primary_advisor_name: "Pierre Duval",
+    status: "draft",
+    trip_start_date: "2026-09-15",
+    trip_end_date: "2026-09-17",
+    destinations: ["Lyon", "Beaujolais"],
+    traveler_count: 2,
+    days: [
+      { day_number: 1, date: "2026-09-15", title: "Lyon", location: "Lyon", events: [ev({ id: "l1-1", event_type: "flight", title: "Arrival Lyon", start_time: "12:00", status: "confirmed" }), ev({ id: "l1-2", event_type: "stay", title: "Villa Florentine", start_time: "15:00", status: "tentative", client_price: 950 }), ev({ id: "l1-3", event_type: "meal", title: "Dinner Paul Bocuse (L'Auberge)", start_time: "20:00", status: "tentative", client_price: 420 })] },
+      { day_number: 2, date: "2026-09-16", title: "Beaujolais", location: "Beaujolais", events: [ev({ id: "l2-1", event_type: "activity", title: "Wine tour — Côte du Py", start_time: "09:30", status: "tentative", client_price: 350 }), ev({ id: "l2-2", event_type: "meal", title: "Lunch at domaine", start_time: "13:00", status: "tentative", client_price: 180 })] },
+      { day_number: 3, date: "2026-09-17", title: "Departure", location: "Lyon", events: [ev({ id: "l3-1", event_type: "flight", title: "Departure Lyon", start_time: "10:00", status: "confirmed" })] },
+    ],
+    currency: "EUR",
+    data_ownership_level: "Advisor",
+    created_by: "2",
+    created_at: iso(now),
+    updated_at: iso(now),
+    publish_state: "never",
   } as Itinerary,
 ];
 

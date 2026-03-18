@@ -3,7 +3,9 @@
 import Link from "next/link";
 import type { Product } from "@/types/product";
 import { getProductId } from "@/lib/products-api";
-import { CATEGORY_LABELS, COUNTRY_NAMES, DATA_LAYER_BADGES, PARTNERSHIP_TIER_LABELS, PRICE_RANGE_DISPLAY, VERIFICATION_BADGES } from "@/config/productCategoryConfig";
+import { CATEGORY_ICONS, CATEGORY_LABELS, COUNTRY_NAMES, PARTNERSHIP_TIER_LABELS, PRICE_RANGE_DISPLAY, VERIFICATION_BADGES } from "@/config/productCategoryConfig";
+import ImageWithFallback from "@/components/ui/ImageWithFallback";
+import type { ProductCategory } from "@/types/product";
 import { cn } from "@/lib/utils";
 import { highlightSearch } from "@/utils/searchHighlight";
 import { Button } from "@/components/ui/button";
@@ -18,13 +20,12 @@ import {
 const COLUMNS: { key: string; label: string; sortable?: boolean; className?: string }[] = [
   { key: "_", label: "" },
   { key: "name", label: "Name", sortable: true },
-  { key: "location", label: "Location", sortable: true },
   { key: "category", label: "Category", sortable: true },
-  { key: "key_metric", label: "Key metric", sortable: false },
-  { key: "price_range", label: "Price", sortable: true },
-  { key: "partnership_tier", label: "Partnership", sortable: true },
+  { key: "location", label: "Location", sortable: true },
+  { key: "status", label: "Status", sortable: true },
+  { key: "partnership_tier", label: "Tier", sortable: true },
+  { key: "price_range", label: "Price range", sortable: true },
   { key: "verification", label: "Verification", sortable: true },
-  { key: "data_layer", label: "Layer", sortable: false },
   { key: "actions", label: "Actions", sortable: false },
 ];
 
@@ -46,28 +47,6 @@ type Props = {
   searchQuery?: string;
 };
 
-function keyMetric(p: Product): string {
-  const cat = p.category;
-  if (cat === "accommodation" && (p as unknown as { star_rating?: number }).star_rating != null)
-    return `${(p as unknown as { star_rating: number }).star_rating}★`;
-  if (cat === "dmc" && (p as unknown as { destinations_covered?: string[] }).destinations_covered?.length)
-    return `${(p as unknown as { destinations_covered: string[] }).destinations_covered.length} destinations`;
-  if (cat === "cruise" && (p as unknown as { ship_name?: string }).ship_name)
-    return (p as unknown as { ship_name: string }).ship_name;
-  if (cat === "service_provider" && (p as unknown as { service_types?: string[] }).service_types?.length)
-    return `${(p as unknown as { service_types: string[] }).service_types.length} services`;
-  if (cat === "activity" && (p as unknown as { duration?: string }).duration)
-    return (p as unknown as { duration: string }).duration;
-  if (cat === "restaurant") {
-    const r = p as unknown as { michelin_stars?: number; cuisine_type?: string };
-    if (r.michelin_stars != null) return `${r.michelin_stars}★`;
-    if (r.cuisine_type) return r.cuisine_type;
-  }
-  if (cat === "transportation" && (p as unknown as { vehicle_types?: string[] }).vehicle_types?.length)
-    return (p as unknown as { vehicle_types: string[] }).vehicle_types.join(", ");
-  return "—";
-}
-
 export default function ProductListView({
   products,
   isLoading,
@@ -86,8 +65,8 @@ export default function ProductListView({
   searchQuery,
 }: Props) {
   const handleSort = (key: string) => {
-    const by = key === "location" ? "city" : key;
-    if (["name", "city", "category", "price_range", "partnership_tier", "verification_status", "updated_at"].includes(by))
+    const by = key === "location" ? "city" : key === "verification" ? "verification_status" : key;
+    if (["name", "city", "category", "status", "price_range", "partnership_tier", "verification_status", "updated_at"].includes(by))
       onSortChange(by, sortBy === by && sortOrder === "asc" ? "desc" : "asc");
   };
 
@@ -141,12 +120,12 @@ export default function ProductListView({
         <tbody>
           {products.map((p) => {
             const id = getProductId(p);
-            const layer = (p.data_ownership_level ?? "Advisor") as keyof typeof DATA_LAYER_BADGES;
             const ver = (p.verification_status ?? "unverified") as keyof typeof VERIFICATION_BADGES;
+            const Icon = CATEGORY_ICONS[p.category];
             return (
               <tr
                 key={id}
-                className="border-b border-[rgba(255,255,255,0.06)] hover:bg-white/[0.04]"
+                className="border-b border-[rgba(255,255,255,0.06)] hover:bg-white/[0.05]"
               >
                 <td className="w-10 py-2 pl-4">
                   {!isEnableTab && (
@@ -159,27 +138,46 @@ export default function ProductListView({
                   )}
                 </td>
                 <td className="py-2 px-2">
-                  <Link href={`/dashboard/products/${id}`} className="font-medium text-[#F5F5F5] hover:underline">
-                    {searchQuery ? highlightSearch(p.name || "—", searchQuery) : (p.name || "—")}
+                  <Link href={`/dashboard/products/${id}`} className="flex items-center gap-3 min-w-0 group">
+                    <span className="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-zinc-800 ring-1 ring-white/10">
+                      <ImageWithFallback
+                        fallbackType="product"
+                        src={p.hero_image_url}
+                        alt={p.name ?? ""}
+                        productCategory={p.category as ProductCategory}
+                        className="w-full h-full object-cover rounded-lg opacity-90 group-hover:opacity-100 transition-opacity"
+                      />
+                    </span>
+                    <span className="font-semibold text-[#F5F5F5] group-hover:underline truncate">
+                      {searchQuery ? highlightSearch(p.name || "—", searchQuery) : (p.name || "—")}
+                    </span>
                   </Link>
+                </td>
+                <td className="py-2 px-2 text-sm">
+                  <span className="inline-flex items-center gap-1.5">
+                    {Icon && <Icon size={14} className="text-[rgba(245,245,245,0.6)]" />}
+                    {CATEGORY_LABELS[p.category] ?? p.category}
+                  </span>
                 </td>
                 <td className="py-2 px-2 text-sm text-[rgba(245,245,245,0.8)]">
                   {[p.city, (p.country && COUNTRY_NAMES[p.country]) || p.country].filter(Boolean).join(", ") || "—"}
                 </td>
-                <td className="py-2 px-2 text-sm">{CATEGORY_LABELS[p.category] ?? p.category}</td>
-                <td className="py-2 px-2 text-sm text-[rgba(245,245,245,0.7)]">{keyMetric(p)}</td>
+                <td className="py-2 px-2">
+                  <span className="text-xs px-1.5 py-0.5 rounded border border-[rgba(255,255,255,0.15)] bg-white/5 text-[rgba(245,245,245,0.8)] capitalize">
+                    {p.status ?? "—"}
+                  </span>
+                </td>
+                <td className="py-2 px-2 text-sm">
+                  <span className="text-xs px-1.5 py-0.5 rounded border border-[rgba(255,255,255,0.15)] text-[rgba(245,245,245,0.8)]">
+                    {p.partnership_tier ? PARTNERSHIP_TIER_LABELS[p.partnership_tier] : "—"}
+                  </span>
+                </td>
                 <td className="py-2 px-2 text-sm">
                   {p.price_range ? PRICE_RANGE_DISPLAY[p.price_range] : "—"}
                 </td>
-                <td className="py-2 px-2 text-sm">{p.partnership_tier ? PARTNERSHIP_TIER_LABELS[p.partnership_tier] : "—"}</td>
                 <td className="py-2 px-2">
                   <span className={cn("text-xs px-1.5 py-0.5 rounded border", VERIFICATION_BADGES[ver]?.variant === "default" && "bg-[var(--muted-success-bg)] text-[var(--muted-success-text)]")}>
                     {VERIFICATION_BADGES[ver]?.label ?? ver}
-                  </span>
-                </td>
-                <td className="py-2 px-2">
-                  <span className={cn("text-xs px-1.5 py-0.5 rounded border", DATA_LAYER_BADGES[layer]?.className)}>
-                    {DATA_LAYER_BADGES[layer]?.label ?? layer}
                   </span>
                 </td>
                 <td className="py-2 px-2">

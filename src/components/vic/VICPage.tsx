@@ -94,7 +94,7 @@ export default function VICPage() {
     try {
       const data = await fetchVICList(params);
       const apiEmpty = !data.vics?.length && (data.total ?? 0) === 0;
-      if (apiEmpty) {
+      if (IS_PREVIEW_MODE || apiEmpty) {
         const fake = filterAndPaginateFakeVics(FAKE_VICS, {
           tab: activeTab,
           userId: user?.id != null ? String(user.id) : undefined,

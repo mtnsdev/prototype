@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, List, LayoutGrid, Plus } from "lucide-react";
+import { Search, List, LayoutGrid, Plus, Columns3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -47,8 +47,8 @@ type Props = {
   dateTo: string;
   onDateFromChange: (v: string) => void;
   onDateToChange: (v: string) => void;
-  viewMode: "list" | "cards";
-  onViewModeChange: (v: "list" | "cards") => void;
+  viewMode: "list" | "cards" | "board";
+  onViewModeChange: (v: "list" | "cards" | "board") => void;
   sortBy: string;
   sortOrder: "asc" | "desc";
   onSortChange: (by: string, order: "asc" | "desc") => void;
@@ -183,6 +183,17 @@ export default function ItineraryToolbar({
           title="Card view"
         >
           <LayoutGrid size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={() => onViewModeChange("board")}
+          className={cn(
+            "p-1.5 rounded",
+            viewMode === "board" ? "bg-white/10 text-[#F5F5F5]" : "text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5]"
+          )}
+          title="Board (Kanban)"
+        >
+          <Columns3 size={16} />
         </button>
       </div>
       {hasFilters && (

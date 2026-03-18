@@ -173,13 +173,13 @@ export const DATA_LAYER_BADGES: Record<DataOwnershipLevel, { label: string; clas
   Advisor: { label: "Advisor", className: "bg-[var(--muted-amber-bg)] text-[var(--muted-amber-text)] border-[var(--muted-amber-border)]" },
 };
 
-// Category accent colors for cards (Section 6) — muted palette
+/** Muted top accent for luxury UI — low-chroma stone/zinc, not saturated primaries */
 export const CATEGORY_ACCENT_COLORS: Record<ProductCategory, string> = {
-  accommodation: "border-l-[var(--muted-amber-text)]",
-  dmc: "border-l-[var(--muted-success-text)]",
-  cruise: "border-l-[var(--muted-info-text)]",
-  service_provider: "border-l-[var(--muted-accent-text)]",
-  activity: "border-l-[var(--muted-success-text)]",
-  restaurant: "border-l-[var(--muted-error-text)]",
-  transportation: "border-l-[rgba(245,245,245,0.5)]",
+  accommodation: "border-t border-t-stone-500/45",
+  dmc: "border-t border-t-stone-400/35",
+  cruise: "border-t border-t-zinc-500/40",
+  service_provider: "border-t border-t-neutral-500/35",
+  activity: "border-t border-t-zinc-600/45",
+  restaurant: "border-t border-t-stone-600/40",
+  transportation: "border-t border-t-neutral-600/40",
 };

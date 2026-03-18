@@ -31,7 +31,6 @@ const COLUMNS: { key: string; label: string; sortable?: boolean; className?: str
   { key: "city_country", label: "City / Country", sortable: true },
   { key: "status", label: "Status", sortable: true },
   { key: "acuity", label: "Acuity", sortable: true },
-  { key: "tags", label: "Tags", sortable: false },
   { key: "actions", label: "Actions", sortable: false },
 ];
 
@@ -105,7 +104,6 @@ export default function VICListView({
                   <td className="py-3"><div className="h-4 w-32 bg-white/10 rounded animate-pulse" /></td>
                   <td className="py-3"><div className="h-4 w-16 bg-white/10 rounded animate-pulse" /></td>
                   <td className="py-3"><div className="h-4 w-20 bg-white/10 rounded animate-pulse" /></td>
-                  <td className="py-3"><div className="h-4 w-24 bg-white/10 rounded animate-pulse" /></td>
                   <td className="py-2 pr-4"><div className="h-8 w-8 bg-white/10 rounded animate-pulse" /></td>
                 </tr>
               ))}

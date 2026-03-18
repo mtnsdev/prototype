@@ -23,18 +23,36 @@ type Props = {
   canEdit: boolean;
   canViewFinancials: boolean;
   onEventChange: () => void;
+  onEventSelect?: (day: ItineraryDay, ev: ItineraryEvent) => void;
+  editEvent?: { day: ItineraryDay; event: ItineraryEvent } | null;
+  onEditEventClose?: () => void;
+  onEditEventRequest?: (day: ItineraryDay, ev: ItineraryEvent) => void;
 };
 
-function dayTotal(day: ItineraryDay, currency: string = "EUR"): number {
+function dayClientTotal(day: ItineraryDay): number {
   return (day.events ?? []).reduce((sum, e) => sum + (e.client_price ?? 0), 0);
 }
 
-export default function ItineraryTimeline({ itinerary, canEdit, canViewFinancials, onEventChange }: Props) {
+function dayMarginTotal(day: ItineraryDay): number {
+  return (day.events ?? []).reduce((sum, e) => {
+    const cp = e.client_price ?? 0;
+    const net = e.net_cost ?? (cp > 0 ? Math.round(cp * 0.75) : 0);
+    return sum + (cp - net);
+  }, 0);
+}
+
+function marginColor(marginPct: number): string {
+  if (marginPct >= 20) return "text-emerald-500";
+  if (marginPct >= 10) return "text-amber-500";
+  return "text-red-500";
+}
+
+export default function ItineraryTimeline({ itinerary, canEdit, canViewFinancials, onEventChange, onEventSelect, editEvent: editEventProp, onEditEventClose, onEditEventRequest }: Props) {
   const days = itinerary.days ?? [];
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set(days.map((d) => d.day_number)));
   const [addEventDay, setAddEventDay] = useState<ItineraryDay | null>(null);
-  const [editEvent, setEditEvent] = useState<{ day: ItineraryDay; event: ItineraryEvent } | null>(null);
   const [addingDay, setAddingDay] = useState(false);
+  const editEvent = editEventProp ?? null;
 
   const allExpanded = days.length > 0 && expandedDays.size === days.length;
   const allCollapsed = expandedDays.size === 0;
@@ -136,12 +154,14 @@ export default function ItineraryTimeline({ itinerary, canEdit, canViewFinancial
                         <ItineraryEventCard
                           key={ev.id}
                           event={ev}
+                          day={day}
                           itineraryId={itinerary.id}
                           dayNumber={day.day_number}
                           canEdit={canEdit}
                           canViewFinancials={canViewFinancials}
                           onUpdate={onEventChange}
-                          onEdit={() => setEditEvent({ day, event: ev })}
+                          onEdit={() => onEditEventRequest?.(day, ev)}
+                          onEventClick={onEventSelect ? () => onEventSelect(day, ev) : undefined}
                         />
                       ))
                     )}
@@ -162,8 +182,11 @@ export default function ItineraryTimeline({ itinerary, canEdit, canViewFinancial
                     )}
                     <p className="text-xs text-[rgba(245,245,245,0.45)] pt-1 border-t border-[rgba(255,255,255,0.04)] mt-2">
                       {(day.events ?? []).length} event{(day.events ?? []).length !== 1 ? "s" : ""}
-                      {canViewFinancials && dayTotal(day, itinerary.currency) > 0 && (
-                        <> · {itinerary.currency === "EUR" ? "€" : itinerary.currency} {dayTotal(day).toLocaleString()} total</>
+                      {dayClientTotal(day) > 0 && (
+                        <> · {itinerary.currency === "EUR" ? "€" : itinerary.currency} {dayClientTotal(day).toLocaleString()} client</>
+                      )}
+                      {canViewFinancials && dayMarginTotal(day) > 0 && (
+                        <> · <span className={marginColor(dayClientTotal(day) > 0 ? Math.round((dayMarginTotal(day) / dayClientTotal(day)) * 100) : 0)}>€{dayMarginTotal(day).toLocaleString()} margin</span></>
                       )}
                     </p>
                   </div>
@@ -190,13 +213,13 @@ export default function ItineraryTimeline({ itinerary, canEdit, canViewFinancial
       {(addEventDay || editEvent) && (
         <AddEventModal
           open
-          onClose={() => { setAddEventDay(null); setEditEvent(null); }}
+          onClose={() => { setAddEventDay(null); onEditEventClose?.(); }}
           itineraryId={itinerary.id}
           dayNumber={addEventDay?.day_number ?? editEvent?.day.day_number ?? 1}
           event={editEvent?.event ?? null}
           onAdded={() => {
             setAddEventDay(null);
-            setEditEvent(null);
+            onEditEventClose?.();
             onEventChange();
           }}
         />

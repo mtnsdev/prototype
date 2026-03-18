@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  LayoutGrid,
-  List,
   Upload,
   RefreshCw,
   Search,
@@ -52,7 +50,6 @@ export default function KnowledgeVaultPage() {
   const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
   const [totalDocs, setTotalDocs] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("last_updated");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -106,7 +103,7 @@ export default function KnowledgeVaultPage() {
 
   return (
     <div className="h-full flex flex-col bg-[#0C0C0C] text-[#F5F5F5]">
-      {IS_PREVIEW_MODE && <PreviewBanner feature="Knowledge Vault" variant="full" dismissible />}
+      {IS_PREVIEW_MODE && <PreviewBanner feature="Knowledge Vault" variant="full" dismissible sampleDataOnly />}
       {/* Header */}
       <header className="shrink-0 flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-[rgba(255,255,255,0.08)]">
         <div>
@@ -136,24 +133,6 @@ export default function KnowledgeVaultPage() {
             <RefreshCw size={14} className={loading ? "mr-1.5 animate-spin" : "mr-1.5"} />
             Sync All
           </Button>
-          <div className="flex rounded-lg border border-white/10 overflow-hidden">
-            <Button
-              variant={viewMode === "grid" ? "default" : "ghost"}
-              size="sm"
-              className="rounded-none border-0 bg-transparent"
-              onClick={() => setViewMode("grid")}
-            >
-              <LayoutGrid size={14} />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
-              size="sm"
-              className="rounded-none border-0 bg-transparent"
-              onClick={() => setViewMode("list")}
-            >
-              <List size={14} />
-            </Button>
-          </div>
         </div>
       </header>
 
@@ -245,7 +224,7 @@ export default function KnowledgeVaultPage() {
             </div>
             <DocumentGrid
               documents={documents}
-              viewMode={viewMode}
+              viewMode="list"
               loading={loading}
               onSelectDocument={setSelectedDoc}
             />

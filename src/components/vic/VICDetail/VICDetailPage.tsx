@@ -26,6 +26,7 @@ import TravelProfileModal from "../Modals/TravelProfileModal";
 import type { TravelProfile } from "@/types/vic";
 import PreviewBanner from "@/components/ui/PreviewBanner";
 import { IS_PREVIEW_MODE } from "@/config/preview";
+import ImageWithFallback from "@/components/ui/ImageWithFallback";
 
 const VALID_TABS: DetailTabId[] = ["overview", "identity", "relationship", "preferences", "travel", "linked_entities", "sharing", "governance"];
 
@@ -169,7 +170,11 @@ export default function VICDetailPage({ vicId }: Props) {
   const leg = vic as unknown as { city?: string; country?: string; company?: string; role?: string; customTags?: string[] };
   const location = [vic.home_city ?? leg.city, vic.home_country ?? leg.country].filter(Boolean).join(", ");
   const companyRole = [leg.company, leg.role].filter(Boolean).join(" · ");
-  const tags = vic.tags ?? leg.customTags ?? [];
+  const line2Parts = [
+    vic.preferred_name && vic.preferred_name !== vic.full_name ? `Preferred: ${vic.preferred_name}` : null,
+    location,
+    companyRole,
+  ].filter(Boolean);
 
   return (
     <div className="h-full overflow-y-auto bg-[#0C0C0C]">
@@ -184,26 +189,17 @@ export default function VICDetailPage({ vicId }: Props) {
         </Link>
 
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-[#F5F5F5]">{vic.full_name}</h1>
-            {vic.preferred_name && vic.preferred_name !== vic.full_name && (
-              <p className="text-sm text-[rgba(245,245,245,0.5)]">Preferred: {vic.preferred_name}</p>
+          <div className="flex items-start gap-4 min-w-0">
+            <ImageWithFallback fallbackType="avatar" alt={vic.full_name ?? "VIC"} name={vic.full_name ?? "?"} className="w-16 h-16 shrink-0" />
+            <div className="min-w-0">
+              <h1 className="text-2xl font-semibold text-[#F5F5F5] tracking-tight">{vic.full_name}</h1>
+            {line2Parts.length > 0 && (
+              <p className="text-sm text-[rgba(245,245,245,0.55)] mt-1">
+                {line2Parts.join(" · ")}
+              </p>
             )}
-            {location && <p className="text-sm text-[rgba(245,245,245,0.6)]">{location}</p>}
-            {companyRole && <p className="text-sm text-[rgba(245,245,245,0.5)]">{companyRole}</p>}
             <p className={"text-xs mt-1 " + acuityStatusColor}>{acuityStatusText}</p>
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {tags.map((t) => (
-                  <span
-                    key={t}
-                    className="rounded bg-white/10 px-2 py-0.5 text-xs text-[rgba(245,245,245,0.8)]"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            )}
+            </div>
           </div>
           <div className="flex items-center gap-1">
             {canEdit && (

@@ -59,9 +59,10 @@
     --muted-accent-bg: rgba(155, 150, 170, 0.12);
     --muted-accent-text: #9B96AA;
     --muted-accent-border: rgba(155, 150, 170, 0.22);
-    --muted-amber-bg: rgba(175, 165, 140, 0.14);
-    --muted-amber-text: #AFA58C;
-    --muted-amber-border: rgba(175, 165, 140, 0.25);
+    /* Preview / sample data — soft orange (not gold) */
+    --muted-amber-bg: rgba(200, 130, 80, 0.18);
+    --muted-amber-text: #C88260;
+    --muted-amber-border: rgba(200, 130, 80, 0.32);
 
     /* Spacing (4px grid) */
     --space-0: 0;
@@ -389,6 +390,33 @@ input.chat-input-no-focus-outline:focus-visible,
         animation: none;
         opacity: 1;
         transform: none;
+    }
+}
+
+/* ==========================================
+   Briefing Room: widget stagger fade-in
+   ========================================== */
+
+@keyframes briefing-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-briefing-fade-in {
+    animation: briefing-fade-in 0.4s ease-out forwards;
+    opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-briefing-fade-in {
+        animation: none;
+        opacity: 1;
     }
 }
 

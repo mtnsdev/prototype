@@ -22,6 +22,7 @@ export interface NewsAlertItem {
   summary: string;
   source: string;
   source_icon?: string;
+  thumbnail_url?: string;
   category: "renovation" | "opening" | "closure" | "safety" | "promotion" | "industry" | "regulatory";
   severity: "info" | "warning" | "urgent";
   destination?: string;

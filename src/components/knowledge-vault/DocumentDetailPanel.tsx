@@ -142,7 +142,7 @@ export default function DocumentDetailPanel({ document: doc, loading = false, on
             {doc.tags.map((t) => (
               <span
                 key={t}
-                className="text-xs px-2 py-0.5 rounded bg-white/10 text-[rgba(245,245,245,0.8)]"
+                className="text-xs lowercase border border-gray-600 text-gray-400 rounded-full px-2 py-0.5"
               >
                 {t}
               </span>

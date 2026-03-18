@@ -94,7 +94,7 @@ export default function DetailSidebar({ vic, className }: Props) {
             {tags.length > 0 && (
               <li className="flex flex-wrap gap-1 pt-0.5">
                 {tags.slice(0, 4).map((t) => (
-                  <span key={t} className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-[rgba(245,245,245,0.8)]">{t}</span>
+                  <span key={t} className="text-xs lowercase border border-gray-600 text-gray-400 rounded-full px-2 py-0.5">{t}</span>
                 ))}
               </li>
             )}
