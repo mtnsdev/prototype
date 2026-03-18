@@ -27,7 +27,10 @@ export function canEditProduct(
   const uid = String(user.id);
   if (level === "Advisor") return product.created_by === uid;
   if (level === "Agency" && user.agency_id)
-    return String(product.agency_id) === String(user.agency_id) && (user.role === "admin" || user.role === "advisor");
+    return (
+      String(product.agency_id) === String(user.agency_id) &&
+      (user.role === "admin" || user.role === "agency_admin" || user.role === "owner")
+    );
   return false;
 }
 

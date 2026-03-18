@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import AppleWidgetCard from "../AppleWidgetCard";
 import type { QuickStartContent } from "@/types/briefing";
+import { cn } from "@/lib/utils";
 
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   UserPlus,
@@ -28,7 +29,8 @@ const ROUTES: Record<string, string> = {
   "Create Itinerary": "/dashboard/itineraries?create=1",
   "Browse Products": "/dashboard/products",
   "Search Knowledge": "/dashboard/knowledge",
-  "Run Acuity": "/dashboard/chat",
+  "Acuity Lookup": "/dashboard/vics",
+  "Run Acuity on VIC": "/dashboard/vics",
   "Import CSV": "/dashboard/vics",
 };
 
@@ -67,19 +69,38 @@ export default function QuickStartWidget({ content, staggerIndex = 0 }: Props) {
         {actions.map((action) => {
           const Icon = ICON_MAP[action.icon] ?? Zap;
           const href = ROUTES[action.label] ?? action.route ?? "#";
+          const isAcuityVic =
+            action.label === "Acuity Lookup" || action.label === "Run Acuity on VIC";
           return (
             <Link
               key={action.label}
               href={href}
-              className="flex flex-col items-center justify-center rounded-xl bg-white/[0.03] p-4 hover:bg-white/[0.06] transition-all text-center group"
+              className={cn(
+                "flex flex-col items-center justify-center rounded-xl p-4 transition-all text-center group border",
+                isAcuityVic
+                  ? "bg-violet-500/10 border-violet-500/25 hover:bg-violet-500/15"
+                  : "bg-white/[0.03] border-transparent hover:bg-white/[0.06]"
+              )}
             >
               <Icon
                 size={24}
-                className="text-gray-400 group-hover:text-white transition-colors"
+                className={cn(
+                  "transition-colors",
+                  isAcuityVic ? "text-violet-400 group-hover:text-violet-300" : "text-gray-400 group-hover:text-white"
+                )}
               />
-              <span className="text-xs text-gray-400 mt-2 group-hover:text-white transition-colors truncate w-full">
-                {action.label.replace("Create Itinerary", "Create Itin.").replace("Browse Products", "Browse Prods.").replace("Search Knowledge", "Search Knowl.")}
-              </span>
+              {isAcuityVic ? (
+                <span className="text-[10px] leading-tight text-violet-200/90 mt-2 text-center font-medium">
+                  Acuity Lookup
+                </span>
+              ) : (
+                <span className="text-xs text-gray-400 mt-2 group-hover:text-white transition-colors truncate w-full">
+                  {action.label
+                    .replace("Create Itinerary", "Create Itin.")
+                    .replace("Browse Products", "Browse Prods.")
+                    .replace("Search Knowledge", "Search Knowl.")}
+                </span>
+              )}
             </Link>
           );
         })}

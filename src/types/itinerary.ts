@@ -74,6 +74,27 @@ export interface ItineraryTripOption {
 
 export type ItineraryPublishState = "never" | "published_clean" | "unpublished_changes";
 
+/** LTA sales cycle — single workflow for trip lifecycle */
+export type PipelineStage =
+  | "lead"
+  | "discovery"
+  | "proposal"
+  | "revision"
+  | "committed"
+  | "preparing"
+  | "final_review"
+  | "traveling"
+  | "post_travel"
+  | "archived";
+
+export interface PipelineEvent {
+  from_stage: PipelineStage;
+  to_stage: PipelineStage;
+  changed_at: string;
+  changed_by: string;
+  note?: string;
+}
+
 export interface Itinerary {
   id: string;
   agency_id: string;
@@ -111,6 +132,9 @@ export interface Itinerary {
   publish_state?: ItineraryPublishState;
   published_version?: number;
   last_published_at?: string;
+  /** Sales cycle position */
+  pipeline_stage: PipelineStage;
+  pipeline_history?: PipelineEvent[];
 }
 
 export interface ItineraryListParams {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, AlertCircle, Cake, Calendar } from "lucide-react";
+import { ChevronDown, ChevronUp, AlertCircle, Cake, Calendar, Plane } from "lucide-react";
 import type { VIC } from "@/types/vic";
 import { cn } from "@/lib/utils";
 
@@ -41,9 +41,13 @@ function isBirthdayWithin14Days(vic: VIC): boolean {
   }
 }
 
-type Props = { vic: VIC; className?: string };
+type Props = {
+  vic: VIC;
+  className?: string;
+  onShowTravelProfiles?: () => void;
+};
 
-export default function DetailSidebar({ vic, className }: Props) {
+export default function DetailSidebar({ vic, className, onShowTravelProfiles }: Props) {
   const [collapsed, setCollapsed] = useState(false);
 
   const advisorName = vic.assigned_advisor_name ?? vic.assigned_advisor_id ?? "—";
@@ -77,6 +81,19 @@ export default function DetailSidebar({ vic, className }: Props) {
       </button>
 
       <div className={cn("px-4 py-3 space-y-4", collapsed && "max-lg:hidden")}>
+        {onShowTravelProfiles != null && (
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2">Travel profiles</h3>
+            <button
+              type="button"
+              onClick={onShowTravelProfiles}
+              className="flex items-center gap-2 w-full text-left text-sm text-[rgba(245,245,245,0.85)] hover:text-[#F5F5F5] hover:bg-white/[0.04] rounded-lg px-2 py-1.5 -mx-2 transition-colors"
+            >
+              <Plane size={14} className="text-[rgba(245,245,245,0.5)] shrink-0" />
+              <span>{(vic.travel_profiles?.length ?? 0)} of 7 profile types</span>
+            </button>
+          </div>
+        )}
         <div>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2">Quick info</h3>
           <ul className="space-y-1.5 text-sm text-[rgba(245,245,245,0.85)]">

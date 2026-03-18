@@ -1,6 +1,6 @@
 "use client";
 
-import { Cloud, Database, Upload, Mail, Globe, FileSearch } from "lucide-react";
+import { Cloud, Database, Mail, FileSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,55 +8,67 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { DataSourceType } from "@/types/knowledge-vault";
+import { DataSourceType, type DataSource } from "@/types/knowledge-vault";
 import { useToast } from "@/contexts/ToastContext";
+import { cn } from "@/lib/utils";
 
-const SOURCES = [
+type RowDef = {
+  type: DataSourceType | "web_scrape";
+  name: string;
+  description: string;
+  comingSoon?: boolean;
+};
+
+const ROWS: RowDef[] = [
   {
-    type: DataSourceType.GoogleDrive,
-    name: "Google Drive",
-    description: "Connect shared drives and team folders for automatic sync.",
-    icon: Cloud,
+    type: DataSourceType.GoogleDriveAdmin,
+    name: "Google Drive — Shared",
+    description:
+      "Connect your agency's shared Google Drive. All advisors will see synced documents.",
   },
   {
-    type: DataSourceType.Claromentis,
-    name: "Claromentis (Intranet)",
-    description: "Pull documents and pages from your Claromentis intranet.",
-    icon: Database,
+    type: DataSourceType.GoogleDrivePersonal,
+    name: "Google Drive — Personal",
+    description: "Connect your personal Google Drive. Only you will see these documents.",
   },
   {
-    type: DataSourceType.ManualUpload,
-    name: "Manual Upload",
-    description: "Upload documents directly. Already available from the Upload button.",
-    icon: Upload,
+    type: DataSourceType.ClaromentisDocuments,
+    name: "Claromentis — Documents",
+    description:
+      "Sync files from your Claromentis document library. Respects Claromentis permission groups.",
   },
   {
-    type: DataSourceType.Virtuoso,
-    name: "Virtuoso Network",
-    description: "Access Virtuoso partner content and rate sheets.",
-    icon: Globe,
+    type: DataSourceType.ClaromentisPages,
+    name: "Claromentis — Pages",
+    description:
+      "Sync wiki pages from your Claromentis intranet. Respects Claromentis permission groups.",
   },
   {
     type: DataSourceType.Email,
     name: "Email Ingestion",
-    description: "Ingest documents from email attachments and threads.",
-    icon: Mail,
+    description: "Automatically ingest travel-related emails.",
+    comingSoon: true,
   },
   {
-    type: "web_scrape" as const,
+    type: "web_scrape",
     name: "Web Scrape",
-    description: "Crawl and index specific URLs or partner portals.",
-    icon: FileSearch,
+    description: "Scrape supplier websites for rate updates.",
+    comingSoon: true,
   },
 ];
 
 type Props = {
   open: boolean;
   onClose: () => void;
+  sources: DataSource[];
 };
 
-export default function ConnectSourceModal({ open, onClose }: Props) {
+export default function ConnectSourceModal({ open, onClose, sources }: Props) {
   const toast = useToast();
+
+  const connectedTypes = new Set(
+    sources.filter((s) => s.status === "connected").map((s) => s.source_type)
+  );
 
   const handleConnect = () => {
     toast("Coming soon — contact your admin.");
@@ -71,31 +83,61 @@ export default function ConnectSourceModal({ open, onClose }: Props) {
           <DialogTitle className="text-[#F5F5F5]">Connect a source</DialogTitle>
         </DialogHeader>
         <p className="text-sm text-[rgba(245,245,245,0.6)]">
-          Choose a data source to connect to your Knowledge Vault. Documents will be synced and indexed for search.
+          Choose a data source to connect to your Knowledge Vault. Documents will be synced and indexed
+          for search.
         </p>
         <div className="grid gap-3 mt-4">
-          {SOURCES.map((src) => {
-            const Icon = src.icon;
+          {ROWS.map((row) => {
+            const isConnected =
+              row.type !== "web_scrape" && !row.comingSoon && connectedTypes.has(row.type as DataSourceType);
+            const Icon =
+              row.type === DataSourceType.Email
+                ? Mail
+                : row.type === "web_scrape"
+                  ? FileSearch
+                  : row.type === DataSourceType.GoogleDriveAdmin ||
+                      row.type === DataSourceType.GoogleDrivePersonal
+                    ? Cloud
+                    : Database;
             return (
               <div
-                key={src.type}
+                key={String(row.type)}
                 className="flex items-start gap-4 rounded-xl border border-[rgba(255,255,255,0.08)] bg-white/[0.03] p-4"
               >
                 <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-[#F5F5F5] shrink-0">
                   <Icon size={20} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-medium text-[#F5F5F5]">{src.name}</h3>
-                  <p className="text-sm text-[rgba(245,245,245,0.6)] mt-0.5">{src.description}</p>
+                  <h3 className="font-medium text-[#F5F5F5]">{row.name}</h3>
+                  <p className="text-sm text-[rgba(245,245,245,0.6)] mt-0.5">{row.description}</p>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-white/10 text-[#F5F5F5] shrink-0"
-                  onClick={handleConnect}
-                >
-                  Connect
-                </Button>
+                <div className="shrink-0 flex flex-col items-end gap-1">
+                  {row.comingSoon && (
+                    <span
+                      className={cn(
+                        "text-xs px-2 py-1 rounded border border-white/15",
+                        "text-[rgba(245,245,245,0.55)]"
+                      )}
+                    >
+                      Coming soon
+                    </span>
+                  )}
+                  {!row.comingSoon && isConnected && (
+                    <span className="text-xs px-2 py-1 rounded bg-[var(--muted-success-bg)] text-[var(--muted-success-text)] border border-[var(--muted-success-border)]">
+                      Connected
+                    </span>
+                  )}
+                  {!row.comingSoon && !isConnected && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-white/10 text-[#F5F5F5]"
+                      onClick={handleConnect}
+                    >
+                      Connect
+                    </Button>
+                  )}
+                </div>
               </div>
             );
           })}

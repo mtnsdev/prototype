@@ -143,10 +143,10 @@ export default function ItineraryDetailSidebar({
         <button
           type="button"
           onClick={() => setAiOpen((o) => !o)}
-          className="flex items-center justify-between w-full text-left text-xs font-semibold uppercase tracking-wider text-violet-400/90"
+          className="flex items-center justify-between w-full text-left text-xs font-semibold uppercase tracking-wider text-blue-400/90"
         >
           <span className="flex items-center gap-1.5">
-            <Sparkles size={14} /> AI Assist
+            <Sparkles size={14} className="text-blue-400" /> AI Assist
           </span>
           {aiOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </button>
@@ -161,11 +161,11 @@ export default function ItineraryDetailSidebar({
                 key={x.t}
                 type="button"
                 onClick={x.on}
-                className="w-full text-left rounded-lg border border-violet-500/20 bg-violet-500/5 p-3 hover:bg-violet-500/10 transition-colors"
+                className="w-full text-left rounded-lg border border-blue-500/20 bg-blue-500/5 p-3 hover:bg-blue-500/10 transition-colors"
               >
                 <p className="text-sm font-medium text-[#F5F5F5]">{x.t}</p>
                 <p className="text-xs text-gray-500">{x.d}</p>
-                <span className="text-xs text-violet-400 mt-1 inline-block">{x.on ? "Open →" : "—"}</span>
+                <span className="text-xs text-blue-400 mt-1 inline-block">{x.on ? "Open →" : "—"}</span>
               </button>
             ))}
           </div>

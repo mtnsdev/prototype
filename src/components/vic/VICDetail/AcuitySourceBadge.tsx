@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Check, Pencil } from "lucide-react";
+import { Sparkles, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,6 +18,15 @@ function formatSourcedDate(iso: string | undefined): string {
   } catch {
     return "—";
   }
+}
+
+function displayProvider(p?: string): string {
+  if (!p) return "Acuity";
+  const x = p.toLowerCase();
+  if (x === "gemini") return "Gemini";
+  if (x === "perplexity") return "Perplexity";
+  if (x === "claude") return "Claude";
+  return p.charAt(0).toUpperCase() + p.slice(1);
 }
 
 function confidenceColor(confidence: string | undefined): string {
@@ -42,69 +51,73 @@ type Props = {
 
 export default function AcuitySourceBadge({ provenance, fieldLabel, onMarkVerified, onEdit }: Props) {
   const [verified, setVerified] = useState(!!provenance.verified);
-  const provider = provenance.provider ?? "Acuity";
+  const provider = displayProvider(provenance.provider);
+  const conf = (provenance.confidence ?? "medium") as string;
   const sourcedAt = formatSourcedDate(provenance.sourced_at);
-  const tooltip = "Sourced by Acuity via " + provider + " · " + sourcedAt;
+  const titleTip = `${provider} · ${sourcedAt} · ${conf} confidence${provenance.raw_excerpt ? ` · “${provenance.raw_excerpt.slice(0, 80)}…”` : ""}`;
+
+  const isLow = conf === "low";
+  const unverified = !verified;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          title={tooltip}
+          title={titleTip}
           className={cn(
-            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-            "bg-[var(--muted-accent-bg)] text-[var(--muted-accent-text)] border border-[var(--muted-accent-border)]",
-            "hover:bg-[rgba(155,150,170,0.18)] transition-colors cursor-pointer"
+            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition-opacity",
+            "bg-violet-500/15 text-violet-300 border",
+            verified ? "border-emerald-500/40" : "border-amber-500/45",
+            isLow && "opacity-60"
           )}
         >
-          {verified ? <Check size={10} className="text-[var(--muted-success-text)] shrink-0" /> : <Sparkles size={10} className="shrink-0" />}
+          {verified ? (
+            <Check size={10} className="text-emerald-400 shrink-0" />
+          ) : (
+            <Sparkles size={10} className="text-violet-400 shrink-0" />
+          )}
           <span>{provider}</span>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-72 bg-[#1a1a1a] border-[rgba(255,255,255,0.1)] p-3">
+      <DropdownMenuContent align="start" className="w-80 bg-[#1a1a1a] border-[rgba(255,255,255,0.1)] p-3">
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2">
-            <Sparkles size={14} className="text-[var(--muted-accent-text)] shrink-0" />
+            <Sparkles size={14} className="text-violet-400 shrink-0" />
             <span className="font-medium text-[#F5F5F5]">{provider}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[rgba(245,245,245,0.5)]">Confidence:</span>
-            <span className={cn("font-medium", confidenceColor(provenance.confidence))}>
-              {(provenance.confidence ?? "—").charAt(0).toUpperCase() + (provenance.confidence ?? "—").slice(1)}
-            </span>
-          </div>
-          <p className="text-xs text-[rgba(245,245,245,0.6)]">
-            Date sourced: {sourcedAt}
+          <p className="text-xs text-[rgba(245,245,245,0.55)]">
+            {sourcedAt} · <span className={confidenceColor(conf)}>{conf} confidence</span>
           </p>
-          <p className="text-xs text-[rgba(245,245,245,0.7)]">
-            This field was populated by Acuity Intelligence using {provider}. Verify before sharing with client.
+          {provenance.raw_excerpt && (
+            <blockquote className="text-xs text-[rgba(245,245,245,0.75)] border-l-2 border-violet-500/40 pl-2 italic">
+              &ldquo;{provenance.raw_excerpt}&rdquo;
+            </blockquote>
+          )}
+          <p className="text-xs text-[rgba(245,245,245,0.65)]">
+            {fieldLabel ? `${fieldLabel}: ` : ""}Sourced by Acuity via {provider}. Verify before sharing with client.
           </p>
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs border-white/10 text-[#F5F5F5]"
-              onClick={() => {
-                setVerified(true);
-                onMarkVerified?.();
-              }}
-            >
-              <Check size={12} className="mr-1" />
-              Mark as Verified
-            </Button>
-            {onEdit && (
+          {unverified && (
+            <div className="flex flex-wrap gap-1.5 pt-1">
               <Button
                 variant="outline"
                 size="sm"
                 className="h-7 text-xs border-white/10 text-[#F5F5F5]"
-                onClick={onEdit}
+                onClick={() => {
+                  setVerified(true);
+                  onMarkVerified?.();
+                }}
               >
-                <Pencil size={12} className="mr-1" />
-                Edit
+                <Check size={12} className="mr-1" />
+                Accept
               </Button>
-            )}
-          </div>
+              {onEdit && (
+                <Button variant="outline" size="sm" className="h-7 text-xs border-white/10 text-[#F5F5F5]" onClick={onEdit}>
+                  Edit
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </DropdownMenuContent>
     </DropdownMenu>

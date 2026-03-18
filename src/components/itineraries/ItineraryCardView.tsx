@@ -14,6 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Pencil, Trash2, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { PipelineStage } from "@/types/itinerary";
+import { PIPELINE_STAGE_LABEL_MAP, pipelineStageBadgeClass } from "@/config/pipelineStages";
 import { DemoBadge } from "@/components/ui/DemoBadge";
 
 type Props = {
@@ -52,6 +54,7 @@ export default function ItineraryCardView({
       {itineraries.map((it) => {
         const id = getItineraryId(it);
         const statusBadge = ITINERARY_STATUS_BADGES[it.status];
+        const ps = (it.pipeline_stage ?? "lead") as PipelineStage;
         const eventCount = it.days?.reduce((acc, d) => acc + (d.events?.length ?? 0), 0) ?? 0;
         return (
           <div
@@ -61,12 +64,22 @@ export default function ItineraryCardView({
             <DemoBadge />
             <div className="p-4 flex-1 flex flex-col gap-3">
               <div className="flex items-start justify-between gap-2">
-                <Link
-                  href={`/dashboard/itineraries/${id}`}
-                  className="font-semibold text-[#F5F5F5] hover:underline line-clamp-2 flex-1 min-w-0"
-                >
-                  {it.trip_name || "Untitled"}
-                </Link>
+                <div className="flex-1 min-w-0">
+                  <Link
+                    href={`/dashboard/itineraries/${id}`}
+                    className="font-semibold text-[#F5F5F5] hover:underline line-clamp-2 block"
+                  >
+                    {it.trip_name || "Untitled"}
+                  </Link>
+                  <span
+                    className={cn(
+                      "inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full font-medium",
+                      pipelineStageBadgeClass(ps)
+                    )}
+                  >
+                    {PIPELINE_STAGE_LABEL_MAP[ps]}
+                  </span>
+                </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-[rgba(245,245,245,0.6)]">

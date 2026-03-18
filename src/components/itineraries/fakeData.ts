@@ -3,7 +3,14 @@
  * Monaco Grand Prix (JC), Tuscany Wine & Culture (Eric), Maldives Family Retreat (Camille).
  */
 
-import type { Itinerary, ItineraryDay, ItineraryEvent, ItineraryTripOption } from "@/types/itinerary";
+import type {
+  Itinerary,
+  ItineraryDay,
+  ItineraryEvent,
+  ItineraryTripOption,
+  PipelineEvent,
+  PipelineStage,
+} from "@/types/itinerary";
 
 const LUXURY_TUSCANY_OPTION: ItineraryTripOption = {
   id: "luxury",
@@ -280,6 +287,14 @@ export const FAKE_ITINERARIES: Itinerary[] = [
     publish_state: "published_clean",
     published_version: 2,
     last_published_at: iso(new Date(Date.now() - 3 * 86400000)),
+    pipeline_stage: "final_review",
+    pipeline_history: [
+      { from_stage: "lead", to_stage: "discovery", changed_at: "2026-01-05T09:00:00Z", changed_by: "Manon L.", note: "F1 weekend inquiry" },
+      { from_stage: "discovery", to_stage: "proposal", changed_at: "2026-01-12T14:00:00Z", changed_by: "Manon L." },
+      { from_stage: "proposal", to_stage: "committed", changed_at: "2026-01-20T11:00:00Z", changed_by: "Manon L.", note: "Deposit received — grandstand K confirmed" },
+      { from_stage: "committed", to_stage: "preparing", changed_at: "2026-02-01T09:00:00Z", changed_by: "Manon L." },
+      { from_stage: "preparing", to_stage: "final_review", changed_at: "2026-03-01T10:00:00Z", changed_by: "Manon L.", note: "Re-confirmed hotel & helicopter" },
+    ] satisfies PipelineEvent[],
   } as Itinerary,
   {
     id: "fake-it-2",
@@ -366,6 +381,22 @@ export const FAKE_ITINERARIES: Itinerary[] = [
     updated_at: iso(now),
     publish_state: "never",
     trip_options: [LUXURY_TUSCANY_OPTION],
+    pipeline_stage: "post_travel",
+    pipeline_history: [
+      { from_stage: "lead", to_stage: "discovery", changed_at: "2025-09-01T09:00:00Z", changed_by: "Manon L." },
+      { from_stage: "discovery", to_stage: "proposal", changed_at: "2025-09-10T14:00:00Z", changed_by: "Manon L." },
+      { from_stage: "proposal", to_stage: "committed", changed_at: "2025-09-20T11:00:00Z", changed_by: "Manon L." },
+      { from_stage: "committed", to_stage: "preparing", changed_at: "2025-10-01T09:00:00Z", changed_by: "Manon L." },
+      { from_stage: "preparing", to_stage: "final_review", changed_at: "2025-10-25T09:00:00Z", changed_by: "Manon L." },
+      { from_stage: "final_review", to_stage: "traveling", changed_at: "2025-11-01T06:00:00Z", changed_by: "Manon L." },
+      {
+        from_stage: "traveling",
+        to_stage: "post_travel",
+        changed_at: "2025-11-15T18:00:00Z",
+        changed_by: "Manon L.",
+        note: "Welcome home email sent — clients loved it",
+      },
+    ] satisfies PipelineEvent[],
   } as Itinerary,
   {
     id: "fake-it-3",
@@ -489,6 +520,32 @@ export const FAKE_ITINERARIES: Itinerary[] = [
     created_by: "1",
     created_at: iso(now),
     updated_at: iso(now),
+    pipeline_stage: "preparing",
+    pipeline_history: [
+      { from_stage: "lead", to_stage: "discovery", changed_at: "2025-12-05T09:00:00Z", changed_by: "Manon L." },
+      { from_stage: "discovery", to_stage: "proposal", changed_at: "2025-12-12T14:00:00Z", changed_by: "Manon L." },
+      {
+        from_stage: "proposal",
+        to_stage: "revision",
+        changed_at: "2025-12-18T10:00:00Z",
+        changed_by: "Manon L.",
+        note: "Client wants water villa instead of beach villa",
+      },
+      {
+        from_stage: "revision",
+        to_stage: "committed",
+        changed_at: "2025-12-22T15:30:00Z",
+        changed_by: "Manon L.",
+        note: "Full payment received",
+      },
+      {
+        from_stage: "committed",
+        to_stage: "preparing",
+        changed_at: "2026-01-05T09:00:00Z",
+        changed_by: "Manon L.",
+        note: "Booking confirmed — starting concierge prep",
+      },
+    ] satisfies PipelineEvent[],
   } as Itinerary,
   {
     id: "fake-it-4",
@@ -518,6 +575,17 @@ export const FAKE_ITINERARIES: Itinerary[] = [
     publish_state: "published_clean",
     published_version: 1,
     last_published_at: iso(new Date(Date.now() - 20 * 86400000)),
+    pipeline_stage: "proposal",
+    pipeline_history: [
+      { from_stage: "lead", to_stage: "discovery", changed_at: "2026-02-01T10:00:00Z", changed_by: "Manon L." },
+      {
+        from_stage: "discovery",
+        to_stage: "proposal",
+        changed_at: "2026-02-10T16:00:00Z",
+        changed_by: "Manon L.",
+        note: "Sent 2 options via AXUS",
+      },
+    ] satisfies PipelineEvent[],
   } as Itinerary,
   {
     id: "fake-it-5",
@@ -546,6 +614,24 @@ export const FAKE_ITINERARIES: Itinerary[] = [
     created_by: "1",
     created_at: iso(now),
     updated_at: iso(now),
+    pipeline_stage: "committed",
+    pipeline_history: [
+      {
+        from_stage: "lead",
+        to_stage: "discovery",
+        changed_at: "2026-01-10T09:00:00Z",
+        changed_by: "Manon L.",
+        note: "Initial call — anniversary trip for June",
+      },
+      { from_stage: "discovery", to_stage: "proposal", changed_at: "2026-01-15T14:30:00Z", changed_by: "Manon L." },
+      {
+        from_stage: "proposal",
+        to_stage: "committed",
+        changed_at: "2026-01-22T11:00:00Z",
+        changed_by: "Manon L.",
+        note: "Client approved Option B — $2,500 deposit received",
+      },
+    ] satisfies PipelineEvent[],
   } as Itinerary,
   {
     id: "fake-it-6",
@@ -568,11 +654,14 @@ export const FAKE_ITINERARIES: Itinerary[] = [
       { day_number: 3, date: "2026-09-17", title: "Departure", location: "Lyon", events: [ev({ id: "l3-1", event_type: "flight", title: "Departure Lyon", start_time: "10:00", status: "confirmed" })] },
     ],
     currency: "EUR",
+    tags: [],
     data_ownership_level: "Advisor",
     created_by: "2",
     created_at: iso(now),
     updated_at: iso(now),
     publish_state: "never",
+    pipeline_stage: "lead",
+    pipeline_history: [] as PipelineEvent[],
   } as Itinerary,
 ];
 
@@ -582,6 +671,9 @@ export type ItineraryFilters = {
   agencyId?: string;
   search?: string;
   status?: string;
+  pipeline_stage?: PipelineStage;
+  /** When set, keep itineraries whose pipeline_stage is in this list (e.g. upcoming trips) */
+  pipeline_stages_in?: PipelineStage[];
   vic_id?: string;
   destination?: string;
   date_from?: string;
@@ -617,6 +709,12 @@ export function filterAndPaginateFakeItineraries(
 
   if (filters.search) list = list.filter((it) => matchesSearch(it, filters.search!));
   if (filters.status) list = list.filter((it) => it.status === filters.status);
+  if (filters.pipeline_stages_in?.length) {
+    const allowed = new Set(filters.pipeline_stages_in);
+    list = list.filter((it) => allowed.has((it.pipeline_stage ?? "lead") as PipelineStage));
+  } else if (filters.pipeline_stage) {
+    list = list.filter((it) => (it.pipeline_stage ?? "lead") === filters.pipeline_stage);
+  }
   if (filters.vic_id) list = list.filter((it) => it.primary_vic_id === filters.vic_id);
   if (filters.destination) {
     const q = (filters.destination ?? "").toLowerCase();

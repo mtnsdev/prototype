@@ -11,30 +11,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { DocumentType } from "@/types/knowledge-vault";
 import { useToast } from "@/contexts/ToastContext";
-
-const DOC_TYPES = [
-  { value: DocumentType.DestinationGuide, label: "Destination Guide" },
-  { value: DocumentType.PropertyProfile, label: "Property Profile" },
-  { value: DocumentType.RateSheet, label: "Rate Sheet" },
-  { value: DocumentType.Policy, label: "Policy" },
-  { value: DocumentType.Contract, label: "Contract" },
-  { value: DocumentType.TrainingMaterial, label: "Training Material" },
-  { value: DocumentType.Newsletter, label: "Newsletter" },
-  { value: DocumentType.ClientReport, label: "Client Report" },
-  { value: DocumentType.MarketingCollateral, label: "Marketing Collateral" },
-  { value: DocumentType.InternalMemo, label: "Internal Memo" },
-  { value: DocumentType.PartnerDirectory, label: "Partner Directory" },
-  { value: DocumentType.TravelAdvisory, label: "Travel Advisory" },
-];
 
 type Props = {
   open: boolean;
@@ -47,7 +24,6 @@ export default function UploadDocumentModal({ open, onClose, onUploaded }: Props
   const [step, setStep] = useState(1);
   const [files, setFiles] = useState<File[]>([]);
   const [title, setTitle] = useState("");
-  const [documentType, setDocumentType] = useState<DocumentType>(DocumentType.InternalMemo);
   const [dataLayer, setDataLayer] = useState<"agency" | "advisor">("agency");
   const [tags, setTags] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -56,7 +32,6 @@ export default function UploadDocumentModal({ open, onClose, onUploaded }: Props
     setStep(1);
     setFiles([]);
     setTitle("");
-    setDocumentType(DocumentType.InternalMemo);
     setDataLayer("agency");
     setTags("");
     setUploading(false);
@@ -87,7 +62,6 @@ export default function UploadDocumentModal({ open, onClose, onUploaded }: Props
       const formData = new FormData();
       files.forEach((f) => formData.append("files", f));
       formData.set("title", title);
-      formData.set("document_type", documentType);
       formData.set("data_layer", dataLayer);
       formData.set("tags", tags);
       const { uploadKnowledgeDocuments } = await import("@/lib/knowledge-vault-api");
@@ -162,21 +136,6 @@ export default function UploadDocumentModal({ open, onClose, onUploaded }: Props
               />
             </div>
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Document type</Label>
-              <Select value={documentType} onValueChange={(v) => setDocumentType(v as DocumentType)}>
-                <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {DOC_TYPES.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
               <Label className="text-[rgba(245,245,245,0.8)]">Data layer</Label>
               <div className="flex gap-4 mt-2">
                 <label className="flex items-center gap-2 text-sm text-[rgba(245,245,245,0.8)]">
@@ -216,9 +175,7 @@ export default function UploadDocumentModal({ open, onClose, onUploaded }: Props
             <p className="text-sm text-[rgba(245,245,245,0.7)]">Review and upload</p>
             <div className="rounded-lg bg-white/5 border border-white/10 p-3 space-y-1">
               <p className="font-medium text-[#F5F5F5]">{title || "Untitled"}</p>
-              <p className="text-xs text-[rgba(245,245,245,0.5)]">
-                {DOC_TYPES.find((t) => t.value === documentType)?.label} · {dataLayer}
-              </p>
+              <p className="text-xs text-[rgba(245,245,245,0.5)]">{dataLayer} layer</p>
               <p className="text-xs text-[rgba(245,245,245,0.5)]">
                 {files.length} file{files.length !== 1 ? "s" : ""}
               </p>

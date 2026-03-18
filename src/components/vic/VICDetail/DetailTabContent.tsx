@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Lock, X } from "lucide-react";
-import type { VIC, SharedAccess } from "@/types/vic";
+import { Lock, X, Plane, Plus, ChevronDown } from "lucide-react";
+import type { VIC, SharedAccess, TravelProfileType } from "@/types/vic";
 import { getVICId } from "@/lib/vic-api";
 import { FAKE_ITINERARIES } from "@/components/itineraries/fakeData";
 import { FAKE_PRODUCTS } from "@/components/products/fakeData";
@@ -31,6 +31,146 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-4">
       <h3 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-3">{title}</h3>
       <div className="text-sm text-[rgba(245,245,245,0.85)]">{children}</div>
+    </div>
+  );
+}
+
+function TravelProfilesInline({
+  profiles,
+  activeProfileType,
+  onActiveProfileTypeChange,
+  onAddTravelProfile,
+  onEditTravelProfile,
+}: {
+  profiles: VIC["travel_profiles"];
+  activeProfileType: TravelProfileType;
+  onActiveProfileTypeChange: (t: TravelProfileType) => void;
+  onAddTravelProfile?: () => void;
+  onEditTravelProfile: () => void;
+}) {
+  const list = profiles ?? [];
+  const activeProfile = list.find((p) => p.profile_type === activeProfileType);
+  const hasProfile = (type: TravelProfileType) => list.some((p) => p.profile_type === type);
+
+  return (
+    <div className="mt-4 space-y-3">
+      <div className="flex flex-wrap gap-2">
+        {ALL_TRAVEL_PROFILE_TYPES.map((type) => (
+          <button
+            key={type}
+            type="button"
+            onClick={() => onActiveProfileTypeChange(type)}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5",
+              activeProfileType === type
+                ? "bg-blue-500/15 text-blue-400 border border-blue-500/30"
+                : hasProfile(type)
+                  ? "bg-white/5 text-gray-300 border border-white/10 hover:border-white/20"
+                  : "bg-white/[0.02] text-gray-600 border border-white/5 hover:border-white/10"
+            )}
+          >
+            {profileTypeIcon(type)} {capitalize(type)}
+            {hasProfile(type) && <span className="ml-1 text-green-400">●</span>}
+          </button>
+        ))}
+      </div>
+
+      {activeProfile ? (
+        <div className="bg-white/[0.03] rounded-xl p-4 border border-white/[0.06]">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-white">{capitalize(activeProfileType)}</span>
+              {activeProfile.is_primary && (
+                <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">PRIMARY</span>
+              )}
+            </div>
+            <button type="button" className="text-xs text-blue-400 hover:text-blue-300" onClick={onEditTravelProfile}>
+              Edit
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+            {(activeProfile.accommodation_types?.length ?? 0) > 0 && (
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Accommodation</p>
+                <p className="text-xs text-gray-300">
+                  {(activeProfile.accommodation_types ?? []).join(", ")}
+                </p>
+              </div>
+            )}
+            {activeProfile.accommodation_preferences && !activeProfile.accommodation_types?.length && (
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Accommodation</p>
+                <p className="text-xs text-gray-300">{activeProfile.accommodation_preferences}</p>
+              </div>
+            )}
+            {(activeProfile.cuisine_preferences?.length ?? 0) > 0 && (
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Cuisine</p>
+                <p className="text-xs text-gray-300">{(activeProfile.cuisine_preferences ?? []).join(", ")}</p>
+              </div>
+            )}
+            {(activeProfile.cabin_class || activeProfile.travel_pace || activeProfile.pace) && (
+              <>
+                {activeProfile.cabin_class && (
+                  <div>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Cabin</p>
+                    <p className="text-xs text-gray-300">{activeProfile.cabin_class}</p>
+                  </div>
+                )}
+                {(activeProfile.travel_pace ?? activeProfile.pace) && (
+                  <div>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Pace</p>
+                    <p className="text-xs text-gray-300">{activeProfile.travel_pace ?? activeProfile.pace}</p>
+                  </div>
+                )}
+              </>
+            )}
+            {(activeProfile.budget_range ?? activeProfile.budget_tier) && (
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Budget</p>
+                <p className="text-xs text-gray-300">{activeProfile.budget_range ?? activeProfile.budget_tier}</p>
+              </div>
+            )}
+            {((activeProfile.destinations_preferred?.length ?? 0) > 0 || (activeProfile.destinations?.length ?? 0) > 0) && (
+              <div className="col-span-2">
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Preferred Destinations</p>
+                <p className="text-xs text-gray-300">
+                  {(activeProfile.destinations_preferred ?? activeProfile.destinations ?? []).join(", ")}
+                </p>
+              </div>
+            )}
+          </div>
+          {activeProfile.source === "acuity" && (
+            <div className="mt-3 pt-3 border-t border-white/[0.04]">
+              <p className="text-[10px] text-violet-400 flex items-center gap-1">
+                <span>✦</span> Some preferences enriched by Acuity
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="bg-white/[0.02] rounded-xl p-4 border border-dashed border-white/10 text-center">
+          <p className="text-xs text-gray-500">No {capitalize(activeProfileType)} profile yet</p>
+          {onAddTravelProfile && (
+            <button
+              type="button"
+              className="mt-2 text-xs text-blue-400 hover:text-blue-300"
+              onClick={onAddTravelProfile}
+            >
+              + Create {capitalize(activeProfileType)} Profile
+            </button>
+          )}
+        </div>
+      )}
+      {list.length < 7 && onAddTravelProfile && (
+        <button
+          type="button"
+          className="text-xs text-gray-500 hover:text-gray-400 flex items-center gap-1"
+          onClick={onAddTravelProfile}
+        >
+          <Plus className="w-3 h-3" /> Add another profile type
+        </button>
+      )}
     </div>
   );
 }
@@ -288,6 +428,24 @@ function SharingTabContent({ vic }: { vic: VIC }) {
   );
 }
 
+const ALL_TRAVEL_PROFILE_TYPES: TravelProfileType[] = [
+  "business",
+  "leisure",
+  "romantic",
+  "adventure",
+  "wellness",
+  "cultural",
+  "celebration",
+];
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, " ");
+}
+
+function profileTypeIcon(_type: TravelProfileType) {
+  return <Plane className="w-3.5 h-3.5 text-[rgba(245,245,245,0.5)]" />;
+}
+
 type Props = {
   vic: VIC;
   activeTab: DetailTabId;
@@ -295,11 +453,25 @@ type Props = {
   onUpdate: () => void;
   travelProfiles?: VIC["travel_profiles"];
   onAddTravelProfile?: () => void;
+  showTravelProfiles?: boolean;
+  onShowTravelProfilesChange?: (show: boolean) => void;
+  travelSectionRef?: React.RefObject<HTMLDivElement | null>;
 };
 
-export default function DetailTabContent({ vic, activeTab, canViewSensitive, onUpdate, travelProfiles: travelProfilesProp, onAddTravelProfile }: Props) {
+export default function DetailTabContent({
+  vic,
+  activeTab,
+  canViewSensitive,
+  onUpdate,
+  travelProfiles: travelProfilesProp,
+  onAddTravelProfile,
+  showTravelProfiles = false,
+  onShowTravelProfilesChange,
+  travelSectionRef,
+}: Props) {
   const showToast = useToast();
   const [sendFormOpen, setSendFormOpen] = useState(false);
+  const [activeProfileType, setActiveProfileType] = useState<TravelProfileType>("business");
   const leg = vic as unknown as { city?: string; country?: string; company?: string; role?: string; phone?: string; customTags?: string[]; notes?: string; familyContext?: string; preferences?: string; loyaltyPrograms?: string; additionalContext?: string };
   const vicId = getVICId(vic);
 
@@ -311,29 +483,58 @@ export default function DetailTabContent({ vic, activeTab, canViewSensitive, onU
     const acuityLastRun = vic.acuity_last_run ?? (vic as unknown as { acuityLastRun?: string }).acuityLastRun;
     const acuityProvider = vic.acuity_provider ?? "—";
     const acuityConfidence = vic.acuity_confidence ?? "—";
-    const enrichedCount = Object.keys(provenance).filter((k) => provenance[k]?.source === "acuity").length;
-    const totalFields = 24;
-    const completeness = Math.round((enrichedCount / totalFields) * 100);
+    const acuityEntries = Object.entries(provenance).filter(([, p]) => p?.source === "acuity");
+    const enrichedCount = acuityEntries.length;
+    const totalFields = 40;
+    const completeness = Math.min(100, Math.round((enrichedCount / totalFields) * 100));
     const acuityDaysAgo = acuityLastRun ? Math.floor((Date.now() - new Date(acuityLastRun).getTime()) / (24 * 60 * 60 * 1000)) : null;
+    const providerCounts: Record<string, number> = {};
+    const confScores: number[] = [];
+    const w = { high: 1, medium: 0.66, low: 0.33 } as const;
+    acuityEntries.forEach(([, p]) => {
+      const pr = (p.provider ?? "unknown").toLowerCase();
+      const label = pr === "gemini" ? "Gemini" : pr === "perplexity" ? "Perplexity" : pr === "claude" ? "Claude" : p.provider ?? "—";
+      providerCounts[label] = (providerCounts[label] ?? 0) + 1;
+      confScores.push(w[p.confidence ?? "medium"] ?? 0.66);
+    });
+    const avgConfPct = confScores.length ? Math.round((confScores.reduce((a, b) => a + b, 0) / confScores.length) * 100) : 0;
+    const providerBreakdown = Object.entries(providerCounts)
+      .map(([name, n]) => `${name}: ${n}`)
+      .join(" · ");
     return (
       <div className="space-y-4">
-        <div className="rounded-xl border border-[var(--muted-accent-border)] bg-[var(--muted-accent-bg)] p-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-accent-text)] mb-3">Acuity Intelligence Summary</h3>
+        <div className="rounded-xl border border-violet-500/25 bg-violet-500/10 p-4">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-violet-300 mb-3">Acuity Intelligence Summary</h3>
           {acuityLastRun ? (
             <div className="space-y-2 text-sm">
-              <div className="flex flex-wrap items-center gap-4">
-                <span className="text-[rgba(245,245,245,0.8)]">Last run: {formatDate(acuityLastRun) ?? acuityLastRun}</span>
-                <span className="text-[rgba(245,245,245,0.8)]">Provider: {acuityProvider}</span>
-                <span className="text-[rgba(245,245,245,0.8)]">Confidence: {String(acuityConfidence).charAt(0).toUpperCase() + String(acuityConfidence).slice(1)}</span>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <span className="text-[rgba(245,245,245,0.85)]">Last run: {formatDate(acuityLastRun) ?? acuityLastRun}</span>
+                <span className="text-[rgba(245,245,245,0.85)]">Primary run: {acuityProvider}</span>
+                <span className="text-[rgba(245,245,245,0.85)]">Headline confidence: {String(acuityConfidence).charAt(0).toUpperCase() + String(acuityConfidence).slice(1)}</span>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-2 rounded-full border border-gray-600 bg-white/10 overflow-hidden max-w-[120px]">
+              <p className="text-xs text-[rgba(245,245,245,0.65)]">
+                <span className="text-violet-300/90 font-medium">{enrichedCount}</span> fields enriched by Acuity
+                {providerBreakdown ? (
+                  <>
+                    {" · "}
+                    {providerBreakdown}
+                  </>
+                ) : null}
+              </p>
+              <p className="text-xs text-[rgba(245,245,245,0.65)]">
+                Estimated overall confidence (avg. across enriched fields):{" "}
+                <span className="text-emerald-400/90 font-medium">{avgConfPct}%</span>
+              </p>
+              <div className="flex items-center gap-3 pt-1">
+                <div className="flex-1 h-2 rounded-full border border-violet-500/20 bg-white/10 overflow-hidden max-w-[160px]">
                   <div className="h-full rounded-full bg-violet-500" style={{ width: completeness + "%" }} />
                 </div>
-                <span className="text-xs text-white">{enrichedCount} of {totalFields} profile fields enriched</span>
+                <span className="text-xs text-[rgba(245,245,245,0.75)]">Coverage ~{completeness}% of enrichable field set</span>
               </div>
               {acuityDaysAgo != null && acuityDaysAgo > 30 && (
-                <Button variant="outline" size="sm" className="border-[var(--muted-accent-border)] text-[var(--muted-accent-text)]" onClick={onUpdate}>Refresh</Button>
+                <Button variant="outline" size="sm" className="border-violet-500/30 text-violet-300 mt-2" onClick={onUpdate}>
+                  Refresh
+                </Button>
               )}
             </div>
           ) : (
@@ -345,7 +546,8 @@ export default function DetailTabContent({ vic, activeTab, canViewSensitive, onU
             <Row label="Preferred name" value={vic.preferred_name} acuityProvenance={provenance.preferred_name} />
             <Row label="Primary contact" value={contact || undefined} />
             <Row label="Location" value={location || undefined} acuityProvenance={provenance.home_city || provenance.home_country} />
-            <Row label="Company & Role" value={[vic.company ?? leg.company, vic.title ?? leg.role].filter(Boolean).join(" · ") || undefined} />
+            <Row label="Company" value={vic.company ?? leg.company} emptyLabel="Not set" />
+            <Row label="Title / role" value={vic.title ?? leg.role} emptyLabel="Not set" acuityProvenance={provenance.title} />
             <Row label="Client since" value={vic.client_since ? formatDate(vic.client_since) ?? vic.client_since : undefined} />
             <Row label="Relationship status" value={vic.relationship_status?.replace(/_/g, " ") ?? undefined} />
             <Row label="Last Acuity run" value={acuityLastRun ? (formatDate(acuityLastRun) ?? acuityLastRun) : undefined} />
@@ -367,6 +569,36 @@ export default function DetailTabContent({ vic, activeTab, canViewSensitive, onU
             <p className="whitespace-pre-wrap">{vic.vip_notes}</p>
           </Section>
         )}
+
+        {/* Travel Profiles — collapsible section at bottom of Overview */}
+        <div ref={travelSectionRef} className="border-t border-white/[0.06] pt-5 mt-5">
+          <button
+            type="button"
+            onClick={() => onShowTravelProfilesChange?.(!showTravelProfiles)}
+            className="flex items-center justify-between w-full group"
+          >
+            <div className="flex items-center gap-2">
+              <Plane className="w-4 h-4 text-gray-400" />
+              <span className="text-sm font-medium text-white">Travel Profiles</span>
+              <span className="text-xs text-gray-500 bg-white/5 px-2 py-0.5 rounded-full">
+                {(travelProfilesProp ?? vic.travel_profiles ?? []).length} of 7
+              </span>
+            </div>
+            <ChevronDown
+              className={cn("w-4 h-4 text-gray-500 transition-transform", showTravelProfiles && "rotate-180")}
+            />
+          </button>
+
+          {showTravelProfiles && (
+            <TravelProfilesInline
+              profiles={travelProfilesProp ?? vic.travel_profiles ?? []}
+              activeProfileType={activeProfileType}
+              onActiveProfileTypeChange={setActiveProfileType}
+              onAddTravelProfile={onAddTravelProfile}
+              onEditTravelProfile={() => showToast("Edit travel profile — coming in v2")}
+            />
+          )}
+        </div>
       </div>
     );
   }
@@ -396,10 +628,10 @@ export default function DetailTabContent({ vic, activeTab, canViewSensitive, onU
         </Section>
         <Section title="Personal">
           <div className="space-y-0">
-            <Row label="Company" value={vic.company ?? leg.company} emptyLabel="Not set" acuityProvenance={prov.company} />
+            <Row label="Company" value={vic.company ?? leg.company} emptyLabel="Not set" />
             <Row label="Title" value={vic.title} emptyLabel="Not set" acuityProvenance={prov.title} />
             <Row label="Preferred name" value={vic.preferred_name} emptyLabel="Not set" acuityProvenance={prov.preferred_name} />
-            <Row label="Nationality" value={vic.nationality} emptyLabel="Not set" acuityProvenance={prov.nationality} />
+            <Row label="Nationality" value={vic.nationality} emptyLabel="Not set" acuityProvenance={prov.nationality?.source === "acuity" ? prov.nationality : undefined} />
             <Row label="Date of birth" value={dobValue} emptyLabel="Not set" acuityProvenance={prov.date_of_birth} />
             <Row label="Primary language" value={vic.language_primary} emptyLabel="Not set" acuityProvenance={prov.language_primary} />
             <Row
@@ -450,7 +682,7 @@ export default function DetailTabContent({ vic, activeTab, canViewSensitive, onU
             <Row label="Assigned advisor" value={vic.assigned_advisor_name ?? vic.assigned_advisor_id} emptyLabel="Not set" />
             <Row label="Secondary advisor" value={vic.secondary_advisor_name ?? vic.secondary_advisor_id} emptyLabel="Not set" />
             <Row label="Client since" value={vic.client_since ? formatDate(vic.client_since) ?? vic.client_since : undefined} emptyLabel="Not set" />
-            <Row label="Referral source" value={vic.referral_source} emptyLabel="Not set" acuityProvenance={vic.field_provenance?.referral_source} />
+            <Row label="Referral source" value={vic.referral_source} emptyLabel="Not set" />
             <Row label="Referred by VIC" value={referredByLink} emptyLabel="Not set" />
             <div className="flex gap-2 py-1.5 border-b border-[rgba(255,255,255,0.06)] items-center">
               <span className="text-[rgba(245,245,245,0.5)] shrink-0 w-36">Relationship status</span>
@@ -471,13 +703,33 @@ export default function DetailTabContent({ vic, activeTab, canViewSensitive, onU
 
   if (activeTab === "preferences") {
     const notes = vic.notes ?? leg.notes;
+    const provPref = vic.field_provenance ?? {};
+    const leisureKeys = Object.keys(provPref).filter((k) => k.startsWith("leisure.") && provPref[k]?.source === "acuity");
+    const LEISURE_LABELS: Record<string, string> = {
+      "leisure.accommodation_types": "Accommodation types",
+      "leisure.accommodation_style": "Accommodation style",
+      "leisure.cuisine_preferences": "Cuisine preferences",
+      "leisure.dining_style": "Dining style",
+      "leisure.experience_themes": "Experience themes",
+      "leisure.activities_loved": "Activities loved",
+      "leisure.travel_pace": "Travel pace",
+      "leisure.budget_range": "Budget range",
+      "leisure.preferred_airlines": "Preferred airlines",
+      "leisure.cabin_class": "Cabin class",
+      "leisure.destinations_preferred": "Destinations preferred",
+      "leisure.destinations_visited": "Destinations visited",
+      "leisure.best_for_occasions": "Best for occasions",
+    };
     return (
       <div className="space-y-4">
         <Section title="Preferences & tags">
           <div className="space-y-0">
             {(vic.tags ?? leg.customTags ?? []).length > 0 && (
               <div className="py-1.5 border-b border-[rgba(255,255,255,0.06)]">
-                <span className="text-[rgba(245,245,245,0.5)] block w-36 mb-1">Tags</span>
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <span className="text-[rgba(245,245,245,0.5)] w-36 shrink-0">Tags</span>
+                  {provPref.customTags?.source === "acuity" && <AcuitySourceBadge provenance={provPref.customTags} fieldLabel="Tags" />}
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {(vic.tags ?? leg.customTags ?? []).map((t: string) => (
                     <span key={t} className="text-xs lowercase border border-gray-600 text-gray-400 rounded-full px-2 py-0.5">{t}</span>
@@ -485,8 +737,8 @@ export default function DetailTabContent({ vic, activeTab, canViewSensitive, onU
                 </div>
               </div>
             )}
-            <Row label="Dietary restrictions" value={vic.dietary_restrictions} acuityProvenance={vic.field_provenance?.dietary_restrictions} />
-            <Row label="Accessibility needs" value={vic.accessibility_needs} acuityProvenance={vic.field_provenance?.accessibility_needs} />
+            <Row label="Dietary restrictions" value={vic.dietary_restrictions} />
+            <Row label="Accessibility needs" value={vic.accessibility_needs} />
             <Row label="GDPR consent" value={vic.gdpr_consent_given == null ? undefined : vic.gdpr_consent_given ? "Yes" : "No"} />
             <Row label="Marketing consent" value={vic.marketing_consent == null ? undefined : vic.marketing_consent ? "Yes" : "No"} />
           </div>
@@ -496,9 +748,34 @@ export default function DetailTabContent({ vic, activeTab, canViewSensitive, onU
             <p className="whitespace-pre-wrap">{notes}</p>
           </Section>
         )}
+        {leisureKeys.length > 0 && (
+          <Section title="Travel preferences (Acuity · leisure)">
+            <p className="text-xs text-[rgba(245,245,245,0.45)] mb-3">
+              Fields discovered from public sources. Review excerpts via each badge.
+            </p>
+            <div className="space-y-0">
+              {leisureKeys.sort().map((key) => {
+                const p = provPref[key];
+                if (!p || p.source !== "acuity") return null;
+                const excerpt = p.raw_excerpt ?? "—";
+                return (
+                  <Row
+                    key={key}
+                    label={LEISURE_LABELS[key] ?? key.replace("leisure.", "")}
+                    value={excerpt.length > 120 ? `${excerpt.slice(0, 117)}…` : excerpt}
+                    acuityProvenance={p}
+                  />
+                );
+              })}
+            </div>
+          </Section>
+        )}
         {leg.familyContext && (
           <Section title="Family context">
-            <p className="whitespace-pre-wrap">{leg.familyContext}</p>
+            <div className="flex flex-wrap items-start gap-2">
+              <p className="whitespace-pre-wrap flex-1 min-w-0">{leg.familyContext}</p>
+              {provPref.familyContext?.source === "acuity" && <AcuitySourceBadge provenance={provPref.familyContext} fieldLabel="Family context" />}
+            </div>
           </Section>
         )}
         <Section title="Documents">
@@ -527,6 +804,13 @@ export default function DetailTabContent({ vic, activeTab, canViewSensitive, onU
                   emptyLabel="Not set"
                 />
                 <Row label="Known traveler number" value={vic.known_traveler_number ? (typeof vic.known_traveler_number === "string" && vic.known_traveler_number.startsWith("****") ? vic.known_traveler_number : "****" + String(vic.known_traveler_number).slice(-4)) : undefined} emptyLabel="Not set" />
+                {provPref.loyalty_programs?.source === "acuity" && (
+                  <Row
+                    label="Loyalty signals (Acuity)"
+                    value="Cross-check listed programs with client — inferred from public mentions"
+                    acuityProvenance={provPref.loyalty_programs}
+                  />
+                )}
               </div>
               {vic.loyalty_programs && vic.loyalty_programs.length > 0 && (
                 <div className="py-1.5">
@@ -607,46 +891,6 @@ export default function DetailTabContent({ vic, activeTab, canViewSensitive, onU
             setSendFormOpen(false);
           }}
         />
-      </div>
-    );
-  }
-
-  if (activeTab === "travel") {
-    const profiles = travelProfilesProp ?? vic.travel_profiles ?? [];
-    const discovered = vic.travel_discovered_preferences ?? [];
-    return (
-      <div className="space-y-4">
-        <Section title="Travel profiles">
-          {profiles.length === 0 ? (
-            <p className="text-[rgba(245,245,245,0.6)]">No travel profiles yet.</p>
-          ) : (
-            <ul className="space-y-2">
-              {profiles.map((p) => (
-                <li key={p.id} className="flex items-center justify-between py-2 border-b border-[rgba(255,255,255,0.06)] last:border-0">
-                  <div>
-                    <span className="font-medium capitalize">{p.profile_type.replace(/_/g, " ")}</span>
-                    {p.is_primary && <span className="ml-2 text-xs text-[rgba(245,245,245,0.5)]">Primary</span>}
-                    {p.preferences_summary && <p className="text-xs text-[rgba(245,245,245,0.6)] mt-0.5">{p.preferences_summary}</p>}
-                  </div>
-                  <Link
-                    href={`/dashboard/vics/${vicId}/travel/${p.profile_type}`}
-                    className="text-sm text-[rgba(245,245,245,0.8)] hover:underline"
-                  >
-                    View
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-          {onAddTravelProfile && (
-            <Button type="button" variant="outline" size="sm" className="mt-3" onClick={onAddTravelProfile}>
-              Add Travel Profile
-            </Button>
-          )}
-        </Section>
-        {discovered.length > 0 && (
-          <TravelDiscoveredPreferences discovered={discovered} />
-        )}
       </div>
     );
   }

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import type { Itinerary, ItineraryStatus, ItineraryListParams } from "@/types/itinerary";
+import type { Itinerary, ItineraryStatus, ItineraryListParams, PipelineStage } from "@/types/itinerary";
+import { PIPELINE_STAGES } from "@/config/pipelineStages";
 import { fetchItineraryList, getItineraryId } from "@/lib/itineraries-api";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/contexts/ToastContext";
@@ -18,11 +19,19 @@ import CreateItineraryModal from "./Modals/CreateItineraryModal";
 import PreviewBanner from "@/components/ui/PreviewBanner";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 import DeleteItineraryModal from "./Modals/DeleteItineraryModal";
+import { cn } from "@/lib/utils";
 
 const VIEW_KEY = "itinerary_view";
 const SORT_KEY = "itinerary_sortBy";
 const SORT_ORDER_KEY = "itinerary_sortOrder";
 const PAGE_SIZE = 20;
+
+const UPCOMING_PIPELINE_STAGES: PipelineStage[] = [
+  "committed",
+  "preparing",
+  "final_review",
+  "traveling",
+];
 
 export default function ItinerariesPage() {
   const { user } = useUser();
@@ -33,6 +42,7 @@ export default function ItinerariesPage() {
   const activeTab = tabFromUrl === "agency" ? "agency" : "mine";
   const createVicId = searchParams.get("vic_id") ?? undefined;
   const openCreateFromUrl = searchParams.get("create") === "1";
+  const upcomingTripsFromUrl = searchParams.get("filter") === "upcoming";
 
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -48,6 +58,7 @@ export default function ItinerariesPage() {
   const [viewMode, setViewMode] = useState<"list" | "cards" | "board">("list");
   const [sortBy, setSortBy] = useState("updated_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [pipelineFilter, setPipelineFilter] = useState<PipelineStage | null>(null);
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteItinerary, setDeleteItinerary] = useState<Itinerary | null>(null);
@@ -58,6 +69,14 @@ export default function ItinerariesPage() {
 
   const isDev = typeof process !== "undefined" && process.env.NODE_ENV === "development";
   const currentUser = user ? { id: user.id, role: user.role, agency_id: user.agency_id } : null;
+
+  const clearUpcomingUrlParam = useCallback(() => {
+    const sp = new URLSearchParams(searchParams.toString());
+    if (sp.get("filter") !== "upcoming") return;
+    sp.delete("filter");
+    const q = sp.toString();
+    router.replace(`/dashboard/itineraries${q ? `?${q}` : ""}`);
+  }, [router, searchParams]);
 
   const loadItineraries = useCallback(async () => {
     setError(null);
@@ -90,6 +109,7 @@ export default function ItinerariesPage() {
           destination: params.destination ?? undefined,
           date_from: params.date_from ?? undefined,
           date_to: params.date_to ?? undefined,
+          pipeline_stage: pipelineFilter ?? undefined,
           sortBy,
           sortOrder,
           page: 1,
@@ -112,6 +132,8 @@ export default function ItinerariesPage() {
         destination: params.destination ?? undefined,
         date_from: params.date_from ?? undefined,
         date_to: params.date_to ?? undefined,
+        pipeline_stages_in: upcomingTripsFromUrl ? UPCOMING_PIPELINE_STAGES : undefined,
+        pipeline_stage: upcomingTripsFromUrl ? undefined : (pipelineFilter ?? undefined),
         sortBy,
         sortOrder,
         page: 1,
@@ -135,6 +157,8 @@ export default function ItinerariesPage() {
     dateTo,
     sortBy,
     sortOrder,
+    pipelineFilter,
+    upcomingTripsFromUrl,
     isDev,
   ]);
 
@@ -166,7 +190,9 @@ export default function ItinerariesPage() {
     destinationFilter != null ||
     vicFilter != null ||
     dateFrom !== "" ||
-    dateTo !== "";
+    dateTo !== "" ||
+    pipelineFilter != null ||
+    upcomingTripsFromUrl;
 
   const clearFilters = () => {
     setSearchQuery("");
@@ -175,7 +201,21 @@ export default function ItinerariesPage() {
     setVicFilter(null);
     setDateFrom("");
     setDateTo("");
+    setPipelineFilter(null);
+    clearUpcomingUrlParam();
   };
+
+  const itinerariesForStageCounts = useMemo(() => {
+    return filterAndPaginateFakeItineraries(FAKE_ITINERARIES, {
+      tab: activeTab,
+      userId: user?.id != null ? String(user.id) : undefined,
+      agencyId: user?.agency_id != null ? String(user.agency_id) : undefined,
+      page: 1,
+      limit: 500,
+      sortBy: "updated_at",
+      sortOrder: "desc",
+    }).itineraries;
+  }, [activeTab, user?.id, user?.agency_id]);
 
   const isEmpty = !isLoading && itineraries.length === 0 && !hasActiveFilters;
   const noResults = !isLoading && itineraries.length === 0 && hasActiveFilters;
@@ -211,6 +251,21 @@ export default function ItinerariesPage() {
         onClearFilters={clearFilters}
       />
 
+      {upcomingTripsFromUrl && (
+        <div className="px-4 py-2 text-xs bg-emerald-500/10 text-emerald-200/90 border-b border-emerald-500/15 flex flex-wrap items-center justify-between gap-2 shrink-0">
+          <span>
+            Showing upcoming trips: Committed, Preparing, Final Review, or Traveling.
+          </span>
+          <button
+            type="button"
+            onClick={clearUpcomingUrlParam}
+            className="text-emerald-400 hover:text-emerald-300 font-medium"
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
       {error && (
         <div className="px-4 py-2 text-sm text-[var(--muted-amber-text)] bg-[var(--muted-amber-bg)] border-b border-[var(--muted-amber-border)]">
           {error}
@@ -228,6 +283,44 @@ export default function ItinerariesPage() {
 
       {!isEmpty && !noResults && (
         <>
+          <div className="flex items-center gap-2 px-4 mb-2 overflow-x-auto pb-1 shrink-0 border-b border-white/[0.04]">
+            <button
+              type="button"
+              onClick={() => {
+                setPipelineFilter(null);
+                clearUpcomingUrlParam();
+              }}
+              className={cn(
+                "px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all",
+                !pipelineFilter && !upcomingTripsFromUrl
+                  ? "bg-white/10 text-white border border-white/20"
+                  : "text-gray-500 hover:text-gray-400"
+              )}
+            >
+              All
+            </button>
+            {PIPELINE_STAGES.filter((s) => s.key !== "archived").map((stage) => (
+              <button
+                key={stage.key}
+                type="button"
+                onClick={() => {
+                  setPipelineFilter(stage.key);
+                  clearUpcomingUrlParam();
+                }}
+                className={cn(
+                  "px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all",
+                  pipelineFilter === stage.key
+                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                    : "text-gray-500 hover:text-gray-400"
+                )}
+              >
+                {stage.label}
+                <span className="ml-1 text-gray-600">
+                  {itinerariesForStageCounts.filter((i) => (i.pipeline_stage ?? "lead") === stage.key).length}
+                </span>
+              </button>
+            ))}
+          </div>
           {viewMode === "board" && (
             <ItineraryKanbanView itineraries={itineraries} />
           )}
@@ -245,7 +338,13 @@ export default function ItinerariesPage() {
                     setItineraries((prev) => [dup, ...prev]);
                   } catch (_) {
                     if (isDev) {
-                      const dup = { ...it, id: `fake-it-dup-${Date.now()}`, trip_name: `${it.trip_name} (copy)` };
+                      const dup = {
+                        ...it,
+                        id: `fake-it-dup-${Date.now()}`,
+                        trip_name: `${it.trip_name} (copy)`,
+                        pipeline_stage: it.pipeline_stage ?? "lead",
+                        pipeline_history: [...(it.pipeline_history ?? [])],
+                      };
                       setItineraries((prev) => [dup, ...prev]);
                     }
                   }
@@ -270,7 +369,13 @@ export default function ItinerariesPage() {
                     setItineraries((prev) => [dup, ...prev]);
                   } catch (_) {
                     if (isDev) {
-                      const dup = { ...it, id: `fake-it-dup-${Date.now()}`, trip_name: `${it.trip_name} (copy)` };
+                      const dup = {
+                        ...it,
+                        id: `fake-it-dup-${Date.now()}`,
+                        trip_name: `${it.trip_name} (copy)`,
+                        pipeline_stage: it.pipeline_stage ?? "lead",
+                        pipeline_history: [...(it.pipeline_history ?? [])],
+                      };
                       setItineraries((prev) => [dup, ...prev]);
                     }
                   }

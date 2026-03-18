@@ -14,6 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import type { PipelineStage } from "@/types/itinerary";
+import { PIPELINE_STAGE_LABEL_MAP, pipelineStageBadgeClass } from "@/config/pipelineStages";
 
 type Props = {
   itineraries: Itinerary[];
@@ -32,6 +34,7 @@ const COLUMNS = [
   { key: "destinations", label: "Destinations", sortable: false },
   { key: "dates", label: "Dates", sortable: true },
   { key: "duration", label: "Duration", sortable: false },
+  { key: "pipeline", label: "Pipeline", sortable: false },
   { key: "status", label: "Status", sortable: true },
   { key: "events", label: "Events", sortable: false },
   { key: "price", label: "Price", sortable: false },
@@ -75,6 +78,8 @@ export default function ItineraryListView({
           {itineraries.map((it) => {
             const id = getItineraryId(it);
             const statusBadge = ITINERARY_STATUS_BADGES[it.status];
+            const ps = (it.pipeline_stage ?? "lead") as PipelineStage;
+            const plLabel = PIPELINE_STAGE_LABEL_MAP[ps];
             const eventCount = it.days?.reduce((acc, d) => acc + (d.events?.length ?? 0), 0) ?? 0;
             const totalPrice = it.total_client_price ?? it.days?.reduce((sum, d) => sum + (d.events ?? []).reduce((s, e) => s + (e.client_price ?? 0), 0), 0) ?? 0;
             const currencySym = it.currency === "EUR" ? "€" : it.currency ?? "€";
@@ -108,6 +113,11 @@ export default function ItineraryListView({
                 </td>
                 <td className="py-2 px-2 text-sm text-[rgba(245,245,245,0.7)]">
                   {it.days?.length ?? 0} days
+                </td>
+                <td className="py-2 px-2">
+                  <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-medium", pipelineStageBadgeClass(ps))}>
+                    {plLabel}
+                  </span>
                 </td>
                 <td className="py-2 px-2">
                   <span

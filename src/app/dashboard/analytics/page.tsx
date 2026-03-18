@@ -63,7 +63,7 @@ export default function AnalyticsPage() {
       <div className="max-w-6xl mx-auto p-6 space-y-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h1 className="text-2xl font-semibold text-[#F5F5F5] flex items-center gap-2">
-            <BarChart3 size={28} className="text-violet-400" /> Analytics
+            <BarChart3 size={28} className="text-blue-400" /> Analytics
           </h1>
           <div className="flex items-center gap-2">
             <Select value={range} onValueChange={setRange}>
@@ -171,22 +171,22 @@ export default function AnalyticsPage() {
 
         <div
           className={cn(
-            "rounded-xl border p-4 transition-colors",
-            askFocus ? "border-violet-500/40 bg-violet-500/5" : "border-violet-500/20 bg-violet-500/[0.03]"
+            "rounded-xl border border-white/10 p-4 transition-colors bg-blue-500/5",
+            askFocus && "border-blue-500/25"
           )}
         >
-          <div className="flex items-center gap-2 rounded-lg bg-black/20 border border-violet-500/20 px-4 py-3">
-            <span className="text-violet-400">✦</span>
+          <div className="flex items-center gap-2 rounded-lg bg-black/20 border border-blue-500/10 px-4 py-3">
+            <span className="text-blue-400">✦</span>
             <input
               className="flex-1 bg-transparent text-[#F5F5F5] placeholder:text-gray-500 text-sm outline-none"
-              placeholder="Ask Acuity about your data..."
+              placeholder="Ask a question about your data..."
               onFocus={() => setAskFocus(true)}
               onBlur={() => setAskFocus(false)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") showToast("Acuity Analytics — coming in v2");
+                if (e.key === "Enter") showToast("AI Analytics — coming in v2");
               }}
             />
-            <Button size="sm" className="bg-violet-600" onClick={() => showToast("Acuity Analytics — coming in v2")}>
+            <Button size="sm" className="bg-slate-600 hover:bg-slate-500" onClick={() => showToast("AI Analytics — coming in v2")}>
               →
             </Button>
           </div>
@@ -196,8 +196,8 @@ export default function AnalyticsPage() {
                 <button
                   key={q}
                   type="button"
-                  className="text-xs px-3 py-1.5 rounded-full border border-violet-500/30 text-violet-300 hover:bg-violet-500/10"
-                  onClick={() => showToast("Acuity Analytics — coming in v2")}
+                  className="text-xs px-3 py-1.5 rounded-full border border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
+                  onClick={() => showToast("AI Analytics — coming in v2")}
                 >
                   {q}
                 </button>

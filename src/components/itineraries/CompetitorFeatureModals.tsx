@@ -106,7 +106,7 @@ export function CompareOptionsModal({
             <p className="text-sm text-gray-500">Car transfers</p>
             <p className="text-sm text-gray-500">Restaurant dining</p>
           </div>
-          <div className="rounded-lg border border-violet-500/20 p-4 space-y-2">
+          <div className="rounded-lg border border-blue-500/20 p-4 space-y-2">
             <h3 className="font-semibold text-[#F5F5F5]">{luxuryOption.name}</h3>
             <p className="text-sm text-gray-400">6 days</p>
             <p className="text-sm text-gray-400">{evLux} events</p>
@@ -120,7 +120,7 @@ export function CompareOptionsModal({
           <Button variant="outline" className="border-white/10" onClick={() => onToast("Send Both to Client — coming in v2")}>
             Send Both to Client
           </Button>
-          <Button className="bg-violet-600" onClick={() => onToast("Select as Final — coming in v2")}>
+          <Button className="bg-blue-600 hover:bg-blue-500" onClick={() => onToast("Select as Final — coming in v2")}>
             Select as Final
           </Button>
         </div>
@@ -325,8 +325,8 @@ export function ImportItineraryModal({ open, onClose, onParse }: { open: boolean
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70">
       <div className="w-full max-w-lg rounded-xl border border-white/10 bg-[#141414] p-6">
         <div className="flex justify-between">
-          <h2 className="text-lg font-semibold text-violet-300 flex items-center gap-2">
-            <Sparkles size={18} /> Import Itinerary with Acuity
+          <h2 className="text-lg font-semibold text-blue-300 flex items-center gap-2">
+            <Sparkles size={18} className="text-blue-400" /> Import Itinerary
           </h2>
           <Button variant="ghost" size="icon" onClick={onClose} disabled={loading}>
             <X size={18} />
@@ -336,24 +336,24 @@ export function ImportItineraryModal({ open, onClose, onParse }: { open: boolean
           <div className="py-12 text-center">
             <div className="flex justify-center gap-1 mb-4">
               {[0, 1, 2].map((i) => (
-                <span key={i} className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" style={{ animationDelay: `${i * 200}ms` }} />
+                <span key={i} className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" style={{ animationDelay: `${i * 200}ms` }} />
               ))}
             </div>
-            <p className="text-sm text-violet-300">Acuity is parsing your content…</p>
+            <p className="text-sm text-blue-300">Parsing your content…</p>
           </div>
         ) : (
           <>
-            <p className="text-sm text-gray-400 mt-2">Paste a URL, upload a PDF, or paste text and Acuity will convert it into structured events.</p>
+            <p className="text-sm text-gray-400 mt-2">Paste a URL, upload a PDF, or paste text and we&apos;ll convert it into structured events.</p>
             <textarea className="w-full mt-4 h-32 rounded-lg bg-white/5 border border-white/10 p-3 text-sm text-[#F5F5F5] placeholder:text-gray-500" placeholder="Paste URL or text here…" />
             <Button variant="outline" className="mt-2 border-white/10 gap-2">
               <Upload size={14} /> Upload PDF
             </Button>
-            <p className="text-xs text-violet-400/80 mt-4">✦ Powered by Acuity Intelligence</p>
+            <p className="text-xs text-blue-400/80 mt-4">✦ AI-powered import</p>
             <div className="flex justify-end gap-2 mt-6">
               <Button variant="outline" className="border-white/10" onClick={onClose}>
                 Cancel
               </Button>
-              <Button className="bg-violet-600" onClick={handleParse}>
+              <Button className="bg-blue-600 hover:bg-blue-500" onClick={handleParse}>
                 Import & Parse
               </Button>
             </div>
@@ -370,14 +370,14 @@ export function DestinationGuideModal({ open, onClose, vicName, dest, dates, onG
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70">
       <div className="w-full max-w-lg rounded-xl border border-white/10 bg-[#141414] p-6">
         <div className="flex justify-between">
-          <h2 className="text-lg font-semibold text-violet-300 flex items-center gap-2">
-            <Sparkles size={18} /> Generate Destination Guide
+          <h2 className="text-lg font-semibold text-blue-300 flex items-center gap-2">
+            <Sparkles size={18} className="text-blue-400" /> Generate Destination Guide
           </h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X size={18} />
           </Button>
         </div>
-        <p className="text-sm text-gray-400 mt-2">Acuity will create a personalized travel brief.</p>
+        <p className="text-sm text-gray-400 mt-2">We&apos;ll create a personalized travel brief.</p>
         <div className="mt-4 space-y-2 text-sm">
           <label className="block text-gray-500 text-xs">Destination</label>
           <input defaultValue={dest} className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-[#F5F5F5]" />
@@ -398,12 +398,12 @@ export function DestinationGuideModal({ open, onClose, vicName, dest, dates, onG
             <input type="checkbox" defaultChecked readOnly className="rounded" /> Transportation guide
           </label>
         </div>
-        <p className="text-xs text-violet-400/80 mt-4">✦ Personalized using Acuity VIC insights</p>
+        <p className="text-xs text-blue-400/80 mt-4">✦ Personalized using VIC profile insights</p>
         <div className="flex justify-end gap-2 mt-6">
           <Button variant="outline" className="border-white/10" onClick={onClose}>
             Cancel
           </Button>
-          <Button className="bg-violet-600" onClick={onGenerate}>
+          <Button className="bg-blue-600 hover:bg-blue-500" onClick={onGenerate}>
             Generate Guide
           </Button>
         </div>
@@ -433,27 +433,27 @@ export function ActivitySuggestModal({
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70">
       <div className="w-full max-w-lg rounded-xl border border-white/10 bg-[#141414] p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between">
-          <h2 className="text-lg font-semibold text-violet-300 flex items-center gap-2">
-            <Sparkles size={18} /> Activity Suggestions for {vicName.split(" ")[0]}
+          <h2 className="text-lg font-semibold text-blue-300 flex items-center gap-2">
+            <Sparkles size={18} className="text-blue-400" /> Activity Suggestions for {vicName.split(" ")[0]}
           </h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X size={18} />
           </Button>
         </div>
-        <p className="text-sm text-gray-400 mt-2">Based on Acuity insights: wine enthusiast, fine dining, motorsport, art collector</p>
+        <p className="text-sm text-gray-400 mt-2">Based on VIC profile: wine enthusiast, fine dining, motorsport, art collector</p>
         <p className="text-sm text-gray-500 mt-1">For Monaco (23–26 May):</p>
         <div className="space-y-3 mt-4">
           {items.map((it, i) => (
             <div key={i} className="rounded-lg border border-white/10 p-3">
               <p className="text-sm font-medium text-[#F5F5F5]">🍷 {it.title}</p>
               <p className="text-xs text-gray-500">{it.sub}</p>
-              <Button size="sm" variant="outline" className="mt-2 border-violet-500/30 text-violet-300" onClick={() => onAdd(it.day)}>
+              <Button size="sm" variant="outline" className="mt-2 border-blue-500/30 text-blue-300" onClick={() => onAdd(it.day)}>
                 + Add to {it.day}
               </Button>
             </div>
           ))}
         </div>
-        <p className="text-xs text-violet-400/80 mt-4">✦ Suggestions powered by Acuity + Gemini</p>
+        <p className="text-xs text-blue-400/80 mt-4">✦ Suggestions based on VIC preferences</p>
       </div>
     </div>
   );
@@ -479,7 +479,7 @@ export function AutomationBuilderModal({ open, onClose, onSaveDraft }: { open: b
           <option>Trip status changed</option>
           <option>Trip departure in X days</option>
           <option>New VIC created</option>
-          <option>Acuity scan completed</option>
+          <option>VIC Acuity profile completed</option>
         </select>
         <p className="text-xs text-gray-500 mt-4 uppercase">Then (Action)</p>
         <select className="w-full mt-1 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-[#F5F5F5]">
@@ -488,7 +488,7 @@ export function AutomationBuilderModal({ open, onClose, onSaveDraft }: { open: b
           <option>Create action item</option>
           <option>Notify advisor</option>
           <option>Update VIC field</option>
-          <option>Run Acuity scan</option>
+          <option>Run Acuity on VIC</option>
         </select>
         <p className="text-xs text-gray-500 mt-4">Automation builder in development. These templates show planned capabilities.</p>
         <div className="flex justify-end gap-2 mt-6">
@@ -544,7 +544,7 @@ export function SendFormModal({
             </button>
           ))}
         </div>
-        <Button variant="link" className="text-violet-400 p-0 h-auto mt-2" onClick={() => {}}>
+        <Button variant="link" className="text-blue-400 p-0 h-auto mt-2" onClick={() => {}}>
           Create Custom Form — coming soon
         </Button>
         <div className="flex justify-end gap-2 mt-6">

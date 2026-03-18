@@ -1,13 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import {
-  Upload,
-  RefreshCw,
-  Search,
-  X,
-  BookMarked,
-} from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Upload, RefreshCw, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,15 +9,7 @@ import {
   fetchKnowledgeDocuments,
   fetchKnowledgeHealth,
 } from "@/lib/knowledge-vault-api";
-import type {
-  DataSource,
-  KnowledgeDocument,
-  IngestionHealth,
-  DataLayer,
-  DocumentType,
-  Freshness,
-  IngestionStatus,
-} from "@/types/knowledge-vault";
+import type { DataSource, KnowledgeDocument, IngestionHealth, DataLayer, IngestionStatus } from "@/types/knowledge-vault";
 import KnowledgeVaultFilters from "./KnowledgeVaultFilters";
 import DataSourceCards from "./DataSourceCards";
 import IngestionHealthBar from "./IngestionHealthBar";
@@ -33,17 +19,7 @@ import UploadDocumentModal from "./UploadDocumentModal";
 import ConnectSourceModal from "./ConnectSourceModal";
 import PreviewBanner from "@/components/ui/PreviewBanner";
 import { IS_PREVIEW_MODE } from "@/config/preview";
-
-function timeAgo(iso: string): string {
-  const d = new Date(iso);
-  const sec = Math.floor((Date.now() - d.getTime()) / 1000);
-  if (sec < 60) return "just now";
-  if (sec < 3600) return `${Math.floor(sec / 60)} min ago`;
-  if (sec < 86400) return `${Math.floor(sec / 3600)} hours ago`;
-  if (sec < 604800) return `${Math.floor(sec / 86400)} days ago`;
-  return Math.floor(sec / 604800) + " weeks ago";
-}
-
+import { VAULT_VISIBLE_DOCUMENTS, VAULT_VISIBLE_COUNT_TOOLTIP, getVaultSidebarTags } from "./knowledgeVaultMockData";
 export default function KnowledgeVaultPage() {
   const [sources, setSources] = useState<DataSource[]>([]);
   const [health, setHealth] = useState<IngestionHealth | null>(null);
@@ -58,13 +34,13 @@ export default function KnowledgeVaultPage() {
   const [connectOpen, setConnectOpen] = useState(false);
   const [filtersDrawerOpen, setFiltersDrawerOpen] = useState(false);
   const [filters, setFilters] = useState<{
-    source_id?: string;
+    source_ids?: string[];
     data_layer?: DataLayer;
-    document_type?: DocumentType;
-    freshness?: Freshness;
     ingestion_status?: IngestionStatus;
     tags?: string[];
   }>({});
+
+  const tagFacets = useMemo(() => getVaultSidebarTags(), []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -73,12 +49,15 @@ export default function KnowledgeVaultPage() {
         fetchKnowledgeSources(),
         fetchKnowledgeHealth(),
         fetchKnowledgeDocuments({
-          ...filters,
-          search: searchQuery || undefined,
+          data_layer: filters.data_layer,
+          ingestion_status: filters.ingestion_status,
+          tags: filters.tags,
+          source_ids: filters.source_ids?.length ? filters.source_ids.join(",") : undefined,
+          search: searchQuery.trim() || undefined,
           sort_by: sortBy,
           sort_order: sortOrder,
           page: 1,
-          limit: 50,
+          limit: 100,
         }),
       ]);
       setSources(Array.isArray(srcList) ? srcList : []);
@@ -94,23 +73,60 @@ export default function KnowledgeVaultPage() {
     load();
   }, [load]);
 
-  const lastSyncLabel = sources[0]?.last_sync
-    ? timeAgo(sources[0].last_sync)
-    : "—";
-  const hasActiveFilters = Object.keys(filters).some(
-    (k) => filters[k as keyof typeof filters] != null
-  );
+  const vaultDocFiltersActive = useMemo(() => {
+    return (
+      Boolean(searchQuery.trim()) ||
+      Boolean(filters.source_ids?.length) ||
+      filters.data_layer != null ||
+      filters.ingestion_status != null ||
+      Boolean(filters.tags?.length)
+    );
+  }, [filters, searchQuery]);
+
+  const hasActiveFilters = vaultDocFiltersActive;
+
+  const selectedSourceIds = filters.source_ids ?? [];
+
+  const toggleSource = useCallback((id: string) => {
+    setFilters((f) => {
+      const cur = f.source_ids ?? [];
+      const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
+      return { ...f, source_ids: next.length ? next : undefined };
+    });
+  }, []);
+
+  const handleDocumentTagsChange = useCallback((docId: string, tags: string[]) => {
+    setDocuments((prev) => prev.map((d) => (d.id === docId ? { ...d, tags } : d)));
+    setSelectedDoc((d) => (d?.id === docId ? { ...d, tags } : d));
+  }, []);
+
+  const connectedCount = sources.filter((s) => s.status === "connected").length;
 
   return (
     <div className="h-full flex flex-col bg-[#0C0C0C] text-[#F5F5F5]">
       {IS_PREVIEW_MODE && <PreviewBanner feature="Knowledge Vault" variant="full" dismissible sampleDataOnly />}
-      {/* Header */}
       <header className="shrink-0 flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-[rgba(255,255,255,0.08)]">
         <div>
           <h1 className="text-xl font-semibold text-[#F5F5F5]">Knowledge Vault</h1>
           <p className="text-sm text-[rgba(245,245,245,0.6)] mt-0.5">
-            {totalDocs} documents · {sources.filter((s) => s.status === "connected").length} sources
-            · Last sync {lastSyncLabel}
+            {vaultDocFiltersActive ? (
+              <>
+                {totalDocs} matching ·{" "}
+                <span className="border-b border-dotted border-gray-500 cursor-help" title={VAULT_VISIBLE_COUNT_TOOLTIP}>
+                  {VAULT_VISIBLE_DOCUMENTS} documents visible
+                </span>
+                {" · "}
+                {connectedCount} sources · Last sync 2 min ago
+              </>
+            ) : (
+              <>
+                <span className="border-b border-dotted border-gray-500 cursor-help" title={VAULT_VISIBLE_COUNT_TOOLTIP}>
+                  {VAULT_VISIBLE_DOCUMENTS} documents visible
+                </span>
+                {" · "}
+                {connectedCount} sources · Last sync 2 min ago
+              </>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -136,9 +152,7 @@ export default function KnowledgeVaultPage() {
         </div>
       </header>
 
-      {/* Three-panel layout */}
       <div className="flex-1 flex min-h-0">
-        {/* Left sidebar — filters (desktop) */}
         <aside className="w-64 shrink-0 border-r border-[rgba(255,255,255,0.08)] bg-[#0C0C0C] overflow-y-auto hidden md:block">
           <KnowledgeVaultFilters
             sources={sources}
@@ -146,11 +160,14 @@ export default function KnowledgeVaultPage() {
             onFiltersChange={setFilters}
             onConnectSource={() => setConnectOpen(true)}
             hasActiveFilters={hasActiveFilters}
-            onClearFilters={() => setFilters({})}
+            tagFacets={tagFacets}
+            onClearFilters={() => {
+              setFilters({});
+              setSearchQuery("");
+            }}
           />
         </aside>
 
-        {/* Mobile filters drawer */}
         {filtersDrawerOpen && (
           <div className="md:hidden fixed inset-0 z-50 flex">
             <div className="absolute inset-0 bg-black/50" onClick={() => setFiltersDrawerOpen(false)} />
@@ -165,41 +182,44 @@ export default function KnowledgeVaultPage() {
                 sources={sources}
                 filters={filters}
                 onFiltersChange={setFilters}
-                onConnectSource={() => { setConnectOpen(true); setFiltersDrawerOpen(false); }}
+                onConnectSource={() => {
+                  setConnectOpen(true);
+                  setFiltersDrawerOpen(false);
+                }}
                 hasActiveFilters={hasActiveFilters}
-                onClearFilters={() => setFilters({})}
+                tagFacets={tagFacets}
+                onClearFilters={() => {
+                  setFilters({});
+                  setSearchQuery("");
+                }}
               />
             </div>
           </div>
         )}
 
-        {/* Main: source cards + health + search + grid */}
         <main className="flex-1 min-w-0 overflow-auto flex flex-col">
           <div className="p-4 space-y-4">
             <DataSourceCards
               sources={sources}
-              selectedSourceId={filters.source_id}
-              onSelectSource={(id) =>
-                setFilters((f) => ({ ...f, source_id: id || undefined }))
-              }
+              selectedSourceIds={selectedSourceIds}
+              onToggleSource={toggleSource}
               onConnectSource={() => setConnectOpen(true)}
             />
             {health && (
               <IngestionHealthBar
                 health={health}
-                onFilterFailed={() =>
-                  setFilters((f) => ({ ...f, ingestion_status: "failed" }))
-                }
+                sources={sources}
+                onFilterFailed={() => setFilters((f) => ({ ...f, ingestion_status: "failed" }))}
               />
             )}
-            <div className="flex gap-2">
-              <div className="relative flex-1">
+            <div className="flex flex-wrap gap-2 items-center">
+              <div className="relative flex-1 min-w-[200px]">
                 <Search
                   size={16}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(245,245,245,0.4)]"
                 />
                 <Input
-                  placeholder="Search documents, summaries, tags…"
+                  placeholder="Search documents, tags…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 bg-white/5 border-white/10 text-[#F5F5F5]"
@@ -212,16 +232,16 @@ export default function KnowledgeVaultPage() {
                   setSortBy(by);
                   setSortOrder(order);
                 }}
-                className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-[#F5F5F5]"
+                className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-[#F5F5F5] shrink-0 h-10"
               >
                 <option value="last_updated-desc">Updated (newest)</option>
                 <option value="last_updated-asc">Updated (oldest)</option>
                 <option value="title-asc">Title (A–Z)</option>
                 <option value="title-desc">Title (Z–A)</option>
-                <option value="quality_score-desc">Quality (high first)</option>
                 <option value="file_size_kb-desc">Size (largest first)</option>
               </select>
             </div>
+
             <DocumentGrid
               documents={documents}
               viewMode="list"
@@ -231,17 +251,16 @@ export default function KnowledgeVaultPage() {
           </div>
         </main>
 
-        {/* Right panel — document detail */}
         {selectedDoc && (
           <DocumentDetailPanel
             document={selectedDoc}
             onClose={() => setSelectedDoc(null)}
             onUpdate={() => load()}
+            onTagsChange={handleDocumentTagsChange}
           />
         )}
       </div>
 
-      {/* Mobile: open filters drawer */}
       <div className="md:hidden fixed bottom-4 left-4 z-40">
         <Button
           variant="outline"
@@ -261,7 +280,7 @@ export default function KnowledgeVaultPage() {
           load();
         }}
       />
-      <ConnectSourceModal open={connectOpen} onClose={() => setConnectOpen(false)} />
+      <ConnectSourceModal open={connectOpen} onClose={() => setConnectOpen(false)} sources={sources} />
     </div>
   );
 }
