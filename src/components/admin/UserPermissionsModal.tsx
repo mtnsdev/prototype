@@ -204,7 +204,7 @@ export function UserPermissionsModal({
                 {/* Header */}
                 <DialogHeader className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] shrink-0">
                     <DialogTitle className="text-[16px] text-[#F5F5F5]">
-                        Claromentis Access
+                        Intranet access
                     </DialogTitle>
                     <p className="text-[12px] text-[rgba(245,245,245,0.45)] mt-0.5">
                         {userEmail}
@@ -285,7 +285,7 @@ export function UserPermissionsModal({
                                 No synced permissions yet
                             </p>
                             <p className="text-[12px] text-[rgba(245,245,245,0.35)] mt-1">
-                                Click &quot;Sync Now&quot; to fetch this user&apos;s Claromentis access.
+                                Click &quot;Sync Now&quot; to fetch this user&apos;s intranet access.
                             </p>
                         </div>
                     ) : (

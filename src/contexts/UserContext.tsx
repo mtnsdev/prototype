@@ -18,6 +18,9 @@ type UserContextType = {
     setUser: (user: User | null) => void;
     clearUser: () => void;
     getFirstName: () => string;
+    /** Demo toggle: Knowledge Vault admin UI (scope dropdown, Show all, delete, re-index). Default off = advisor. */
+    kvViewAsAdmin: boolean;
+    setKvViewAsAdmin: (value: boolean) => void;
 };
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -27,6 +30,7 @@ const USER_STORAGE_KEY = "user_data";
 export function UserProvider({ children }: { children: ReactNode }) {
     const [user, setUserState] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [kvViewAsAdmin, setKvViewAsAdmin] = useState(false);
 
     // Hydrate user from localStorage on mount
     useEffect(() => {
@@ -87,6 +91,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 setUser,
                 clearUser,
                 getFirstName,
+                kvViewAsAdmin,
+                setKvViewAsAdmin,
             }}
         >
             {children}
