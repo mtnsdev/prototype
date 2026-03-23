@@ -114,7 +114,7 @@ export async function uploadKnowledgeDocuments(
 
 export async function updateKnowledgeDocument(
   documentId: string,
-  body: Partial<Pick<KnowledgeDocument, "tags">>
+  body: Partial<Pick<KnowledgeDocument, "title" | "content_summary">>
 ): Promise<KnowledgeDocument> {
   try {
     const res = await fetch(`/api/knowledge/documents/${documentId}`, {

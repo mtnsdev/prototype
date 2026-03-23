@@ -1,5 +1,5 @@
 /**
- * Knowledge Vault mock data — 7 sources, 28 sample docs (847 total indexed in health).
+ * Knowledge Vault mock data — sources, catalog docs (Drive, intranet, email, etc.), health.
  */
 
 import {
@@ -19,10 +19,9 @@ const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
 const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
 export const VAULT_TOTAL_DOCUMENTS = 860;
-/** Sum of visible docs per connected source + email templates */
-export const VAULT_VISIBLE_DOCUMENTS = 714;
-export const VAULT_VISIBLE_COUNT_TOOLTIP =
-  "You have access to 711 of 860 total documents across all sources. Document visibility is based on your Claromentis access groups and data layer permissions.";
+/** Explains org-wide totals vs. what the mock catalog lists (pagination + filters). */
+export const VAULT_CATALOG_COUNT_TOOLTIP =
+  "Production: totals reflect intranet ACLs and data-layer rules. This preview lists a small catalog with pagination; counts in the header match the current filter and page size.";
 
 export type WebResult = {
   title: string;
@@ -71,6 +70,7 @@ export function getMockDataSources(): DataSource[] {
       status: "connected",
       last_sync: twoMinAgo,
       document_count: 245,
+      indexed_document_count: 228,
       total_size_mb: 1240,
       sync_frequency: "daily",
       health_score: 95,
@@ -86,6 +86,7 @@ export function getMockDataSources(): DataSource[] {
       status: "connected",
       last_sync: twoMinAgo,
       document_count: 67,
+      indexed_document_count: 64,
       total_size_mb: 340,
       sync_frequency: "daily",
       health_score: 92,
@@ -93,14 +94,15 @@ export function getMockDataSources(): DataSource[] {
     },
     {
       id: "src-claro-docs",
-      name: "Claromentis — Documents",
-      source_type: DataSourceType.ClaromentisDocuments,
+      name: "Intranet — Documents",
+      source_type: DataSourceType.IntranetDocuments,
       icon: "Database",
       description:
-        "Files and documents from your Claromentis intranet. Synced with permission-based access control.",
+        "Files and documents from your agency intranet. Synced with permission-based access control.",
       status: "connected",
       last_sync: oneHourAgo,
       document_count: 312,
+      indexed_document_count: 285,
       document_visible_count: 198,
       total_size_mb: 2100,
       sync_frequency: "daily",
@@ -109,14 +111,15 @@ export function getMockDataSources(): DataSource[] {
     },
     {
       id: "src-claro-pages",
-      name: "Claromentis — Pages",
-      source_type: DataSourceType.ClaromentisPages,
+      name: "Intranet — Pages",
+      source_type: DataSourceType.IntranetPages,
       icon: "Database",
       description:
-        "Wiki-style pages and articles from your Claromentis intranet. Knowledge base articles, how-to guides, internal wikis.",
+        "Wiki-style pages and articles from your agency intranet. Knowledge base articles, how-to guides, internal wikis.",
       status: "connected",
       last_sync: oneHourAgo,
       document_count: 175,
+      indexed_document_count: 158,
       document_visible_count: 140,
       total_size_mb: 85,
       sync_frequency: "daily",
@@ -124,74 +127,19 @@ export function getMockDataSources(): DataSource[] {
       connected_at: "2025-02-01T09:30:00Z",
     },
     {
-      id: "src-manual",
-      name: "Manual Uploads",
-      source_type: DataSourceType.ManualUpload,
-      icon: "Upload",
-      description: "Advisor and agency uploads",
-      status: "connected",
-      last_sync: null,
-      document_count: 34,
-      total_size_mb: 156,
-      sync_frequency: "manual",
-      health_score: 100,
-      connected_at: "2024-06-01T00:00:00Z",
-    },
-    {
-      id: "src-virtuoso",
-      name: "Virtuoso Network",
-      source_type: DataSourceType.Virtuoso,
-      icon: "Sparkles",
-      description: "Virtuoso partner content",
-      status: "connected",
-      last_sync: oneWeekAgo,
-      document_count: 14,
-      total_size_mb: 42,
-      sync_frequency: "weekly",
-      health_score: 45,
-      connected_at: "2025-03-01T12:00:00Z",
-    },
-    {
-      id: "src-web",
-      name: "Saved from Web",
-      source_type: DataSourceType.WebScrape,
-      icon: "Globe",
-      description: "Articles and pages you saved from external web searches",
-      status: "connected",
-      last_sync: twoMinAgo,
-      document_count: 3,
-      total_size_mb: 1,
-      sync_frequency: "manual",
-      health_score: 100,
-      connected_at: "2026-03-01T00:00:00Z",
-    },
-    {
       id: "src-email",
-      name: "Email Ingestion",
+      name: "Email",
       source_type: DataSourceType.Email,
       icon: "Mail",
-      description: "Email attachments and threads",
-      status: "disconnected",
-      last_sync: null,
-      document_count: 0,
-      total_size_mb: 0,
-      sync_frequency: "manual",
-      health_score: 0,
-      connected_at: "",
-    },
-    {
-      id: "src-email-templates",
-      name: "Email Templates",
-      source_type: DataSourceType.EmailTemplate,
-      icon: "Mail",
-      description: "Sales cycle email templates",
+      description: "Forwarded emails and attachments",
       status: "connected",
       last_sync: twoMinAgo,
-      document_count: 13,
-      total_size_mb: 1,
-      sync_frequency: "manual",
+      document_count: 4,
+      indexed_document_count: 4,
+      total_size_mb: 12,
+      sync_frequency: "real_time",
       health_score: 100,
-      connected_at: "2025-06-01T00:00:00Z",
+      connected_at: "2026-01-01T00:00:00Z",
     },
   ];
 }
@@ -214,97 +162,84 @@ function buildEmailTemplateDocuments(): KnowledgeDocument[] {
     linked_products: [] as { id: string; name: string }[],
     linked_vics: [] as { id: string; name: string }[],
   };
-  const defs: { id: string; title: string; summary: string; tags: string[]; pipeline_stage: PipelineStage }[] = [
+  const defs: { id: string; title: string; summary: string; pipeline_stage: PipelineStage }[] = [
     {
       id: "tmpl-001",
       title: "Client Inquiry Response",
       summary:
         "Initial response to a new client inquiry — introduces services and next steps.",
-      tags: ["lead", "first-contact"],
       pipeline_stage: "lead",
     },
     {
       id: "tmpl-002",
       title: "Summary of Request (How We Work)",
       summary: "Explains service fees, process, and what the client can expect. Sent after initial inquiry.",
-      tags: ["discovery", "onboarding", "fees"],
       pipeline_stage: "discovery",
     },
     {
       id: "tmpl-003",
       title: "New Client Request to DMC",
       summary: "Request sent to DMC/partner with client preferences, dates, and budget for itinerary creation.",
-      tags: ["proposal", "partner", "dmc"],
       pipeline_stage: "proposal",
     },
     {
       id: "tmpl-004",
       title: "Client Proposal",
       summary: "Formal proposal email presenting itinerary options and pricing to the client.",
-      tags: ["proposal", "pricing"],
       pipeline_stage: "proposal",
     },
     {
       id: "tmpl-005",
       title: "Revised Client Proposal",
       summary: "Updated proposal after client feedback — highlights what changed from the original.",
-      tags: ["revision", "iteration"],
       pipeline_stage: "revision",
     },
     {
       id: "tmpl-006",
       title: "Invoice Email",
       summary: "Sends invoice to client for deposit or full payment with payment instructions.",
-      tags: ["committed", "payment", "invoice"],
       pipeline_stage: "committed",
     },
     {
       id: "tmpl-007",
       title: "Partner Confirmation",
       summary: "Confirms booking with DMC/partner after client commitment and payment.",
-      tags: ["committed", "partner", "booking"],
       pipeline_stage: "committed",
     },
     {
       id: "tmpl-008",
       title: "Client Next Steps",
       summary: "Post-commitment email outlining what happens next: documents needed, concierge requests, timeline.",
-      tags: ["committed", "onboarding"],
       pipeline_stage: "committed",
     },
     {
       id: "tmpl-009",
       title: "Travel Protection Quote",
       summary: "Sends travel insurance/protection quote and options to client.",
-      tags: ["preparing", "insurance"],
       pipeline_stage: "preparing",
     },
     {
       id: "tmpl-010",
       title: "Hotel / Partner Re-Confirmation",
       summary: "Re-confirms all bookings with hotels and partners 2-3 weeks before travel.",
-      tags: ["preparing", "partner", "confirmation"],
       pipeline_stage: "preparing",
     },
     {
       id: "tmpl-011",
       title: "VIP Email to Partners (Hotels)",
       summary: "Sends VIP guest details to hotels — preferences, special occasions, dietary needs.",
-      tags: ["preparing", "vip", "partner"],
       pipeline_stage: "preparing",
     },
     {
       id: "tmpl-012",
       title: "Bon Voyage",
       summary: "Pre-departure email with final details, emergency contacts, and well-wishes.",
-      tags: ["final_review", "pre-travel"],
       pipeline_stage: "final_review",
     },
     {
       id: "tmpl-013",
       title: "Welcome Home",
       summary: "Post-trip follow-up thanking the client, requesting feedback, and planting the seed for the next trip.",
-      tags: ["post_travel", "follow-up", "review"],
       pipeline_stage: "post_travel",
     },
   ];
@@ -313,7 +248,7 @@ function buildEmailTemplateDocuments(): KnowledgeDocument[] {
     id: x.id,
     title: x.title,
     content_summary: x.summary,
-    tags: x.tags,
+    tags: [] as string[],
     pipeline_stage: x.pipeline_stage,
   }));
 }
@@ -332,11 +267,12 @@ function d(daysAgo: number): string {
 
 const GSHARED = "Google Drive — Shared";
 const GPERSONAL = "Google Drive — Personal";
-const CLARO_DOC = "Claromentis — Documents";
-const CLARO_PAGE = "Claromentis — Pages";
+const INTRANET_DOC = "Intranet — Documents";
+const INTRANET_PAGE = "Intranet — Pages";
 const MANUAL = "Manual Uploads";
 const VIRT = "Virtuoso Network";
 const WEB_SRC_NAME = "Saved from Web";
+const EMAIL_FEED = "Email";
 
 function buildSavedWebDocuments(): KnowledgeDocument[] {
   return [
@@ -347,9 +283,10 @@ function buildSavedWebDocuments(): KnowledgeDocument[] {
       source_type: DataSourceType.WebScrape,
       source_name: WEB_SRC_NAME,
       data_layer: "advisor",
+      ownerId: "user-colleague",
       file_type: "html",
       file_size_kb: Math.round(0.02 * 1024),
-      tags: ["japan", "visa", "policy"],
+      tags: [],
       ingestion_status: "indexed",
       last_updated: "2026-03-16T10:00:00Z",
       source_url: "japan-travel.gov.jp",
@@ -363,9 +300,10 @@ function buildSavedWebDocuments(): KnowledgeDocument[] {
       source_type: DataSourceType.WebScrape,
       source_name: WEB_SRC_NAME,
       data_layer: "advisor",
+      ownerId: "user-colleague",
       file_type: "html",
       file_size_kb: Math.round(0.05 * 1024),
-      tags: ["hotel", "japan", "new-opening"],
+      tags: [],
       ingestion_status: "indexed",
       last_updated: "2026-03-10T14:00:00Z",
       source_url: "aman.com",
@@ -379,9 +317,10 @@ function buildSavedWebDocuments(): KnowledgeDocument[] {
       source_type: DataSourceType.WebScrape,
       source_name: WEB_SRC_NAME,
       data_layer: "advisor",
+      ownerId: "1",
       file_type: "html",
       file_size_kb: Math.round(0.08 * 1024),
-      tags: ["maldives", "hotel", "destination"],
+      tags: [],
       ingestion_status: "indexed",
       last_updated: "2026-02-25T09:00:00Z",
       source_url: "travelandleisure.com",
@@ -389,83 +328,6 @@ function buildSavedWebDocuments(): KnowledgeDocument[] {
       linked_vics: [],
     },
   ];
-}
-
-/** Normalize + infer tags for sidebar facets (user-managed style). */
-function enrichDocumentTags(doc: KnowledgeDocument): KnowledgeDocument {
-  const tags = new Set(
-    doc.tags.map((t) => t.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""))
-  );
-  const title = doc.title.toLowerCase();
-  const add = (...xs: string[]) => xs.forEach((x) => tags.add(x));
-  if (title.includes("maldives") || [...tags].some((t) => t.includes("maldives"))) {
-    add("maldives", "hotel", "destination");
-  }
-  if (title.includes("japan") || title.includes("kyoto") || title.includes("visa")) {
-    add("japan");
-  }
-  if (title.includes("four seasons") && (title.includes("rate") || title.includes("q1"))) {
-    add("rate-sheet", "hotel", "france");
-  }
-  if (title.includes("rate") && title.includes("sheet")) add("rate-sheet");
-  if (title.includes("dmc") || title.includes("partner agreement")) {
-    add("dmc", "contract");
-  }
-  if (title.includes("contract") || title.includes("agreement")) add("contract");
-  if (title.includes("policy") || title.includes("escalation") || title.includes("process")) {
-    add("policy", "training");
-  }
-  if (title.includes("training") || title.includes("virtuoso travel week") || title.includes("webinar")) {
-    add("training");
-  }
-  if (title.includes("smith") || title.includes("client report") || title.includes("trip research")) {
-    add("client-report");
-  }
-  if (title.includes("one&only") || title.includes("reethi") || title.includes("property profile")) {
-    add("hotel", "maldives", "partner-program");
-  }
-  if (title.includes("france") || title.includes("paris") || title.includes("nice")) add("france");
-  if (title.includes("virtuoso") && !title.includes("rate")) add("partner-program");
-  if (doc.source_type === DataSourceType.WebScrape) {
-    doc.tags.forEach((t) => tags.add(t.toLowerCase()));
-  }
-  return { ...doc, tags: [...tags].filter(Boolean) };
-}
-
-const SIDEBAR_TAG_ORDER = [
-  "hotel",
-  "rate-sheet",
-  "destination",
-  "policy",
-  "contract",
-  "training",
-  "partner-program",
-  "maldives",
-  "france",
-  "japan",
-  "client-report",
-  "dmc",
-];
-
-export function getVaultSidebarTags(): { name: string; count: number }[] {
-  const docs = getMockDocumentsRaw().map(enrichDocumentTags);
-  const c = new Map<string, number>();
-  for (const d of docs) {
-    if (d.source_type === DataSourceType.WebScrape) continue;
-    for (const t of d.tags) {
-      c.set(t, (c.get(t) ?? 0) + 1);
-    }
-  }
-  const primary = SIDEBAR_TAG_ORDER.filter((name) => (c.get(name) ?? 0) > 0).map((name) => ({
-    name,
-    count: c.get(name)!,
-  }));
-  const rest = [...c.entries()]
-    .filter(([k]) => !SIDEBAR_TAG_ORDER.includes(k))
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 16)
-    .map(([name, count]) => ({ name, count }));
-  return [...primary, ...rest];
 }
 
 function getMockDocumentsRaw(): KnowledgeDocument[] {
@@ -482,7 +344,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       file_size_kb: 2100,
       content_summary:
         "Deep dive on Maldivian luxury stays including atolls, seaplane transfers, and family-friendly overwater options. Summarizes Virtuoso-preferred properties and seasonal pricing patterns advisors use when quoting multi-island itineraries.",
-      tags: ["luxury", "beach", "Asia", "Maldives"],
+      tags: ["Destination Guides", "Maldives"],
       ingestion_status: "indexed",
       ingested_at: d(2),
       last_updated: d(2),
@@ -503,7 +365,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       file_size_kb: 3200,
       content_summary:
         "Regional guide covering Chianti, Montalcino, and boutique agriturismi with driving times and harvest-season notes. Includes winery appointment etiquette and sample three-day tasting routes for FIT clients.",
-      tags: ["Europe", "Italy", "wine", "luxury"],
+      tags: ["Destination Guides", "Italy", "Wine Country"],
       ingestion_status: "indexed",
       ingested_at: d(10),
       last_updated: d(10),
@@ -524,7 +386,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       file_size_kb: 480,
       content_summary:
         "Consolidated net and BAR references for Four Seasons properties across key leisure markets for Q1. Notes blackout dates and Virtuoso value-adds so advisors can align quotes with agency contract terms.",
-      tags: ["rates", "Four Seasons", "luxury"],
+      tags: ["Rate Sheets", "Four Seasons"],
       ingestion_status: "indexed",
       ingested_at: d(1),
       last_updated: d(1),
@@ -545,7 +407,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       file_size_kb: 620,
       content_summary:
         "Executed agreement covering Thailand, Vietnam, and Cambodia ground services, liability caps, and payment milestones. Legal summary highlights what advisors may promise clients versus DMC scope.",
-      tags: ["DMC", "Asia", "contracts"],
+      tags: ["Contracts", "Southeast Asia"],
       ingestion_status: "indexed",
       ingested_at: d(55),
       last_updated: d(55),
@@ -566,7 +428,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       file_size_kb: 890,
       content_summary:
         "Session notes from consortium keynotes and supplier speed-dating. Captures new preferred partners, sustainability talking points, and booking deadlines advisors should reference in follow-ups.",
-      tags: ["Virtuoso", "training", "webinar"],
+      tags: ["Training", "Virtuoso", "Events"],
       ingestion_status: "indexed",
       ingested_at: d(14),
       last_updated: d(14),
@@ -587,7 +449,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       file_size_kb: 120,
       content_summary:
         "Transcript of this week’s agency stand-up covering pipeline wins, supplier escalations, and Enable rollout reminders. Searchable for action items and owner names mentioned on the call.",
-      tags: ["team call", "transcript", "weekly"],
+      tags: ["Team Calls", "Transcripts"],
       ingestion_status: "indexed",
       ingested_at: d(0),
       last_updated: d(0),
@@ -603,12 +465,13 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       source_type: DataSourceType.GoogleDrivePersonal,
       source_name: GPERSONAL,
       data_layer: "advisor",
+      ownerId: "1",
       document_type: DocumentType.ClientReport,
       file_type: "docx",
       file_size_kb: 340,
       content_summary:
         "Private working notes on rail passes, ryokan shortlist, and kid-friendly activities for the Smith family spring trip. Includes rough day-by-day pacing and links to properties under consideration.",
-      tags: ["Japan", "Asia", "family", "research"],
+      tags: ["Client Work", "Smith Family", "Japan"],
       ingestion_status: "indexed",
       ingested_at: d(1),
       last_updated: d(1),
@@ -624,13 +487,15 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       source_type: DataSourceType.GoogleDrivePersonal,
       source_name: GPERSONAL,
       data_layer: "advisor",
+      ownerId: "user-colleague",
       document_type: DocumentType.PartnerDirectory,
       file_type: "xlsx",
       file_size_kb: 88,
       content_summary:
         "Personal spreadsheet of ground operators and cell numbers built over years of FIT work. Not visible to other advisors; sync is advisor-scoped per Enable privacy rules.",
-      tags: ["DMC", "contacts", "personal"],
-      ingestion_status: "failed",
+      tags: ["Personal", "Contacts"],
+      ingestion_status: "not_indexed",
+      ingested_at: d(3),
       last_updated: d(3),
       freshness: "recent",
       quality_score: 60,
@@ -644,12 +509,13 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       source_type: DataSourceType.GoogleDrivePersonal,
       source_name: GPERSONAL,
       data_layer: "advisor",
+      ownerId: "1",
       document_type: DocumentType.DestinationGuide,
       file_type: "docx",
       file_size_kb: 256,
       content_summary:
         "Side-by-side notes on game-drive density, pool villas, and family tents across Serengeti and Masai Mara camps. Used to prep proposals before pulling official property profiles from shared drives.",
-      tags: ["Africa", "safari", "luxury", "notes"],
+      tags: ["Research", "Africa", "Safari"],
       ingestion_status: "indexed",
       ingested_at: d(2),
       last_updated: d(2),
@@ -665,12 +531,13 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       source_type: DataSourceType.GoogleDrivePersonal,
       source_name: GPERSONAL,
       data_layer: "advisor",
+      ownerId: "user-colleague",
       document_type: DocumentType.MarketingCollateral,
       file_type: "docx",
       file_size_kb: 180,
       content_summary:
         "Draft copy blocks and image placeholders for romance-themed packages. Still internal; merge into agency templates once approved by marketing lead.",
-      tags: ["honeymoon", "romance", "draft"],
+      tags: ["Drafts", "Honeymoon"],
       ingestion_status: "indexed",
       ingested_at: d(48),
       last_updated: d(48),
@@ -683,15 +550,15 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       id: "doc-cd-1",
       title: "Aman Tokyo — Property Profile",
       source_id: "src-claro-docs",
-      source_type: DataSourceType.ClaromentisDocuments,
-      source_name: CLARO_DOC,
+      source_type: DataSourceType.IntranetDocuments,
+      source_name: INTRANET_DOC,
       data_layer: "agency",
       document_type: DocumentType.PropertyProfile,
       file_type: "pdf",
       file_size_kb: 1200,
       content_summary:
-        "Official intranet profile for Aman Tokyo covering room categories, Virtuoso amenities, and neighborhood dining. Pulled from Claromentis document library with permission group restrictions applied at sync.",
-      tags: ["Aman", "Japan", "Asia", "luxury", "city"],
+        "Official intranet profile for Aman Tokyo covering room categories, Virtuoso amenities, and neighborhood dining. Pulled from the intranet document library with permission group restrictions applied at sync.",
+      tags: ["Property Profiles", "Asia", "Japan"],
       ingestion_status: "indexed",
       ingested_at: d(1),
       last_updated: d(1),
@@ -704,15 +571,15 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       id: "doc-cd-2",
       title: "Belmond Hotel Caruso — Property Profile",
       source_id: "src-claro-docs",
-      source_type: DataSourceType.ClaromentisDocuments,
-      source_name: CLARO_DOC,
+      source_type: DataSourceType.IntranetDocuments,
+      source_name: INTRANET_DOC,
       data_layer: "agency",
       document_type: DocumentType.PropertyProfile,
       file_type: "pdf",
       file_size_kb: 980,
       content_summary:
         "Ravello cliffside positioning, pool and dining highlights, and transfer guidance from Naples. Synced file reflects latest sales notes from the Europe supplier desk.",
-      tags: ["Belmond", "Italy", "Europe", "luxury"],
+      tags: ["Property Profiles", "Europe", "Italy"],
       ingestion_status: "indexed",
       ingested_at: d(12),
       last_updated: d(12),
@@ -725,16 +592,17 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       id: "doc-cd-3",
       title: "One&Only Reethi Rah — Property Profile",
       source_id: "src-claro-docs",
-      source_type: DataSourceType.ClaromentisDocuments,
-      source_name: CLARO_DOC,
+      source_type: DataSourceType.IntranetDocuments,
+      source_name: INTRANET_DOC,
       data_layer: "agency",
       document_type: DocumentType.PropertyProfile,
       file_type: "pdf",
       file_size_kb: 1100,
       content_summary:
         "Beach and overwater villa matrix, kids’ club hours, and seaplane timing. Advisors use this alongside rate sheets when building Maldives multi-property stays.",
-      tags: ["One&Only", "Maldives", "Asia", "beach"],
+      tags: ["Property Profiles", "Asia", "Maldives"],
       ingestion_status: "processing",
+      ingested_at: d(0),
       last_updated: d(0),
       freshness: "fresh",
       quality_score: 88,
@@ -745,15 +613,15 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       id: "doc-cd-4",
       title: "Agency Commission Policy 2026",
       source_id: "src-claro-docs",
-      source_type: DataSourceType.ClaromentisDocuments,
-      source_name: CLARO_DOC,
+      source_type: DataSourceType.IntranetDocuments,
+      source_name: INTRANET_DOC,
       data_layer: "agency",
       document_type: DocumentType.Policy,
       file_type: "pdf",
       file_size_kb: 220,
       content_summary:
         "Published commission splits, override rules, and disclosure requirements effective January 2026. Mandatory reference before quoting net rates to clients.",
-      tags: ["policy", "commission", "rates"],
+      tags: ["Policies", "Commission"],
       ingestion_status: "indexed",
       ingested_at: d(3),
       last_updated: d(3),
@@ -766,15 +634,15 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       id: "doc-cd-5",
       title: "Preferred Partner Directory — Europe",
       source_id: "src-claro-docs",
-      source_type: DataSourceType.ClaromentisDocuments,
-      source_name: CLARO_DOC,
+      source_type: DataSourceType.IntranetDocuments,
+      source_name: INTRANET_DOC,
       data_layer: "agency",
       document_type: DocumentType.PartnerDirectory,
       file_type: "xlsx",
       file_size_kb: 410,
       content_summary:
-        "Spreadsheet of contracted DMCs and hotel reps by country with escalation paths. Updated quarterly from supplier relations; visibility follows Claromentis group membership.",
-      tags: ["Europe", "partners", "DMC"],
+        "Spreadsheet of contracted DMCs and hotel reps by country with escalation paths. Updated quarterly from supplier relations; visibility follows intranet group membership.",
+      tags: ["Partner Directories", "Europe"],
       ingestion_status: "indexed",
       ingested_at: d(9),
       last_updated: d(9),
@@ -787,15 +655,15 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       id: "doc-cd-6",
       title: "New Advisor Onboarding Pack",
       source_id: "src-claro-docs",
-      source_type: DataSourceType.ClaromentisDocuments,
-      source_name: CLARO_DOC,
+      source_type: DataSourceType.IntranetDocuments,
+      source_name: INTRANET_DOC,
       data_layer: "agency",
       document_type: DocumentType.TrainingMaterial,
       file_type: "pdf",
       file_size_kb: 5600,
       content_summary:
-        "Bundled PDFs covering CRM hygiene, booking tools, and first-30-days checklist. HR uploads revisions to Claromentis; Enable mirrors only pages the new hire can access.",
-      tags: ["training", "onboarding", "new hire"],
+        "Bundled PDFs covering CRM hygiene, booking tools, and first-30-days checklist. HR uploads revisions to the intranet; Enable mirrors only pages the new hire can access.",
+      tags: ["Training", "Onboarding"],
       ingestion_status: "indexed",
       ingested_at: d(62),
       last_updated: d(62),
@@ -808,15 +676,16 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       id: "doc-cd-7",
       title: "Advisor Private Notes — FIT SOP",
       source_id: "src-claro-docs",
-      source_type: DataSourceType.ClaromentisDocuments,
-      source_name: CLARO_DOC,
+      source_type: DataSourceType.IntranetDocuments,
+      source_name: INTRANET_DOC,
       data_layer: "advisor",
+      ownerId: "user-colleague",
       document_type: DocumentType.InternalMemo,
       file_type: "pdf",
       file_size_kb: 95,
       content_summary:
-        "Example of advisor-scoped Claromentis content: personal SOP checklist mirrored only for the owning advisor per intranet ACLs.",
-      tags: ["internal", "SOP", "FIT"],
+        "Example of advisor-scoped intranet content: personal SOP checklist mirrored only for the owning advisor per intranet ACLs.",
+      tags: ["Advisor Private", "SOP"],
       ingestion_status: "indexed",
       ingested_at: d(5),
       last_updated: d(5),
@@ -829,8 +698,8 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       id: "doc-cp-1",
       title: "How to Book Through Virtuoso",
       source_id: "src-claro-pages",
-      source_type: DataSourceType.ClaromentisPages,
-      source_name: CLARO_PAGE,
+      source_type: DataSourceType.IntranetPages,
+      source_name: INTRANET_PAGE,
       data_layer: "agency",
       document_type: DocumentType.TrainingMaterial,
       file_type: "html",
@@ -838,7 +707,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       is_wiki_page: true,
       content_summary:
         "Wiki article walking through Virtuoso booking codes, hotel acknowledgment steps, and where to log consortium benefits. Chunked for vector search so chat can cite specific steps.",
-      tags: ["Virtuoso", "how-to", "booking", "guide"],
+      tags: ["Knowledge Base", "Virtuoso", "How-to"],
       ingestion_status: "indexed",
       ingested_at: d(2),
       last_updated: d(2),
@@ -851,16 +720,16 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       id: "doc-cp-2",
       title: "Destination Knowledge: Greek Islands",
       source_id: "src-claro-pages",
-      source_type: DataSourceType.ClaromentisPages,
-      source_name: CLARO_PAGE,
+      source_type: DataSourceType.IntranetPages,
+      source_name: INTRANET_PAGE,
       data_layer: "agency",
       document_type: DocumentType.DestinationGuide,
       file_type: "html",
       file_size_kb: 128,
       is_wiki_page: true,
       content_summary:
-        "Living wiki on Cyclades vs Dodecanese pacing, ferry vs helicopter, and shoulder-season value. Authored in Claromentis page editor; rendered as HTML chunks in Enable.",
-      tags: ["Greece", "Europe", "islands", "beach"],
+        "Living wiki on Cyclades vs Dodecanese pacing, ferry vs helicopter, and shoulder-season value. Authored in the intranet page editor; rendered as HTML chunks in Enable.",
+      tags: ["Destination Guides", "Greece"],
       ingestion_status: "indexed",
       ingested_at: d(11),
       last_updated: d(11),
@@ -873,8 +742,8 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       id: "doc-cp-3",
       title: "Supplier Escalation Process",
       source_id: "src-claro-pages",
-      source_type: DataSourceType.ClaromentisPages,
-      source_name: CLARO_PAGE,
+      source_type: DataSourceType.IntranetPages,
+      source_name: INTRANET_PAGE,
       data_layer: "agency",
       document_type: DocumentType.Policy,
       file_type: "html",
@@ -882,7 +751,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       is_wiki_page: true,
       content_summary:
         "Defines when to loop in supplier relations versus legal, with SLAs by severity. Page-style content kept current without PDF re-uploads.",
-      tags: ["policy", "suppliers", "process"],
+      tags: ["Policies", "Suppliers"],
       ingestion_status: "indexed",
       ingested_at: d(1),
       last_updated: d(1),
@@ -895,8 +764,8 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       id: "doc-cp-4",
       title: "FAQs — Client Travel Insurance",
       source_id: "src-claro-pages",
-      source_type: DataSourceType.ClaromentisPages,
-      source_name: CLARO_PAGE,
+      source_type: DataSourceType.IntranetPages,
+      source_name: INTRANET_PAGE,
       data_layer: "agency",
       document_type: DocumentType.TrainingMaterial,
       file_type: "html",
@@ -904,7 +773,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       is_wiki_page: true,
       content_summary:
         "FAQ wiki for common insurance objections, CFAR nuances, and state-specific caveats. Advisors paste excerpts into client emails with confidence.",
-      tags: ["FAQ", "insurance", "clients"],
+      tags: ["Knowledge Base", "Insurance", "FAQ"],
       ingestion_status: "indexed",
       ingested_at: d(40),
       last_updated: d(40),
@@ -917,8 +786,8 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       id: "doc-cp-5",
       title: "Internal: Peak Season Planning Checklist",
       source_id: "src-claro-pages",
-      source_type: DataSourceType.ClaromentisPages,
-      source_name: CLARO_PAGE,
+      source_type: DataSourceType.IntranetPages,
+      source_name: INTRANET_PAGE,
       data_layer: "agency",
       document_type: DocumentType.InternalMemo,
       file_type: "html",
@@ -926,7 +795,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       is_wiki_page: true,
       content_summary:
         "Seasonal checklist for July–August capacity holds and deposit timing. Marked stale pending ops review next quarter.",
-      tags: ["internal", "planning", "seasonal"],
+      tags: ["Internal", "Planning", "Seasonal"],
       ingestion_status: "indexed",
       ingested_at: d(120),
       last_updated: d(120),
@@ -942,13 +811,15 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       source_type: DataSourceType.ManualUpload,
       source_name: MANUAL,
       data_layer: "advisor",
+      ownerId: "1",
       document_type: DocumentType.ClientReport,
       file_type: "pdf",
       file_size_kb: 890,
       content_summary:
         "Draft proposal PDF for Johnson anniversary with suite upgrades and celebratory amenities. Uploaded manually; visible only to uploading advisor until shared upward.",
-      tags: ["proposal", "anniversary", "luxury"],
-      ingestion_status: "pending",
+      tags: ["Manual Uploads", "Proposals"],
+      ingestion_status: "processing",
+      ingested_at: d(0),
       last_updated: d(0),
       freshness: "fresh",
       quality_score: 88,
@@ -969,7 +840,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       file_size_kb: 3200,
       content_summary:
         "Official Enable product overview for advisor-facing conversations. Distributed as enable-layer content so all tenants see the same positioning and screenshots.",
-      tags: ["Enable", "marketing", "brochure"],
+      tags: ["Manual Uploads", "Enable"],
       ingestion_status: "indexed",
       ingested_at: d(8),
       last_updated: d(8),
@@ -989,14 +860,140 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       file_type: "pdf",
       file_size_kb: 180,
       content_summary:
-        "Summary of new VoA and e-VOA rules effective March 2026 with source links. Agency-wide manual upload for rapid circulation beyond Claromentis publish cycle.",
-      tags: ["Bali", "visa", "advisory", "Asia"],
+        "Summary of new VoA and e-VOA rules effective March 2026 with source links. Agency-wide manual upload for rapid circulation beyond intranet publish cycle.",
+      tags: ["Manual Uploads", "Travel Advisories", "Asia"],
       ingestion_status: "indexed",
       ingested_at: d(1),
       last_updated: d(1),
       freshness: "fresh",
       quality_score: 90,
       linked_products: [{ id: "p-bali", name: "Bali Retreat" }],
+      linked_vics: [],
+    },
+    {
+      id: "doc-email-1",
+      title: "RE: Ritz Paris Group Booking — March 2026",
+      source_id: "src-email",
+      source_type: DataSourceType.Email,
+      source_name: EMAIL_FEED,
+      data_layer: "advisor",
+      ownerId: "1",
+      document_type: DocumentType.InternalMemo,
+      file_type: "email",
+      file_size_kb: 42,
+      content_summary: "Thread confirming room block and catering hold for 18 guests; advisor-facing summary.",
+      tags: [],
+      ingestion_status: "indexed",
+      ingested_at: d(1),
+      last_updated: d(1),
+      freshness: "fresh",
+      quality_score: 82,
+      linked_products: [],
+      linked_vics: [],
+    },
+    {
+      id: "doc-email-2",
+      title: "FW: Virtuoso Commission Confirmation",
+      source_id: "src-email",
+      source_type: DataSourceType.Email,
+      source_name: EMAIL_FEED,
+      data_layer: "advisor",
+      ownerId: "1",
+      document_type: DocumentType.InternalMemo,
+      file_type: "email",
+      file_size_kb: 28,
+      content_summary: "Forwarded consortium commission statement for Q4 booking batch.",
+      tags: [],
+      ingestion_status: "indexed",
+      ingested_at: d(3),
+      last_updated: d(3),
+      freshness: "recent",
+      quality_score: 78,
+      linked_products: [],
+      linked_vics: [],
+    },
+    {
+      id: "doc-email-3",
+      title: "Client Inquiry — Honeymoon Maldives",
+      source_id: "src-email",
+      source_type: DataSourceType.Email,
+      source_name: EMAIL_FEED,
+      data_layer: "advisor",
+      ownerId: "1",
+      document_type: DocumentType.ClientReport,
+      file_type: "email",
+      file_size_kb: 36,
+      content_summary: "Initial client email with dates, budget band, and resort preferences.",
+      tags: [],
+      ingestion_status: "indexed",
+      ingested_at: d(0),
+      last_updated: d(0),
+      freshness: "fresh",
+      quality_score: 85,
+      linked_products: [],
+      linked_vics: [],
+    },
+    {
+      id: "doc-email-4",
+      title: "RE: Air Schedule Change — LHR–MLE",
+      source_id: "src-email",
+      source_type: DataSourceType.Email,
+      source_name: EMAIL_FEED,
+      data_layer: "advisor",
+      ownerId: "1",
+      document_type: DocumentType.InternalMemo,
+      file_type: "email",
+      file_size_kb: 22,
+      content_summary: "Carrier notification of retimed connection; advisor notes for client comms.",
+      tags: [],
+      ingestion_status: "indexed",
+      ingested_at: d(2),
+      last_updated: d(2),
+      freshness: "recent",
+      quality_score: 80,
+      linked_products: [],
+      linked_vics: [],
+    },
+    {
+      id: "doc-gdp-zip",
+      title: "Property Photos Archive.zip",
+      source_id: "src-gdrive-personal",
+      source_type: DataSourceType.GoogleDrivePersonal,
+      source_name: GPERSONAL,
+      data_layer: "advisor",
+      ownerId: "1",
+      document_type: DocumentType.MarketingCollateral,
+      file_type: "zip",
+      file_size_kb: 45 * 1024,
+      content_summary: "Bulk image archive; unsupported for RAG chunking in this demo.",
+      tags: [],
+      ingestion_status: "not_indexed",
+      ingested_at: d(14),
+      last_updated: d(14),
+      freshness: "aging",
+      quality_score: 55,
+      linked_products: [],
+      linked_vics: [],
+    },
+    {
+      id: "doc-gdp-mp4",
+      title: "Hotel Walkthrough Video.mp4",
+      source_id: "src-gdrive-personal",
+      source_type: DataSourceType.GoogleDrivePersonal,
+      source_name: GPERSONAL,
+      data_layer: "advisor",
+      ownerId: "1",
+      document_type: DocumentType.MarketingCollateral,
+      file_type: "mp4",
+      file_size_kb: 120 * 1024,
+      content_summary: "Property video asset; video formats are synced but not indexed for search in this demo.",
+      tags: [],
+      ingestion_status: "not_indexed",
+      ingested_at: d(21),
+      last_updated: d(21),
+      freshness: "aging",
+      quality_score: 50,
+      linked_products: [],
       linked_vics: [],
     },
     {
@@ -1011,7 +1008,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       file_size_kb: 2400,
       content_summary:
         "Network-wide preferred hotel rate references and benefit codes. Synced weekly from Virtuoso; identical for all Enable users on the consortium feed.",
-      tags: ["Virtuoso", "rates", "hotels"],
+      tags: ["Network Rates", "Hotels"],
       ingestion_status: "indexed",
       ingested_at: d(14),
       last_updated: d(14),
@@ -1032,7 +1029,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       file_size_kb: 5100,
       content_summary:
         "Cruise line portfolio with Virtuoso Voyages amenities and group promo windows. Large PDF chunked for ship-level retrieval in search.",
-      tags: ["Virtuoso", "cruise", "rates"],
+      tags: ["Network Rates", "Cruise"],
       ingestion_status: "indexed",
       ingested_at: d(52),
       last_updated: d(52),
@@ -1053,7 +1050,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       file_size_kb: 1800,
       content_summary:
         "Static member roster and regional rep contacts. Stale flag reflects annual PDF refresh cycle; advisors should confirm emails in live Virtuoso tools.",
-      tags: ["Virtuoso", "directory", "partners"],
+      tags: ["Directory", "Partners"],
       ingestion_status: "indexed",
       ingested_at: d(100),
       last_updated: d(100),
@@ -1074,7 +1071,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       file_size_kb: 2200,
       content_summary:
         "Module three of the selling luxury curriculum: discovery questions, objection handling, and case studies. Enable mirrors consortium training assets for in-app study.",
-      tags: ["Virtuoso", "training", "certification", "luxury"],
+      tags: ["Training", "Certification"],
       ingestion_status: "indexed",
       ingested_at: d(20),
       last_updated: d(20),
@@ -1083,23 +1080,26 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       linked_products: [],
       linked_vics: [],
     },
-    ...buildSavedWebDocuments(),
-    ...buildEmailTemplateDocuments(),
   ];
 }
 
+const EXCLUDED_FROM_VAULT_LIST = new Set<DataSourceType>([
+  DataSourceType.ManualUpload,
+  DataSourceType.Virtuoso,
+  DataSourceType.WebScrape,
+  DataSourceType.EmailTemplate,
+]);
+
 export function getMockDocuments(): KnowledgeDocument[] {
-  return getMockDocumentsRaw().map(enrichDocumentTags);
+  return getMockDocumentsRaw().filter((d) => !EXCLUDED_FROM_VAULT_LIST.has(d.source_type));
 }
 
 export function getMockIngestionHealth(): IngestionHealth {
   return {
     total_documents: VAULT_TOTAL_DOCUMENTS,
-    indexed: 834,
-    pending: 14,
-    processing: 6,
-    failed: 6,
-    stale: 18,
+    indexed: 798,
+    processing: 12,
+    not_indexed: 50,
     last_full_sync: twoMinAgo,
     avg_freshness_days: 14,
   };
@@ -1115,35 +1115,35 @@ export function filterMockDocuments(
   let list = [...getMockDocuments()];
 
   const idsFromParam = params.source_ids?.split(",").filter(Boolean) ?? [];
-  const hasSearch = Boolean(params.search?.trim());
-
-  if (hasSearch) {
-    list = list.filter((d) => d.source_type !== DataSourceType.WebScrape);
-  }
-
   if (idsFromParam.length > 0) {
     list = list.filter((d) => idsFromParam.includes(d.source_id));
   } else if (params.source_id) {
     list = list.filter((d) => d.source_id === params.source_id);
-  } else {
-    list = list.filter((d) => d.source_type !== DataSourceType.WebScrape);
   }
 
-  if (params.data_layer) list = list.filter((d) => d.data_layer === params.data_layer);
+  if (params.data_layer) {
+    if (params.data_layer === "agency") {
+      list = list.filter((d) => d.data_layer === "agency" || d.data_layer === "enable");
+    } else if (params.data_layer === "advisor") {
+      list = list.filter((d) => d.data_layer === "advisor");
+    } else {
+      list = list.filter((d) => d.data_layer === params.data_layer);
+    }
+  }
   if (params.ingestion_status) list = list.filter((d) => d.ingestion_status === params.ingestion_status);
-  if (params.tags?.length) {
-    const wanted = params.tags.map((t) => t.toLowerCase());
-    list = list.filter((d) =>
-      wanted.some((w) => d.tags.some((t) => t.toLowerCase() === w))
-    );
+  if (params.tags) {
+    const tagFilters = params.tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    if (tagFilters.length)
+      list = list.filter((d) => tagFilters.some((t) => d.tags.includes(t)));
   }
   if (params.search) {
     const q = params.search.toLowerCase();
     list = list.filter(
       (d) =>
-        d.title.toLowerCase().includes(q) ||
-        (d.content_summary ?? "").toLowerCase().includes(q) ||
-        d.tags.some((t) => t.toLowerCase().includes(q))
+        d.title.toLowerCase().includes(q) || (d.content_summary ?? "").toLowerCase().includes(q)
     );
   }
 
@@ -1155,9 +1155,6 @@ export function filterMockDocuments(
     if (sortBy === "title") {
       aVal = a.title;
       bVal = b.title;
-    } else if (sortBy === "quality_score") {
-      aVal = a.quality_score ?? 0;
-      bVal = b.quality_score ?? 0;
     } else if (sortBy === "file_size_kb") {
       aVal = a.file_size_kb;
       bVal = b.file_size_kb;
@@ -1174,4 +1171,13 @@ export function filterMockDocuments(
   list = list.slice(start, start + limit);
 
   return { documents: list, total };
+}
+
+/** Distinct auto-generated tag labels across vault list mock (for filter chips). */
+export function getKnowledgeVaultDistinctTags(): string[] {
+  const seen = new Set<string>();
+  for (const d of getMockDocuments()) {
+    for (const t of d.tags) seen.add(t);
+  }
+  return [...seen].sort((a, b) => a.localeCompare(b));
 }

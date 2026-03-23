@@ -3,7 +3,19 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { User, LogOut, Mail, AtSign, Loader2, Shield, ChevronRight, Key, Plug } from "lucide-react";
+import {
+    User,
+    LogOut,
+    Mail,
+    AtSign,
+    Loader2,
+    Shield,
+    ChevronRight,
+    Key,
+    Plug,
+    Users,
+    Database,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -358,7 +370,7 @@ export default function SettingsPage() {
                 </section>
 
                 {/* Admin Section - Only visible to admins */}
-                {user?.role === "admin" && (
+                {(user?.role === "admin" || user?.role === "agency_admin") && (
                     <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
                         <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center gap-3">
                             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center border border-amber-500/20">
@@ -367,25 +379,57 @@ export default function SettingsPage() {
                             <h2 className="text-[15px] font-semibold text-[#F5F5F5]">Administration</h2>
                         </div>
 
-                        <div className="p-5">
-                            <p className="text-[13px] text-[rgba(245,245,245,0.5)] mb-4">
-                                Manage users and content permissions.
+                        <div className="p-5 space-y-3">
+                            <p className="text-[13px] text-[rgba(245,245,245,0.5)]">
+                                Teams, knowledge source defaults, and workspace admin.
                             </p>
-                            <Link
-                                href="/dashboard/settings/admin"
-                                className={[
-                                    "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
-                                    "text-[14px] font-medium",
-                                    "bg-[rgba(251,191,36,0.12)] hover:bg-[rgba(251,191,36,0.18)]",
-                                    "border border-[rgba(251,191,36,0.2)] hover:border-[rgba(251,191,36,0.35)]",
-                                    "text-amber-400 hover:text-amber-300",
-                                    "transition-all duration-150",
-                                ].join(" ")}
-                            >
-                                <Shield size={16} />
-                                Open Admin Panel
-                                <ChevronRight size={16} />
-                            </Link>
+                            <div className="flex flex-col gap-2">
+                                <Link
+                                    href="/dashboard/settings/teams"
+                                    className={[
+                                        "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
+                                        "text-[14px] font-medium",
+                                        "bg-white/[0.06] hover:bg-white/[0.1]",
+                                        "border border-white/[0.08]",
+                                        "text-[#F5F5F5]",
+                                        "transition-all duration-150",
+                                    ].join(" ")}
+                                >
+                                    <Users size={16} className="text-violet-400" />
+                                    Teams
+                                    <ChevronRight size={16} className="ml-auto opacity-60" />
+                                </Link>
+                                <Link
+                                    href="/dashboard/settings/sources"
+                                    className={[
+                                        "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
+                                        "text-[14px] font-medium",
+                                        "bg-white/[0.06] hover:bg-white/[0.1]",
+                                        "border border-white/[0.08]",
+                                        "text-[#F5F5F5]",
+                                        "transition-all duration-150",
+                                    ].join(" ")}
+                                >
+                                    <Database size={16} className="text-blue-400" />
+                                    Knowledge sources
+                                    <ChevronRight size={16} className="ml-auto opacity-60" />
+                                </Link>
+                                <Link
+                                    href="/dashboard/settings/admin"
+                                    className={[
+                                        "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
+                                        "text-[14px] font-medium",
+                                        "bg-[rgba(251,191,36,0.12)] hover:bg-[rgba(251,191,36,0.18)]",
+                                        "border border-[rgba(251,191,36,0.2)] hover:border-[rgba(251,191,36,0.35)]",
+                                        "text-amber-400 hover:text-amber-300",
+                                        "transition-all duration-150",
+                                    ].join(" ")}
+                                >
+                                    <Shield size={16} />
+                                    Open Admin Panel
+                                    <ChevronRight size={16} className="ml-auto opacity-80" />
+                                </Link>
+                            </div>
                         </div>
                     </section>
                 )}

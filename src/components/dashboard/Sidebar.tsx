@@ -13,13 +13,13 @@ import {
     History,
     User,
     Users,
-    Package,
+    Building2,
     Route,
     ChevronRight,
     ChevronDown,
     Database,
     LayoutDashboard,
-    BookMarked,
+    BookOpen,
     BarChart3,
     Zap,
 } from "lucide-react";
@@ -30,7 +30,6 @@ import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
 import { useClaromentisStatus } from "@/hooks/useClaromentisStatus";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 import { cn } from "@/lib/utils";
-
 export type Conversation = {
     id: number;
     title: string;
@@ -269,15 +268,6 @@ export default function Sidebar({
                     />
 
                     <NavLink
-                        href="/dashboard/products"
-                        collapsed={collapsed}
-                        icon={<Package size={18} />}
-                        label="Products"
-                        active={pathname.startsWith("/dashboard/products")}
-                        navTag={IS_PREVIEW_MODE ? "sample" : undefined}
-                    />
-
-                    <NavLink
                         href="/dashboard/itineraries"
                         collapsed={collapsed}
                         icon={<Route size={18} />}
@@ -287,11 +277,23 @@ export default function Sidebar({
                     />
 
                     <NavLink
-                        href="/dashboard/knowledge"
+                        href="/dashboard/knowledge-vault"
                         collapsed={collapsed}
-                        icon={<BookMarked size={18} />}
-                        label="Knowledge"
-                        active={pathname.startsWith("/dashboard/knowledge")}
+                        icon={<BookOpen size={18} />}
+                        label="Knowledge Vault"
+                        active={
+                            pathname.startsWith("/dashboard/knowledge-vault") ||
+                            pathname.startsWith("/dashboard/knowledge")
+                        }
+                        navTag={IS_PREVIEW_MODE ? "sample" : undefined}
+                    />
+
+                    <NavLink
+                        href="/dashboard/products"
+                        collapsed={collapsed}
+                        icon={<Building2 size={18} />}
+                        label="Product Directory"
+                        active={pathname.startsWith("/dashboard/products")}
                         navTag={IS_PREVIEW_MODE ? "sample" : undefined}
                     />
 
@@ -375,6 +377,33 @@ export default function Sidebar({
                                 <Settings size={14} className="text-[rgba(245,245,245,0.5)]" />
                                 <span>Settings</span>
                             </Link>
+                            {userContext && (
+                                <div className="flex items-center justify-between px-3 py-2 border-t border-white/[0.04]">
+                                    <span className="text-[10px] text-gray-500">Admin view</span>
+                                    <button
+                                        type="button"
+                                        role="switch"
+                                        aria-checked={userContext.kvViewAsAdmin}
+                                        onClick={() =>
+                                            userContext.setKvViewAsAdmin(!userContext.kvViewAsAdmin)
+                                        }
+                                        className={cn(
+                                            "relative w-7 h-4 rounded-full transition-colors shrink-0",
+                                            userContext.kvViewAsAdmin ? "bg-blue-500/20" : "bg-white/[0.06]"
+                                        )}
+                                    >
+                                        <span className="sr-only">Toggle Knowledge Vault admin demo view</span>
+                                        <span
+                                            className={cn(
+                                                "absolute top-0.5 w-3 h-3 rounded-full transition-transform pointer-events-none",
+                                                userContext.kvViewAsAdmin
+                                                    ? "translate-x-3.5 bg-blue-400"
+                                                    : "translate-x-0.5 bg-gray-500"
+                                            )}
+                                        />
+                                    </button>
+                                </div>
+                            )}
                             <div className="h-px bg-[rgba(255,255,255,0.08)]" />
                             <Button
                                 variant="ghost"
@@ -448,14 +477,21 @@ function NavLink({
         <Link
             href={href}
             className={[
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px]",
+                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px]",
                 "transition-all duration-150 ease-out",
                 active
-                    ? "bg-white/10 text-[#F5F5F5] font-medium"
-                    : "text-[rgba(245,245,245,0.65)] hover:bg-white/6 hover:text-[#F5F5F5]",
+                    ? "bg-white/[0.06] text-white font-medium"
+                    : "text-gray-500 hover:text-gray-300 hover:bg-white/[0.03]",
             ].join(" ")}
         >
-            <span className={`shrink-0 ${active ? 'text-white/90' : 'text-white/50'}`}>{icon}</span>
+            <span
+                className={cn(
+                    "shrink-0 inline-flex items-center justify-center relative",
+                    active ? "text-white" : "text-gray-500"
+                )}
+            >
+                {icon}
+            </span>
             {!collapsed && (
                 <>
                     <span className="truncate flex-1 min-w-0">{label}</span>

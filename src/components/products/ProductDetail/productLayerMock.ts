@@ -3,6 +3,8 @@
  * In production this would come from API per product + advisor.
  */
 
+import { TEAM_EVERYONE_ID } from "@/types/teams";
+
 export type AdvisorLayerMock = {
   contact: string;
   notes: string;
@@ -22,8 +24,10 @@ export type PartnerProgramMock = {
   name: string;
   benefits: string;
   commission?: string;
-  data_layer: "agency" | "enable";
+  /** Enable-curated vs team-scoped */
+  scope: "enable" | string;
   expires: string | null;
+  commissionContact?: { name: string; email: string } | null;
 };
 
 const GEORGE_V_ADVISOR: AdvisorLayerMock = {
@@ -64,16 +68,18 @@ const DEFAULT_PROGRAMS: PartnerProgramMock[] = [
     benefits:
       "Room upgrade on availability, daily breakfast for 2, $100 hotel credit, early check-in / late check-out.",
     commission: "10% on rack rate",
-    data_layer: "agency",
+    scope: TEAM_EVERYONE_ID,
     expires: "2026-12-31",
+    commissionContact: { name: "Marie Duval", email: "marie.duval@aman.com" },
   },
   {
     id: "pp-002",
     name: "Four Seasons Preferred Partner",
     benefits: "Complimentary 3rd night, airport transfers, welcome amenity, VIP treatment.",
     commission: "12% net",
-    data_layer: "agency",
+    scope: TEAM_EVERYONE_ID,
     expires: null,
+    commissionContact: null,
   },
 ];
 
@@ -135,7 +141,7 @@ export function getProductLayerMock(productId: string): {
           name: "Virtuoso Preferred",
           benefits: "Breakfast, resort credit, upgrade subject to availability.",
           commission: "10%",
-          data_layer: "enable",
+          scope: "enable",
           expires: null,
         },
       ],

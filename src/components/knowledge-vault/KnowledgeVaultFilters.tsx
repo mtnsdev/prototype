@@ -1,248 +1,316 @@
 "use client";
 
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import type { DataSource } from "@/types/knowledge-vault";
-import type { DataLayer, IngestionStatus } from "@/types/knowledge-vault";
-import { DataSourceType } from "@/types/knowledge-vault";
+import { useMemo, useState } from "react";
+import { Check, ChevronDown, Search, X } from "lucide-react";
+import type { IngestionStatus } from "@/types/knowledge-vault";
 import { cn } from "@/lib/utils";
-
-const DATA_LAYER_LABELS: Record<DataLayer, string> = {
-  enable: "Enable",
-  agency: "Agency",
-  advisor: "Advisor",
-};
-
-const DATA_LAYER_COLORS: Record<DataLayer, string> = {
-  enable: "bg-[var(--muted-info-bg)] text-[var(--muted-info-text)] border-[var(--muted-info-border)]",
-  agency: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  advisor: "bg-violet-500/10 text-violet-400 border-violet-500/20",
-};
-
-function sourceDataLayerLabel(sourceType: DataSourceType): "Agency" | "Advisor" | "Enable" {
-  const m: Partial<Record<DataSourceType, "Agency" | "Advisor" | "Enable">> = {
-    [DataSourceType.GoogleDriveAdmin]: "Agency",
-    [DataSourceType.GoogleDrivePersonal]: "Advisor",
-    [DataSourceType.ClaromentisDocuments]: "Agency",
-    [DataSourceType.ClaromentisPages]: "Agency",
-    [DataSourceType.ManualUpload]: "Advisor",
-    [DataSourceType.Virtuoso]: "Agency",
-    [DataSourceType.WebScrape]: "Advisor",
-    [DataSourceType.EmailTemplate]: "Agency",
-    [DataSourceType.Email]: "Agency",
-    [DataSourceType.APIStream]: "Agency",
-  };
-  return m[sourceType] ?? "Agency";
-}
+import { useUser } from "@/contexts/UserContext";
+import { getVisibleTeamsForUser } from "@/lib/teamsMock";
+import { Input } from "@/components/ui/input";
 
 export type KnowledgeVaultFiltersState = {
   source_ids?: string[];
-  data_layer?: DataLayer;
-  ingestion_status?: IngestionStatus;
+  /** Omitted = all scopes */
+  scope?: "private" | string;
+  /** OR match: doc must include at least one selected tag */
   tags?: string[];
+  ingestion_status?: IngestionStatus;
 };
-
-type TagFacet = { name: string; count: number };
 
 type Props = {
-  sources: DataSource[];
   filters: KnowledgeVaultFiltersState;
   onFiltersChange: (f: KnowledgeVaultFiltersState) => void;
-  onConnectSource: () => void;
-  hasActiveFilters: boolean;
-  onClearFilters: () => void;
-  tagFacets: TagFacet[];
+  hasDocumentFilters: boolean;
+  onClearDocumentFilters: () => void;
+  /** Distinct auto-generated tag labels for vault documents */
+  tagOptions: string[];
 };
 
+const AVAILABILITY: { value: IngestionStatus; label: string }[] = [
+  { value: "indexed", label: "Indexed" },
+  { value: "processing", label: "Processing" },
+  { value: "not_indexed", label: "Not indexed" },
+];
+
 export default function KnowledgeVaultFilters({
-  sources,
   filters,
   onFiltersChange,
-  onConnectSource,
-  hasActiveFilters,
-  onClearFilters,
-  tagFacets,
+  hasDocumentFilters,
+  onClearDocumentFilters,
+  tagOptions,
 }: Props) {
-  const selected = filters.source_ids ?? [];
+  const { user } = useUser();
+  const scopeTeams = getVisibleTeamsForUser(user?.id);
+  const selectedTags = filters.tags ?? [];
+  const [tagSearch, setTagSearch] = useState("");
 
-  const toggleFilter = <K extends keyof KnowledgeVaultFiltersState>(
-    key: K,
-    value: KnowledgeVaultFiltersState[K]
-  ) => {
+  const filteredSortedTagOptions = useMemo(() => {
+    const q = tagSearch.trim().toLowerCase();
+    const base = q.length ? tagOptions.filter((t) => t.toLowerCase().includes(q)) : [...tagOptions];
+    return base.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  }, [tagOptions, tagSearch]);
+
+  const setScope = (scope: KnowledgeVaultFiltersState["scope"]) => {
     onFiltersChange({
       ...filters,
-      [key]: filters[key] === value ? undefined : value,
+      scope,
     });
   };
 
-  const toggleSourceId = (id: string) => {
-    const next = selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id];
+  const toggleScope = (value: NonNullable<KnowledgeVaultFiltersState["scope"]>) => {
+    setScope(filters.scope === value ? undefined : value);
+  };
+
+  const toggleTag = (tag: string) => {
+    const next = selectedTags.includes(tag)
+      ? selectedTags.filter((t) => t !== tag)
+      : [...selectedTags, tag];
     onFiltersChange({
       ...filters,
-      source_ids: next.length ? next : undefined,
+      tags: next.length ? next : undefined,
     });
   };
 
-  const toggleTagFilter = (tag: string) => {
-    const current = filters.tags ?? [];
-    const next = current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag];
-    onFiltersChange({ ...filters, tags: next.length ? next : undefined });
+  const removeTag = (tag: string) => {
+    const next = selectedTags.filter((t) => t !== tag);
+    onFiltersChange({
+      ...filters,
+      tags: next.length ? next : undefined,
+    });
   };
 
   return (
-    <div className="p-4 space-y-6">
-      {hasActiveFilters && (
+    <div className="p-4 space-y-4">
+      <p className="text-[11px] leading-relaxed text-[var(--text-tertiary)]">
+        Choose sources on the cards above. These options filter the document list only—they do not change which
+        connection is selected.
+      </p>
+
+      {hasDocumentFilters && (
         <button
           type="button"
-          onClick={onClearFilters}
-          className="text-xs text-[rgba(245,245,245,0.7)] hover:text-[#F5F5F5] hover:underline"
+          onClick={onClearDocumentFilters}
+          className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:underline"
         >
-          Clear all filters
+          Clear document filters
         </button>
       )}
 
-      <section>
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2">
-          Data sources
-        </h3>
-        <ul className="space-y-1">
-          {sources.map((s) => {
-            const connected = s.status === "connected";
-            const active = selected.includes(s.id);
-            const layer = sourceDataLayerLabel(s.source_type);
-            const layerCls =
-              layer === "Agency"
-                ? "text-blue-400/90"
-                : layer === "Advisor"
-                  ? "text-violet-400/90"
-                  : "text-emerald-400/90";
-            return (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  disabled={!connected}
-                  onClick={() => connected && toggleSourceId(s.id)}
-                  className={cn(
-                    "w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm",
-                    !connected && "opacity-45 cursor-not-allowed",
-                    connected && active && "bg-white/10 text-[#F5F5F5]",
-                    connected && !active && "text-[rgba(245,245,245,0.8)] hover:bg-white/5"
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "w-2 h-2 rounded-full shrink-0",
-                      !connected && "bg-[rgba(255,255,255,0.25)]",
-                      connected && s.health_score >= 80 && "bg-[var(--muted-success-text)]",
-                      connected &&
-                        s.health_score >= 50 &&
-                        s.health_score < 80 &&
-                        "bg-[var(--muted-amber-text)]",
-                      connected && s.health_score < 50 && s.health_score > 0 && "bg-[var(--muted-error-text)]",
-                      connected && s.health_score === 0 && "bg-[rgba(255,255,255,0.3)]",
-                      s.source_type === DataSourceType.WebScrape && connected && "bg-blue-400"
-                    )}
-                  />
-                  <span className="truncate flex-1 min-w-0">{s.name}</span>
-                  {s.document_visible_count != null &&
-                  (s.source_type === DataSourceType.ClaromentisDocuments ||
-                    s.source_type === DataSourceType.ClaromentisPages) ? (
-                    <span className="text-xs shrink-0 tabular-nums">
-                      <span className="text-[rgba(245,245,245,0.5)]">{s.document_visible_count}</span>
-                      <span className="text-gray-600">/{s.document_count}</span>
-                    </span>
-                  ) : (
-                    <span className="text-xs text-[rgba(245,245,245,0.5)] shrink-0 tabular-nums">
-                      {s.document_count}
-                    </span>
-                  )}
-                  <span className={cn("text-[10px] shrink-0 font-medium", layerCls)}>{layer}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start gap-2 mt-1 text-[rgba(245,245,245,0.7)]"
-          onClick={onConnectSource}
-        >
-          <Plus size={14} /> Connect Source
-        </Button>
-      </section>
-
-      <section>
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2">
-          Data layer
-        </h3>
-        <div className="flex flex-wrap gap-1.5">
-          {(["enable", "agency", "advisor"] as const).map((layer) => (
+      <div className="flex flex-col gap-5 sm:flex-row sm:flex-wrap sm:items-start sm:gap-8">
+        <section className="min-w-0" role="group" aria-labelledby="kv-filter-scope-label">
+          <h3
+            id="kv-filter-scope-label"
+            className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2"
+          >
+            Scope
+          </h3>
+          <div className="flex flex-wrap gap-1.5" role="toolbar" aria-label="Filter by scope">
             <button
-              key={layer}
               type="button"
-              onClick={() => toggleFilter("data_layer", layer)}
+              aria-pressed={filters.scope == null}
+              onClick={() => setScope(undefined)}
               className={cn(
                 "text-xs px-2 py-1 rounded border",
-                filters.data_layer === layer
-                  ? DATA_LAYER_COLORS[layer]
-                  : "border-white/10 text-[rgba(245,245,245,0.6)] hover:bg-white/5"
+                filters.scope == null
+                  ? "bg-white/10 text-[var(--text-primary)] border-white/20"
+                  : "border-white/10 text-[var(--text-secondary)] hover:bg-white/5"
               )}
             >
-              {DATA_LAYER_LABELS[layer]}
+              All
             </button>
-          ))}
-        </div>
-      </section>
-
-      {tagFacets.length > 0 && (
-        <div className="mt-4">
-          <p className="text-[10px] font-semibold tracking-wider text-gray-500 uppercase mb-2">Tags</p>
-          <div className="flex flex-wrap gap-1.5">
-            {tagFacets.map((tag) => (
+            <button
+              type="button"
+              aria-pressed={filters.scope === "private"}
+              onClick={() => toggleScope("private")}
+              className={cn(
+                "text-xs px-2 py-1 rounded border",
+                filters.scope === "private"
+                  ? "bg-[var(--muted-accent-bg)] text-[var(--muted-accent-text)] border-[var(--muted-accent-border)]"
+                  : "border-white/10 text-[var(--text-secondary)] hover:bg-white/5"
+              )}
+            >
+              Private
+            </button>
+            {scopeTeams.map((team) => (
               <button
-                key={tag.name}
+                key={team.id}
                 type="button"
-                onClick={() => toggleTagFilter(tag.name)}
+                aria-pressed={filters.scope === team.id}
+                onClick={() => toggleScope(team.id)}
                 className={cn(
-                  "text-[10px] px-2 py-0.5 rounded-full transition-all border",
-                  filters.tags?.includes(tag.name)
-                    ? "bg-blue-500/15 text-blue-400 border-blue-500/30"
-                    : "bg-white/5 text-gray-500 border-white/[0.06] hover:border-white/10"
+                  "text-xs px-2 py-1 rounded border max-w-[160px] truncate",
+                  filters.scope === team.id
+                    ? "bg-[var(--muted-info-bg)] text-[var(--muted-info-text)] border-[var(--muted-info-border)]"
+                    : "border-white/10 text-[var(--text-secondary)] hover:bg-white/5"
                 )}
+                title={team.name}
               >
-                {tag.name}
-                <span className="ml-1 text-gray-600">{tag.count}</span>
+                {team.name}
               </button>
             ))}
           </div>
-        </div>
-      )}
+        </section>
 
-      <section>
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2">
-          Ingestion status
-        </h3>
-        <div className="flex flex-wrap gap-1.5">
-          {(["indexed", "pending", "processing", "failed"] as const).map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => toggleFilter("ingestion_status", s)}
-              className={cn(
-                "text-xs px-2 py-1 rounded border",
-                filters.ingestion_status === s
-                  ? s === "failed"
-                    ? "bg-[var(--muted-error-bg)] text-[var(--muted-error-text)] border-[var(--muted-error-border)]"
-                    : "bg-white/10 border-white/20 text-[#F5F5F5]"
-                  : "border-white/10 text-[rgba(245,245,245,0.6)] hover:bg-white/5"
-              )}
+        <section className="min-w-0 flex-1 sm:max-w-md lg:max-w-lg" role="group" aria-labelledby="kv-filter-tags-label">
+          <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
+            <h3
+              id="kv-filter-tags-label"
+              className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]"
             >
-              {s}
-            </button>
-          ))}
-        </div>
-      </section>
+              Tags
+            </h3>
+            <p
+              className="text-[10px] text-[var(--text-quaternary)] max-w-[min(100%,280px)] leading-snug"
+              title="Labels come from folder paths at sync. Selecting more than one tag keeps documents that match any of them (OR)."
+            >
+              Folder paths · OR match
+            </p>
+          </div>
+          {selectedTags.length > 0 && (
+            <div className="mb-1.5 flex max-h-[2.75rem] flex-wrap content-start gap-1 overflow-y-auto overscroll-contain">
+              {selectedTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex max-w-full shrink-0 items-center gap-0.5 rounded border border-white/[0.12] bg-white/[0.06] pl-1.5 pr-0.5 py-0.5 text-[10px] text-[var(--text-secondary)]"
+                >
+                  <span className="truncate max-w-[140px]" title={tag}>
+                    {tag}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeTag(tag)}
+                    className="rounded p-0.5 text-[var(--text-quaternary)] hover:bg-white/[0.08] hover:text-[var(--text-secondary)]"
+                    aria-label={`Remove tag filter ${tag}`}
+                  >
+                    <X size={11} strokeWidth={2} aria-hidden />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          {tagOptions.length > 0 && (
+            <div className="relative mb-1.5">
+              <Search
+                size={13}
+                className="absolute left-2 top-1/2 -translate-y-1/2 text-[var(--text-quaternary)] pointer-events-none"
+                aria-hidden
+              />
+              <Input
+                value={tagSearch}
+                onChange={(e) => setTagSearch(e.target.value)}
+                placeholder="Search tags…"
+                className="h-7 pl-7 text-xs bg-white/[0.04] border-white/[0.08] text-[var(--text-secondary)] placeholder:text-[var(--text-quaternary)]"
+                aria-label="Search tag filters"
+              />
+            </div>
+          )}
+          {tagOptions.length === 0 ? (
+            <p className="text-[11px] text-[var(--text-quaternary)] py-1">No tags in catalog</p>
+          ) : (
+            <details className="group rounded-lg border border-white/[0.06] bg-black/20 overflow-hidden">
+              <summary className="flex cursor-pointer list-none items-center gap-2 px-2.5 py-1.5 text-[11px] text-[var(--text-secondary)] hover:bg-white/[0.03] [&::-webkit-details-marker]:hidden">
+                <span className="min-w-0 flex-1 font-medium">Browse tag list</span>
+                <span className="tabular-nums text-[var(--text-quaternary)]">{tagOptions.length}</span>
+                <ChevronDown
+                  size={14}
+                  className="shrink-0 text-[var(--text-quaternary)] transition-transform group-open:rotate-180"
+                  aria-hidden
+                />
+              </summary>
+              <div
+                className="max-h-[7.5rem] overflow-y-auto overscroll-contain border-t border-white/[0.05]"
+                role="listbox"
+                aria-label="Filter by tags"
+                aria-multiselectable
+              >
+                {filteredSortedTagOptions.length === 0 ? (
+                  <p className="px-2.5 py-2 text-[11px] text-[var(--text-quaternary)]">
+                    No tags match “{tagSearch.trim()}”
+                  </p>
+                ) : (
+                  <ul className="divide-y divide-white/[0.04]">
+                    {filteredSortedTagOptions.map((tag) => {
+                      const pressed = selectedTags.includes(tag);
+                      return (
+                        <li key={tag}>
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={pressed}
+                            onClick={() => toggleTag(tag)}
+                            title={tag}
+                            className={cn(
+                              "flex w-full items-center gap-2 px-2.5 py-1 text-left text-[11px] transition-colors",
+                              pressed
+                                ? "bg-white/[0.06] text-[var(--text-primary)]"
+                                : "text-[var(--text-tertiary)] hover:bg-white/[0.035] hover:text-[var(--text-secondary)]"
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "flex h-3 w-3 shrink-0 items-center justify-center rounded border",
+                                pressed
+                                  ? "border-white/30 bg-white/[0.1] text-[var(--text-secondary)]"
+                                  : "border-white/[0.12] bg-transparent"
+                              )}
+                              aria-hidden
+                            >
+                              {pressed ? <Check size={9} strokeWidth={2.5} /> : null}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate">{tag}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            </details>
+          )}
+        </section>
+
+        <section className="min-w-0" role="group" aria-labelledby="kv-filter-ingestion-label">
+          <h3
+            id="kv-filter-ingestion-label"
+            className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2"
+          >
+            Availability
+          </h3>
+          <div className="flex flex-wrap gap-1.5" role="toolbar" aria-label="Filter by RAG availability">
+            {AVAILABILITY.map(({ value, label }) => {
+              const pressed = filters.ingestion_status === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={pressed}
+                  onClick={() =>
+                    onFiltersChange({
+                      ...filters,
+                      ingestion_status: filters.ingestion_status === value ? undefined : value,
+                    })
+                  }
+                  className={cn(
+                    "text-xs px-2 py-1 rounded border",
+                    pressed &&
+                      value === "indexed" &&
+                      "bg-[var(--color-success-muted)] border-[color-mix(in_srgb,var(--color-success)_38%,transparent)] text-[var(--color-success)]",
+                    pressed &&
+                      value === "processing" &&
+                      "bg-[var(--color-warning-muted)] border-[color-mix(in_srgb,var(--color-warning)_35%,transparent)] text-[var(--color-warning)]",
+                    pressed &&
+                      value === "not_indexed" &&
+                      "bg-white/10 border-white/22 text-[var(--text-primary)]",
+                    !pressed && "border-white/10 text-[var(--text-secondary)] hover:bg-white/5"
+                  )}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

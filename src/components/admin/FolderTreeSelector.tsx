@@ -57,7 +57,7 @@ async function fetchWithTimeout(url: string, options: RequestInit): Promise<Resp
   }
 }
 
-async function fetchClaromentisChildren(token: string, parentId: number | null): Promise<FolderTreeNode[]> {
+async function fetchIntranetFolderChildren(token: string, parentId: number | null): Promise<FolderTreeNode[]> {
   const pid = parentId ?? 0;
   const res = await fetchWithTimeout(
     `${API_BASE}/admin/folder-tree?parent_id=${pid}`,
@@ -140,7 +140,7 @@ function fetchChildren(
   if (mode === "google-drive") {
     return fetchDriveChildren(token, String(parentId ?? "root"), driveId, isRootLoad);
   }
-  return fetchClaromentisChildren(token, parentId as number | null);
+  return fetchIntranetFolderChildren(token, parentId as number | null);
 }
 
 function TreeNode({

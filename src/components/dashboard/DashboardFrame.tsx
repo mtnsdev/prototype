@@ -5,6 +5,8 @@ import Sidebar from "@/components/dashboard/Sidebar";
 import { ChatProvider, useChatContextOptional } from "@/contexts/ChatContext";
 import { UserProvider } from "@/contexts/UserContext";
 import { ToastProvider } from "@/contexts/ToastContext";
+import { KnowledgeVaultEmailProvider } from "@/contexts/KnowledgeVaultEmailContext";
+import ReportIssueLauncher from "@/components/ui/ReportIssueLauncher";
 
 function SidebarFallback() {
     return (
@@ -32,6 +34,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
                 {/* Everything to the right of the sidebar is route-specific */}
                 <div className="flex-1 min-w-0">{children}</div>
+                <ReportIssueLauncher />
             </div>
         </div>
     );
@@ -40,11 +43,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 export default function DashboardFrame({ children }: { children: React.ReactNode }) {
     return (
         <UserProvider>
-            <ChatProvider>
-                <ToastProvider>
-                    <DashboardContent>{children}</DashboardContent>
-                </ToastProvider>
-            </ChatProvider>
+            <KnowledgeVaultEmailProvider>
+                <ChatProvider>
+                    <ToastProvider>
+                        <DashboardContent>{children}</DashboardContent>
+                    </ToastProvider>
+                </ChatProvider>
+            </KnowledgeVaultEmailProvider>
         </UserProvider>
     );
 }
