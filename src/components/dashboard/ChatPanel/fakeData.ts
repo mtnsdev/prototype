@@ -76,12 +76,12 @@ export const FAKE_PLACE_CARDS: PlaceCard[] = [
 export const FAKE_KB_CITATIONS: Citation[] = [
   {
     chunk_id: "fake-1",
-    source: "claromentis_documents",
+    source: "intranet_documents",
     page_number: 12,
     excerpt: "Commission rates for Rosewood Elite tier start at 10% for qualifying bookings...",
     filename: "Commission_Guide_2024.pdf",
     pdf_path: "",
-    source_label: "Claromentis — Documents",
+    source_label: "Intranet — Documents",
   },
   {
     chunk_id: "fake-2",
@@ -92,7 +92,7 @@ export const FAKE_KB_CITATIONS: Citation[] = [
     pdf_path: "",
     source_label: "My Google Drive",
   },
-  { chunk_id: "fake-3", source: "claromentis_documents", page_number: 5, excerpt: "Maldives overwater villas: One&Only Reethi Rah and Four Seasons Landaa Giraavaru offer family villas with pool.", filename: "Maldives_Destination_Guide_2026.pdf", pdf_path: "", source_label: "Claromentis — Documents" },
+  { chunk_id: "fake-3", source: "intranet_documents", page_number: 5, excerpt: "Maldives overwater villas: One&Only Reethi Rah and Four Seasons Landaa Giraavaru offer family villas with pool.", filename: "Maldives_Destination_Guide_2026.pdf", pdf_path: "", source_label: "Intranet — Documents" },
   { chunk_id: "fake-4", source: "google-drive", page_number: 3, excerpt: "Virtuoso benefits at Aman properties include room upgrade, daily breakfast, and $100 credit.", filename: "Aman_Virtuoso_Benefits.pdf", pdf_path: "", source_label: "My Google Drive" },
-  { chunk_id: "fake-5", source: "claromentis_pages", page_number: 1, excerpt: "Monaco Grand Prix 2026: recommended hotels Hôtel de Paris, Hermitage, and Fairmont. Book 12 months ahead.", filename: "Monaco_GP_Guide.pdf", pdf_path: "", source_label: "Claromentis — Pages" },
+  { chunk_id: "fake-5", source: "intranet_pages", page_number: 1, excerpt: "Monaco Grand Prix 2026: recommended hotels Hôtel de Paris, Hermitage, and Fairmont. Book 12 months ahead.", filename: "Monaco_GP_Guide.pdf", pdf_path: "", source_label: "Intranet — Pages" },
 ];

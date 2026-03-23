@@ -20,7 +20,7 @@ export type IntegrationDefinition = {
 export const INTEGRATION_DEFINITIONS: IntegrationDefinition[] = [
     {
         key: "claromentis",
-        label: "Claromentis (Intranet)",
+        label: "Intranet",
         visibleTo: "all",
         knowledgeQueryKey: "claromentis",
     },

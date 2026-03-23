@@ -30,8 +30,6 @@ import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
 import { useClaromentisStatus } from "@/hooks/useClaromentisStatus";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 import { cn } from "@/lib/utils";
-import { useKnowledgeVaultUnprocessedEmailCount } from "@/contexts/KnowledgeVaultEmailContext";
-
 export type Conversation = {
     id: number;
     title: string;
@@ -60,7 +58,6 @@ export default function Sidebar({
     const pathname = usePathname();
     const router = useRouter();
     const userContext = useUserOptional();
-    const kvEmailUnprocessed = useKnowledgeVaultUnprocessedEmailCount();
     const [recentConversations, setRecentConversations] = useState<Conversation[]>([]);
     const [userPopoverOpen, setUserPopoverOpen] = useState(false);
     const popoverRef = useRef<HTMLDivElement>(null);
@@ -289,7 +286,6 @@ export default function Sidebar({
                             pathname.startsWith("/dashboard/knowledge")
                         }
                         navTag={IS_PREVIEW_MODE ? "sample" : undefined}
-                        kvNotificationCount={kvEmailUnprocessed}
                     />
 
                     <NavLink
@@ -381,6 +377,33 @@ export default function Sidebar({
                                 <Settings size={14} className="text-[rgba(245,245,245,0.5)]" />
                                 <span>Settings</span>
                             </Link>
+                            {userContext && (
+                                <div className="flex items-center justify-between px-3 py-2 border-t border-white/[0.04]">
+                                    <span className="text-[10px] text-gray-500">Admin view</span>
+                                    <button
+                                        type="button"
+                                        role="switch"
+                                        aria-checked={userContext.kvViewAsAdmin}
+                                        onClick={() =>
+                                            userContext.setKvViewAsAdmin(!userContext.kvViewAsAdmin)
+                                        }
+                                        className={cn(
+                                            "relative w-7 h-4 rounded-full transition-colors shrink-0",
+                                            userContext.kvViewAsAdmin ? "bg-blue-500/20" : "bg-white/[0.06]"
+                                        )}
+                                    >
+                                        <span className="sr-only">Toggle Knowledge Vault admin demo view</span>
+                                        <span
+                                            className={cn(
+                                                "absolute top-0.5 w-3 h-3 rounded-full transition-transform pointer-events-none",
+                                                userContext.kvViewAsAdmin
+                                                    ? "translate-x-3.5 bg-blue-400"
+                                                    : "translate-x-0.5 bg-gray-500"
+                                            )}
+                                        />
+                                    </button>
+                                </div>
+                            )}
                             <div className="h-px bg-[rgba(255,255,255,0.08)]" />
                             <Button
                                 variant="ghost"
@@ -440,7 +463,6 @@ function NavLink({
     active,
     badge,
     navTag,
-    kvNotificationCount,
 }: {
     href: string;
     collapsed: boolean;
@@ -450,10 +472,7 @@ function NavLink({
     badge?: string;
     /** Shown when IS_PREVIEW_MODE; "sample" = Sample data, "construction" = Under construction */
     navTag?: "sample" | "construction" | "coming_soon";
-    /** Unprocessed email count for Knowledge Vault (sky badge) */
-    kvNotificationCount?: number;
 }) {
-    const kvCollapsedBadge = collapsed && kvNotificationCount != null && kvNotificationCount > 0;
     return (
         <Link
             href={href}
@@ -472,28 +491,12 @@ function NavLink({
                 )}
             >
                 {icon}
-                {kvCollapsedBadge && (
-                    <span
-                        className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 bg-sky-400 text-[8px] font-bold text-[#06060a] rounded-full flex items-center justify-center border border-[#0C0C0C]"
-                        title="Unreviewed forwarded emails"
-                    >
-                        {kvNotificationCount > 9 ? "9+" : kvNotificationCount}
-                    </span>
-                )}
             </span>
             {!collapsed && (
                 <>
                     <span className="truncate flex-1 min-w-0">{label}</span>
                     {navTag && <NavTag variant={navTag} />}
-                    {kvNotificationCount != null && kvNotificationCount > 0 && (
-                        <span
-                            className="shrink-0 ml-auto min-w-5 h-5 px-1 bg-sky-500/15 text-sky-400 text-[10px] font-semibold rounded-full inline-flex items-center justify-center border border-sky-500/20"
-                            title="Unreviewed forwarded emails"
-                        >
-                            {kvNotificationCount > 9 ? "9+" : kvNotificationCount}
-                        </span>
-                    )}
-                    {badge && !navTag && !(kvNotificationCount && kvNotificationCount > 0) && (
+                    {badge && !navTag && (
                         <span
                             className="shrink-0 ml-auto rounded-md px-2 py-0.5 text-[11px] font-normal text-[rgba(245,245,245,0.4)] bg-white/[0.05] border border-white/[0.08]"
                             title="This feature is not fully implemented yet"

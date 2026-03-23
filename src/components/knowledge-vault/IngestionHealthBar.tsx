@@ -3,21 +3,18 @@
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import type { DataSource, IngestionHealth, IngestionStatus } from "@/types/knowledge-vault";
-import { cn } from "@/lib/utils";
 
 type Props = {
   health: IngestionHealth;
   sources: DataSource[];
-  onFilterFailed: () => void;
   activeIngestionFilter?: IngestionStatus | null;
-  /** When true, failed filter applies to the document list only—hide cue and disable shortcut. */
+  /** When true, ingestion filter applies only to the vault list — hide shortcut row cues. */
   documentFiltersUnavailable?: boolean;
 };
 
 export default function IngestionHealthBar({
   health,
   sources,
-  onFilterFailed,
   activeIngestionFilter,
   documentFiltersUnavailable,
 }: Props) {
@@ -38,57 +35,37 @@ export default function IngestionHealthBar({
 
   return (
     <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#161616] p-4">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <span className="text-sm font-medium text-[#F5F5F5]">Ingestion Health</span>
-        <div className="flex-1 h-3 rounded-full overflow-hidden flex bg-white/5 min-w-[80px]">
+        <div className="flex-1 h-3 rounded-full overflow-hidden flex bg-white/5 min-w-[120px]">
           <div
-            className="bg-[var(--muted-success-text)] transition-all"
+            className="bg-[color-mix(in_srgb,var(--color-success)_52%,transparent)] transition-all"
             style={{ width: pct(health.indexed) + "%" }}
+            title="Indexed"
           />
           <div
-            className="bg-[var(--muted-info-text)] transition-all"
+            className="bg-[color-mix(in_srgb,var(--color-warning)_48%,transparent)] transition-all"
             style={{ width: pct(health.processing) + "%" }}
+            title="Processing"
           />
           <div
-            className="bg-[rgba(255,255,255,0.2)] transition-all"
-            style={{ width: pct(health.pending) + "%" }}
-          />
-          <div
-            className="bg-[var(--muted-error-text)] transition-all"
-            style={{ width: pct(health.failed) + "%" }}
+            className="bg-white/[0.18] transition-all"
+            style={{ width: pct(health.not_indexed) + "%" }}
+            title="Not indexed"
           />
         </div>
-        <div className="text-xs text-[rgba(245,245,245,0.7)] shrink-0">
-          <span className="text-[var(--muted-success-text)]">{health.indexed} indexed</span>
-          {" · "}
-          <span className="text-[var(--muted-info-text)]">{health.processing} processing</span>
-          {" · "}
-          <span className="text-[rgba(245,245,245,0.5)]">{health.pending} pending</span>
-          {" · "}
-          <button
-            type="button"
-            onClick={onFilterFailed}
-            disabled={documentFiltersUnavailable || health.failed === 0}
-            title={
-              documentFiltersUnavailable
-                ? "Open a document source to filter the vault list by failed items"
-                : undefined
-            }
-            className={cn(
-              "text-[var(--muted-error-text)]",
-              documentFiltersUnavailable || health.failed === 0
-                ? "opacity-40 cursor-not-allowed"
-                : "hover:underline"
-            )}
-          >
-            {health.failed} failed
-          </button>
+        <div className="text-xs text-[var(--text-secondary)] shrink-0 flex flex-wrap gap-x-2 gap-y-1">
+          <span className="text-[var(--color-success)]">{health.indexed} indexed</span>
+          <span className="text-white/30">·</span>
+          <span className="text-[var(--color-warning)]">{health.processing} processing</span>
+          <span className="text-white/30">·</span>
+          <span className="text-[var(--text-tertiary)]">{health.not_indexed} not indexed</span>
         </div>
       </div>
-      {activeIngestionFilter === "failed" && !documentFiltersUnavailable && (
-        <p className="text-xs text-[var(--muted-error-text)] mt-2">
-          Document list is filtered to <span className="font-medium">failed</span> items. Adjust or clear in{" "}
-          <span className="font-medium text-[rgba(245,245,245,0.85)]">Document filters</span> below the search bar.
+      {activeIngestionFilter != null && !documentFiltersUnavailable && (
+        <p className="text-xs text-[rgba(245,245,245,0.55)] mt-2">
+          Document list filtered by availability. Clear in{" "}
+          <span className="font-medium text-[rgba(245,245,245,0.85)]">Document filters</span> below.
         </p>
       )}
       <button
@@ -102,12 +79,13 @@ export default function IngestionHealthBar({
       {expanded && (
         <div className="mt-3 pt-3 border-t border-white/10 space-y-2.5 text-xs">
           {orderedSources.map((s) => (
-            <div key={s.id} className="flex items-center gap-3">
+            <div key={s.id} className="flex items-center gap-3 flex-wrap">
               <span className="text-[rgba(245,245,245,0.85)] w-[200px] shrink-0 truncate" title={s.name}>
                 {s.name}
               </span>
-              <span className="text-[rgba(245,245,245,0.5)] w-16 shrink-0 tabular-nums">
-                {s.document_count} docs
+              <span className="text-[rgba(245,245,245,0.5)] shrink-0 tabular-nums">
+                {s.indexed_document_count != null ? `${s.indexed_document_count} / ${s.document_count}` : s.document_count}{" "}
+                indexed
               </span>
               <span className="text-[rgba(245,245,245,0.35)]">|</span>
               <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden min-w-[60px]">
@@ -117,10 +95,10 @@ export default function IngestionHealthBar({
                   <div
                     className={
                       s.health_score >= 80
-                        ? "h-full bg-[var(--muted-success-text)]"
+                        ? "h-full bg-[color-mix(in_srgb,var(--color-success)_45%,transparent)]"
                         : s.health_score >= 50
-                          ? "h-full bg-[var(--muted-amber-text)]"
-                          : "h-full bg-[var(--muted-error-text)]"
+                          ? "h-full bg-[color-mix(in_srgb,var(--color-warning)_42%,transparent)]"
+                          : "h-full bg-white/26"
                     }
                     style={{ width: `${Math.max(2, s.health_score)}%` }}
                   />
@@ -135,8 +113,7 @@ export default function IngestionHealthBar({
             </div>
           ))}
           <p className="text-[rgba(245,245,245,0.45)] pt-2 border-t border-white/5">
-            Last full sync: {new Date(health.last_full_sync).toLocaleString()} · Needs attention (vault-wide):{" "}
-            {health.stale}
+            Last full sync: {new Date(health.last_full_sync).toLocaleString()}
           </p>
         </div>
       )}

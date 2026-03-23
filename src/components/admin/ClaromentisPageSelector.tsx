@@ -19,7 +19,7 @@ type Props = {
 };
 
 /**
- * Displays Claromentis page names (no content previews) for allow-list
+ * Displays intranet page names (no content previews) for allow-list
  * selection in the admin permissions panel.
  */
 export default function ClaromentisPageSelector({
@@ -88,7 +88,7 @@ export default function ClaromentisPageSelector({
                     <p className="text-[13px] text-[#C87A7A] px-3 py-4">{error}</p>
                 ) : pages.length === 0 ? (
                     <p className="text-[13px] text-[rgba(245,245,245,0.4)] px-3 py-4 text-center">
-                        {search ? "No pages match your search" : "No Claromentis pages found"}
+                        {search ? "No pages match your search" : "No intranet pages found"}
                     </p>
                 ) : (
                     <div className="py-1">

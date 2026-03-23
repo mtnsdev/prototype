@@ -36,7 +36,7 @@ type SearchFormState = {
 const SEARCH_ENDPOINT = "/api/library/search";
 const PROXY_ENDPOINT = "/api/library/proxy";
 
-export default function ClaromentisSearchPanel() {
+export default function IntranetSearchPanel() {
     const [form, setForm] = useState<SearchFormState>({
         q: "",
         createdFrom: "",
@@ -76,7 +76,7 @@ export default function ClaromentisSearchPanel() {
         const qq = submitted.q.trim();
         if (qq) url.searchParams.set("q", qq);
 
-        // FE sends YYYY-MM-DD, backend should convert to YYYYMMDD for Claromentis
+        // FE sends YYYY-MM-DD, backend should convert to YYYYMMDD for intranet API
         if (submitted.createdFrom.trim()) url.searchParams.set("created_from", submitted.createdFrom.trim());
         if (submitted.createdTo.trim()) url.searchParams.set("created_to", submitted.createdTo.trim());
 

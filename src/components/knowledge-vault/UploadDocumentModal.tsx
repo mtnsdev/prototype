@@ -25,7 +25,6 @@ export default function UploadDocumentModal({ open, onClose, onUploaded }: Props
   const [files, setFiles] = useState<File[]>([]);
   const [title, setTitle] = useState("");
   const [dataLayer, setDataLayer] = useState<"agency" | "advisor">("agency");
-  const [tags, setTags] = useState("");
   const [uploading, setUploading] = useState(false);
 
   const reset = () => {
@@ -33,7 +32,6 @@ export default function UploadDocumentModal({ open, onClose, onUploaded }: Props
     setFiles([]);
     setTitle("");
     setDataLayer("agency");
-    setTags("");
     setUploading(false);
   };
 
@@ -63,7 +61,6 @@ export default function UploadDocumentModal({ open, onClose, onUploaded }: Props
       files.forEach((f) => formData.append("files", f));
       formData.set("title", title);
       formData.set("data_layer", dataLayer);
-      formData.set("tags", tags);
       const { uploadKnowledgeDocuments } = await import("@/lib/knowledge-vault-api");
       await uploadKnowledgeDocuments(formData);
       toast("Documents uploaded. Processing…");
@@ -157,15 +154,6 @@ export default function UploadDocumentModal({ open, onClose, onUploaded }: Props
                   Advisor
                 </label>
               </div>
-            </div>
-            <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Tags (comma-separated)</Label>
-              <input
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                placeholder="luxury, Europe, rates"
-                className="mt-1 w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-[#F5F5F5]"
-              />
             </div>
           </div>
         )}

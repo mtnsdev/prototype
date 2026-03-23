@@ -594,7 +594,7 @@ export default function UsersPage() {
                 />
             )}
 
-            {/* Claromentis Permissions Modal */}
+            {/* Intranet permissions modal */}
             {permissionsUser && (
                 <UserPermissionsModal
                     userId={permissionsUser.id}
