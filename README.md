@@ -17,8 +17,11 @@ Keep this terminal **open** until you see **`✓ Ready`** — if you close it, t
 
 1. `npm run dev:stop`
 2. `npm run dev:fresh` — deletes **`.next`**, then starts dev (fixes wedged Turbopack/lock)
-3. If pages never finish loading (browser spins, terminal stuck on “Compiling …”), do a full reinstall: `rm -rf node_modules .next && npm install`, then `npm run dev` again (fixes a corrupted `next` install, e.g. missing `node_modules/next/font/google`).
-4. Open **http://localhost:4002**
+3. If **TypeScript / “Failed to compile”** mentions duplicate `PageProps` or files like **`.next/types/routes.d 2.ts`**, macOS created duplicate build files. Delete them, then `npm run dev:fresh`:
+   - `rm -rf ".next 2"` (if present)
+   - `rm -f .next/types/*\ 2.ts .next/types/*\ 3.ts` (duplicate `routes.d 2.ts`, etc.)
+4. If pages never finish loading (browser spins, terminal stuck on “Compiling …”), do a full reinstall: `rm -rf node_modules .next && npm install`, then `npm run dev` again (fixes a corrupted `next` install or **`node_modules/* 2`** duplicate folders from Finder).
+5. Open **http://localhost:4002** — dashboard routes **redirect to `/login`** until you sign in (HTTP 307 is normal).
 
 On macOS, after the server is up: **`npm run open:dev`**.
 

@@ -32,16 +32,16 @@ const ROWS: RowDef[] = [
     description: "Connect your personal Google Drive. Only you will see these documents.",
   },
   {
-    type: DataSourceType.ClaromentisDocuments,
-    name: "Claromentis — Documents",
+    type: DataSourceType.IntranetDocuments,
+    name: "Intranet — Documents",
     description:
-      "Sync files from your Claromentis document library. Respects Claromentis permission groups.",
+      "Sync files from your agency intranet document library. Respects intranet permission groups.",
   },
   {
-    type: DataSourceType.ClaromentisPages,
-    name: "Claromentis — Pages",
+    type: DataSourceType.IntranetPages,
+    name: "Intranet — Pages",
     description:
-      "Sync wiki pages from your Claromentis intranet. Respects Claromentis permission groups.",
+      "Sync wiki pages from your agency intranet. Respects intranet permission groups.",
   },
   {
     type: DataSourceType.Email,

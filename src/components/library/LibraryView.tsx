@@ -14,7 +14,7 @@ import SyncStatusButton from "@/components/library/SyncStatusButton";
 import type { DriveFile } from "@/types/google-drive";
 
 // ---------------------------------------------------------------------------
-// Claromentis types (existing)
+// Intranet library types (existing)
 // ---------------------------------------------------------------------------
 type TLItem =
     | { kind: "folder"; id: number; parent_id: number; title: string; has_children?: boolean; URI?: string }
@@ -824,7 +824,7 @@ function buildProxyUrl(path: string, filename: string): string {
     return url.toString();
 }
 
-// Search result item component — distinguishes documents (Claromentis) vs pages (knowledge library)
+// Search result item component — distinguishes documents (intranet) vs pages (knowledge library)
 function SearchResultItem({
     item,
     onOpenPreview,
@@ -835,7 +835,7 @@ function SearchResultItem({
     const isFolder = item.kind === "folder";
     const isPage = item.kind === "page";
 
-    // Build preview URL for Claromentis documents (not for pages)
+    // Build preview URL for intranet documents (not for pages)
     const getPreviewUrl = (): string | null => {
         if (item.kind !== "document") return null;
 
@@ -858,7 +858,7 @@ function SearchResultItem({
     // Get title based on item type
     const title = item.kind === "page" ? item.name : item.title;
 
-    // Icon and styling: folder = folder icon; page = BookOpen (knowledge library); document = FileText (Claromentis)
+    // Icon and styling: folder = folder icon; page = BookOpen (knowledge library); document = FileText (intranet)
     const iconEl = isFolder ? <Folder size={16} /> : isPage ? <BookOpen size={16} /> : <FileText size={16} />;
     const iconBg =
         isFolder
@@ -875,7 +875,7 @@ function SearchResultItem({
                 "hover:bg-white/4 transition-colors",
             ].join(" ")}
         >
-            {/* Icon — folder / page (knowledge library) / document (Claromentis) */}
+            {/* Icon — folder / page (knowledge library) / document (intranet) */}
             <div className={["w-8 h-8 rounded-lg flex items-center justify-center shrink-0", iconBg].join(" ")}>
                 {iconEl}
             </div>
@@ -895,7 +895,7 @@ function SearchResultItem({
                 </p>
             </div>
 
-            {/* Preview: Claromentis documents use proxy URL; pages use pdf_path */}
+            {/* Preview: intranet documents use proxy URL; pages use pdf_path */}
             {item.kind === "document" && previewUrl && (
                 <button
                     type="button"
@@ -944,7 +944,7 @@ type BreadcrumbItem = {
     path: NavigationMode;
 };
 
-function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }) {
+function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
     // Navigation mode state
     const [navigationMode, setNavigationMode] = useState<NavigationMode>(initialRootId !== undefined ? "documents" : "knowledge-root");
     const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([{ label: "Knowledge", path: "knowledge-root" }]);
@@ -960,7 +960,7 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
         pdfPath: undefined,
     });
 
-    // Search state — documents (Claromentis) and pages (knowledge library) kept separately
+    // Search state — documents (intranet) and pages (knowledge library) kept separately
     const [searchDocuments, setSearchDocuments] = useState<Exclude<TLItem, PageItem>[]>([]);
     const [searchPages, setSearchPages] = useState<PageItem[]>([]);
     const [rootViewTab, setRootViewTab] = useState<"documents" | "pages">("documents");
@@ -1160,7 +1160,7 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
             { label: "Knowledge", path: "knowledge-root" },
             { label: "Documents", path: "documents" }
         ]);
-        setRootId(0); // Load Claromentis root
+        setRootId(0); // Load intranet root
         setExpandedIds(new Set());
         setSearchQuery("");
     }, []);
@@ -1202,7 +1202,7 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
                         <SyncStatusButton />
                     </div>
 
-                    {/* Search bar for Claromentis */}
+                    {/* Search bar for intranet */}
                     <div className="px-5 py-3 border-b border-[rgba(255,255,255,0.08)] shrink-0">
                         <div className="relative">
                             <Search
@@ -1871,12 +1871,12 @@ function ClaromentisLibraryContent({ initialRootId }: { initialRootId?: number }
 }
 
 // ===========================================================================
-// LibraryView: Main export -- delegates to Claromentis or Drive content
+// LibraryView: Main export -- delegates to intranet or Drive content
 // ===========================================================================
 export default function LibraryView({ initialRootId, source = "claromentis", connectionType }: LibraryViewProps) {
     if (source === "google-drive") {
         return <DriveLibraryContent connectionType={connectionType} />;
     }
 
-    return <ClaromentisLibraryContent initialRootId={initialRootId} />;
+    return <IntranetLibraryContent initialRootId={initialRootId} />;
 }

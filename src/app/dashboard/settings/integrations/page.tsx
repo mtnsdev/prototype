@@ -325,7 +325,7 @@ function DriveConnectionCard({
 }
 
 // ---------------------------------------------------------------------------
-// ClaromentisConnectionCard -- per-user Claromentis Basic Auth connection
+// Intranet connection card (Basic Auth; API routes remain /claromentis/*)
 // ---------------------------------------------------------------------------
 type ClaromentisStatus = {
     status: "active" | "error" | "disconnected";
@@ -420,7 +420,7 @@ function ClaromentisConnectionCard() {
     }, []);
 
     const handleDisconnect = useCallback(async () => {
-        if (!confirm("Disconnect your Claromentis account?")) return;
+        if (!confirm("Disconnect your intranet account?")) return;
         try {
             const token = localStorage.getItem("auth_token");
             await fetch("/api/integrations/claromentis/disconnect", {
@@ -458,9 +458,9 @@ function ClaromentisConnectionCard() {
                     <Link2 size={18} className="text-[rgba(245,245,245,0.6)]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h2 className="text-[15px] font-semibold text-[#F5F5F5]">Claromentis Account</h2>
+                    <h2 className="text-[15px] font-semibold text-[#F5F5F5]">Intranet account</h2>
                     <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-0.5">
-                        Connect your personal Claromentis account for search and browsing
+                        Connect your personal intranet account for search and browsing
                     </p>
                 </div>
                 {isConnected && (
@@ -628,7 +628,7 @@ export default function IntegrationsPage() {
 
                 <EmailForwardingCard />
 
-                {/* Claromentis first, then personal drive, then admin drive (when applicable) */}
+                {/* Intranet first, then personal drive, then admin drive (when applicable) */}
                 <ClaromentisConnectionCard />
 
                 <DriveConnectionCard connectionType="personal" />

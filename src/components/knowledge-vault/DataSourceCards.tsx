@@ -21,14 +21,14 @@ import { SourceCardSkeleton } from "@/components/ui/SkeletonPatterns";
 const SHOWN_TYPES = new Set<DataSourceType>([
   DataSourceType.GoogleDriveAdmin,
   DataSourceType.GoogleDrivePersonal,
-  DataSourceType.ClaromentisDocuments,
-  DataSourceType.ClaromentisPages,
+  DataSourceType.IntranetDocuments,
+  DataSourceType.IntranetPages,
   DataSourceType.Email,
 ]);
 
-function isClaromentis(s: DataSource) {
+function isIntranetSource(s: DataSource) {
   return (
-    s.source_type === DataSourceType.ClaromentisDocuments || s.source_type === DataSourceType.ClaromentisPages
+    s.source_type === DataSourceType.IntranetDocuments || s.source_type === DataSourceType.IntranetPages
   );
 }
 
@@ -37,8 +37,8 @@ function sourceDefaultScope(source: DataSource): "private" | string {
   const m: Partial<Record<DataSourceType, "private" | string>> = {
     [DataSourceType.GoogleDriveAdmin]: TEAM_EVERYONE_ID,
     [DataSourceType.GoogleDrivePersonal]: "private",
-    [DataSourceType.ClaromentisDocuments]: TEAM_EVERYONE_ID,
-    [DataSourceType.ClaromentisPages]: TEAM_EVERYONE_ID,
+    [DataSourceType.IntranetDocuments]: TEAM_EVERYONE_ID,
+    [DataSourceType.IntranetPages]: TEAM_EVERYONE_ID,
     [DataSourceType.Email]: "private",
   };
   return m[source.source_type] ?? TEAM_EVERYONE_ID;
@@ -55,9 +55,9 @@ function BadgeIcon({ source }: { source: DataSource }) {
     return <Building2 size={10} className="text-[var(--muted-success-text)]" />;
   if (source.source_type === DataSourceType.GoogleDrivePersonal)
     return <User size={10} className="text-[var(--muted-info-text)]" />;
-  if (source.source_type === DataSourceType.ClaromentisDocuments)
+  if (source.source_type === DataSourceType.IntranetDocuments)
     return <FileText size={10} className="text-[rgba(245,245,245,0.85)]" />;
-  if (source.source_type === DataSourceType.ClaromentisPages)
+  if (source.source_type === DataSourceType.IntranetPages)
     return <BookOpen size={10} className="text-[rgba(245,245,245,0.85)]" />;
   return null;
 }
@@ -78,7 +78,6 @@ type Props = {
   selectedSourceIds: string[];
   onToggleSource: (id: string) => void;
   onConnectSource: () => void;
-  emailUnprocessedCount?: number;
   loading?: boolean;
 };
 
@@ -87,7 +86,6 @@ export default function DataSourceCards({
   selectedSourceIds,
   onToggleSource,
   onConnectSource,
-  emailUnprocessedCount = 0,
   loading = false,
 }: Props) {
   const connected = sources.filter((s) => s.status !== "disconnected" && SHOWN_TYPES.has(s.source_type));
@@ -108,7 +106,7 @@ export default function DataSourceCards({
         const Icon = getBaseIcon(src);
         const isSelected = selectedSourceIds.includes(src.id);
         const badge = src.source_type !== DataSourceType.Email ? BadgeIcon({ source: src }) : null;
-        const isEmail = src.source_type === DataSourceType.Email;
+        const isEmailSource = src.source_type === DataSourceType.Email;
         const defaultScope = sourceDefaultScope(src);
 
         return (
@@ -118,25 +116,13 @@ export default function DataSourceCards({
             onClick={() => onToggleSource(src.id)}
             className={cn(
               "shrink-0 w-[180px] rounded-xl border p-3 text-left transition-colors",
-              isEmail && "bg-sky-500/5 border-sky-500/10 hover:border-sky-500/20",
-              !isEmail && "border-[rgba(255,255,255,0.08)] bg-[#161616] hover:bg-white/[0.04]",
-              isSelected &&
-                (isEmail ? "ring-2 ring-sky-500/40 border-sky-500/30" : "ring-2 ring-white/30 border-white/20")
+              "border-[rgba(255,255,255,0.08)] bg-[#161616] hover:bg-white/[0.04]",
+              isSelected && "ring-2 ring-white/30 border-white/20"
             )}
           >
             <div className="flex items-center gap-2 mb-1">
-              <div
-                className={cn(
-                  "relative w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
-                  isEmail ? "bg-sky-500/10 text-sky-400" : "bg-white/10 text-[rgba(245,245,245,0.9)]"
-                )}
-              >
+              <div className="relative w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-white/10 text-[rgba(245,245,245,0.9)]">
                 <Icon size={18} />
-                {isEmail && emailUnprocessedCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-0.5 bg-sky-400 text-[9px] text-[#06060a] font-bold rounded-full flex items-center justify-center">
-                    {emailUnprocessedCount > 9 ? "9+" : emailUnprocessedCount}
-                  </span>
-                )}
                 {badge && (
                   <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-md bg-[#0C0C0C] border border-white/15 flex items-center justify-center">
                     {badge}
@@ -149,22 +135,19 @@ export default function DataSourceCards({
               <span
                 className={cn(
                   "w-1.5 h-1.5 rounded-full shrink-0",
-                  isEmail ? "bg-sky-400" : src.status === "connected" && "bg-[var(--muted-success-text)]"
+                  src.status === "connected" && "bg-[var(--muted-success-text)]"
                 )}
               />
-              <span
-                className={cn(
-                  "text-[10px]",
-                  isEmail ? "text-sky-400/90" : "text-[rgba(245,245,245,0.5)]"
-                )}
-              >
-                {src.document_count} docs
+              <span className="text-[10px] tabular-nums text-[rgba(245,245,245,0.5)]">
+                {src.indexed_document_count != null
+                  ? `${src.indexed_document_count} / ${src.document_count} indexed`
+                  : `${src.document_count} docs`}
               </span>
             </div>
             <div className="mt-1">
               <ScopeBadge scope={defaultScope} teams={MOCK_TEAMS} />
             </div>
-            {!isEmail && isClaromentis(src) && src.document_visible_count != null && (
+            {!isEmailSource && isIntranetSource(src) && src.document_visible_count != null && (
               <p className="text-[10px] text-gray-500 mt-0.5">Based on your access</p>
             )}
             <p className="text-xs text-[rgba(245,245,245,0.5)] mt-2">
@@ -172,17 +155,24 @@ export default function DataSourceCards({
                 ? "On demand"
                 : `Last sync ${timeAgo(src.last_sync)}`}
             </p>
-            <div className="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
-              <div
-                className={cn(
-                  "h-full rounded-full",
-                  src.health_score >= 80 && "bg-[var(--muted-success-text)]",
-                  src.health_score >= 50 && src.health_score < 80 && "bg-[var(--muted-amber-text)]",
-                  src.health_score < 50 && src.health_score > 0 && "bg-[var(--muted-error-text)]"
-                )}
-                style={{ width: Math.max(0, src.health_score) + "%" }}
-              />
-            </div>
+            {src.status === "syncing" ? (
+              <div className="w-full h-1 bg-white/[0.04] rounded-full mt-3 overflow-hidden">
+                <div className="h-full bg-amber-500/30 rounded-full animate-pulse w-full" />
+              </div>
+            ) : (
+              <div className="w-full h-1 bg-white/[0.04] rounded-full mt-3 overflow-hidden">
+                <div
+                  className="h-full bg-emerald-500/30 rounded-full"
+                  style={{
+                    width: `${(() => {
+                      const total = Math.max(1, src.document_count);
+                      const idx = src.indexed_document_count ?? 0;
+                      return Math.min(100, (idx / total) * 100);
+                    })()}%`,
+                  }}
+                />
+              </div>
+            )}
           </button>
         );
       })}

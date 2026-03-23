@@ -12,8 +12,8 @@ export type SyncFrequency = "real_time" | "hourly" | "daily" | "weekly" | "manua
 export enum DataSourceType {
   GoogleDriveAdmin = "google_drive_admin",
   GoogleDrivePersonal = "google_drive_personal",
-  ClaromentisDocuments = "claromentis_documents",
-  ClaromentisPages = "claromentis_pages",
+  IntranetDocuments = "intranet_documents",
+  IntranetPages = "intranet_pages",
   ManualUpload = "manual_upload",
   APIStream = "api_stream",
   Email = "email",
@@ -33,8 +33,10 @@ export interface DataSource {
   last_sync: string | null;
   /** Total documents in source (synced corpus) */
   document_count: number;
-  /** Advisor-visible subset (e.g. Claromentis ACL); omit for full visibility */
+  /** Advisor-visible subset (e.g. intranet ACL); omit for full visibility */
   document_visible_count?: number;
+  /** Documents chunked for RAG (subset of synced document_count) */
+  indexed_document_count?: number;
   total_size_mb: number;
   sync_frequency: SyncFrequency;
   health_score: number;
@@ -44,7 +46,8 @@ export interface DataSource {
 
 export type DataLayer = "enable" | "agency" | "advisor";
 
-export type IngestionStatus = "pending" | "processing" | "indexed" | "failed" | "stale";
+/** RAG availability: synced to S3 first; indexed when chunking completed. */
+export type IngestionStatus = "indexed" | "processing" | "not_indexed";
 
 export type Freshness = "fresh" | "recent" | "aging" | "stale";
 
@@ -70,7 +73,7 @@ export interface KnowledgeDocument {
   source_type: DataSourceType;
   source_name: string;
   data_layer: DataLayer;
-  /** @deprecated UI uses tags only; optional for legacy mocks */
+  /** @deprecated optional for legacy mocks */
   document_type?: DocumentType;
   file_type: string;
   file_size_kb: number;
@@ -90,19 +93,20 @@ export interface KnowledgeDocument {
   uploaded_by_name?: string;
   /** Private (advisor) docs: owner for visibility; omit in legacy mocks → treated as current user in UI */
   ownerId?: string;
-  /** Claromentis wiki-style pages */
+  /** Intranet wiki-style pages */
   is_wiki_page?: boolean;
   /** Email template → sales cycle stage */
   pipeline_stage?: PipelineStage;
 }
 
 export interface IngestionHealth {
+  /** Total synced to storage (S3) */
   total_documents: number;
   indexed: number;
-  pending: number;
+  /** Synced but chunking not complete */
   processing: number;
-  failed: number;
-  stale: number;
+  /** Synced but unsupported format for RAG */
+  not_indexed: number;
   last_full_sync: string;
   avg_freshness_days: number;
 }
@@ -113,7 +117,8 @@ export interface KnowledgeDocumentListParams {
   source_ids?: string;
   data_layer?: DataLayer;
   ingestion_status?: IngestionStatus;
-  tags?: string[];
+  /** Comma-separated tag labels (OR match) */
+  tags?: string;
   search?: string;
   sort_by?: string;
   sort_order?: "asc" | "desc";
