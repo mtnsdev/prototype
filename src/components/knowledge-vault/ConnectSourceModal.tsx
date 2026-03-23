@@ -1,6 +1,6 @@
 "use client";
 
-import { Cloud, Database, Mail, FileSearch } from "lucide-react";
+import { Cloud, Database, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,7 +13,7 @@ import { useToast } from "@/contexts/ToastContext";
 import { cn } from "@/lib/utils";
 
 type RowDef = {
-  type: DataSourceType | "web_scrape";
+  type: DataSourceType;
   name: string;
   description: string;
   comingSoon?: boolean;
@@ -45,15 +45,10 @@ const ROWS: RowDef[] = [
   },
   {
     type: DataSourceType.Email,
-    name: "Email Ingestion",
-    description: "Automatically ingest travel-related emails.",
-    comingSoon: true,
-  },
-  {
-    type: "web_scrape",
-    name: "Web Scrape",
-    description: "Scrape supplier websites for rate updates.",
-    comingSoon: true,
+    name: "Email forwarding",
+    description:
+      "Forward emails to your agency ingest address. Body and attachments appear in the Knowledge Vault as advisor-private by default.",
+    comingSoon: false,
   },
 ];
 
@@ -88,17 +83,14 @@ export default function ConnectSourceModal({ open, onClose, sources }: Props) {
         </p>
         <div className="grid gap-3 mt-4">
           {ROWS.map((row) => {
-            const isConnected =
-              row.type !== "web_scrape" && !row.comingSoon && connectedTypes.has(row.type as DataSourceType);
+            const isConnected = !row.comingSoon && connectedTypes.has(row.type);
             const Icon =
               row.type === DataSourceType.Email
                 ? Mail
-                : row.type === "web_scrape"
-                  ? FileSearch
-                  : row.type === DataSourceType.GoogleDriveAdmin ||
-                      row.type === DataSourceType.GoogleDrivePersonal
-                    ? Cloud
-                    : Database;
+                : row.type === DataSourceType.GoogleDriveAdmin ||
+                    row.type === DataSourceType.GoogleDrivePersonal
+                  ? Cloud
+                  : Database;
             return (
               <div
                 key={String(row.type)}

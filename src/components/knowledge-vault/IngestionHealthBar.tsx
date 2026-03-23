@@ -2,15 +2,25 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import type { DataSource, IngestionHealth } from "@/types/knowledge-vault";
+import type { DataSource, IngestionHealth, IngestionStatus } from "@/types/knowledge-vault";
+import { cn } from "@/lib/utils";
 
 type Props = {
   health: IngestionHealth;
   sources: DataSource[];
   onFilterFailed: () => void;
+  activeIngestionFilter?: IngestionStatus | null;
+  /** When true, failed filter applies to the document list only—hide cue and disable shortcut. */
+  documentFiltersUnavailable?: boolean;
 };
 
-export default function IngestionHealthBar({ health, sources, onFilterFailed }: Props) {
+export default function IngestionHealthBar({
+  health,
+  sources,
+  onFilterFailed,
+  activeIngestionFilter,
+  documentFiltersUnavailable,
+}: Props) {
   const [expanded, setExpanded] = useState(false);
   const total = health.total_documents || 1;
   const pct = (n: number) => (n / total) * 100;
@@ -21,9 +31,6 @@ export default function IngestionHealthBar({ health, sources, onFilterFailed }: 
       "src-gdrive-personal",
       "src-claro-docs",
       "src-claro-pages",
-      "src-manual",
-      "src-virtuoso",
-      "src-web",
       "src-email",
     ];
     return order.indexOf(a.id) - order.indexOf(b.id);
@@ -61,12 +68,29 @@ export default function IngestionHealthBar({ health, sources, onFilterFailed }: 
           <button
             type="button"
             onClick={onFilterFailed}
-            className="text-[var(--muted-error-text)] hover:underline"
+            disabled={documentFiltersUnavailable || health.failed === 0}
+            title={
+              documentFiltersUnavailable
+                ? "Open a document source to filter the vault list by failed items"
+                : undefined
+            }
+            className={cn(
+              "text-[var(--muted-error-text)]",
+              documentFiltersUnavailable || health.failed === 0
+                ? "opacity-40 cursor-not-allowed"
+                : "hover:underline"
+            )}
           >
             {health.failed} failed
           </button>
         </div>
       </div>
+      {activeIngestionFilter === "failed" && !documentFiltersUnavailable && (
+        <p className="text-xs text-[var(--muted-error-text)] mt-2">
+          Document list is filtered to <span className="font-medium">failed</span> items. Adjust or clear in{" "}
+          <span className="font-medium text-[rgba(245,245,245,0.85)]">Document filters</span> below the search bar.
+        </p>
+      )}
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}

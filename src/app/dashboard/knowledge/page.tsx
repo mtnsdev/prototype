@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import KnowledgeVaultPage from "@/components/knowledge-vault/KnowledgeVaultPage";
-
-export default function KnowledgePage() {
-  return <KnowledgeVaultPage />;
+export default function KnowledgeLegacyPage() {
+  redirect("/dashboard/knowledge-vault");
 }

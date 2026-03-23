@@ -20,7 +20,7 @@ const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString
 
 export const VAULT_TOTAL_DOCUMENTS = 860;
 /** Sum of visible docs per connected source + email templates */
-export const VAULT_VISIBLE_DOCUMENTS = 714;
+export const VAULT_VISIBLE_DOCUMENTS = 520;
 export const VAULT_VISIBLE_COUNT_TOOLTIP =
   "You have access to 711 of 860 total documents across all sources. Document visibility is based on your Claromentis access groups and data layer permissions.";
 
@@ -124,74 +124,18 @@ export function getMockDataSources(): DataSource[] {
       connected_at: "2025-02-01T09:30:00Z",
     },
     {
-      id: "src-manual",
-      name: "Manual Uploads",
-      source_type: DataSourceType.ManualUpload,
-      icon: "Upload",
-      description: "Advisor and agency uploads",
-      status: "connected",
-      last_sync: null,
-      document_count: 34,
-      total_size_mb: 156,
-      sync_frequency: "manual",
-      health_score: 100,
-      connected_at: "2024-06-01T00:00:00Z",
-    },
-    {
-      id: "src-virtuoso",
-      name: "Virtuoso Network",
-      source_type: DataSourceType.Virtuoso,
-      icon: "Sparkles",
-      description: "Virtuoso partner content",
-      status: "connected",
-      last_sync: oneWeekAgo,
-      document_count: 14,
-      total_size_mb: 42,
-      sync_frequency: "weekly",
-      health_score: 45,
-      connected_at: "2025-03-01T12:00:00Z",
-    },
-    {
-      id: "src-web",
-      name: "Saved from Web",
-      source_type: DataSourceType.WebScrape,
-      icon: "Globe",
-      description: "Articles and pages you saved from external web searches",
-      status: "connected",
-      last_sync: twoMinAgo,
-      document_count: 3,
-      total_size_mb: 1,
-      sync_frequency: "manual",
-      health_score: 100,
-      connected_at: "2026-03-01T00:00:00Z",
-    },
-    {
       id: "src-email",
-      name: "Email Ingestion",
+      name: "Email",
       source_type: DataSourceType.Email,
       icon: "Mail",
-      description: "Email attachments and threads",
-      status: "disconnected",
-      last_sync: null,
-      document_count: 0,
-      total_size_mb: 0,
-      sync_frequency: "manual",
-      health_score: 0,
-      connected_at: "",
-    },
-    {
-      id: "src-email-templates",
-      name: "Email Templates",
-      source_type: DataSourceType.EmailTemplate,
-      icon: "Mail",
-      description: "Sales cycle email templates",
+      description: "Forwarded emails and attachments",
       status: "connected",
       last_sync: twoMinAgo,
-      document_count: 13,
-      total_size_mb: 1,
-      sync_frequency: "manual",
+      document_count: 4,
+      total_size_mb: 12,
+      sync_frequency: "real_time",
       health_score: 100,
-      connected_at: "2025-06-01T00:00:00Z",
+      connected_at: "2026-01-01T00:00:00Z",
     },
   ];
 }
@@ -347,6 +291,7 @@ function buildSavedWebDocuments(): KnowledgeDocument[] {
       source_type: DataSourceType.WebScrape,
       source_name: WEB_SRC_NAME,
       data_layer: "advisor",
+      ownerId: "user-colleague",
       file_type: "html",
       file_size_kb: Math.round(0.02 * 1024),
       tags: ["japan", "visa", "policy"],
@@ -363,6 +308,7 @@ function buildSavedWebDocuments(): KnowledgeDocument[] {
       source_type: DataSourceType.WebScrape,
       source_name: WEB_SRC_NAME,
       data_layer: "advisor",
+      ownerId: "user-colleague",
       file_type: "html",
       file_size_kb: Math.round(0.05 * 1024),
       tags: ["hotel", "japan", "new-opening"],
@@ -379,6 +325,7 @@ function buildSavedWebDocuments(): KnowledgeDocument[] {
       source_type: DataSourceType.WebScrape,
       source_name: WEB_SRC_NAME,
       data_layer: "advisor",
+      ownerId: "1",
       file_type: "html",
       file_size_kb: Math.round(0.08 * 1024),
       tags: ["maldives", "hotel", "destination"],
@@ -389,83 +336,6 @@ function buildSavedWebDocuments(): KnowledgeDocument[] {
       linked_vics: [],
     },
   ];
-}
-
-/** Normalize + infer tags for sidebar facets (user-managed style). */
-function enrichDocumentTags(doc: KnowledgeDocument): KnowledgeDocument {
-  const tags = new Set(
-    doc.tags.map((t) => t.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""))
-  );
-  const title = doc.title.toLowerCase();
-  const add = (...xs: string[]) => xs.forEach((x) => tags.add(x));
-  if (title.includes("maldives") || [...tags].some((t) => t.includes("maldives"))) {
-    add("maldives", "hotel", "destination");
-  }
-  if (title.includes("japan") || title.includes("kyoto") || title.includes("visa")) {
-    add("japan");
-  }
-  if (title.includes("four seasons") && (title.includes("rate") || title.includes("q1"))) {
-    add("rate-sheet", "hotel", "france");
-  }
-  if (title.includes("rate") && title.includes("sheet")) add("rate-sheet");
-  if (title.includes("dmc") || title.includes("partner agreement")) {
-    add("dmc", "contract");
-  }
-  if (title.includes("contract") || title.includes("agreement")) add("contract");
-  if (title.includes("policy") || title.includes("escalation") || title.includes("process")) {
-    add("policy", "training");
-  }
-  if (title.includes("training") || title.includes("virtuoso travel week") || title.includes("webinar")) {
-    add("training");
-  }
-  if (title.includes("smith") || title.includes("client report") || title.includes("trip research")) {
-    add("client-report");
-  }
-  if (title.includes("one&only") || title.includes("reethi") || title.includes("property profile")) {
-    add("hotel", "maldives", "partner-program");
-  }
-  if (title.includes("france") || title.includes("paris") || title.includes("nice")) add("france");
-  if (title.includes("virtuoso") && !title.includes("rate")) add("partner-program");
-  if (doc.source_type === DataSourceType.WebScrape) {
-    doc.tags.forEach((t) => tags.add(t.toLowerCase()));
-  }
-  return { ...doc, tags: [...tags].filter(Boolean) };
-}
-
-const SIDEBAR_TAG_ORDER = [
-  "hotel",
-  "rate-sheet",
-  "destination",
-  "policy",
-  "contract",
-  "training",
-  "partner-program",
-  "maldives",
-  "france",
-  "japan",
-  "client-report",
-  "dmc",
-];
-
-export function getVaultSidebarTags(): { name: string; count: number }[] {
-  const docs = getMockDocumentsRaw().map(enrichDocumentTags);
-  const c = new Map<string, number>();
-  for (const d of docs) {
-    if (d.source_type === DataSourceType.WebScrape) continue;
-    for (const t of d.tags) {
-      c.set(t, (c.get(t) ?? 0) + 1);
-    }
-  }
-  const primary = SIDEBAR_TAG_ORDER.filter((name) => (c.get(name) ?? 0) > 0).map((name) => ({
-    name,
-    count: c.get(name)!,
-  }));
-  const rest = [...c.entries()]
-    .filter(([k]) => !SIDEBAR_TAG_ORDER.includes(k))
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 16)
-    .map(([name, count]) => ({ name, count }));
-  return [...primary, ...rest];
 }
 
 function getMockDocumentsRaw(): KnowledgeDocument[] {
@@ -603,6 +473,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       source_type: DataSourceType.GoogleDrivePersonal,
       source_name: GPERSONAL,
       data_layer: "advisor",
+      ownerId: "1",
       document_type: DocumentType.ClientReport,
       file_type: "docx",
       file_size_kb: 340,
@@ -624,6 +495,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       source_type: DataSourceType.GoogleDrivePersonal,
       source_name: GPERSONAL,
       data_layer: "advisor",
+      ownerId: "user-colleague",
       document_type: DocumentType.PartnerDirectory,
       file_type: "xlsx",
       file_size_kb: 88,
@@ -644,6 +516,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       source_type: DataSourceType.GoogleDrivePersonal,
       source_name: GPERSONAL,
       data_layer: "advisor",
+      ownerId: "1",
       document_type: DocumentType.DestinationGuide,
       file_type: "docx",
       file_size_kb: 256,
@@ -665,6 +538,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       source_type: DataSourceType.GoogleDrivePersonal,
       source_name: GPERSONAL,
       data_layer: "advisor",
+      ownerId: "user-colleague",
       document_type: DocumentType.MarketingCollateral,
       file_type: "docx",
       file_size_kb: 180,
@@ -811,6 +685,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       source_type: DataSourceType.ClaromentisDocuments,
       source_name: CLARO_DOC,
       data_layer: "advisor",
+      ownerId: "user-colleague",
       document_type: DocumentType.InternalMemo,
       file_type: "pdf",
       file_size_kb: 95,
@@ -942,6 +817,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       source_type: DataSourceType.ManualUpload,
       source_name: MANUAL,
       data_layer: "advisor",
+      ownerId: "1",
       document_type: DocumentType.ClientReport,
       file_type: "pdf",
       file_size_kb: 890,
@@ -1083,13 +959,21 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       linked_products: [],
       linked_vics: [],
     },
-    ...buildSavedWebDocuments(),
-    ...buildEmailTemplateDocuments(),
   ];
 }
 
+const EXCLUDED_FROM_VAULT_LIST = new Set<DataSourceType>([
+  DataSourceType.ManualUpload,
+  DataSourceType.Virtuoso,
+  DataSourceType.WebScrape,
+  DataSourceType.EmailTemplate,
+  DataSourceType.Email,
+]);
+
 export function getMockDocuments(): KnowledgeDocument[] {
-  return getMockDocumentsRaw().map(enrichDocumentTags);
+  return getMockDocumentsRaw()
+    .filter((d) => !EXCLUDED_FROM_VAULT_LIST.has(d.source_type))
+    .map((d) => ({ ...d, tags: [] as string[] }));
 }
 
 export function getMockIngestionHealth(): IngestionHealth {
@@ -1115,35 +999,27 @@ export function filterMockDocuments(
   let list = [...getMockDocuments()];
 
   const idsFromParam = params.source_ids?.split(",").filter(Boolean) ?? [];
-  const hasSearch = Boolean(params.search?.trim());
-
-  if (hasSearch) {
-    list = list.filter((d) => d.source_type !== DataSourceType.WebScrape);
-  }
-
   if (idsFromParam.length > 0) {
     list = list.filter((d) => idsFromParam.includes(d.source_id));
   } else if (params.source_id) {
     list = list.filter((d) => d.source_id === params.source_id);
-  } else {
-    list = list.filter((d) => d.source_type !== DataSourceType.WebScrape);
   }
 
-  if (params.data_layer) list = list.filter((d) => d.data_layer === params.data_layer);
-  if (params.ingestion_status) list = list.filter((d) => d.ingestion_status === params.ingestion_status);
-  if (params.tags?.length) {
-    const wanted = params.tags.map((t) => t.toLowerCase());
-    list = list.filter((d) =>
-      wanted.some((w) => d.tags.some((t) => t.toLowerCase() === w))
-    );
+  if (params.data_layer) {
+    if (params.data_layer === "agency") {
+      list = list.filter((d) => d.data_layer === "agency" || d.data_layer === "enable");
+    } else if (params.data_layer === "advisor") {
+      list = list.filter((d) => d.data_layer === "advisor");
+    } else {
+      list = list.filter((d) => d.data_layer === params.data_layer);
+    }
   }
+  if (params.ingestion_status) list = list.filter((d) => d.ingestion_status === params.ingestion_status);
   if (params.search) {
     const q = params.search.toLowerCase();
     list = list.filter(
       (d) =>
-        d.title.toLowerCase().includes(q) ||
-        (d.content_summary ?? "").toLowerCase().includes(q) ||
-        d.tags.some((t) => t.toLowerCase().includes(q))
+        d.title.toLowerCase().includes(q) || (d.content_summary ?? "").toLowerCase().includes(q)
     );
   }
 
@@ -1155,9 +1031,6 @@ export function filterMockDocuments(
     if (sortBy === "title") {
       aVal = a.title;
       bVal = b.title;
-    } else if (sortBy === "quality_score") {
-      aVal = a.quality_score ?? 0;
-      bVal = b.quality_score ?? 0;
     } else if (sortBy === "file_size_kb") {
       aVal = a.file_size_kb;
       bVal = b.file_size_kb;

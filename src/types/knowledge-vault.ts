@@ -88,6 +88,8 @@ export interface KnowledgeDocument {
   url?: string;
   uploaded_by?: string;
   uploaded_by_name?: string;
+  /** Private (advisor) docs: owner for visibility; omit in legacy mocks → treated as current user in UI */
+  ownerId?: string;
   /** Claromentis wiki-style pages */
   is_wiki_page?: boolean;
   /** Email template → sales cycle stage */

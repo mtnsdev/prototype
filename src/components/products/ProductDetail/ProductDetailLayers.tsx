@@ -5,6 +5,8 @@ import { Award, ChevronDown, Lock, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/contexts/ToastContext";
 import { useUser } from "@/contexts/UserContext";
+import { ScopeBadge } from "@/components/ui/ScopeBadge";
+import { MOCK_TEAMS } from "@/lib/teamsMock";
 import type { Product } from "@/types/product";
 import {
   getProductLayerMock,
@@ -24,7 +26,7 @@ export function ProductDetailLayers({ product }: Props) {
 
   const mock = useMemo(() => getProductLayerMock(product.id), [product.id]);
   const [notesOpen, setNotesOpen] = useState(true);
-  const [activeNoteLayer, setActiveNoteLayer] = useState<"advisor" | "agency">("advisor");
+  const [activeNoteLayer, setActiveNoteLayer] = useState<"private" | "team">("private");
   const [advisorOverrides, setAdvisorOverrides] = useState<AdvisorLayerMock>(mock.advisorDefaults);
   const [agencyNotes, setAgencyNotes] = useState<AgencyNoteMock[]>(mock.agencyNotes);
   const [newAgencyNote, setNewAgencyNote] = useState("");
@@ -59,7 +61,7 @@ export function ProductDetailLayers({ product }: Props) {
         <div className="flex items-center gap-1.5 text-[10px] text-gray-600 mb-3">
           <Lock className="w-3 h-3 shrink-0" />
           <span>
-            Agency-level record — view only. You can add personal notes or suggest changes.
+            Team record — view only. You can add personal notes or suggest changes.
           </span>
         </div>
       )}
@@ -95,7 +97,7 @@ export function ProductDetailLayers({ product }: Props) {
             <div className="flex items-center justify-between mb-4">
               <span className="sr-only">Layer</span>
               <div className="flex items-center gap-1 bg-white/[0.03] rounded-full p-0.5 ml-auto">
-                {(["advisor", "agency"] as const).map((layer) => (
+                {(["private", "team"] as const).map((layer) => (
                   <button
                     key={layer}
                     type="button"
@@ -103,19 +105,19 @@ export function ProductDetailLayers({ product }: Props) {
                     className={cn(
                       "px-3 py-1 rounded-full text-[10px] font-medium transition-all",
                       activeNoteLayer === layer
-                        ? layer === "advisor"
+                        ? layer === "private"
                           ? "bg-violet-500/15 text-violet-400"
                           : "bg-blue-500/15 text-blue-400"
                         : "text-gray-500 hover:text-gray-400"
                     )}
                   >
-                    {layer === "advisor" ? "My Notes" : "Agency Notes"}
+                    {layer === "private" ? "My Notes" : "Team Notes"}
                   </button>
                 ))}
               </div>
             </div>
 
-            {activeNoteLayer === "advisor" && (
+            {activeNoteLayer === "private" && (
               <div className="space-y-3">
                 <div className="flex items-center gap-1.5 mb-2">
                   <Lock className="w-3 h-3 text-violet-400/50" />
@@ -180,13 +182,11 @@ export function ProductDetailLayers({ product }: Props) {
               </div>
             )}
 
-            {activeNoteLayer === "agency" && (
+            {activeNoteLayer === "team" && (
               <div className="space-y-3">
                 <div className="flex items-center gap-1.5 mb-2">
                   <Users className="w-3 h-3 text-blue-400/50" />
-                  <span className="text-[10px] text-blue-400/60">
-                    Visible to all agency members
-                  </span>
+                  <span className="text-[10px] text-blue-400/60">Visible to all team members</span>
                 </div>
                 <div className="space-y-2">
                   {agencyNotes.map((note) => (
@@ -224,7 +224,7 @@ export function ProductDetailLayers({ product }: Props) {
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="Add a note for the agency..."
+                    placeholder="Add a note for the team..."
                     value={newAgencyNote}
                     onChange={(e) => setNewAgencyNote(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && submitAgencyNote()}
@@ -240,7 +240,7 @@ export function ProductDetailLayers({ product }: Props) {
                 </div>
                 {!isAdmin && (
                   <p className="text-[10px] text-gray-600 italic">
-                    Agency-level fields (description, star rating, etc.) can only be changed by an
+                    Team-level fields (description, star rating, etc.) can only be changed by an
                     admin. You can suggest a change below.
                   </p>
                 )}
@@ -296,21 +296,23 @@ function PartnerProgramsSection({ programs }: { programs: PartnerProgramMock[] }
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-medium text-white">{program.name}</span>
-                  <span
-                    className={cn(
-                      "text-[10px] px-1.5 py-0.5 rounded",
-                      program.data_layer === "agency"
-                        ? "bg-blue-500/10 text-blue-400"
-                        : "bg-emerald-500/10 text-emerald-400"
-                    )}
-                  >
-                    {program.data_layer === "agency" ? "Agency" : "Enable"}
-                  </span>
+                  {program.scope === "enable" ? (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">
+                      Enable
+                    </span>
+                  ) : (
+                    <ScopeBadge scope={program.scope} teams={MOCK_TEAMS} />
+                  )}
                 </div>
                 <p className="text-[10px] text-gray-400 mt-1">{program.benefits}</p>
                 {program.commission && (
                   <p className="text-[10px] text-amber-400/70 mt-0.5">
                     Commission: {program.commission}
+                  </p>
+                )}
+                {program.commissionContact && (
+                  <p className="text-[10px] text-gray-500 mt-0.5">
+                    Commission contact: {program.commissionContact.name} — {program.commissionContact.email}
                   </p>
                 )}
                 {program.expires && (

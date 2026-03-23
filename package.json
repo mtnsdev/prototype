@@ -2,10 +2,18 @@
   "name": "enable-next",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "dev": "next dev -p 4001",
+    "dev": "node scripts/start-dev.cjs",
+    "dev:stop": "node scripts/start-dev.cjs --stop",
+    "dev:fresh": "node scripts/start-dev.cjs --fresh",
+    "dev:4001": "node scripts/start-dev.cjs 4001",
+    "dev:raw": "next dev -p 4002",
+    "open:dev": "open http://localhost:4002",
     "build": "next build",
-    "start": "next start -p 4001",
+    "start": "next start -p 4002",
     "lint": "eslint"
   },
   "dependencies": {
@@ -21,7 +29,7 @@
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.562.0",
     "mongoose": "^9.1.5",
-    "next": "16.1.4",
+    "next": "^16.1.4",
     "postcss": "^8.5.6",
     "radix-ui": "^1.4.3",
     "react": "19.2.3",

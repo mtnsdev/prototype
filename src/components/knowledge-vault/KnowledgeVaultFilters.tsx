@@ -1,248 +1,153 @@
 "use client";
 
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import type { DataSource } from "@/types/knowledge-vault";
-import type { DataLayer, IngestionStatus } from "@/types/knowledge-vault";
-import { DataSourceType } from "@/types/knowledge-vault";
+import type { IngestionStatus } from "@/types/knowledge-vault";
 import { cn } from "@/lib/utils";
-
-const DATA_LAYER_LABELS: Record<DataLayer, string> = {
-  enable: "Enable",
-  agency: "Agency",
-  advisor: "Advisor",
-};
-
-const DATA_LAYER_COLORS: Record<DataLayer, string> = {
-  enable: "bg-[var(--muted-info-bg)] text-[var(--muted-info-text)] border-[var(--muted-info-border)]",
-  agency: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  advisor: "bg-violet-500/10 text-violet-400 border-violet-500/20",
-};
-
-function sourceDataLayerLabel(sourceType: DataSourceType): "Agency" | "Advisor" | "Enable" {
-  const m: Partial<Record<DataSourceType, "Agency" | "Advisor" | "Enable">> = {
-    [DataSourceType.GoogleDriveAdmin]: "Agency",
-    [DataSourceType.GoogleDrivePersonal]: "Advisor",
-    [DataSourceType.ClaromentisDocuments]: "Agency",
-    [DataSourceType.ClaromentisPages]: "Agency",
-    [DataSourceType.ManualUpload]: "Advisor",
-    [DataSourceType.Virtuoso]: "Agency",
-    [DataSourceType.WebScrape]: "Advisor",
-    [DataSourceType.EmailTemplate]: "Agency",
-    [DataSourceType.Email]: "Agency",
-    [DataSourceType.APIStream]: "Agency",
-  };
-  return m[sourceType] ?? "Agency";
-}
+import { useUser } from "@/contexts/UserContext";
+import { getVisibleTeamsForUser } from "@/lib/teamsMock";
 
 export type KnowledgeVaultFiltersState = {
   source_ids?: string[];
-  data_layer?: DataLayer;
+  /** Omitted = all scopes */
+  scope?: "private" | string;
   ingestion_status?: IngestionStatus;
-  tags?: string[];
 };
 
-type TagFacet = { name: string; count: number };
-
 type Props = {
-  sources: DataSource[];
   filters: KnowledgeVaultFiltersState;
   onFiltersChange: (f: KnowledgeVaultFiltersState) => void;
-  onConnectSource: () => void;
-  hasActiveFilters: boolean;
-  onClearFilters: () => void;
-  tagFacets: TagFacet[];
+  hasDocumentFilters: boolean;
+  onClearDocumentFilters: () => void;
 };
 
 export default function KnowledgeVaultFilters({
-  sources,
   filters,
   onFiltersChange,
-  onConnectSource,
-  hasActiveFilters,
-  onClearFilters,
-  tagFacets,
+  hasDocumentFilters,
+  onClearDocumentFilters,
 }: Props) {
-  const selected = filters.source_ids ?? [];
+  const { user } = useUser();
+  const scopeTeams = getVisibleTeamsForUser(user?.id);
 
-  const toggleFilter = <K extends keyof KnowledgeVaultFiltersState>(
-    key: K,
-    value: KnowledgeVaultFiltersState[K]
-  ) => {
+  const setScope = (scope: KnowledgeVaultFiltersState["scope"]) => {
     onFiltersChange({
       ...filters,
-      [key]: filters[key] === value ? undefined : value,
+      scope,
     });
   };
 
-  const toggleSourceId = (id: string) => {
-    const next = selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id];
-    onFiltersChange({
-      ...filters,
-      source_ids: next.length ? next : undefined,
-    });
-  };
-
-  const toggleTagFilter = (tag: string) => {
-    const current = filters.tags ?? [];
-    const next = current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag];
-    onFiltersChange({ ...filters, tags: next.length ? next : undefined });
+  const toggleScope = (value: NonNullable<KnowledgeVaultFiltersState["scope"]>) => {
+    setScope(filters.scope === value ? undefined : value);
   };
 
   return (
-    <div className="p-4 space-y-6">
-      {hasActiveFilters && (
+    <div className="p-4 space-y-4">
+      <p className="text-[11px] leading-relaxed text-[rgba(245,245,245,0.45)]">
+        Choose sources on the cards above. These options filter the document list only—they do not change which
+        connection is selected.
+      </p>
+
+      {hasDocumentFilters && (
         <button
           type="button"
-          onClick={onClearFilters}
+          onClick={onClearDocumentFilters}
           className="text-xs text-[rgba(245,245,245,0.7)] hover:text-[#F5F5F5] hover:underline"
         >
-          Clear all filters
+          Clear document filters
         </button>
       )}
 
-      <section>
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2">
-          Data sources
-        </h3>
-        <ul className="space-y-1">
-          {sources.map((s) => {
-            const connected = s.status === "connected";
-            const active = selected.includes(s.id);
-            const layer = sourceDataLayerLabel(s.source_type);
-            const layerCls =
-              layer === "Agency"
-                ? "text-blue-400/90"
-                : layer === "Advisor"
-                  ? "text-violet-400/90"
-                  : "text-emerald-400/90";
-            return (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  disabled={!connected}
-                  onClick={() => connected && toggleSourceId(s.id)}
-                  className={cn(
-                    "w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm",
-                    !connected && "opacity-45 cursor-not-allowed",
-                    connected && active && "bg-white/10 text-[#F5F5F5]",
-                    connected && !active && "text-[rgba(245,245,245,0.8)] hover:bg-white/5"
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "w-2 h-2 rounded-full shrink-0",
-                      !connected && "bg-[rgba(255,255,255,0.25)]",
-                      connected && s.health_score >= 80 && "bg-[var(--muted-success-text)]",
-                      connected &&
-                        s.health_score >= 50 &&
-                        s.health_score < 80 &&
-                        "bg-[var(--muted-amber-text)]",
-                      connected && s.health_score < 50 && s.health_score > 0 && "bg-[var(--muted-error-text)]",
-                      connected && s.health_score === 0 && "bg-[rgba(255,255,255,0.3)]",
-                      s.source_type === DataSourceType.WebScrape && connected && "bg-blue-400"
-                    )}
-                  />
-                  <span className="truncate flex-1 min-w-0">{s.name}</span>
-                  {s.document_visible_count != null &&
-                  (s.source_type === DataSourceType.ClaromentisDocuments ||
-                    s.source_type === DataSourceType.ClaromentisPages) ? (
-                    <span className="text-xs shrink-0 tabular-nums">
-                      <span className="text-[rgba(245,245,245,0.5)]">{s.document_visible_count}</span>
-                      <span className="text-gray-600">/{s.document_count}</span>
-                    </span>
-                  ) : (
-                    <span className="text-xs text-[rgba(245,245,245,0.5)] shrink-0 tabular-nums">
-                      {s.document_count}
-                    </span>
-                  )}
-                  <span className={cn("text-[10px] shrink-0 font-medium", layerCls)}>{layer}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start gap-2 mt-1 text-[rgba(245,245,245,0.7)]"
-          onClick={onConnectSource}
-        >
-          <Plus size={14} /> Connect Source
-        </Button>
-      </section>
-
-      <section>
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2">
-          Data layer
-        </h3>
-        <div className="flex flex-wrap gap-1.5">
-          {(["enable", "agency", "advisor"] as const).map((layer) => (
+      <div className="flex flex-col gap-5 sm:flex-row sm:flex-wrap sm:items-start sm:gap-8">
+        <section className="min-w-0" role="group" aria-labelledby="kv-filter-scope-label">
+          <h3
+            id="kv-filter-scope-label"
+            className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2"
+          >
+            Scope
+          </h3>
+          <div className="flex flex-wrap gap-1.5" role="toolbar" aria-label="Filter by scope">
             <button
-              key={layer}
               type="button"
-              onClick={() => toggleFilter("data_layer", layer)}
+              aria-pressed={filters.scope == null}
+              onClick={() => setScope(undefined)}
               className={cn(
                 "text-xs px-2 py-1 rounded border",
-                filters.data_layer === layer
-                  ? DATA_LAYER_COLORS[layer]
+                filters.scope == null
+                  ? "bg-white/10 text-[#F5F5F5] border-white/20"
                   : "border-white/10 text-[rgba(245,245,245,0.6)] hover:bg-white/5"
               )}
             >
-              {DATA_LAYER_LABELS[layer]}
+              All
             </button>
-          ))}
-        </div>
-      </section>
-
-      {tagFacets.length > 0 && (
-        <div className="mt-4">
-          <p className="text-[10px] font-semibold tracking-wider text-gray-500 uppercase mb-2">Tags</p>
-          <div className="flex flex-wrap gap-1.5">
-            {tagFacets.map((tag) => (
+            <button
+              type="button"
+              aria-pressed={filters.scope === "private"}
+              onClick={() => toggleScope("private")}
+              className={cn(
+                "text-xs px-2 py-1 rounded border",
+                filters.scope === "private"
+                  ? "bg-violet-500/10 text-violet-400 border-violet-500/20"
+                  : "border-white/10 text-[rgba(245,245,245,0.6)] hover:bg-white/5"
+              )}
+            >
+              Private
+            </button>
+            {scopeTeams.map((team) => (
               <button
-                key={tag.name}
+                key={team.id}
                 type="button"
-                onClick={() => toggleTagFilter(tag.name)}
+                aria-pressed={filters.scope === team.id}
+                onClick={() => toggleScope(team.id)}
                 className={cn(
-                  "text-[10px] px-2 py-0.5 rounded-full transition-all border",
-                  filters.tags?.includes(tag.name)
-                    ? "bg-blue-500/15 text-blue-400 border-blue-500/30"
-                    : "bg-white/5 text-gray-500 border-white/[0.06] hover:border-white/10"
+                  "text-xs px-2 py-1 rounded border max-w-[160px] truncate",
+                  filters.scope === team.id
+                    ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                    : "border-white/10 text-[rgba(245,245,245,0.6)] hover:bg-white/5"
                 )}
+                title={team.name}
               >
-                {tag.name}
-                <span className="ml-1 text-gray-600">{tag.count}</span>
+                {team.name}
               </button>
             ))}
           </div>
-        </div>
-      )}
+        </section>
 
-      <section>
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2">
-          Ingestion status
-        </h3>
-        <div className="flex flex-wrap gap-1.5">
-          {(["indexed", "pending", "processing", "failed"] as const).map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => toggleFilter("ingestion_status", s)}
-              className={cn(
-                "text-xs px-2 py-1 rounded border",
-                filters.ingestion_status === s
-                  ? s === "failed"
-                    ? "bg-[var(--muted-error-bg)] text-[var(--muted-error-text)] border-[var(--muted-error-border)]"
-                    : "bg-white/10 border-white/20 text-[#F5F5F5]"
-                  : "border-white/10 text-[rgba(245,245,245,0.6)] hover:bg-white/5"
-              )}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      </section>
+        <section className="min-w-0" role="group" aria-labelledby="kv-filter-ingestion-label">
+          <h3
+            id="kv-filter-ingestion-label"
+            className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2"
+          >
+            Ingestion status
+          </h3>
+          <div className="flex flex-wrap gap-1.5" role="toolbar" aria-label="Filter by ingestion status">
+            {(["indexed", "pending", "processing", "failed"] as const).map((s) => {
+              const pressed = filters.ingestion_status === s;
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  aria-pressed={pressed}
+                  onClick={() =>
+                    onFiltersChange({
+                      ...filters,
+                      ingestion_status: filters.ingestion_status === s ? undefined : s,
+                    })
+                  }
+                  className={cn(
+                    "text-xs px-2 py-1 rounded border capitalize",
+                    pressed
+                      ? s === "failed"
+                        ? "bg-[var(--muted-error-bg)] text-[var(--muted-error-text)] border-[var(--muted-error-border)]"
+                        : "bg-white/10 border-white/20 text-[#F5F5F5]"
+                      : "border-white/10 text-[rgba(245,245,245,0.6)] hover:bg-white/5"
+                  )}
+                >
+                  {s}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
