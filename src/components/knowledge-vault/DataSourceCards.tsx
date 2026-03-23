@@ -3,19 +3,28 @@
 import {
   Cloud,
   Database,
-  Upload,
-  Globe,
   Mail,
   Plus,
   Building2,
   User,
   FileText,
   BookOpen,
-  Sparkles,
 } from "lucide-react";
 import type { DataSource } from "@/types/knowledge-vault";
 import { DataSourceType } from "@/types/knowledge-vault";
 import { cn } from "@/lib/utils";
+import { ScopeBadge } from "@/components/ui/ScopeBadge";
+import { MOCK_TEAMS } from "@/lib/teamsMock";
+import { TEAM_EVERYONE_ID } from "@/types/teams";
+import { SourceCardSkeleton } from "@/components/ui/SkeletonPatterns";
+
+const SHOWN_TYPES = new Set<DataSourceType>([
+  DataSourceType.GoogleDriveAdmin,
+  DataSourceType.GoogleDrivePersonal,
+  DataSourceType.ClaromentisDocuments,
+  DataSourceType.ClaromentisPages,
+  DataSourceType.Email,
+]);
 
 function isClaromentis(s: DataSource) {
   return (
@@ -23,33 +32,22 @@ function isClaromentis(s: DataSource) {
   );
 }
 
-function sourceCardLayer(source: DataSource): "Agency" | "Advisor" | "Enable" {
-  const m: Partial<Record<DataSourceType, "Agency" | "Advisor" | "Enable">> = {
-    [DataSourceType.GoogleDriveAdmin]: "Agency",
-    [DataSourceType.GoogleDrivePersonal]: "Advisor",
-    [DataSourceType.ClaromentisDocuments]: "Agency",
-    [DataSourceType.ClaromentisPages]: "Agency",
-    [DataSourceType.ManualUpload]: "Advisor",
-    [DataSourceType.Virtuoso]: "Agency",
-    [DataSourceType.WebScrape]: "Advisor",
-    [DataSourceType.EmailTemplate]: "Agency",
-    [DataSourceType.Email]: "Agency",
-    [DataSourceType.APIStream]: "Agency",
+/** Admin-configurable default scope per source (UI mock). */
+function sourceDefaultScope(source: DataSource): "private" | string {
+  const m: Partial<Record<DataSourceType, "private" | string>> = {
+    [DataSourceType.GoogleDriveAdmin]: TEAM_EVERYONE_ID,
+    [DataSourceType.GoogleDrivePersonal]: "private",
+    [DataSourceType.ClaromentisDocuments]: TEAM_EVERYONE_ID,
+    [DataSourceType.ClaromentisPages]: TEAM_EVERYONE_ID,
+    [DataSourceType.Email]: "private",
   };
-  return m[source.source_type] ?? "Agency";
+  return m[source.source_type] ?? TEAM_EVERYONE_ID;
 }
 
-const ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  Cloud,
-  Database,
-  Upload,
-  Globe,
-  Mail,
-  Sparkles,
-};
-
 function getBaseIcon(source: DataSource) {
-  return ICONS[source.icon] ?? Database;
+  if (source.source_type === DataSourceType.Email) return Mail;
+  if (source.icon === "Cloud") return Cloud;
+  return Database;
 }
 
 function BadgeIcon({ source }: { source: DataSource }) {
@@ -75,26 +73,13 @@ function timeAgo(iso: string | null): string {
   return Math.floor(sec / 604800) + "w ago";
 }
 
-function LayerBadge({ layer }: { layer: "Agency" | "Advisor" | "Enable" }) {
-  return (
-    <span
-      className={cn(
-        "text-[10px] px-1.5 py-0.5 rounded mt-1 inline-block",
-        layer === "Agency" && "bg-blue-500/10 text-blue-400",
-        layer === "Advisor" && "bg-violet-500/10 text-violet-400",
-        layer === "Enable" && "bg-emerald-500/10 text-emerald-400"
-      )}
-    >
-      {layer}
-    </span>
-  );
-}
-
 type Props = {
   sources: DataSource[];
   selectedSourceIds: string[];
   onToggleSource: (id: string) => void;
   onConnectSource: () => void;
+  emailUnprocessedCount?: number;
+  loading?: boolean;
 };
 
 export default function DataSourceCards({
@@ -102,18 +87,29 @@ export default function DataSourceCards({
   selectedSourceIds,
   onToggleSource,
   onConnectSource,
+  emailUnprocessedCount = 0,
+  loading = false,
 }: Props) {
-  const connected = sources.filter((s) => s.status !== "disconnected");
+  const connected = sources.filter((s) => s.status !== "disconnected" && SHOWN_TYPES.has(s.source_type));
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3 pb-2">
+        {Array.from({ length: 4 }, (_, i) => (
+          <SourceCardSkeleton key={i} />
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-2">
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3 pb-2">
       {connected.map((src) => {
         const Icon = getBaseIcon(src);
         const isSelected = selectedSourceIds.includes(src.id);
-        const badge = BadgeIcon({ source: src });
-        const isTemplates = src.source_type === DataSourceType.EmailTemplate;
-        const isWeb = src.source_type === DataSourceType.WebScrape;
-        const layer = sourceCardLayer(src);
+        const badge = src.source_type !== DataSourceType.Email ? BadgeIcon({ source: src }) : null;
+        const isEmail = src.source_type === DataSourceType.Email;
+        const defaultScope = sourceDefaultScope(src);
 
         return (
           <button
@@ -122,32 +118,25 @@ export default function DataSourceCards({
             onClick={() => onToggleSource(src.id)}
             className={cn(
               "shrink-0 w-[180px] rounded-xl border p-3 text-left transition-colors",
-              isWeb &&
-                "bg-blue-500/[0.03] border-blue-500/10 hover:border-blue-500/20",
-              isTemplates &&
-                !isWeb &&
-                "border-rose-500/20 bg-rose-500/[0.04] hover:bg-rose-500/[0.08]",
-              !isWeb &&
-                !isTemplates &&
-                "border-[rgba(255,255,255,0.08)] bg-[#161616] hover:bg-white/[0.04]",
+              isEmail && "bg-sky-500/5 border-sky-500/10 hover:border-sky-500/20",
+              !isEmail && "border-[rgba(255,255,255,0.08)] bg-[#161616] hover:bg-white/[0.04]",
               isSelected &&
-                (isWeb
-                  ? "ring-2 ring-blue-500/40 border-blue-500/30"
-                  : isTemplates
-                    ? "ring-2 ring-rose-500/40 border-rose-500/30"
-                    : "ring-2 ring-white/30 border-white/20")
+                (isEmail ? "ring-2 ring-sky-500/40 border-sky-500/30" : "ring-2 ring-white/30 border-white/20")
             )}
           >
             <div className="flex items-center gap-2 mb-1">
               <div
                 className={cn(
                   "relative w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
-                  isWeb && "bg-blue-500/15 text-blue-400",
-                  isTemplates && !isWeb && "bg-rose-500/15 text-rose-300",
-                  !isWeb && !isTemplates && "bg-white/10 text-[rgba(245,245,245,0.9)]"
+                  isEmail ? "bg-sky-500/10 text-sky-400" : "bg-white/10 text-[rgba(245,245,245,0.9)]"
                 )}
               >
                 <Icon size={18} />
+                {isEmail && emailUnprocessedCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-0.5 bg-sky-400 text-[9px] text-[#06060a] font-bold rounded-full flex items-center justify-center">
+                    {emailUnprocessedCount > 9 ? "9+" : emailUnprocessedCount}
+                  </span>
+                )}
                 {badge && (
                   <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-md bg-[#0C0C0C] border border-white/15 flex items-center justify-center">
                     {badge}
@@ -160,17 +149,22 @@ export default function DataSourceCards({
               <span
                 className={cn(
                   "w-1.5 h-1.5 rounded-full shrink-0",
-                  isWeb && "bg-blue-400",
-                  !isWeb && src.status === "connected" && "bg-[var(--muted-success-text)]"
+                  isEmail ? "bg-sky-400" : src.status === "connected" && "bg-[var(--muted-success-text)]"
                 )}
               />
-              <span className={cn("text-[10px]", isWeb ? "text-blue-400" : "text-[rgba(245,245,245,0.5)]")}>
+              <span
+                className={cn(
+                  "text-[10px]",
+                  isEmail ? "text-sky-400/90" : "text-[rgba(245,245,245,0.5)]"
+                )}
+              >
                 {src.document_count} docs
               </span>
             </div>
-            {isWeb && <p className="text-[10px] text-gray-600 mt-0.5">Personal saves</p>}
-            <LayerBadge layer={layer} />
-            {!isWeb && isClaromentis(src) && src.document_visible_count != null && (
+            <div className="mt-1">
+              <ScopeBadge scope={defaultScope} teams={MOCK_TEAMS} />
+            </div>
+            {!isEmail && isClaromentis(src) && src.document_visible_count != null && (
               <p className="text-[10px] text-gray-500 mt-0.5">Based on your access</p>
             )}
             <p className="text-xs text-[rgba(245,245,245,0.5)] mt-2">
@@ -195,7 +189,7 @@ export default function DataSourceCards({
       <button
         type="button"
         onClick={onConnectSource}
-        className="shrink-0 w-44 rounded-xl border border-dashed border-[rgba(255,255,255,0.2)] bg-white/[0.02] hover:bg-white/[0.06] flex flex-col items-center justify-center gap-2 p-4 text-[rgba(245,245,245,0.6)]"
+        className="min-h-[140px] rounded-xl border border-dashed border-[rgba(255,255,255,0.2)] bg-white/[0.02] hover:bg-white/[0.06] flex flex-col items-center justify-center gap-2 p-4 text-[rgba(245,245,245,0.6)]"
       >
         <Plus size={24} />
         <span className="text-sm font-medium">Connect Source</span>

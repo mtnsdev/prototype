@@ -13,13 +13,13 @@ import {
     History,
     User,
     Users,
-    Package,
+    Building2,
     Route,
     ChevronRight,
     ChevronDown,
     Database,
     LayoutDashboard,
-    BookMarked,
+    BookOpen,
     BarChart3,
     Zap,
 } from "lucide-react";
@@ -30,6 +30,7 @@ import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
 import { useClaromentisStatus } from "@/hooks/useClaromentisStatus";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 import { cn } from "@/lib/utils";
+import { useKnowledgeVaultUnprocessedEmailCount } from "@/contexts/KnowledgeVaultEmailContext";
 
 export type Conversation = {
     id: number;
@@ -59,6 +60,7 @@ export default function Sidebar({
     const pathname = usePathname();
     const router = useRouter();
     const userContext = useUserOptional();
+    const kvEmailUnprocessed = useKnowledgeVaultUnprocessedEmailCount();
     const [recentConversations, setRecentConversations] = useState<Conversation[]>([]);
     const [userPopoverOpen, setUserPopoverOpen] = useState(false);
     const popoverRef = useRef<HTMLDivElement>(null);
@@ -269,15 +271,6 @@ export default function Sidebar({
                     />
 
                     <NavLink
-                        href="/dashboard/products"
-                        collapsed={collapsed}
-                        icon={<Package size={18} />}
-                        label="Products"
-                        active={pathname.startsWith("/dashboard/products")}
-                        navTag={IS_PREVIEW_MODE ? "sample" : undefined}
-                    />
-
-                    <NavLink
                         href="/dashboard/itineraries"
                         collapsed={collapsed}
                         icon={<Route size={18} />}
@@ -287,11 +280,24 @@ export default function Sidebar({
                     />
 
                     <NavLink
-                        href="/dashboard/knowledge"
+                        href="/dashboard/knowledge-vault"
                         collapsed={collapsed}
-                        icon={<BookMarked size={18} />}
-                        label="Knowledge"
-                        active={pathname.startsWith("/dashboard/knowledge")}
+                        icon={<BookOpen size={18} />}
+                        label="Knowledge Vault"
+                        active={
+                            pathname.startsWith("/dashboard/knowledge-vault") ||
+                            pathname.startsWith("/dashboard/knowledge")
+                        }
+                        navTag={IS_PREVIEW_MODE ? "sample" : undefined}
+                        kvNotificationCount={kvEmailUnprocessed}
+                    />
+
+                    <NavLink
+                        href="/dashboard/products"
+                        collapsed={collapsed}
+                        icon={<Building2 size={18} />}
+                        label="Product Directory"
+                        active={pathname.startsWith("/dashboard/products")}
                         navTag={IS_PREVIEW_MODE ? "sample" : undefined}
                     />
 
@@ -434,6 +440,7 @@ function NavLink({
     active,
     badge,
     navTag,
+    kvNotificationCount,
 }: {
     href: string;
     collapsed: boolean;
@@ -443,24 +450,50 @@ function NavLink({
     badge?: string;
     /** Shown when IS_PREVIEW_MODE; "sample" = Sample data, "construction" = Under construction */
     navTag?: "sample" | "construction" | "coming_soon";
+    /** Unprocessed email count for Knowledge Vault (sky badge) */
+    kvNotificationCount?: number;
 }) {
+    const kvCollapsedBadge = collapsed && kvNotificationCount != null && kvNotificationCount > 0;
     return (
         <Link
             href={href}
             className={[
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px]",
+                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px]",
                 "transition-all duration-150 ease-out",
                 active
-                    ? "bg-white/10 text-[#F5F5F5] font-medium"
-                    : "text-[rgba(245,245,245,0.65)] hover:bg-white/6 hover:text-[#F5F5F5]",
+                    ? "bg-white/[0.06] text-white font-medium"
+                    : "text-gray-500 hover:text-gray-300 hover:bg-white/[0.03]",
             ].join(" ")}
         >
-            <span className={`shrink-0 ${active ? 'text-white/90' : 'text-white/50'}`}>{icon}</span>
+            <span
+                className={cn(
+                    "shrink-0 inline-flex items-center justify-center relative",
+                    active ? "text-white" : "text-gray-500"
+                )}
+            >
+                {icon}
+                {kvCollapsedBadge && (
+                    <span
+                        className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 bg-sky-400 text-[8px] font-bold text-[#06060a] rounded-full flex items-center justify-center border border-[#0C0C0C]"
+                        title="Unreviewed forwarded emails"
+                    >
+                        {kvNotificationCount > 9 ? "9+" : kvNotificationCount}
+                    </span>
+                )}
+            </span>
             {!collapsed && (
                 <>
                     <span className="truncate flex-1 min-w-0">{label}</span>
                     {navTag && <NavTag variant={navTag} />}
-                    {badge && !navTag && (
+                    {kvNotificationCount != null && kvNotificationCount > 0 && (
+                        <span
+                            className="shrink-0 ml-auto min-w-5 h-5 px-1 bg-sky-500/15 text-sky-400 text-[10px] font-semibold rounded-full inline-flex items-center justify-center border border-sky-500/20"
+                            title="Unreviewed forwarded emails"
+                        >
+                            {kvNotificationCount > 9 ? "9+" : kvNotificationCount}
+                        </span>
+                    )}
+                    {badge && !navTag && !(kvNotificationCount && kvNotificationCount > 0) && (
                         <span
                             className="shrink-0 ml-auto rounded-md px-2 py-0.5 text-[11px] font-normal text-[rgba(245,245,245,0.4)] bg-white/[0.05] border border-white/[0.08]"
                             title="This feature is not fully implemented yet"

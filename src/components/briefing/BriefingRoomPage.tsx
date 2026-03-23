@@ -38,7 +38,7 @@ const QUICK_START_ROUTES: Record<string, string> = {
   "Add VIC": "/dashboard/vics",
   "Create Itinerary": "/dashboard/itineraries?create=1",
   "Browse Products": "/dashboard/products",
-  "Search Knowledge": "/dashboard/knowledge",
+  "Search Knowledge": "/dashboard/knowledge-vault",
   "Acuity Lookup": "/dashboard/vics",
   "Run Acuity on VIC": "/dashboard/vics",
   "Import CSV": "/dashboard/vics",

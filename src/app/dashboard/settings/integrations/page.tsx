@@ -12,12 +12,15 @@ import {
     Users,
     User,
     Link2,
+    Mail,
+    Copy,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import GoogleDriveFolderPicker from "@/components/GoogleDriveFolderPicker";
 import { useUser } from "@/contexts/UserContext";
+import { useToast } from "@/contexts/ToastContext";
 import type { DriveStatus } from "@/types/google-drive";
 
 const OAUTH_POPUP_WIDTH = 600;
@@ -553,6 +556,52 @@ function ClaromentisConnectionCard() {
 }
 
 // ---------------------------------------------------------------------------
+// EmailForwardingCard -- agency ingest address for Knowledge Vault
+// ---------------------------------------------------------------------------
+function EmailForwardingCard() {
+    const toast = useToast();
+    const agencySlug =
+        (typeof process !== "undefined" && process.env.NEXT_PUBLIC_AGENCY_INGEST_SLUG) || "travellustre";
+    const address = `${agencySlug}@ingest.enable.travel`;
+
+    return (
+        <div className="bg-white/[0.02] border border-white/[0.06] rounded-[20px] p-5">
+            <div className="flex items-center gap-2 mb-3">
+                <Mail className="w-4 h-4 text-sky-400" />
+                <span className="text-xs font-semibold tracking-wider text-gray-400 uppercase">
+                    Email Forwarding
+                </span>
+            </div>
+
+            <p className="text-xs text-gray-500 mb-4">
+                Forward any email to this address and it will appear in your Knowledge Vault. Attachments are
+                extracted and stored as separate documents.
+            </p>
+
+            <div className="flex items-center gap-2 bg-white/[0.03] border border-white/[0.04] rounded-xl px-4 py-3">
+                <code className="text-sm text-sky-400 flex-1 font-mono break-all">{address}</code>
+                <button
+                    type="button"
+                    onClick={() => {
+                        void navigator.clipboard.writeText(address);
+                        toast("Email address copied");
+                    }}
+                    className="text-gray-500 hover:text-gray-300 transition-colors shrink-0 p-1"
+                    aria-label="Copy address"
+                >
+                    <Copy className="w-4 h-4" />
+                </button>
+            </div>
+
+            <p className="text-[10px] text-gray-600 mt-3">
+                We match forwarded emails to your advisor account using your registered email address. All ingested
+                content is private to you by default.
+            </p>
+        </div>
+    );
+}
+
+// ---------------------------------------------------------------------------
 // IntegrationsPage -- renders both connection cards
 // ---------------------------------------------------------------------------
 export default function IntegrationsPage() {
@@ -572,6 +621,8 @@ export default function IntegrationsPage() {
                     <h1 className="text-[24px] font-semibold text-[#F5F5F5] tracking-tight">Integrations</h1>
                     <p className="text-[14px] text-[rgba(245,245,245,0.5)] mt-1">Connect data sources for search and RAG</p>
                 </div>
+
+                <EmailForwardingCard />
 
                 {/* Claromentis first, then personal drive, then admin drive (when applicable) */}
                 <ClaromentisConnectionCard />
