@@ -14,8 +14,8 @@ const iso = (d: Date) => d.toISOString();
 /** Curated Unsplash hero images (w=600 h=400 fit=crop for cards) */
 const IMG = {
   fourSeasons: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=600&h=400&fit=crop",
-  japanDmc: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&h=400&fit=crop",
-  belmond: "https://images.unsplash.com/photo-1602002418816-5c0aeef426aa?w=600&h=400&fit=crop",
+  japanDmc: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&h=400&fit=crop",
+  belmond: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&h=400&fit=crop",
   oneOnly: "https://images.unsplash.com/photo-1573843981267-be1999ff37cd?w=600&h=400&fit=crop",
   aKItaly: "https://images.unsplash.com/photo-1534445867742-43195f401b6c?w=600&h=400&fit=crop",
   ponant: "https://images.unsplash.com/photo-1548574505-5e239809ee19?w=600&h=400&fit=crop",
@@ -24,14 +24,14 @@ const IMG = {
   leCinq: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&h=400&fit=crop",
   nobu: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&h=400&fit=crop",
   helicopter: "https://images.unsplash.com/photo-1540962351504-03099e0a754b?w=600&h=400&fit=crop",
-  tuscany: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop",
+  tuscany: "https://images.unsplash.com/photo-1523531294919-4bcd7c65e216?w=600&h=400&fit=crop",
   bali: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&h=400&fit=crop",
 };
 
 export const FAKE_PRODUCTS: Product[] = [
   // 1. Enable — Four Seasons George V
   {
-    id: "fake-enable-1",
+    id: "prod-enable-001",
     name: "Four Seasons George V",
     description: "Iconic palace hotel on Avenue George V. Three Michelin-starred restaurants.",
     category: "accommodation",
@@ -60,7 +60,7 @@ export const FAKE_PRODUCTS: Product[] = [
   } as Product,
   // 2. Enable — DMC (directory example)
   {
-    id: "fake-enable-2",
+    id: "prod-enable-002",
     name: "Original Travel — Japan DMC",
     description: "Curated ground services across Japan: private guides, ryokan access, bullet-train logistics, and seasonal itineraries from Hokkaido to Okinawa.",
     category: "dmc",
@@ -84,7 +84,7 @@ export const FAKE_PRODUCTS: Product[] = [
   } as Product,
   // 3. Agency — Belmond Hotel Caruso
   {
-    id: "fake-agency-1",
+    id: "prod-agency-001",
     name: "Belmond Hotel Caruso",
     description: "11th-century palace perched above the Amalfi Coast.",
     category: "accommodation",
@@ -108,7 +108,7 @@ export const FAKE_PRODUCTS: Product[] = [
   } as Product,
   // 4. Enable — One&Only Reethi Rah
   {
-    id: "fake-enable-3",
+    id: "prod-enable-003",
     name: "One&Only Reethi Rah",
     description: "Expansive private island with over 6km of coastline.",
     category: "accommodation",
@@ -129,7 +129,7 @@ export const FAKE_PRODUCTS: Product[] = [
   } as Product,
   // 5. Agency — Abercrombie & Kent Italy
   {
-    id: "fake-agency-2",
+    id: "prod-agency-002",
     name: "Abercrombie & Kent Italy",
     description: "Premium ground handling across 12 Italian destinations.",
     category: "dmc",
@@ -151,7 +151,7 @@ export const FAKE_PRODUCTS: Product[] = [
   } as Product,
   // 6. Enable — Ponant Le Commandant Charcot
   {
-    id: "fake-enable-4",
+    id: "prod-enable-004",
     name: "Ponant Le Commandant Charcot",
     description: "World's first luxury polar exploration vessel with hybrid-electric propulsion.",
     category: "cruise",
@@ -173,7 +173,7 @@ export const FAKE_PRODUCTS: Product[] = [
   } as Product,
   // 7. Agency — Scott Dunn Private
   {
-    id: "fake-agency-3",
+    id: "prod-agency-003",
     name: "Scott Dunn Private",
     description: "Bespoke concierge and villa rental specialists.",
     category: "service_provider",
@@ -193,7 +193,7 @@ export const FAKE_PRODUCTS: Product[] = [
   } as Product,
   // 8. Advisor — Hot Air Balloon Cappadocia (My Products)
   {
-    id: "fake-advisor-1",
+    id: "prod-advisor-001",
     name: "Hot Air Balloon Cappadocia",
     description: "Sunrise flight over fairy chimneys and ancient cave dwellings.",
     category: "activity",
@@ -216,7 +216,7 @@ export const FAKE_PRODUCTS: Product[] = [
   } as Product,
   // 9. Enable — Le Cinq (Four Seasons George V)
   {
-    id: "fake-enable-5",
+    id: "prod-enable-005",
     name: "Le Cinq (Four Seasons George V)",
     description: "Three Michelin stars. Chef Christian Le Squer's contemporary French cuisine.",
     category: "restaurant",
@@ -237,7 +237,7 @@ export const FAKE_PRODUCTS: Product[] = [
   } as Product,
   // 10. Agency — Nobu Matsuhisa Monaco
   {
-    id: "fake-agency-4",
+    id: "prod-agency-004",
     name: "Nobu Matsuhisa Monaco",
     description: "Japanese-Peruvian fusion overlooking Monte Carlo.",
     category: "restaurant",
@@ -259,7 +259,7 @@ export const FAKE_PRODUCTS: Product[] = [
   } as Product,
   // 11. Advisor — Luxury Helicopter Transfers Monaco (My Products)
   {
-    id: "fake-advisor-2",
+    id: "prod-advisor-002",
     name: "Luxury Helicopter Transfers Monaco",
     description: "7-minute scenic transfers along the Côte d'Azur.",
     category: "transportation",
@@ -281,7 +281,7 @@ export const FAKE_PRODUCTS: Product[] = [
   } as Product,
   // 12. Agency — Wine Tour Tuscany
   {
-    id: "fake-agency-5",
+    id: "prod-agency-005",
     name: "Wine Tour Tuscany",
     description: "Private visits to Brunello and Chianti Classico estates.",
     category: "activity",

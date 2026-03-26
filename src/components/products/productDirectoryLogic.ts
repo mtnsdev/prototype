@@ -60,6 +60,7 @@ export function validatePartnerPortalAdminPayload(payload: PartnerPortalAdminSav
   const expTs = exp ? new Date(exp).getTime() : null;
 
   for (const pr of payload.program.activePromotions ?? []) {
+    if (pr.effectiveRate < 0) return "Incentive effective rate cannot be negative.";
     const bStart = new Date(pr.bookingStart).getTime();
     const bEnd = new Date(pr.bookingEnd).getTime();
     const tStart = new Date(pr.travelStart).getTime();

@@ -18,11 +18,11 @@ const RAW: EmailIngestion[] = [
     senderEmail: "reservations@aman.com",
     senderName: "Aman Reservations",
     receivedAt: "2026-03-16T14:30:00Z",
-    forwardedBy: "user-janet",
-    forwardedByName: "Janet",
-    ownerId: "user-janet",
+    forwardedBy: "user-hana",
+    forwardedByName: "Hana Yoshida",
+    ownerId: "user-hana",
     bodyText:
-      "Dear Janet,\n\nPlease find attached the updated 2026 preferred partner rates for Aman Tokyo. Key highlights:\n\n- Suite rates reduced 12% for shoulder season (April, November)\n- New 4th night free promotion for bookings of 7+ nights\n- Complimentary airport transfer for all Virtuoso bookings\n\nPlease don't hesitate to reach out with any questions.\n\nBest regards,\nAman Reservations Team",
+      "Dear Hana,\n\nPlease find attached the updated 2026 preferred partner rates for Aman Tokyo. Key highlights:\n\n- Suite rates reduced 12% for shoulder season (April, November)\n- New 4th night free promotion for bookings of 7+ nights\n- Complimentary airport transfer for all Virtuoso bookings\n\nPlease don't hesitate to reach out with any questions.\n\nBest regards,\nAman Reservations Team",
     attachments: [
       {
         id: "att-001",
@@ -51,7 +51,7 @@ const RAW: EmailIngestion[] = [
     attachments: [
       {
         id: "att-002",
-        filename: "FS_BoraBora_Confirmation_Dubois.pdf",
+        filename: "FS_BoraBora_Confirmation_Signoles.pdf",
         mimeType: "application/pdf",
         size: 180000,
         url: "/mock/fs-borabora-confirmation.pdf",
@@ -78,7 +78,7 @@ const RAW: EmailIngestion[] = [
     senderName: "Virtuoso Events",
     receivedAt: "2026-03-12T16:45:00Z",
     forwardedBy: "user-kristin",
-    forwardedByName: "Kristin",
+    forwardedByName: "Kristin Summers",
     ownerId: "user-kristin",
     bodyText:
       "Hi Kristin,\n\nAttached is the updated agenda for Virtuoso Travel Week 2026 in Las Vegas (August 10-14).\n\nKey sessions to note:\n- Luxury Trends Keynote (Monday 9am)\n- New Member Orientation (Monday 2pm)\n- Partner Speed Dating (Tuesday all day)\n- Gala Dinner (Wednesday 7pm)\n\nPlease distribute to your team.",
@@ -111,15 +111,33 @@ const RAW: EmailIngestion[] = [
     senderEmail: "eric.tournier@gmail.com",
     senderName: "Eric Tournier",
     receivedAt: "2026-03-17T11:20:00Z",
-    forwardedBy: "user-janet",
-    forwardedByName: "Janet",
-    ownerId: "user-janet",
+    forwardedBy: "user-claire",
+    forwardedByName: "Claire Dubois",
+    ownerId: "user-claire",
     bodyText:
-      "Hi Janet,\n\nAs discussed, Marie and I would love to plan a ski trip for December 2026. Our preferences:\n\n- Courchevel or Verbier (open to suggestions)\n- 5-7 nights over Christmas / New Year\n- Ski-in/ski-out if possible\n- The kids (ages 8, 12) will need ski school\n- Budget: flexible but let's keep it under €30k total\n\nWe loved the chalet you found us last year in Megève. Something similar would be perfect.\n\nThanks!\nEric",
+      "Hi Claire,\n\nAs discussed, Marie and I would love to plan a ski trip for December 2026. Our preferences:\n\n- Courchevel or Verbier (open to suggestions)\n- 5-7 nights over Christmas / New Year\n- Ski-in/ski-out if possible\n- The kids (ages 8, 12) will need ski school\n- Budget: flexible but let's keep it under €30k total\n\nWe loved the chalet you found us last year in Megève. Something similar would be perfect.\n\nThanks!\nEric",
     attachments: [],
     scope: "private",
     tags: ["unprocessed"],
     status: "unprocessed",
+  },
+  {
+    id: "email-005",
+    subject: "FW: Archived supplier contract (reference)",
+    senderEmail: "contracts@supplier.example",
+    senderName: "Supplier Contracts",
+    receivedAt: "2026-03-08T08:00:00Z",
+    forwardedBy: "user-alex-former",
+    forwardedByName: "Alex Rivera",
+    forwarder_departed: true,
+    ownerId: "1",
+    bodyText:
+      "Please see attached for reference. Forwarded into the vault while Alex was still active; forwarder account is now inactive — access and retention follow your agency policy.",
+    attachments: [],
+    scope: TEAM_EVERYONE_ID,
+    tags: ["reference"],
+    status: "processed",
+    processedAt: "2026-03-08T09:00:00Z",
   },
 ];
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Bookmark, Check, Plus, Search, X } from "lucide-react";
+import { Bookmark, Check, Folder, Plus, Search, X } from "lucide-react";
 import type {
   DirectoryCollectionOption,
   DirectoryProduct,
@@ -57,13 +57,17 @@ export default function ProductDirectoryCollectionPicker({
 
   const filtered = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
-    if (!q) return collections;
-    return collections.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        (c.teamName ?? "").toLowerCase().includes(q) ||
-        (c.description ?? "").toLowerCase().includes(q)
-    );
+    const base = !q
+      ? collections
+      : collections.filter(
+          (c) =>
+            c.name.toLowerCase().includes(q) ||
+            (c.teamName ?? "").toLowerCase().includes(q) ||
+            (c.description ?? "").toLowerCase().includes(q)
+        );
+    const system = base.filter((c) => c.isSystem);
+    const user = base.filter((c) => !c.isSystem);
+    return [...system, ...user];
   }, [collections, searchTerm]);
 
   const toggle = (id: string) => {
@@ -307,7 +311,19 @@ export default function ProductDirectoryCollectionPicker({
                         {isOn ? <Check className="h-3 w-3 stroke-[2.5]" /> : null}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[13px] font-medium text-[#F5F5F5]">{collection.name}</p>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {collection.isSystem || collection.icon === "search" ? (
+                            <Search className="h-3.5 w-3.5 shrink-0 text-[#9B9590]" aria-hidden />
+                          ) : (
+                            <Folder className="h-3.5 w-3.5 shrink-0 text-[#6B6560]" aria-hidden />
+                          )}
+                          <p className="text-[13px] font-medium text-[#F5F5F5]">{collection.name}</p>
+                          {collection.isSystem ? (
+                            <span className="text-[9px] text-[#6B6560] bg-white/[0.03] border border-white/[0.04] px-1.5 py-0.5 rounded">
+                              Auto
+                            </span>
+                          ) : null}
+                        </div>
                         {collection.description ? (
                           <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-[#6B6560]">
                             {collection.description}

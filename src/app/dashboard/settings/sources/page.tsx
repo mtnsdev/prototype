@@ -85,7 +85,7 @@ export default function SourcesSettingsPage() {
             : s
         )
       );
-      toast("Default scope updated (demo)");
+      toast("Default access updated (demo)");
     },
     [toast]
   );
@@ -123,7 +123,7 @@ export default function SourcesSettingsPage() {
           <div>
             <h1 className="text-xl font-semibold text-white">Knowledge sources</h1>
             <p className="text-sm text-gray-500 mt-0.5">
-              Default scope for new documents per connection. Private vs team visibility uses your Teams model.
+              Default access for new documents per connection. Private vs team visibility uses your Teams model.
             </p>
           </div>
         </div>

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ProductDirectoryFilterSwitch } from "./ProductDirectoryFilterSwitch";
 
 type Props = {
   commissionRange: [number, number];
@@ -30,6 +31,8 @@ export default function ProductDirectoryCommissionRangeDropdown({
 }: Props) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const filterLabelId = useId();
+  const sortLabelId = useId();
 
   const [lo, hi] = commissionRange;
 
@@ -48,6 +51,15 @@ export default function ProductDirectoryCommissionRangeDropdown({
       document.removeEventListener("keydown", onKey);
     };
   }, [open]);
+
+  const handleFilterToggle = () => {
+    if (commissionFilterActive) {
+      onCommissionRangeChange([0, 25]);
+      onCommissionFilterActiveChange(false);
+    } else {
+      onCommissionFilterActiveChange(true);
+    }
+  };
 
   return (
     <div ref={rootRef} className="relative">
@@ -68,37 +80,18 @@ export default function ProductDirectoryCommissionRangeDropdown({
 
       {open && (
         <div className="absolute left-0 top-full z-[60] mt-1 w-72 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0c0c12] p-4 shadow-xl">
-          <div className="mb-4 flex items-center justify-between">
-            <span className="text-[11px] font-medium text-[#F5F0EB]">Commission Range</span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={commissionFilterActive}
-              onClick={() => {
-                onCommissionFilterActiveChange(!commissionFilterActive);
-                if (commissionFilterActive) onCommissionRangeChange([0, 25]);
-              }}
-              className={cn(
-                "relative h-4 w-8 rounded-full transition-colors",
-                commissionFilterActive ? "bg-[#B8976E]" : "bg-white/[0.06]"
-              )}
-            >
-              <span
-                className={cn(
-                  "absolute top-0.5 h-3 w-3 rounded-full bg-white transition-transform",
-                  commissionFilterActive ? "translate-x-4" : "translate-x-0.5"
-                )}
-              />
-            </button>
-          </div>
-
-          <div className="mb-3">
-            <span className="text-[20px] font-medium text-[#B8976E]">
-              {lo}% – {hi}%
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <span id={filterLabelId} className="text-[11px] font-medium text-[#F5F0EB]">
+              Filter by range
             </span>
+            <ProductDirectoryFilterSwitch
+              checked={commissionFilterActive}
+              onCheckedChange={handleFilterToggle}
+              aria-labelledby={filterLabelId}
+            />
           </div>
 
-          <div className="relative mb-4 h-8">
+          <div className="relative mb-2 h-8">
             <div className="absolute top-1/2 h-1 w-full -translate-y-1/2 rounded-full bg-white/[0.06]" />
             <div
               className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full"
@@ -154,6 +147,10 @@ export default function ProductDirectoryCommissionRangeDropdown({
             />
           </div>
 
+          <p className="mb-3 text-center text-[13px] font-medium tabular-nums text-[#B8976E]">
+            {lo}% – {hi}%
+          </p>
+
           <div className="mb-4 flex justify-between text-[9px] text-[#4A4540]">
             <span>0%</span>
             <span>5%</span>
@@ -163,28 +160,7 @@ export default function ProductDirectoryCommissionRangeDropdown({
             <span>25%</span>
           </div>
 
-          <div className="flex items-center justify-between border-t border-white/[0.04] pt-3">
-            <span className="text-[10px] text-[#9B9590]">Sort by highest commission</span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={sortByCommission}
-              onClick={() => onSortByCommissionChange(!sortByCommission)}
-              className={cn(
-                "relative h-4 w-8 flex-shrink-0 rounded-full transition-colors",
-                sortByCommission ? "bg-[#B8976E]" : "bg-white/[0.06]"
-              )}
-            >
-              <span
-                className={cn(
-                  "absolute top-0.5 h-3 w-3 rounded-full bg-white transition-transform",
-                  sortByCommission ? "translate-x-4" : "translate-x-0.5"
-                )}
-              />
-            </button>
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5 border-t border-white/[0.04] pt-3">
             {PRESETS.map((p) => (
               <button
                 key={p.label}
@@ -198,6 +174,17 @@ export default function ProductDirectoryCommissionRangeDropdown({
                 {p.label}
               </button>
             ))}
+          </div>
+
+          <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/[0.04] pt-3">
+            <span id={sortLabelId} className="text-[10px] text-[#9B9590]">
+              Sort by highest commission
+            </span>
+            <ProductDirectoryFilterSwitch
+              checked={sortByCommission}
+              onCheckedChange={onSortByCommissionChange}
+              aria-labelledby={sortLabelId}
+            />
           </div>
         </div>
       )}

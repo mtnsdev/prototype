@@ -66,7 +66,7 @@ export default function StatusChangeDropdown({ itinerary, onStatusChange }: Prop
           Change status <ChevronDown size={14} className="ml-1" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-white/10">
+      <DropdownMenuContent align="end">
         {nextStatuses.map((s) => (
           <DropdownMenuItem key={s} onClick={() => handleChange(s)}>
             {STATUS_LABELS[s]}

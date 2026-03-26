@@ -97,7 +97,7 @@ export default function ProductCard({
                 <MoreHorizontal size={16} />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-white/10">
+            <DropdownMenuContent align="end">
               <DropdownMenuItem asChild>
                 <Link href={`/dashboard/products/${id}`}>View</Link>
               </DropdownMenuItem>

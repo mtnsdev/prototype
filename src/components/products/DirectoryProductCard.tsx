@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef } from "react";
-import { Check, Clock, Plus, Sparkles } from "lucide-react";
+import { Check, Clock, Plus, Search, Sparkles } from "lucide-react";
 import type { DirectoryProduct } from "@/types/product-directory";
 import { cn } from "@/lib/utils";
 import { directoryCategoryColors, directoryCategoryLabel } from "./productDirectoryVisual";
@@ -27,6 +27,10 @@ type Props = {
   bulkSelected?: boolean;
   onToggleBulkSelect?: () => void;
   onEnterBulkMode?: (productId: string) => void;
+  /** Product is in the External Search system collection. */
+  showSavedFromSearch?: boolean;
+  /** Native tooltip for “Saved from search” (e.g. saved-by + query). */
+  savedFromSearchTitle?: string;
 };
 
 export default function DirectoryProductCard({
@@ -41,6 +45,8 @@ export default function DirectoryProductCard({
   bulkSelected = false,
   onToggleBulkSelect,
   onEnterBulkMode,
+  showSavedFromSearch = false,
+  savedFromSearchTitle,
 }: Props) {
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ignoreNextClickRef = useRef(false);
@@ -73,6 +79,7 @@ export default function DirectoryProductCard({
 
   return (
     <div
+      data-directory-product-id={product.id}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -274,6 +281,18 @@ export default function DirectoryProductCard({
             </span>
           ) : !canViewCommissions && topForCommission != null && topRate != null ? (
             <span className="text-[9px] text-[#6B6560]">Partner rate on file</span>
+          ) : null}
+          {showSavedFromSearch ? (
+            <div
+              className="group relative mt-1.5 flex items-center gap-1 text-[9px] text-[#6B6560]"
+              title={
+                savedFromSearchTitle ??
+                "Saved from chat or external search to your External Search collection."
+              }
+            >
+              <Search className="h-2.5 w-2.5 shrink-0" aria-hidden />
+              <span>Saved from search</span>
+            </div>
           ) : null}
         </div>
       </div>

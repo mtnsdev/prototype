@@ -1,19 +1,20 @@
 "use client";
 
 import { useMemo, useState, useCallback } from "react";
+import Link from "next/link";
 import {
   Check,
   FileText,
+  Info,
   Mail,
   Paperclip,
-  Search,
   X,
 } from "lucide-react";
-import DashboardNotifications from "@/components/dashboard/DashboardNotifications";
 import { ScopeBadge } from "@/components/ui/ScopeBadge";
 import { useTeams } from "@/contexts/TeamsContext";
 import { TEAM_EVERYONE_ID } from "@/types/teams";
 import { cn } from "@/lib/utils";
+import { PageSearchField } from "@/components/ui/page-search-field";
 import { useUser } from "@/contexts/UserContext";
 import { useKnowledgeVaultEmails } from "@/contexts/KnowledgeVaultEmailContext";
 import { useToast } from "@/contexts/ToastContext";
@@ -152,7 +153,7 @@ export default function EmailIngestionPage() {
   );
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-[#06060a] text-[#F5F5F5]">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#06060a] text-[#F5F5F5]">
       <header className="shrink-0 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between px-6 py-4 border-b border-[rgba(255,255,255,0.08)]">
         <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-semibold text-white">Email Ingestion</h1>
@@ -174,7 +175,6 @@ export default function EmailIngestionPage() {
               Copy
             </button>
           </div>
-          <DashboardNotifications />
         </div>
       </header>
 
@@ -215,15 +215,13 @@ export default function EmailIngestionPage() {
               ))}
             </div>
             <div className="hidden sm:block flex-1" />
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
-              <input
-                placeholder="Search emails..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-1.5 bg-white/[0.02] border border-white/[0.04] rounded-lg text-sm text-gray-300 outline-none focus:border-white/10"
-              />
-            </div>
+            <PageSearchField
+              className="w-full sm:w-64 sm:max-w-xs"
+              placeholder="Search emails…"
+              aria-label="Search emails"
+              value={search}
+              onChange={setSearch}
+            />
           </div>
 
           <div className="rounded-xl border border-white/[0.06] overflow-hidden bg-[#0e0e12]">
@@ -236,7 +234,7 @@ export default function EmailIngestionPage() {
                     <th className="text-left py-3">Date</th>
                     <th className="text-left py-3">Attachments</th>
                     <th className="text-left py-3">Tags</th>
-                    <th className="text-left py-3">Scope</th>
+                    <th className="text-left py-3">Access</th>
                     <th className="text-left py-3 pr-4">Status</th>
                   </tr>
                 </thead>
@@ -293,6 +291,18 @@ export default function EmailIngestionPage() {
                 </tbody>
               </table>
             </div>
+            <p className="px-4 py-2.5 text-[10px] text-gray-600 border-t border-white/[0.04] flex items-start gap-2 leading-relaxed">
+              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-gray-500" aria-hidden />
+              <span>
+                Changing email or attachment access is recorded in the Knowledge Vault session log. If you use the email
+                tab inside Knowledge Vault, scroll to the bottom on that page. From here, open{" "}
+                <Link href="/dashboard/knowledge-vault" className="text-gray-400 underline-offset-2 hover:underline">
+                  Knowledge Vault
+                </Link>{" "}
+                and expand{" "}
+                <span className="text-gray-400 font-medium">Access change log — vault &amp; email</span>.
+              </span>
+            </p>
           </div>
         </div>
       </div>
@@ -380,23 +390,26 @@ function EmailDetailBody({
         <span>{formatTableDate(email.receivedAt)}</span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 mb-4">
-        <ScopeBadge scope={email.scope} teams={teams} />
-        {isAdmin && (
-          <select
-            value={email.scope}
-            onChange={(e) => onScopeChange(e.target.value)}
-            className="text-xs bg-white/[0.04] border border-white/[0.06] rounded-lg px-2 py-1 text-gray-300 outline-none"
-          >
-            <option value="private">Private</option>
-            {teams.filter((t) => t.id !== TEAM_EVERYONE_ID).map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-            <option value={TEAM_EVERYONE_ID}>Everyone</option>
-          </select>
-        )}
+      <div className="mb-4">
+        <span className="text-[10px] text-gray-600 uppercase tracking-wider">Access</span>
+        <div className="flex flex-wrap items-center gap-2 mt-1">
+          <ScopeBadge scope={email.scope} teams={teams} />
+          {isAdmin && (
+            <select
+              value={email.scope}
+              onChange={(e) => onScopeChange(e.target.value)}
+              className="text-xs bg-white/[0.04] border border-white/[0.06] rounded-lg px-2 py-1 text-gray-300 outline-none"
+            >
+              <option value="private">Private</option>
+              {teams.filter((t) => t.id !== TEAM_EVERYONE_ID).map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+              <option value={TEAM_EVERYONE_ID}>Everyone</option>
+            </select>
+          )}
+        </div>
       </div>
 
       <div className="mb-4">
@@ -491,6 +504,16 @@ function EmailDetailBody({
 
       <div className="mt-6 pt-4 border-t border-white/[0.04]">
         <span className="text-[10px] text-gray-600 uppercase tracking-wider">Metadata</span>
+        {email.forwarder_departed ? (
+          <div className="mt-2 mb-2 flex items-start gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/[0.06] px-3 py-2 text-[10px] text-amber-100/90">
+            <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-400/90" aria-hidden />
+            <span>
+              Forwarder <span className="font-medium text-amber-50">{email.forwardedByName}</span> no longer has an
+              account. Vault access and retention follow the same rules as other leaver content; confirm attachment access
+              with an admin if unsure.
+            </span>
+          </div>
+        ) : null}
         <div className="mt-2 space-y-1 text-[11px] text-gray-500">
           <div>Forwarded by: {email.forwardedByName}</div>
           <div>Received: {formatDetailDateTime(email.receivedAt)}</div>

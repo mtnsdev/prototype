@@ -93,7 +93,7 @@ export function KvTagsFullWidthRow({ tags, emailLike, className }: FullRowProps)
 }
 
 /**
- * Single-line tags under the document title (list + grid). Saves a full table row per document.
+ * Single-line tags under the document title in the vault list. Saves a full table row per document.
  */
 export function KvTagsTitleSubline({ tags, emailLike, className }: FullRowProps) {
   if (emailLike) {
@@ -185,6 +185,23 @@ export function KvTagsInline({ tags, className }: InlineProps) {
   return (
     <p
       className={cn("text-[10px] truncate leading-snug", TEXT_PRIMARY, className)}
+      title={tags.join(" → ")}
+    >
+      {joined}
+    </p>
+  );
+}
+
+/** Muted one-line tags under document title in the vault list; hidden when there are no tags. */
+export function KvTagsDiscreteTitleSubline({ tags, className }: InlineProps) {
+  if (tags.length === 0) return null;
+  const joined = tags.join(SEP);
+  return (
+    <p
+      className={cn(
+        "mt-1 text-[10px] leading-snug truncate font-normal text-[var(--text-quaternary)] opacity-90",
+        className
+      )}
       title={tags.join(" → ")}
     >
       {joined}

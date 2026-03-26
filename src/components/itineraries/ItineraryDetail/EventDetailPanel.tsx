@@ -80,7 +80,7 @@ export default function EventDetailPanel({
   const marginPct = clientPrice > 0 ? Math.round((margin / clientPrice) * 100) : 0;
 
   return (
-    <div className="w-full max-w-[400px] h-full flex flex-col bg-[#0C0C0C] border-l border-white/[0.08] shadow-xl animate-in slide-in-from-right duration-200">
+    <div className="w-full max-w-[400px] h-full flex flex-col bg-[#08080c] border-l border-white/[0.08] shadow-xl animate-in slide-in-from-right duration-200">
       <header className="shrink-0 flex items-center justify-between gap-2 p-4 border-b border-white/[0.08]">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-[rgba(245,245,245,0.9)] shrink-0">

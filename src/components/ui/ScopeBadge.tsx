@@ -32,7 +32,6 @@ export function ScopeBadge({ scope, teams, className = "" }: Props) {
           color: "rgba(140,160,180,0.45)",
           border: "1px solid rgba(140,160,180,0.10)",
         }}
-        title="Mirrors intranet permissions"
       >
         Based on access
       </span>
