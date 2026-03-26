@@ -15,7 +15,7 @@ import { DataSourceType } from "@/types/knowledge-vault";
 import { cn } from "@/lib/utils";
 import { ScopeBadge } from "@/components/ui/ScopeBadge";
 import { MOCK_TEAMS } from "@/lib/teamsMock";
-import { TEAM_EVERYONE_ID } from "@/types/teams";
+import { dataSourceDefaultUiScope } from "@/lib/knowledgeDocumentScope";
 import { SourceCardSkeleton } from "@/components/ui/SkeletonPatterns";
 
 const SHOWN_TYPES = new Set<DataSourceType>([
@@ -30,18 +30,6 @@ function isIntranetSource(s: DataSource) {
   return (
     s.source_type === DataSourceType.IntranetDocuments || s.source_type === DataSourceType.IntranetPages
   );
-}
-
-/** Admin-configurable default scope per source (UI mock). */
-function sourceDefaultScope(source: DataSource): "private" | string {
-  const m: Partial<Record<DataSourceType, "private" | string>> = {
-    [DataSourceType.GoogleDriveAdmin]: TEAM_EVERYONE_ID,
-    [DataSourceType.GoogleDrivePersonal]: "private",
-    [DataSourceType.IntranetDocuments]: TEAM_EVERYONE_ID,
-    [DataSourceType.IntranetPages]: TEAM_EVERYONE_ID,
-    [DataSourceType.Email]: "private",
-  };
-  return m[source.source_type] ?? TEAM_EVERYONE_ID;
 }
 
 function getBaseIcon(source: DataSource) {
@@ -79,6 +67,10 @@ type Props = {
   onToggleSource: (id: string) => void;
   onConnectSource: () => void;
   loading?: boolean;
+  /** When true, user’s team policies exclude this source — show note on card */
+  isSourcePolicyBlocked?: (source: DataSource) => boolean;
+  /** Admins see every connected source; advisors only sources their teams allow */
+  isAdmin?: boolean;
 };
 
 export default function DataSourceCards({
@@ -87,8 +79,13 @@ export default function DataSourceCards({
   onToggleSource,
   onConnectSource,
   loading = false,
+  isSourcePolicyBlocked,
+  isAdmin = false,
 }: Props) {
   const connected = sources.filter((s) => s.status !== "disconnected" && SHOWN_TYPES.has(s.source_type));
+  const visible = isAdmin
+    ? connected
+    : connected.filter((s) => !isSourcePolicyBlocked?.(s));
 
   if (loading) {
     return (
@@ -102,12 +99,14 @@ export default function DataSourceCards({
 
   return (
     <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3 pb-2">
-      {connected.map((src) => {
+      {visible.map((src) => {
         const Icon = getBaseIcon(src);
         const isSelected = selectedSourceIds.includes(src.id);
         const badge = src.source_type !== DataSourceType.Email ? BadgeIcon({ source: src }) : null;
-        const isEmailSource = src.source_type === DataSourceType.Email;
-        const defaultScope = sourceDefaultScope(src);
+        const defaultScope = dataSourceDefaultUiScope(src.source_type);
+        const totalForBar = Math.max(src.document_count, 1);
+        const indexedForBar = src.indexed_document_count ?? 0;
+        const barPct = Math.min(100, (indexedForBar / totalForBar) * 100);
 
         return (
           <button
@@ -140,15 +139,15 @@ export default function DataSourceCards({
               />
               <span className="text-[10px] tabular-nums text-[rgba(245,245,245,0.5)]">
                 {src.indexed_document_count != null
-                  ? `${src.indexed_document_count} / ${src.document_count} indexed`
+                  ? `${src.indexed_document_count}/${src.document_count} indexed`
                   : `${src.document_count} docs`}
               </span>
             </div>
             <div className="mt-1">
               <ScopeBadge scope={defaultScope} teams={MOCK_TEAMS} />
             </div>
-            {!isEmailSource && isIntranetSource(src) && src.document_visible_count != null && (
-              <p className="text-[10px] text-gray-500 mt-0.5">Based on your access</p>
+            {isIntranetSource(src) && src.source_type === DataSourceType.IntranetDocuments && (
+              <p className="text-[10px] text-gray-500 mt-0.5">Mirrors intranet permissions</p>
             )}
             <p className="text-xs text-[rgba(245,245,245,0.5)] mt-2">
               {src.sync_frequency === "manual" && !src.last_sync
@@ -156,19 +155,19 @@ export default function DataSourceCards({
                 : `Last sync ${timeAgo(src.last_sync)}`}
             </p>
             {src.status === "syncing" ? (
-              <div className="w-full h-1 bg-white/[0.04] rounded-full mt-3 overflow-hidden">
-                <div className="h-full bg-amber-500/30 rounded-full animate-pulse w-full" />
+              <div className="w-full h-[2px] bg-white/[0.04] rounded-full mt-3 overflow-hidden">
+                <div
+                  className="h-full rounded-full w-full animate-pulse"
+                  style={{ backgroundColor: "#B8976E" }}
+                />
               </div>
             ) : (
-              <div className="w-full h-1 bg-white/[0.04] rounded-full mt-3 overflow-hidden">
+              <div className="w-full h-[2px] bg-white/[0.04] rounded-full mt-3 overflow-hidden">
                 <div
-                  className="h-full bg-emerald-500/30 rounded-full"
+                  className="h-full rounded-full transition-[width] duration-300"
                   style={{
-                    width: `${(() => {
-                      const total = Math.max(1, src.document_count);
-                      const idx = src.indexed_document_count ?? 0;
-                      return Math.min(100, (idx / total) * 100);
-                    })()}%`,
+                    width: `${barPct}%`,
+                    backgroundColor: "#5B8A6E",
                   }}
                 />
               </div>
@@ -179,10 +178,18 @@ export default function DataSourceCards({
       <button
         type="button"
         onClick={onConnectSource}
-        className="min-h-[140px] rounded-xl border border-dashed border-[rgba(255,255,255,0.2)] bg-white/[0.02] hover:bg-white/[0.06] flex flex-col items-center justify-center gap-2 p-4 text-[rgba(245,245,245,0.6)]"
+        className={cn(
+          "shrink-0 w-[180px] rounded-xl border border-dashed p-3 text-left transition-colors",
+          "border-[rgba(255,255,255,0.2)] bg-white/[0.02] hover:bg-white/[0.06]",
+          "text-[rgba(245,245,245,0.75)]"
+        )}
       >
-        <Plus size={24} />
-        <span className="text-sm font-medium">Connect Source</span>
+        <div className="flex items-center gap-2">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-[rgba(245,245,245,0.9)]">
+            <Plus size={18} />
+          </div>
+          <span className="text-xs font-medium leading-tight text-white">Connect source</span>
+        </div>
       </button>
     </div>
   );

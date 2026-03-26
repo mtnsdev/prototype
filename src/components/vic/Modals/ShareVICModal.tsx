@@ -146,7 +146,7 @@ export default function ShareVICModal({ vic, onClose, onSaved }: Props) {
               id="agency_visibility"
               checked={sharedToAgency}
               onChange={(e) => setSharedToAgency(e.target.checked)}
-              className="rounded border-white/20 bg-white/5"
+              className="checkbox-on-dark"
             />
             <Label htmlFor="agency_visibility" className="font-normal text-[#F5F5F5]">Make visible in Agency Directory</Label>
           </div>

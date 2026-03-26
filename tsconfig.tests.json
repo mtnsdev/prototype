@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": ".test-build",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "es2020",
+    "declaration": false,
+    "sourceMap": false
+  },
+  "include": [
+    "tests/productDirectoryLogic.test.ts",
+    "src/components/products/productDirectoryLogic.ts",
+    "src/components/products/productDirectoryCommission.ts",
+    "src/types/product-directory.ts",
+    "src/components/products/productDirectoryDetailMeta.ts"
+  ]
+}

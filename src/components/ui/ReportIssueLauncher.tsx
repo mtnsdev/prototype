@@ -78,7 +78,7 @@ export default function ReportIssueLauncher() {
               <Button
                 type="button"
                 size="sm"
-                className="text-[10px] h-8 bg-[var(--muted-info-bg)] text-[var(--muted-info-text)] border border-[var(--muted-info-border)] hover:bg-white/[0.08]"
+                className="text-[10px] h-8 bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 border-0"
                 onClick={submit}
               >
                 Submit

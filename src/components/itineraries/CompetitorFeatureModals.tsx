@@ -386,16 +386,16 @@ export function DestinationGuideModal({ open, onClose, vicName, dest, dates, onG
         </div>
         <div className="mt-4 text-sm text-gray-300 space-y-1">
           <label className="flex items-center gap-2">
-            <input type="checkbox" defaultChecked readOnly className="rounded" /> Weather & climate
+            <input type="checkbox" defaultChecked readOnly className="checkbox-on-dark checkbox-on-dark-sm" /> Weather & climate
           </label>
           <label className="flex items-center gap-2">
-            <input type="checkbox" defaultChecked readOnly className="rounded" /> Local dining recommendations
+            <input type="checkbox" defaultChecked readOnly className="checkbox-on-dark checkbox-on-dark-sm" /> Local dining recommendations
           </label>
           <label className="flex items-center gap-2">
-            <input type="checkbox" defaultChecked readOnly className="rounded" /> Cultural tips & etiquette
+            <input type="checkbox" defaultChecked readOnly className="checkbox-on-dark checkbox-on-dark-sm" /> Cultural tips & etiquette
           </label>
           <label className="flex items-center gap-2">
-            <input type="checkbox" defaultChecked readOnly className="rounded" /> Transportation guide
+            <input type="checkbox" defaultChecked readOnly className="checkbox-on-dark checkbox-on-dark-sm" /> Transportation guide
           </label>
         </div>
         <p className="text-xs text-blue-400/80 mt-4">✦ Personalized using VIC profile insights</p>

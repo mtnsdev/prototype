@@ -1,8 +1,4 @@
-# Enable — Prototype
-
-Prototype app for Briefing Room, VICs, Products, Itineraries, and Knowledge Vault. Sections marked **Sample data** or **Under construction** in the sidebar use demo/placeholder data.
-
-## Getting Started
+## Enable (Next.js app)
 
 ### Local development
 
@@ -13,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:4001](http://localhost:4001) with your browser to see the result.
+Keep this terminal **open** until you see **`✓ Ready`** — if you close it, the browser shows **connection refused**.
 
 `npm run dev` uses **`lsof` via `execFileSync`** (no shell), so project paths **with spaces** (e.g. `Enable Local`) don’t break cleanup. It frees **4001** & **4002**, removes **`.next/dev/lock`**, then starts Next (default bind **0.0.0.0**).
 

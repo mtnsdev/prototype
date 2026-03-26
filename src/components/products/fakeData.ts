@@ -1,6 +1,8 @@
 /**
  * Dev-only fake Product data for list, filters, and detail when API is not ready.
  * 13 products: My Products (Advisor) = 2, Agency Library = 6 (incl. Bali DMC), Enable Directory = 5.
+ *
+ * Unified Product Directory mocks (4-type model): see `productDirectoryMock.ts`.
  */
 
 import type { Product } from "@/types/product";
@@ -414,3 +416,12 @@ export function filterAndPaginateFakeProducts(
 
   return { products: list, total };
 }
+
+export {
+  buildDirectoryCollectionRefs,
+  cloneDirectoryProduct,
+  DIRECTORY_REGION_PRESETS,
+  MOCK_DIRECTORY_COLLECTIONS,
+  MOCK_DIRECTORY_PRODUCTS,
+  getDirectoryProductById,
+} from "./productDirectoryMock";

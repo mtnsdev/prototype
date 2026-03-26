@@ -147,7 +147,7 @@ export default function EnrichProductModal({ open, onClose, product, products: b
                     type="checkbox"
                     checked={selectedFields.includes(f.id)}
                     onChange={() => toggleField(f.id)}
-                    className="rounded border-white/20 bg-white/5"
+                    className="checkbox-on-dark"
                   />
                   <span className="text-sm text-[#F5F5F5]">{f.label}</span>
                 </label>

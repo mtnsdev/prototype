@@ -285,7 +285,7 @@ function TreeNode({
               handleClick();
             }}
             onClick={(e) => e.stopPropagation()}
-            className="w-3.5 h-3.5 rounded border-[rgba(255,255,255,0.2)] bg-[#0C0C0C] text-blue-500 focus:ring-0 focus:ring-offset-0 shrink-0 cursor-pointer"
+            className="checkbox-on-dark checkbox-on-dark-sm shrink-0 cursor-pointer"
           />
         )}
 

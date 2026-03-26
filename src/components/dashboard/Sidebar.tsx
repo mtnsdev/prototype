@@ -22,10 +22,17 @@ import {
     BookOpen,
     BarChart3,
     Zap,
+    Bell,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useUserOptional } from "@/contexts/UserContext";
+import { useKvShareSuggestionsOptional } from "@/contexts/KvShareSuggestionsContext";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
 import { useClaromentisStatus } from "@/hooks/useClaromentisStatus";
 import { IS_PREVIEW_MODE } from "@/config/preview";
@@ -58,11 +65,16 @@ export default function Sidebar({
     const pathname = usePathname();
     const router = useRouter();
     const userContext = useUserOptional();
+    const kvShareSuggestions = useKvShareSuggestionsOptional();
+    const showKvAdminBell = Boolean(
+        kvShareSuggestions &&
+            userContext?.user &&
+            (userContext.user.role === "admin" || userContext.kvViewAsAdmin)
+    );
     const [recentConversations, setRecentConversations] = useState<Conversation[]>([]);
     const [userPopoverOpen, setUserPopoverOpen] = useState(false);
     const popoverRef = useRef<HTMLDivElement>(null);
     const isOnChatPage = pathname.startsWith("/dashboard/chat");
-
     // Close popover when clicking outside
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -114,7 +126,7 @@ export default function Sidebar({
             localStorage.removeItem("user_data");
             document.cookie = "auth_token=; Path=/; Max-Age=0; SameSite=Lax";
         }
-        router.push("/dashboard");
+        router.push("/login");
     };
 
     const handleNewChat = () => {
@@ -137,9 +149,9 @@ export default function Sidebar({
                 {/* Header */}
                 <div
                     className={[
-                        "flex border-b border-[rgba(255,255,255,0.08)]",
+                        "flex min-h-14 border-b border-[rgba(255,255,255,0.08)]",
                         collapsed
-                            ? "flex-col items-center gap-2 py-3 px-2"
+                            ? "flex-col items-center gap-2 px-2 py-3"
                             : "items-center justify-between px-3 py-3",
                     ].join(" ")}
                 >
@@ -182,31 +194,96 @@ export default function Sidebar({
                                     <p className="text-[11px] text-[rgba(245,245,245,0.5)] mt-1">Created by Enable VIC</p>
                                 </div>
                             </div>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={onToggle}
-                                className="h-8 w-8 shrink-0 rounded-md hover:bg-white/8 text-white/60 hover:text-white/90"
-                                aria-label="Collapse sidebar"
-                            >
-                                <PanelLeftClose size={16} />
-                            </Button>
+                            <div className="flex items-center gap-1 shrink-0">
+                                {showKvAdminBell && kvShareSuggestions && (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 rounded-md hover:bg-white/8 text-white/60 hover:text-white/90 relative"
+                                                aria-label="Knowledge notifications"
+                                            >
+                                                <Bell size={16} />
+                                                {kvShareSuggestions.suggestions.length > 0 && (
+                                                    <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-0.5 rounded-full bg-amber-500/90 text-[9px] font-bold text-[#0a0a0f] flex items-center justify-center">
+                                                        {kvShareSuggestions.suggestions.length > 9
+                                                            ? "9+"
+                                                            : kvShareSuggestions.suggestions.length}
+                                                    </span>
+                                                )}
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent
+                                            align="end"
+                                            className="w-80 max-h-72 overflow-y-auto bg-[#1a1a1a] border-white/10 p-0"
+                                        >
+                                            {kvShareSuggestions.suggestions.length === 0 ? (
+                                                <div className="px-3 py-3 text-xs text-gray-500">
+                                                    No pending sharing suggestions
+                                                </div>
+                                            ) : (
+                                                kvShareSuggestions.suggestions.map((s) => (
+                                                    <div
+                                                        key={s.id}
+                                                        className="px-3 py-2.5 border-b border-white/[0.06] last:border-0"
+                                                    >
+                                                        <p className="text-[11px] text-[rgba(245,245,245,0.85)] leading-snug">
+                                                            Suggested sharing &quot;{s.docTitle}&quot; with{" "}
+                                                            <span className="text-[#C9A96E]">{s.teamName}</span>
+                                                        </p>
+                                                        <div className="flex gap-2 mt-2">
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                className="h-7 text-[11px] bg-blue-500/15 text-blue-300 hover:bg-blue-500/25"
+                                                                onClick={() => kvShareSuggestions.approve(s.id)}
+                                                            >
+                                                                Approve
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                className="h-7 text-[11px] text-gray-500 hover:text-gray-300"
+                                                                onClick={() => kvShareSuggestions.decline(s.id)}
+                                                            >
+                                                                Decline
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                )}
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={onToggle}
+                                    className="h-8 w-8 shrink-0 rounded-md hover:bg-white/8 text-white/60 hover:text-white/90"
+                                    aria-label="Collapse sidebar"
+                                >
+                                    <PanelLeftClose size={16} />
+                                </Button>
+                            </div>
                         </>
                     )}
                 </div>
 
-                {/* New Chat Button — always visible so user can start a chat from any page */}
-                <div className="p-2.5 border-b border-[rgba(255,255,255,0.08)]">
+                {/* New Chat — always visible so user can start a chat from any page */}
+                <div className="border-b border-[rgba(255,255,255,0.08)] p-2.5">
                     <Button
                         variant="outline"
                         onClick={handleNewChat}
-                        className={[
-                            "w-full gap-2.5 rounded-lg bg-white/8 hover:bg-white/12 border-white/10 hover:border-white/15",
-                            collapsed ? "justify-center" : "",
-                        ].join(" ")}
+                        className={cn(
+                            "group w-full gap-2.5 rounded-lg border-white/10 bg-white/8 hover:border-white/15 hover:bg-white/12",
+                            collapsed ? "justify-center" : ""
+                        )}
                     >
-                        <Plus size={16} className="text-white/70 group-hover:text-white/90 transition-colors" />
+                        <Plus size={16} className="text-white/70 transition-colors group-hover:text-white/90" />
                         {!collapsed && <span className="text-sm font-medium text-[#F5F5F5]">New Chat</span>}
                     </Button>
                 </div>
@@ -280,7 +357,7 @@ export default function Sidebar({
                         href="/dashboard/knowledge-vault"
                         collapsed={collapsed}
                         icon={<BookOpen size={18} />}
-                        label="Knowledge Vault"
+                        label="Knowledge"
                         active={
                             pathname.startsWith("/dashboard/knowledge-vault") ||
                             pathname.startsWith("/dashboard/knowledge")
@@ -292,7 +369,7 @@ export default function Sidebar({
                         href="/dashboard/products"
                         collapsed={collapsed}
                         icon={<Building2 size={18} />}
-                        label="Product Directory"
+                        label="Products"
                         active={pathname.startsWith("/dashboard/products")}
                         navTag={IS_PREVIEW_MODE ? "sample" : undefined}
                     />
@@ -378,31 +455,64 @@ export default function Sidebar({
                                 <span>Settings</span>
                             </Link>
                             {userContext && (
-                                <div className="flex items-center justify-between px-3 py-2 border-t border-white/[0.04]">
-                                    <span className="text-[10px] text-gray-500">Admin view</span>
-                                    <button
-                                        type="button"
-                                        role="switch"
-                                        aria-checked={userContext.kvViewAsAdmin}
-                                        onClick={() =>
-                                            userContext.setKvViewAsAdmin(!userContext.kvViewAsAdmin)
-                                        }
-                                        className={cn(
-                                            "relative w-7 h-4 rounded-full transition-colors shrink-0",
-                                            userContext.kvViewAsAdmin ? "bg-blue-500/20" : "bg-white/[0.06]"
-                                        )}
-                                    >
-                                        <span className="sr-only">Toggle Knowledge Vault admin demo view</span>
-                                        <span
+                                <>
+                                    <div className="flex items-center justify-between px-3 py-2 border-t border-white/[0.04]">
+                                        <span className="text-[10px] text-gray-500">KV admin</span>
+                                        <button
+                                            type="button"
+                                            role="switch"
+                                            aria-checked={userContext.kvViewAsAdmin}
+                                            onClick={() =>
+                                                userContext.setKvViewAsAdmin(!userContext.kvViewAsAdmin)
+                                            }
                                             className={cn(
-                                                "absolute top-0.5 w-3 h-3 rounded-full transition-transform pointer-events-none",
-                                                userContext.kvViewAsAdmin
-                                                    ? "translate-x-3.5 bg-blue-400"
-                                                    : "translate-x-0.5 bg-gray-500"
+                                                "relative w-7 h-4 rounded-full transition-colors shrink-0",
+                                                userContext.kvViewAsAdmin ? "bg-blue-500/20" : "bg-white/[0.06]"
                                             )}
-                                        />
-                                    </button>
-                                </div>
+                                        >
+                                            <span className="sr-only">Toggle Knowledge Vault admin demo view</span>
+                                            <span
+                                                className={cn(
+                                                    "absolute top-0.5 w-3 h-3 rounded-full transition-transform pointer-events-none",
+                                                    userContext.kvViewAsAdmin
+                                                        ? "translate-x-3.5 bg-blue-400"
+                                                        : "translate-x-0.5 bg-gray-500"
+                                                )}
+                                            />
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center justify-between px-3 py-2 border-t border-white/[0.04]">
+                                        <span className="text-[10px] text-gray-500">Products admin</span>
+                                        <button
+                                            type="button"
+                                            role="switch"
+                                            aria-checked={userContext.directoryViewAsAdmin}
+                                            onClick={() =>
+                                                userContext.setDirectoryViewAsAdmin(
+                                                    !userContext.directoryViewAsAdmin
+                                                )
+                                            }
+                                            className={cn(
+                                                "relative w-7 h-4 rounded-full transition-colors shrink-0",
+                                                userContext.directoryViewAsAdmin
+                                                    ? "bg-blue-500/20"
+                                                    : "bg-white/[0.06]"
+                                            )}
+                                        >
+                                            <span className="sr-only">
+                                                Toggle product directory and partner portal admin demo view
+                                            </span>
+                                            <span
+                                                className={cn(
+                                                    "absolute top-0.5 w-3 h-3 rounded-full transition-transform pointer-events-none",
+                                                    userContext.directoryViewAsAdmin
+                                                        ? "translate-x-3.5 bg-blue-400"
+                                                        : "translate-x-0.5 bg-gray-500"
+                                                )}
+                                            />
+                                        </button>
+                                    </div>
+                                </>
                             )}
                             <div className="h-px bg-[rgba(255,255,255,0.08)]" />
                             <Button
@@ -463,6 +573,7 @@ function NavLink({
     active,
     badge,
     navTag,
+    notificationPill,
 }: {
     href: string;
     collapsed: boolean;
@@ -472,6 +583,8 @@ function NavLink({
     badge?: string;
     /** Shown when IS_PREVIEW_MODE; "sample" = Sample data, "construction" = Under construction */
     navTag?: "sample" | "construction" | "coming_soon";
+    /** Unprocessed email ingestion count (Knowledge Vault) */
+    notificationPill?: number;
 }) {
     return (
         <Link
@@ -495,6 +608,14 @@ function NavLink({
             {!collapsed && (
                 <>
                     <span className="truncate flex-1 min-w-0">{label}</span>
+                    {notificationPill != null && notificationPill > 0 && (
+                        <span
+                            className="shrink-0 ml-auto min-w-[1.25rem] h-5 px-1 rounded-full bg-sky-500/15 text-sky-400 text-[10px] font-semibold flex items-center justify-center"
+                            title="Unprocessed forwarded emails"
+                        >
+                            {notificationPill > 9 ? "9+" : notificationPill}
+                        </span>
+                    )}
                     {navTag && <NavTag variant={navTag} />}
                     {badge && !navTag && (
                         <span

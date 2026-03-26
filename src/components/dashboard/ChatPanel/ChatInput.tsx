@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { Send, Plus, Globe, MapPin, X } from "lucide-react";
+import { Check, Send, Plus, Globe, MapPin, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 type ChatInputProps = {
@@ -111,7 +112,17 @@ export function ChatInput({
                     <span className="font-medium">Search Google Places</span>
                     <p className="text-[11px] text-[rgba(245,245,245,0.5)] mt-0.5">Include place recommendations</p>
                   </div>
-                  {searchPlacesMode && <span className="ml-auto text-[#AE8550]" aria-hidden>✓</span>}
+                  <span
+                    className={cn(
+                      "ml-auto flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors",
+                      searchPlacesMode
+                        ? "border-[#C9A96E] bg-[#C9A96E] text-[#08080c]"
+                        : "border-[rgba(255,255,255,0.18)] bg-[#0e0e14]"
+                    )}
+                    aria-hidden
+                  >
+                    {searchPlacesMode ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : null}
+                  </span>
                 </button>
               </div>
             )}

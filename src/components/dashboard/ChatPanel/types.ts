@@ -6,6 +6,11 @@ export type Citation = {
   filename: string;
   pdf_path: string;
   source_label?: string;
+  /** Knowledge Vault scope: team id, `private`, or `mirrors_source` */
+  kv_scope?: "private" | "mirrors_source" | string;
+  document_id?: string;
+  /** Citation is from another user’s private doc (display-only shield) */
+  is_other_user_private?: boolean;
 };
 
 export type ConflictClaim = {

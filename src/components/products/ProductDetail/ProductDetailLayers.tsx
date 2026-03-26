@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { Award, ChevronDown, Lock, Users } from "lucide-react";
+import { Award, Lock, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/contexts/ToastContext";
 import { useUser } from "@/contexts/UserContext";
@@ -25,8 +25,6 @@ export function ProductDetailLayers({ product }: Props) {
   const isAdmin = user?.role === "admin" || user?.role === "agency_admin";
 
   const mock = useMemo(() => getProductLayerMock(product.id), [product.id]);
-  const [notesOpen, setNotesOpen] = useState(true);
-  const [activeNoteLayer, setActiveNoteLayer] = useState<"private" | "team">("private");
   const [advisorOverrides, setAdvisorOverrides] = useState<AdvisorLayerMock>(mock.advisorDefaults);
   const [agencyNotes, setAgencyNotes] = useState<AgencyNoteMock[]>(mock.agencyNotes);
   const [newAgencyNote, setNewAgencyNote] = useState("");
@@ -76,52 +74,15 @@ export function ProductDetailLayers({ product }: Props) {
         </button>
       )}
 
-      {/* Notes & Details — collapsible */}
+      {/* Notes — unified view (matches directory slide-in) */}
       <div className="border-t border-white/[0.06] pt-5 mt-5">
-        <button
-          type="button"
-          onClick={() => setNotesOpen((o) => !o)}
-          className="flex w-full items-center justify-between mb-4 text-left"
-        >
-          <span className="text-sm font-medium text-white">Notes & Details</span>
-          <ChevronDown
-            className={cn(
-              "w-4 h-4 text-gray-500 transition-transform",
-              notesOpen && "rotate-180"
-            )}
-          />
-        </button>
-
-        {notesOpen && (
-          <>
-            <div className="flex items-center justify-between mb-4">
-              <span className="sr-only">Layer</span>
-              <div className="flex items-center gap-1 bg-white/[0.03] rounded-full p-0.5 ml-auto">
-                {(["private", "team"] as const).map((layer) => (
-                  <button
-                    key={layer}
-                    type="button"
-                    onClick={() => setActiveNoteLayer(layer)}
-                    className={cn(
-                      "px-3 py-1 rounded-full text-[10px] font-medium transition-all",
-                      activeNoteLayer === layer
-                        ? layer === "private"
-                          ? "bg-violet-500/15 text-violet-400"
-                          : "bg-blue-500/15 text-blue-400"
-                        : "text-gray-500 hover:text-gray-400"
-                    )}
-                  >
-                    {layer === "private" ? "My Notes" : "Team Notes"}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {activeNoteLayer === "private" && (
-              <div className="space-y-3">
+        <h3 className="mb-4 text-sm font-medium text-white">Notes</h3>
+            <div className="space-y-3 rounded-xl border border-violet-500/10 bg-violet-500/[0.04] p-3">
                 <div className="flex items-center gap-1.5 mb-2">
                   <Lock className="w-3 h-3 text-violet-400/50" />
-                  <span className="text-[10px] text-violet-400/60">Only visible to you</span>
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-violet-400/50">
+                    My Notes — Only visible to you
+                  </span>
                 </div>
                 <div>
                   <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">
@@ -179,11 +140,15 @@ export function ProductDetailLayers({ product }: Props) {
                     </span>
                   </div>
                 </div>
-              </div>
-            )}
+            </div>
 
-            {activeNoteLayer === "team" && (
-              <div className="space-y-3">
+            <div className="my-4 flex items-center gap-2">
+              <div className="h-px flex-1 bg-white/[0.06]" />
+              <span className="text-[8px] uppercase tracking-widest text-gray-600">Agency / Team Notes</span>
+              <div className="h-px flex-1 bg-white/[0.06]" />
+            </div>
+
+              <div className="space-y-3 rounded-xl border border-blue-500/10 bg-blue-500/[0.03] p-3">
                 <div className="flex items-center gap-1.5 mb-2">
                   <Users className="w-3 h-3 text-blue-400/50" />
                   <span className="text-[10px] text-blue-400/60">Visible to all team members</span>
@@ -245,9 +210,6 @@ export function ProductDetailLayers({ product }: Props) {
                   </p>
                 )}
               </div>
-            )}
-          </>
-        )}
       </div>
 
       {/* Partner Programs */}

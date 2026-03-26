@@ -2,10 +2,15 @@
 
 import { useMemo, useState } from "react";
 import { Check, ChevronDown, Search, X } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { IngestionStatus } from "@/types/knowledge-vault";
 import { cn } from "@/lib/utils";
-import { useUser } from "@/contexts/UserContext";
-import { getVisibleTeamsForUser } from "@/lib/teamsMock";
+import type { Team } from "@/types/teams";
 import { Input } from "@/components/ui/input";
 
 export type KnowledgeVaultFiltersState = {
@@ -24,6 +29,8 @@ type Props = {
   onClearDocumentFilters: () => void;
   /** Distinct auto-generated tag labels for vault documents */
   tagOptions: string[];
+  /** Teams shown as scope pills (admin: all; advisor: membership) */
+  scopeTeams: Team[];
 };
 
 const AVAILABILITY: { value: IngestionStatus; label: string }[] = [
@@ -32,15 +39,19 @@ const AVAILABILITY: { value: IngestionStatus; label: string }[] = [
   { value: "not_indexed", label: "Not indexed" },
 ];
 
+/** First N team pills inline; rest in overflow (spec: >4 teams → first 3 + More) */
+const MAX_INLINE_TEAM_PILLS = 3;
+
 export default function KnowledgeVaultFilters({
   filters,
   onFiltersChange,
   hasDocumentFilters,
   onClearDocumentFilters,
   tagOptions,
+  scopeTeams,
 }: Props) {
-  const { user } = useUser();
-  const scopeTeams = getVisibleTeamsForUser(user?.id);
+  const inlineScopeTeams = scopeTeams.slice(0, MAX_INLINE_TEAM_PILLS);
+  const overflowScopeTeams = scopeTeams.slice(MAX_INLINE_TEAM_PILLS);
   const selectedTags = filters.tags ?? [];
   const [tagSearch, setTagSearch] = useState("");
 
@@ -81,11 +92,6 @@ export default function KnowledgeVaultFilters({
 
   return (
     <div className="p-4 space-y-4">
-      <p className="text-[11px] leading-relaxed text-[var(--text-tertiary)]">
-        Choose sources on the cards above. These options filter the document list only—they do not change which
-        connection is selected.
-      </p>
-
       {hasDocumentFilters && (
         <button
           type="button"
@@ -103,69 +109,93 @@ export default function KnowledgeVaultFilters({
             className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2"
           >
             Scope
-          </h3>
+        </h3>
           <div className="flex flex-wrap gap-1.5" role="toolbar" aria-label="Filter by scope">
-            <button
-              type="button"
+                <button
+                  type="button"
               aria-pressed={filters.scope == null}
               onClick={() => setScope(undefined)}
-              className={cn(
-                "text-xs px-2 py-1 rounded border",
+                  className={cn(
+                "text-[10px] px-2.5 py-1 rounded-lg transition-colors border",
                 filters.scope == null
-                  ? "bg-white/10 text-[var(--text-primary)] border-white/20"
-                  : "border-white/10 text-[var(--text-secondary)] hover:bg-white/5"
+                  ? "bg-[rgba(201,169,110,0.15)] text-[#C9A96E] border-[rgba(201,169,110,0.3)]"
+                  : "text-[#9B9590] hover:text-[#F5F0EB] border-transparent"
               )}
             >
               All
-            </button>
+                </button>
             <button
               type="button"
               aria-pressed={filters.scope === "private"}
               onClick={() => toggleScope("private")}
               className={cn(
-                "text-xs px-2 py-1 rounded border",
+                "text-[10px] px-2.5 py-1 rounded-lg transition-colors border",
                 filters.scope === "private"
-                  ? "bg-[var(--muted-accent-bg)] text-[var(--muted-accent-text)] border-[var(--muted-accent-border)]"
-                  : "border-white/10 text-[var(--text-secondary)] hover:bg-white/5"
+                  ? "bg-[rgba(201,169,110,0.15)] text-[#C9A96E] border-[rgba(201,169,110,0.3)]"
+                  : "text-[#9B9590] hover:text-[#F5F0EB] border-transparent"
               )}
             >
               Private
             </button>
-            {scopeTeams.map((team) => (
+            {inlineScopeTeams.map((team) => (
               <button
                 key={team.id}
                 type="button"
                 aria-pressed={filters.scope === team.id}
                 onClick={() => toggleScope(team.id)}
                 className={cn(
-                  "text-xs px-2 py-1 rounded border max-w-[160px] truncate",
+                  "text-[10px] px-2.5 py-1 rounded-lg transition-colors border max-w-[160px] truncate",
                   filters.scope === team.id
-                    ? "bg-[var(--muted-info-bg)] text-[var(--muted-info-text)] border-[var(--muted-info-border)]"
-                    : "border-white/10 text-[var(--text-secondary)] hover:bg-white/5"
+                    ? "bg-[rgba(201,169,110,0.15)] text-[#C9A96E] border-[rgba(201,169,110,0.3)]"
+                    : "text-[#9B9590] hover:text-[#F5F0EB] border-transparent"
                 )}
                 title={team.name}
               >
                 {team.name}
               </button>
             ))}
+            {overflowScopeTeams.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      "text-[10px] px-2.5 py-1 rounded-lg text-[#9B9590] hover:text-[#F5F0EB] inline-flex items-center gap-1 border border-transparent",
+                      overflowScopeTeams.some((t) => t.id === filters.scope) &&
+                        "bg-[rgba(201,169,110,0.15)] text-[#C9A96E] border-[rgba(201,169,110,0.3)]"
+                    )}
+                  >
+                    +{overflowScopeTeams.length} more
+                    <ChevronDown className="w-3 h-3" aria-hidden />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="bg-[#0c0c12] border border-[rgba(255,255,255,0.06)] max-h-64 overflow-y-auto"
+                >
+                  {overflowScopeTeams.map((team) => (
+                    <DropdownMenuItem
+                      key={team.id}
+                      className="text-[11px] text-[#9B9590] hover:text-[#F5F0EB] focus:text-[#F5F0EB]"
+                      onClick={() => setScope(team.id)}
+                    >
+                      {team.name}
+                      {filters.scope === team.id ? " ✓" : ""}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </section>
 
         <section className="min-w-0 flex-1 sm:max-w-md lg:max-w-lg" role="group" aria-labelledby="kv-filter-tags-label">
-          <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
-            <h3
-              id="kv-filter-tags-label"
-              className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]"
-            >
-              Tags
-            </h3>
-            <p
-              className="text-[10px] text-[var(--text-quaternary)] max-w-[min(100%,280px)] leading-snug"
-              title="Labels come from folder paths at sync. Selecting more than one tag keeps documents that match any of them (OR)."
-            >
-              Folder paths · OR match
-            </p>
-          </div>
+          <h3
+            id="kv-filter-tags-label"
+            className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]"
+          >
+            Tags
+          </h3>
           {selectedTags.length > 0 && (
             <div className="mb-1.5 flex max-h-[2.75rem] flex-wrap content-start gap-1 overflow-y-auto overscroll-contain">
               {selectedTags.map((tag) => (
@@ -202,8 +232,8 @@ export default function KnowledgeVaultFilters({
                 className="h-7 pl-7 text-xs bg-white/[0.04] border-white/[0.08] text-[var(--text-secondary)] placeholder:text-[var(--text-quaternary)]"
                 aria-label="Search tag filters"
               />
-            </div>
-          )}
+        </div>
+      )}
           {tagOptions.length === 0 ? (
             <p className="text-[11px] text-[var(--text-quaternary)] py-1">No tags in catalog</p>
           ) : (
@@ -275,14 +305,14 @@ export default function KnowledgeVaultFilters({
             className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2"
           >
             Availability
-          </h3>
+        </h3>
           <div className="flex flex-wrap gap-1.5" role="toolbar" aria-label="Filter by RAG availability">
             {AVAILABILITY.map(({ value, label }) => {
               const pressed = filters.ingestion_status === value;
               return (
-                <button
+            <button
                   key={value}
-                  type="button"
+              type="button"
                   aria-pressed={pressed}
                   onClick={() =>
                     onFiltersChange({
@@ -290,8 +320,8 @@ export default function KnowledgeVaultFilters({
                       ingestion_status: filters.ingestion_status === value ? undefined : value,
                     })
                   }
-                  className={cn(
-                    "text-xs px-2 py-1 rounded border",
+              className={cn(
+                "text-xs px-2 py-1 rounded border",
                     pressed &&
                       value === "indexed" &&
                       "bg-[var(--color-success-muted)] border-[color-mix(in_srgb,var(--color-success)_38%,transparent)] text-[var(--color-success)]",
@@ -305,11 +335,11 @@ export default function KnowledgeVaultFilters({
                   )}
                 >
                   {label}
-                </button>
+            </button>
               );
             })}
-          </div>
-        </section>
+        </div>
+      </section>
       </div>
     </div>
   );

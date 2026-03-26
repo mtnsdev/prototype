@@ -21,16 +21,21 @@ type UserContextType = {
     /** Demo toggle: Knowledge Vault admin UI (scope dropdown, Show all, delete, re-index). Default off = advisor. */
     kvViewAsAdmin: boolean;
     setKvViewAsAdmin: (value: boolean) => void;
+    /** Demo toggle: Partner portal / product directory admin (edit programs, overrides). Separate from KV. */
+    directoryViewAsAdmin: boolean;
+    setDirectoryViewAsAdmin: (value: boolean) => void;
 };
 
 const UserContext = createContext<UserContextType | null>(null);
 
 const USER_STORAGE_KEY = "user_data";
+const DIRECTORY_ADMIN_DEMO_KEY = "enable_directory_admin_demo";
 
 export function UserProvider({ children }: { children: ReactNode }) {
     const [user, setUserState] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [kvViewAsAdmin, setKvViewAsAdmin] = useState(false);
+    const [kvViewAsAdmin, setKvViewAsAdminState] = useState(false);
+    const [directoryViewAsAdmin, setDirectoryViewAsAdminState] = useState(false);
 
     // Hydrate user from localStorage on mount
     useEffect(() => {
@@ -40,11 +45,27 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 const parsed = JSON.parse(stored);
                 setUserState(parsed);
             }
+            const dirAdmin = localStorage.getItem(DIRECTORY_ADMIN_DEMO_KEY);
+            if (dirAdmin === "1") setDirectoryViewAsAdminState(true);
         } catch (error) {
             console.error("Failed to parse stored user data:", error);
             localStorage.removeItem(USER_STORAGE_KEY);
         } finally {
             setIsLoading(false);
+        }
+    }, []);
+
+    const setKvViewAsAdmin = useCallback((value: boolean) => {
+        setKvViewAsAdminState(value);
+    }, []);
+
+    const setDirectoryViewAsAdmin = useCallback((value: boolean) => {
+        setDirectoryViewAsAdminState(value);
+        try {
+            if (value) localStorage.setItem(DIRECTORY_ADMIN_DEMO_KEY, "1");
+            else localStorage.removeItem(DIRECTORY_ADMIN_DEMO_KEY);
+        } catch {
+            /* ignore quota / private mode */
         }
     }, []);
 
@@ -93,6 +114,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 getFirstName,
                 kvViewAsAdmin,
                 setKvViewAsAdmin,
+                directoryViewAsAdmin,
+                setDirectoryViewAsAdmin,
             }}
         >
             {children}

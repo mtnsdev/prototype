@@ -471,7 +471,7 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
                   id="gdpr_consent"
                   checked={form.gdpr_consent_given}
                   onChange={(e) => update({ gdpr_consent_given: e.target.checked })}
-                  className="rounded border-white/20 bg-white/5"
+                  className="checkbox-on-dark"
                 />
                 <Label htmlFor="gdpr_consent" className="font-normal">GDPR consent given</Label>
               </div>
@@ -481,7 +481,7 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
                   id="marketing_consent"
                   checked={form.marketing_consent}
                   onChange={(e) => update({ marketing_consent: e.target.checked })}
-                  className="rounded border-white/20 bg-white/5"
+                  className="checkbox-on-dark"
                 />
                 <Label htmlFor="marketing_consent" className="font-normal">Marketing consent</Label>
               </div>

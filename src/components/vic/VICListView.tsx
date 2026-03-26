@@ -76,7 +76,7 @@ export default function VICListView({
                 type="checkbox"
                 checked={vics.length > 0 && selectedVicIds.size === vics.length}
                 onChange={onToggleSelectAll}
-                className="rounded border-white/20 bg-white/5"
+                className="checkbox-on-dark"
               />
             </th>
             {COLUMNS.slice(1).map((col) => (

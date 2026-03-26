@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { ChevronDown, RefreshCw, Search, Shield } from "lucide-react";
+import { ChevronDown, Info, RefreshCw, Search, Shield, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,25 +11,27 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { MOCK_TEAMS } from "@/lib/teamsMock";
+import { MOCK_TEAMS, resolveUserPolicies } from "@/lib/teamsMock";
+import { dataSourceTypeToPolicySourceId } from "@/lib/knowledgeDocumentScope";
 import { useToast } from "@/contexts/ToastContext";
+import { useKvShareSuggestions } from "@/contexts/KvShareSuggestionsContext";
+import { useTeams } from "@/contexts/TeamsContext";
 import {
-  fetchKnowledgeSources,
-  fetchKnowledgeDocuments,
-  fetchKnowledgeHealth,
-} from "@/lib/knowledge-vault-api";
-import type {
-  DataLayer,
-  DataSource,
-  KnowledgeDocument,
-  IngestionHealth,
-} from "@/types/knowledge-vault";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { fetchKnowledgeSources, fetchKnowledgeDocuments } from "@/lib/knowledge-vault-api";
+import type { DataLayer, DataSource, KnowledgeDocument } from "@/types/knowledge-vault";
 import KnowledgeVaultFilters, { type KnowledgeVaultFiltersState } from "./KnowledgeVaultFilters";
 import DataSourceCards from "./DataSourceCards";
-import IngestionHealthBar from "./IngestionHealthBar";
 import DocumentGrid from "./DocumentGrid";
 import DocumentDetailPanel from "./DocumentDetailPanel";
 import EmailIngestionView from "./EmailIngestionView";
+import KnowledgeVaultPermissionsPanel from "./KnowledgeVaultPermissionsPanel";
 import ConnectSourceModal from "./ConnectSourceModal";
 import PreviewBanner from "@/components/ui/PreviewBanner";
 import { IS_PREVIEW_MODE } from "@/config/preview";
@@ -91,11 +93,12 @@ function scopeFilterToDataLayer(scope: string | undefined): DataLayer | undefine
 export default function KnowledgeVaultPage() {
   const { user, kvViewAsAdmin } = useUser();
   const toast = useToast();
-  const isAdmin = kvViewAsAdmin;
+  const kvShare = useKvShareSuggestions();
+  const { teams: liveTeams } = useTeams();
+  const isAdmin = kvViewAsAdmin || user?.role === "admin";
   const currentUserOwnerId = user?.id != null ? String(user.id) : "1";
 
   const [sources, setSources] = useState<DataSource[]>([]);
-  const [health, setHealth] = useState<IngestionHealth | null>(null);
   const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
   const [totalDocs, setTotalDocs] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -108,9 +111,35 @@ export default function KnowledgeVaultPage() {
   const [docScopeOverrides, setDocScopeOverrides] = useState<KvScopeOverrides>({});
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([]);
   const [listPage, setListPage] = useState(1);
+  const [permissionsOpen, setPermissionsOpen] = useState(false);
+  const [docTagOverrides, setDocTagOverrides] = useState<Record<string, string[]>>({});
+  const [deleteModal, setDeleteModal] = useState<
+    null | { mode: "single"; doc: KnowledgeDocument } | { mode: "bulk"; count: number }
+  >(null);
   const filtersPanelRef = useRef<HTMLDivElement>(null);
+  const scopeTeamsForFilter = useMemo(() => {
+    if (isAdmin) return liveTeams;
+    const uid = String(user?.id ?? "");
+    return liveTeams.filter((t) => t.isDefault || (uid && t.memberIds.includes(uid)));
+  }, [isAdmin, liveTeams, user?.id]);
 
   const vaultTagFilterOptions = useMemo(() => getKnowledgeVaultDistinctTags(), []);
+
+  const resolvedPolicies = useMemo(
+    () =>
+      resolveUserPolicies(user ? { id: String(user.id), role: isAdmin ? "admin" : user.role } : null, MOCK_TEAMS),
+    [user, isAdmin]
+  );
+
+  const isSourcePolicyBlocked = useCallback(
+    (source: DataSource) => {
+      if (resolvedPolicies.accessibleSources === "all") return false;
+      const key = dataSourceTypeToPolicySourceId(source.source_type);
+      if (!key) return false;
+      return !resolvedPolicies.accessibleSources.includes(key);
+    },
+    [resolvedPolicies]
+  );
 
   const emailOnlyView =
     filters.source_ids?.length === 1 && filters.source_ids[0] === EMAIL_SOURCE_ID;
@@ -120,9 +149,8 @@ export default function KnowledgeVaultPage() {
     const { sort_by, sort_order } = kvSortToApi(sortOption);
     const emailOnly = filters.source_ids?.length === 1 && filters.source_ids[0] === EMAIL_SOURCE_ID;
     try {
-      const [srcList, healthRes, docRes] = await Promise.all([
+      const [srcList, docRes] = await Promise.all([
         fetchKnowledgeSources(),
-        fetchKnowledgeHealth(),
         fetchKnowledgeDocuments({
           data_layer: emailOnly ? undefined : scopeFilterToDataLayer(filters.scope),
           ingestion_status: emailOnly ? undefined : filters.ingestion_status,
@@ -136,7 +164,6 @@ export default function KnowledgeVaultPage() {
         }),
       ]);
       setSources(Array.isArray(srcList) ? srcList : []);
-      setHealth(healthRes);
       setDocuments(docRes.documents ?? []);
       setTotalDocs(docRes.total ?? 0);
     } finally {
@@ -152,7 +179,14 @@ export default function KnowledgeVaultPage() {
     if (emailOnlyView) return documents;
     return documents
       .filter((doc) =>
-        canSeeKnowledgeDocument(doc, currentUserOwnerId, isAdmin, showAllPrivateDocs, docScopeOverrides)
+        canSeeKnowledgeDocument(
+          doc,
+          currentUserOwnerId,
+          isAdmin,
+          showAllPrivateDocs,
+          docScopeOverrides,
+          resolvedPolicies
+        )
       )
       .filter((doc) => matchesKvScopeFilter(doc, filters.scope, docScopeOverrides));
   }, [
@@ -163,6 +197,7 @@ export default function KnowledgeVaultPage() {
     showAllPrivateDocs,
     docScopeOverrides,
     filters.scope,
+    resolvedPolicies,
   ]);
 
   const oversightPrivate = useCallback(
@@ -182,6 +217,16 @@ export default function KnowledgeVaultPage() {
   }, []);
 
   useEffect(() => {
+    kvShare.setApprovalHandler((docId, teamId) => {
+      const d = documents.find((x) => x.id === docId);
+      if (d && canAdminRescopeDocument(d)) applyDocScopeOverride(d, teamId);
+      const label = MOCK_TEAMS.find((t) => t.id === teamId)?.name ?? teamId;
+      toast(`Scope changed to ${label}`);
+    });
+    return () => kvShare.setApprovalHandler(null);
+  }, [kvShare, documents, applyDocScopeOverride, toast]);
+
+  useEffect(() => {
     setSelectedDocIds([]);
     setListPage(1);
   }, [filters, searchQuery, sortOption, showAllPrivateDocs]);
@@ -195,29 +240,31 @@ export default function KnowledgeVaultPage() {
         toast(`Scope changed to ${name}`);
         return;
       }
-      if (
-        !isAdmin &&
-        typeof window !== "undefined" &&
-        window.confirm(`Suggest sharing with ${name}? An admin will review.`)
-      ) {
-        toast("Sharing suggestion sent (demo)");
+      if (!isAdmin) {
+        kvShare.addSuggestion({
+          docId: doc.id,
+          docTitle: doc.title,
+          teamId,
+          teamName: name,
+        });
+        toast({
+          title: "Suggestion sent",
+          description: `Suggested sharing "${doc.title}" with ${name}. An admin will review.`,
+          duration: 4000,
+        });
         return;
       }
-      if (isAdmin) {
-        toast("Scope can't be changed for this document.");
-      }
+      toast("Scope can't be changed for this document.");
     },
-    [isAdmin, applyDocScopeOverride, toast]
+    [isAdmin, applyDocScopeOverride, toast, kvShare]
   );
 
   const handleDeleteDocument = useCallback(
     (doc: KnowledgeDocument) => {
       if (!isAdmin) return;
-      if (typeof window !== "undefined" && window.confirm(`Remove "${doc.title}"? (demo)`)) {
-        toast("Delete requested (demo)");
-      }
+      setDeleteModal({ mode: "single", doc });
     },
-    [isAdmin, toast]
+    [isAdmin]
   );
 
   const toggleDocSelected = useCallback((docId: string) => {
@@ -239,14 +286,19 @@ export default function KnowledgeVaultPage() {
       const targets = visibleDocuments.filter((d) => selectedDocIds.includes(d.id));
       if (targets.length === 0) return;
       if (!isAdmin) {
-        if (
-          typeof window !== "undefined" &&
-          window.confirm(
-            `Suggest sharing ${targets.length} document${targets.length > 1 ? "s" : ""} with ${name}? An admin will review.`
-          )
-        ) {
-          toast("Sharing suggestion sent (demo)");
-        }
+        kvShare.addSuggestions(
+          targets.map((d) => ({
+            docId: d.id,
+            docTitle: d.title,
+            teamId,
+            teamName: name,
+          }))
+        );
+        toast({
+          title: "Suggestion sent",
+          description: `Suggested sharing ${targets.length} document${targets.length > 1 ? "s" : ""} with ${name}. An admin will review.`,
+          duration: 4000,
+        });
         return;
       }
       setDocScopeOverrides((prev) => {
@@ -258,23 +310,80 @@ export default function KnowledgeVaultPage() {
       });
       toast(`Scope updated for applicable documents — ${name}`);
     },
-    [isAdmin, selectedDocIds, visibleDocuments, toast]
+    [isAdmin, selectedDocIds, visibleDocuments, toast, kvShare]
   );
 
   const bulkDownload = useCallback(() => {
+    if (!resolvedPolicies.canExportDocuments) {
+      toast("Your team policy doesn’t allow exporting documents.");
+      return;
+    }
     toast("Download started (demo)");
-  }, [toast]);
+  }, [toast, resolvedPolicies.canExportDocuments]);
+
+  const openDocument = useCallback((doc: KnowledgeDocument) => {
+    setPermissionsOpen(false);
+    setSelectedDoc(doc);
+  }, []);
 
   const bulkDelete = useCallback(() => {
     if (!isAdmin || selectedDocIds.length === 0) return;
-    if (
-      typeof window !== "undefined" &&
-      window.confirm(`Remove ${selectedDocIds.length} document(s)? (demo)`)
-    ) {
-      toast("Delete requested (demo)");
+    setDeleteModal({ mode: "bulk", count: selectedDocIds.length });
+  }, [isAdmin, selectedDocIds.length]);
+
+  const confirmMoveToTrash = useCallback(() => {
+    if (!deleteModal) return;
+    toast("Documents moved to trash (demo). They will be removed after 30 days unless restored.");
+    if (deleteModal.mode === "bulk") {
       setSelectedDocIds([]);
+    } else if (selectedDoc?.id === deleteModal.doc.id) {
+      setSelectedDoc(null);
     }
-  }, [isAdmin, selectedDocIds.length, toast]);
+    setDeleteModal(null);
+  }, [deleteModal, toast, selectedDoc]);
+
+  const selectedDocEffectiveTags = useMemo(() => {
+    if (!selectedDoc) return [];
+    return docTagOverrides[selectedDoc.id] ?? selectedDoc.tags;
+  }, [selectedDoc, docTagOverrides]);
+
+  const addSelectedDocTag = useCallback(
+    (tag: string) => {
+      if (!selectedDoc) return;
+      setDocTagOverrides((prev) => {
+        const cur = prev[selectedDoc.id] ?? selectedDoc.tags;
+        if (cur.includes(tag)) return prev;
+        return { ...prev, [selectedDoc.id]: [...cur, tag] };
+      });
+    },
+    [selectedDoc]
+  );
+
+  const removeSelectedDocTag = useCallback(
+    (tag: string) => {
+      if (!selectedDoc) return;
+      setDocTagOverrides((prev) => {
+        const base = prev[selectedDoc.id] ?? selectedDoc.tags;
+        return { ...prev, [selectedDoc.id]: base.filter((t) => t !== tag) };
+      });
+    },
+    [selectedDoc]
+  );
+
+  const renameSelectedDocTag = useCallback(
+    (oldTag: string, newTag: string) => {
+      if (!selectedDoc) return;
+      const t = newTag.trim();
+      if (!t || t === oldTag) return;
+      setDocTagOverrides((prev) => {
+        const base = prev[selectedDoc.id] ?? selectedDoc.tags;
+        const withoutOld = base.filter((x) => x !== oldTag);
+        if (withoutOld.includes(t)) return prev;
+        return { ...prev, [selectedDoc.id]: base.map((x) => (x === oldTag ? t : x)) };
+      });
+    },
+    [selectedDoc]
+  );
 
   useEffect(() => {
     if (!selectedDoc || emailOnlyView) return;
@@ -348,34 +457,31 @@ export default function KnowledgeVaultPage() {
     hasDocumentFilters,
     onClearDocumentFilters: clearDocumentFilters,
     tagOptions: vaultTagFilterOptions,
+    scopeTeams: scopeTeamsForFilter,
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#06060a] text-[#F5F5F5]">
-      {IS_PREVIEW_MODE && <PreviewBanner feature="Knowledge Vault" variant="full" dismissible sampleDataOnly />}
-      <header className="shrink-0 flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-[rgba(255,255,255,0.08)]">
-        <div>
-          <h1 className="text-xl font-semibold text-[#F5F5F5]">Knowledge Vault</h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-0.5">
+    <div className="h-full flex flex-col bg-[#08080c] text-[#F5F5F5]">
+      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-[rgba(255,255,255,0.08)] px-6 py-3">
+        <div className="min-w-0">
+          <h1 className="text-sm font-semibold leading-none text-[#F5F5F5]">Knowledge Vault</h1>
+          <p className="mt-1 text-[11px] leading-snug text-[rgba(245,245,245,0.5)]">
             {vaultDocFiltersActive ? (
               <>
                 {emailOnlyView ? (
                   <>Email ingestion · </>
-                ) : (
-                  <>
-                    {listCount} matching ·{" "}
-                  </>
-                )}
+                ) : null}
                 <span className="border-b border-dotted border-gray-500 cursor-help" title={VAULT_CATALOG_COUNT_TOOLTIP}>
-                  {listCount} documents visible
+                  {listCount} documents
                 </span>
-                {" · "}
+                {emailOnlyView ? null : <> matching · </>}
+                {" "}
                 {connectedCount} sources · Last sync 2 min ago
               </>
             ) : (
               <>
                 <span className="border-b border-dotted border-gray-500 cursor-help" title={VAULT_CATALOG_COUNT_TOOLTIP}>
-                  {listCount} documents visible
+                  {listCount} documents
                 </span>
                 {" · "}
                 {connectedCount} sources · Last sync 2 min ago
@@ -383,9 +489,23 @@ export default function KnowledgeVaultPage() {
             )}
           </p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap justify-end">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {isAdmin && !emailOnlyView && (
-            <label className="flex items-center gap-2 cursor-pointer select-none shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 border-white/10 px-2.5 text-[11px] text-[#F5F5F5]"
+              onClick={() => {
+                setSelectedDoc(null);
+                setPermissionsOpen(true);
+              }}
+            >
+              <Settings2 size={13} className="mr-1 shrink-0" />
+              Manage Permissions
+            </Button>
+          )}
+          {isAdmin && !emailOnlyView && (
+            <label className="flex h-8 cursor-pointer select-none items-center gap-2 shrink-0">
               <span className="sr-only">Show all documents including other advisors private files</span>
               <div
                 className={cn(
@@ -413,18 +533,21 @@ export default function KnowledgeVaultPage() {
           <Button
             variant="outline"
             size="sm"
-            className="border-white/10 text-[#F5F5F5]"
+            className="h-8 border-white/10 px-2.5 text-[11px] text-[#F5F5F5]"
             onClick={load}
             disabled={loading}
           >
-            <RefreshCw size={14} className={loading ? "mr-1.5 animate-spin" : "mr-1.5"} />
+            <RefreshCw size={13} className={loading ? "mr-1 shrink-0 animate-spin" : "mr-1 shrink-0"} />
             Sync All
           </Button>
         </div>
       </header>
+      {IS_PREVIEW_MODE && (
+        <PreviewBanner feature="Knowledge Vault" variant="full" dismissible sampleDataOnly />
+      )}
 
       <div className="flex-1 flex min-h-0">
-        <main className="flex-1 min-w-0 overflow-auto flex flex-col bg-[#06060a]">
+        <main className="flex-1 min-w-0 overflow-auto flex flex-col bg-[#08080c]">
           <div className="p-4 space-y-4">
             <DataSourceCards
               sources={sources}
@@ -432,17 +555,11 @@ export default function KnowledgeVaultPage() {
               onToggleSource={toggleSource}
               onConnectSource={() => setConnectOpen(true)}
               loading={loading}
+              isSourcePolicyBlocked={isSourcePolicyBlocked}
+              isAdmin={isAdmin}
             />
-            {health && (
-              <IngestionHealthBar
-                health={health}
-                sources={sources}
-                activeIngestionFilter={filters.ingestion_status}
-                documentFiltersUnavailable={emailOnlyView}
-              />
-            )}
             <div className="flex flex-wrap gap-2 items-center">
-              <div className="relative flex-1 min-w-[200px]">
+              <div className="relative min-w-[200px] flex-1">
                 <Search
                   size={16}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]"
@@ -455,19 +572,6 @@ export default function KnowledgeVaultPage() {
                   disabled={emailOnlyView}
                 />
               </div>
-              <select
-                value={sortOption}
-                onChange={(e) => setSortOption(e.target.value as KvSortOption)}
-                disabled={emailOnlyView}
-                className="text-[10px] bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-1.5 text-[var(--text-secondary)] outline-none shrink-0 h-9 disabled:opacity-40"
-              >
-                <option value="updated_desc">Updated (newest)</option>
-                <option value="updated_asc">Updated (oldest)</option>
-                <option value="title_asc">Title (A–Z)</option>
-                <option value="title_desc">Title (Z–A)</option>
-                <option value="size_desc">Size (largest)</option>
-                <option value="size_asc">Size (smallest)</option>
-              </select>
             </div>
 
             {!emailOnlyView && (
@@ -501,9 +605,13 @@ export default function KnowledgeVaultPage() {
               <EmailIngestionView loading={loading} />
             ) : (
               <>
-                <p className="text-[11px] text-[var(--text-tertiary)] leading-relaxed">
-                  Supported formats: PDF, DOCX, TXT, HTML, MD. Other file types are synced but not indexed.
-                </p>
+                <div className="flex items-center gap-2 text-[10px] text-gray-600">
+                  <Info className="w-3 h-3 shrink-0" aria-hidden />
+                  <span>
+                    Enable indexes PDFs, Word docs, spreadsheets, text files, and images. Other file types are
+                    stored but not searchable in chat.
+                  </span>
+                </div>
                 {selectedDocIds.length > 0 && (
                   <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white/[0.03] border border-white/[0.06] rounded-xl">
                     <span className="text-xs text-gray-400">
@@ -516,7 +624,7 @@ export default function KnowledgeVaultPage() {
                             type="button"
                             className="text-[10px] px-3 py-1.5 rounded-lg bg-white/[0.04] text-gray-400 hover:text-white hover:bg-white/[0.06]"
                           >
-                            Share with…
+                            {isAdmin ? "Share with…" : "Suggest sharing…"}
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-white/10">
@@ -531,17 +639,20 @@ export default function KnowledgeVaultPage() {
                           ))}
                         </DropdownMenuContent>
                       </DropdownMenu>
-                      <button
-                        type="button"
-                        className="text-[10px] px-3 py-1.5 rounded-lg bg-white/[0.04] text-gray-400 hover:text-white hover:bg-white/[0.06]"
-                        onClick={bulkDownload}
-                      >
-                        Download
-                      </button>
+                      {resolvedPolicies.canExportDocuments ? (
+                        <button
+                          type="button"
+                          className="text-[10px] px-3 py-1.5 rounded-lg bg-white/[0.04] text-gray-400 hover:text-white hover:bg-white/[0.06]"
+                          onClick={bulkDownload}
+                        >
+                          Download
+                        </button>
+                      ) : null}
                       {isAdmin && (
                         <button
                           type="button"
-                          className="text-[10px] px-3 py-1.5 rounded-lg bg-white/[0.04] text-red-400/60 hover:text-red-400 hover:bg-red-500/5"
+                          className="text-[10px] px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.06]"
+                          style={{ color: "#A66B6B" }}
                           onClick={bulkDelete}
                         >
                           Delete
@@ -554,7 +665,7 @@ export default function KnowledgeVaultPage() {
                   documents={pagedVisibleDocuments}
                   viewMode="list"
                   loading={loading}
-                  onSelectDocument={setSelectedDoc}
+                  onSelectDocument={openDocument}
                   isOversightPrivate={oversightPrivate}
                   scopeOverrides={docScopeOverrides}
                   listSelection={{
@@ -566,6 +677,23 @@ export default function KnowledgeVaultPage() {
                   teams={MOCK_TEAMS.map((t) => ({ id: t.id, name: t.name }))}
                   onShareDocument={handleShareDocument}
                   onDeleteDocument={handleDeleteDocument}
+                  canExportDocuments={resolvedPolicies.canExportDocuments}
+                  shareSubmenuLabel={isAdmin ? "Share with…" : "Suggest sharing…"}
+                  listSortControl={
+                    <select
+                      value={sortOption}
+                      onChange={(e) => setSortOption(e.target.value as KvSortOption)}
+                      className="h-8 min-w-[10.5rem] rounded-lg border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[10px] text-[var(--text-secondary)] outline-none"
+                      aria-label="Sort documents"
+                    >
+                      <option value="updated_desc">Updated (newest)</option>
+                      <option value="updated_asc">Updated (oldest)</option>
+                      <option value="title_asc">Title (A–Z)</option>
+                      <option value="title_desc">Title (Z–A)</option>
+                      <option value="size_desc">Size (largest)</option>
+                      <option value="size_asc">Size (smallest)</option>
+                    </select>
+                  }
                 />
                 {!loading && totalVisible > 0 && (
                   <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/[0.06] text-[11px] text-[var(--text-tertiary)]">
@@ -619,7 +747,10 @@ export default function KnowledgeVaultPage() {
           </div>
         </main>
 
-        {selectedDoc && !emailOnlyView && (
+        {permissionsOpen && isAdmin && !emailOnlyView && (
+          <KnowledgeVaultPermissionsPanel sources={sources} onClose={() => setPermissionsOpen(false)} />
+        )}
+        {selectedDoc && !emailOnlyView && !permissionsOpen && (
           <DocumentDetailPanel
             document={selectedDoc}
             oversightPrivate={oversightPrivate(selectedDoc)}
@@ -628,10 +759,74 @@ export default function KnowledgeVaultPage() {
             currentUserOwnerId={currentUserOwnerId}
             onScopeChange={(scope) => applyDocScopeOverride(selectedDoc, scope)}
             onClose={() => setSelectedDoc(null)}
-            onUpdate={() => load()}
+            canExportDocuments={resolvedPolicies.canExportDocuments}
+            documentTags={selectedDocEffectiveTags}
+            onAddDocumentTag={addSelectedDocTag}
+            onRemoveDocumentTag={removeSelectedDocTag}
+            onRenameDocumentTag={renameSelectedDocTag}
+            onSuggestShareWithTeam={(teamId, teamName) => {
+              const d = selectedDoc;
+              if (!d) return;
+              kvShare.addSuggestion({
+                docId: d.id,
+                docTitle: d.title,
+                teamId,
+                teamName,
+              });
+              toast({
+                title: "Suggestion sent",
+                description: `Suggested sharing "${d.title}" with ${teamName}. An admin will review.`,
+                duration: 4000,
+              });
+            }}
           />
         )}
       </div>
+
+      <Dialog open={deleteModal != null} onOpenChange={(o) => !o && setDeleteModal(null)}>
+        <DialogContent className="bg-[#0e0e12] border border-white/[0.06] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white">Move to trash?</DialogTitle>
+            <DialogDescription className="text-gray-400 text-sm">
+              {deleteModal?.mode === "single" ? (
+                <>
+                  &quot;{deleteModal.doc.title}&quot; will be moved to trash and automatically deleted after 30
+                  days.
+                </>
+              ) : deleteModal?.mode === "bulk" ? (
+                <>
+                  {deleteModal.count} documents will be moved to trash and automatically deleted after 30 days.
+                </>
+              ) : null}
+              <br />
+              <br />
+              An admin can restore these documents within 30 days.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-white/[0.06] bg-white/[0.04] text-sm text-gray-300"
+              onClick={() => setDeleteModal(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              className="text-sm"
+              style={{
+                background: "rgba(166,107,107,0.10)",
+                border: "1px solid rgba(166,107,107,0.20)",
+                color: "#A66B6B",
+              }}
+              onClick={confirmMoveToTrash}
+            >
+              Move to trash
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ConnectSourceModal open={connectOpen} onClose={() => setConnectOpen(false)} sources={sources} />
     </div>
