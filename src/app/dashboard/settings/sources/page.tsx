@@ -66,7 +66,7 @@ export default function SourcesSettingsPage() {
 
   const canAccess = useMemo(() => {
     if (typeof window === "undefined") return true;
-    return Boolean(localStorage.getItem("auth_token"));
+    return true;
   }, []);
 
   const updateDefault = useCallback(
@@ -90,10 +90,7 @@ export default function SourcesSettingsPage() {
     [toast]
   );
 
-  if (!canAccess) {
-    router.push("/login");
-    return null;
-  }
+  // Auth is disabled in this prototype.
 
   if (!isAdmin) {
     return (

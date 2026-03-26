@@ -1,7 +1,7 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { ReactNode, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/contexts/UserContext";
 import { Shield, Users, FolderLock, ArrowLeft, Loader2, FlaskConical, Sparkles } from "lucide-react";
@@ -15,24 +15,15 @@ const ADMIN_NAV_ITEMS = [
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-    const router = useRouter();
     const pathname = usePathname();
-    const { user, isLoading } = useUser();
-    const [isAuthorized, setIsAuthorized] = useState(false);
+    const { isLoading } = useUser();
 
     useEffect(() => {
-        if (!isLoading) {
-            if (!user) {
-                router.push("/login");
-            } else if (user.role !== "admin") {
-                router.push("/dashboard");
-            } else {
-                setIsAuthorized(true);
-            }
-        }
-    }, [user, isLoading, router]);
+        // Auth is disabled in this prototype. Keep the loading spinner only while
+        // the user context hydrates, then allow access regardless of role.
+    }, []);
 
-    if (isLoading || !isAuthorized) {
+    if (isLoading) {
         return (
             <div className="h-full flex items-center justify-center bg-[#0C0C0C]">
                 <div className="flex flex-col items-center gap-3">
