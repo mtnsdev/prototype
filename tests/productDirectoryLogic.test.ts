@@ -101,6 +101,25 @@ test("validatePartnerPortalAdminPayload rejects invalid expiry", () => {
   assert.equal(validatePartnerPortalAdminPayload(bad), "Invalid expiry date.");
 });
 
+test("validatePartnerPortalAdminPayload rejects negative incentive rate", () => {
+  const bad = basePayload({
+    program: {
+      ...basePayload().program,
+      activePromotions: [
+        {
+          id: "promo1",
+          effectiveRate: -1,
+          bookingStart: "2026-01-01T00:00:00.000Z",
+          bookingEnd: "2026-02-01T00:00:00.000Z",
+          travelStart: "2026-01-01T00:00:00.000Z",
+          travelEnd: "2026-02-01T00:00:00.000Z",
+        },
+      ],
+    },
+  });
+  assert.equal(validatePartnerPortalAdminPayload(bad), "Incentive effective rate cannot be negative.");
+});
+
 test("validatePartnerPortalAdminPayload rejects promotion window after program expiry", () => {
   const bad = basePayload({
     program: {

@@ -7,6 +7,7 @@ import {
   Bookmark,
   Building2,
   Check,
+  Clock,
   Contact,
   ExternalLink,
   Lock,
@@ -137,6 +138,14 @@ export function ProductDirectoryDetailBody({
   const [editAgencyNoteDraft, setEditAgencyNoteDraft] = useState("");
   const [upgradeConfirmOpen, setUpgradeConfirmOpen] = useState(false);
   const [upgradeConfirmText, setUpgradeConfirmText] = useState("");
+  const [contactUpgradeOpen, setContactUpgradeOpen] = useState(false);
+  const [contactUpgradeTarget, setContactUpgradeTarget] = useState<{
+    name: string;
+    role: string;
+    email: string;
+    phone?: string;
+    note?: string;
+  } | null>(null);
   const [agencyContacts, setAgencyContacts] = useState<DirectoryAgencyContact[]>(product.agencyContacts);
   const [agencyContactFormOpen, setAgencyContactFormOpen] = useState(false);
   const [editingAgencyContactId, setEditingAgencyContactId] = useState<string | null>(null);
@@ -162,6 +171,10 @@ export function ProductDirectoryDetailBody({
     setEditingPersonalContactId(null);
     setPersonalContactFormOpen(false);
     setAgencyContactFormOpen(false);
+    setUpgradeConfirmOpen(false);
+    setUpgradeConfirmText("");
+    setContactUpgradeOpen(false);
+    setContactUpgradeTarget(null);
   }, [product.id]);
 
   useEffect(() => {
@@ -199,6 +212,23 @@ export function ProductDirectoryDetailBody({
   useEffect(() => {
     setAgencyContacts(product.agencyContacts);
   }, [product.id, product.agencyContacts]);
+
+  useEffect(() => {
+    if (!upgradeConfirmOpen && !contactUpgradeOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (upgradeConfirmOpen) {
+        setUpgradeConfirmOpen(false);
+        setUpgradeConfirmText("");
+      }
+      if (contactUpgradeOpen) {
+        setContactUpgradeOpen(false);
+        setContactUpgradeTarget(null);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [upgradeConfirmOpen, contactUpgradeOpen]);
 
   const postAgencyNote = () => {
     const t = newAgencyNote.trim();
@@ -357,15 +387,17 @@ export function ProductDirectoryDetailBody({
   const confirmUpgrade = () => {
     const t = upgradeConfirmText.trim();
     if (!t) return;
+    const displayName = user?.username ?? user?.email ?? "You";
     setAgencyNotes((prev) => [
       {
         id: `an-upgrade-${Date.now()}`,
-        authorName: user?.username ?? user?.email ?? "You",
+        authorName: displayName,
         authorId: currentUserId,
         text: t,
         createdAt: new Date().toISOString(),
         pendingUpgrade: true,
         upgradedById: currentUserId,
+        upgradedByName: displayName,
       },
       ...prev,
     ]);
@@ -382,6 +414,59 @@ export function ProductDirectoryDetailBody({
   const rejectUpgrade = (noteId: string) => {
     setAgencyNotes((prev) => prev.filter((n) => n.id !== noteId));
     toast("Note rejected");
+  };
+
+  const requestContactUpgrade = (contact: DirectoryAgencyContact) => {
+    setContactUpgradeTarget({
+      name: contact.name,
+      role: contact.role,
+      email: contact.email === "—" ? "" : contact.email,
+      phone: contact.phone === "—" ? undefined : contact.phone,
+      note: contact.note,
+    });
+    setContactUpgradeOpen(true);
+  };
+
+  const confirmContactUpgrade = () => {
+    if (!contactUpgradeTarget) return;
+    const displayName = user?.username ?? user?.email ?? "You";
+    const row: DirectoryAgencyContact = {
+      id: `ac-upgrade-${Date.now()}`,
+      name: contactUpgradeTarget.name,
+      role: contactUpgradeTarget.role,
+      email: contactUpgradeTarget.email.trim() || "—",
+      phone: contactUpgradeTarget.phone?.trim() || "—",
+      note: contactUpgradeTarget.note?.trim() || undefined,
+      addedBy: displayName,
+      addedById: currentUserId,
+      pendingUpgrade: true,
+      upgradedById: currentUserId,
+      upgradedByName: displayName,
+    };
+    const next = [...agencyContacts, row];
+    setAgencyContacts(next);
+    onPatchProduct(product.id, { agencyContacts: next });
+    setContactUpgradeOpen(false);
+    setContactUpgradeTarget(null);
+    toast("Contact submitted for review");
+  };
+
+  const approveContactUpgrade = (contactId: string) => {
+    const next = agencyContacts.map((c) => (c.id === contactId ? { ...c, pendingUpgrade: false } : c));
+    setAgencyContacts(next);
+    onPatchProduct(product.id, { agencyContacts: next });
+    toast("Contact approved — now visible to agency");
+  };
+
+  const rejectContactUpgrade = (contactId: string) => {
+    const next = agencyContacts.filter((c) => c.id !== contactId);
+    setAgencyContacts(next);
+    onPatchProduct(product.id, { agencyContacts: next });
+    if (editingAgencyContactId === contactId) {
+      setEditingAgencyContactId(null);
+      setAgencyContactFormOpen(false);
+    }
+    toast("Contact suggestion rejected");
   };
 
   const removeFromCollection = (collectionId: string) => {
@@ -410,6 +495,9 @@ export function ProductDirectoryDetailBody({
       note: newAgencyContactNote.trim() || undefined,
       addedBy: prev?.addedBy ?? (user?.username ?? user?.email ?? "You"),
       addedById: prev?.addedById ?? currentUserId,
+      pendingUpgrade: prev?.pendingUpgrade,
+      upgradedById: prev?.upgradedById,
+      upgradedByName: prev?.upgradedByName,
     };
     const next = editId ? agencyContacts.map((c) => (c.id === editId ? row : c)) : [...agencyContacts, row];
     setAgencyContacts(next);
@@ -1035,9 +1123,19 @@ export function ProductDirectoryDetailBody({
                       </p>
                       <ul className="space-y-1 text-[9px] text-[#9B9590]">
                         {program.activePromotions.map((pr) => (
-                          <li key={pr.id}>
-                            <span className="font-semibold text-[#C9A96E]">{pr.effectiveRate}%</span> · book{" "}
-                            {pr.bookingStart.slice(0, 10)}–{pr.bookingEnd.slice(0, 10)}
+                          <li key={pr.id} className="space-y-0.5">
+                            <div>
+                              <span className="font-semibold text-[#C9A96E]">{pr.effectiveRate}%</span> · book{" "}
+                              {pr.bookingStart.slice(0, 10)}–{pr.bookingEnd.slice(0, 10)}
+                            </div>
+                            {pr.title?.trim() ? (
+                              <p className="text-[10px] font-medium text-[#F5F0EB]">{pr.title.trim()}</p>
+                            ) : null}
+                            {pr.details?.trim() ? (
+                              <p className="whitespace-pre-wrap text-[9px] leading-snug text-[#6B6560]">
+                                {pr.details.trim()}
+                              </p>
+                            ) : null}
                           </li>
                         ))}
                       </ul>
@@ -1155,6 +1253,14 @@ export function ProductDirectoryDetailBody({
                       ) : null}
                     </div>
                     {c.note ? <p className="mt-0.5 text-[9px] text-[#9B9590]">{c.note}</p> : null}
+                    <button
+                      type="button"
+                      onClick={() => requestContactUpgrade(c)}
+                      className="mt-1.5 flex items-center gap-1 text-[9px] text-[#9B9590] transition-colors hover:text-[#C9A96E]"
+                    >
+                      <Share2 className="h-3 w-3 shrink-0" />
+                      Suggest to agency…
+                    </button>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
                     <button
@@ -1550,8 +1656,11 @@ export function ProductDirectoryDetailBody({
                 >
                   {note.pendingUpgrade && (
                     <div className="mb-1.5 flex flex-wrap items-center gap-1 text-[9px] text-[#C9A96E]">
-                      <Award className="h-3 w-3 shrink-0" />
-                      <span>Pending approval</span>
+                      <Clock className="h-3 w-3 shrink-0" />
+                      <span>
+                        Pending approval — suggested by{" "}
+                        {note.upgradedByName || note.authorName || "advisor"}
+                      </span>
                       {isAdmin && (
                         <div className="ml-auto flex gap-2">
                           <button
@@ -1842,6 +1951,47 @@ export function ProductDirectoryDetailBody({
                 onClick={confirmUpgrade}
               >
                 Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {contactUpgradeOpen && contactUpgradeTarget && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-80 rounded-2xl border border-white/[0.06] bg-[#0c0c12] p-5 shadow-2xl">
+            <h3 className="mb-2 text-sm font-medium text-[#F5F0EB]">Share contact with agency?</h3>
+            <div className="mb-3 rounded-lg border border-white/[0.04] bg-white/[0.03] p-2.5">
+              <p className="text-xs font-medium text-[#F5F0EB]">{contactUpgradeTarget.name}</p>
+              <p className="text-[10px] text-[#9B9590]">{contactUpgradeTarget.role}</p>
+              <p className="text-[10px] text-[#6B6560]">
+                {contactUpgradeTarget.email.trim() || "—"}
+              </p>
+            </div>
+            <p className="mb-1 text-[10px] leading-relaxed text-[#6B6560]">
+              This contact will be submitted for admin approval before becoming visible to the team.
+            </p>
+            <p className="mb-4 text-[10px] leading-relaxed text-[#6B6560]">
+              Your private contact will remain intact.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                className="px-3 py-1.5 text-xs text-[#9B9590] transition-colors hover:text-[#F5F0EB]"
+                onClick={() => {
+                  setContactUpgradeOpen(false);
+                  setContactUpgradeTarget(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="rounded-lg px-3 py-1.5 text-xs font-medium text-[#08080c] transition-colors hover:opacity-90"
+                style={{ background: "#C9A96E" }}
+                onClick={confirmContactUpgrade}
+              >
+                Submit for Review
               </button>
             </div>
           </div>

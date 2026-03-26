@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-  Search,
   List,
   LayoutGrid,
   LayoutList,
@@ -12,7 +11,6 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -21,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { catalogSelectTriggerClass, PageSearchField } from "@/components/ui/page-search-field";
 import type { ProductCategory, ProductStatus, VerificationStatus, PartnershipTier, PriceRange } from "@/types/product";
 import { CATEGORY_LABELS } from "@/config/productCategoryConfig";
 
@@ -158,15 +157,13 @@ export default function ProductToolbar({
   return (
     <div className="flex flex-col gap-3 p-4 border-b border-[rgba(255,255,255,0.08)] bg-[#0C0C0C]">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[rgba(245,245,245,0.4)]" />
-          <Input
-            placeholder="Search products…"
-            value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
-            className="pl-9 bg-white/5 border-white/10 text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)]"
-          />
-        </div>
+        <PageSearchField
+          className="min-w-[200px] max-w-md flex-1"
+          placeholder="Search products…"
+          aria-label="Search products"
+          value={localSearch}
+          onChange={setLocalSearch}
+        />
 
         <div className="flex items-center gap-1 border border-white/10 rounded-md p-0.5 bg-white/5">
           <Button
@@ -199,7 +196,7 @@ export default function ProductToolbar({
         </div>
 
         <Select value={sortValue} onValueChange={handleSortValue}>
-          <SelectTrigger className="w-[180px] bg-white/5 border-white/10 text-[#F5F5F5]">
+          <SelectTrigger className={cn(catalogSelectTriggerClass, "w-[180px]")}>
             <SelectValue placeholder="Sort" />
           </SelectTrigger>
           <SelectContent>
@@ -290,7 +287,7 @@ export default function ProductToolbar({
           value={categoryFilter ?? "all"}
           onValueChange={(v) => onCategoryChange((v === "all" ? null : v) as ProductCategory | null)}
         >
-          <SelectTrigger className="w-[160px] bg-white/5 border-white/10 text-[#F5F5F5]">
+          <SelectTrigger className={cn(catalogSelectTriggerClass, "w-[160px]")}>
             <SelectValue placeholder="Category" />
           </SelectTrigger>
           <SelectContent>
@@ -306,7 +303,7 @@ export default function ProductToolbar({
           value={statusFilter ?? "all"}
           onValueChange={(v) => onStatusChange((v === "all" ? null : v) as ProductStatus | null)}
         >
-          <SelectTrigger className="w-[130px] bg-white/5 border-white/10 text-[#F5F5F5]">
+          <SelectTrigger className={cn(catalogSelectTriggerClass, "w-[130px]")}>
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -319,7 +316,7 @@ export default function ProductToolbar({
           </SelectContent>
         </Select>
         <Select value={countryFilter ?? "all"} onValueChange={(v) => onCountryChange(v === "all" ? null : v)}>
-          <SelectTrigger className="w-[140px] bg-white/5 border-white/10 text-[#F5F5F5]">
+          <SelectTrigger className={cn(catalogSelectTriggerClass, "w-[140px]")}>
             <SelectValue placeholder="Country" />
           </SelectTrigger>
           <SelectContent>
@@ -335,7 +332,7 @@ export default function ProductToolbar({
           value={partnershipTierFilter ?? "all"}
           onValueChange={(v) => onPartnershipTierChange((v === "all" ? null : v) as PartnershipTier | null)}
         >
-          <SelectTrigger className="w-[130px] bg-white/5 border-white/10 text-[#F5F5F5]">
+          <SelectTrigger className={cn(catalogSelectTriggerClass, "w-[130px]")}>
             <SelectValue placeholder="Partnership" />
           </SelectTrigger>
           <SelectContent>
@@ -351,7 +348,7 @@ export default function ProductToolbar({
           value={priceRangeFilter ?? "all"}
           onValueChange={(v) => onPriceRangeChange((v === "all" ? null : v) as PriceRange | null)}
         >
-          <SelectTrigger className="w-[130px] bg-white/5 border-white/10 text-[#F5F5F5]">
+          <SelectTrigger className={cn(catalogSelectTriggerClass, "w-[130px]")}>
             <SelectValue placeholder="Price" />
           </SelectTrigger>
           <SelectContent>
@@ -367,7 +364,7 @@ export default function ProductToolbar({
           value={verificationFilter ?? "all"}
           onValueChange={(v) => onVerificationChange((v === "all" ? null : v) as VerificationStatus | null)}
         >
-          <SelectTrigger className="w-[130px] bg-white/5 border-white/10 text-[#F5F5F5]">
+          <SelectTrigger className={cn(catalogSelectTriggerClass, "w-[130px]")}>
             <SelectValue placeholder="Verification" />
           </SelectTrigger>
           <SelectContent>

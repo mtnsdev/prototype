@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
-import type { VIC } from "@/types/vic";
+import { useState, useEffect, useCallback, useLayoutEffect, useRef } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import type { AcuityStatus, RelationshipStatus, VIC } from "@/types/vic";
 import type { AcuitySettings } from "@/types/vic";
 import type { VICListParams } from "@/types/vic";
 import type { VICTab } from "./TabBar";
@@ -28,8 +28,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import PreviewBanner from "@/components/ui/PreviewBanner";
 import { IS_PREVIEW_MODE } from "@/config/preview";
+import {
+  buildVicListSearchParams,
+  mergeVicListIntoUrl,
+  parseVicListSearchParams,
+} from "@/lib/vicListUrl";
 
 const VIC_VIEW_KEY = "vic_view";
 const VIC_SORT_KEY = "vic_sortBy";
@@ -38,8 +42,9 @@ const PAGE_SIZE = 20;
 
 export default function VICPage() {
   const { user } = useUser();
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const viewFromUrl = searchParams.get("view");
   const tabFromUrl = (searchParams.get("tab") as VICTab) || "mine";
   const activeTab: VICTab = tabFromUrl === "shared" || tabFromUrl === "agency" ? tabFromUrl : "mine";
 
@@ -53,14 +58,48 @@ export default function VICPage() {
   const [relationshipStatus, setRelationshipStatus] = useState<string | null>(null);
   const [acuityStatusFilter, setAcuityStatusFilter] = useState<string | null>(null);
 
-  const [viewMode, setViewMode] = useState<"list" | "cards">(() => {
-    if (typeof window === "undefined") return "list";
-    const v = viewFromUrl === "cards" ? "cards" : (localStorage.getItem(VIC_VIEW_KEY) as "list" | "cards") || "list";
-    return v === "cards" ? "cards" : "list";
-  });
-  const [sortBy, setSortBy] = useState(() => (typeof window === "undefined" ? "full_name" : localStorage.getItem(VIC_SORT_KEY) || "full_name"));
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">(() => (typeof window === "undefined" ? "asc" : (localStorage.getItem(VIC_SORT_ORDER_KEY) as "asc" | "desc") || "asc"));
+  const [viewMode, setViewMode] = useState<"list" | "cards">("list");
+  const [sortBy, setSortBy] = useState("full_name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
+
+  const vicUrlHydratedRef = useRef(false);
+  const vicUrlSyncedRef = useRef<string | null>(null);
+  const skipPageResetRef = useRef(true);
+
+  useLayoutEffect(() => {
+    if (typeof window === "undefined" || vicUrlHydratedRef.current) return;
+    vicUrlHydratedRef.current = true;
+    const sp = new URLSearchParams(window.location.search);
+    vicUrlSyncedRef.current = sp.toString();
+    const p = parseVicListSearchParams(sp);
+    setSearchQuery(p.q);
+    setSelectedCountry(p.country);
+    setRelationshipStatus(p.status);
+    setAcuityStatusFilter(p.acuity);
+    if (sp.has("sort_by")) setSortBy(p.sortBy);
+    else {
+      try {
+        const s = localStorage.getItem(VIC_SORT_KEY);
+        if (s) setSortBy(s);
+      } catch (_) {}
+    }
+    if (sp.has("sort_order")) setSortOrder(p.sortOrder);
+    else {
+      try {
+        const o = localStorage.getItem(VIC_SORT_ORDER_KEY) as "asc" | "desc" | null;
+        if (o === "asc" || o === "desc") setSortOrder(o);
+      } catch (_) {}
+    }
+    if (sp.has("view")) setViewMode(p.view);
+    else {
+      try {
+        const v = localStorage.getItem(VIC_VIEW_KEY) as "list" | "cards" | null;
+        if (v === "cards") setViewMode("cards");
+      } catch (_) {}
+    }
+    if (sp.has("page")) setPage(p.page);
+  }, []);
 
   const [selectedVicIds, setSelectedVicIds] = useState<Set<string>>(new Set());
 
@@ -132,7 +171,7 @@ export default function VICPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [isDev, activeTab, user?.id, searchQuery, selectedCountry, relationshipStatus, acuityStatusFilter, sortBy, sortOrder, page]);
+  }, [activeTab, user?.id, searchQuery, selectedCountry, relationshipStatus, acuityStatusFilter, sortBy, sortOrder, page]);
 
   useEffect(() => {
     loadVics();
@@ -164,8 +203,46 @@ export default function VICPage() {
   }, []);
 
   useEffect(() => {
-    if (viewFromUrl === "cards") setViewMode("cards");
-  }, [viewFromUrl]);
+    if (!vicUrlHydratedRef.current) return;
+    const built = buildVicListSearchParams({
+      tab: activeTab,
+      q: searchQuery,
+      country: selectedCountry,
+      status: relationshipStatus as RelationshipStatus | null,
+      acuity: acuityStatusFilter as AcuityStatus | null,
+      sortBy,
+      sortOrder,
+      view: viewMode,
+      page,
+    });
+    const next = mergeVicListIntoUrl(new URLSearchParams(searchParams.toString()), built);
+    const qs = next.toString();
+    if (qs === vicUrlSyncedRef.current) return;
+    vicUrlSyncedRef.current = qs;
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [
+    activeTab,
+    searchQuery,
+    selectedCountry,
+    relationshipStatus,
+    acuityStatusFilter,
+    sortBy,
+    sortOrder,
+    viewMode,
+    page,
+    pathname,
+    router,
+    searchParams,
+  ]);
+
+  useEffect(() => {
+    if (!vicUrlHydratedRef.current) return;
+    if (skipPageResetRef.current) {
+      skipPageResetRef.current = false;
+      return;
+    }
+    setPage(1);
+  }, [searchQuery, selectedCountry, relationshipStatus, acuityStatusFilter, activeTab]);
 
   // Force card view on mobile (< 768px)
   const [forceCardView, setForceCardView] = useState(false);
@@ -247,10 +324,30 @@ export default function VICPage() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#0C0C0C] overflow-hidden">
-      {IS_PREVIEW_MODE && <PreviewBanner feature="VIC Management" variant="full" dismissible sampleDataOnly />}
-      <TabBar activeTab={activeTab} />
-      <VICToolbar
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#08080c]">
+      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-[rgba(255,255,255,0.08)] pl-6 pr-[4.5rem] py-3">
+        <div className="min-w-0">
+          <h1 className="text-sm font-semibold leading-none text-[#F5F5F5]">VICs</h1>
+          <p className="mt-1 text-[11px] leading-snug text-[rgba(245,245,245,0.5)]">
+            {hasActiveFilters ? (
+              <>
+                <span>
+                  {totalCount} VIC{totalCount !== 1 ? "s" : ""}
+                </span>
+                {" · "}
+                matching filters
+              </>
+            ) : (
+              <span>
+                {totalCount} VIC{totalCount !== 1 ? "s" : ""}
+              </span>
+            )}
+          </p>
+        </div>
+      </header>
+      <TabBar activeTab={activeTab} className="shrink-0" />
+      <div className="relative z-10 shrink-0 px-6 pb-0 pt-4">
+        <VICToolbar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         selectedCountry={selectedCountry}
@@ -263,7 +360,13 @@ export default function VICPage() {
         onViewModeChange={setViewMode}
         sortBy={sortBy}
         sortOrder={sortOrder}
-        onSortChange={(by, order) => { setSortBy(by); setSortOrder(order); }}
+        onSortChange={(by, order) => {
+          setSortBy(by);
+          setSortOrder(order);
+        }}
+        totalCount={totalCount}
+        page={page}
+        pageSize={PAGE_SIZE}
         onAddVIC={activeTab === "mine" ? openAdd : undefined}
         onImportCSV={() => setImportModalOpen(true)}
         onClearFilters={clearFilters}
@@ -287,7 +390,8 @@ export default function VICPage() {
             if (first) { setDeletingVic(first); setDeleteModalOpen(true); }
           } else setBulkDeleteIds(ids);
         } : undefined}
-      />
+        />
+      </div>
 
       {selectedVicIds.size > 0 && (
         <BulkActionsBar
@@ -336,7 +440,7 @@ export default function VICPage() {
         />
       )}
 
-      <div className="flex-1 overflow-auto p-4 md:p-6">
+      <div className="flex min-h-0 flex-1 flex-col overflow-auto p-4 md:p-6">
         {error && (
           <div className="rounded-lg bg-[var(--muted-error-bg)] border border-[var(--muted-error-border)] text-[var(--muted-error-text)] px-4 py-2 text-sm mb-4">
             {error}

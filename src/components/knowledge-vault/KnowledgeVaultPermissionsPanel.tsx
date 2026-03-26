@@ -61,7 +61,7 @@ function TeamsTab() {
                     <MoreHorizontal className="w-3.5 h-3.5" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-white/10">
+                <DropdownMenuContent align="end">
                   <DropdownMenuItem className="text-xs" onClick={() => toast(`Rename ${team.name} (demo)`)}>
                     Rename
                   </DropdownMenuItem>
@@ -192,7 +192,7 @@ function SourceDefaultsTab({ sources }: { sources: DataSource[] }) {
         return;
       }
       setSavedScopes((prev) => ({ ...prev, [id]: newV }));
-      toast(`Default scope updated for ${source.name}.`);
+      toast(`Default access updated for ${source.name}.`);
       setApplyRetro((a) => ({ ...a, [id]: false }));
     },
     [applyRetro, draftScopes, savedScopes, toast]
@@ -203,7 +203,7 @@ function SourceDefaultsTab({ sources }: { sources: DataSource[] }) {
     const name = scopeLabel(confirmRetro.newScope);
     setSavedScopes((prev) => ({ ...prev, [confirmRetro.sourceId]: confirmRetro.newScope }));
     toast(
-      `Default scope updated. ${confirmRetro.count} existing documents re-scoped to ${name}.`
+      `Default access updated. ${confirmRetro.count} existing documents set to ${name}.`
     );
     setApplyRetro((a) => ({ ...a, [confirmRetro.sourceId]: false }));
     setConfirmRetro(null);
@@ -230,7 +230,7 @@ function SourceDefaultsTab({ sources }: { sources: DataSource[] }) {
               </div>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] text-gray-500 uppercase tracking-wider shrink-0">Default scope</span>
+              <span className="text-[10px] text-gray-500 uppercase tracking-wider shrink-0">Default access</span>
               {locked ? (
                 <div className="flex items-center gap-1.5">
                   <Lock className="w-3 h-3 text-gray-600 shrink-0" aria-hidden />
@@ -252,11 +252,6 @@ function SourceDefaultsTab({ sources }: { sources: DataSource[] }) {
                 </select>
               )}
             </div>
-            {locked && (
-              <p className="text-[9px] text-gray-600 mt-2 italic leading-relaxed">
-                Mirrors intranet document permissions — cannot be overridden
-              </p>
-            )}
             {source.source_type === DataSourceType.IntranetPages && (
               <p className="text-[9px] text-gray-600 mt-2 italic leading-relaxed">
                 Intranet pages default to Private — admins can share with teams as needed
@@ -322,11 +317,11 @@ function SourceDefaultsTab({ sources }: { sources: DataSource[] }) {
           className="bg-[#0e0e12] border border-white/[0.06] sm:max-w-md"
         >
           <DialogHeader>
-            <DialogTitle className="text-white">Apply scope change to existing documents?</DialogTitle>
+            <DialogTitle className="text-white">Apply access change to existing documents?</DialogTitle>
             <DialogDescription className="text-gray-400 text-sm">
               {confirmRetro && (
                 <>
-                  This will change the scope of {confirmRetro.count} existing documents from &quot;
+                  This will change access for {confirmRetro.count} existing documents from &quot;
                   {scopeLabel(confirmRetro.oldScope)}&quot; to &quot;{scopeLabel(confirmRetro.newScope)}&quot;.
                   This cannot be undone.
                 </>

@@ -229,7 +229,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
         ? "bg-emerald-600 text-white hover:bg-emerald-700"
         : "bg-gray-700 text-gray-400 hover:bg-gray-600";
 
-  const isMonaco = itinerary?.id === "fake-it-1";
+  const isMonaco = itinerary?.id === "itin-001";
 
   const relevantTemplates = useMemo(
     () => (itinerary ? getEmailTemplatesForPipelineStage(itinerary.pipeline_stage) : []),
@@ -260,7 +260,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
 
   if (loading) {
     return (
-      <div className="h-full flex flex-col bg-[#0C0C0C] overflow-hidden">
+      <div className="h-full flex flex-col bg-[#08080c] overflow-hidden">
         <div className="shrink-0 h-10 px-4 border-b border-[rgba(255,255,255,0.08)] flex items-center gap-3">
           <div className="h-8 w-8 rounded bg-white/10 animate-pulse" />
           <div className="h-5 w-48 bg-white/10 rounded animate-pulse" />
@@ -292,7 +292,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-[#0C0C0C] overflow-hidden">
+    <div className="h-full flex flex-col bg-[#08080c] overflow-hidden">
       {IS_PREVIEW_MODE && <PreviewBanner feature="Itinerary" variant="compact" sampleDataOnly />}
       <div className="shrink-0 flex flex-col">
         <div className="px-4 pt-3">
@@ -395,7 +395,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
                 <MoreHorizontal size={16} />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-white/10">
+            <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setInvoiceOpen(true)}>Generate Invoice</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -407,7 +407,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
         </div>
       </header>
 
-      <div className="shrink-0 px-4 py-3 border-b border-white/[0.06] relative bg-[#0C0C0C]">
+      <div className="shrink-0 px-4 py-3 border-b border-white/[0.06] relative bg-[#08080c]">
         <div className="w-full overflow-x-auto mb-2">
           <div className="flex items-center min-w-max px-1">
             {PIPELINE_STAGES.map((stage, i) => {

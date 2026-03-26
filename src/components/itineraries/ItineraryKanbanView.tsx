@@ -29,24 +29,24 @@ export default function ItineraryKanbanView({ itineraries }: Props) {
   const router = useRouter();
 
   return (
-    <div className="flex-1 overflow-x-auto overflow-y-hidden p-4">
-      <div className="flex gap-4 min-h-[min(70vh,640px)] items-start">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 overflow-x-auto overflow-y-hidden p-4">
+      <div className="flex h-full min-h-0 items-stretch gap-4">
         {COLUMNS.map((col) => {
           const colItems = itineraries.filter((it) => it.status === col.status);
           return (
             <div
               key={col.status}
-              className="w-[260px] shrink-0 flex flex-col rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden"
+              className="flex h-full min-h-0 w-[260px] shrink-0 flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.02]"
             >
               <div
                 className={cn(
-                  "px-3 py-2.5 border-b text-xs font-semibold uppercase tracking-wider border-white/[0.06]",
+                  "shrink-0 border-b px-3 py-2.5 text-xs font-semibold uppercase tracking-wider border-white/[0.06]",
                   col.headerClass
                 )}
               >
                 {col.label} ({colItems.length})
               </div>
-              <div className="p-2 flex flex-col gap-2 overflow-y-auto max-h-[calc(70vh-48px)] min-h-[200px]">
+              <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2">
                 {colItems.length === 0 ? (
                   <p className="text-xs text-center text-[rgba(245,245,245,0.35)] py-8 px-2">
                     No trips {col.label.toLowerCase()} yet
@@ -63,7 +63,7 @@ export default function ItineraryKanbanView({ itineraries }: Props) {
                         onClick={() => router.push(`/dashboard/itineraries/${id}`)}
                         className="text-left rounded-lg border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/[0.12] transition-all group overflow-hidden w-full"
                       >
-                        <div className="relative h-20 w-full bg-zinc-900">
+                        <div className="relative h-20 w-full bg-[#0c0c12]">
                           <ImageWithFallback
                             fallbackType="trip"
                             src={it.hero_image_url}

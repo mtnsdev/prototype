@@ -109,6 +109,26 @@ if (!fs.existsSync(nextBin)) {
   process.exit(1);
 }
 
+const reactVirtualPkg = path.join(
+  root,
+  "node_modules",
+  "@tanstack",
+  "react-virtual",
+  "package.json"
+);
+if (!fs.existsSync(reactVirtualPkg)) {
+  console.warn(
+    "[dev] Missing @tanstack/react-virtual (declared in package.json). Running npm install…"
+  );
+  execFileSync("npm", ["install"], { stdio: "inherit", cwd: root });
+  if (!fs.existsSync(reactVirtualPkg)) {
+    console.error(
+      "[dev] Still missing @tanstack/react-virtual after npm install. Try: rm -rf node_modules && npm install"
+    );
+    process.exit(1);
+  }
+}
+
 const HOST = process.env.DEV_HOST;
 const nextArgs = ["dev", "-p", PORT];
 if (HOST) nextArgs.push("-H", HOST);

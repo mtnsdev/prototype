@@ -24,7 +24,8 @@ export function documentPolicySourceId(doc: KnowledgeDocument): KvPolicySourceId
 }
 
 /**
- * UI scope for badges: optional explicit kv_scope, else derived from data_layer + source defaults.
+ * Server-side effective scope (no session overrides). Optional explicit `kv_scope`, else derived from
+ * `data_layer` + source defaults. Merge rule with client: see `effectiveUiScope` in knowledgeVaultVisibility.
  */
 export function knowledgeDocumentUiScope(doc: KnowledgeDocument): "private" | string | "mirrors_source" {
   if (doc.kv_scope != null && doc.kv_scope !== "") return doc.kv_scope;

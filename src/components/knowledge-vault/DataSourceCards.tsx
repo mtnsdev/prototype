@@ -26,12 +26,6 @@ const SHOWN_TYPES = new Set<DataSourceType>([
   DataSourceType.Email,
 ]);
 
-function isIntranetSource(s: DataSource) {
-  return (
-    s.source_type === DataSourceType.IntranetDocuments || s.source_type === DataSourceType.IntranetPages
-  );
-}
-
 function getBaseIcon(source: DataSource) {
   if (source.source_type === DataSourceType.Email) return Mail;
   if (source.icon === "Cloud") return Cloud;
@@ -146,9 +140,6 @@ export default function DataSourceCards({
             <div className="mt-1">
               <ScopeBadge scope={defaultScope} teams={MOCK_TEAMS} />
             </div>
-            {isIntranetSource(src) && src.source_type === DataSourceType.IntranetDocuments && (
-              <p className="text-[10px] text-gray-500 mt-0.5">Mirrors intranet permissions</p>
-            )}
             <p className="text-xs text-[rgba(245,245,245,0.5)] mt-2">
               {src.sync_frequency === "manual" && !src.last_sync
                 ? "On demand"

@@ -4,11 +4,7 @@ import type {
   DirectoryProductCategory,
 } from "@/types/product-directory";
 import type { DirectoryPriceTier, DirectoryTierLevel } from "@/components/products/productDirectoryDetailMeta";
-import {
-  getDirectoryProductRegistryCommission,
-  daysUntilExpiry,
-  isProgramBookable,
-} from "@/components/products/productDirectoryCommission";
+import { getDirectoryProductRegistryCommission } from "@/components/products/productDirectoryCommission";
 import { productMatchesAmenityFilter, productMatchesProgramFilter } from "@/components/products/productDirectoryFilterConfig";
 import { productMatchesLocationCountries } from "@/components/products/locationGroups";
 
@@ -21,9 +17,7 @@ export type DirectoryFilterSkip =
   | "amenities"
   | "commissionRange"
   | "tier"
-  | "price"
-  | "expiring"
-  | "enriched";
+  | "price";
 
 export type DirectoryPageFilterInput = {
   q: string;
@@ -36,10 +30,6 @@ export type DirectoryPageFilterInput = {
   commissionRange: [number, number];
   selectedTiers: DirectoryTierLevel[];
   selectedPriceTiers: DirectoryPriceTier[];
-  showExpiringOnly: boolean;
-  showMyEnrichedOnly: boolean;
-  enrichFilterTeam: boolean;
-  enrichFilterPersonal: boolean;
 };
 
 export function applyDirectoryProductFilters(
@@ -99,27 +89,6 @@ export function applyDirectoryProductFilters(
 
   if (skip !== "price" && f.selectedPriceTiers.length > 0) {
     result = result.filter((p) => p.priceTier != null && f.selectedPriceTiers.includes(p.priceTier));
-  }
-
-  if (skip !== "expiring" && f.showExpiringOnly) {
-    result = result.filter((p) =>
-      p.partnerPrograms.some((pp) => {
-        if (!isProgramBookable(pp) || !pp.expiryDate) return false;
-        const d = daysUntilExpiry(pp.expiryDate);
-        return d != null && d >= 0 && d <= 30;
-      })
-    );
-  }
-
-  if (skip !== "enriched" && f.showMyEnrichedOnly) {
-    result = result.filter((p) => {
-      if (f.enrichFilterTeam && f.enrichFilterPersonal) {
-        return !!p.hasTeamData || !!p.hasAdvisorNotes;
-      }
-      if (f.enrichFilterTeam) return !!p.hasTeamData;
-      if (f.enrichFilterPersonal) return !!p.hasAdvisorNotes;
-      return true;
-    });
   }
 
   return result;

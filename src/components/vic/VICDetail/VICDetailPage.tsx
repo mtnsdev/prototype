@@ -142,7 +142,7 @@ export default function VICDetailPage({ vicId }: Props) {
 
   if (loading) {
     return (
-      <div className="h-full overflow-y-auto bg-[#0C0C0C]">
+      <div className="h-full overflow-y-auto bg-[#08080c]">
         <div className="max-w-3xl mx-auto p-6 space-y-6">
           <div className="h-5 w-32 bg-white/10 rounded animate-pulse" />
           <div className="flex gap-4">
@@ -191,7 +191,7 @@ export default function VICDetailPage({ vicId }: Props) {
   ].filter(Boolean);
 
   return (
-    <div className="h-full overflow-y-auto bg-[#0C0C0C]">
+    <div className="h-full overflow-y-auto bg-[#08080c]">
       {IS_PREVIEW_MODE && <PreviewBanner feature="VIC Profile" variant="compact" sampleDataOnly />}
       <div className="max-w-6xl mx-auto p-6 space-y-6">
         <Link
@@ -240,7 +240,7 @@ export default function VICDetailPage({ vicId }: Props) {
                   <ChevronDown size={14} />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-white/10">
+              <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => handleRunAcuity("full")}>Full Profile Refresh</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleRunAcuity("quick")}>Quick Update (fields &gt;30d)</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleRunAcuity("selective")}>Selective…</DropdownMenuItem>

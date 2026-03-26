@@ -90,7 +90,7 @@ export default function VICCard({ vic, onEdit, onDelete, onShare, canEdit, canDe
               <MoreHorizontal size={16} className="text-[rgba(245,245,245,0.6)]" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-[#141414] border-[rgba(255,255,255,0.12)]">
+          <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
               <Link href={`/dashboard/vics/${vicId}`} className="text-[rgba(245,245,245,0.9)]">View</Link>
             </DropdownMenuItem>

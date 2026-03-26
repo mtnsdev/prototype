@@ -36,7 +36,7 @@ export function PublishItineraryModal({
     : "—";
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70">
-      <div className="w-full max-w-md rounded-xl border border-white/10 bg-[#141414] p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0e0e14] p-6 shadow-xl">
         <h2 className="text-lg font-semibold text-[#F5F5F5]">Publish Itinerary</h2>
         <p className="text-sm text-[rgba(245,245,245,0.6)] mt-2">
           This will update the client-facing view to reflect your latest changes.
@@ -59,7 +59,7 @@ export function PublishItineraryModal({
           </ul>
         </div>
         <div className="flex justify-end gap-2 mt-6">
-          <Button variant="outline" className="border-white/10" onClick={onClose}>
+          <Button variant="outline" className="border-[rgba(255,255,255,0.06)]" onClick={onClose}>
             Cancel
           </Button>
           <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={onPublish}>
@@ -89,7 +89,7 @@ export function CompareOptionsModal({
   const evLux = luxuryOption.days.reduce((n, d) => n + (d.events?.length ?? 0), 0);
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70">
-      <div className="w-full max-w-2xl rounded-xl border border-white/10 bg-[#141414] p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-2xl rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0e0e14] p-6 shadow-xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-[#F5F5F5]">Compare Options</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -97,7 +97,7 @@ export function CompareOptionsModal({
           </Button>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div className="rounded-lg border border-white/10 p-4 space-y-2">
+          <div className="rounded-lg border border-[rgba(255,255,255,0.06)] p-4 space-y-2">
             <h3 className="font-semibold text-[#F5F5F5]">{classicLabel}</h3>
             <p className="text-sm text-gray-400">6 days</p>
             <p className="text-sm text-gray-400">{evClassic} events</p>
@@ -117,7 +117,7 @@ export function CompareOptionsModal({
           </div>
         </div>
         <div className="flex flex-wrap gap-2 mt-6 justify-end">
-          <Button variant="outline" className="border-white/10" onClick={() => onToast("Send Both to Client — coming in v2")}>
+          <Button variant="outline" className="border-[rgba(255,255,255,0.06)]" onClick={() => onToast("Send Both to Client — coming in v2")}>
             Send Both to Client
           </Button>
           <Button className="bg-blue-600 hover:bg-blue-500" onClick={() => onToast("Select as Final — coming in v2")}>
@@ -144,7 +144,7 @@ export function GuestPortalPreviewModal({
   if (!isMonaco) {
     return (
       <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70">
-        <div className="w-full max-w-md rounded-xl border border-white/10 bg-white p-6 text-gray-900">
+        <div className="w-full max-w-md rounded-xl border border-[rgba(255,255,255,0.06)] bg-white p-6 text-gray-900">
           <div className="flex justify-between">
             <h2 className="font-semibold">Guest Portal</h2>
             <button type="button" onClick={onClose} className="text-gray-500">
@@ -246,7 +246,7 @@ export function InvoiceModal({
   const subtotal = lines.reduce((s, l) => s + l.amt, 0);
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 overflow-y-auto">
-      <div className="w-full max-w-lg rounded-xl border border-white/10 bg-[#141414] p-6 shadow-xl my-8 max-h-[85vh] overflow-y-auto">
+      <div className="w-full max-w-lg rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0e0e14] p-6 shadow-xl my-8 max-h-[85vh] overflow-y-auto">
         <div className="flex justify-between items-start mb-4">
           <h2 className="text-lg font-semibold text-[#F5F5F5]">Generate Invoice</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -261,7 +261,7 @@ export function InvoiceModal({
           <p className="text-[#F5F5F5]">{itinerary.trip_name}</p>
           <p className="text-gray-400 text-xs">{formatDateRange(itinerary.trip_start_date, itinerary.trip_end_date)}</p>
         </div>
-        <div className="mt-4 border-t border-white/10 pt-3 text-sm">
+        <div className="mt-4 border-t border-[rgba(255,255,255,0.06)] pt-3 text-sm">
           <div className="grid grid-cols-12 gap-2 text-gray-500 text-xs mb-1">
             <span className="col-span-7">Line</span>
             <span className="col-span-2">Qty</span>
@@ -276,7 +276,7 @@ export function InvoiceModal({
           ))}
           {lines.length > 12 && <p className="text-xs text-gray-500">… {lines.length - 12} more lines</p>}
         </div>
-        <div className="mt-4 border-t border-white/10 pt-2 text-sm space-y-1">
+        <div className="mt-4 border-t border-[rgba(255,255,255,0.06)] pt-2 text-sm space-y-1">
           <div className="flex justify-between">
             <span className="text-gray-400">Subtotal</span>
             <span className="text-[#F5F5F5]">€{subtotal.toLocaleString()}</span>
@@ -292,15 +292,15 @@ export function InvoiceModal({
         </div>
         <p className="text-xs text-gray-500 mt-4">50% deposit upon confirmation · Balance 30 days before departure</p>
         <div className="flex flex-wrap gap-2 mt-4">
-          <Button variant="outline" size="sm" className="border-white/10" onClick={() => {}}>
+          <Button variant="outline" size="sm" className="border-[rgba(255,255,255,0.06)]" onClick={() => {}}>
             Download PDF — coming soon
           </Button>
-          <Button variant="outline" size="sm" className="border-white/10" onClick={() => {}}>
+          <Button variant="outline" size="sm" className="border-[rgba(255,255,255,0.06)]" onClick={() => {}}>
             Email to Client — coming soon
           </Button>
         </div>
         <div className="flex justify-end gap-2 mt-6">
-          <Button variant="outline" className="border-white/10" onClick={onClose}>
+          <Button variant="outline" className="border-[rgba(255,255,255,0.06)]" onClick={onClose}>
             Cancel
           </Button>
           <Button onClick={onGenerate}>Generate</Button>
@@ -323,7 +323,7 @@ export function ImportItineraryModal({ open, onClose, onParse }: { open: boolean
   };
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70">
-      <div className="w-full max-w-lg rounded-xl border border-white/10 bg-[#141414] p-6">
+      <div className="w-full max-w-lg rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0e0e14] p-6">
         <div className="flex justify-between">
           <h2 className="text-lg font-semibold text-blue-300 flex items-center gap-2">
             <Sparkles size={18} className="text-blue-400" /> Import Itinerary
@@ -344,13 +344,13 @@ export function ImportItineraryModal({ open, onClose, onParse }: { open: boolean
         ) : (
           <>
             <p className="text-sm text-gray-400 mt-2">Paste a URL, upload a PDF, or paste text and we&apos;ll convert it into structured events.</p>
-            <textarea className="w-full mt-4 h-32 rounded-lg bg-white/5 border border-white/10 p-3 text-sm text-[#F5F5F5] placeholder:text-gray-500" placeholder="Paste URL or text here…" />
-            <Button variant="outline" className="mt-2 border-white/10 gap-2">
+            <textarea className="w-full mt-4 h-32 rounded-lg bg-white/5 border border-[rgba(255,255,255,0.06)] p-3 text-sm text-[#F5F5F5] placeholder:text-gray-500" placeholder="Paste URL or text here…" />
+            <Button variant="outline" className="mt-2 border-[rgba(255,255,255,0.06)] gap-2">
               <Upload size={14} /> Upload PDF
             </Button>
             <p className="text-xs text-blue-400/80 mt-4">✦ AI-powered import</p>
             <div className="flex justify-end gap-2 mt-6">
-              <Button variant="outline" className="border-white/10" onClick={onClose}>
+              <Button variant="outline" className="border-[rgba(255,255,255,0.06)]" onClick={onClose}>
                 Cancel
               </Button>
               <Button className="bg-blue-600 hover:bg-blue-500" onClick={handleParse}>
@@ -368,7 +368,7 @@ export function DestinationGuideModal({ open, onClose, vicName, dest, dates, onG
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70">
-      <div className="w-full max-w-lg rounded-xl border border-white/10 bg-[#141414] p-6">
+      <div className="w-full max-w-lg rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0e0e14] p-6">
         <div className="flex justify-between">
           <h2 className="text-lg font-semibold text-blue-300 flex items-center gap-2">
             <Sparkles size={18} className="text-blue-400" /> Generate Destination Guide
@@ -380,7 +380,7 @@ export function DestinationGuideModal({ open, onClose, vicName, dest, dates, onG
         <p className="text-sm text-gray-400 mt-2">We&apos;ll create a personalized travel brief.</p>
         <div className="mt-4 space-y-2 text-sm">
           <label className="block text-gray-500 text-xs">Destination</label>
-          <input defaultValue={dest} className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-[#F5F5F5]" />
+          <input defaultValue={dest} className="w-full rounded-lg bg-white/5 border border-[rgba(255,255,255,0.06)] px-3 py-2 text-[#F5F5F5]" />
           <p className="text-gray-400">VIC: {vicName}</p>
           <p className="text-gray-400">Travel dates: {dates}</p>
         </div>
@@ -400,7 +400,7 @@ export function DestinationGuideModal({ open, onClose, vicName, dest, dates, onG
         </div>
         <p className="text-xs text-blue-400/80 mt-4">✦ Personalized using VIC profile insights</p>
         <div className="flex justify-end gap-2 mt-6">
-          <Button variant="outline" className="border-white/10" onClick={onClose}>
+          <Button variant="outline" className="border-[rgba(255,255,255,0.06)]" onClick={onClose}>
             Cancel
           </Button>
           <Button className="bg-blue-600 hover:bg-blue-500" onClick={onGenerate}>
@@ -431,7 +431,7 @@ export function ActivitySuggestModal({
   ];
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70">
-      <div className="w-full max-w-lg rounded-xl border border-white/10 bg-[#141414] p-6 max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-lg rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0e0e14] p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between">
           <h2 className="text-lg font-semibold text-blue-300 flex items-center gap-2">
             <Sparkles size={18} className="text-blue-400" /> Activity Suggestions for {vicName.split(" ")[0]}
@@ -444,7 +444,7 @@ export function ActivitySuggestModal({
         <p className="text-sm text-gray-500 mt-1">For Monaco (23–26 May):</p>
         <div className="space-y-3 mt-4">
           {items.map((it, i) => (
-            <div key={i} className="rounded-lg border border-white/10 p-3">
+            <div key={i} className="rounded-lg border border-[rgba(255,255,255,0.06)] p-3">
               <p className="text-sm font-medium text-[#F5F5F5]">🍷 {it.title}</p>
               <p className="text-xs text-gray-500">{it.sub}</p>
               <Button size="sm" variant="outline" className="mt-2 border-blue-500/30 text-blue-300" onClick={() => onAdd(it.day)}>
@@ -463,16 +463,16 @@ export function AutomationBuilderModal({ open, onClose, onSaveDraft }: { open: b
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70">
-      <div className="w-full max-w-md rounded-xl border border-white/10 bg-[#141414] p-6 max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-md rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0e0e14] p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between">
           <h2 className="text-lg font-semibold text-[#F5F5F5]">Create Automation</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X size={18} />
           </Button>
         </div>
-        <input placeholder="Name" className="w-full mt-4 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm" />
+        <input placeholder="Name" className="w-full mt-4 rounded-lg bg-white/5 border border-[rgba(255,255,255,0.06)] px-3 py-2 text-sm" />
         <p className="text-xs text-gray-500 mt-4 uppercase">When (Trigger)</p>
-        <select className="w-full mt-1 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-[#F5F5F5]">
+        <select className="w-full mt-1 rounded-lg bg-white/5 border border-[rgba(255,255,255,0.06)] px-3 py-2 text-sm text-[#F5F5F5]">
           <option>Select trigger…</option>
           <option>VIC birthday</option>
           <option>Passport expiry in X days</option>
@@ -482,7 +482,7 @@ export function AutomationBuilderModal({ open, onClose, onSaveDraft }: { open: b
           <option>VIC Acuity profile completed</option>
         </select>
         <p className="text-xs text-gray-500 mt-4 uppercase">Then (Action)</p>
-        <select className="w-full mt-1 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-[#F5F5F5]">
+        <select className="w-full mt-1 rounded-lg bg-white/5 border border-[rgba(255,255,255,0.06)] px-3 py-2 text-sm text-[#F5F5F5]">
           <option>Select action…</option>
           <option>Send email</option>
           <option>Create action item</option>
@@ -492,7 +492,7 @@ export function AutomationBuilderModal({ open, onClose, onSaveDraft }: { open: b
         </select>
         <p className="text-xs text-gray-500 mt-4">Automation builder in development. These templates show planned capabilities.</p>
         <div className="flex justify-end gap-2 mt-6">
-          <Button variant="outline" className="border-white/10" onClick={onClose}>
+          <Button variant="outline" className="border-[rgba(255,255,255,0.06)]" onClick={onClose}>
             Cancel
           </Button>
           <Button variant="outline" onClick={onSaveDraft}>
@@ -524,7 +524,7 @@ export function SendFormModal({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70">
-      <div className="w-full max-w-md rounded-xl border border-white/10 bg-[#141414] p-6 max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-md rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0e0e14] p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between">
           <h2 className="text-lg font-semibold text-[#F5F5F5]">Send Form to {vicName}</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -537,7 +537,7 @@ export function SendFormModal({
             <button
               key={x.t}
               type="button"
-              className="w-full text-left rounded-lg border border-white/10 p-3 hover:bg-white/5"
+              className="w-full text-left rounded-lg border border-[rgba(255,255,255,0.06)] p-3 hover:bg-white/5"
             >
               <p className="text-sm font-medium text-[#F5F5F5]">📋 {x.t}</p>
               <p className="text-xs text-gray-500">{x.d}</p>
@@ -548,7 +548,7 @@ export function SendFormModal({
           Create Custom Form — coming soon
         </Button>
         <div className="flex justify-end gap-2 mt-6">
-          <Button variant="outline" className="border-white/10" onClick={onClose}>
+          <Button variant="outline" className="border-[rgba(255,255,255,0.06)]" onClick={onClose}>
             Cancel
           </Button>
           <Button onClick={onSend}>Send Selected</Button>

@@ -186,7 +186,7 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="bg-[#1a1a1a] border-white/10 max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-[#0e0e14] border-[rgba(255,255,255,0.06)] max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-[#F5F5F5]">Create itinerary</DialogTitle>
         </DialogHeader>

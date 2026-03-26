@@ -136,7 +136,7 @@ export default function ItineraryEventCard({
                 <MoreHorizontal size={16} />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-white/10">
+            <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onEdit?.()}>Edit</DropdownMenuItem>
               <DropdownMenuItem onClick={() => onUpdate()} className="text-red-400">Remove</DropdownMenuItem>
               <DropdownMenuItem onClick={() => {}}>Move to another day</DropdownMenuItem>

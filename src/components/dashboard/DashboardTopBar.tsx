@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search, Settings } from "lucide-react";
 import { useGlobalSearchOptional } from "@/contexts/GlobalSearchContext";
-import DashboardNotifications from "@/components/dashboard/DashboardNotifications";
 import { cn } from "@/lib/utils";
 
 export default function DashboardTopBar() {
@@ -36,7 +35,6 @@ export default function DashboardTopBar() {
       >
         <Search className="w-4 h-4" />
       </button>
-      <DashboardNotifications />
       {isBriefing && (
         <Link
           href="/dashboard/settings"

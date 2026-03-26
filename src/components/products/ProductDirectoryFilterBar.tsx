@@ -9,11 +9,11 @@ import {
   LayoutGrid,
   List,
   Map as MapIcon,
-  Search,
 } from "lucide-react";
 import type { DirectoryAmenityTag, DirectoryCollectionOption, DirectoryProductCategory } from "@/types/product-directory";
 import type { DirectoryPriceTier, DirectoryTierLevel } from "@/components/products/productDirectoryDetailMeta";
 import { cn } from "@/lib/utils";
+import { PageSearchField } from "@/components/ui/page-search-field";
 import ProductDirectoryLocationDropdown from "./ProductDirectoryLocationDropdown";
 import ProductDirectoryAmenitiesDropdown from "./ProductDirectoryAmenitiesDropdown";
 import ProductDirectoryProgramSearchDropdown from "./ProductDirectoryProgramSearchDropdown";
@@ -21,13 +21,11 @@ import ProductDirectoryCollectionSearchDropdown from "./ProductDirectoryCollecti
 import ProductDirectoryCommissionRangeDropdown from "./ProductDirectoryCommissionRangeDropdown";
 import ProductDirectoryTierDropdown from "./ProductDirectoryTierDropdown";
 import ProductDirectoryPriceFilterDropdown from "./ProductDirectoryPriceFilterDropdown";
-import ProductDirectoryMoreFiltersDropdown from "./ProductDirectoryMoreFiltersDropdown";
 import {
   DIRECTORY_PRODUCT_SORT_OPTIONS,
   type DirectoryProductSortOption,
 } from "./productDirectoryFilterConfig";
 import { DIRECTORY_PRODUCT_TYPE_CONFIG } from "./productDirectoryProductTypes";
-import type { Team } from "@/types/teams";
 
 type Props = {
   searchQuery: string;
@@ -41,7 +39,6 @@ type Props = {
   onCollectionFilterChange: (v: string[]) => void;
   onRequestNewCollection: () => void;
   collections: DirectoryCollectionOption[];
-  teams: Team[];
   selectedProgramIds: string[];
   onSelectedProgramIdsChange: (v: string[]) => void;
   selectedAmenities: DirectoryAmenityTag[];
@@ -56,14 +53,6 @@ type Props = {
   onSelectedTiersChange: (v: DirectoryTierLevel[]) => void;
   selectedPriceTiers: DirectoryPriceTier[];
   onSelectedPriceTiersChange: (v: DirectoryPriceTier[]) => void;
-  showExpiringOnly: boolean;
-  onShowExpiringOnlyChange: (v: boolean) => void;
-  showMyEnrichedOnly: boolean;
-  onShowMyEnrichedOnlyChange: (v: boolean) => void;
-  enrichFilterTeam: boolean;
-  onEnrichFilterTeamChange: (v: boolean) => void;
-  enrichFilterPersonal: boolean;
-  onEnrichFilterPersonalChange: (v: boolean) => void;
   sortBy: DirectoryProductSortOption;
   onSortByChange: (v: DirectoryProductSortOption) => void;
   canViewCommissions: boolean;
@@ -87,7 +76,6 @@ export default function ProductDirectoryFilterBar({
   onCollectionFilterChange,
   onRequestNewCollection,
   collections,
-  teams,
   selectedProgramIds,
   onSelectedProgramIdsChange,
   selectedAmenities,
@@ -102,14 +90,6 @@ export default function ProductDirectoryFilterBar({
   onSelectedTiersChange,
   selectedPriceTiers,
   onSelectedPriceTiersChange,
-  showExpiringOnly,
-  onShowExpiringOnlyChange,
-  showMyEnrichedOnly,
-  onShowMyEnrichedOnlyChange,
-  enrichFilterTeam,
-  onEnrichFilterTeamChange,
-  enrichFilterPersonal,
-  onEnrichFilterPersonalChange,
   sortBy,
   onSortByChange,
   canViewCommissions,
@@ -146,17 +126,12 @@ export default function ProductDirectoryFilterBar({
     <div className="mb-4 space-y-2 border-b border-[rgba(255,255,255,0.03)] pb-4">
       {/* Row 1 — Search full width, type pills below */}
       <div className="flex flex-col gap-3">
-        <div className="flex min-w-0 w-full items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2">
-          <Search className="h-4 w-4 shrink-0 text-[#4A4540]" />
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(e) => onSearchQueryChange(e.target.value)}
-            placeholder="Search products..."
-            className="min-w-0 flex-1 bg-transparent text-[12px] text-[#F5F0EB] placeholder-[#4A4540] outline-none"
-            aria-label="Search products"
-          />
-        </div>
+        <PageSearchField
+          value={searchQuery}
+          onChange={onSearchQueryChange}
+          placeholder="Search products…"
+          aria-label="Search products"
+        />
         <div className="-mx-1 flex w-full min-w-0 items-center gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           <button
             type="button"
@@ -209,7 +184,6 @@ export default function ProductDirectoryFilterBar({
         />
         <ProductDirectoryCollectionSearchDropdown
           collections={collections}
-          teams={teams}
           selectedIds={collectionFilter}
           onChange={onCollectionFilterChange}
           onRequestNewCollection={onRequestNewCollection}
@@ -234,26 +208,18 @@ export default function ProductDirectoryFilterBar({
           selectedPriceTiers={selectedPriceTiers}
           onChange={onSelectedPriceTiersChange}
         />
-        <ProductDirectoryMoreFiltersDropdown
-          showExpiringOnly={showExpiringOnly}
-          onShowExpiringOnlyChange={onShowExpiringOnlyChange}
-          showMyEnrichedOnly={showMyEnrichedOnly}
-          onShowMyEnrichedOnlyChange={onShowMyEnrichedOnlyChange}
-          enrichFilterTeam={enrichFilterTeam}
-          onEnrichFilterTeamChange={onEnrichFilterTeamChange}
-          enrichFilterPersonal={enrichFilterPersonal}
-          onEnrichFilterPersonalChange={onEnrichFilterPersonalChange}
-        />
 
         <div ref={sortWrapRef} className="relative">
           <button
             type="button"
             onClick={() => setSortOpen((o) => !o)}
-            className="flex items-center gap-1.5 rounded-lg border border-[rgba(255,255,255,0.03)] bg-[#0c0c12] px-2.5 py-1.5 text-[11px] text-[#9B9590] transition-colors hover:border-[rgba(255,255,255,0.06)]"
+            className="flex min-w-0 items-center gap-1.5 rounded-lg border border-[rgba(255,255,255,0.03)] bg-[#0c0c12] px-2.5 py-1.5 text-[11px] text-[#9B9590] transition-colors hover:border-[rgba(255,255,255,0.06)]"
           >
-            <ArrowUpDown className="h-3 w-3 text-[#4A4540]" />
-            <span>{DIRECTORY_PRODUCT_SORT_OPTIONS.find((o) => o.id === sortBy)?.label ?? "Sort"}</span>
-            <ChevronDown className="h-3 w-3 text-[#4A4540]" />
+            <ArrowUpDown className="h-3 w-3 shrink-0 text-[#4A4540]" />
+            <span className="min-w-0 truncate !text-[#F5F0EB]">
+              {DIRECTORY_PRODUCT_SORT_OPTIONS.find((o) => o.id === sortBy)?.label ?? "Sort"}
+            </span>
+            <ChevronDown className="h-3 w-3 shrink-0 text-[#4A4540]" />
           </button>
           {sortOpen && (
             <div
