@@ -6,6 +6,10 @@ import { TEAM_EVERYONE_ID } from "@/types/teams";
 /** Local session overrides for document scope (until API persists teams scope). */
 export type KvScopeOverrides = Partial<Record<string, "private" | string>>;
 
+/**
+ * Precedence: session `overrides[doc.id]` (if set) wins over persisted `doc.kv_scope` and defaults
+ * from `knowledgeDocumentUiScope`. On API load, drop stale overrides that disagree with server `kv_scope`.
+ */
 export function effectiveUiScope(
   doc: KnowledgeDocument,
   overrides?: KvScopeOverrides
@@ -48,6 +52,7 @@ export function canSeeKnowledgeDocument(
   if (!isPrivateEffective(doc, overrides)) return true;
   const owner = effectivePrivateOwnerId(doc, currentUserId);
   if (owner === currentUserId) return true;
+  if (doc.owner_departed && isAdmin) return true;
   return Boolean(isAdmin && showAllPrivateDocs);
 }
 
@@ -59,9 +64,11 @@ export function isOversightPrivateDoc(
   showAllPrivateDocs: boolean,
   overrides?: KvScopeOverrides
 ): boolean {
-  if (!isAdmin || !showAllPrivateDocs || !isPrivateEffective(doc, overrides)) return false;
+  if (!isAdmin || !isPrivateEffective(doc, overrides)) return false;
   const owner = effectivePrivateOwnerId(doc, currentUserId);
-  return owner !== currentUserId;
+  if (owner === currentUserId) return false;
+  if (doc.owner_departed) return true;
+  return showAllPrivateDocs;
 }
 
 /** Refine list when scope filter is active — e.g. exclude docs promoted to team while API still returns advisor rows. */

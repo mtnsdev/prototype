@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { X, Globe, ExternalLink, MapPin, FileText } from "lucide-react";
+import { X, Globe, ExternalLink, MapPin, FileText, FolderPlus } from "lucide-react";
 import { StarRating } from "./StarRating";
 import type { PlaceCard, WebCitation, Citation } from "./types";
 
@@ -14,6 +14,9 @@ type RightPanelProps = {
   onClose: () => void;
   onCitationClick?: (filename: string, pageNumber: number | string, pdfPath?: string) => void;
   highlightedKbCitationNumber?: number | null;
+  /** When true and a card has `directory_product_id`, show save-to-directory control. */
+  externalSearchActive?: boolean;
+  onSavePlaceToExternalSearch?: (directoryProductId: string) => void;
 };
 
 export function RightPanel({
@@ -25,6 +28,8 @@ export function RightPanel({
   onClose,
   onCitationClick,
   highlightedKbCitationNumber = null,
+  externalSearchActive = false,
+  onSavePlaceToExternalSearch,
 }: RightPanelProps) {
   const panelTitle =
     mode === "sources" ? "Web sources" : mode === "knowledge" ? "Knowledge Sources" : "Places";
@@ -212,6 +217,22 @@ export function RightPanel({
                         </a>
                       )}
                       <div className="flex flex-wrap gap-3 pt-1">
+                        {externalSearchActive &&
+                          onSavePlaceToExternalSearch &&
+                          card.directory_product_id &&
+                          card.directory_product_id.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onSavePlaceToExternalSearch(card.directory_product_id!);
+                              }}
+                              className="inline-flex items-center gap-1 rounded-lg border border-[rgba(174,133,80,0.35)] bg-[rgba(174,133,80,0.12)] px-2 py-1 text-[11px] font-medium text-[#D4A574] transition-colors hover:border-[rgba(174,133,80,0.55)] hover:bg-[rgba(174,133,80,0.2)]"
+                            >
+                              <FolderPlus className="w-3 h-3 shrink-0" aria-hidden />
+                              Save to External Search
+                            </button>
+                          )}
                         {card.google_maps_url && (
                           <a
                             href={card.google_maps_url}

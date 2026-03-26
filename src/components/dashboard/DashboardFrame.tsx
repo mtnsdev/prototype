@@ -9,6 +9,11 @@ import { KnowledgeVaultEmailProvider } from "@/contexts/KnowledgeVaultEmailConte
 import { TeamsProvider } from "@/contexts/TeamsContext";
 import { KvShareSuggestionsProvider } from "@/contexts/KvShareSuggestionsContext";
 import ReportIssueLauncher from "@/components/ui/ReportIssueLauncher";
+import {
+  NotificationPanelProvider,
+  SidebarNotificationBell,
+} from "@/components/dashboard/DashboardNotifications";
+import { ProductDirectoryCatalogProvider } from "@/components/products/ProductDirectoryCatalogContext";
 
 function SidebarFallback() {
     return (
@@ -35,7 +40,12 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 </Suspense>
 
                 {/* Everything to the right of the sidebar is route-specific */}
-                <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
+                <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">{children}</div>
+                <div className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-end px-4 py-3">
+                    <div className="pointer-events-auto">
+                        <SidebarNotificationBell className="h-9 w-9 text-[#6B6560] hover:text-[#9B9590]" />
+                    </div>
+                </div>
                 <ReportIssueLauncher />
             </div>
         </div>
@@ -45,17 +55,21 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 export default function DashboardFrame({ children }: { children: React.ReactNode }) {
     return (
         <UserProvider>
-            <TeamsProvider>
-                <KvShareSuggestionsProvider>
-                    <KnowledgeVaultEmailProvider>
-                        <ChatProvider>
-                            <ToastProvider>
-                                <DashboardContent>{children}</DashboardContent>
-                            </ToastProvider>
-                        </ChatProvider>
-                    </KnowledgeVaultEmailProvider>
-                </KvShareSuggestionsProvider>
-            </TeamsProvider>
+            <ProductDirectoryCatalogProvider>
+                <TeamsProvider>
+                    <KvShareSuggestionsProvider>
+                        <KnowledgeVaultEmailProvider>
+                            <ChatProvider>
+                                <ToastProvider>
+                                    <NotificationPanelProvider>
+                                        <DashboardContent>{children}</DashboardContent>
+                                    </NotificationPanelProvider>
+                                </ToastProvider>
+                            </ChatProvider>
+                        </KnowledgeVaultEmailProvider>
+                    </KvShareSuggestionsProvider>
+                </TeamsProvider>
+            </ProductDirectoryCatalogProvider>
         </UserProvider>
     );
 }

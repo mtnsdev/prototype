@@ -1,10 +1,88 @@
 import type {
   DirectoryCollectionOption,
+  DirectoryExternalSearchMeta,
   DirectoryPartnerProgram,
   DirectoryProduct,
   DirectoryProductCollectionRef,
 } from "@/types/product-directory";
 import { TEAM_EVERYONE_ID } from "@/types/teams";
+
+/** Default collection for products saved from chat / external search. */
+export const DIRECTORY_EXTERNAL_COLLECTION_ID = "col-external";
+
+/**
+ * Mock advisor id whose `MOCK_DIRECTORY_PRODUCTS` rows include External Search membership.
+ * Other advisors get an empty External Search bucket until they save (or you call `applyAddProductToExternalSearch`).
+ */
+export const DIRECTORY_EXTERNAL_SEARCH_MOCK_SEED_ADVISOR_ID = "1";
+
+/** Demo metadata for “saved from chat / external search” (keys = directory product ids). */
+export const EXTERNAL_SEARCH_META: Record<string, DirectoryExternalSearchMeta> = {
+  prod_009: {
+    savedAt: "2026-02-15T10:30:00Z",
+    savedBy: "Marco Pellegrini",
+    searchQuery: "luxury resort Saint Lucia all-inclusive",
+    sourceConversation: 9004,
+  },
+  "prod-well-001": {
+    savedAt: "2026-03-02T14:15:00Z",
+    savedBy: "Claire Dubois",
+    searchQuery: "wellness retreat Europe medical spa",
+  },
+  prod_007: {
+    savedAt: "2026-03-10T09:45:00Z",
+    savedBy: "Hana Yoshida",
+    searchQuery: "patagonia trekking luxury lodge",
+  },
+  prod_008: {
+    savedAt: "2026-03-18T16:00:00Z",
+    savedBy: "James Whitfield",
+    searchQuery: "luxury cruise Dubai Oman Arabian Gulf",
+    sourceConversation: 9006,
+  },
+};
+
+export function getExternalSearchMeta(productId: string): DirectoryExternalSearchMeta | undefined {
+  return EXTERNAL_SEARCH_META[productId];
+}
+
+/** Merges persisted chat/search saves over built-in demo metadata. */
+export function resolveExternalSearchMeta(
+  productId: string,
+  persisted?: Record<string, DirectoryExternalSearchMeta>
+): DirectoryExternalSearchMeta | undefined {
+  const p = persisted?.[productId];
+  if (p) return p;
+  return EXTERNAL_SEARCH_META[productId];
+}
+
+function formatSavedAtForTooltip(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+export function externalSearchSavedTooltip(
+  productId: string,
+  persisted?: Record<string, DirectoryExternalSearchMeta>
+): string | undefined {
+  const m = resolveExternalSearchMeta(productId, persisted);
+  if (!m) return undefined;
+  const q = m.searchQuery ?? "external search";
+  const who = m.savedBy?.trim() ? m.savedBy : "Advisor";
+  const when = m.savedAt ? formatSavedAtForTooltip(m.savedAt) : "recently";
+  let out = `Saved ${when} by ${who} — "${q}"`;
+  if (m.sourceConversation != null) {
+    out += ` · Chat #${m.sourceConversation}`;
+  }
+  return out;
+}
 
 export function cloneDirectoryProduct(p: DirectoryProduct): DirectoryProduct {
   return {
@@ -111,6 +189,18 @@ export const MOCK_DIRECTORY_PRODUCTS: DirectoryProduct[] = [
         note: "Prefers Japanese communication",
         addedBy: "Janet",
         addedById: "1",
+      },
+      {
+        id: "contact_001_pending",
+        name: "Kenji Sato",
+        role: "Sales Coordinator",
+        email: "kenji.sato@aman.com",
+        phone: "—",
+        pendingUpgrade: true,
+        upgradedById: "2",
+        upgradedByName: "Alex",
+        addedBy: "Alex",
+        addedById: "2",
       },
     ],
     collections: [
@@ -347,15 +437,18 @@ export const MOCK_DIRECTORY_PRODUCTS: DirectoryProduct[] = [
     activePromotion: null,
     commissionRate: 9,
     partnerProgramCount: 1,
-    collectionCount: 1,
-    collectionIds: ["col_004"],
+    collectionCount: 2,
+    collectionIds: ["col_004", DIRECTORY_EXTERNAL_COLLECTION_ID],
     partnerPrograms: [
       makeProgram("prog_ex", "prog-direct", "Explora Direct", 9, "2027-01-15", "trade@explora.com", {
         amenityTags: ["breakfast", "welcome-amenity", "airport-transfer"],
       }),
     ],
     agencyContacts: [],
-    collections: [{ id: "col_004", name: "Adventure Picks", scope: "private" }],
+    collections: [
+      { id: "col_004", name: "Adventure Picks", scope: "private" },
+      { id: DIRECTORY_EXTERNAL_COLLECTION_ID, name: "External Search", scope: "private" },
+    ],
     hasTeamData: true,
     hasAdvisorNotes: false,
     addedAt: "2025-07-01T09:00:00Z",
@@ -379,8 +472,8 @@ export const MOCK_DIRECTORY_PRODUCTS: DirectoryProduct[] = [
     activePromotion: null,
     commissionRate: 14,
     partnerProgramCount: 1,
-    collectionCount: 0,
-    collectionIds: [],
+    collectionCount: 1,
+    collectionIds: [DIRECTORY_EXTERNAL_COLLECTION_ID],
     partnerPrograms: [
       makeProgram("prog_rss", "prog-consortium", "Regent Partner", 14, "2026-04-10", "partners@rssc.com", {
         registryStatus: "expiring-soon",
@@ -388,7 +481,7 @@ export const MOCK_DIRECTORY_PRODUCTS: DirectoryProduct[] = [
       }),
     ],
     agencyContacts: [],
-    collections: [],
+    collections: [{ id: DIRECTORY_EXTERNAL_COLLECTION_ID, name: "External Search", scope: "private" }],
     hasTeamData: true,
     hasAdvisorNotes: false,
     addedAt: "2026-01-02T10:00:00Z",
@@ -412,11 +505,11 @@ export const MOCK_DIRECTORY_PRODUCTS: DirectoryProduct[] = [
     activePromotion: null,
     commissionRate: null,
     partnerProgramCount: 0,
-    collectionCount: 0,
-    collectionIds: [],
+    collectionCount: 1,
+    collectionIds: [DIRECTORY_EXTERNAL_COLLECTION_ID],
     partnerPrograms: [],
     agencyContacts: [],
-    collections: [],
+    collections: [{ id: DIRECTORY_EXTERNAL_COLLECTION_ID, name: "External Search", scope: "private" }],
     hasTeamData: true,
     hasAdvisorNotes: true,
     addedAt: "2025-06-18T07:00:00Z",
@@ -490,8 +583,8 @@ export const MOCK_DIRECTORY_PRODUCTS: DirectoryProduct[] = [
     activePromotion: null,
     commissionRate: null,
     partnerProgramCount: 1,
-    collectionCount: 0,
-    collectionIds: [],
+    collectionCount: 1,
+    collectionIds: [DIRECTORY_EXTERNAL_COLLECTION_ID],
     partnerPrograms: [
       makeProgram("ppl-rest-001", "prog-direct", "Direct", null, null, undefined, {
         amenities: "Priority reservation, complimentary aperitif, kitchen tour when available.",
@@ -499,7 +592,7 @@ export const MOCK_DIRECTORY_PRODUCTS: DirectoryProduct[] = [
       }),
     ],
     agencyContacts: [],
-    collections: [],
+    collections: [{ id: DIRECTORY_EXTERNAL_COLLECTION_ID, name: "External Search", scope: "private" }],
     hasTeamData: true,
     hasAdvisorNotes: true,
     addedAt: "2026-03-01T10:00:00Z",
@@ -530,8 +623,8 @@ export const MOCK_DIRECTORY_PRODUCTS: DirectoryProduct[] = [
     activePromotion: null,
     commissionRate: 8,
     partnerProgramCount: 1,
-    collectionCount: 0,
-    collectionIds: [],
+    collectionCount: 1,
+    collectionIds: [DIRECTORY_EXTERNAL_COLLECTION_ID],
     partnerPrograms: [
       makeProgram("ppl-well-001", "prog-preferred", "Preferred Partner", 8, "2026-12-31", undefined, {
         amenities: "Complimentary initial consultation, room upgrade, late checkout, 10% off treatments.",
@@ -539,7 +632,7 @@ export const MOCK_DIRECTORY_PRODUCTS: DirectoryProduct[] = [
       }),
     ],
     agencyContacts: [],
-    collections: [],
+    collections: [{ id: DIRECTORY_EXTERNAL_COLLECTION_ID, name: "External Search", scope: "private" }],
     hasTeamData: false,
     hasAdvisorNotes: true,
     addedAt: "2026-02-14T08:30:00Z",
@@ -589,6 +682,19 @@ export const MOCK_DIRECTORY_PRODUCTS: DirectoryProduct[] = [
 
 export const MOCK_DIRECTORY_COLLECTIONS: DirectoryCollectionOption[] = [
   {
+    id: DIRECTORY_EXTERNAL_COLLECTION_ID,
+    name: "External Search",
+    description: "Products saved from chat and external search",
+    scope: "private",
+    ownerId: "1",
+    ownerName: "Janet",
+    teamId: null,
+    productIds: ["prod_009", "prod-well-001", "prod_007", "prod_008"],
+    isSystem: true,
+    icon: "search",
+    createdAt: "2026-02-15T10:00:00Z",
+  },
+  {
     id: "col_001",
     name: "Japan Shortlist",
     description: "Hotels and experiences for Japan-bound clients.",
@@ -631,6 +737,43 @@ export const MOCK_DIRECTORY_COLLECTIONS: DirectoryCollectionOption[] = [
     productIds: ["prod_007"],
   },
 ];
+
+/** Per-advisor catalog clone: External Search is owned by `advisorUserId`; seed demo data only for {@link DIRECTORY_EXTERNAL_SEARCH_MOCK_SEED_ADVISOR_ID}. */
+export function cloneMockDirectoryCatalogForAdvisor(
+  advisorUserId: string,
+  advisorDisplayName: string
+): { products: DirectoryProduct[]; collections: DirectoryCollectionOption[] } {
+  const ownsSeed = advisorUserId === DIRECTORY_EXTERNAL_SEARCH_MOCK_SEED_ADVISOR_ID;
+  const seedExternal = MOCK_DIRECTORY_COLLECTIONS.find((x) => x.id === DIRECTORY_EXTERNAL_COLLECTION_ID);
+  const seedProductIds = seedExternal?.productIds ? [...seedExternal.productIds] : [];
+
+  const collections: DirectoryCollectionOption[] = MOCK_DIRECTORY_COLLECTIONS.map((c) => {
+    const base: DirectoryCollectionOption = { ...c, productIds: c.productIds ? [...c.productIds] : undefined };
+    if (c.id !== DIRECTORY_EXTERNAL_COLLECTION_ID) return base;
+    return {
+      ...base,
+      ownerId: advisorUserId,
+      ownerName: advisorDisplayName,
+      productIds: ownsSeed ? seedProductIds : [],
+    };
+  });
+
+  const products: DirectoryProduct[] = MOCK_DIRECTORY_PRODUCTS.map((p) => {
+    const copy = cloneDirectoryProduct(p);
+    if (ownsSeed) return copy;
+    if (!copy.collectionIds.includes(DIRECTORY_EXTERNAL_COLLECTION_ID)) return copy;
+    const nextIds = copy.collectionIds.filter((id) => id !== DIRECTORY_EXTERNAL_COLLECTION_ID);
+    const nextRefs = copy.collections.filter((x) => x.id !== DIRECTORY_EXTERNAL_COLLECTION_ID);
+    return {
+      ...copy,
+      collectionIds: nextIds,
+      collections: nextRefs,
+      collectionCount: nextIds.length,
+    };
+  });
+
+  return { products, collections };
+}
 
 /** Regions shown in filter + derived union from products. */
 export const DIRECTORY_REGION_PRESETS = [

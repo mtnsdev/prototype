@@ -33,6 +33,7 @@ export const FAKE_RECENT_CONVERSATIONS = [
 
 export const FAKE_PLACE_CARDS: PlaceCard[] = [
   {
+    directory_product_id: "prod_001",
     name: "Four Seasons Hotel Abu Dhabi",
     address: "Al Maryah Island",
     city: "Abu Dhabi",
@@ -45,6 +46,7 @@ export const FAKE_PLACE_CARDS: PlaceCard[] = [
     primary_image_url: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400&h=300&fit=crop",
   },
   {
+    directory_product_id: "prod_002",
     name: "Rosewood Abu Dhabi",
     address: "Al Maryah Island",
     city: "Abu Dhabi",
@@ -57,6 +59,7 @@ export const FAKE_PLACE_CARDS: PlaceCard[] = [
     primary_image_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop",
   },
   {
+    directory_product_id: "prod_003",
     name: "Emirates Palace Mandarin Oriental",
     address: "West Corniche Road",
     city: "Abu Dhabi",
@@ -69,13 +72,13 @@ export const FAKE_PLACE_CARDS: PlaceCard[] = [
     primary_image_url: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400&h=300&fit=crop",
   },
   { name: "One&Only Reethi Rah", address: "North Malé Atoll", city: "Malé", country: "Maldives", google_maps_url: "https://maps.google.com/?q=One+Only+Reethi+Rah", google_rating: 4.9, google_types: ["lodging", "spa"], contact_phone: "", website: "https://www.oneandonlyresorts.com", primary_image_url: "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&h=300&fit=crop" },
-  { name: "Hôtel de Paris Monte-Carlo", address: "Place du Casino", city: "Monaco", country: "Monaco", google_maps_url: "https://maps.google.com/?q=Hotel+de+Paris+Monte+Carlo", google_rating: 4.8, google_types: ["lodging", "restaurant"], contact_phone: "+377 98 06 30 00", website: "https://www.hoteldeparismontecarlo.com", primary_image_url: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&h=300&fit=crop" },
+  { name: "Hôtel de Paris Monte-Carlo", address: "Place du Casino", city: "Monaco", country: "Monaco", google_maps_url: "https://maps.google.com/?q=Hotel+de+Paris+Monte+Carlo", google_rating: 4.8, google_types: ["lodging", "restaurant"], contact_phone: "+377 98 06 30 00", website: "https://www.hoteldeparismontecarlo.com", primary_image_url: "https://images.unsplash.com/photo-1529551739587-e242c564f727?w=400&h=300&fit=crop" },
   { name: "Belmond Hotel Caruso", address: "Piazza San Giovanni del Toro", city: "Ravello", country: "Italy", google_maps_url: "https://maps.google.com/?q=Belmond+Hotel+Caruso", google_rating: 4.9, google_types: ["lodging"], contact_phone: "", website: "https://www.belmond.com/hotels/europe/italy/amalfi-coast/belmond-hotel-caruso", primary_image_url: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&h=300&fit=crop" },
 ];
 
 export const FAKE_KB_CITATIONS: Citation[] = [
   {
-    chunk_id: "fake-1",
+    chunk_id: "kb-001",
     source: "intranet_documents",
     page_number: 12,
     excerpt: "Commission rates for Rosewood Elite tier start at 10% for qualifying bookings...",
@@ -84,7 +87,7 @@ export const FAKE_KB_CITATIONS: Citation[] = [
     source_label: "Intranet — Documents",
   },
   {
-    chunk_id: "fake-2",
+    chunk_id: "kb-002",
     source: "google-drive",
     page_number: 1,
     excerpt: "Four Seasons Abu Dhabi offers butler service, private beach, and multiple dining venues.",
@@ -92,7 +95,7 @@ export const FAKE_KB_CITATIONS: Citation[] = [
     pdf_path: "",
     source_label: "My Google Drive",
   },
-  { chunk_id: "fake-3", source: "intranet_documents", page_number: 5, excerpt: "Maldives overwater villas: One&Only Reethi Rah and Four Seasons Landaa Giraavaru offer family villas with pool.", filename: "Maldives_Destination_Guide_2026.pdf", pdf_path: "", source_label: "Intranet — Documents" },
-  { chunk_id: "fake-4", source: "google-drive", page_number: 3, excerpt: "Virtuoso benefits at Aman properties include room upgrade, daily breakfast, and $100 credit.", filename: "Aman_Virtuoso_Benefits.pdf", pdf_path: "", source_label: "My Google Drive" },
-  { chunk_id: "fake-5", source: "intranet_pages", page_number: 1, excerpt: "Monaco Grand Prix 2026: recommended hotels Hôtel de Paris, Hermitage, and Fairmont. Book 12 months ahead.", filename: "Monaco_GP_Guide.pdf", pdf_path: "", source_label: "Intranet — Pages" },
+  { chunk_id: "kb-003", source: "intranet_documents", page_number: 5, excerpt: "Maldives overwater villas: One&Only Reethi Rah and Four Seasons Landaa Giraavaru offer family villas with pool.", filename: "Maldives_Destination_Guide_2026.pdf", pdf_path: "", source_label: "Intranet — Documents" },
+  { chunk_id: "kb-004", source: "google-drive", page_number: 3, excerpt: "Virtuoso benefits at Aman properties include room upgrade, daily breakfast, and $100 credit.", filename: "Aman_Virtuoso_Benefits.pdf", pdf_path: "", source_label: "My Google Drive" },
+  { chunk_id: "kb-005", source: "intranet_pages", page_number: 1, excerpt: "Monaco Grand Prix 2026: recommended hotels Hôtel de Paris, Hermitage, and Fairmont. Book 12 months ahead.", filename: "Monaco_GP_Guide.pdf", pdf_path: "", source_label: "Intranet — Pages" },
 ];

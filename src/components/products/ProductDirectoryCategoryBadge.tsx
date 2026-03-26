@@ -1,13 +1,23 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import type { DirectoryProductCategory } from "@/types/product-directory";
 import { directoryCategoryColors, directoryCategoryLabel } from "./productDirectoryVisual";
 
-export function ProductDirectoryCategoryBadge({ type }: { type: DirectoryProductCategory }) {
+export function ProductDirectoryCategoryBadge({
+  type,
+  compact,
+}: {
+  type: DirectoryProductCategory;
+  compact?: boolean;
+}) {
   const c = directoryCategoryColors(type);
   return (
     <span
-      className="inline-block rounded px-1.5 py-0.5 text-[9px] font-medium leading-tight"
+      className={cn(
+        "inline-block rounded font-medium leading-tight",
+        compact ? "px-1 py-px text-[8px]" : "px-1.5 py-0.5 text-[9px]"
+      )}
       style={{
         background: c.bg,
         color: c.color,

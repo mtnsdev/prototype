@@ -42,7 +42,7 @@ export default function DeleteItineraryModal({ open, onClose, itinerary, onDelet
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="bg-[#1a1a1a] border-white/10">
+      <DialogContent className="bg-[#0e0e14] border-[rgba(255,255,255,0.06)]">
         <DialogHeader>
           <DialogTitle className="text-[#F5F5F5]">Delete itinerary</DialogTitle>
         </DialogHeader>

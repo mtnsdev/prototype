@@ -145,6 +145,8 @@ export interface ItineraryListParams {
   destination?: string;
   date_from?: string;
   date_to?: string;
+  /** Sales pipeline stage (when backend supports it) */
+  pipeline_stage?: PipelineStage;
   tab?: "mine" | "agency";
   sort_by?: string;
   sort_order?: "asc" | "desc";

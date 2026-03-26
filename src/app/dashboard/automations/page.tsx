@@ -125,7 +125,7 @@ export default function AutomationsPage() {
   };
 
   return (
-    <div className="h-full overflow-auto bg-[#0C0C0C]">
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-auto bg-[#0C0C0C]">
       {IS_PREVIEW_MODE && <PreviewBanner feature="Automations" variant="full" dismissible sampleDataOnly />}
       <div className="max-w-3xl mx-auto p-6 space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4">

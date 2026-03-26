@@ -115,7 +115,7 @@ export default function BriefingRoomPage() {
   const quickActions = quickStartContent?.actions?.slice(0, 6) ?? [];
 
   return (
-    <div className="h-full flex flex-col min-h-0 bg-[#0a0a0b]">
+    <div className="flex h-full min-h-0 flex-1 flex-col bg-[#0a0a0b]">
       {IS_PREVIEW_MODE && <PreviewBanner feature="Briefing Room" variant="full" dismissible sampleDataOnly />}
       {/* Elegant header with subtle gradient */}
       <header className="shrink-0 relative overflow-hidden">
@@ -177,7 +177,7 @@ export default function BriefingRoomPage() {
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[rgba(255,255,255,0.06)] to-transparent" />
       </header>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex min-h-0 flex-1 overflow-auto">
         <div className="max-w-[1600px] mx-auto px-6 py-8 md:px-8 md:py-10">
           {loading ? (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">

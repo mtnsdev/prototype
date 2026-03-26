@@ -42,21 +42,21 @@ const GEORGE_V_AGENCY: AgencyNoteMock[] = [
     id: "an-001",
     content:
       "Feels more like a 4-star despite the 5-star brochure rating. Rooms are beautiful but service is inconsistent — especially at dinner.",
-    author: "Maida",
+    author: "Marco Pellegrini",
     timeAgo: "2 weeks ago",
   },
   {
     id: "an-002",
     content:
       "Partner program renewed for 2026. 15% commission on rack rate, complimentary upgrade on availability. Contact: partnerships@hotel.com",
-    author: "Kristin",
+    author: "Kristin Summers",
     timeAgo: "1 month ago",
     pinned: true,
   },
   {
     id: "an-003",
     content: "Great for honeymoons. Not ideal for families with young kids — no kids club.",
-    author: "Janet",
+    author: "James Whitfield",
     timeAgo: "3 months ago",
   },
 ];
@@ -70,7 +70,7 @@ const DEFAULT_PROGRAMS: PartnerProgramMock[] = [
     commission: "10% on rack rate",
     scope: TEAM_EVERYONE_ID,
     expires: "2026-12-31",
-    commissionContact: { name: "Marie Duval", email: "marie.duval@aman.com" },
+    commissionContact: { name: "Rebecca Torres", email: "rtorres@virtuoso.com" },
   },
   {
     id: "pp-002",
@@ -94,7 +94,7 @@ const DMC_BALI_AGENCY: AgencyNoteMock[] = [
     id: "an-dmc-001",
     content:
       "Standard commission 12% on rack rate. 15% for bookings over $10k. Net 30 payment. Best DMC we work with in Bali — always recommend.",
-    author: "Kristin",
+    author: "Kristin Summers",
     timeAgo: "1 month ago",
     pinned: true,
   },
@@ -108,7 +108,7 @@ export function getProductLayerMock(productId: string): {
   partnerPrograms: PartnerProgramMock[];
   pendingSuggestions: number;
 } {
-  if (productId === "fake-enable-1") {
+  if (productId === "prod-enable-001") {
     return {
       advisorDefaults: GEORGE_V_ADVISOR,
       agencyNotes: [...GEORGE_V_AGENCY],
@@ -138,7 +138,7 @@ export function getProductLayerMock(productId: string): {
           id: "an-prod001-1",
           content:
             "Strong FIT for honeymoon — request ocean-view upgrade language in proposals. Virtuoso breakfast always confirmed.",
-          author: "Kristin",
+          author: "Kristin Summers",
           timeAgo: "1 week ago",
           pinned: true,
         },
@@ -155,31 +155,14 @@ export function getProductLayerMock(productId: string): {
       pendingSuggestions: 0,
     };
   }
-  /** Any other directory catalog id — show sample agency context so the panel is never “empty”. */
-  if (productId.startsWith("prod_") || productId.includes("prod-")) {
-    return {
-      advisorDefaults: { ...EMPTY_ADVISOR },
-      agencyNotes: [
-        {
-          id: `ag-tip-${productId}`,
-          content:
-            "Verify rate and amenities on the latest partner sheet before quoting — property terms change seasonally.",
-          author: "Agency catalog",
-          timeAgo: "Tip",
-        },
-      ],
-      partnerPrograms: [],
-      pendingSuggestions: 0,
-    };
-  }
-  if (productId === "fake-enable-3") {
+  if (productId === "prod-enable-003") {
     return {
       advisorDefaults: { ...EMPTY_ADVISOR, personalRating: 0 },
       agencyNotes: [
         {
           id: "an-oo-1",
           content: "Family-friendly; kids club is excellent. Book water villas early in peak season.",
-          author: "Kristin",
+          author: "Kristin Summers",
           timeAgo: "3 weeks ago",
         },
       ],
@@ -196,10 +179,27 @@ export function getProductLayerMock(productId: string): {
       pendingSuggestions: 0,
     };
   }
+  /** Directory catalog ids (`productDirectoryMock`) — exclude API fake `prod-enable-*` so they use the default branch below. */
+  if (productId.startsWith("prod_") || (productId.startsWith("prod-") && !productId.startsWith("prod-enable-"))) {
+    return {
+      advisorDefaults: { ...EMPTY_ADVISOR },
+      agencyNotes: [
+        {
+          id: `ag-tip-${productId}`,
+          content:
+            "Verify rate and amenities on the latest partner sheet before quoting — property terms change seasonally.",
+          author: "Agency catalog",
+          timeAgo: "Tip",
+        },
+      ],
+      partnerPrograms: [],
+      pendingSuggestions: 0,
+    };
+  }
   return {
     advisorDefaults: { ...EMPTY_ADVISOR },
     agencyNotes: [],
-    partnerPrograms: productId.startsWith("fake-enable") ? [DEFAULT_PROGRAMS[0]] : [],
-    pendingSuggestions: productId === "fake-enable-5" ? 1 : 0,
+    partnerPrograms: productId.startsWith("prod-enable") ? [DEFAULT_PROGRAMS[0]] : [],
+    pendingSuggestions: productId === "prod-enable-005" ? 1 : 0,
   };
 }

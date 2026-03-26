@@ -12,6 +12,8 @@ import {
   type KnowledgeDocumentListResponse,
 } from "@/types/knowledge-vault";
 import type { PipelineStage } from "@/types/itinerary";
+import { TEAM_EVERYONE_ID } from "@/types/teams";
+import { kvMockSearchRankingPenalty } from "@/lib/knowledgeVaultOffboardingPolicy";
 
 const now = new Date();
 const twoMinAgo = new Date(now.getTime() - 2 * 60 * 1000).toISOString();
@@ -283,7 +285,7 @@ function buildSavedWebDocuments(): KnowledgeDocument[] {
       source_type: DataSourceType.WebScrape,
       source_name: WEB_SRC_NAME,
       data_layer: "advisor",
-      ownerId: "user-colleague",
+      ownerId: "user-claire",
       file_type: "html",
       file_size_kb: Math.round(0.02 * 1024),
       tags: [],
@@ -300,7 +302,7 @@ function buildSavedWebDocuments(): KnowledgeDocument[] {
       source_type: DataSourceType.WebScrape,
       source_name: WEB_SRC_NAME,
       data_layer: "advisor",
-      ownerId: "user-colleague",
+      ownerId: "user-claire",
       file_type: "html",
       file_size_kb: Math.round(0.05 * 1024),
       tags: [],
@@ -351,7 +353,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       freshness: "fresh",
       quality_score: 94,
       linked_products: [{ id: "p-maldives", name: "Maldives Overwater Escape" }],
-      linked_vics: [{ id: "fake-vic-1", name: "Jordan Chen" }],
+      linked_vics: [{ id: "vic-001", name: "Jean-Christophe Chopin" }],
     },
     {
       id: "doc-gda-2",
@@ -392,7 +394,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       last_updated: d(1),
       freshness: "fresh",
       quality_score: 91,
-      linked_products: [{ id: "p-fs", name: "Four Seasons Collection" }],
+      linked_products: [{ id: "prod_002", name: "Four Seasons Bora Bora" }],
       linked_vics: [],
     },
     {
@@ -435,7 +437,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       freshness: "recent",
       quality_score: 86,
       linked_products: [],
-      linked_vics: [{ id: "fake-vic-2", name: "Alex Rivera" }],
+      linked_vics: [{ id: "vic-003", name: "Camille Signoles" }],
     },
     {
       id: "doc-gda-6",
@@ -460,7 +462,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
     },
     {
       id: "doc-gdp-1",
-      title: "Smith Family — Japan Trip Research",
+      title: "Moreau Family — Japan Trip Research",
       source_id: "src-gdrive-personal",
       source_type: DataSourceType.GoogleDrivePersonal,
       source_name: GPERSONAL,
@@ -470,15 +472,15 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       file_type: "docx",
       file_size_kb: 340,
       content_summary:
-        "Private working notes on rail passes, ryokan shortlist, and kid-friendly activities for the Smith family spring trip. Includes rough day-by-day pacing and links to properties under consideration.",
-      tags: ["Client Work", "Smith Family", "Japan"],
+        "Private working notes on rail passes, ryokan shortlist, and kid-friendly activities for the Moreau family spring trip. Includes rough day-by-day pacing and links to properties under consideration.",
+      tags: ["Client Work", "Moreau Family", "Japan"],
       ingestion_status: "indexed",
       ingested_at: d(1),
       last_updated: d(1),
       freshness: "fresh",
       quality_score: 72,
       linked_products: [],
-      linked_vics: [{ id: "fake-vic-3", name: "Smith Family" }],
+      linked_vics: [{ id: "vic-012", name: "Philippe Moreau" }],
     },
     {
       id: "doc-gdp-2",
@@ -487,7 +489,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       source_type: DataSourceType.GoogleDrivePersonal,
       source_name: GPERSONAL,
       data_layer: "advisor",
-      ownerId: "user-colleague",
+      ownerId: "user-claire",
       document_type: DocumentType.PartnerDirectory,
       file_type: "xlsx",
       file_size_kb: 88,
@@ -576,7 +578,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       source_type: DataSourceType.GoogleDrivePersonal,
       source_name: GPERSONAL,
       data_layer: "advisor",
-      ownerId: "user-colleague",
+      ownerId: "user-claire",
       document_type: DocumentType.MarketingCollateral,
       file_type: "docx",
       file_size_kb: 180,
@@ -651,7 +653,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       last_updated: d(0),
       freshness: "fresh",
       quality_score: 88,
-      linked_products: [{ id: "p-oorr", name: "One&Only Reethi Rah" }],
+      linked_products: [{ id: "prod-agency-003", name: "One&Only Reethi Rah" }],
       linked_vics: [],
     },
     {
@@ -724,7 +726,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       source_type: DataSourceType.IntranetDocuments,
       source_name: INTRANET_DOC,
       data_layer: "advisor",
-      ownerId: "user-colleague",
+      ownerId: "user-claire",
       document_type: DocumentType.InternalMemo,
       file_type: "pdf",
       file_size_kb: 95,
@@ -781,7 +783,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       freshness: "recent",
       quality_score: 85,
       linked_products: [],
-      linked_vics: [{ id: "fake-vic-4", name: "Elena Kostas" }],
+      linked_vics: [{ id: "vic-006", name: "Valérie Rousseau" }],
     },
     {
       id: "doc-cp-3",
@@ -851,7 +853,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
     },
     {
       id: "doc-mu-1",
-      title: "Johnson Anniversary Trip — Proposal Draft",
+      title: "Bresson Anniversary Trip — Proposal Draft",
       source_id: "src-manual",
       source_type: DataSourceType.ManualUpload,
       source_name: MANUAL,
@@ -861,7 +863,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       file_type: "pdf",
       file_size_kb: 890,
       content_summary:
-        "Draft proposal PDF for Johnson anniversary with suite upgrades and celebratory amenities. Uploaded manually; visible only to uploading advisor until shared upward.",
+        "Draft proposal PDF for Bresson anniversary with suite upgrades and celebratory amenities. Uploaded manually; visible only to uploading advisor until shared upward.",
       tags: ["Manual Uploads", "Proposals"],
       ingestion_status: "processing",
       ingested_at: d(0),
@@ -871,7 +873,7 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       uploaded_by: "user-1",
       uploaded_by_name: "You",
       linked_products: [],
-      linked_vics: [{ id: "fake-vic-5", name: "Johnson Party" }],
+      linked_vics: [{ id: "vic-011", name: "Thomas Bresson" }],
     },
     {
       id: "doc-mu-2",
@@ -913,6 +915,56 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       freshness: "fresh",
       quality_score: 90,
       linked_products: [{ id: "p-bali", name: "Bali Retreat" }],
+      linked_vics: [],
+    },
+    {
+      id: "doc-mu-leaver-shared",
+      title: "Schengen Visa Rules — Advisor Cheat Sheet",
+      source_id: "src-manual",
+      source_type: DataSourceType.ManualUpload,
+      source_name: MANUAL,
+      data_layer: "advisor",
+      ownerId: "user-alex-former",
+      kv_scope: TEAM_EVERYONE_ID,
+      owner_departed: true,
+      departed_at: "2026-02-01T00:00:00Z",
+      requires_access_review: true,
+      document_type: DocumentType.TravelAdvisory,
+      file_type: "pdf",
+      file_size_kb: 220,
+      tags: ["Manual Uploads", "Europe"],
+      ingestion_status: "indexed",
+      ingested_at: d(14),
+      last_updated: d(14),
+      freshness: "recent",
+      quality_score: 86,
+      uploaded_by: "user-alex-former",
+      uploaded_by_name: "Alex Rivera",
+      linked_products: [],
+      linked_vics: [],
+    },
+    {
+      id: "doc-mu-leaver-private",
+      title: "Draft — Client Parson Itinerary Notes",
+      source_id: "src-manual",
+      source_type: DataSourceType.ManualUpload,
+      source_name: MANUAL,
+      data_layer: "advisor",
+      ownerId: "user-morgan-former",
+      owner_departed: true,
+      departed_at: "2026-01-15T00:00:00Z",
+      document_type: DocumentType.ClientReport,
+      file_type: "pdf",
+      file_size_kb: 340,
+      tags: ["Manual Uploads", "Drafts"],
+      ingestion_status: "indexed",
+      ingested_at: d(30),
+      last_updated: d(30),
+      freshness: "aging",
+      quality_score: 72,
+      uploaded_by: "user-morgan-former",
+      uploaded_by_name: "Morgan Lee",
+      linked_products: [],
       linked_vics: [],
     },
     {
@@ -1194,7 +1246,13 @@ export function filterMockDocuments(
 
   const sortBy = params.sort_by ?? "last_updated";
   const order = params.sort_order ?? "desc";
+  const searchActive = Boolean(params.search?.trim());
   list.sort((a, b) => {
+    if (searchActive) {
+      const pa = kvMockSearchRankingPenalty(a);
+      const pb = kvMockSearchRankingPenalty(b);
+      if (pa !== pb) return pa - pb;
+    }
     let aVal: string | number = a.last_updated;
     let bVal: string | number = b.last_updated;
     if (sortBy === "title") {

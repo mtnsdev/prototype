@@ -841,7 +841,7 @@ export default function DetailTabContent({
         </Section>
 
         <Section title="Client forms">
-          {vicId === "fake-vic-1" ? (
+          {vicId === "vic-001" ? (
             <div className="space-y-3">
               <div className="rounded-lg border border-white/[0.08] p-3">
                 <div className="flex justify-between items-start gap-2">

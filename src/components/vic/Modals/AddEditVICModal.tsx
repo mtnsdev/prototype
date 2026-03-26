@@ -251,7 +251,7 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
                 className={cn(
                   "rounded-full w-8 h-8 flex items-center justify-center text-xs font-medium transition-colors",
                   step === s.id
-                    ? "bg-[#F5F5F5] text-[#0C0C0C]"
+                    ? "bg-[#F5F5F5] text-[#08080c]"
                     : step > s.id
                       ? "bg-white/20 text-[#F5F5F5]"
                       : "bg-white/10 text-[rgba(245,245,245,0.5)]"

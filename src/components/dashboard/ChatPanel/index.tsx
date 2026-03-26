@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Loader2, ChevronDown } from "lucide-react";
 import PdfModal from "../PdfModal";
 import { useUserOptional } from "@/contexts/UserContext";
+import { useToast } from "@/contexts/ToastContext";
+import { useProductDirectoryCatalogOptional } from "@/components/products/ProductDirectoryCatalogContext";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 import type { Message, ChatPanelProps, BotResponse, Citation, WebCitation, Conflict, PlaceCard } from "./types";
 import { ChatHeader } from "./ChatHeader";
@@ -21,6 +23,8 @@ export default function ChatPanel({
   onBackToHome,
 }: ChatPanelProps) {
   const userContext = useUserOptional();
+  const toast = useToast();
+  const directoryCatalog = useProductDirectoryCatalogOptional();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -322,6 +326,38 @@ export default function ChatPanel({
     rightPanelMode === "knowledge" && panelMessage?.role === "bot" && panelMessage.response
       ? getOrderedCitations(panelMessage.response.answer ?? "", panelMessage.response.citations ?? [])
       : [];
+  const lastUserQueryForPanel = useMemo(() => {
+    if (rightPanelMessageIndex == null) return undefined;
+    for (let i = rightPanelMessageIndex - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m?.role === "user" && m.text?.trim()) return m.text.trim();
+    }
+    return undefined;
+  }, [rightPanelMessageIndex, messages]);
+
+  const handleSavePlaceToExternalSearch = useCallback(
+    (directoryProductId: string) => {
+      if (!directoryCatalog) return;
+      const ok = directoryCatalog.addProductToExternalSearch(directoryProductId, {
+        searchQuery: lastUserQueryForPanel,
+        sourceConversationId: currentSessionId ?? undefined,
+      });
+      if (ok) {
+        toast({
+          title: "Saved to External Search",
+          description: "View it under Product directory → External Search collection.",
+        });
+      } else {
+        toast({
+          title: "Could not save",
+          description:
+            "This product may be missing from your directory or External Search is unavailable for your account.",
+        });
+      }
+    },
+    [directoryCatalog, lastUserQueryForPanel, currentSessionId, toast]
+  );
+
   const isRightPanelOpen = rightPanelMessageIndex != null && rightPanelMode != null;
   const closeRightPanel = useCallback(() => {
     setRightPanelMessageIndex(null);
@@ -521,6 +557,8 @@ export default function ChatPanel({
           onClose={closeRightPanel}
           onCitationClick={openPdfModalFn}
           highlightedKbCitationNumber={rightPanelMode === "knowledge" ? highlightedKbCitationNumber : null}
+          externalSearchActive={externalSearchMode}
+          onSavePlaceToExternalSearch={directoryCatalog ? handleSavePlaceToExternalSearch : undefined}
         />
       </div>
 

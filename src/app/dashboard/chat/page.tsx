@@ -28,7 +28,7 @@ export default function ChatPage() {
 
     return (
         <>
-            <div className="h-full flex flex-col overflow-hidden">
+            <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                 <ChatPanel
                     conversationId={selectedConversationId}
                     onConversationCreated={handleConversationCreated}

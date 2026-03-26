@@ -9,6 +9,7 @@ import { usePages, type PageItem } from "@/hooks/usePages";
 import { Folder, FileText, BookOpen, ChevronRight, ChevronDown, Eye, Loader2, Search, Cloud, Shield, Lock, Globe, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageSearchField } from "@/components/ui/page-search-field";
 import PdfModal from "@/components/dashboard/PdfModal";
 import SyncStatusButton from "@/components/library/SyncStatusButton";
 import type { DriveFile } from "@/types/google-drive";
@@ -436,8 +437,8 @@ function DriveLibraryContent({
                             <Cloud size={16} className="text-[rgba(245,245,245,0.6)]" />
                         </div>
                         <div>
-                            <h1 className="text-[15px] font-semibold text-[#F5F5F5]">{headerLabel}</h1>
-                            <p className="text-[12px] text-[rgba(245,245,245,0.45)] mt-0.5">
+                            <h1 className="text-sm font-semibold leading-none text-[#F5F5F5]">{headerLabel}</h1>
+                            <p className="mt-1 text-[11px] leading-snug text-[rgba(245,245,245,0.5)]">
                                 {fileCount} files, {folderCount} folders
                             </p>
                         </div>
@@ -472,19 +473,12 @@ function DriveLibraryContent({
 
                 {/* Search */}
                 <div className="px-5 py-3 border-b border-[rgba(255,255,255,0.08)] shrink-0">
-                    <div className="relative">
-                        <Search
-                            size={16}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(245,245,245,0.4)]"
-                        />
-                        <Input
-                            type="text"
-                            placeholder="Search files and folders..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full rounded-lg pl-10 bg-[#0C0C0C] border-[rgba(255,255,255,0.1)]"
-                        />
-                    </div>
+                    <PageSearchField
+                        placeholder="Search files and folders…"
+                        aria-label="Search files and folders"
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                    />
                     {isSearchMode && (
                         <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-2">
                             {filteredFiles.length} result{filteredFiles.length !== 1 ? "s" : ""}
@@ -1196,33 +1190,20 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                     {/* Header */}
                     <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] shrink-0 flex items-center justify-between">
                         <div>
-                            <h1 className="text-[15px] font-semibold text-[#F5F5F5]">Knowledge Library</h1>
-                            <p className="text-[12px] text-[rgba(245,245,245,0.4)] mt-0.5">Knowledge</p>
+                            <h1 className="text-sm font-semibold leading-none text-[#F5F5F5]">Knowledge Library</h1>
+                            <p className="mt-1 text-[11px] leading-snug text-[rgba(245,245,245,0.5)]">Knowledge</p>
                         </div>
                         <SyncStatusButton />
                     </div>
 
                     {/* Search bar for intranet */}
                     <div className="px-5 py-3 border-b border-[rgba(255,255,255,0.08)] shrink-0">
-                        <div className="relative">
-                            <Search
-                                size={16}
-                                className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(245,245,245,0.4)]"
-                            />
-                            <input
-                                type="text"
-                                placeholder="Search files and folders..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className={[
-                                    "w-full rounded-lg pl-10 pr-4 py-2.5 text-[13px]",
-                                    "bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.4)]",
-                                    "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
-                                    "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
-                                    "transition-all duration-150",
-                                ].join(" ")}
-                            />
-                        </div>
+                        <PageSearchField
+                            placeholder="Search files and folders…"
+                            aria-label="Search files and folders"
+                            value={searchQuery}
+                            onChange={setSearchQuery}
+                        />
                         <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-2">
                             {searchQuery.trim().length < 2
                                 ? "Type at least 2 characters to search all documents and folders."
@@ -1534,9 +1515,9 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                 <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] shrink-0">
                     <div className="flex items-center justify-between">
                         <div className="flex-1">
-                            <h1 className="text-[15px] font-semibold text-[#F5F5F5]">Knowledge Library</h1>
+                            <h1 className="text-sm font-semibold leading-none text-[#F5F5F5]">Knowledge Library</h1>
                             {/* Breadcrumbs */}
-                            <div className="flex items-center gap-2 mt-1.5">
+                            <div className="flex items-center gap-2 mt-1">
                                 {breadcrumbs.map((crumb, idx) => (
                                     <div key={crumb.path} className="flex items-center gap-2">
                                         {idx > 0 && <ChevronRight size={12} className="text-[rgba(245,245,245,0.3)]" />}
@@ -1577,25 +1558,12 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                 {/* Search Input - Only show for documents mode */}
                 {navigationMode === "documents" && (
                     <div className="px-5 py-3 border-b border-[rgba(255,255,255,0.08)] shrink-0">
-                        <div className="relative">
-                            <Search
-                                size={16}
-                                className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(245,245,245,0.4)]"
-                            />
-                            <input
-                                type="text"
-                                placeholder="Search documents and folders..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className={[
-                                    "w-full rounded-lg pl-10 pr-4 py-2.5 text-[13px]",
-                                    "bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.4)]",
-                                    "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
-                                    "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
-                                    "transition-all duration-150",
-                                ].join(" ")}
-                            />
-                        </div>
+                        <PageSearchField
+                            placeholder="Search documents and folders…"
+                            aria-label="Search documents and folders"
+                            value={searchQuery}
+                            onChange={setSearchQuery}
+                        />
                         <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-2">
                             {searchQuery.trim().length < 2
                                 ? "Type at least 2 characters to search all documents and folders."

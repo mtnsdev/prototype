@@ -80,7 +80,7 @@ export default function AcuitySourceBadge({ provenance, fieldLabel, onMarkVerifi
           <span>{provider}</span>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-80 bg-[#1a1a1a] border-[rgba(255,255,255,0.1)] p-3">
+      <DropdownMenuContent align="start" className="w-80 p-3">
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2">
             <Sparkles size={14} className="text-violet-400 shrink-0" />

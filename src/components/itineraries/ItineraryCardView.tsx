@@ -86,7 +86,7 @@ export default function ItineraryCardView({
                       <MoreHorizontal size={16} />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-white/10">
+                  <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
                       <Link href={`/dashboard/itineraries/${id}`}>View</Link>
                     </DropdownMenuItem>

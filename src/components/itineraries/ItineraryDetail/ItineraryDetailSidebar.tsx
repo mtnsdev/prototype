@@ -65,7 +65,7 @@ export default function ItineraryDetailSidebar({
   const showFinancials = canViewFinancials || totalClient > 0 || totalNet > 0;
 
   return (
-    <aside className="w-72 shrink-0 border-l border-[rgba(255,255,255,0.08)] bg-[#0C0C0C] p-4 overflow-y-auto max-md:w-full max-md:border-l-0 max-md:border-t max-md:order-last">
+    <aside className="w-72 shrink-0 border-l border-[rgba(255,255,255,0.08)] bg-[#08080c] p-4 overflow-y-auto max-md:w-full max-md:border-l-0 max-md:border-t max-md:order-last">
       <section className="space-y-3 mb-6">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)]">
           Trip info

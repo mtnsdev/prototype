@@ -10,6 +10,8 @@ import {
 } from "react";
 import { MOCK_EMAIL_INGESTIONS } from "@/components/knowledge-vault/emailIngestionMock";
 import type { EmailAttachment, EmailIngestion } from "@/types/email-ingestion";
+import { useUser } from "@/contexts/UserContext";
+import { recordKvAccessAudit } from "@/lib/knowledgeVaultAuditLog";
 
 function cloneEmails(src: typeof MOCK_EMAIL_INGESTIONS): EmailIngestion[] {
   return src.map((e) => ({
@@ -45,24 +47,58 @@ function initialEmails(): EmailIngestion[] {
 }
 
 export function KnowledgeVaultEmailProvider({ children }: { children: ReactNode }) {
+  const { user } = useUser();
+  const auditActorLabel = user?.username ?? user?.email ?? "User";
+
   const [emails, setEmails] = useState<EmailIngestion[]>(initialEmails);
 
   const unprocessedCount = useMemo(() => emails.filter((e) => e.status === "unprocessed").length, [emails]);
 
-  const shareEmailWithTeam = useCallback((id: string, teamId: string) => {
-    setEmails((prev) => prev.map((e) => (e.id === id ? { ...e, scope: teamId } : e)));
-  }, []);
+  const shareEmailWithTeam = useCallback(
+    (id: string, teamId: string) => {
+      setEmails((prev) => {
+        const e = prev.find((x) => x.id === id);
+        if (!e || e.scope === teamId) return prev;
+        recordKvAccessAudit({
+          docId: `email:${e.id}`,
+          docTitle: `Email: ${e.subject}`,
+          actorLabel: auditActorLabel,
+          fromScope: e.scope,
+          toScope: teamId,
+        });
+        return prev.map((em) => (em.id === id ? { ...em, scope: teamId } : em));
+      });
+    },
+    [auditActorLabel]
+  );
 
-  const shareAttachmentWithTeam = useCallback((attachmentId: string, teamId: string) => {
-    setEmails((prev) =>
-      prev.map((e) => ({
-        ...e,
-        attachments: e.attachments.map((a) =>
-          a.id === attachmentId ? { ...a, scope: teamId } : a
-        ),
-      }))
-    );
-  }, []);
+  const shareAttachmentWithTeam = useCallback(
+    (attachmentId: string, teamId: string) => {
+      setEmails((prev) => {
+        let hit: { email: EmailIngestion; att: EmailAttachment } | null = null;
+        for (const e of prev) {
+          const a = e.attachments.find((x) => x.id === attachmentId);
+          if (a) {
+            hit = { email: e, att: a };
+            break;
+          }
+        }
+        if (!hit || hit.att.scope === teamId) return prev;
+        recordKvAccessAudit({
+          docId: `email-att:${attachmentId}`,
+          docTitle: `${hit.att.filename} · ${hit.email.subject}`,
+          actorLabel: auditActorLabel,
+          fromScope: hit.att.scope,
+          toScope: teamId,
+        });
+        return prev.map((e) => ({
+          ...e,
+          attachments: e.attachments.map((a) => (a.id === attachmentId ? { ...a, scope: teamId } : a)),
+        }));
+      });
+    },
+    [auditActorLabel]
+  );
 
   const markEmailProcessed = useCallback((id: string) => {
     const now = new Date().toISOString();

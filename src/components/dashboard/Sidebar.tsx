@@ -16,25 +16,14 @@ import {
     Building2,
     Route,
     ChevronRight,
-    ChevronDown,
-    Database,
     LayoutDashboard,
     BookOpen,
     BarChart3,
     Zap,
-    Bell,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useUserOptional } from "@/contexts/UserContext";
-import { useKvShareSuggestionsOptional } from "@/contexts/KvShareSuggestionsContext";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
-import { useClaromentisStatus } from "@/hooks/useClaromentisStatus";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 import { cn } from "@/lib/utils";
 export type Conversation = {
@@ -65,12 +54,6 @@ export default function Sidebar({
     const pathname = usePathname();
     const router = useRouter();
     const userContext = useUserOptional();
-    const kvShareSuggestions = useKvShareSuggestionsOptional();
-    const showKvAdminBell = Boolean(
-        kvShareSuggestions &&
-            userContext?.user &&
-            (userContext.user.role === "admin" || userContext.kvViewAsAdmin)
-    );
     const [recentConversations, setRecentConversations] = useState<Conversation[]>([]);
     const [userPopoverOpen, setUserPopoverOpen] = useState(false);
     const popoverRef = useRef<HTMLDivElement>(null);
@@ -195,69 +178,6 @@ export default function Sidebar({
                                 </div>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
-                                {showKvAdminBell && kvShareSuggestions && (
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8 rounded-md hover:bg-white/8 text-white/60 hover:text-white/90 relative"
-                                                aria-label="Knowledge notifications"
-                                            >
-                                                <Bell size={16} />
-                                                {kvShareSuggestions.suggestions.length > 0 && (
-                                                    <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] px-0.5 rounded-full bg-amber-500/90 text-[9px] font-bold text-[#0a0a0f] flex items-center justify-center">
-                                                        {kvShareSuggestions.suggestions.length > 9
-                                                            ? "9+"
-                                                            : kvShareSuggestions.suggestions.length}
-                                                    </span>
-                                                )}
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent
-                                            align="end"
-                                            className="w-80 max-h-72 overflow-y-auto bg-[#1a1a1a] border-white/10 p-0"
-                                        >
-                                            {kvShareSuggestions.suggestions.length === 0 ? (
-                                                <div className="px-3 py-3 text-xs text-gray-500">
-                                                    No pending sharing suggestions
-                                                </div>
-                                            ) : (
-                                                kvShareSuggestions.suggestions.map((s) => (
-                                                    <div
-                                                        key={s.id}
-                                                        className="px-3 py-2.5 border-b border-white/[0.06] last:border-0"
-                                                    >
-                                                        <p className="text-[11px] text-[rgba(245,245,245,0.85)] leading-snug">
-                                                            Suggested sharing &quot;{s.docTitle}&quot; with{" "}
-                                                            <span className="text-[#C9A96E]">{s.teamName}</span>
-                                                        </p>
-                                                        <div className="flex gap-2 mt-2">
-                                                            <Button
-                                                                type="button"
-                                                                size="sm"
-                                                                className="h-7 text-[11px] bg-blue-500/15 text-blue-300 hover:bg-blue-500/25"
-                                                                onClick={() => kvShareSuggestions.approve(s.id)}
-                                                            >
-                                                                Approve
-                                                            </Button>
-                                                            <Button
-                                                                type="button"
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                className="h-7 text-[11px] text-gray-500 hover:text-gray-300"
-                                                                onClick={() => kvShareSuggestions.decline(s.id)}
-                                                            >
-                                                                Decline
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                )}
                                 <Button
                                     type="button"
                                     variant="ghost"

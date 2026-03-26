@@ -25,6 +25,10 @@ export interface DirectoryProductPromotion {
   bookingEnd: string;
   travelStart: string;
   travelEnd: string;
+  /** Short label shown in directory / partner portal (e.g. “Spring bonus”). */
+  title?: string;
+  /** Advisor-facing terms, stacking rules, or internal notes for the incentive. */
+  details?: string;
 }
 
 /** Structured amenity tags for program/amenity filters and card highlights. */
@@ -80,6 +84,10 @@ export interface DirectoryAgencyContact {
   note?: string;
   addedBy?: string;
   addedById?: string;
+  /** Submitted from private contacts; awaiting admin approval. */
+  pendingUpgrade?: boolean;
+  upgradedById?: string;
+  upgradedByName?: string;
 }
 
 export interface DirectoryProductCollectionRef {
@@ -98,6 +106,7 @@ export interface DirectoryAgencyNote {
   /** Submitted from personal notes; awaiting admin approval. */
   pendingUpgrade?: boolean;
   upgradedById?: string;
+  upgradedByName?: string;
   pinned?: boolean;
 }
 
@@ -170,6 +179,19 @@ export interface DirectoryCollectionOption {
   description?: string;
   /** Canonical member ids for header count (live count also derived from products). */
   productIds?: string[];
+  /** System collections (e.g. External Search) cannot be renamed or deleted. */
+  isSystem?: boolean;
+  /** Optional icon key for UI (e.g. `search`). */
+  icon?: string;
+  createdAt?: string;
+}
+
+/** Mock / analytics metadata for products saved into the External Search system collection. */
+export interface DirectoryExternalSearchMeta {
+  savedAt: string;
+  savedBy: string;
+  searchQuery?: string;
+  sourceConversation?: number;
 }
 
 /** Payload when creating a collection from the add-to-collection picker. */

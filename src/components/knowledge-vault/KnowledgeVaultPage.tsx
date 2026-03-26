@@ -1,9 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { ChevronDown, Info, RefreshCw, Search, Shield, Settings2 } from "lucide-react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  useLayoutEffect,
+  useSyncExternalStore,
+} from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { Info, RefreshCw, Shield, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PageSearchField } from "@/components/ui/page-search-field";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,12 +50,28 @@ import { knowledgeDocumentUiScope } from "@/lib/knowledgeDocumentScope";
 import {
   canAdminRescopeDocument,
   canSeeKnowledgeDocument,
+  effectiveUiScope,
   isOversightPrivateDoc,
   matchesKvScopeFilter,
   type KvScopeOverrides,
 } from "@/lib/knowledgeVaultVisibility";
+import { KV_OFFBOARDING_PLAYBOOK } from "@/lib/knowledgeVaultOffboardingPolicy";
+import {
+  getKvAccessAuditSnapshot,
+  recordKvAccessAudit,
+  subscribeKvAccessAudit,
+} from "@/lib/knowledgeVaultAuditLog";
+import {
+  kvSortToApi,
+  kvToggleSortColumn,
+  type KvSortColumn,
+  type KvSortOption,
+} from "@/lib/knowledgeVaultSort";
+import { buildKnowledgeVaultSearchParams, parseKnowledgeVaultSearchParams } from "@/lib/knowledgeVaultUrl";
+import { TEAM_EVERYONE_ID } from "@/types/teams";
 
 const EMAIL_SOURCE_ID = "src-email";
+const KV_SEARCH_DEBOUNCE_MS = 320;
 
 /** Fetch enough rows for client-side visibility filters; table pages this list. */
 const KV_FETCH_LIMIT = 5000;
@@ -64,30 +89,38 @@ function kvPaginationItems(current: number, total: number): (number | "gap")[] {
   return out;
 }
 
-export type KvSortOption =
-  | "updated_desc"
-  | "updated_asc"
-  | "title_asc"
-  | "title_desc"
-  | "size_desc"
-  | "size_asc";
-
-function kvSortToApi(option: KvSortOption): { sort_by: string; sort_order: "asc" | "desc" } {
-  const m: Record<KvSortOption, { sort_by: string; sort_order: "asc" | "desc" }> = {
-    updated_desc: { sort_by: "last_updated", sort_order: "desc" },
-    updated_asc: { sort_by: "last_updated", sort_order: "asc" },
-    title_asc: { sort_by: "title", sort_order: "asc" },
-    title_desc: { sort_by: "title", sort_order: "desc" },
-    size_desc: { sort_by: "file_size_kb", sort_order: "desc" },
-    size_asc: { sort_by: "file_size_kb", sort_order: "asc" },
-  };
-  return m[option];
-}
-
 function scopeFilterToDataLayer(scope: string | undefined): DataLayer | undefined {
   if (scope == null) return undefined;
   if (scope === "private") return "advisor";
   return "agency";
+}
+
+function formatKvAuditScope(scopeKey: string): string {
+  if (scopeKey === "private") return "Private";
+  if (scopeKey === "mirrors_source") return "Based on access";
+  if (scopeKey === TEAM_EVERYONE_ID) return "Everyone";
+  const t = MOCK_TEAMS.find((x) => x.id === scopeKey);
+  return t?.name ?? scopeKey;
+}
+
+function formatKnowledgeVaultLastSync(sources: DataSource[]): string {
+  const connected = sources.filter((s) => s.status === "connected");
+  if (connected.length === 0) return "Connect a source to sync";
+  let best: number | null = null;
+  for (const s of connected) {
+    if (!s.last_sync) continue;
+    const t = new Date(s.last_sync).getTime();
+    if (Number.isNaN(t)) continue;
+    best = best == null ? t : Math.max(best, t);
+  }
+  if (best == null) return "No sync timestamps yet";
+  const diffMin = Math.floor((Date.now() - best) / 60000);
+  if (diffMin < 1) return "Last sync just now";
+  if (diffMin < 60) return `Last sync ${diffMin}m ago`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 48) return `Last sync ${diffH}h ago`;
+  const diffD = Math.floor(diffH / 24);
+  return `Last sync ${diffD}d ago`;
 }
 
 export default function KnowledgeVaultPage() {
@@ -97,6 +130,10 @@ export default function KnowledgeVaultPage() {
   const { teams: liveTeams } = useTeams();
   const isAdmin = kvViewAsAdmin || user?.role === "admin";
   const currentUserOwnerId = user?.id != null ? String(user.id) : "1";
+  const router = useRouter();
+  const pathname = usePathname();
+  const kvUrlSyncedRef = useRef<string | null>(null);
+  const kvUrlHydratedRef = useRef(false);
 
   const [sources, setSources] = useState<DataSource[]>([]);
   const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
@@ -104,8 +141,11 @@ export default function KnowledgeVaultPage() {
   const [loading, setLoading] = useState(true);
   const [showAllPrivateDocs, setShowAllPrivateDocs] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortOption, setSortOption] = useState<KvSortOption>("updated_desc");
   const [selectedDoc, setSelectedDoc] = useState<KnowledgeDocument | null>(null);
+  /** Deep-link `?doc=` until the panel opens or we give up (keeps URL stable vs sync effect). */
+  const [kvPendingOpenDocId, setKvPendingOpenDocId] = useState<string | null>(null);
   const [connectOpen, setConnectOpen] = useState(false);
   const [filters, setFilters] = useState<KnowledgeVaultFiltersState>({});
   const [docScopeOverrides, setDocScopeOverrides] = useState<KvScopeOverrides>({});
@@ -131,6 +171,31 @@ export default function KnowledgeVaultPage() {
     [user, isAdmin]
   );
 
+  const kvAccessAuditLog = useSyncExternalStore(
+    subscribeKvAccessAudit,
+    getKvAccessAuditSnapshot,
+    getKvAccessAuditSnapshot
+  );
+
+  const auditActorLabel = user?.username ?? user?.email ?? "Admin";
+
+  const syncKnowledgeVaultFromLocation = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    kvUrlSyncedRef.current = sp.toString();
+    const p = parseKnowledgeVaultSearchParams(sp);
+    setSearchQuery(p.q);
+    setDebouncedSearch(p.q.trim());
+    setSortOption(p.sort ?? "updated_desc");
+    setListPage(p.page ?? 1);
+    setFilters(Object.keys(p.filters).length > 0 ? p.filters : {});
+    if (p.docId) setKvPendingOpenDocId(p.docId);
+    else {
+      setKvPendingOpenDocId(null);
+      setSelectedDoc(null);
+    }
+  }, []);
+
   const isSourcePolicyBlocked = useCallback(
     (source: DataSource) => {
       if (resolvedPolicies.accessibleSources === "all") return false;
@@ -140,6 +205,42 @@ export default function KnowledgeVaultPage() {
     },
     [resolvedPolicies]
   );
+
+  const onListSortColumn = useCallback((column: KvSortColumn) => {
+    setSortOption((prev) => kvToggleSortColumn(prev, column));
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery.trim()), KV_SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  useLayoutEffect(() => {
+    if (kvUrlHydratedRef.current) return;
+    kvUrlHydratedRef.current = true;
+    syncKnowledgeVaultFromLocation();
+  }, [syncKnowledgeVaultFromLocation]);
+
+  useEffect(() => {
+    const onPopState = () => syncKnowledgeVaultFromLocation();
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [syncKnowledgeVaultFromLocation]);
+
+  useEffect(() => {
+    if (!kvUrlHydratedRef.current) return;
+    const p = buildKnowledgeVaultSearchParams({
+      debouncedSearch,
+      sortOption,
+      listPage,
+      filters,
+      openDocumentId: selectedDoc?.id ?? kvPendingOpenDocId,
+    });
+    const qs = p.toString();
+    if (qs === kvUrlSyncedRef.current) return;
+    kvUrlSyncedRef.current = qs;
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [debouncedSearch, sortOption, listPage, filters, pathname, router, selectedDoc?.id, kvPendingOpenDocId]);
 
   const emailOnlyView =
     filters.source_ids?.length === 1 && filters.source_ids[0] === EMAIL_SOURCE_ID;
@@ -156,7 +257,7 @@ export default function KnowledgeVaultPage() {
           ingestion_status: emailOnly ? undefined : filters.ingestion_status,
           source_ids: filters.source_ids?.length ? filters.source_ids.join(",") : undefined,
           tags: emailOnly ? undefined : filters.tags?.length ? filters.tags.join(",") : undefined,
-          search: searchQuery.trim() || undefined,
+          search: debouncedSearch.trim() || undefined,
           sort_by,
           sort_order,
           page: 1,
@@ -169,7 +270,7 @@ export default function KnowledgeVaultPage() {
     } finally {
       setLoading(false);
     }
-  }, [filters, searchQuery, sortOption]);
+  }, [filters, debouncedSearch, sortOption]);
 
   useEffect(() => {
     load();
@@ -200,28 +301,56 @@ export default function KnowledgeVaultPage() {
     resolvedPolicies,
   ]);
 
+  useEffect(() => {
+    const pending = kvPendingOpenDocId;
+    if (!pending || loading) return;
+    const match =
+      visibleDocuments.find((d) => d.id === pending) ?? documents.find((d) => d.id === pending);
+    if (match) {
+      setKvPendingOpenDocId(null);
+      setPermissionsOpen(false);
+      setSelectedDoc(match);
+      return;
+    }
+    setKvPendingOpenDocId(null);
+  }, [loading, visibleDocuments, documents, kvPendingOpenDocId]);
+
   const oversightPrivate = useCallback(
     (doc: KnowledgeDocument) =>
       isOversightPrivateDoc(doc, currentUserOwnerId, isAdmin, showAllPrivateDocs, docScopeOverrides),
     [currentUserOwnerId, isAdmin, showAllPrivateDocs, docScopeOverrides]
   );
 
-  const applyDocScopeOverride = useCallback((doc: KnowledgeDocument, scope: "private" | string) => {
-    const base = knowledgeDocumentUiScope(doc);
-    setDocScopeOverrides((prev) => {
-      const next = { ...prev };
-      if (scope === base) delete next[doc.id];
-      else next[doc.id] = scope;
-      return next;
-    });
-  }, []);
+  const applyDocScopeOverride = useCallback(
+    (doc: KnowledgeDocument, scope: "private" | string) => {
+      const prevEff = effectiveUiScope(doc, docScopeOverrides);
+      const base = knowledgeDocumentUiScope(doc);
+      const nextEffective = scope === base ? base : scope;
+      if (prevEff !== nextEffective) {
+        recordKvAccessAudit({
+          docId: doc.id,
+          docTitle: doc.title,
+          actorLabel: auditActorLabel,
+          fromScope: prevEff,
+          toScope: nextEffective,
+        });
+      }
+      setDocScopeOverrides((prev) => {
+        const next = { ...prev };
+        if (scope === base) delete next[doc.id];
+        else next[doc.id] = scope;
+        return next;
+      });
+    },
+    [docScopeOverrides, auditActorLabel]
+  );
 
   useEffect(() => {
     kvShare.setApprovalHandler((docId, teamId) => {
       const d = documents.find((x) => x.id === docId);
       if (d && canAdminRescopeDocument(d)) applyDocScopeOverride(d, teamId);
       const label = MOCK_TEAMS.find((t) => t.id === teamId)?.name ?? teamId;
-      toast(`Scope changed to ${label}`);
+      toast(`Access: ${label}`);
     });
     return () => kvShare.setApprovalHandler(null);
   }, [kvShare, documents, applyDocScopeOverride, toast]);
@@ -229,7 +358,7 @@ export default function KnowledgeVaultPage() {
   useEffect(() => {
     setSelectedDocIds([]);
     setListPage(1);
-  }, [filters, searchQuery, sortOption, showAllPrivateDocs]);
+  }, [filters, debouncedSearch, sortOption, showAllPrivateDocs]);
 
   const handleShareDocument = useCallback(
     (doc: KnowledgeDocument, teamId: string) => {
@@ -237,7 +366,7 @@ export default function KnowledgeVaultPage() {
       const name = team?.name ?? "team";
       if (isAdmin && canAdminRescopeDocument(doc)) {
         applyDocScopeOverride(doc, teamId);
-        toast(`Scope changed to ${name}`);
+        toast(`Access: ${name}`);
         return;
       }
       if (!isAdmin) {
@@ -254,7 +383,7 @@ export default function KnowledgeVaultPage() {
         });
         return;
       }
-      toast("Scope can't be changed for this document.");
+      toast("Access can't be changed for this document.");
     },
     [isAdmin, applyDocScopeOverride, toast, kvShare]
   );
@@ -270,14 +399,6 @@ export default function KnowledgeVaultPage() {
   const toggleDocSelected = useCallback((docId: string) => {
     setSelectedDocIds((prev) => (prev.includes(docId) ? prev.filter((id) => id !== docId) : [...prev, docId]));
   }, []);
-
-  const toggleSelectAllVisible = useCallback(() => {
-    setSelectedDocIds((prev) => {
-      const ids = visibleDocuments.map((d) => d.id);
-      const allOn = ids.length > 0 && ids.every((id) => prev.includes(id));
-      return allOn ? prev.filter((id) => !ids.includes(id)) : [...new Set([...prev, ...ids])];
-    });
-  }, [visibleDocuments]);
 
   const bulkShareWithTeam = useCallback(
     (teamId: string) => {
@@ -304,13 +425,23 @@ export default function KnowledgeVaultPage() {
       setDocScopeOverrides((prev) => {
         const next = { ...prev };
         for (const doc of targets) {
-          if (canAdminRescopeDocument(doc)) next[doc.id] = teamId;
+          if (!canAdminRescopeDocument(doc)) continue;
+          const prevEff = effectiveUiScope(doc, prev);
+          if (prevEff === teamId) continue;
+          recordKvAccessAudit({
+            docId: doc.id,
+            docTitle: doc.title,
+            actorLabel: auditActorLabel,
+            fromScope: prevEff,
+            toScope: teamId,
+          });
+          next[doc.id] = teamId;
         }
         return next;
       });
-      toast(`Scope updated for applicable documents — ${name}`);
+      toast(`Access updated for applicable documents — ${name}`);
     },
-    [isAdmin, selectedDocIds, visibleDocuments, toast, kvShare]
+    [isAdmin, selectedDocIds, visibleDocuments, toast, kvShare, auditActorLabel]
   );
 
   const bulkDownload = useCallback(() => {
@@ -405,9 +536,46 @@ export default function KnowledgeVaultPage() {
     return visibleDocuments.slice(start, start + KV_PAGE_SIZE);
   }, [visibleDocuments, listPage]);
 
+  const toggleSelectAllOnPage = useCallback(() => {
+    setSelectedDocIds((prev) => {
+      const ids = pagedVisibleDocuments.map((d) => d.id);
+      const allOn = ids.length > 0 && ids.every((id) => prev.includes(id));
+      if (allOn) return prev.filter((id) => !ids.includes(id));
+      return [...new Set([...prev, ...ids])];
+    });
+  }, [pagedVisibleDocuments]);
+
+  const selectAllMatchingVisible = useCallback(() => {
+    setSelectedDocIds((prev) => [...new Set([...prev, ...visibleDocuments.map((d) => d.id)])]);
+  }, [visibleDocuments]);
+
   const pageSummaryStart = totalVisible === 0 ? 0 : (listPage - 1) * KV_PAGE_SIZE + 1;
   const pageSummaryEnd = totalVisible === 0 ? 0 : Math.min(listPage * KV_PAGE_SIZE, totalVisible);
   const pageItems = useMemo(() => kvPaginationItems(listPage, totalListPages), [listPage, totalListPages]);
+
+  const hasServerSideListFilters = useMemo(
+    () =>
+      Boolean(
+        debouncedSearch.trim() ||
+          filters.source_ids?.length ||
+          filters.scope != null ||
+          filters.tags?.length ||
+          filters.ingestion_status != null
+      ),
+    [debouncedSearch, filters]
+  );
+
+  const lastSyncLabel = useMemo(() => formatKnowledgeVaultLastSync(sources), [sources]);
+
+  const pageDocIds = useMemo(() => pagedVisibleDocuments.map((d) => d.id), [pagedVisibleDocuments]);
+  const allOnPageSelected =
+    pageDocIds.length > 0 && pageDocIds.every((id) => selectedDocIds.includes(id));
+  const allMatchingSelected =
+    totalVisible > 0 && visibleDocuments.every((d) => selectedDocIds.includes(d.id));
+  const showSelectAllMatchingHint =
+    allOnPageSelected && totalVisible > pageDocIds.length && !allMatchingSelected;
+
+  const listRefetching = loading && documents.length > 0;
 
   const vaultDocFiltersActive = useMemo(() => {
     return (
@@ -456,13 +624,60 @@ export default function KnowledgeVaultPage() {
     onFiltersChange: setFilters,
     hasDocumentFilters,
     onClearDocumentFilters: clearDocumentFilters,
+    searchActive: Boolean(searchQuery.trim()),
     tagOptions: vaultTagFilterOptions,
     scopeTeams: scopeTeamsForFilter,
   };
 
+  const adminGovernanceFooter =
+    isAdmin ? (
+      <div className="mt-8 space-y-3 border-t border-white/[0.06] pt-6">
+        <details className="group rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+          <summary className="cursor-pointer text-xs font-medium text-gray-400 hover:text-gray-300 list-none flex items-center justify-between gap-2">
+            <span>{KV_OFFBOARDING_PLAYBOOK.title}</span>
+            <span className="text-[10px] text-gray-600 group-open:hidden">Show</span>
+            <span className="text-[10px] text-gray-600 hidden group-open:inline">Hide</span>
+          </summary>
+          <ul className="mt-3 space-y-2 text-[10px] text-gray-500 list-disc pl-4 leading-relaxed">
+            {KV_OFFBOARDING_PLAYBOOK.bullets.map((b, i) => (
+              <li key={i}>{b}</li>
+            ))}
+          </ul>
+        </details>
+        <details className="group rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+          <summary className="cursor-pointer text-xs font-medium text-gray-400 hover:text-gray-300 list-none flex items-center justify-between gap-2">
+            <span>Access change log — vault &amp; email (this session)</span>
+            <span className="text-[10px] text-gray-600 group-open:hidden">Show</span>
+            <span className="text-[10px] text-gray-600 hidden group-open:inline">Hide</span>
+          </summary>
+          {kvAccessAuditLog.length === 0 ? (
+            <p className="mt-3 text-[10px] text-gray-600">
+              No access changes yet. Vault document panel, bulk share, and email ingest (thread or attachment access)
+              write here in this session (demo only — production should use an immutable audit service).
+            </p>
+          ) : (
+            <ul className="mt-3 max-h-48 overflow-y-auto space-y-2 text-[10px] text-gray-500">
+              {kvAccessAuditLog.map((e) => (
+                <li key={e.id} className="border-b border-white/[0.04] pb-2 last:border-0">
+                  <span className="text-gray-400">{new Date(e.at).toLocaleString()}</span>
+                  {" · "}
+                  <span className="text-gray-300">{e.actorLabel}</span>
+                  <br />
+                  <span className="text-gray-400 truncate block" title={e.docTitle}>
+                    {e.docTitle}
+                  </span>
+                  {formatKvAuditScope(e.fromScope)} → {formatKvAuditScope(e.toScope)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </details>
+      </div>
+    ) : null;
+
   return (
-    <div className="h-full flex flex-col bg-[#08080c] text-[#F5F5F5]">
-      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-[rgba(255,255,255,0.08)] px-6 py-3">
+    <div className="flex h-full min-h-0 flex-1 flex-col bg-[#08080c] text-[#F5F5F5]">
+      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-[rgba(255,255,255,0.08)] pl-6 pr-[4.5rem] py-3">
         <div className="min-w-0">
           <h1 className="text-sm font-semibold leading-none text-[#F5F5F5]">Knowledge Vault</h1>
           <p className="mt-1 text-[11px] leading-snug text-[rgba(245,245,245,0.5)]">
@@ -476,7 +691,7 @@ export default function KnowledgeVaultPage() {
                 </span>
                 {emailOnlyView ? null : <> matching · </>}
                 {" "}
-                {connectedCount} sources · Last sync 2 min ago
+                {connectedCount} sources · {lastSyncLabel}
               </>
             ) : (
               <>
@@ -484,7 +699,7 @@ export default function KnowledgeVaultPage() {
                   {listCount} documents
                 </span>
                 {" · "}
-                {connectedCount} sources · Last sync 2 min ago
+                {connectedCount} sources · {lastSyncLabel}
               </>
             )}
           </p>
@@ -505,8 +720,14 @@ export default function KnowledgeVaultPage() {
             </Button>
           )}
           {isAdmin && !emailOnlyView && (
-            <label className="flex h-8 cursor-pointer select-none items-center gap-2 shrink-0">
-              <span className="sr-only">Show all documents including other advisors private files</span>
+            <label
+              className="flex h-8 cursor-pointer select-none items-center gap-2 shrink-0"
+              title="When enabled, your list includes other advisors’ private vault files for admin oversight. Your own private files are always shown. This does not change who can see what—only what you can browse as an admin."
+            >
+              <span className="sr-only">
+                When enabled, include other advisors private vault files for admin oversight. Your private
+                files are always visible. Does not change sharing permissions.
+              </span>
               <div
                 className={cn(
                   "relative w-7 h-4 rounded-full transition-colors shrink-0",
@@ -543,10 +764,12 @@ export default function KnowledgeVaultPage() {
         </div>
       </header>
       {IS_PREVIEW_MODE && (
-        <PreviewBanner feature="Knowledge Vault" variant="full" dismissible sampleDataOnly />
+        <div className="shrink-0">
+          <PreviewBanner feature="Knowledge Vault" variant="full" dismissible sampleDataOnly />
+        </div>
       )}
 
-      <div className="flex-1 flex min-h-0">
+      <div className="flex min-h-0 flex-1">
         <main className="flex-1 min-w-0 overflow-auto flex flex-col bg-[#08080c]">
           <div className="p-4 space-y-4">
             <DataSourceCards
@@ -558,51 +781,27 @@ export default function KnowledgeVaultPage() {
               isSourcePolicyBlocked={isSourcePolicyBlocked}
               isAdmin={isAdmin}
             />
-            <div className="flex flex-wrap gap-2 items-center">
-              <div className="relative min-w-[200px] flex-1">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]"
-                />
-                <Input
-                  placeholder="Search documents…"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 bg-white/5 border-white/10 text-[#F5F5F5]"
-                  disabled={emailOnlyView}
-                />
-              </div>
-            </div>
-
-            {!emailOnlyView && (
-              <div ref={filtersPanelRef} className="scroll-mt-6">
-                <div className="hidden md:block rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
+            <div className="flex flex-col gap-2 border-b border-[rgba(255,255,255,0.03)] pb-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+              <PageSearchField
+                className="min-w-0 w-full sm:min-w-[200px] sm:flex-1"
+                placeholder="Search documents…"
+                aria-label="Search documents"
+                value={searchQuery}
+                onChange={setSearchQuery}
+                disabled={emailOnlyView}
+              />
+              {!emailOnlyView && (
+                <div ref={filtersPanelRef} className="min-w-0 w-full scroll-mt-6 sm:flex-1 sm:min-w-[200px]">
                   <KnowledgeVaultFilters {...filterPanelProps} />
                 </div>
-                <details className="md:hidden rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden group">
-                  <summary className="px-4 py-3 text-sm font-medium text-[#F5F5F5] cursor-pointer list-none flex items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
-                    <span className="flex items-center gap-2">
-                      Document filters
-                      <ChevronDown
-                        size={16}
-                        className="text-[var(--text-tertiary)] shrink-0 transition-transform group-open:rotate-180"
-                      />
-                    </span>
-                    {hasDocumentFilters && (
-                      <span className="text-[10px] uppercase tracking-wide text-[var(--muted-amber-text)] shrink-0">
-                        Active
-                      </span>
-                    )}
-                  </summary>
-                  <div className="border-t border-white/[0.06]">
-                    <KnowledgeVaultFilters {...filterPanelProps} />
-                  </div>
-                </details>
-              </div>
-            )}
+              )}
+            </div>
 
             {emailOnlyView ? (
-              <EmailIngestionView loading={loading} />
+              <>
+                <EmailIngestionView loading={loading} />
+                {adminGovernanceFooter}
+              </>
             ) : (
               <>
                 <div className="flex items-center gap-2 text-[10px] text-gray-600">
@@ -616,6 +815,7 @@ export default function KnowledgeVaultPage() {
                   <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white/[0.03] border border-white/[0.06] rounded-xl">
                     <span className="text-xs text-gray-400">
                       {selectedDocIds.length} document{selectedDocIds.length > 1 ? "s" : ""} selected
+                      {allMatchingSelected && totalVisible > 0 ? " · All matching results" : null}
                     </span>
                     <div className="flex flex-wrap items-center gap-2">
                       <DropdownMenu>
@@ -627,7 +827,7 @@ export default function KnowledgeVaultPage() {
                             {isAdmin ? "Share with…" : "Suggest sharing…"}
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-white/10">
+                        <DropdownMenuContent align="end">
                           {MOCK_TEAMS.map((team) => (
                             <DropdownMenuItem
                               key={team.id}
@@ -661,9 +861,23 @@ export default function KnowledgeVaultPage() {
                     </div>
                   </div>
                 )}
+                {showSelectAllMatchingHint && (
+                  <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[#C9A96E]/20 bg-[#C9A96E]/[0.06] px-3 py-2 text-[11px] text-[#D4C4A8]">
+                    <span>
+                      All {pageDocIds.length} on this page are selected. Select all {totalVisible} documents
+                      matching your filters?
+                    </span>
+                    <button
+                      type="button"
+                      onClick={selectAllMatchingVisible}
+                      className="font-medium text-[#C9A96E] underline-offset-2 hover:underline"
+                    >
+                      Select all {totalVisible}
+                    </button>
+                  </div>
+                )}
                 <DocumentGrid
                   documents={pagedVisibleDocuments}
-                  viewMode="list"
                   loading={loading}
                   onSelectDocument={openDocument}
                   isOversightPrivate={oversightPrivate}
@@ -671,7 +885,7 @@ export default function KnowledgeVaultPage() {
                   listSelection={{
                     selectedIds: selectedDocIds,
                     onToggle: toggleDocSelected,
-                    onSelectAllToggle: toggleSelectAllVisible,
+                    onSelectAllPageToggle: toggleSelectAllOnPage,
                   }}
                   isAdmin={isAdmin}
                   teams={MOCK_TEAMS.map((t) => ({ id: t.id, name: t.name }))}
@@ -679,21 +893,21 @@ export default function KnowledgeVaultPage() {
                   onDeleteDocument={handleDeleteDocument}
                   canExportDocuments={resolvedPolicies.canExportDocuments}
                   shareSubmenuLabel={isAdmin ? "Share with…" : "Suggest sharing…"}
-                  listSortControl={
-                    <select
-                      value={sortOption}
-                      onChange={(e) => setSortOption(e.target.value as KvSortOption)}
-                      className="h-8 min-w-[10.5rem] rounded-lg border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[10px] text-[var(--text-secondary)] outline-none"
-                      aria-label="Sort documents"
-                    >
-                      <option value="updated_desc">Updated (newest)</option>
-                      <option value="updated_asc">Updated (oldest)</option>
-                      <option value="title_asc">Title (A–Z)</option>
-                      <option value="title_desc">Title (Z–A)</option>
-                      <option value="size_desc">Size (largest)</option>
-                      <option value="size_asc">Size (smallest)</option>
-                    </select>
+                  listSort={{ option: sortOption, onColumnClick: onListSortColumn }}
+                  listEmpty={
+                    !loading && totalVisible === 0
+                      ? {
+                          variant:
+                            documents.length === 0
+                              ? hasServerSideListFilters
+                                ? "filtered_empty"
+                                : "api_empty"
+                              : "client_visibility",
+                          onConnectSource: () => setConnectOpen(true),
+                        }
+                      : undefined
                   }
+                  listRefetching={listRefetching}
                 />
                 {!loading && totalVisible > 0 && (
                   <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/[0.06] text-[11px] text-[var(--text-tertiary)]">
@@ -742,6 +956,7 @@ export default function KnowledgeVaultPage() {
                     </div>
                   </div>
                 )}
+                {adminGovernanceFooter}
               </>
             )}
           </div>

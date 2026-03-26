@@ -91,7 +91,7 @@ export default function TagInput({
         <p className="text-xs text-[rgba(245,245,245,0.5)]">Max {MAX_TAGS} tags</p>
       )}
       {input && filteredSuggestions.length > 0 && (
-        <ul className="rounded border border-[rgba(255,255,255,0.1)] bg-[#1a1a1a] py-1 max-h-32 overflow-y-auto">
+        <ul className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0e0e14] py-1 max-h-32 overflow-y-auto shadow-2xl">
           {filteredSuggestions.slice(0, 8).map((s) => (
             <li key={s}>
               <button

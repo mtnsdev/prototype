@@ -1,24 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Bookmark, LayoutGrid, Search, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-type ProductDirectoryMainTab = "browse" | "collections" | "partner-portal";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/contexts/ToastContext";
 import { MOCK_TEAMS, resolveUserPolicies } from "@/lib/teamsMock";
 import type {
   DirectoryAmenityTag,
   DirectoryCollectionOption,
+  DirectoryExternalSearchMeta,
   DirectoryProduct,
   DirectoryProductCategory,
   NewDirectoryCollectionInput,
 } from "@/types/product-directory";
 import {
   buildDirectoryCollectionRefs,
-  MOCK_DIRECTORY_COLLECTIONS,
-  MOCK_DIRECTORY_PRODUCTS,
+  cloneMockDirectoryCatalogForAdvisor,
+  DIRECTORY_EXTERNAL_COLLECTION_ID,
+  externalSearchSavedTooltip,
 } from "./productDirectoryMock";
 import ProductDirectoryFilterBar from "./ProductDirectoryFilterBar";
 import DirectoryProductCard from "./DirectoryProductCard";
@@ -27,9 +28,9 @@ import ProductDirectoryDetailPanel from "./ProductDirectoryDetailPanel";
 import ProductDirectoryCollectionPicker from "./ProductDirectoryCollectionPicker";
 import ProductDirectoryMapSplit from "./ProductDirectoryMapSplit";
 import {
+  buildPartnerPortalRows,
   ProductDirectoryCollectionsTab,
   ProductDirectoryPartnerPortalTab,
-  buildPartnerPortalRows,
 } from "./ProductDirectoryTabsViews";
 import type { Team } from "@/types/teams";
 import type { DirectoryPriceTier, DirectoryTierLevel } from "@/components/products/productDirectoryDetailMeta";
@@ -59,9 +60,23 @@ import {
   type PartnerPortalAdminSavePayload,
   validatePartnerPortalAdminPayload,
 } from "./productDirectoryLogic";
+import { cloneDirectoryCollectionsForState, cloneDirectoryProductsForState, persistDirectorySnapshot } from "./productDirectoryPersistence";
+import { resolveAdvisorCatalogFromStorage } from "./productDirectoryCatalogResolve";
+import { useProductDirectoryCatalog } from "./ProductDirectoryCatalogContext";
 import { directoryCategoryColors, directoryCategoryLabel } from "./productDirectoryVisual";
 import { ScopeBadge } from "@/components/ui/ScopeBadge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { TEAM_EVERYONE_ID } from "@/types/teams";
+
+type ProductDirectoryMainTab = "browse" | "collections" | "partner-portal";
 
 function bookableProgramsForCompare(p: DirectoryProduct) {
   return p.partnerPrograms.filter(isProgramBookable);
@@ -300,15 +315,26 @@ function filterCollectionsForUser(
 ): DirectoryCollectionOption[] {
   const memberTeamIds = teams.filter((t) => t.isDefault || t.memberIds.includes(uid)).map((t) => t.id);
   return collections.filter((c) => {
+    if (c.isSystem) {
+      if (c.scope === "team" && c.teamId) return memberTeamIds.includes(c.teamId);
+      if (c.scope === "private") return c.ownerId === uid;
+      return true;
+    }
     if (c.scope === "private" && c.ownerId === uid) return true;
     if (c.scope === "team" && c.teamId && memberTeamIds.includes(c.teamId)) return true;
     return false;
   });
 }
 
+const DIRECTORY_SEED_NAME = "Janet";
+
 export default function ProductDirectoryPage() {
-  const { user, directoryViewAsAdmin } = useUser();
+  const { user, directoryViewAsAdmin, isLoading: userLoading } = useUser();
   const toast = useToast();
+  const { catalogRevision } = useProductDirectoryCatalog();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const uid = user ? String(user.id) : "1";
 
   const policies = useMemo(
@@ -319,15 +345,29 @@ export default function ProductDirectoryPage() {
   const isAdmin =
     directoryViewAsAdmin || user?.role === "admin" || user?.role === "agency_admin";
 
-  const [products, setProducts] = useState<DirectoryProduct[]>(() =>
-    MOCK_DIRECTORY_PRODUCTS.map((p) => ({ ...p, collectionIds: [...p.collectionIds], collections: [...p.collections] }))
+  const [products, setProducts] = useState<DirectoryProduct[]>(
+    () => cloneMockDirectoryCatalogForAdvisor("1", DIRECTORY_SEED_NAME).products
   );
 
-  const [directoryCollections, setDirectoryCollections] = useState<DirectoryCollectionOption[]>(() =>
-    MOCK_DIRECTORY_COLLECTIONS.map((c) => ({
-      ...c,
-      productIds: c.productIds ? [...c.productIds] : undefined,
-    }))
+  const [directoryCollections, setDirectoryCollections] = useState<DirectoryCollectionOption[]>(
+    () => cloneMockDirectoryCatalogForAdvisor("1", DIRECTORY_SEED_NAME).collections
+  );
+
+  const [externalSearchMeta, setExternalSearchMeta] = useState<Record<string, DirectoryExternalSearchMeta>>({});
+
+  useEffect(() => {
+    if (userLoading) return;
+    const advisorUid = String(user?.id ?? "1");
+    const advisorName = user?.username ?? user?.email?.split("@")[0] ?? "You";
+    const r = resolveAdvisorCatalogFromStorage(advisorUid, advisorName);
+    setProducts(r.products);
+    setDirectoryCollections(r.directoryCollections);
+    setExternalSearchMeta(r.externalSearchMeta);
+  }, [userLoading, user?.id, user?.username, user?.email, catalogRevision]);
+
+  const externalSearchTooltipForProduct = useCallback(
+    (productId: string) => externalSearchSavedTooltip(productId, externalSearchMeta),
+    [externalSearchMeta]
   );
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -347,12 +387,11 @@ export default function ProductDirectoryPage() {
   const [sortByCommission, setSortByCommission] = useState(false);
   const [selectedTiers, setSelectedTiers] = useState<DirectoryTierLevel[]>([]);
   const [selectedPriceTiers, setSelectedPriceTiers] = useState<DirectoryPriceTier[]>([]);
-  const [showExpiringOnly, setShowExpiringOnly] = useState(false);
-  const [showMyEnrichedOnly, setShowMyEnrichedOnly] = useState(false);
-  const [enrichFilterTeam, setEnrichFilterTeam] = useState(true);
-  const [enrichFilterPersonal, setEnrichFilterPersonal] = useState(true);
   const [sortBy, setSortBy] = useState<DirectoryProductSortOption>("name-asc");
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
+  const urlViewParam = searchParams.get("view");
+  const viewFromUrl: "grid" | "list" | "map" =
+    urlViewParam === "list" || urlViewParam === "map" ? urlViewParam : "grid";
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "map">(viewFromUrl);
   const [collectionCopyEdits, setCollectionCopyEdits] = useState<
     Record<string, { name?: string; description?: string }>
   >({});
@@ -365,7 +404,14 @@ export default function ProductDirectoryPage() {
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(() => new Set());
   const [bulkCollectionOpen, setBulkCollectionOpen] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
+  const browseScrollRef = useRef<HTMLDivElement>(null);
+
   const [mainTab, setMainTab] = useState<ProductDirectoryMainTab>("browse");
+  const [partnerPortalDirty, setPartnerPortalDirty] = useState(false);
+  const [partnerPortalMountKey, setPartnerPortalMountKey] = useState(0);
+  const [tabLeaveDialogOpen, setTabLeaveDialogOpen] = useState(false);
+  const [pendingMainTab, setPendingMainTab] = useState<ProductDirectoryMainTab | null>(null);
+
   const [createCollectionOpen, setCreateCollectionOpen] = useState(false);
   const [createCollectionFromBulk, setCreateCollectionFromBulk] = useState(false);
   const [createCollectionName, setCreateCollectionName] = useState("");
@@ -374,6 +420,96 @@ export default function ProductDirectoryPage() {
   const [createCollectionTeamId, setCreateCollectionTeamId] = useState("");
 
   const portalRowCount = useMemo(() => buildPartnerPortalRows(products).length, [products]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      persistDirectorySnapshot(products, directoryCollections, externalSearchMeta);
+    }, 500);
+    return () => clearTimeout(t);
+  }, [products, directoryCollections, externalSearchMeta]);
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    const next: ProductDirectoryMainTab =
+      tab === "collections"
+        ? "collections"
+        : tab === "partner" || tab === "partner-portal"
+          ? "partner-portal"
+          : "browse";
+    setMainTab((prev) => (prev === next ? prev : next));
+  }, [searchParams]);
+
+  const applyUrlForTab = useCallback(
+    (t: ProductDirectoryMainTab) => {
+      const p = new URLSearchParams(searchParams.toString());
+      if (t === "browse") {
+        p.delete("tab");
+        p.delete("program");
+      } else if (t === "collections") {
+        p.set("tab", "collections");
+        p.delete("program");
+      } else {
+        p.set("tab", "partner");
+      }
+      const qs = p.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
+
+  const applyViewToUrl = useCallback(
+    (mode: "grid" | "list" | "map") => {
+      const p = new URLSearchParams(searchParams.toString());
+      if (mode === "grid") p.delete("view");
+      else p.set("view", mode);
+      const qs = p.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
+
+  const handleViewModeChange = useCallback(
+    (mode: "grid" | "list" | "map") => {
+      setViewMode(mode);
+      applyViewToUrl(mode);
+    },
+    [applyViewToUrl]
+  );
+
+  useEffect(() => {
+    setViewMode((prev) => (prev === viewFromUrl ? prev : viewFromUrl));
+  }, [viewFromUrl]);
+
+  const trySetMainTab = useCallback(
+    (t: ProductDirectoryMainTab) => {
+      if (t === mainTab) return;
+      if (mainTab === "partner-portal" && t !== "partner-portal" && partnerPortalDirty) {
+        setPendingMainTab(t);
+        setTabLeaveDialogOpen(true);
+        return;
+      }
+      setMainTab(t);
+      applyUrlForTab(t);
+    },
+    [applyUrlForTab, mainTab, partnerPortalDirty]
+  );
+
+  const confirmLeavePartnerTab = useCallback(() => {
+    const t = pendingMainTab;
+    setTabLeaveDialogOpen(false);
+    setPendingMainTab(null);
+    setPartnerPortalMountKey((k) => k + 1);
+    setPartnerPortalDirty(false);
+    if (t) {
+      setMainTab(t);
+      applyUrlForTab(t);
+    }
+  }, [applyUrlForTab, pendingMainTab]);
+
+  const cancelLeavePartnerTab = useCallback(() => {
+    setTabLeaveDialogOpen(false);
+    setPendingMainTab(null);
+  }, []);
 
   useEffect(() => {
     if (viewMode !== "map") setMapCluster(null);
@@ -440,7 +576,15 @@ export default function ProductDirectoryPage() {
   /** Owner or admin: rename collection, remove products, sharing. Members can still add products. */
   const isCollectionOwner = activeCollectionMeta != null && activeCollectionMeta.ownerId === uid;
   const canEditActiveCollection = isAdmin || isCollectionOwner;
-  const canShareActiveCollection = canEditActiveCollection;
+  const canManageProductsInActiveCollection =
+    canEditActiveCollection ||
+    (activeCollectionMeta?.isSystem === true &&
+      activeCollectionMeta.scope === "private" &&
+      activeCollectionMeta.ownerId === uid);
+  /** System collections cannot be renamed or have metadata edited in the browse header. */
+  const canEditActiveCollectionMetadata = canEditActiveCollection && !activeCollectionMeta?.isSystem;
+  const canShareActiveCollection =
+    canEditActiveCollection && activeCollectionMeta != null && !activeCollectionMeta.isSystem;
 
   const filterInput: DirectoryPageFilterInput = useMemo(
     () => ({
@@ -454,10 +598,6 @@ export default function ProductDirectoryPage() {
       commissionRange,
       selectedTiers,
       selectedPriceTiers,
-      showExpiringOnly,
-      showMyEnrichedOnly,
-      enrichFilterTeam,
-      enrichFilterPersonal,
     }),
     [
       debouncedSearch,
@@ -470,10 +610,6 @@ export default function ProductDirectoryPage() {
       commissionRange,
       selectedTiers,
       selectedPriceTiers,
-      showExpiringOnly,
-      showMyEnrichedOnly,
-      enrichFilterTeam,
-      enrichFilterPersonal,
     ]
   );
 
@@ -513,8 +649,6 @@ export default function ProductDirectoryPage() {
     if (f.activeTypeFilters.length > 0) push("type", "type", () => setActiveTypeFilters([]));
     if (f.selectedTiers.length > 0) push("tier", "tier", () => setSelectedTiers([]));
     if (f.selectedPriceTiers.length > 0) push("price", "price", () => setSelectedPriceTiers([]));
-    if (f.showExpiringOnly) push("expiring", "Expiring soon", () => setShowExpiringOnly(false));
-    if (f.showMyEnrichedOnly) push("enriched", "My enriched", () => setShowMyEnrichedOnly(false));
 
     hints.sort((a, b) => b.count - a.count);
     return hints[0] ?? null;
@@ -531,10 +665,6 @@ export default function ProductDirectoryPage() {
     setCommissionRange([0, 25]);
     setSelectedTiers([]);
     setSelectedPriceTiers([]);
-    setShowExpiringOnly(false);
-    setShowMyEnrichedOnly(false);
-    setEnrichFilterTeam(true);
-    setEnrichFilterPersonal(true);
     setSortByCommission(false);
   }, []);
 
@@ -583,6 +713,27 @@ export default function ProductDirectoryPage() {
     }
   }, [filteredProducts, sortBy, sortByCommission, canViewCommissions]);
 
+  useEffect(() => {
+    if (mainTab !== "browse" || !detailProductId) return;
+    if (viewMode !== "list" && viewMode !== "map") return;
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      const el = e.target as HTMLElement | null;
+      if (el?.closest("input, textarea, select, [contenteditable=true]")) return;
+      e.preventDefault();
+      const idx = sortedProducts.findIndex((p) => p.id === detailProductId);
+      if (idx < 0) return;
+      const next =
+        e.key === "ArrowDown" ? Math.min(sortedProducts.length - 1, idx + 1) : Math.max(0, idx - 1);
+      if (next === idx) return;
+      setDetailProductId(sortedProducts[next]!.id);
+    };
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mainTab, detailProductId, viewMode, sortedProducts]);
+
   const compareProducts = useMemo(() => {
     if (!compareMode) return [];
     const list: DirectoryProduct[] = [];
@@ -599,6 +750,13 @@ export default function ProductDirectoryPage() {
   }, [compareMode, compareProducts.length]);
 
   const detailProduct = detailProductId ? (products.find((p) => p.id === detailProductId) ?? null) : null;
+
+  useLayoutEffect(() => {
+    if (mainTab !== "browse" || viewMode !== "grid" || !detailProductId) return;
+    const el = document.querySelector(`[data-directory-product-id="${CSS.escape(detailProductId)}"]`);
+    el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [detailProductId, mainTab, viewMode, sortedProducts.length]);
+
   const detailProductCustomProgramKeys = useMemo(
     () => (detailProduct ? customProgramKeysForProduct(detailProduct, products) : []),
     [detailProduct, products]
@@ -615,6 +773,7 @@ export default function ProductDirectoryPage() {
     (collectionId: string) => {
       if (isAdmin) return true;
       const c = directoryCollections.find((x) => x.id === collectionId);
+      if (c?.isSystem && c.scope === "private") return c.ownerId === uid;
       return c?.ownerId === uid;
     },
     [isAdmin, uid, directoryCollections]
@@ -695,7 +854,9 @@ export default function ProductDirectoryPage() {
         updatedCount = result.updatedCount;
         return result.products;
       });
-      toast(`Updated program across ${updatedCount} product${updatedCount !== 1 ? "s" : ""}`);
+      toast(
+        `Updated program across ${updatedCount} product${updatedCount !== 1 ? "s" : ""} (saved in this browser until API sync)`
+      );
       return true;
     },
     [toast, uid, user]
@@ -764,7 +925,7 @@ export default function ProductDirectoryPage() {
       clearSelection();
     } else {
       setCollectionFilter([id]);
-      setMainTab("browse");
+      trySetMainTab("browse");
     }
 
     setCreateCollectionOpen(false);
@@ -780,6 +941,7 @@ export default function ProductDirectoryPage() {
     selectedProductIds,
     toast,
     uid,
+    trySetMainTab,
   ]);
 
   const handleAddToItinerary = useCallback(() => {
@@ -837,7 +999,7 @@ export default function ProductDirectoryPage() {
     [collectionFilter, products, patchProduct, toast]
   );
 
-  const showRemoveOnCards = collectionFilter.length === 1 && canEditActiveCollection;
+  const showRemoveOnCards = collectionFilter.length === 1 && canManageProductsInActiveCollection;
 
   const addBulkToCollection = useCallback(
     (colId: string) => {
@@ -904,8 +1066,8 @@ export default function ProductDirectoryPage() {
     : null;
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#08080c] text-[#F5F5F5]">
-      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-[rgba(255,255,255,0.08)] px-6 py-3">
+    <div className="flex h-full min-h-0 flex-1 flex-col bg-[#08080c] text-[#F5F5F5]">
+      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-[rgba(255,255,255,0.08)] pl-6 pr-[4.5rem] py-3">
         <div className="min-w-0">
           <h1 className="text-sm font-semibold leading-none text-[#F5F5F5]">Product Directory</h1>
           <p className="mt-1 text-[11px] leading-snug text-[rgba(245,245,245,0.5)]">
@@ -913,12 +1075,12 @@ export default function ProductDirectoryPage() {
               ? `${sortedProducts.length} product${sortedProducts.length !== 1 ? "s" : ""}`
               : mainTab === "collections"
                 ? `${availableCollections.length} collection${availableCollections.length !== 1 ? "s" : ""}`
-                : `${portalRowCount} partner program${portalRowCount !== 1 ? "s" : ""}`}
+                : `${portalRowCount} program${portalRowCount !== 1 ? "s" : ""} · rates, linked properties & incentives`}
           </p>
         </div>
       </header>
 
-      <div className="flex shrink-0 gap-0.5 border-b border-[rgba(255,255,255,0.08)] px-6">
+      <div className="flex shrink-0 gap-0.5 border-b border-[rgba(255,255,255,0.08)] pl-6 pr-[4.5rem]">
         {(
           [
             { id: "browse" as const, label: "Products" },
@@ -929,7 +1091,7 @@ export default function ProductDirectoryPage() {
           <button
             key={t.id}
             type="button"
-            onClick={() => setMainTab(t.id)}
+            onClick={() => trySetMainTab(t.id)}
             className={cn(
               "relative px-3 py-2.5 text-[11px] font-medium transition-colors",
               mainTab === t.id ? "text-[#F5F5F5]" : "text-[#6B6560] hover:text-[#9B9590]"
@@ -944,7 +1106,7 @@ export default function ProductDirectoryPage() {
       </div>
 
       {mainTab === "browse" ? (
-      <div className="shrink-0 px-6 pb-0 pt-4">
+      <div className="relative z-10 shrink-0 px-6 pb-0 pt-4">
         <ProductDirectoryFilterBar
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}
@@ -957,7 +1119,6 @@ export default function ProductDirectoryPage() {
         onCollectionFilterChange={setCollectionFilter}
         onRequestNewCollection={() => openCreateCollectionModal("general")}
         collections={availableCollections}
-        teams={MOCK_TEAMS}
         selectedProgramIds={selectedProgramIds}
         onSelectedProgramIdsChange={setSelectedProgramIds}
         selectedAmenities={selectedAmenities}
@@ -972,20 +1133,12 @@ export default function ProductDirectoryPage() {
         onSelectedTiersChange={setSelectedTiers}
         selectedPriceTiers={selectedPriceTiers}
         onSelectedPriceTiersChange={setSelectedPriceTiers}
-        showExpiringOnly={showExpiringOnly}
-        onShowExpiringOnlyChange={setShowExpiringOnly}
-        showMyEnrichedOnly={showMyEnrichedOnly}
-        onShowMyEnrichedOnlyChange={setShowMyEnrichedOnly}
-        enrichFilterTeam={enrichFilterTeam}
-        onEnrichFilterTeamChange={setEnrichFilterTeam}
-        enrichFilterPersonal={enrichFilterPersonal}
-        onEnrichFilterPersonalChange={setEnrichFilterPersonal}
         sortBy={sortBy}
         onSortByChange={setSortBy}
         canViewCommissions={canViewCommissions}
         resultCount={sortedProducts.length}
         viewMode={viewMode}
-        onViewModeChange={setViewMode}
+        onViewModeChange={handleViewModeChange}
         bulkMode={bulkMode}
         bulkSelectedCount={selectedProductIds.size}
         onBulkModeToggle={handleBulkToggle}
@@ -997,8 +1150,6 @@ export default function ProductDirectoryPage() {
         (canViewCommissions && commissionFilterActive) ||
         selectedTiers.length > 0 ||
         selectedPriceTiers.length > 0 ||
-        showExpiringOnly ||
-        showMyEnrichedOnly ||
         activeTypeFilters.length > 0 ||
         collectionFilter.length > 0 ||
         debouncedSearch.trim()) && (
@@ -1102,24 +1253,6 @@ export default function ProductDirectoryPage() {
               <span className="text-[#6B6560]">✕</span>
             </button>
           ) : null}
-          {showExpiringOnly ? (
-            <button
-              type="button"
-              onClick={() => setShowExpiringOnly(false)}
-              className="flex items-center gap-1 rounded-full bg-[rgba(184,151,110,0.06)] px-2 py-0.5 text-[9px] text-[#B8976E] transition-colors hover:bg-[rgba(184,151,110,0.10)]"
-            >
-              Expiring soon <span className="text-[#6B6560]">✕</span>
-            </button>
-          ) : null}
-          {showMyEnrichedOnly ? (
-            <button
-              type="button"
-              onClick={() => setShowMyEnrichedOnly(false)}
-              className="flex items-center gap-1 rounded-full bg-[rgba(160,140,180,0.06)] px-2 py-0.5 text-[9px] text-[rgba(160,140,180,0.60)] transition-colors hover:bg-[rgba(160,140,180,0.10)]"
-            >
-              My enriched <span className="text-[#6B6560]">✕</span>
-            </button>
-          ) : null}
           <button
             type="button"
             onClick={clearAllFilters}
@@ -1133,7 +1266,7 @@ export default function ProductDirectoryPage() {
       {headerCollection && activeCollectionMeta && (
         <div className="mb-4 flex flex-col gap-3 rounded-xl border border-[rgba(255,255,255,0.03)] bg-[#0c0c12] p-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            {editingCollectionHeader && canEditActiveCollection ? (
+            {editingCollectionHeader && canEditActiveCollectionMetadata ? (
               <div className="space-y-2">
                 <input
                   type="text"
@@ -1211,7 +1344,7 @@ export default function ProductDirectoryPage() {
           </div>
           {!editingCollectionHeader && (
             <div className="flex shrink-0 gap-2">
-              {canEditActiveCollection && (
+              {canEditActiveCollectionMetadata && (
                 <button
                   type="button"
                   className="text-[10px] text-[#9B9590] transition-colors hover:text-[#F5F0EB]"
@@ -1237,38 +1370,61 @@ export default function ProductDirectoryPage() {
       </div>
       ) : null}
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-4">
-      {mainTab === "collections" ? (
-        <ProductDirectoryCollectionsTab
-          collections={availableCollections}
-          products={products}
-          teams={MOCK_TEAMS}
-          onOpenCollection={(id) => {
-            setCollectionFilter([id]);
-            setMainTab("browse");
-          }}
-        />
-      ) : mainTab === "partner-portal" ? (
-        <ProductDirectoryPartnerPortalTab
-          products={products}
-          teams={MOCK_TEAMS}
-          canViewCommissions={canViewCommissions}
-          isAdmin={isAdmin}
-          onSelectProduct={(id) => setDetailProductId(id)}
-          onAdminSaveProgram={saveProgramFromPartnerPortal}
-        />
-      ) : compareMode && compareProducts.length >= 2 ? (
-        <ProductDirectoryCompareView
-          products={compareProducts}
-          canViewCommissions={canViewCommissions}
-          onClose={clearSelection}
-          onViewFullDetails={(p) => {
-            clearSelection();
-            setDetailProductId(p.id);
-          }}
-        />
-      ) : (
-        <>
+      <div ref={browseScrollRef} className="relative z-0 min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-4">
+        <div
+          className={cn(
+            "min-h-0",
+            mainTab !== "collections" && "pointer-events-none hidden"
+          )}
+          aria-hidden={mainTab !== "collections"}
+        >
+          <ProductDirectoryCollectionsTab
+            collections={availableCollections}
+            products={products}
+            teams={MOCK_TEAMS}
+            onOpenCollection={(id) => {
+              setCollectionFilter([id]);
+              trySetMainTab("browse");
+            }}
+          />
+        </div>
+        <div
+          className={cn(
+            "min-h-0",
+            mainTab !== "partner-portal" && "pointer-events-none hidden"
+          )}
+          aria-hidden={mainTab !== "partner-portal"}
+        >
+          <ProductDirectoryPartnerPortalTab
+            key={partnerPortalMountKey}
+            products={products}
+            teams={MOCK_TEAMS}
+            canViewCommissions={canViewCommissions}
+            isAdmin={isAdmin}
+            onSelectProduct={(id) => setDetailProductId(id)}
+            onAdminSaveProgram={saveProgramFromPartnerPortal}
+            onDirtyChange={setPartnerPortalDirty}
+          />
+        </div>
+        <div
+          className={cn(
+            "min-h-0",
+            mainTab !== "browse" && "pointer-events-none hidden"
+          )}
+          aria-hidden={mainTab !== "browse"}
+        >
+          {compareMode && compareProducts.length >= 2 ? (
+            <ProductDirectoryCompareView
+              products={compareProducts}
+              canViewCommissions={canViewCommissions}
+              onClose={clearSelection}
+              onViewFullDetails={(p) => {
+                clearSelection();
+                setDetailProductId(p.id);
+              }}
+            />
+          ) : (
+            <>
           {viewMode === "grid" && (
             <div
               className={cn(
@@ -1301,6 +1457,8 @@ export default function ProductDirectoryPage() {
                     setBulkMode(true);
                     setSelectedProductIds(new Set([id]));
                   }}
+                  showSavedFromSearch={product.collectionIds.includes(DIRECTORY_EXTERNAL_COLLECTION_ID)}
+                  savedFromSearchTitle={externalSearchTooltipForProduct(product.id)}
                 />
               ))}
             </div>
@@ -1330,6 +1488,10 @@ export default function ProductDirectoryPage() {
                 setBulkMode(true);
                 setSelectedProductIds(new Set([id]));
               }}
+              externalSearchCollectionId={DIRECTORY_EXTERNAL_COLLECTION_ID}
+              externalSearchTooltip={externalSearchTooltipForProduct}
+              scrollToProductId={detailProductId}
+              scrollParentRef={browseScrollRef}
             />
           )}
 
@@ -1342,6 +1504,8 @@ export default function ProductDirectoryPage() {
               onSelectProduct={handleMapSelect}
               onClusterOpen={setMapCluster}
               onClusterClose={() => setMapCluster(null)}
+              externalSearchCollectionId={DIRECTORY_EXTERNAL_COLLECTION_ID}
+              externalSearchTooltip={externalSearchTooltipForProduct}
             />
           )}
 
@@ -1369,9 +1533,9 @@ export default function ProductDirectoryPage() {
               )}
             </div>
           )}
-        </>
-      )}
-
+            </>
+          )}
+        </div>
       </div>
 
       {/* Slide-in detail: 7-block layout + layer mock data in ProductDirectoryDetailBody */}
@@ -1421,16 +1585,18 @@ export default function ProductDirectoryPage() {
           <p className="px-3 py-2 text-[9px] uppercase tracking-wider text-[#4A4540]">
             Add {selectedProductIds.size} products to…
           </p>
-          {availableCollections.map((col) => (
-            <button
-              key={col.id}
-              type="button"
-              onClick={() => addBulkToCollection(col.id)}
-              className="w-full px-3 py-2 text-left text-xs text-[#C8C0B8] transition-colors hover:bg-white/[0.04]"
-            >
-              {col.teamName ? `[${col.teamName}] ${col.name}` : col.name}
-            </button>
-          ))}
+          {[...availableCollections]
+            .sort((a, b) => Number(!!b.isSystem) - Number(!!a.isSystem))
+            .map((col) => (
+              <button
+                key={col.id}
+                type="button"
+                onClick={() => addBulkToCollection(col.id)}
+                className="w-full px-3 py-2 text-left text-xs text-[#C8C0B8] transition-colors hover:bg-white/[0.04]"
+              >
+                {col.teamName ? `[${col.teamName}] ${col.name}` : col.name}
+              </button>
+            ))}
           <div className="mt-1 border-t border-white/[0.04] pt-1">
             <button
               type="button"
@@ -1458,7 +1624,7 @@ export default function ProductDirectoryPage() {
             <Bookmark className="h-3.5 w-3.5" />
             Add to Collection
           </button>
-          {activeCollectionMeta && canEditActiveCollection && collectionFilter.length === 1 && (
+          {activeCollectionMeta && canManageProductsInActiveCollection && collectionFilter.length === 1 && (
             <button
               type="button"
               onClick={bulkRemoveFromActiveCollection}
@@ -1576,6 +1742,30 @@ export default function ProductDirectoryPage() {
           </div>
         </div>
       )}
+
+      <Dialog
+        open={tabLeaveDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) cancelLeavePartnerTab();
+        }}
+      >
+        <DialogContent className="border-white/[0.08] bg-[#0c0c12] text-[#F5F5F5] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Leave Partner portal?</DialogTitle>
+            <DialogDescription className="text-[#9B9590]">
+              You have unsaved edits. Switching tabs will discard your draft for this session.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={cancelLeavePartnerTab}>
+              Stay
+            </Button>
+            <Button type="button" variant="destructive" onClick={confirmLeavePartnerTab}>
+              Discard and leave
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -12,5 +12,9 @@ export default function ItineraryEditRoute() {
     if (id) router.replace(`/dashboard/itineraries/${id}`);
   }, [id, router]);
 
-  return <div className="p-6 text-[rgba(245,245,245,0.5)]">Redirecting…</div>;
+  return (
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
+      <div className="p-6 text-[rgba(245,245,245,0.5)]">Redirecting…</div>
+    </div>
+  );
 }

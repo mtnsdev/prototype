@@ -107,7 +107,7 @@ export default function BriefingWidgetCard({
                 <MoreHorizontal size={16} />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-[#141416] border-[rgba(255,255,255,0.08)]">
+            <DropdownMenuContent align="end">
               {onResize && (
                 <>
                   <DropdownMenuItem onClick={() => onResize("small")}>Resize: Small</DropdownMenuItem>

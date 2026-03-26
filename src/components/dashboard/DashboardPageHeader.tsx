@@ -5,12 +5,12 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   title: ReactNode;
-  /** Renders on the right (sync, filters export, etc.). Bell + search live in DashboardTopBar. */
+  /** Renders on the right (sync, filters export, etc.). Notifications bell is fixed top-right in DashboardFrame. */
   actions?: ReactNode;
   className?: string;
 };
 
-/** Page title row — notifications are in the persistent DashboardTopBar. */
+/** Page title row — notifications bell is fixed in DashboardFrame. */
 export default function DashboardPageHeader({ title, actions, className }: Props) {
   return (
     <header

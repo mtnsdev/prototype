@@ -38,6 +38,8 @@ export type PlaceCard = {
   contact_phone: string;
   website: string;
   primary_image_url: string;
+  /** Directory product id when this place maps to the advisor catalog (enables “save to External Search”). */
+  directory_product_id?: string | null;
 };
 
 export type WebCitation = {

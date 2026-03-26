@@ -19,6 +19,8 @@ export interface EmailIngestion {
   receivedAt: string;
   forwardedBy: string;
   forwardedByName: string;
+  /** Forwarder no longer has an account — access and retention follow org policy. */
+  forwarder_departed?: boolean;
   bodyText: string;
   bodyHtml?: string;
   attachments: EmailAttachment[];

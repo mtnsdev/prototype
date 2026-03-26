@@ -7,6 +7,7 @@ import {
   ExternalLink,
   FileText,
   Image,
+  Info,
   Mail,
   Paperclip,
   Search,
@@ -131,7 +132,8 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
   };
 
   const filterBar = (
-    <div className="flex items-center gap-2 mb-2 flex-wrap">
+    <div className="space-y-2 mb-2">
+    <div className="flex items-center gap-2 flex-wrap">
       {(["all", "recent", "unprocessed"] as const).map((f) => (
         <button
           key={f}
@@ -150,6 +152,13 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
           )}
         </button>
       ))}
+    </div>
+      {isAdmin ? (
+        <p className="text-[10px] text-gray-600 flex items-start gap-1.5 leading-relaxed">
+          <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-gray-500" aria-hidden />
+          Thread and attachment access changes are recorded in the session log below (scroll down).
+        </p>
+      ) : null}
     </div>
   );
 

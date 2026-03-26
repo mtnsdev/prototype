@@ -1,28 +1,32 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, Plus } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import type { DirectoryCollectionOption } from "@/types/product-directory";
 import { cn } from "@/lib/utils";
-import { ScopeBadge } from "@/components/ui/ScopeBadge";
-import type { Team } from "@/types/teams";
-import { TEAM_EVERYONE_ID } from "@/types/teams";
 
 type Props = {
   collections: DirectoryCollectionOption[];
-  teams: Team[];
   selectedIds: string[];
   onChange: (ids: string[]) => void;
   onRequestNewCollection: () => void;
 };
 
-function scopeForBadge(c: DirectoryCollectionOption) {
-  return c.scope === "private" ? "private" : (c.teamId ?? TEAM_EVERYONE_ID);
+function collectionMatchesQuery(c: DirectoryCollectionOption, q: string) {
+  if (!q) return true;
+  if (c.name.toLowerCase().includes(q)) return true;
+  if (c.teamName?.toLowerCase().includes(q)) return true;
+  return false;
+}
+
+function secondaryLine(c: DirectoryCollectionOption): string | null {
+  if (c.scope === "private") return "Private";
+  if (c.teamName) return c.teamName;
+  return null;
 }
 
 export default function ProductDirectoryCollectionSearchDropdown({
   collections,
-  teams,
   selectedIds,
   onChange,
   onRequestNewCollection,
@@ -33,7 +37,10 @@ export default function ProductDirectoryCollectionSearchDropdown({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setSearch("");
+      return;
+    }
     const t = requestAnimationFrame(() => inputRef.current?.focus());
     const onDoc = (e: MouseEvent) => {
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
@@ -50,10 +57,10 @@ export default function ProductDirectoryCollectionSearchDropdown({
     };
   }, [open]);
 
-  const filtered = collections.filter((c) => {
-    const label = c.teamName ? `[${c.teamName}] ${c.name}` : c.name;
-    return label.toLowerCase().includes(search.trim().toLowerCase());
-  });
+  const q = search.trim().toLowerCase();
+  const filtered = collections.filter((c) => collectionMatchesQuery(c, q));
+  const systemFiltered = filtered.filter((c) => c.isSystem);
+  const userFiltered = filtered.filter((c) => !c.isSystem);
 
   const toggle = (id: string) => {
     if (selectedIds.includes(id)) onChange(selectedIds.filter((x) => x !== id));
@@ -70,6 +77,29 @@ export default function ProductDirectoryCollectionSearchDropdown({
           : `${selectedIds.length} collections`}
       </span>
     );
+
+  const renderCollectionRow = (col: DirectoryCollectionOption) => {
+    const on = selectedIds.includes(col.id);
+    const sub = secondaryLine(col);
+    const count = col.productIds?.length ?? 0;
+    return (
+      <button
+        key={col.id}
+        type="button"
+        className="flex w-full items-start justify-between gap-2 px-3 py-2 text-left transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+        onClick={() => toggle(col.id)}
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="truncate text-[11px] text-[#E8E4DF]">{col.name}</span>
+            <span className="shrink-0 tabular-nums text-[10px] text-[#6B6560]">{count}</span>
+          </div>
+          {sub ? <div className="truncate text-[10px] text-[#6B6560]">{sub}</div> : null}
+        </div>
+        {on ? <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#C9A96E]" /> : <span className="h-3.5 w-3.5 shrink-0" />}
+      </button>
+    );
+  };
 
   return (
     <div ref={rootRef} className="relative">
@@ -89,18 +119,18 @@ export default function ProductDirectoryCollectionSearchDropdown({
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-[60] mt-1 w-64 max-h-72 overflow-hidden rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0c0c12] shadow-xl">
-          <div className="sticky top-0 z-[1] border-b border-[rgba(255,255,255,0.03)] bg-[#0c0c12] p-2">
+        <div className="absolute left-0 top-full z-[60] mt-1 w-[min(100vw-2rem,18rem)] max-h-[min(24rem,70vh)] overflow-hidden rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0c0c12] shadow-xl">
+          <div className="border-b border-[rgba(255,255,255,0.03)] p-2">
             <input
               ref={inputRef}
               type="text"
-              placeholder="Search collections..."
+              placeholder="Search collections…"
               className="w-full rounded-lg border-none bg-[rgba(255,255,255,0.03)] px-2 py-1.5 text-[11px] text-[#F5F0EB] placeholder-[#4A4540] focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/40"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="max-h-52 overflow-y-auto">
+          <div className="max-h-[min(16rem,50vh)] overflow-y-auto">
             <button
               type="button"
               className={cn(
@@ -110,51 +140,33 @@ export default function ProductDirectoryCollectionSearchDropdown({
               onClick={() => onChange([])}
             >
               <span>All Products</span>
-              {selectedIds.length === 0 ? <Check className="h-3 w-3 shrink-0 text-[#C9A96E]" /> : null}
+              {selectedIds.length === 0 ? <Check className="h-3.5 w-3.5 shrink-0 text-[#C9A96E]" /> : null}
             </button>
-            <div className="border-t border-[rgba(255,255,255,0.03)]" />
-            {filtered.map((col) => {
-              const on = selectedIds.includes(col.id);
-              const label = col.teamName ? `[${col.teamName}] ${col.name}` : col.name;
-              return (
-                <button
-                  key={col.id}
-                  type="button"
-                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-[11px] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
-                  onClick={() => toggle(col.id)}
-                >
-                  <div className="flex min-w-0 flex-1 items-center gap-2">
-                    <span className="truncate text-[#9B9590]">{label}</span>
-                    <ScopeBadge scope={scopeForBadge(col)} teams={teams} className="shrink-0" />
-                  </div>
-                  {on ? <Check className="h-3 w-3 shrink-0 text-[#C9A96E]" /> : null}
-                </button>
-              );
-            })}
+
+            {systemFiltered.length > 0 ? <>{systemFiltered.map(renderCollectionRow)}</> : null}
+
+            {systemFiltered.length > 0 && userFiltered.length > 0 ? (
+              <div className="mx-3 border-t border-[rgba(255,255,255,0.06)]" role="separator" />
+            ) : null}
+
+            {userFiltered.length > 0 ? <>{userFiltered.map(renderCollectionRow)}</> : null}
+
+            {filtered.length === 0 ? (
+              <p className="px-3 py-4 text-center text-[11px] text-[#6B6560]">No collections match.</p>
+            ) : null}
           </div>
           <div className="border-t border-[rgba(255,255,255,0.03)] p-1">
             <button
               type="button"
-              className="flex w-full items-center gap-1 px-3 py-2 text-left text-[11px] text-[#C9A96E] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+              className="w-full px-3 py-2 text-left text-[11px] text-[#C9A96E] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
               onClick={() => {
                 setOpen(false);
                 onRequestNewCollection();
               }}
             >
-              <Plus className="h-3 w-3 shrink-0" /> New Collection
+              New collection
             </button>
           </div>
-          {selectedIds.length > 0 && (
-            <div className="border-t border-[rgba(255,255,255,0.03)] p-1">
-              <button
-                type="button"
-                className="w-full py-1.5 text-[10px] text-[#6B6560] transition-colors hover:text-[#9B9590]"
-                onClick={() => onChange([])}
-              >
-                Clear selection
-              </button>
-            </div>
-          )}
         </div>
       )}
     </div>

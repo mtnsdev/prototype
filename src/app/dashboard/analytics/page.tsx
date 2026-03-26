@@ -45,11 +45,11 @@ const donutBg =
   totalTrips > 0 ? `conic-gradient(${donutStops.join(", ")})` : "conic-gradient(#333 0% 100%)";
 
 const TOP_VICS = [
-  { id: "fake-vic-1", name: "Jean-Christophe Chopin", trips: 2, rev: "€28,500", last: "Monaco GP", acuity: "Complete" },
-  { id: "fake-vic-14", name: "Valérie Rousseau", trips: 1, rev: "€3,970", last: "Paris Weekend", acuity: "Complete" },
-  { id: "fake-vic-4", name: "Eric Tournier", trips: 1, rev: "—", last: "Tuscany (draft)", acuity: "Complete" },
-  { id: "fake-vic-3", name: "Camille Signoles", trips: 1, rev: "€42,000", last: "Maldives", acuity: "Complete" },
-  { id: "fake-vic-11", name: "Thomas Bresson", trips: 1, rev: "—", last: "Lyon (draft)", acuity: "Not Run" },
+  { id: "vic-001", name: "Jean-Christophe Chopin", trips: 2, rev: "€28,500", last: "Monaco GP", acuity: "Complete" },
+  { id: "vic-014", name: "Valérie Rousseau", trips: 1, rev: "€3,970", last: "Paris Weekend", acuity: "Complete" },
+  { id: "vic-004", name: "Eric Tournier", trips: 1, rev: "—", last: "Tuscany (draft)", acuity: "Complete" },
+  { id: "vic-003", name: "Camille Signoles", trips: 1, rev: "€42,000", last: "Maldives", acuity: "Complete" },
+  { id: "vic-011", name: "Thomas Bresson", trips: 1, rev: "—", last: "Lyon (draft)", acuity: "Not Run" },
 ];
 
 export default function AnalyticsPage() {
@@ -58,7 +58,7 @@ export default function AnalyticsPage() {
   const [askFocus, setAskFocus] = useState(false);
 
   return (
-    <div className="h-full overflow-auto bg-[#0C0C0C]">
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-auto bg-[#0C0C0C]">
       {IS_PREVIEW_MODE && <PreviewBanner feature="Analytics" variant="full" dismissible sampleDataOnly />}
       <div className="max-w-6xl mx-auto p-6 space-y-8">
         <div className="flex flex-wrap items-center justify-between gap-4">

@@ -223,7 +223,7 @@ export default function AddEventModal({ open, onClose, itineraryId, dayNumber, o
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="bg-[#1a1a1a] border-white/10 max-w-lg">
+      <DialogContent className="bg-[#0e0e14] border-[rgba(255,255,255,0.06)] max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-[#F5F5F5]">
             {isEdit ? "Edit event" : "Add event"} — Day {dayNumber}
@@ -397,7 +397,7 @@ export default function AddEventModal({ open, onClose, itineraryId, dayNumber, o
                   </Button>
                 </div>
               ) : productResults.length > 0 && (
-                <ul className="mt-1 max-h-32 overflow-y-auto rounded-lg border border-white/10 bg-[#0C0C0C]">
+                <ul className="mt-1 max-h-32 overflow-y-auto rounded-lg border border-white/10 bg-[#08080c]">
                   {productResults.map((p) => (
                     <li key={p.id}>
                       <button

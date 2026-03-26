@@ -60,7 +60,7 @@ export default function BulkActionsBar({
                 <ChevronDown size={14} />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="bg-[#141414] border-[rgba(255,255,255,0.12)]">
+            <DropdownMenuContent align="start">
               {STATUS_OPTIONS.map((s) => (
                 <DropdownMenuItem
                   key={s}

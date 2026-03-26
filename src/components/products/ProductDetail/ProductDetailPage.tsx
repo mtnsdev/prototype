@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Copy, Pencil, Plus, Trash2 } from "lucide-react";
@@ -15,8 +15,10 @@ import { FAKE_PRODUCTS } from "../fakeData";
 import {
   buildDirectoryCollectionRefs,
   cloneDirectoryProduct,
+  cloneMockDirectoryCatalogForAdvisor,
+  DIRECTORY_EXTERNAL_COLLECTION_ID,
+  DIRECTORY_EXTERNAL_SEARCH_MOCK_SEED_ADVISOR_ID,
   getDirectoryProductById,
-  MOCK_DIRECTORY_COLLECTIONS,
   MOCK_DIRECTORY_PRODUCTS,
 } from "../productDirectoryMock";
 import { useUser } from "@/contexts/UserContext";
@@ -59,6 +61,11 @@ function filterCollectionsForUser(
 ): DirectoryCollectionOption[] {
   const memberTeamIds = teams.filter((t) => t.isDefault || t.memberIds.includes(uid)).map((t) => t.id);
   return collections.filter((c) => {
+    if (c.isSystem) {
+      if (c.scope === "team" && c.teamId) return memberTeamIds.includes(c.teamId);
+      if (c.scope === "private") return c.ownerId === uid;
+      return true;
+    }
     if (c.scope === "private" && c.ownerId === uid) return true;
     if (c.scope === "team" && c.teamId && memberTeamIds.includes(c.teamId)) return true;
     return false;
@@ -89,20 +96,34 @@ function customProgramKeysForProduct(target: DirectoryProduct, allProducts: Dire
   return out;
 }
 
+const DIRECTORY_DETAIL_SEED_NAME = "Janet";
+
 export default function ProductDetailPage({ productId }: Props) {
   const router = useRouter();
-  const { user, directoryViewAsAdmin } = useUser();
+  const { user, directoryViewAsAdmin, isLoading: userLoading } = useUser();
   const toast = useToast();
 
-  const dirSeed = useMemo(() => getDirectoryProductById(productId), [productId]);
-  const [directoryProduct, setDirectoryProduct] = useState<DirectoryProduct | null>(() =>
-    dirSeed ? cloneDirectoryProduct(dirSeed) : null
-  );
+  const [directoryProduct, setDirectoryProduct] = useState<DirectoryProduct | null>(null);
 
   useEffect(() => {
+    if (userLoading) return;
     const d = getDirectoryProductById(productId);
-    setDirectoryProduct(d ? cloneDirectoryProduct(d) : null);
-  }, [productId]);
+    if (!d) {
+      setDirectoryProduct(null);
+      return;
+    }
+    const advisorUid = String(user?.id ?? "1");
+    let p = cloneDirectoryProduct(d);
+    if (
+      advisorUid !== DIRECTORY_EXTERNAL_SEARCH_MOCK_SEED_ADVISOR_ID &&
+      p.collectionIds.includes(DIRECTORY_EXTERNAL_COLLECTION_ID)
+    ) {
+      const nextIds = p.collectionIds.filter((id) => id !== DIRECTORY_EXTERNAL_COLLECTION_ID);
+      const nextRefs = p.collections.filter((x) => x.id !== DIRECTORY_EXTERNAL_COLLECTION_ID);
+      p = { ...p, collectionIds: nextIds, collections: nextRefs, collectionCount: nextIds.length };
+    }
+    setDirectoryProduct(p);
+  }, [productId, userLoading, user?.id]);
 
   const uid = user ? String(user.id) : "1";
   const policies = useMemo(
@@ -114,12 +135,19 @@ export default function ProductDetailPage({ productId }: Props) {
     directoryViewAsAdmin || user?.role === "admin" || user?.role === "agency_admin";
 
   const [pickerOpen, setPickerOpen] = useState(false);
+  const detailCatalogSeedRef = useRef<string | null>(null);
   const [directoryCollections, setDirectoryCollections] = useState<DirectoryCollectionOption[]>(() =>
-    MOCK_DIRECTORY_COLLECTIONS.map((c) => ({
-      ...c,
-      productIds: c.productIds ? [...c.productIds] : undefined,
-    }))
+    cloneMockDirectoryCatalogForAdvisor("1", DIRECTORY_DETAIL_SEED_NAME).collections
   );
+
+  useEffect(() => {
+    if (userLoading) return;
+    const advisorUid = String(user?.id ?? "1");
+    const advisorName = user?.username ?? user?.email?.split("@")[0] ?? "You";
+    if (detailCatalogSeedRef.current === advisorUid) return;
+    detailCatalogSeedRef.current = advisorUid;
+    setDirectoryCollections(cloneMockDirectoryCatalogForAdvisor(advisorUid, advisorName).collections);
+  }, [userLoading, user?.id, user?.username, user?.email]);
 
   const availableCollections = useMemo(
     () => filterCollectionsForUser(uid, directoryCollections, MOCK_TEAMS),
@@ -280,7 +308,7 @@ export default function ProductDetailPage({ productId }: Props) {
     load();
   }, [productId, load]);
 
-  if (dirSeed && directoryProduct) {
+    if (getDirectoryProductById(productId) && directoryProduct) {
     return (
       <div className="min-h-screen bg-[#08080c] p-6 md:p-8">
         {IS_PREVIEW_MODE && <PreviewBanner feature="Product detail" variant="compact" sampleDataOnly />}

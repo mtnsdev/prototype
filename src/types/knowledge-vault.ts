@@ -95,6 +95,17 @@ export interface KnowledgeDocument {
   uploaded_by_name?: string;
   /** Private (advisor) docs: owner for visibility; omit in legacy mocks → treated as current user in UI */
   ownerId?: string;
+  /** Owning user no longer has an account (e.g. left the agency). Drives custody messaging and admin visibility for private docs. */
+  owner_departed?: boolean;
+  /** ISO timestamp when the owner was marked inactive (HR / IdP); optional until API provides it. */
+  departed_at?: string;
+  /**
+   * Legal/comms: widened or leaver-tied content pending review before full RAG / discovery treatment.
+   * UI + mock search ranking only until workflow exists.
+   */
+  requires_access_review?: boolean;
+  /** After reassignment, logical custodian user id (future API). */
+  access_reassigned_to_user_id?: string;
   /** Intranet wiki-style pages */
   is_wiki_page?: boolean;
   /** Email template → sales cycle stage */

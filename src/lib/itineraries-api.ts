@@ -31,6 +31,7 @@ function buildQuery(params: ItineraryListParams): string {
   if (params.destination != null && params.destination !== "") sp.set("destination", params.destination);
   if (params.date_from != null) sp.set("date_from", params.date_from);
   if (params.date_to != null) sp.set("date_to", params.date_to);
+  if (params.pipeline_stage != null) sp.set("pipeline_stage", params.pipeline_stage);
   if (params.tab != null) sp.set("tab", params.tab);
   if (params.sort_by != null) sp.set("sort_by", params.sort_by);
   if (params.sort_order != null) sp.set("sort_order", params.sort_order);
