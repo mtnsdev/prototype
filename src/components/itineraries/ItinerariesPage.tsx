@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect, useCallback, useMemo, useLayoutEffect, useRef } from "react";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import type { Itinerary, ItineraryStatus, ItineraryListParams, PipelineStage } from "@/types/itinerary";
-import { PIPELINE_STAGES } from "@/config/pipelineStages";
 import { fetchItineraryList, getItineraryId } from "@/lib/itineraries-api";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/contexts/ToastContext";
@@ -16,10 +15,15 @@ import ItineraryCardView from "./ItineraryCardView";
 import ItineraryKanbanView from "./ItineraryKanbanView";
 import ItinerariesEmptyState from "./ItinerariesEmptyState";
 import CreateItineraryModal from "./Modals/CreateItineraryModal";
-import PreviewBanner from "@/components/ui/PreviewBanner";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 import DeleteItineraryModal from "./Modals/DeleteItineraryModal";
-import { cn } from "@/lib/utils";
+import {
+  buildItinerariesSearchParams,
+  mergeItinerariesListIntoUrl,
+  parseItinerariesSearchParams,
+} from "@/lib/itinerariesUrl";
+import { PIPELINE_STAGE_LABEL_MAP, PIPELINE_STAGES } from "@/config/pipelineStages";
+import { ITINERARY_STATUS_BADGES } from "./statusConfig";
 
 const VIEW_KEY = "itinerary_view";
 const SORT_KEY = "itinerary_sortBy";
@@ -36,13 +40,13 @@ const UPCOMING_PIPELINE_STAGES: PipelineStage[] = [
 export default function ItinerariesPage() {
   const { user } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
   const showToast = useToast();
   const searchParams = useSearchParams();
   const tabFromUrl = (searchParams.get("tab") as "mine" | "agency") || "mine";
   const activeTab = tabFromUrl === "agency" ? "agency" : "mine";
   const createVicId = searchParams.get("vic_id") ?? undefined;
   const openCreateFromUrl = searchParams.get("create") === "1";
-  const upcomingTripsFromUrl = searchParams.get("filter") === "upcoming";
 
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -59,6 +63,10 @@ export default function ItinerariesPage() {
   const [sortBy, setSortBy] = useState("updated_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [pipelineFilter, setPipelineFilter] = useState<PipelineStage | null>(null);
+  const [upcomingTrips, setUpcomingTrips] = useState(false);
+
+  const itinUrlHydratedRef = useRef(false);
+  const itinUrlSyncedRef = useRef<string | null>(null);
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteItinerary, setDeleteItinerary] = useState<Itinerary | null>(null);
@@ -70,13 +78,81 @@ export default function ItinerariesPage() {
   const isDev = typeof process !== "undefined" && process.env.NODE_ENV === "development";
   const currentUser = user ? { id: user.id, role: user.role, agency_id: user.agency_id } : null;
 
-  const clearUpcomingUrlParam = useCallback(() => {
-    const sp = new URLSearchParams(searchParams.toString());
-    if (sp.get("filter") !== "upcoming") return;
-    sp.delete("filter");
-    const q = sp.toString();
-    router.replace(`/dashboard/itineraries${q ? `?${q}` : ""}`);
-  }, [router, searchParams]);
+  useLayoutEffect(() => {
+    if (typeof window === "undefined" || itinUrlHydratedRef.current) return;
+    itinUrlHydratedRef.current = true;
+    const sp = new URLSearchParams(window.location.search);
+    itinUrlSyncedRef.current = sp.toString();
+    const p = parseItinerariesSearchParams(sp);
+    setSearchQuery(p.q);
+    setStatusFilter(p.status);
+    setDestinationFilter(p.destination);
+    setVicFilter(p.vic);
+    setDateFrom(p.dateFrom);
+    setDateTo(p.dateTo);
+    setPipelineFilter(p.upcoming ? null : p.pipeline);
+    setUpcomingTrips(p.upcoming);
+    if (sp.has("sort_by")) setSortBy(p.sortBy);
+    else {
+      try {
+        const s = localStorage.getItem(SORT_KEY);
+        if (s) setSortBy(s);
+      } catch (_) {}
+    }
+    if (sp.has("sort_order")) setSortOrder(p.sortOrder);
+    else {
+      try {
+        const o = localStorage.getItem(SORT_ORDER_KEY) as "asc" | "desc" | null;
+        if (o === "asc" || o === "desc") setSortOrder(o);
+      } catch (_) {}
+    }
+    if (sp.has("view")) setViewMode(p.view);
+    else {
+      try {
+        const v = localStorage.getItem(VIEW_KEY) as "list" | "cards" | "board" | null;
+        if (v === "list" || v === "cards" || v === "board") setViewMode(v);
+      } catch (_) {}
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!itinUrlHydratedRef.current) return;
+    const built = buildItinerariesSearchParams({
+      tab: activeTab,
+      q: searchQuery,
+      status: statusFilter,
+      destination: destinationFilter,
+      vic: vicFilter,
+      dateFrom,
+      dateTo,
+      pipeline: pipelineFilter,
+      upcoming: upcomingTrips,
+      sortBy,
+      sortOrder,
+      view: viewMode,
+    });
+    const next = mergeItinerariesListIntoUrl(new URLSearchParams(searchParams.toString()), built);
+    const qs = next.toString();
+    if (qs === itinUrlSyncedRef.current) return;
+    itinUrlSyncedRef.current = qs;
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [
+    activeTab,
+    searchQuery,
+    statusFilter,
+    destinationFilter,
+    vicFilter,
+    dateFrom,
+    dateTo,
+    pipelineFilter,
+    upcomingTrips,
+    sortBy,
+    sortOrder,
+    viewMode,
+    pathname,
+    router,
+    searchParams,
+  ]);
 
   const loadItineraries = useCallback(async () => {
     setError(null);
@@ -90,6 +166,7 @@ export default function ItinerariesPage() {
       destination: destinationFilter ?? undefined,
       date_from: dateFrom || undefined,
       date_to: dateTo || undefined,
+      pipeline_stage: upcomingTrips ? undefined : (pipelineFilter ?? undefined),
       sort_by: sortBy,
       sort_order: sortOrder,
       page: 1,
@@ -109,7 +186,8 @@ export default function ItinerariesPage() {
           destination: params.destination ?? undefined,
           date_from: params.date_from ?? undefined,
           date_to: params.date_to ?? undefined,
-          pipeline_stage: pipelineFilter ?? undefined,
+          pipeline_stages_in: upcomingTrips ? UPCOMING_PIPELINE_STAGES : undefined,
+          pipeline_stage: upcomingTrips ? undefined : (pipelineFilter ?? undefined),
           sortBy,
           sortOrder,
           page: 1,
@@ -132,8 +210,8 @@ export default function ItinerariesPage() {
         destination: params.destination ?? undefined,
         date_from: params.date_from ?? undefined,
         date_to: params.date_to ?? undefined,
-        pipeline_stages_in: upcomingTripsFromUrl ? UPCOMING_PIPELINE_STAGES : undefined,
-        pipeline_stage: upcomingTripsFromUrl ? undefined : (pipelineFilter ?? undefined),
+        pipeline_stages_in: upcomingTrips ? UPCOMING_PIPELINE_STAGES : undefined,
+        pipeline_stage: upcomingTrips ? undefined : (pipelineFilter ?? undefined),
         sortBy,
         sortOrder,
         page: 1,
@@ -158,23 +236,13 @@ export default function ItinerariesPage() {
     sortBy,
     sortOrder,
     pipelineFilter,
-    upcomingTripsFromUrl,
+    upcomingTrips,
     isDev,
   ]);
 
   useEffect(() => {
     loadItineraries();
   }, [loadItineraries]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const v = localStorage.getItem(VIEW_KEY) as "list" | "cards" | "board" | null;
-    if (v === "list" || v === "cards" || v === "board") setViewMode(v);
-    const s = localStorage.getItem(SORT_KEY);
-    const o = localStorage.getItem(SORT_ORDER_KEY) as "asc" | "desc" | null;
-    if (s) setSortBy(s);
-    if (o === "asc" || o === "desc") setSortOrder(o);
-  }, []);
 
   useEffect(() => {
     try {
@@ -192,7 +260,7 @@ export default function ItinerariesPage() {
     dateFrom !== "" ||
     dateTo !== "" ||
     pipelineFilter != null ||
-    upcomingTripsFromUrl;
+    upcomingTrips;
 
   const clearFilters = () => {
     setSearchQuery("");
@@ -202,7 +270,7 @@ export default function ItinerariesPage() {
     setDateFrom("");
     setDateTo("");
     setPipelineFilter(null);
-    clearUpcomingUrlParam();
+    setUpcomingTrips(false);
   };
 
   const itinerariesForStageCounts = useMemo(() => {
@@ -217,16 +285,50 @@ export default function ItinerariesPage() {
     }).itineraries;
   }, [activeTab, user?.id, user?.agency_id]);
 
+  const stageCounts = useMemo(() => {
+    const out: Partial<Record<PipelineStage, number>> = {};
+    for (const s of PIPELINE_STAGES) out[s.key] = 0;
+    for (const it of itinerariesForStageCounts) {
+      const k = (it.pipeline_stage ?? "lead") as PipelineStage;
+      out[k] = (out[k] ?? 0) + 1;
+    }
+    return out;
+  }, [itinerariesForStageCounts]);
+
+  const chipBtn =
+    "flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-[#9B9590] transition-colors hover:bg-white/[0.06]";
+
   const isEmpty = !isLoading && itineraries.length === 0 && !hasActiveFilters;
   const noResults = !isLoading && itineraries.length === 0 && hasActiveFilters;
 
   const canViewFinancials_ = canViewFinancials(currentUser);
 
   return (
-    <div className="h-full flex flex-col bg-[#0C0C0C] overflow-hidden">
-      {IS_PREVIEW_MODE && <PreviewBanner feature="Itineraries" variant="full" dismissible sampleDataOnly />}
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#08080c] text-[#F5F5F5]">
+      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-[rgba(255,255,255,0.08)] pl-6 pr-[4.5rem] py-3">
+        <div className="min-w-0">
+          <h1 className="text-sm font-semibold leading-none text-[#F5F5F5]">Itineraries</h1>
+          <p className="mt-1 text-[11px] leading-snug text-[rgba(245,245,245,0.5)]">
+            {hasActiveFilters ? (
+              <>
+                <span>
+                  {totalCount} {totalCount === 1 ? "itinerary" : "itineraries"}
+                </span>
+                {" · "}
+                matching filters
+              </>
+            ) : (
+              <span>
+                {totalCount} {totalCount === 1 ? "itinerary" : "itineraries"}
+              </span>
+            )}
+          </p>
+        </div>
+      </header>
       <ItineraryTabBar activeTab={activeTab} />
-      <ItineraryToolbar
+      <div className="relative z-10 shrink-0 px-6 pb-0 pt-4">
+        <ItineraryToolbar
+        activeTab={activeTab}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         statusFilter={statusFilter}
@@ -239,6 +341,11 @@ export default function ItinerariesPage() {
         dateTo={dateTo}
         onDateFromChange={setDateFrom}
         onDateToChange={setDateTo}
+        pipelineFilter={pipelineFilter}
+        onPipelineFilterChange={setPipelineFilter}
+        upcomingTrips={upcomingTrips}
+        onUpcomingTripsChange={setUpcomingTrips}
+        stageCounts={stageCounts}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         sortBy={sortBy}
@@ -248,84 +355,108 @@ export default function ItinerariesPage() {
           setSortOrder(order);
         }}
         onCreateItinerary={() => setCreateModalOpen(true)}
-        onClearFilters={clearFilters}
-      />
+        resultTotal={totalCount}
+        />
+      </div>
 
-      {upcomingTripsFromUrl && (
-        <div className="px-4 py-2 text-xs bg-emerald-500/10 text-emerald-200/90 border-b border-emerald-500/15 flex flex-wrap items-center justify-between gap-2 shrink-0">
-          <span>
-            Showing upcoming trips: Committed, Preparing, Final Review, or Traveling.
-          </span>
-          <button
-            type="button"
-            onClick={clearUpcomingUrlParam}
-            className="text-emerald-400 hover:text-emerald-300 font-medium"
-          >
+      {(searchQuery.trim() ||
+        statusFilter != null ||
+        destinationFilter != null ||
+        vicFilter != null ||
+        dateFrom !== "" ||
+        dateTo !== "" ||
+        pipelineFilter != null ||
+        upcomingTrips) && (
+        <div className="mb-3 flex shrink-0 flex-wrap gap-1.5 px-6">
+          {searchQuery.trim() ? (
+            <button type="button" className={chipBtn} onClick={() => setSearchQuery("")} aria-label="Clear search">
+              &quot;{searchQuery.trim().slice(0, 24)}
+              {searchQuery.trim().length > 24 ? "…" : ""}&quot;
+              <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+          {statusFilter ? (
+            <button type="button" className={chipBtn} onClick={() => setStatusFilter(null)} aria-label="Clear status">
+              {ITINERARY_STATUS_BADGES[statusFilter].label}
+              <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+          {vicFilter ? (
+            <button type="button" className={chipBtn} onClick={() => setVicFilter(null)} aria-label="Clear client filter">
+              Client
+              <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+          {destinationFilter ? (
+            <button type="button" className={chipBtn} onClick={() => setDestinationFilter(null)} aria-label="Clear destination">
+              {destinationFilter.slice(0, 28)}
+              {destinationFilter.length > 28 ? "…" : ""}
+              <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+          {dateFrom ? (
+            <button type="button" className={chipBtn} onClick={() => setDateFrom("")} aria-label="Clear start date">
+              From {dateFrom}
+              <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+          {dateTo ? (
+            <button type="button" className={chipBtn} onClick={() => setDateTo("")} aria-label="Clear end date">
+              To {dateTo}
+              <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+          {pipelineFilter ? (
+            <button type="button" className={chipBtn} onClick={() => setPipelineFilter(null)} aria-label="Clear pipeline">
+              {PIPELINE_STAGE_LABEL_MAP[pipelineFilter]}
+              <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+          {upcomingTrips ? (
+            <button type="button" className={chipBtn} onClick={() => setUpcomingTrips(false)} aria-label="Clear upcoming filter">
+              Upcoming trips
+              <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+        </div>
+      )}
+
+      {upcomingTrips && (
+        <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-lg border border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.06)] px-3 py-2 text-[11px] text-[#C9A96E] mx-6">
+          <span>Showing upcoming trips: Committed, Preparing, Final Review, or Traveling.</span>
+          <button type="button" onClick={() => setUpcomingTrips(false)} className="font-medium text-[#E8D5B5] hover:text-[#F5F0EB]">
             Clear
           </button>
         </div>
       )}
 
       {error && (
-        <div className="px-4 py-2 text-sm text-[var(--muted-amber-text)] bg-[var(--muted-amber-bg)] border-b border-[var(--muted-amber-border)]">
+        <div className="shrink-0 px-4 py-2 text-sm text-[var(--muted-amber-text)] bg-[var(--muted-amber-bg)] border-b border-[var(--muted-amber-border)]">
           {error}
         </div>
       )}
 
-      {(isEmpty || noResults) && (
-        <ItinerariesEmptyState
-          hasNoItineraries={isEmpty}
-          tab={activeTab}
-          onCreateItinerary={activeTab === "mine" ? () => setCreateModalOpen(true) : undefined}
-          onClearFilters={noResults ? clearFilters : undefined}
-        />
-      )}
-
-      {!isEmpty && !noResults && (
-        <>
-          <div className="flex items-center gap-2 px-4 mb-2 overflow-x-auto pb-1 shrink-0 border-b border-white/[0.04]">
-            <button
-              type="button"
-              onClick={() => {
-                setPipelineFilter(null);
-                clearUpcomingUrlParam();
-              }}
-              className={cn(
-                "px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all",
-                !pipelineFilter && !upcomingTripsFromUrl
-                  ? "bg-white/10 text-white border border-white/20"
-                  : "text-gray-500 hover:text-gray-400"
-              )}
-            >
-              All
-            </button>
-            {PIPELINE_STAGES.filter((s) => s.key !== "archived").map((stage) => (
-              <button
-                key={stage.key}
-                type="button"
-                onClick={() => {
-                  setPipelineFilter(stage.key);
-                  clearUpcomingUrlParam();
-                }}
-                className={cn(
-                  "px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all",
-                  pipelineFilter === stage.key
-                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                    : "text-gray-500 hover:text-gray-400"
-                )}
-              >
-                {stage.label}
-                <span className="ml-1 text-gray-600">
-                  {itinerariesForStageCounts.filter((i) => (i.pipeline_stage ?? "lead") === stage.key).length}
-                </span>
-              </button>
-            ))}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        {(isEmpty || noResults) && (
+          <div className="flex min-h-0 flex-1 flex-col overflow-auto">
+            <ItinerariesEmptyState
+              hasNoItineraries={isEmpty}
+              tab={activeTab}
+              onCreateItinerary={activeTab === "mine" ? () => setCreateModalOpen(true) : undefined}
+              onClearFilters={noResults ? clearFilters : undefined}
+            />
           </div>
-          {viewMode === "board" && (
-            <ItineraryKanbanView itineraries={itineraries} />
-          )}
-          {viewMode === "list" && (
-            <div className="flex-1 overflow-auto">
+        )}
+
+        {!isEmpty && !noResults && (
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            {viewMode === "board" && (
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                <ItineraryKanbanView itineraries={itineraries} />
+              </div>
+            )}
+            {viewMode === "list" && (
+            <div className="flex min-h-0 flex-1 overflow-auto">
               <ItineraryListView
                 itineraries={itineraries}
                 isLoading={isLoading}
@@ -354,9 +485,9 @@ export default function ItinerariesPage() {
                 canViewFinancials={canViewFinancials_}
               />
             </div>
-          )}
-          {viewMode === "cards" && (
-            <div className="flex-1 overflow-auto">
+            )}
+            {viewMode === "cards" && (
+            <div className="flex min-h-0 flex-1 overflow-auto">
               <ItineraryCardView
                 itineraries={itineraries}
                 isLoading={isLoading}
@@ -385,9 +516,10 @@ export default function ItinerariesPage() {
                 canViewFinancials={canViewFinancials_}
               />
             </div>
-          )}
-        </>
-      )}
+            )}
+          </div>
+        )}
+      </div>
 
       <CreateItineraryModal
         open={createModalOpen}
