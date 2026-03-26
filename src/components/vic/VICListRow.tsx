@@ -84,7 +84,7 @@ export default function VICListRow({
           type="checkbox"
           checked={isSelected}
           onChange={onToggleSelect}
-          className="rounded border-white/20 bg-white/5"
+          className="checkbox-on-dark"
         />
       </td>
       <td className="py-3">

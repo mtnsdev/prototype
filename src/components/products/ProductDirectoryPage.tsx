@@ -1,1455 +1,1577 @@
 "use client";
 
-import { useMemo, useState, useCallback, useEffect } from "react";
-import {
-  Award,
-  Bookmark,
-  Building2,
-  ChevronLeft,
-  Compass,
-  Globe,
-  LayoutGrid,
-  Lock,
-  Map as MapIcon,
-  Plus,
-  Search,
-  Share2,
-  Ship,
-  Users,
-  Check,
-  Trash2,
-  UserPlus,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Bookmark, LayoutGrid, Search, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+type ProductDirectoryMainTab = "browse" | "collections" | "partner-portal";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/contexts/ToastContext";
-import PreviewBanner from "@/components/ui/PreviewBanner";
-import { IS_PREVIEW_MODE } from "@/config/preview";
-import EmptyState from "@/components/ui/EmptyState";
-import { SkeletonCard, SkeletonRow, Spinner } from "@/components/ui/SkeletonPatterns";
+import { MOCK_TEAMS, resolveUserPolicies } from "@/lib/teamsMock";
+import type {
+  DirectoryAmenityTag,
+  DirectoryCollectionOption,
+  DirectoryProduct,
+  DirectoryProductCategory,
+  NewDirectoryCollectionInput,
+} from "@/types/product-directory";
+import {
+  buildDirectoryCollectionRefs,
+  MOCK_DIRECTORY_COLLECTIONS,
+  MOCK_DIRECTORY_PRODUCTS,
+} from "./productDirectoryMock";
+import ProductDirectoryFilterBar from "./ProductDirectoryFilterBar";
+import DirectoryProductCard from "./DirectoryProductCard";
+import DirectoryProductListView from "./DirectoryProductListView";
+import ProductDirectoryDetailPanel from "./ProductDirectoryDetailPanel";
+import ProductDirectoryCollectionPicker from "./ProductDirectoryCollectionPicker";
+import ProductDirectoryMapSplit from "./ProductDirectoryMapSplit";
+import {
+  ProductDirectoryCollectionsTab,
+  ProductDirectoryPartnerPortalTab,
+  buildPartnerPortalRows,
+} from "./ProductDirectoryTabsViews";
+import type { Team } from "@/types/teams";
+import type { DirectoryPriceTier, DirectoryTierLevel } from "@/components/products/productDirectoryDetailMeta";
+import {
+  AGENCY_PROGRAM_OPTIONS,
+  AMENITY_LABELS,
+  compareProductsByRegistryCommission,
+  DIRECTORY_TIER_FILTER_UI,
+  type DirectoryProductSortOption,
+} from "./productDirectoryFilterConfig";
+import {
+  applyDirectoryProductFilters,
+  type DirectoryFilterSkip,
+  type DirectoryPageFilterInput,
+} from "./productDirectoryFilterPipeline";
+import { DIRECTORY_TIER_SORT_RANK } from "./productDirectoryDetailMeta";
+import {
+  getTopBookableProgramByCommission,
+  isProgramBookable,
+  programDisplayCommissionRate,
+  programDisplayName,
+  programFilterId,
+} from "./productDirectoryCommission";
+import {
+  applyPartnerPortalPayloadToProducts,
+  createDirectoryCollectionRecord,
+  type PartnerPortalAdminSavePayload,
+  validatePartnerPortalAdminPayload,
+} from "./productDirectoryLogic";
+import { directoryCategoryColors, directoryCategoryLabel } from "./productDirectoryVisual";
 import { ScopeBadge } from "@/components/ui/ScopeBadge";
-import { ShareWithTeamDropdown } from "@/components/ui/ShareWithTeamDropdown";
-import { MOCK_TEAMS } from "@/lib/teamsMock";
 import { TEAM_EVERYONE_ID } from "@/types/teams";
 
-type ProductType = "hotel" | "dmc" | "experience" | "cruise";
-
-type DirectoryProduct = {
-  id: string;
-  name: string;
-  type: ProductType;
-  city: string;
-  country: string;
-  latitude: number;
-  longitude: number;
-  description: string;
-  hasTeamData: boolean;
-  hasAdvisorNotes: boolean;
-};
-
-type Collection = {
-  id: string;
-  name: string;
-  description?: string;
-  scope: "private" | string;
-  ownerId: string;
-  ownerName: string;
-  productIds: string[];
-  createdAt: string;
-  updatedAt: string;
-};
-
-const productTypes: { id: ProductType; label: string; icon: typeof Building2; color: string }[] = [
-  { id: "hotel", label: "Hotel / Resort", icon: Building2, color: "text-blue-400" },
-  { id: "dmc", label: "DMC", icon: Globe, color: "text-emerald-400" },
-  { id: "experience", label: "Experience / Tour", icon: Compass, color: "text-amber-400" },
-  { id: "cruise", label: "Cruise", icon: Ship, color: "text-violet-400" },
-];
-
-const MOCK_PRODUCTS: DirectoryProduct[] = [
-  {
-    id: "prod-001",
-    name: "Aman Tokyo",
-    type: "hotel",
-    city: "Tokyo",
-    country: "Japan",
-    latitude: 35.6762,
-    longitude: 139.6503,
-    description:
-      "Urban sanctuary in the heart of Tokyo, blending traditional Japanese aesthetics with contemporary minimalism.",
-    hasTeamData: true,
-    hasAdvisorNotes: true,
-  },
-  {
-    id: "prod-002",
-    name: "Four Seasons Kyoto",
-    type: "hotel",
-    city: "Kyoto",
-    country: "Japan",
-    latitude: 34.9869,
-    longitude: 135.7781,
-    description: "Elegant property surrounded by an 800-year-old pond garden.",
-    hasTeamData: true,
-    hasAdvisorNotes: false,
-  },
-  {
-    id: "prod-003",
-    name: "One&Only Reethi Rah",
-    type: "hotel",
-    city: "North Malé Atoll",
-    country: "Maldives",
-    latitude: 4.4239,
-    longitude: 73.4668,
-    description: "Private island resort with overwater villas and 12 dining venues.",
-    hasTeamData: true,
-    hasAdvisorNotes: true,
-  },
-  {
-    id: "prod-004",
-    name: "Cheval Blanc St-Barth",
-    type: "hotel",
-    city: "St. Barthélemy",
-    country: "France",
-    latitude: 17.8963,
-    longitude: -62.8498,
-    description: "LVMH luxury on the beach at Baie des Flamands.",
-    hasTeamData: false,
-    hasAdvisorNotes: false,
-  },
-  {
-    id: "prod-dmc-001",
-    name: "Bali Luxury Concierge — Dima",
-    type: "dmc",
-    city: "Ubud",
-    country: "Indonesia",
-    latitude: -8.5069,
-    longitude: 115.2625,
-    description: "High-end destination management in Bali.",
-    hasTeamData: true,
-    hasAdvisorNotes: true,
-  },
-  {
-    id: "prod-exp-001",
-    name: "Private Tea Ceremony — Kyoto",
-    type: "experience",
-    city: "Kyoto",
-    country: "Japan",
-    latitude: 35.0116,
-    longitude: 135.7681,
-    description: "Two-hour private tea ceremony in a 16th-century machiya townhouse.",
-    hasTeamData: false,
-    hasAdvisorNotes: true,
-  },
-  {
-    id: "prod-cruise-001",
-    name: "Silversea — Mediterranean Grand Voyage",
-    type: "cruise",
-    city: "Monte Carlo",
-    country: "Monaco",
-    latitude: 43.7384,
-    longitude: 7.4246,
-    description: "14-night luxury cruise from Monte Carlo to Istanbul via the Greek Islands.",
-    hasTeamData: true,
-    hasAdvisorNotes: false,
-  },
-];
-
-const INITIAL_COLLECTIONS: Collection[] = [
-  {
-    id: "col-001",
-    name: "Smith Family — Japan Options",
-    description: "Hotels and experiences for the Smith Japan trip, April 2026",
-    scope: "private",
-    ownerId: "user-janet",
-    ownerName: "Janet",
-    productIds: ["prod-001", "prod-002", "prod-exp-001"],
-    createdAt: "2026-03-10T10:00:00Z",
-    updatedAt: "2026-03-18T14:00:00Z",
-  },
-  {
-    id: "col-002",
-    name: "TravelLustre Preferred Hotels 2026",
-    description: "Our top recommended hotels across all destinations",
-    scope: TEAM_EVERYONE_ID,
-    ownerId: "user-kristin",
-    ownerName: "Kristin",
-    productIds: ["prod-001", "prod-003", "prod-004", "prod-dmc-001"],
-    createdAt: "2026-01-15T09:00:00Z",
-    updatedAt: "2026-03-16T11:00:00Z",
-  },
-  {
-    id: "col-003",
-    name: "My Go-To Maldives Hotels",
-    scope: "private",
-    ownerId: "user-janet",
-    ownerName: "Janet",
-    productIds: ["prod-003", "prod-004"],
-    createdAt: "2026-02-20T15:00:00Z",
-    updatedAt: "2026-03-01T09:00:00Z",
-  },
-];
-
-const COUNTRY_OPTIONS = ["Japan", "Maldives", "France", "Indonesia", "Italy", "Monaco"];
-
-function getInitialCollections(): Collection[] {
-  if (typeof process !== "undefined" && process.env.NEXT_PUBLIC_PD_COLLECTIONS_EMPTY === "1") {
-    return [];
-  }
-  return INITIAL_COLLECTIONS.map((c) => ({ ...c, productIds: [...c.productIds] }));
+function bookableProgramsForCompare(p: DirectoryProduct) {
+  return p.partnerPrograms.filter(isProgramBookable);
 }
 
-type AgencyContact = {
-  id: string;
-  name: string;
-  role: string;
-  email?: string;
-  phone?: string | null;
-  note?: string | null;
-  addedById: string;
-  addedBy: string;
-  addedDate: string;
-};
-
-function getInitialAgencyContacts(): AgencyContact[] {
-  if (typeof process !== "undefined" && process.env.NEXT_PUBLIC_PD_AGENCY_CONTACTS_EMPTY === "1") {
-    return [];
-  }
-  return [
-    {
-      id: "ac-001",
-      name: "Stéphane Laurent",
-      role: "General Manager",
-      email: "slaurent@aman.com",
-      phone: "+33 1 42 22 00 11",
-      note: "Mention TravelLustre — he knows us well.",
-      addedById: "user-001",
-      addedBy: "Constantin Chopin",
-      addedDate: "2025-11-15",
-    },
-    {
-      id: "ac-002",
-      name: "Marie Duval",
-      role: "Commission Contact",
-      email: "marie.duval@aman.com",
-      phone: null,
-      note: null,
-      addedById: "user-002",
-      addedBy: "Sophie Martin",
-      addedDate: "2026-01-08",
-    },
-    {
-      id: "ac-003",
-      name: "Julien Moreau",
-      role: "Reservations Manager",
-      email: "jmoreau@aman.com",
-      phone: "+33 1 42 22 00 15",
-      note: "Best reached by email — usually replies within 2h.",
-      addedById: "user-001",
-      addedBy: "Constantin Chopin",
-      addedDate: "2026-02-20",
-    },
-  ];
+function programsSignature(p: DirectoryProduct) {
+  return bookableProgramsForCompare(p)
+    .map((pp) => programDisplayName(pp))
+    .sort()
+    .join("|");
 }
 
-function pinPosition(lat: number, lng: number) {
-  const left = ((lng + 180) / 360) * 100;
-  const top = ((90 - lat) / 180) * 100;
-  return { left: `${left}%`, top: `${top}%` };
+function commissionKey(p: DirectoryProduct, canViewCommissions: boolean) {
+  if (!canViewCommissions) return "hidden";
+  const top = getTopBookableProgramByCommission(p);
+  const r = top ? programDisplayCommissionRate(top) : null;
+  return r == null ? "none" : String(r);
 }
 
-function markerColor(type: ProductType) {
-  switch (type) {
-    case "hotel":
-      return "bg-blue-400";
-    case "dmc":
-      return "bg-emerald-400";
-    case "experience":
-      return "bg-amber-400";
-    case "cruise":
-      return "bg-violet-400";
-    default:
-      return "bg-gray-400";
-  }
+function amenitySignature(p: DirectoryProduct) {
+  const top = getTopBookableProgramByCommission(p);
+  return (top?.amenityTags ?? [])
+    .slice()
+    .sort()
+    .join("|");
 }
 
-const MAP_CELL_W = 7;
-const MAP_CELL_H = 9;
+function enrichmentSignature(p: DirectoryProduct) {
+  return `${p.hasTeamData ? "1" : "0"}-${p.hasAdvisorNotes ? "1" : "0"}`;
+}
 
-type MapPinItem =
-  | { kind: "single"; product: DirectoryProduct; left: string; top: string }
-  | { kind: "cluster"; products: DirectoryProduct[]; left: string; top: string };
+function diffWrapClass(differs: boolean) {
+  return differs ? "rounded-lg bg-[rgba(201,169,110,0.05)] ring-1 ring-[rgba(201,169,110,0.18)] p-2" : "";
+}
 
-/** Grid buckets nearby pins into one cluster marker (preview map). */
-function clusterMapPins(products: DirectoryProduct[]): MapPinItem[] {
-  const buckets = new Map<string, DirectoryProduct[]>();
-  for (const p of products) {
-    const { left, top } = pinPosition(p.latitude, p.longitude);
-    const lx = parseFloat(left);
-    const ty = parseFloat(top);
-    const gx = Math.floor(lx / MAP_CELL_W);
-    const gy = Math.floor(ty / MAP_CELL_H);
-    const key = `${gx},${gy}`;
-    const arr = buckets.get(key) ?? [];
-    arr.push(p);
-    buckets.set(key, arr);
-  }
-  const out: MapPinItem[] = [];
-  for (const group of buckets.values()) {
-    if (group.length === 1) {
-      const pos = pinPosition(group[0].latitude, group[0].longitude);
-      out.push({ kind: "single", product: group[0], ...pos });
-    } else {
-      let sl = 0;
-      let st = 0;
-      for (const p of group) {
-        const pos = pinPosition(p.latitude, p.longitude);
-        sl += parseFloat(pos.left);
-        st += parseFloat(pos.top);
-      }
-      const n = group.length;
-      out.push({
-        kind: "cluster",
-        products: group,
-        left: `${sl / n}%`,
-        top: `${st / n}%`,
-      });
-    }
+function termsSignatureForProgram(program: (DirectoryProduct["partnerPrograms"][number] | undefined)): string {
+  if (!program) return "::";
+  return `${program.commissionRate ?? ""}::${(program.amenities ?? "").trim()}`;
+}
+
+function customProgramKeysForProduct(target: DirectoryProduct, allProducts: DirectoryProduct[]): string[] {
+  const out: string[] = [];
+  for (const pp of target.partnerPrograms) {
+    const key = programFilterId(pp);
+    const linked = allProducts
+      .map((p) => p.partnerPrograms.find((x) => programFilterId(x) === key))
+      .filter((x): x is NonNullable<typeof x> => Boolean(x));
+    const counts = new Map<string, number>();
+    linked.forEach((x) => {
+      const sig = termsSignatureForProgram(x);
+      counts.set(sig, (counts.get(sig) ?? 0) + 1);
+    });
+    if (counts.size <= 1) continue;
+    const baselineSig = Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
+    if (termsSignatureForProgram(pp) !== baselineSig) out.push(key);
   }
   return out;
 }
 
-export default function ProductDirectoryPage() {
-  const toast = useToast();
-  const { user } = useUser();
-  const isAdmin = user?.role === "admin" || user?.role === "agency_admin";
-  const currentUserId = user?.id != null ? String(user.id) : "user-janet";
+type CompareViewProps = {
+  products: DirectoryProduct[];
+  canViewCommissions: boolean;
+  onClose: () => void;
+  onViewFullDetails: (product: DirectoryProduct) => void;
+};
 
-  const [pageLoading, setPageLoading] = useState(true);
-  const [mapLoading, setMapLoading] = useState(false);
-  const [detailSkeleton, setDetailSkeleton] = useState(false);
-  const [savingProductId, setSavingProductId] = useState<string | null>(null);
-  const [sharingCollectionId, setSharingCollectionId] = useState<string | null>(null);
-  const [postingNote, setPostingNote] = useState(false);
+function ProductDirectoryCompareView({ products, canViewCommissions, onClose, onViewFullDetails }: CompareViewProps) {
+  const types = products.map((p) => p.type);
+  const typeDiffers = new Set(types).size > 1;
+  const commKeys = products.map((p) => commissionKey(p, canViewCommissions));
+  const commDiffers = canViewCommissions && new Set(commKeys).size > 1;
+  const progSigs = products.map(programsSignature);
+  const progDiffers = new Set(progSigs).size > 1;
+  const amenitySigs = products.map(amenitySignature);
+  const amenityDiffers = new Set(amenitySigs).size > 1;
+  const enrichSigs = products.map(enrichmentSignature);
+  const enrichDiffers = new Set(enrichSigs).size > 1;
 
-  const [activeTab, setActiveTab] = useState<"collections" | "agency" | "enable">("collections");
-  const [viewMode, setViewMode] = useState<"list" | "map">("list");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [countryFilter, setCountryFilter] = useState("");
-  const [activeTypeFilters, setActiveTypeFilters] = useState<ProductType[]>([]);
-  const [collections, setCollections] = useState<Collection[]>(getInitialCollections);
-  const [openCollectionId, setOpenCollectionId] = useState<string | null>(null);
-  const [detailProduct, setDetailProduct] = useState<DirectoryProduct | null>(null);
-  const [saveForProductId, setSaveForProductId] = useState<string | null>(null);
-  const [newCollectionOpen, setNewCollectionOpen] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newDesc, setNewDesc] = useState("");
-  const [activeNoteLayer, setActiveNoteLayer] = useState<"advisor" | "agency">("advisor");
-  const [advisorOverrides, setAdvisorOverrides] = useState({
-    contact: "Marc (GM) — marc.dubois@aman.com — mention you are with TravelLustre",
-    notes:
-      "Pool area can get crowded in August. Request rooms in the east wing for quieter experience. Spa is world-class — always book the hammam for VICs.",
-    personalRating: 4 as number,
+  return (
+    <div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <span className="text-[13px] font-medium text-[#F5F0EB]">Comparing {products.length} products</span>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-[11px] text-[#9B9590] transition-colors hover:text-[#F5F0EB]"
+        >
+          ✕ Close comparison
+        </button>
+      </div>
+
+      <div
+        className={cn(
+          "grid gap-3",
+          products.length === 2 && "grid-cols-1 sm:grid-cols-2",
+          products.length === 3 && "grid-cols-1 md:grid-cols-3",
+          products.length === 4 && "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+        )}
+      >
+        {products.map((product) => {
+          const active = bookableProgramsForCompare(product);
+          const topProgram = getTopBookableProgramByCommission(product);
+          const topRate = topProgram ? programDisplayCommissionRate(topProgram) : null;
+          const cat = directoryCategoryColors(product.type);
+
+          return (
+            <div
+              key={product.id}
+              className="overflow-hidden rounded-xl border border-white/[0.04] bg-white/[0.02]"
+            >
+              <img
+                src={product.imageUrl}
+                alt=""
+                className="h-[120px] w-full object-cover"
+              />
+              <div className="space-y-3 p-3">
+                <div>
+                  <h3 className="text-[13px] font-medium text-[#F5F0EB]">{product.name}</h3>
+                  <p className="text-[10px] text-[#9B9590]">
+                    {product.city && product.country ? `${product.city}, ${product.country}` : product.location}
+                  </p>
+                </div>
+
+                <div className={diffWrapClass(typeDiffers)}>
+                  <p className="mb-1 text-[9px] uppercase tracking-wider text-[#4A4540]">Type</p>
+                  <span
+                    className="inline-block rounded-full px-2 py-0.5 text-[10px]"
+                    style={{ background: cat.bg, color: cat.color, border: `1px solid ${cat.border}` }}
+                  >
+                    {directoryCategoryLabel(product.type)}
+                  </span>
+                </div>
+
+                <div className={diffWrapClass(progDiffers)}>
+                  <p className="mb-1 text-[9px] uppercase tracking-wider text-[#4A4540]">Programs</p>
+                  {active.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {active.map((pp) => (
+                        <span
+                          key={pp.id}
+                          className="rounded-full border px-1.5 py-0.5 text-[9px]"
+                          style={{
+                            background: "rgba(201,169,110,0.06)",
+                            borderColor: "rgba(201,169,110,0.12)",
+                            color: "#B8976E",
+                          }}
+                        >
+                          {programDisplayName(pp)}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-[10px] italic text-[#4A4540]">None</span>
+                  )}
+                </div>
+
+                <div className={diffWrapClass(amenityDiffers)}>
+                  <p className="mb-1 text-[9px] uppercase tracking-wider text-[#4A4540]">Client amenities</p>
+                  {topProgram && (topProgram.amenityTags?.length ?? 0) > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {(topProgram.amenityTags ?? []).map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full px-1.5 py-0.5 text-[9px]"
+                          style={{ background: "rgba(91,138,110,0.06)", color: "#5B8A6E" }}
+                        >
+                          {AMENITY_LABELS[tag]}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-[10px] italic text-[#4A4540]">Direct booking</span>
+                  )}
+                </div>
+
+                {canViewCommissions && (
+                  <div className={diffWrapClass(!!commDiffers)}>
+                    <p className="mb-1 text-[9px] uppercase tracking-wider text-[#4A4540]">Commission</p>
+                    {topRate != null ? (
+                      <span className="text-[14px] font-medium text-[#B8976E]">{topRate}%</span>
+                    ) : (
+                      <span className="text-[10px] italic text-[#4A4540]">—</span>
+                    )}
+                  </div>
+                )}
+
+                <div
+                  className={cn(
+                    "border-t border-white/[0.03] pt-2",
+                    enrichDiffers &&
+                      "rounded-lg bg-[rgba(201,169,110,0.05)] px-2 pb-2 ring-1 ring-[rgba(201,169,110,0.18)] -mx-1"
+                  )}
+                >
+                  <div className="flex gap-3">
+                    <div className="flex items-center gap-1">
+                      <span
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{
+                          background: product.hasTeamData ? "rgba(140,160,180,0.60)" : "rgba(255,255,255,0.06)",
+                        }}
+                      />
+                      <span className="text-[9px] text-[#6B6560]">Team data</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{
+                          background: product.hasAdvisorNotes ? "rgba(160,140,180,0.60)" : "rgba(255,255,255,0.06)",
+                        }}
+                      />
+                      <span className="text-[9px] text-[#6B6560]">My notes</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => onViewFullDetails(product)}
+                  className="w-full rounded-lg bg-white/[0.03] py-1.5 text-[10px] text-[#9B9590] transition-colors hover:bg-white/[0.06] hover:text-[#F5F0EB]"
+                >
+                  View full details
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function filterCollectionsForUser(
+  uid: string,
+  collections: DirectoryCollectionOption[],
+  teams: Team[]
+): DirectoryCollectionOption[] {
+  const memberTeamIds = teams.filter((t) => t.isDefault || t.memberIds.includes(uid)).map((t) => t.id);
+  return collections.filter((c) => {
+    if (c.scope === "private" && c.ownerId === uid) return true;
+    if (c.scope === "team" && c.teamId && memberTeamIds.includes(c.teamId)) return true;
+    return false;
   });
-  const [agencyNotes, setAgencyNotes] = useState([
-    {
-      id: "an-001",
-      content:
-        "Partner program renewed for 2026. 15% commission on rack rate, complimentary upgrade on availability. Contact: partnerships@aman.com",
-      author: "Kristin",
-      authorId: "user-kristin",
-      timeAgo: "1 month ago",
-    },
-    {
-      id: "an-002",
-      content:
-        "Great for honeymoons and couples. Not ideal for families with young kids — no kids club, very serene atmosphere.",
-      author: "Janet",
-      authorId: "user-janet",
-      timeAgo: "3 months ago",
-    },
-  ]);
-  const [newAgencyNote, setNewAgencyNote] = useState("");
-  const [mapSelected, setMapSelected] = useState<DirectoryProduct | null>(null);
+}
+
+export default function ProductDirectoryPage() {
+  const { user, directoryViewAsAdmin } = useUser();
+  const toast = useToast();
+  const uid = user ? String(user.id) : "1";
+
+  const policies = useMemo(
+    () => resolveUserPolicies(user ? { id: String(user.id), role: user.role } : null, MOCK_TEAMS),
+    [user]
+  );
+  const canViewCommissions = policies.canViewCommissions;
+  const isAdmin =
+    directoryViewAsAdmin || user?.role === "admin" || user?.role === "agency_admin";
+
+  const [products, setProducts] = useState<DirectoryProduct[]>(() =>
+    MOCK_DIRECTORY_PRODUCTS.map((p) => ({ ...p, collectionIds: [...p.collectionIds], collections: [...p.collections] }))
+  );
+
+  const [directoryCollections, setDirectoryCollections] = useState<DirectoryCollectionOption[]>(() =>
+    MOCK_DIRECTORY_COLLECTIONS.map((c) => ({
+      ...c,
+      productIds: c.productIds ? [...c.productIds] : undefined,
+    }))
+  );
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  const [activeTypeFilters, setActiveTypeFilters] = useState<DirectoryProductCategory[]>([]);
+  const [locationCountries, setLocationCountries] = useState<string[]>([]);
+  const [collectionFilter, setCollectionFilter] = useState<string[]>([]);
+  const [selectedProgramIds, setSelectedProgramIds] = useState<string[]>([]);
+  const [selectedAmenities, setSelectedAmenities] = useState<DirectoryAmenityTag[]>([]);
+  const [commissionRange, setCommissionRange] = useState<[number, number]>([0, 25]);
+  const [commissionFilterActive, setCommissionFilterActive] = useState(false);
+  const [sortByCommission, setSortByCommission] = useState(false);
+  const [selectedTiers, setSelectedTiers] = useState<DirectoryTierLevel[]>([]);
+  const [selectedPriceTiers, setSelectedPriceTiers] = useState<DirectoryPriceTier[]>([]);
+  const [showExpiringOnly, setShowExpiringOnly] = useState(false);
+  const [showMyEnrichedOnly, setShowMyEnrichedOnly] = useState(false);
+  const [enrichFilterTeam, setEnrichFilterTeam] = useState(true);
+  const [enrichFilterPersonal, setEnrichFilterPersonal] = useState(true);
+  const [sortBy, setSortBy] = useState<DirectoryProductSortOption>("name-asc");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
+  const [collectionCopyEdits, setCollectionCopyEdits] = useState<
+    Record<string, { name?: string; description?: string }>
+  >({});
+  const [editingCollectionHeader, setEditingCollectionHeader] = useState(false);
+
+  const [detailProductId, setDetailProductId] = useState<string | null>(null);
+  const [pickerProductId, setPickerProductId] = useState<string | null>(null);
   const [mapCluster, setMapCluster] = useState<DirectoryProduct[] | null>(null);
-  const [agencyContacts, setAgencyContacts] = useState<AgencyContact[]>(getInitialAgencyContacts);
-  const [agencyContactFormOpen, setAgencyContactFormOpen] = useState(false);
-  const [newAgencyContactName, setNewAgencyContactName] = useState("");
-  const [newAgencyContactRole, setNewAgencyContactRole] = useState("");
-  const [newAgencyContactEmail, setNewAgencyContactEmail] = useState("");
-  const [newAgencyContactPhone, setNewAgencyContactPhone] = useState("");
-  const [newAgencyContactNote, setNewAgencyContactNote] = useState("");
-  const [addingAgencyContact, setAddingAgencyContact] = useState(false);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(() => new Set());
+  const [bulkCollectionOpen, setBulkCollectionOpen] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+  const [mainTab, setMainTab] = useState<ProductDirectoryMainTab>("browse");
+  const [createCollectionOpen, setCreateCollectionOpen] = useState(false);
+  const [createCollectionFromBulk, setCreateCollectionFromBulk] = useState(false);
+  const [createCollectionName, setCreateCollectionName] = useState("");
+  const [createCollectionDescription, setCreateCollectionDescription] = useState("");
+  const [createCollectionScope, setCreateCollectionScope] = useState<"private" | "team">("private");
+  const [createCollectionTeamId, setCreateCollectionTeamId] = useState("");
+
+  const portalRowCount = useMemo(() => buildPartnerPortalRows(products).length, [products]);
 
   useEffect(() => {
-    const t = window.setTimeout(() => setPageLoading(false), 400);
-    return () => window.clearTimeout(t);
-  }, []);
-
-  useEffect(() => {
-    if (viewMode !== "map") return;
-    setMapLoading(true);
-    const t = window.setTimeout(() => setMapLoading(false), 500);
-    return () => window.clearTimeout(t);
+    if (viewMode !== "map") setMapCluster(null);
   }, [viewMode]);
 
   useEffect(() => {
-    if (!detailProduct) {
-      setDetailSkeleton(false);
-      return;
-    }
-    setDetailSkeleton(true);
-    const t = window.setTimeout(() => setDetailSkeleton(false), 350);
-    return () => window.clearTimeout(t);
-  }, [detailProduct?.id]);
+    setEditingCollectionHeader(false);
+  }, [collectionFilter.join(",")]);
 
-  const partnerPrograms = [
-    {
-      id: "pp-001",
-      name: "Virtuoso Preferred",
-      benefits: "Room upgrade on availability, daily breakfast for 2, $100 hotel credit, early check-in / late check-out.",
-      commission: "10% on rack rate",
-      commissionContact: { name: "Marie Duval", email: "marie.duval@aman.com" },
-      scope: TEAM_EVERYONE_ID,
-      expires: "2026-12-31",
-    },
-    {
-      id: "pp-002",
-      name: "Aman Junkies Program",
-      benefits: "Return guest recognition, complimentary spa treatment, dedicated host, priority reservations.",
-      commission: null as string | null,
-      commissionContact: null as { name: string; email: string } | null,
-      scope: "enable" as const,
-      expires: null as string | null,
-    },
-  ];
-
-  const productById = useMemo(() => {
-    const m = new Map<string, DirectoryProduct>();
-    MOCK_PRODUCTS.forEach((p) => m.set(p.id, p));
-    return m;
+  const clearSelection = useCallback(() => {
+    setSelectedProductIds(new Set());
+    setBulkMode(false);
+    setBulkCollectionOpen(false);
+    setCompareMode(false);
   }, []);
 
-  const tabProducts = useMemo(() => {
-    if (activeTab === "enable") return MOCK_PRODUCTS;
-    if (activeTab === "agency") {
-      if (typeof process !== "undefined" && process.env.NEXT_PUBLIC_PD_AGENCY_EMPTY === "1") return [];
-      return MOCK_PRODUCTS.filter((p) => p.hasTeamData);
-    }
-    if (openCollectionId) {
-      const col = collections.find((c) => c.id === openCollectionId);
-      if (!col) return [];
-      return col.productIds.map((id) => productById.get(id)).filter(Boolean) as DirectoryProduct[];
-    }
-    return [];
-  }, [activeTab, openCollectionId, collections, productById]);
+  const toggleProductSelection = useCallback((productId: string) => {
+    setSelectedProductIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
+      return next;
+    });
+  }, []);
 
-  const filteredProducts = useMemo(() => {
-    let list = activeTab === "collections" && !openCollectionId ? [] : tabProducts;
-    if (activeTab === "collections" && !openCollectionId) return list;
-    const q = searchQuery.trim().toLowerCase();
-    if (q) {
-      list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q) ||
-          p.city.toLowerCase().includes(q) ||
-          p.country.toLowerCase().includes(q)
-      );
-    }
-    if (countryFilter) {
-      list = list.filter((p) => p.country.toLowerCase() === countryFilter.toLowerCase());
-    }
-    if (activeTypeFilters.length) {
-      list = list.filter((p) => activeTypeFilters.includes(p.type));
-    }
-    return list;
-  }, [activeTab, openCollectionId, tabProducts, searchQuery, countryFilter, activeTypeFilters]);
-
-  const hasListFilters = Boolean(
-    searchQuery.trim() || countryFilter || activeTypeFilters.length > 0
-  );
-  const mapPinProducts = useMemo(
-    () =>
-      filteredProducts.filter(
-        (p) => Number.isFinite(p.latitude) && Number.isFinite(p.longitude)
-      ),
-    [filteredProducts]
-  );
-
-  const mapPinItems = useMemo(() => clusterMapPins(mapPinProducts), [mapPinProducts]);
+  const handleBulkToggle = useCallback(() => {
+    if (bulkMode) clearSelection();
+    else setBulkMode(true);
+  }, [bulkMode, clearSelection]);
 
   useEffect(() => {
-    setMapSelected(null);
-    setMapCluster(null);
-  }, [mapPinProducts]);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && (bulkMode || compareMode)) clearSelection();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [bulkMode, compareMode, clearSelection]);
 
-  const toggleTypeFilter = (t: ProductType) => {
-    setActiveTypeFilters((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
-  };
+  const toggleTypeFilter = useCallback((id: DirectoryProductCategory) => {
+    setActiveTypeFilters((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }, []);
 
-  const addToCollection = (collectionId: string, productId: string) => {
-    const col = collections.find((c) => c.id === collectionId);
-    setSavingProductId(productId);
-    window.setTimeout(() => {
-      setCollections((cols) =>
-        cols.map((c) =>
-          c.id === collectionId && !c.productIds.includes(productId)
-            ? { ...c, productIds: [...c.productIds, productId] }
-            : c
+  const clearTypeFilters = useCallback(() => setActiveTypeFilters([]), []);
+
+  const availableCollections = useMemo(
+    () => filterCollectionsForUser(uid, directoryCollections, MOCK_TEAMS),
+    [uid, directoryCollections]
+  );
+  const myCollectionTeams = useMemo(
+    () => MOCK_TEAMS.filter((t) => t.isDefault || t.memberIds.includes(uid)),
+    [uid]
+  );
+
+  const activeCollectionMeta = useMemo(() => {
+    if (collectionFilter.length !== 1) return null;
+    return availableCollections.find((c) => c.id === collectionFilter[0]) ?? null;
+  }, [collectionFilter, availableCollections]);
+
+  const activeCollectionProductCount = useMemo(() => {
+    if (!activeCollectionMeta) return 0;
+    return products.filter((p) => p.collectionIds.includes(activeCollectionMeta.id)).length;
+  }, [activeCollectionMeta, products]);
+
+  /** Owner or admin: rename collection, remove products, sharing. Members can still add products. */
+  const isCollectionOwner = activeCollectionMeta != null && activeCollectionMeta.ownerId === uid;
+  const canEditActiveCollection = isAdmin || isCollectionOwner;
+  const canShareActiveCollection = canEditActiveCollection;
+
+  const filterInput: DirectoryPageFilterInput = useMemo(
+    () => ({
+      q: debouncedSearch,
+      activeTypeFilters,
+      locationCountries,
+      collectionFilter,
+      selectedProgramIds,
+      selectedAmenities,
+      commissionFilterActive,
+      commissionRange,
+      selectedTiers,
+      selectedPriceTiers,
+      showExpiringOnly,
+      showMyEnrichedOnly,
+      enrichFilterTeam,
+      enrichFilterPersonal,
+    }),
+    [
+      debouncedSearch,
+      activeTypeFilters,
+      locationCountries,
+      collectionFilter,
+      selectedProgramIds,
+      selectedAmenities,
+      commissionFilterActive,
+      commissionRange,
+      selectedTiers,
+      selectedPriceTiers,
+      showExpiringOnly,
+      showMyEnrichedOnly,
+      enrichFilterTeam,
+      enrichFilterPersonal,
+    ]
+  );
+
+  const filteredProducts = useMemo(
+    () => applyDirectoryProductFilters(products, filterInput, canViewCommissions),
+    [products, filterInput, canViewCommissions]
+  );
+
+  const emptyStateHint = useMemo(() => {
+    if (filteredProducts.length > 0) return null;
+    type Hint = { label: string; count: number; onClear: () => void };
+    const hints: Hint[] = [];
+    const f = filterInput;
+
+    const push = (skip: DirectoryFilterSkip, label: string, onClear: () => void) => {
+      const n = applyDirectoryProductFilters(products, f, canViewCommissions, skip).length;
+      if (n > 0) hints.push({ label, count: n, onClear });
+    };
+
+    if (f.q.trim()) push("search", "search", () => setSearchQuery(""));
+    if (f.locationCountries.length > 0) push("location", "location", () => setLocationCountries([]));
+    if (f.collectionFilter.length > 0) push("collection", "collection", () => setCollectionFilter([]));
+    if (f.selectedProgramIds.length > 0) push("program", "program", () => setSelectedProgramIds([]));
+    if (f.selectedAmenities.length > 0) {
+      push(
+        "amenities",
+        f.selectedAmenities.map((t) => AMENITY_LABELS[t]).join(", "),
+        () => setSelectedAmenities([])
+      );
+    }
+    if (canViewCommissions && f.commissionFilterActive) {
+      push("commissionRange", "commission range", () => {
+        setCommissionFilterActive(false);
+        setCommissionRange([0, 25]);
+      });
+    }
+    if (f.activeTypeFilters.length > 0) push("type", "type", () => setActiveTypeFilters([]));
+    if (f.selectedTiers.length > 0) push("tier", "tier", () => setSelectedTiers([]));
+    if (f.selectedPriceTiers.length > 0) push("price", "price", () => setSelectedPriceTiers([]));
+    if (f.showExpiringOnly) push("expiring", "Expiring soon", () => setShowExpiringOnly(false));
+    if (f.showMyEnrichedOnly) push("enriched", "My enriched", () => setShowMyEnrichedOnly(false));
+
+    hints.sort((a, b) => b.count - a.count);
+    return hints[0] ?? null;
+  }, [filteredProducts.length, products, filterInput, canViewCommissions]);
+
+  const clearAllFilters = useCallback(() => {
+    setSearchQuery("");
+    setActiveTypeFilters([]);
+    setLocationCountries([]);
+    setCollectionFilter([]);
+    setSelectedProgramIds([]);
+    setSelectedAmenities([]);
+    setCommissionFilterActive(false);
+    setCommissionRange([0, 25]);
+    setSelectedTiers([]);
+    setSelectedPriceTiers([]);
+    setShowExpiringOnly(false);
+    setShowMyEnrichedOnly(false);
+    setEnrichFilterTeam(true);
+    setEnrichFilterPersonal(true);
+    setSortByCommission(false);
+  }, []);
+
+  const sortedProducts = useMemo(() => {
+    const list = [...filteredProducts];
+    const addedOrUpdatedTs = (p: (typeof list)[0]) => {
+      const iso = p.addedAt ?? p.updatedAt;
+      if (!iso) return 0;
+      const t = new Date(iso).getTime();
+      return Number.isNaN(t) ? 0 : t;
+    };
+
+    if (sortByCommission && canViewCommissions) {
+      list.sort(compareProductsByRegistryCommission);
+      return list;
+    }
+
+    switch (sortBy) {
+      case "name-asc":
+        list.sort((a, b) => a.name.localeCompare(b.name));
+        return list;
+      case "name-desc":
+        list.sort((a, b) => b.name.localeCompare(a.name));
+        return list;
+      case "commission-desc":
+        if (!canViewCommissions) {
+          list.sort((a, b) => a.name.localeCompare(b.name));
+          return list;
+        }
+        list.sort(compareProductsByRegistryCommission);
+        return list;
+      case "tier-desc":
+        list.sort(
+          (a, b) =>
+            DIRECTORY_TIER_SORT_RANK[a.tier ?? "unrated"] - DIRECTORY_TIER_SORT_RANK[b.tier ?? "unrated"]
+        );
+        return list;
+      case "recently-added":
+        list.sort((a, b) => addedOrUpdatedTs(b) - addedOrUpdatedTs(a));
+        return list;
+      case "enrichment-desc":
+        list.sort((a, b) => (b.enrichmentScore ?? 0) - (a.enrichmentScore ?? 0));
+        return list;
+      default:
+        return list;
+    }
+  }, [filteredProducts, sortBy, sortByCommission, canViewCommissions]);
+
+  const compareProducts = useMemo(() => {
+    if (!compareMode) return [];
+    const list: DirectoryProduct[] = [];
+    for (const id of selectedProductIds) {
+      const p = products.find((x) => x.id === id);
+      if (p) list.push(p);
+    }
+    return list;
+  }, [compareMode, selectedProductIds, products]);
+
+  useEffect(() => {
+    if (!compareMode) return;
+    if (compareProducts.length < 2 || compareProducts.length > 4) setCompareMode(false);
+  }, [compareMode, compareProducts.length]);
+
+  const detailProduct = detailProductId ? (products.find((p) => p.id === detailProductId) ?? null) : null;
+  const detailProductCustomProgramKeys = useMemo(
+    () => (detailProduct ? customProgramKeysForProduct(detailProduct, products) : []),
+    [detailProduct, products]
+  );
+  const pickerProduct = pickerProductId ? (products.find((p) => p.id === pickerProductId) ?? null) : null;
+
+  const patchProduct = useCallback((productId: string, patch: Partial<DirectoryProduct>) => {
+    setProducts((prev) => prev.map((p) => (p.id === productId ? { ...p, ...patch } : p)));
+  }, []);
+
+  const isBookmarked = useCallback((p: DirectoryProduct) => p.collectionIds.length > 0, []);
+
+  const canRemoveFromCollection = useCallback(
+    (collectionId: string) => {
+      if (isAdmin) return true;
+      const c = directoryCollections.find((x) => x.id === collectionId);
+      return c?.ownerId === uid;
+    },
+    [isAdmin, uid, directoryCollections]
+  );
+
+  const savePicker = useCallback(
+    (productId: string, selectedIds: string[]) => {
+      setDirectoryCollections((prev) => {
+        const next = prev.map((c) => {
+          const inSet = selectedIds.includes(c.id);
+          const base = [...(c.productIds ?? [])];
+          const has = base.includes(productId);
+          if (inSet && !has) return { ...c, productIds: [...base, productId] };
+          if (!inSet && has) return { ...c, productIds: base.filter((x) => x !== productId) };
+          return c;
+        });
+        const refs = buildDirectoryCollectionRefs(selectedIds, next);
+        patchProduct(productId, {
+          collectionIds: selectedIds,
+          collections: refs,
+          collectionCount: selectedIds.length,
+        });
+        return next;
+      });
+      setPickerProductId(null);
+      toast("Collections updated");
+    },
+    [patchProduct, toast]
+  );
+
+  const createDirectoryCollection = useCallback(
+    (input: NewDirectoryCollectionInput): string => {
+      const trimmed = input.name.trim();
+      if (!trimmed) return "";
+      if (input.scope === "team" && !input.teamId) return "";
+
+      const id = `col_${Date.now()}`;
+      const ownerName = user?.username ?? user?.email?.split("@")[0] ?? "You";
+      const pid = pickerProductId ? products.find((p) => p.id === pickerProductId)?.id : null;
+      const seedProductIds = pid ? [pid] : [];
+
+      const newCol = createDirectoryCollectionRecord({
+        id,
+        input: { ...input, name: trimmed },
+        ownerId: uid,
+        ownerName,
+        teamName: input.teamId ? MOCK_TEAMS.find((t) => t.id === input.teamId)?.name : undefined,
+        seedProductIds,
+      });
+
+      setDirectoryCollections((prev) => [...prev, newCol]);
+      toast(`Created “${newCol.name}”`);
+      return id;
+    },
+    [uid, user, pickerProductId, products, toast]
+  );
+
+  const saveProgramFromPartnerPortal = useCallback(
+    (programKey: string, payload: PartnerPortalAdminSavePayload): boolean => {
+      const validationError = validatePartnerPortalAdminPayload(payload);
+      if (validationError) {
+        toast(validationError);
+        return false;
+      }
+      const editorName = user?.username ?? user?.email?.split("@")[0] ?? "Admin";
+      let updatedCount = 0;
+      setProducts((prev) => {
+        const result = applyPartnerPortalPayloadToProducts({
+          products: prev,
+          programKey,
+          payload,
+          audit: {
+            userId: uid,
+            userName: editorName,
+            editedAtISO: new Date().toISOString(),
+          },
+        });
+        updatedCount = result.updatedCount;
+        return result.products;
+      });
+      toast(`Updated program across ${updatedCount} product${updatedCount !== 1 ? "s" : ""}`);
+      return true;
+    },
+    [toast, uid, user]
+  );
+
+  const openCreateCollectionModal = useCallback(
+    (mode: "general" | "bulk") => {
+      setCreateCollectionFromBulk(mode === "bulk");
+      setCreateCollectionName("");
+      setCreateCollectionDescription("");
+      setCreateCollectionScope("private");
+      setCreateCollectionTeamId(myCollectionTeams[0]?.id ?? "");
+      setCreateCollectionOpen(true);
+    },
+    [myCollectionTeams]
+  );
+
+  const submitCreateCollectionModal = useCallback(() => {
+    const name = createCollectionName.trim();
+    if (!name) {
+      toast("Collection name is required");
+      return;
+    }
+    if (createCollectionScope === "team" && !createCollectionTeamId) {
+      toast("Pick a team");
+      return;
+    }
+
+    const input: NewDirectoryCollectionInput = {
+      name,
+      description: createCollectionDescription.trim() || undefined,
+      scope: createCollectionScope,
+      teamId: createCollectionScope === "team" ? createCollectionTeamId : null,
+    };
+
+    const id = createDirectoryCollection(input);
+    if (!id) return;
+
+    if (createCollectionFromBulk && selectedProductIds.size > 0) {
+      const ids = Array.from(selectedProductIds);
+      setDirectoryCollections((prev) =>
+        prev.map((c) =>
+          c.id === id ? { ...c, productIds: Array.from(new Set([...(c.productIds ?? []), ...ids])) } : c
         )
       );
-      toast(col ? `Added to ${col.name}` : "Added to collection");
-      setSavingProductId(null);
-      setSaveForProductId(null);
-    }, 280);
-  };
+      setProducts((prev) =>
+        prev.map((p) => {
+          if (!selectedProductIds.has(p.id)) return p;
+          const nextIds = p.collectionIds.includes(id) ? p.collectionIds : [...p.collectionIds, id];
+          const refs = buildDirectoryCollectionRefs(nextIds, [
+            ...directoryCollections,
+            {
+              id,
+              name: input.name,
+              scope: input.scope,
+              ownerId: uid,
+              teamId: input.teamId,
+              productIds: ids,
+            } as DirectoryCollectionOption,
+          ]);
+          return { ...p, collectionIds: nextIds, collections: refs, collectionCount: nextIds.length };
+        })
+      );
+      toast(`Created "${name}" and added ${ids.length} product${ids.length !== 1 ? "s" : ""}`);
+      setBulkCollectionOpen(false);
+      clearSelection();
+    } else {
+      setCollectionFilter([id]);
+      setMainTab("browse");
+    }
 
-  const removeFromCollection = (collectionId: string, productId: string) => {
-    setCollections((cols) =>
-      cols.map((c) =>
-        c.id === collectionId ? { ...c, productIds: c.productIds.filter((id) => id !== productId) } : c
-      )
-    );
-  };
+    setCreateCollectionOpen(false);
+  }, [
+    clearSelection,
+    createCollectionDescription,
+    createCollectionFromBulk,
+    createCollectionName,
+    createCollectionScope,
+    createCollectionTeamId,
+    createDirectoryCollection,
+    directoryCollections,
+    selectedProductIds,
+    toast,
+    uid,
+  ]);
 
-  const addAgencyContact = () => {
-    const name = newAgencyContactName.trim();
-    const role = newAgencyContactRole.trim();
-    if (!name || !role || addingAgencyContact) return;
-    setAddingAgencyContact(true);
-    window.setTimeout(() => {
-      const email = newAgencyContactEmail.trim();
-      const phone = newAgencyContactPhone.trim();
-      const note = newAgencyContactNote.trim();
-      setAgencyContacts((c) => [
-        ...c,
-        {
-          id: `agc-${Date.now()}`,
-          name,
-          role,
-          email: email || undefined,
-          phone: phone || null,
-          note: note || null,
-          addedById: currentUserId,
-          addedBy: user?.username || "You",
-          addedDate: new Date().toISOString().slice(0, 10),
-        },
-      ]);
-      setNewAgencyContactName("");
-      setNewAgencyContactRole("");
-      setNewAgencyContactEmail("");
-      setNewAgencyContactPhone("");
-      setNewAgencyContactNote("");
-      toast("Contact added");
-      setAddingAgencyContact(false);
-    }, 260);
-  };
+  const handleAddToItinerary = useCallback(() => {
+    toast("Add to itinerary (connect API when ready)");
+  }, [toast]);
 
-  const removeAgencyContact = (id: string) => {
-    setAgencyContacts((c) => c.filter((x) => x.id !== id));
-    toast("Contact deleted");
-  };
-
-  const createCollection = () => {
-    const name = newName.trim();
-    if (!name) return;
-    const id = `col-${Date.now()}`;
-    setCollections((c) => [
-      ...c,
-      {
-        id,
-        name,
-        description: newDesc.trim() || undefined,
-        scope: "private",
-        ownerId: currentUserId,
-        ownerName: user?.username?.split(" ")[0] || "You",
-        productIds: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-    ]);
-    setNewName("");
-    setNewDesc("");
-    setNewCollectionOpen(false);
-    toast("Collection created");
-  };
-
-  const shareCollectionWithTeam = (collectionId: string, teamId: string) => {
-    setSharingCollectionId(collectionId);
-    window.setTimeout(() => {
-      setCollections((cols) => cols.map((c) => (c.id === collectionId ? { ...c, scope: teamId } : c)));
-      const t = MOCK_TEAMS.find((x) => x.id === teamId);
-      toast(`Collection shared with ${t?.name ?? "team"}`);
-      setSharingCollectionId(null);
-    }, 320);
-  };
-
-  const deleteCollection = (collectionId: string) => {
-    setCollections((cols) => cols.filter((c) => c.id !== collectionId));
-    setOpenCollectionId(null);
-    toast("Collection deleted");
-  };
-
-  const openCollection = collections.find((c) => c.id === openCollectionId);
-
-  const ProductCard = ({ product, onRemove }: { product: DirectoryProduct; onRemove?: () => void }) => (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => setDetailProduct(product)}
-      onKeyDown={(e) => e.key === "Enter" && setDetailProduct(product)}
-      className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4 hover:bg-white/[0.04] cursor-pointer transition-colors relative"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-white truncate">{product.name}</span>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              {product.hasTeamData && (
-                <span className="w-2 h-2 rounded-full bg-blue-400" title="Team notes available" />
-              )}
-              {product.hasAdvisorNotes && (
-                <span className="w-2 h-2 rounded-full bg-violet-400" title="You have notes on this" />
-              )}
-            </div>
-          </div>
-          <span className="text-xs text-gray-500">
-            {product.city}, {product.country}
-          </span>
-        </div>
-        <span
-          className={cn(
-            "text-[10px] px-2 py-0.5 rounded-full border flex items-center gap-1 flex-shrink-0",
-            product.type === "hotel" && "text-blue-400 bg-blue-500/5 border-blue-500/10",
-            product.type === "dmc" && "text-emerald-400 bg-emerald-500/5 border-emerald-500/10",
-            product.type === "experience" && "text-amber-400 bg-amber-500/5 border-amber-500/10",
-            product.type === "cruise" && "text-violet-400 bg-violet-500/5 border-violet-500/10"
-          )}
-        >
-          {productTypes.find((t) => t.id === product.type)?.label}
-        </span>
-      </div>
-      <div className="relative mt-3">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setSaveForProductId((id) => (id === product.id ? null : product.id));
-          }}
-          disabled={savingProductId === product.id}
-          className="text-[10px] text-gray-600 hover:text-gray-400 flex items-center gap-1 disabled:opacity-50"
-        >
-          {savingProductId === product.id ? (
-            <Spinner size="sm" />
-          ) : (
-            <Bookmark className="w-3 h-3" />
-          )}
-          Save
-        </button>
-        {saveForProductId === product.id && (
-          <div className="absolute left-0 top-full mt-1 w-56 bg-gray-900 border border-white/10 rounded-xl shadow-2xl z-50 py-1">
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider px-3 py-2">Save to collection</p>
-            {collections.map((collection) => (
-              <button
-                key={collection.id}
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  addToCollection(collection.id, product.id);
-                }}
-                className="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-white/5 flex items-center justify-between"
-              >
-                <span>{collection.name}</span>
-                {collection.productIds.includes(product.id) && <Check className="w-3 h-3 text-blue-400" />}
-              </button>
-            ))}
-            <div className="border-t border-white/[0.06] mt-1 pt-1">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setNewCollectionOpen(true);
-                  setSaveForProductId(null);
-                }}
-                className="w-full text-left px-3 py-2 text-xs text-blue-400 hover:bg-white/5 flex items-center gap-1"
-              >
-                <Plus className="w-3 h-3" /> New Collection
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-      {onRemove && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-          className="mt-2 text-[10px] text-red-400/80 hover:text-red-400"
-        >
-          Remove from collection
-        </button>
-      )}
-    </div>
+  const handleQuickAddToCollection = useCallback(
+    (collectionId: string) => {
+      if (!detailProduct || detailProduct.collectionIds.includes(collectionId)) return;
+      const nextIds = [...detailProduct.collectionIds, collectionId];
+      const pid = detailProduct.id;
+      setDirectoryCollections((prev) => {
+        const next = prev.map((c) =>
+          c.id === collectionId && !(c.productIds ?? []).includes(pid)
+            ? { ...c, productIds: [...(c.productIds ?? []), pid] }
+            : c
+        );
+        const refs = buildDirectoryCollectionRefs(nextIds, next);
+        patchProduct(detailProduct.id, {
+          collectionIds: nextIds,
+          collections: refs,
+          collectionCount: nextIds.length,
+        });
+        return next;
+      });
+    },
+    [detailProduct, patchProduct]
   );
 
-  const canManageCollection = useCallback(
-    (c: Collection) => isAdmin || c.ownerId === currentUserId,
-    [isAdmin, currentUserId]
+  const handleMapSelect = useCallback((id: string) => {
+    setDetailProductId(id);
+  }, []);
+
+  const removeProductFromFilteredCollection = useCallback(
+    (productId: string) => {
+      if (collectionFilter.length !== 1) return;
+      const cid = collectionFilter[0];
+      const p = products.find((x) => x.id === productId);
+      if (!p) return;
+      const nextIds = p.collectionIds.filter((c) => c !== cid);
+      setDirectoryCollections((prev) => {
+        const next = prev.map((c) =>
+          c.id === cid ? { ...c, productIds: (c.productIds ?? []).filter((x) => x !== productId) } : c
+        );
+        const nextRefs = buildDirectoryCollectionRefs(nextIds, next);
+        patchProduct(productId, {
+          collectionIds: nextIds,
+          collections: nextRefs,
+          collectionCount: nextIds.length,
+        });
+        return next;
+      });
+      toast("Removed from collection");
+    },
+    [collectionFilter, products, patchProduct, toast]
   );
+
+  const showRemoveOnCards = collectionFilter.length === 1 && canEditActiveCollection;
+
+  const addBulkToCollection = useCallback(
+    (colId: string) => {
+      const col = directoryCollections.find((c) => c.id === colId);
+      if (!col) return;
+      const ids = Array.from(selectedProductIds);
+      let added = 0;
+      setDirectoryCollections((prev) => {
+        let catalog = prev;
+        for (const pid of ids) {
+          const p = products.find((x) => x.id === pid);
+          if (!p || p.collectionIds.includes(colId)) continue;
+          const nextIds = [...p.collectionIds, colId];
+          catalog = catalog.map((c) =>
+            c.id === colId && !(c.productIds ?? []).includes(pid)
+              ? { ...c, productIds: [...(c.productIds ?? []), pid] }
+              : c
+          );
+          const refs = buildDirectoryCollectionRefs(nextIds, catalog);
+          patchProduct(pid, { collectionIds: nextIds, collections: refs, collectionCount: nextIds.length });
+          added += 1;
+        }
+        return catalog;
+      });
+      toast(`Added ${added} product${added !== 1 ? "s" : ""} to ${col.name}`);
+      setBulkCollectionOpen(false);
+      clearSelection();
+    },
+    [directoryCollections, selectedProductIds, products, patchProduct, toast, clearSelection]
+  );
+
+  const bulkRemoveFromActiveCollection = useCallback(() => {
+    if (collectionFilter.length !== 1 || !activeCollectionMeta) return;
+    const cid = collectionFilter[0];
+    const ids = Array.from(selectedProductIds);
+    setDirectoryCollections((prev) => {
+      let catalog = prev;
+      for (const pid of ids) {
+        const p = products.find((x) => x.id === pid);
+        if (!p || !p.collectionIds.includes(cid)) continue;
+        const nextIds = p.collectionIds.filter((c) => c !== cid);
+        catalog = catalog.map((c) =>
+          c.id === cid ? { ...c, productIds: (c.productIds ?? []).filter((x) => x !== pid) } : c
+        );
+        const refs = buildDirectoryCollectionRefs(nextIds, catalog);
+        patchProduct(pid, { collectionIds: nextIds, collections: refs, collectionCount: nextIds.length });
+      }
+      return catalog;
+    });
+    toast(`Removed ${ids.length} product${ids.length !== 1 ? "s" : ""} from ${activeCollectionMeta.name}`);
+    clearSelection();
+  }, [collectionFilter, activeCollectionMeta, selectedProductIds, products, patchProduct, toast, clearSelection]);
+
+  const collectionScopeForBadge = (c: DirectoryCollectionOption) =>
+    c.scope === "private" ? "private" : (c.teamId ?? TEAM_EVERYONE_ID);
+
+  const headerCollection = activeCollectionMeta
+    ? {
+        ...activeCollectionMeta,
+        name: collectionCopyEdits[activeCollectionMeta.id]?.name ?? activeCollectionMeta.name,
+        description:
+          collectionCopyEdits[activeCollectionMeta.id]?.description ?? activeCollectionMeta.description,
+      }
+    : null;
 
   return (
-    <div className="min-h-full bg-[#06060a] text-[#F5F5F5] p-6">
-      {IS_PREVIEW_MODE && <PreviewBanner feature="Product Directory" variant="full" dismissible sampleDataOnly />}
-      <h1 className="text-xl font-semibold text-white mb-1">Product Directory</h1>
-      <p className="text-sm text-gray-500 mb-6">Collections, agency library, and Enable-curated catalog.</p>
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#08080c] text-[#F5F5F5]">
+      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-[rgba(255,255,255,0.08)] px-6 py-3">
+        <div className="min-w-0">
+          <h1 className="text-sm font-semibold leading-none text-[#F5F5F5]">Product Directory</h1>
+          <p className="mt-1 text-[11px] leading-snug text-[rgba(245,245,245,0.5)]">
+            {mainTab === "browse"
+              ? `${sortedProducts.length} product${sortedProducts.length !== 1 ? "s" : ""}`
+              : mainTab === "collections"
+                ? `${availableCollections.length} collection${availableCollections.length !== 1 ? "s" : ""}`
+                : `${portalRowCount} partner program${portalRowCount !== 1 ? "s" : ""}`}
+          </p>
+        </div>
+      </header>
 
-      <div className="flex items-center gap-1 bg-white/[0.03] rounded-full p-0.5 mb-6 w-fit">
-        {(["collections", "agency", "enable"] as const).map((tab) => (
+      <div className="flex shrink-0 gap-0.5 border-b border-[rgba(255,255,255,0.08)] px-6">
+        {(
+          [
+            { id: "browse" as const, label: "Products" },
+            { id: "collections" as const, label: "Collections" },
+            { id: "partner-portal" as const, label: "Partner portal" },
+          ] as const
+        ).map((t) => (
           <button
-            key={tab}
+            key={t.id}
             type="button"
-            onClick={() => {
-              setActiveTab(tab);
-              setOpenCollectionId(null);
-              setDetailProduct(null);
-            }}
+            onClick={() => setMainTab(t.id)}
             className={cn(
-              "px-4 py-1.5 rounded-full text-xs font-medium transition-all",
-              activeTab === tab ? "bg-white/10 text-white" : "text-gray-500 hover:text-gray-400"
+              "relative px-3 py-2.5 text-[11px] font-medium transition-colors",
+              mainTab === t.id ? "text-[#F5F5F5]" : "text-[#6B6560] hover:text-[#9B9590]"
             )}
           >
-            {tab === "collections" ? "Collections" : tab === "agency" ? "Agency Library" : "Enable Directory"}
+            {t.label}
+            {mainTab === t.id ? (
+              <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-[#C9A96E]" />
+            ) : null}
           </button>
         ))}
       </div>
 
-      {activeTab === "collections" && !openCollectionId && (
-        <>
-          {pageLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Array.from({ length: 4 }, (_, i) => (
-                <SkeletonCard key={i} />
-              ))}
-            </div>
-          ) : collections.length === 0 ? (
-            <div className="rounded-xl border border-white/[0.08] bg-[#161616]">
-              <EmptyState
-                icon={Bookmark}
-                title="No collections yet"
-                description="Create a collection to group and organize your favorite products."
-                action={{ label: "+ New Collection", onClick: () => setNewCollectionOpen(true) }}
-              />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <button
-                type="button"
-                onClick={() => setNewCollectionOpen(true)}
-                className="border border-dashed border-white/10 rounded-xl p-4 flex flex-col items-center justify-center gap-2 hover:border-white/20 transition-colors min-h-[120px]"
-              >
-                <Plus className="w-5 h-5 text-gray-600" />
-                <span className="text-xs text-gray-500">New Collection</span>
-              </button>
-              {collections.map((collection) => (
-                <div
-                  key={collection.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setOpenCollectionId(collection.id)}
-                  onKeyDown={(e) => e.key === "Enter" && setOpenCollectionId(collection.id)}
-                  className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4 hover:bg-white/[0.04] cursor-pointer transition-colors min-h-[120px] flex flex-col"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm font-medium text-white truncate">{collection.name}</span>
-                    <ScopeBadge scope={collection.scope} teams={MOCK_TEAMS} className="flex-shrink-0" />
-                  </div>
-                  {collection.description && (
-                    <p className="text-[10px] text-gray-500 mb-2 line-clamp-2">{collection.description}</p>
-                  )}
-                  <div className="flex items-center gap-3 mt-auto text-[10px] text-gray-600">
-                    <span>{collection.productIds.length} products</span>
-                  </div>
-                  {collection.scope !== "private" && (
-                    <span className="text-[10px] text-gray-600 mt-1">Created by {collection.ownerName}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+      {mainTab === "browse" ? (
+      <div className="shrink-0 px-6 pb-0 pt-4">
+        <ProductDirectoryFilterBar
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        activeTypeFilters={activeTypeFilters}
+        onToggleTypeFilter={toggleTypeFilter}
+        onClearTypeFilters={clearTypeFilters}
+        locationCountries={locationCountries}
+        onLocationCountriesChange={setLocationCountries}
+        collectionFilter={collectionFilter}
+        onCollectionFilterChange={setCollectionFilter}
+        onRequestNewCollection={() => openCreateCollectionModal("general")}
+        collections={availableCollections}
+        teams={MOCK_TEAMS}
+        selectedProgramIds={selectedProgramIds}
+        onSelectedProgramIdsChange={setSelectedProgramIds}
+        selectedAmenities={selectedAmenities}
+        onSelectedAmenitiesChange={setSelectedAmenities}
+        commissionRange={commissionRange}
+        onCommissionRangeChange={setCommissionRange}
+        commissionFilterActive={commissionFilterActive}
+        onCommissionFilterActiveChange={setCommissionFilterActive}
+        sortByCommission={sortByCommission}
+        onSortByCommissionChange={setSortByCommission}
+        selectedTiers={selectedTiers}
+        onSelectedTiersChange={setSelectedTiers}
+        selectedPriceTiers={selectedPriceTiers}
+        onSelectedPriceTiersChange={setSelectedPriceTiers}
+        showExpiringOnly={showExpiringOnly}
+        onShowExpiringOnlyChange={setShowExpiringOnly}
+        showMyEnrichedOnly={showMyEnrichedOnly}
+        onShowMyEnrichedOnlyChange={setShowMyEnrichedOnly}
+        enrichFilterTeam={enrichFilterTeam}
+        onEnrichFilterTeamChange={setEnrichFilterTeam}
+        enrichFilterPersonal={enrichFilterPersonal}
+        onEnrichFilterPersonalChange={setEnrichFilterPersonal}
+        sortBy={sortBy}
+        onSortByChange={setSortBy}
+        canViewCommissions={canViewCommissions}
+        resultCount={sortedProducts.length}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        bulkMode={bulkMode}
+        bulkSelectedCount={selectedProductIds.size}
+        onBulkModeToggle={handleBulkToggle}
+      />
 
-      {activeTab === "collections" && openCollection && (
-        <div>
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <div>
-              <button
-                type="button"
-                onClick={() => setOpenCollectionId(null)}
-                className="text-[10px] text-gray-500 hover:text-gray-400 flex items-center gap-1 mb-2"
-              >
-                <ChevronLeft className="w-3 h-3" /> Back to Collections
-              </button>
-              <h2 className="text-lg font-semibold text-white">{openCollection.name}</h2>
-              <span className="text-xs text-gray-500">{openCollection.productIds.length} products</span>
-            </div>
-            <div className="flex items-center gap-2">
-              {openCollection.scope === "private" && canManageCollection(openCollection) && (
-                <ShareWithTeamDropdown
-                  teams={MOCK_TEAMS}
-                  onSelect={(teamId) => shareCollectionWithTeam(openCollection.id, teamId)}
-                  trigger={
-                    <button
-                      type="button"
-                      disabled={sharingCollectionId === openCollection.id}
-                      className="text-[10px] text-gray-500 hover:text-blue-400 flex items-center gap-1 disabled:opacity-50"
-                    >
-                      {sharingCollectionId === openCollection.id ? (
-                        <Spinner size="sm" />
-                      ) : (
-                        <Share2 className="w-3 h-3" />
-                      )}{" "}
-                      Share with…
-                    </button>
-                  }
-                />
-              )}
-              {canManageCollection(openCollection) && (
-                <button
-                  type="button"
-                  onClick={() => deleteCollection(openCollection.id)}
-                  className="text-[10px] text-gray-500 hover:text-red-400 flex items-center gap-1"
-                >
-                  <Trash2 className="w-3 h-3" /> Delete
-                </button>
-              )}
-            </div>
-          </div>
-          {filteredProducts.length === 0 ? (
-            <div className="rounded-xl border border-white/[0.08] bg-[#161616]">
-              <EmptyState
-                icon={Bookmark}
-                title="This collection is empty"
-                description="Browse the Agency Library or Enable Directory and save products here."
-                action={{
-                  label: "Browse products →",
-                  onClick: () => {
-                    setOpenCollectionId(null);
-                    setActiveTab("enable");
-                  },
-                }}
-              />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {filteredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onRemove={
-                    canManageCollection(openCollection) || isAdmin
-                      ? () => removeFromCollection(openCollection.id, product.id)
-                      : undefined
-                  }
-                />
-              ))}
-            </div>
-          )}
+      {(locationCountries.length > 0 ||
+        selectedProgramIds.length > 0 ||
+        selectedAmenities.length > 0 ||
+        (canViewCommissions && commissionFilterActive) ||
+        selectedTiers.length > 0 ||
+        selectedPriceTiers.length > 0 ||
+        showExpiringOnly ||
+        showMyEnrichedOnly ||
+        activeTypeFilters.length > 0 ||
+        collectionFilter.length > 0 ||
+        debouncedSearch.trim()) && (
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {debouncedSearch.trim() ? (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-[#9B9590] transition-colors hover:bg-white/[0.06]"
+            >
+              &quot;{debouncedSearch.slice(0, 24)}
+              {debouncedSearch.length > 24 ? "…" : ""}&quot;
+              <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+          {activeTypeFilters.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setActiveTypeFilters([])}
+              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-[#9B9590] transition-colors hover:bg-white/[0.06]"
+            >
+              {activeTypeFilters.map((id) => directoryCategoryLabel(id)).join(", ")}
+              <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+          {locationCountries.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setLocationCountries([])}
+              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-[#9B9590] transition-colors hover:bg-white/[0.06]"
+            >
+              {locationCountries.slice(0, 2).join(", ")}
+              {locationCountries.length > 2 ? ` +${locationCountries.length - 2}` : ""}
+              <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+          {collectionFilter.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setCollectionFilter([])}
+              className="flex items-center gap-1 rounded-full bg-[rgba(201,169,110,0.06)] px-2 py-0.5 text-[9px] text-[#B8976E] transition-colors hover:bg-[rgba(201,169,110,0.10)]"
+            >
+              {collectionFilter.length === 1
+                ? availableCollections.find((c) => c.id === collectionFilter[0])?.name ?? "Collection"
+                : `${collectionFilter.length} collections`}
+              <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+          {selectedProgramIds.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setSelectedProgramIds([])}
+              className="flex items-center gap-1 rounded-full bg-[rgba(201,169,110,0.06)] px-2 py-0.5 text-[9px] text-[#B8976E] transition-colors hover:bg-[rgba(201,169,110,0.10)]"
+            >
+              {AGENCY_PROGRAM_OPTIONS.filter((p) => selectedProgramIds.includes(p.id))
+                .map((p) => p.name)
+                .join(", ")}
+              <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+          {selectedAmenities.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setSelectedAmenities([])}
+              className="flex items-center gap-1 rounded-full bg-[rgba(91,138,110,0.06)] px-2 py-0.5 text-[9px] text-[#5B8A6E] transition-colors hover:bg-[rgba(91,138,110,0.10)]"
+            >
+              {selectedAmenities.map((b) => AMENITY_LABELS[b]).join(", ")}
+              <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+          {canViewCommissions && commissionFilterActive ? (
+            <button
+              type="button"
+              onClick={() => {
+                setCommissionFilterActive(false);
+                setCommissionRange([0, 25]);
+              }}
+              className="flex items-center gap-1 rounded-full bg-[rgba(184,151,110,0.06)] px-2 py-0.5 text-[9px] text-[#B8976E] transition-colors hover:bg-[rgba(184,151,110,0.10)]"
+            >
+              {commissionRange[0]}%–{commissionRange[1]}%
+              <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+          {selectedTiers.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setSelectedTiers([])}
+              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-[#9B9590] transition-colors hover:bg-white/[0.06]"
+            >
+              {selectedTiers.map((t) => DIRECTORY_TIER_FILTER_UI.find((x) => x.id === t)?.label ?? t).join(", ")}
+              <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+          {selectedPriceTiers.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setSelectedPriceTiers([])}
+              className="flex items-center gap-1 rounded-full bg-[rgba(201,169,110,0.06)] px-2 py-0.5 text-[9px] text-[#C9A96E] transition-colors hover:bg-[rgba(201,169,110,0.10)]"
+            >
+              {selectedPriceTiers.join(" ")}
+              <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+          {showExpiringOnly ? (
+            <button
+              type="button"
+              onClick={() => setShowExpiringOnly(false)}
+              className="flex items-center gap-1 rounded-full bg-[rgba(184,151,110,0.06)] px-2 py-0.5 text-[9px] text-[#B8976E] transition-colors hover:bg-[rgba(184,151,110,0.10)]"
+            >
+              Expiring soon <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+          {showMyEnrichedOnly ? (
+            <button
+              type="button"
+              onClick={() => setShowMyEnrichedOnly(false)}
+              className="flex items-center gap-1 rounded-full bg-[rgba(160,140,180,0.06)] px-2 py-0.5 text-[9px] text-[rgba(160,140,180,0.60)] transition-colors hover:bg-[rgba(160,140,180,0.10)]"
+            >
+              My enriched <span className="text-[#6B6560]">✕</span>
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={clearAllFilters}
+            className="px-1.5 text-[9px] text-[#6B6560] transition-colors hover:text-[#9B9590]"
+          >
+            Clear all
+          </button>
         </div>
       )}
 
-      {(activeTab === "agency" || activeTab === "enable") && (
-        <>
-          <div className="flex items-center gap-3 mb-4 flex-wrap">
-            <div className="flex-1 min-w-[200px] flex items-center gap-2 bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-2.5">
-              <Search className="w-4 h-4 text-gray-600" />
-              <input
-                type="text"
-                placeholder="Search products by name, location, description..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 text-xs bg-transparent text-gray-300 placeholder:text-gray-600 outline-none"
-              />
-            </div>
-            <div className="flex items-center gap-1 bg-white/[0.03] rounded-lg p-0.5">
-              <button
-                type="button"
-                onClick={() => setViewMode("list")}
-                className={cn("p-1.5 rounded", viewMode === "list" ? "bg-white/10 text-white" : "text-gray-600")}
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("map")}
-                className={cn("p-1.5 rounded", viewMode === "map" ? "bg-white/10 text-white" : "text-gray-600")}
-              >
-                <MapIcon className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 mb-4 flex-wrap">
-            <div className="flex items-center gap-1 flex-wrap">
-              {productTypes.map((type) => (
-                <button
-                  key={type.id}
-                  type="button"
-                  onClick={() => toggleTypeFilter(type.id)}
-                  className={cn(
-                    "text-[10px] px-2.5 py-1 rounded-full transition-all",
-                    activeTypeFilters.includes(type.id)
-                      ? `${type.color} bg-white/10 border border-white/10`
-                      : "text-gray-500 bg-white/[0.03] border border-white/[0.04] hover:border-white/10"
-                  )}
-                >
-                  {type.label}
-                </button>
-              ))}
-            </div>
-            <select
-              value={countryFilter}
-              onChange={(e) => setCountryFilter(e.target.value)}
-              className="text-[10px] bg-white/[0.03] border border-white/[0.04] rounded-full px-3 py-1 text-gray-400 outline-none"
-            >
-              <option value="">All Countries</option>
-              {COUNTRY_OPTIONS.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {pageLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {Array.from({ length: 8 }, (_, i) => (
-                <SkeletonCard key={i} />
-              ))}
-            </div>
-          ) : viewMode === "list" ? (
-            filteredProducts.length === 0 ? (
-              <div className="rounded-xl border border-white/[0.08] bg-[#161616]">
-                {activeTab === "agency" && tabProducts.length === 0 && !hasListFilters ? (
-                  <EmptyState
-                    icon={Building2}
-                    title="No enriched products yet"
-                    description="When your team adds notes, partner programs, or contacts to products, they'll appear here."
-                  />
-                ) : (
-                  <EmptyState
-                    icon={Search}
-                    title="No products match your filters"
-                    description="Try broadening your search or removing some filters."
-                  />
-                )}
+      {headerCollection && activeCollectionMeta && (
+        <div className="mb-4 flex flex-col gap-3 rounded-xl border border-[rgba(255,255,255,0.03)] bg-[#0c0c12] p-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            {editingCollectionHeader && canEditActiveCollection ? (
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  className="w-full rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#08080c] px-2 py-1.5 text-[13px] text-[#F5F0EB]"
+                  value={headerCollection.name}
+                  onChange={(e) =>
+                    setCollectionCopyEdits((prev) => ({
+                      ...prev,
+                      [activeCollectionMeta.id]: {
+                        ...prev[activeCollectionMeta.id],
+                        name: e.target.value,
+                        description:
+                          prev[activeCollectionMeta.id]?.description ?? activeCollectionMeta.description ?? "",
+                      },
+                    }))
+                  }
+                />
+                <textarea
+                  className="min-h-[52px] w-full resize-none rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#08080c] px-2 py-1.5 text-[11px] text-[#9B9590]"
+                  value={headerCollection.description ?? ""}
+                  placeholder="Description"
+                  onChange={(e) =>
+                    setCollectionCopyEdits((prev) => ({
+                      ...prev,
+                      [activeCollectionMeta.id]: {
+                        ...prev[activeCollectionMeta.id],
+                        name: prev[activeCollectionMeta.id]?.name ?? activeCollectionMeta.name,
+                        description: e.target.value,
+                      },
+                    }))
+                  }
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className="text-[10px] text-[#C9A96E]"
+                    onClick={() => {
+                      setEditingCollectionHeader(false);
+                      toast("Collection saved (demo — not persisted)");
+                    }}
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    className="text-[10px] text-[#6B6560]"
+                    onClick={() => {
+                      setCollectionCopyEdits((prev) => {
+                        const next = { ...prev };
+                        delete next[activeCollectionMeta.id];
+                        return next;
+                      });
+                      setEditingCollectionHeader(false);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            )
-          ) : mapLoading ? (
-            <div className="w-full h-[480px] rounded-xl border border-white/[0.06] bg-[#0f1419] flex items-center justify-center">
-              <Spinner size="md" />
-            </div>
-          ) : mapPinProducts.length === 0 ? (
-            <div className="w-full min-h-[480px] rounded-xl border border-white/[0.08] bg-[#161616] flex items-center">
-              <EmptyState
-                icon={MapIcon}
-                title="No products to show on the map"
-                description="The current filter has no products with location data. Try changing your filters."
-              />
-            </div>
-          ) : (
-            <div className="w-full h-[480px] rounded-xl overflow-hidden border border-white/[0.06] relative bg-gradient-to-b from-[#0f1419] to-[#06060a]">
-              <div className="absolute inset-0 opacity-40 bg-[radial-gradient(ellipse_at_30%_20%,rgba(59,130,246,0.15),transparent_50%),radial-gradient(ellipse_at_70%_60%,rgba(139,92,246,0.12),transparent_45%)]" />
-              <span className="absolute top-3 left-3 text-[10px] text-gray-500 z-10 max-w-[70%]">
-                Map preview — pins by type; nearby pins cluster (click cluster to list)
-              </span>
-              {mapPinItems.map((item, idx) =>
-                item.kind === "single" ? (
-                  <button
-                    key={item.product.id}
-                    type="button"
-                    title={item.product.name}
-                    onClick={() => {
-                      setMapSelected(item.product);
-                      setMapCluster(null);
-                    }}
-                    className={cn(
-                      "absolute w-3 h-3 rounded-full border-2 border-[#06060a] -translate-x-1/2 -translate-y-1/2 shadow-lg hover:scale-125 transition-transform z-[5]",
-                      markerColor(item.product.type)
-                    )}
-                    style={{ left: item.left, top: item.top }}
-                  />
-                ) : (
-                  <button
-                    key={`cluster-${idx}-${item.products.map((p) => p.id).join("-")}`}
-                    type="button"
-                    title={`${item.products.length} products`}
-                    onClick={() => {
-                      setMapCluster(item.products);
-                      setMapSelected(null);
-                    }}
-                    className="absolute z-[6] min-w-7 h-7 px-1 rounded-full border-2 border-[#06060a] -translate-x-1/2 -translate-y-1/2 shadow-lg bg-white/15 text-[10px] font-semibold text-white hover:bg-white/25 flex items-center justify-center"
-                    style={{ left: item.left, top: item.top }}
-                  >
-                    {item.products.length}
-                  </button>
-                )
-              )}
-              {mapSelected && (
-                <div className="absolute bottom-3 left-3 right-3 md:left-auto md:right-3 md:w-64 rounded-xl border border-white/10 bg-[#12121a]/95 p-3 text-left z-20">
-                  <span className="text-xs font-medium text-white block">{mapSelected.name}</span>
-                  <span className="text-[10px] text-gray-400 block">
-                    {mapSelected.city}, {mapSelected.country}
-                  </span>
-                  <span
-                    className={cn(
-                      "text-[10px] mt-1 inline-block",
-                      mapSelected.type === "hotel" && "text-blue-400",
-                      mapSelected.type === "dmc" && "text-emerald-400",
-                      mapSelected.type === "experience" && "text-amber-400",
-                      mapSelected.type === "cruise" && "text-violet-400"
-                    )}
-                  >
-                    {productTypes.find((t) => t.id === mapSelected.type)?.label}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setDetailProduct(mapSelected)}
-                    className="text-[10px] text-blue-400 hover:text-blue-300 mt-2 block"
-                  >
-                    View details →
-                  </button>
+              <>
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <h3 className="text-[14px] font-medium text-[#F5F0EB]">{headerCollection.name}</h3>
+                  <ScopeBadge scope={collectionScopeForBadge(activeCollectionMeta)} teams={MOCK_TEAMS} />
                 </div>
+                {headerCollection.description ? (
+                  <p className="text-[11px] text-[#9B9590]">{headerCollection.description}</p>
+                ) : null}
+                <p className="mt-1 text-[10px] text-[#6B6560]">
+                  {activeCollectionProductCount} products
+                  {activeCollectionMeta.ownerName ? ` · Created by ${activeCollectionMeta.ownerName}` : ""}
+                </p>
+              </>
+            )}
+          </div>
+          {!editingCollectionHeader && (
+            <div className="flex shrink-0 gap-2">
+              {canEditActiveCollection && (
+                <button
+                  type="button"
+                  className="text-[10px] text-[#9B9590] transition-colors hover:text-[#F5F0EB]"
+                  onClick={() => setEditingCollectionHeader(true)}
+                >
+                  Edit
+                </button>
               )}
-              {mapCluster && mapCluster.length > 0 && (
-                <div className="absolute bottom-3 left-3 right-3 md:left-auto md:right-3 md:max-w-sm rounded-xl border border-white/10 bg-[#12121a]/95 p-3 text-left z-20 max-h-48 overflow-y-auto">
-                  <span className="text-[10px] text-gray-500 uppercase tracking-wider block mb-2">
-                    {mapCluster.length} products
-                  </span>
-                  <ul className="space-y-2">
-                    {mapCluster.map((p) => (
-                      <li key={p.id}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDetailProduct(p);
-                            setMapCluster(null);
-                          }}
-                          className="text-left w-full text-xs text-white hover:text-blue-300 truncate"
-                        >
-                          {p.name}
-                          <span className="text-[10px] text-gray-500 block">
-                            {p.city}, {p.country}
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              {canShareActiveCollection && (
+                <button
+                  type="button"
+                  className="text-[10px] text-[#C9A96E] transition-colors hover:text-[#D4B383]"
+                  onClick={() => toast("Share with team (demo)")}
+                >
+                  Share with…
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      </div>
+      ) : null}
+
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-4">
+      {mainTab === "collections" ? (
+        <ProductDirectoryCollectionsTab
+          collections={availableCollections}
+          products={products}
+          teams={MOCK_TEAMS}
+          onOpenCollection={(id) => {
+            setCollectionFilter([id]);
+            setMainTab("browse");
+          }}
+        />
+      ) : mainTab === "partner-portal" ? (
+        <ProductDirectoryPartnerPortalTab
+          products={products}
+          teams={MOCK_TEAMS}
+          canViewCommissions={canViewCommissions}
+          isAdmin={isAdmin}
+          onSelectProduct={(id) => setDetailProductId(id)}
+          onAdminSaveProgram={saveProgramFromPartnerPortal}
+        />
+      ) : compareMode && compareProducts.length >= 2 ? (
+        <ProductDirectoryCompareView
+          products={compareProducts}
+          canViewCommissions={canViewCommissions}
+          onClose={clearSelection}
+          onViewFullDetails={(p) => {
+            clearSelection();
+            setDetailProductId(p.id);
+          }}
+        />
+      ) : (
+        <>
+          {viewMode === "grid" && (
+            <div
+              className={cn(
+                "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3",
+                !detailProduct && "xl:grid-cols-4"
+              )}
+            >
+              {sortedProducts.map((product) => (
+                <DirectoryProductCard
+                  key={product.id}
+                  product={product}
+                  canViewCommissions={canViewCommissions}
+                  bookmarked={isBookmarked(product)}
+                  onProductClick={() => {
+                    if (bulkMode) {
+                      toggleProductSelection(product.id);
+                      return;
+                    }
+                    setDetailProductId(product.id);
+                  }}
+                  onAddToCollectionClick={() => setPickerProductId(product.id)}
+                  showRemoveFromCollection={showRemoveOnCards}
+                  onRemoveFromCollection={
+                    showRemoveOnCards ? () => removeProductFromFilteredCollection(product.id) : undefined
+                  }
+                  bulkMode={bulkMode}
+                  bulkSelected={selectedProductIds.has(product.id)}
+                  onToggleBulkSelect={() => toggleProductSelection(product.id)}
+                  onEnterBulkMode={(id) => {
+                    setBulkMode(true);
+                    setSelectedProductIds(new Set([id]));
+                  }}
+                />
+              ))}
+            </div>
+          )}
+
+          {viewMode === "list" && (
+            <DirectoryProductListView
+              products={sortedProducts}
+              canViewCommissions={canViewCommissions}
+              isBookmarked={isBookmarked}
+              onRowClick={(p) => {
+                if (bulkMode) {
+                  toggleProductSelection(p.id);
+                  return;
+                }
+                setDetailProductId(p.id);
+              }}
+              onAddToCollectionClick={(p) => setPickerProductId(p.id)}
+              showRemoveFromCollection={showRemoveOnCards}
+              onRemoveFromFilteredCollection={
+                showRemoveOnCards ? removeProductFromFilteredCollection : undefined
+              }
+              bulkMode={bulkMode}
+              bulkSelectedIds={selectedProductIds}
+              onToggleBulkSelect={toggleProductSelection}
+              onEnterBulkMode={(id) => {
+                setBulkMode(true);
+                setSelectedProductIds(new Set([id]));
+              }}
+            />
+          )}
+
+          {viewMode === "map" && (
+            <ProductDirectoryMapSplit
+              products={sortedProducts}
+              selectedId={detailProductId}
+              clusterProducts={mapCluster}
+              canViewCommissions={canViewCommissions}
+              onSelectProduct={handleMapSelect}
+              onClusterOpen={setMapCluster}
+              onClusterClose={() => setMapCluster(null)}
+            />
+          )}
+
+          {sortedProducts.length === 0 && (
+            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-8 text-center">
+              <Search className="mx-auto mb-3 h-6 w-6 text-[#4A4540]" aria-hidden />
+              <p className="mb-1 text-[13px] font-medium text-[#F5F0EB]">No products match</p>
+              <p className="mb-4 text-[11px] text-[#6B6560]">Your current filters are too narrow.</p>
+              {emptyStateHint ? (
+                <button
+                  type="button"
+                  onClick={emptyStateHint.onClear}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.12)] bg-[rgba(201,169,110,0.06)] px-3 py-1.5 text-[11px] text-[#C9A96E] transition-colors hover:bg-[rgba(201,169,110,0.10)]"
+                >
+                  {`Remove ${emptyStateHint.label} filter → ${emptyStateHint.count} result${emptyStateHint.count === 1 ? "" : "s"}`}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={clearAllFilters}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-[11px] text-[#9B9590] transition-colors hover:bg-white/[0.06]"
+                >
+                  Clear all filters
+                </button>
               )}
             </div>
           )}
         </>
       )}
 
-      {newCollectionOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="bg-[#12121a] border border-white/10 rounded-xl p-5 max-w-md w-full space-y-3">
-            <h3 className="text-sm font-medium text-white">New collection</h3>
-            <input
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="Name"
-              className="w-full text-xs bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2 outline-none"
-            />
-            <textarea
-              value={newDesc}
-              onChange={(e) => setNewDesc(e.target.value)}
-              placeholder="Description (optional)"
-              rows={2}
-              className="w-full text-xs bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2 outline-none resize-none"
-            />
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setNewCollectionOpen(false)}>
-                Cancel
-              </Button>
-              <Button size="sm" onClick={createCollection}>
-                Create
-              </Button>
-            </div>
+      </div>
+
+      {/* Slide-in detail: 7-block layout + layer mock data in ProductDirectoryDetailBody */}
+      {detailProduct && (
+        <ProductDirectoryDetailPanel
+          product={detailProduct}
+          canViewCommissions={canViewCommissions}
+          isAdmin={isAdmin}
+          teams={MOCK_TEAMS}
+          onClose={() => setDetailProductId(null)}
+          onOpenCollectionPicker={() => {
+            setPickerProductId(detailProduct.id);
+          }}
+          onPatchProduct={patchProduct}
+          onAddToItinerary={handleAddToItinerary}
+          canRemoveFromCollection={canRemoveFromCollection}
+          availableCollections={availableCollections}
+          onQuickAddToCollection={handleQuickAddToCollection}
+          onRequestCreateCollection={() => setPickerProductId(detailProduct.id)}
+          partnerProgramCustomKeys={detailProductCustomProgramKeys}
+        />
+      )}
+
+      {pickerProduct && (
+        <ProductDirectoryCollectionPicker
+          product={pickerProduct}
+          collections={availableCollections}
+          teams={MOCK_TEAMS}
+          initialSelectedIds={pickerProduct.collectionIds}
+          onClose={() => setPickerProductId(null)}
+          onSave={(ids) => savePicker(pickerProduct.id, ids)}
+            onCreateCollection={createDirectoryCollection}
+        />
+      )}
+
+      {bulkCollectionOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-[45] cursor-default bg-black/20"
+          aria-label="Close menu"
+          onClick={() => setBulkCollectionOpen(false)}
+        />
+      )}
+
+      {bulkCollectionOpen && (
+        <div className="fixed bottom-20 left-1/2 z-[50] w-64 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0c0c12] py-1 shadow-2xl">
+          <p className="px-3 py-2 text-[9px] uppercase tracking-wider text-[#4A4540]">
+            Add {selectedProductIds.size} products to…
+          </p>
+          {availableCollections.map((col) => (
+            <button
+              key={col.id}
+              type="button"
+              onClick={() => addBulkToCollection(col.id)}
+              className="w-full px-3 py-2 text-left text-xs text-[#C8C0B8] transition-colors hover:bg-white/[0.04]"
+            >
+              {col.teamName ? `[${col.teamName}] ${col.name}` : col.name}
+            </button>
+          ))}
+          <div className="mt-1 border-t border-white/[0.04] pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                setBulkCollectionOpen(false);
+                openCreateCollectionModal("bulk");
+              }}
+              className="flex w-full items-center gap-1 px-3 py-2 text-left text-xs text-[#C9A96E] transition-colors hover:bg-white/[0.04]"
+            >
+              + New Collection
+            </button>
           </div>
         </div>
       )}
 
-      {detailProduct && (
-        <div className="fixed inset-0 z-[60] flex justify-end bg-black/50" onClick={() => setDetailProduct(null)}>
-          <div
-            className="w-full max-w-lg h-full bg-[#0a0a0f] border-l border-white/10 overflow-y-auto shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+      {selectedProductIds.size > 0 && !compareMode && mainTab === "browse" && (
+        <div className="fixed bottom-6 left-1/2 z-50 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center gap-3 rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#0c0c12]/95 px-5 py-3 shadow-2xl backdrop-blur-xl">
+          <span className="text-[12px] font-medium text-[#F5F0EB]">{selectedProductIds.size} selected</span>
+          <div className="h-5 w-px bg-white/[0.06]" />
+          <button
+            type="button"
+            onClick={() => setBulkCollectionOpen(true)}
+            className="flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.08)] px-3 py-1.5 text-[11px] text-[#C9A96E] transition-colors hover:bg-[rgba(201,169,110,0.12)]"
           >
-            <div className="p-5 space-y-5">
-              {detailSkeleton ? (
-                <div className="space-y-6 animate-pulse">
-                  <div className="flex justify-between gap-2">
-                    <div className="flex-1 space-y-2">
-                      <div className="h-6 bg-white/[0.06] rounded w-3/4" />
-                      <div className="h-3 bg-white/[0.05] rounded w-1/3" />
-                    </div>
-                    <div className="h-8 w-16 bg-white/[0.06] rounded" />
-                  </div>
-                  <div className="h-16 bg-white/[0.04] rounded-xl" />
-                  <div className="h-28 bg-white/[0.04] rounded-xl border border-white/[0.06]" />
-                  <div className="h-36 bg-white/[0.04] rounded-xl border border-white/[0.06]" />
-                  <div className="h-4 bg-white/[0.06] rounded w-36" />
-                  <div className="space-y-2">
-                    <SkeletonRow />
-                    <SkeletonRow />
-                  </div>
-                </div>
-              ) : (
-                <>
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h2 className="text-lg font-semibold text-white">{detailProduct.name}</h2>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {detailProduct.city}, {detailProduct.country}
-                  </p>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => setDetailProduct(null)}>
-                  Close
-                </Button>
+            <Bookmark className="h-3.5 w-3.5" />
+            Add to Collection
+          </button>
+          {activeCollectionMeta && canEditActiveCollection && collectionFilter.length === 1 && (
+            <button
+              type="button"
+              onClick={bulkRemoveFromActiveCollection}
+              className="flex items-center gap-1.5 rounded-lg border border-[rgba(166,107,107,0.15)] bg-[rgba(166,107,107,0.08)] px-3 py-1.5 text-[11px] text-[#A66B6B] transition-colors hover:bg-[rgba(166,107,107,0.12)]"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Remove from Collection
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={selectedProductIds.size < 2 || selectedProductIds.size > 4}
+            title={
+              selectedProductIds.size < 2
+                ? "Select 2–4 products to compare"
+                : selectedProductIds.size > 4
+                  ? "Compare supports up to 4 products"
+                  : "Compare selected"
+            }
+            onClick={() => {
+              if (selectedProductIds.size < 2 || selectedProductIds.size > 4) return;
+              setCompareMode(true);
+            }}
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-[11px] text-[#9B9590] transition-colors disabled:opacity-30",
+              selectedProductIds.size >= 2 &&
+                selectedProductIds.size <= 4 &&
+                "hover:bg-white/[0.06] hover:text-[#F5F0EB]"
+            )}
+          >
+            <LayoutGrid className="h-3.5 w-3.5" />
+            Compare
+          </button>
+          <button type="button" onClick={clearSelection} className="px-2 py-1.5 text-[11px] text-[#6B6560] transition-colors hover:text-[#9B9590]">
+            ✕ Clear
+          </button>
+        </div>
+      )}
+
+      {createCollectionOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#0c0c12] p-4">
+            <h3 className="text-sm font-semibold text-[#F5F0EB]">Create Collection</h3>
+            <p className="mt-1 text-[11px] text-[#6B6560]">Set the basics, then save.</p>
+            <div className="mt-3 space-y-2">
+              <input
+                value={createCollectionName}
+                onChange={(e) => setCreateCollectionName(e.target.value)}
+                placeholder="Collection name"
+                className="w-full rounded-lg border border-white/[0.08] bg-[#08080c] px-3 py-2 text-[12px] text-[#F5F0EB] outline-none"
+              />
+              <textarea
+                value={createCollectionDescription}
+                onChange={(e) => setCreateCollectionDescription(e.target.value)}
+                rows={2}
+                placeholder="Description (optional)"
+                className="w-full resize-none rounded-lg border border-white/[0.08] bg-[#08080c] px-3 py-2 text-[12px] text-[#F5F0EB] outline-none"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCreateCollectionScope("private")}
+                  className={cn(
+                    "rounded-lg border px-3 py-1.5 text-[11px]",
+                    createCollectionScope === "private"
+                      ? "border-[#C9A96E] bg-[rgba(201,169,110,0.12)] text-[#F5F0EB]"
+                      : "border-white/[0.08] text-[#9B9590]"
+                  )}
+                >
+                  Private
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCreateCollectionScope("team")}
+                  className={cn(
+                    "rounded-lg border px-3 py-1.5 text-[11px]",
+                    createCollectionScope === "team"
+                      ? "border-[#C9A96E] bg-[rgba(201,169,110,0.12)] text-[#F5F0EB]"
+                      : "border-white/[0.08] text-[#9B9590]"
+                  )}
+                >
+                  Team
+                </button>
               </div>
-              <p className="text-sm text-gray-400 leading-relaxed">{detailProduct.description}</p>
-
-              {!isAdmin && (
-                <div className="flex items-center gap-1 text-[10px] text-gray-600">
-                  <Lock className="w-3 h-3" />
-                  <span>Agency-level catalog — view only. You can add personal notes.</span>
-                </div>
-              )}
-
-              {detailProduct.id === "prod-001" && (
-                <>
-                  <div className="border-t border-white/[0.06] pt-5">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm font-medium text-white">Notes & Details</span>
-                      <div className="flex items-center gap-1 bg-white/[0.03] rounded-full p-0.5">
-                        {(["advisor", "agency"] as const).map((layer) => (
-                          <button
-                            key={layer}
-                            type="button"
-                            onClick={() => setActiveNoteLayer(layer)}
-                            className={cn(
-                              "px-3 py-1 rounded-full text-[10px] font-medium transition-all",
-                              activeNoteLayer === layer
-                                ? layer === "advisor"
-                                  ? "bg-violet-500/15 text-violet-400"
-                                  : "bg-blue-500/15 text-blue-400"
-                                : "text-gray-500 hover:text-gray-400"
-                            )}
-                          >
-                            {layer === "advisor" ? "My Notes" : "Agency Notes"}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    {activeNoteLayer === "advisor" && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <Lock className="w-3 h-3 text-violet-400/50" />
-                          <span className="text-[10px] text-violet-400/60">Only visible to you</span>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">My Contact</p>
-                          <input
-                            value={advisorOverrides.contact}
-                            onChange={(e) => setAdvisorOverrides((o) => ({ ...o, contact: e.target.value }))}
-                            className="w-full text-xs bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-gray-300 outline-none"
-                          />
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">My Notes</p>
-                          <textarea
-                            value={advisorOverrides.notes}
-                            onChange={(e) => setAdvisorOverrides((o) => ({ ...o, notes: e.target.value }))}
-                            rows={3}
-                            className="w-full text-xs bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-gray-300 outline-none resize-none"
-                          />
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">My Rating</p>
-                          <div className="flex items-center gap-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <button
-                                key={star}
-                                type="button"
-                                onClick={() => setAdvisorOverrides((o) => ({ ...o, personalRating: star }))}
-                                className={cn(
-                                  "w-5 h-5 text-xs",
-                                  star <= advisorOverrides.personalRating ? "text-amber-400" : "text-gray-700"
-                                )}
-                              >
-                                ★
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {activeNoteLayer === "agency" && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <Users className="w-3 h-3 text-blue-400/50" />
-                          <span className="text-[10px] text-blue-400/60">Visible to all agency members</span>
-                        </div>
-                        <div className="space-y-2">
-                          {agencyNotes.map((note) => (
-                            <div
-                              key={note.id}
-                              className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.04]"
-                            >
-                              <p className="text-xs text-gray-300 leading-relaxed">{note.content}</p>
-                              <div className="flex items-center gap-2 mt-2">
-                                <span className="text-[10px] text-gray-500">{note.author}</span>
-                                <span className="text-[10px] text-gray-600">·</span>
-                                <span className="text-[10px] text-gray-600">{note.timeAgo}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="flex gap-2">
-                          <input
-                            value={newAgencyNote}
-                            onChange={(e) => setNewAgencyNote(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                const t = newAgencyNote.trim();
-                                if (!t) return;
-                                setAgencyNotes((n) => [
-                                  ...n,
-                                  {
-                                    id: `an-${Date.now()}`,
-                                    content: t,
-                                    author: user?.username || "You",
-                                    authorId: currentUserId,
-                                    timeAgo: "just now",
-                                  },
-                                ]);
-                                setNewAgencyNote("");
-                              }
-                            }}
-                            placeholder="Add a note for the agency..."
-                            className="flex-1 text-xs bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-gray-300 outline-none"
-                          />
-                          <button
-                            type="button"
-                            disabled={postingNote}
-                            onClick={() => {
-                              const t = newAgencyNote.trim();
-                              if (!t || postingNote) return;
-                              setPostingNote(true);
-                              window.setTimeout(() => {
-                                setAgencyNotes((n) => [
-                                  ...n,
-                                  {
-                                    id: `an-${Date.now()}`,
-                                    content: t,
-                                    author: user?.username || "You",
-                                    authorId: currentUserId,
-                                    timeAgo: "just now",
-                                  },
-                                ]);
-                                setNewAgencyNote("");
-                                toast("Note posted");
-                                setPostingNote(false);
-                              }, 280);
-                            }}
-                            className="text-xs text-blue-400 hover:text-blue-300 px-3 disabled:opacity-50 inline-flex items-center gap-1"
-                          >
-                            {postingNote ? <Spinner size="sm" /> : null}
-                            Post
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="border-t border-white/[0.06] pt-5">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Award className="w-4 h-4 text-amber-400" />
-                      <span className="text-sm font-medium text-white">Partner Programs</span>
-                      <span className="text-[10px] text-gray-500 bg-white/5 px-2 py-0.5 rounded-full">
-                        {partnerPrograms.length}
-                      </span>
-                    </div>
-                    <div className="space-y-2">
-                      {partnerPrograms.map((program) => (
-                        <div
-                          key={program.id}
-                          className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.04]"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium text-white">{program.name}</span>
-                            {program.scope === "enable" ? (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">
-                                Enable
-                              </span>
-                            ) : (
-                              <ScopeBadge scope={program.scope} teams={MOCK_TEAMS} />
-                            )}
-                          </div>
-                          <p className="text-[10px] text-gray-400 mt-1">{program.benefits}</p>
-                          {program.commission && (
-                            <p className="text-[10px] text-amber-400/70 mt-0.5">Commission: {program.commission}</p>
-                          )}
-                          {"commissionContact" in program && program.commissionContact && (
-                            <p className="text-[10px] text-gray-500 mt-0.5">
-                              Commission contact: {program.commissionContact.name} — {program.commissionContact.email}
-                            </p>
-                          )}
-                          {program.expires && (
-                            <p className="text-[10px] text-gray-600 mt-0.5">Expires: {program.expires}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="border-t border-white/[0.06] pt-5">
-                    <div className="flex items-center gap-1.5 mb-3">
-                      <Users className="w-3 h-3 text-blue-400/50" />
-                      <span className="text-[10px] text-blue-400/60">Visible to all agency members</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
-                      <div className="flex items-center gap-2">
-                        <UserPlus className="w-4 h-4 text-blue-400" />
-                        <span className="text-sm font-medium text-white">Agency contacts</span>
-                        <span className="text-[10px] text-gray-500 bg-white/5 px-2 py-0.5 rounded-full">
-                          {agencyContacts.length}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setAgencyContactFormOpen(true)}
-                        className="text-[10px] text-blue-400 hover:text-blue-300 flex items-center gap-1 shrink-0"
-                      >
-                        <Plus className="w-3 h-3" /> Add contact
-                      </button>
-                    </div>
-                    {agencyContacts.length === 0 ? (
-                      <EmptyState
-                        icon={UserPlus}
-                        title="No contacts added yet"
-                        description="Know someone here? Add a contact so the whole team knows who to reach out to."
-                        className="py-10"
-                        action={{
-                          label: "+ Add Contact",
-                          onClick: () => setAgencyContactFormOpen(true),
-                        }}
-                      />
-                    ) : (
-                      <div className="space-y-2">
-                        {agencyContacts.map((c) => (
-                          <div
-                            key={c.id}
-                            className="flex items-start justify-between gap-2 bg-white/[0.03] rounded-xl p-3 border border-white/[0.04]"
-                          >
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <p className="text-xs font-medium text-white">{c.name}</p>
-                                <span className="text-[10px] text-gray-500 bg-white/[0.04] px-1.5 py-0.5 rounded">
-                                  {c.role}
-                                </span>
-                              </div>
-                              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
-                                {c.email && (
-                                  <a
-                                    href={`mailto:${c.email}`}
-                                    className="text-[10px] text-blue-400/70 hover:text-blue-400"
-                                  >
-                                    {c.email}
-                                  </a>
-                                )}
-                                {c.phone && <span className="text-[10px] text-gray-500">{c.phone}</span>}
-                              </div>
-                              {c.note && <p className="text-[10px] text-gray-500 italic mt-1">{c.note}</p>}
-                              <span className="text-[10px] text-gray-700 mt-1 block">
-                                Added by {c.addedBy} · {c.addedDate}
-                              </span>
-                            </div>
-                            {(isAdmin || c.addedById === currentUserId) && (
-                              <button
-                                type="button"
-                                onClick={() => removeAgencyContact(c.id)}
-                                className="text-[10px] text-red-400/80 hover:text-red-400 shrink-0"
-                              >
-                                Remove
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {(agencyContactFormOpen || agencyContacts.length > 0) && (
-                      <div className="mt-4 space-y-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                        <p className="text-[10px] text-gray-500 uppercase tracking-wider">Add contact</p>
-                        <input
-                          value={newAgencyContactName}
-                          onChange={(e) => setNewAgencyContactName(e.target.value)}
-                          placeholder="Name"
-                          className="w-full text-xs bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-gray-300 outline-none"
-                        />
-                        <input
-                          value={newAgencyContactRole}
-                          onChange={(e) => setNewAgencyContactRole(e.target.value)}
-                          placeholder="Role (required)"
-                          className="w-full text-xs bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-gray-300 outline-none"
-                        />
-                        <input
-                          value={newAgencyContactEmail}
-                          onChange={(e) => setNewAgencyContactEmail(e.target.value)}
-                          placeholder="Email (optional)"
-                          className="w-full text-xs bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-gray-300 outline-none"
-                        />
-                        <input
-                          value={newAgencyContactPhone}
-                          onChange={(e) => setNewAgencyContactPhone(e.target.value)}
-                          placeholder="Phone (optional)"
-                          className="w-full text-xs bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-gray-300 outline-none"
-                        />
-                        <input
-                          value={newAgencyContactNote}
-                          onChange={(e) => setNewAgencyContactNote(e.target.value)}
-                          placeholder="Note (optional)"
-                          className="w-full text-xs bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-gray-300 outline-none"
-                        />
-                        <button
-                          type="button"
-                          disabled={
-                            addingAgencyContact || !newAgencyContactName.trim() || !newAgencyContactRole.trim()
-                          }
-                          onClick={addAgencyContact}
-                          className="text-xs text-blue-400 hover:text-blue-300 inline-flex items-center gap-1.5 disabled:opacity-40"
-                        >
-                          {addingAgencyContact ? <Spinner size="sm" /> : null}
-                          Save contact
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-                </>
-              )}
+              {createCollectionScope === "team" ? (
+                <select
+                  value={createCollectionTeamId}
+                  onChange={(e) => setCreateCollectionTeamId(e.target.value)}
+                  className="w-full rounded-lg border border-white/[0.08] bg-[#08080c] px-3 py-2 text-[12px] text-[#F5F0EB] outline-none"
+                >
+                  {myCollectionTeams.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+            </div>
+            <div className="mt-3 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-lg px-3 py-1.5 text-[11px] text-[#9B9590]"
+                onClick={() => setCreateCollectionOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="rounded-lg bg-[#C9A96E] px-3 py-1.5 text-[11px] font-medium text-[#08080c]"
+                onClick={submitCreateCollectionModal}
+              >
+                Create
+              </button>
             </div>
           </div>
         </div>

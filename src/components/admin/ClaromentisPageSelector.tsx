@@ -106,7 +106,7 @@ export default function ClaromentisPageSelector({
                                         type="checkbox"
                                         readOnly
                                         checked={selected}
-                                        className="w-3.5 h-3.5 rounded border-[rgba(255,255,255,0.2)] bg-[#0C0C0C] text-purple-500 shrink-0 pointer-events-none"
+                                        className="checkbox-on-dark checkbox-on-dark-sm shrink-0 pointer-events-none"
                                     />
                                     <FileText size={14} className="text-purple-400 shrink-0" />
                                     <span className="text-[13px] text-[#F5F5F5] truncate">{page.title}</span>

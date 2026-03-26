@@ -74,7 +74,6 @@ function LoginContent() {
     }, [reason]);
 
     const setAuthCookie = useCallback((token: string) => {
-        // Mirror the token into a cookie for any server-side use.
         const secure = window.location.protocol === "https:" ? "; Secure" : "";
         document.cookie = `auth_token=${encodeURIComponent(token)}; Path=/; SameSite=Lax${secure}`;
     }, []);

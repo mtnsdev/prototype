@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import {
   FileText,
   FileSpreadsheet,
@@ -9,6 +9,7 @@ import {
   Search,
   Shield,
   ChevronRight,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,6 +65,11 @@ type Props = {
   teams?: TeamOpt[];
   onShareDocument?: (doc: KnowledgeDocument, teamId: string) => void;
   onDeleteDocument?: (doc: KnowledgeDocument) => void;
+  canExportDocuments?: boolean;
+  /** Row/bulk submenu label */
+  shareSubmenuLabel?: string;
+  /** List view: sort control rendered in the table header (above Title / Source columns). */
+  listSortControl?: ReactNode;
 };
 
 function DocumentActionsMenu({
@@ -73,6 +79,8 @@ function DocumentActionsMenu({
   teams,
   onShareDocument,
   onDeleteDocument,
+  canExportDocuments = true,
+  shareSubmenuLabel = "Share with…",
 }: {
   doc: KnowledgeDocument;
   onSelectDocument: (d: KnowledgeDocument) => void;
@@ -80,24 +88,34 @@ function DocumentActionsMenu({
   teams: TeamOpt[];
   onShareDocument?: (d: KnowledgeDocument, teamId: string) => void;
   onDeleteDocument?: (d: KnowledgeDocument) => void;
+  canExportDocuments?: boolean;
+  shareSubmenuLabel?: string;
 }) {
   const toast = useToast();
   return (
     <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-white/10 min-w-[10rem]">
       <DropdownMenuItem onClick={() => onSelectDocument(doc)}>View</DropdownMenuItem>
-      <DropdownMenuItem onClick={() => toast("Download started (demo)")}>Download</DropdownMenuItem>
-      {onShareDocument && teams.length > 0 && (
+      {canExportDocuments ? (
+        <DropdownMenuItem
+          onClick={() => {
+            toast("Download started (demo)");
+          }}
+        >
+          Download
+        </DropdownMenuItem>
+      ) : null}
+      {teams.length > 0 && (
         <DropdownMenuSub>
           <DropdownMenuSubTrigger className="text-sm">
-            Share with…
+            {shareSubmenuLabel}
             <ChevronRight className="ml-auto h-3.5 w-3.5" aria-hidden />
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="bg-[#1a1a1a] border-white/10">
+          <DropdownMenuSubContent className="bg-[#1a1a1a] border-white/10 py-1">
             {teams.map((team) => (
               <DropdownMenuItem
                 key={team.id}
-                className="text-xs text-gray-400 focus:text-white"
-                onClick={() => onShareDocument(doc, team.id)}
+                className="w-full text-left px-3 py-1.5 text-xs text-gray-400 focus:text-white hover:bg-white/[0.04]"
+                onClick={() => onShareDocument?.(doc, team.id)}
               >
                 {team.name}
               </DropdownMenuItem>
@@ -109,9 +127,11 @@ function DocumentActionsMenu({
         <>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            className="text-red-400/70 focus:text-red-400 focus:bg-red-500/10"
+            className="hover:opacity-80 focus:bg-white/[0.04]"
+            style={{ color: "#A66B6B" }}
             onClick={() => onDeleteDocument(doc)}
           >
+            <Trash2 className="w-3.5 h-3.5 mr-2 inline" aria-hidden />
             Delete
           </DropdownMenuItem>
         </>
@@ -132,6 +152,9 @@ export default function DocumentGrid({
   teams = MOCK_TEAMS.map((t) => ({ id: t.id, name: t.name })),
   onShareDocument,
   onDeleteDocument,
+  canExportDocuments = true,
+  shareSubmenuLabel = "Share with…",
+  listSortControl,
 }: Props) {
   const headerCbRef = useRef<HTMLInputElement>(null);
   const selectedSet = listSelection ? new Set(listSelection.selectedIds) : null;
@@ -147,10 +170,20 @@ export default function DocumentGrid({
 
   if (loading && viewMode === "list") {
     return (
-      <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#161616] p-3 space-y-2">
-        {Array.from({ length: 8 }, (_, i) => (
-          <SkeletonRow key={i} />
-        ))}
+      <div className="overflow-hidden rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#161616]">
+        {listSortControl ? (
+          <div className="flex flex-wrap items-center justify-start gap-2 border-b border-[rgba(255,255,255,0.06)] bg-white/[0.02] px-3 py-2">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
+              Sort
+            </span>
+            {listSortControl}
+          </div>
+        ) : null}
+        <div className="space-y-2 p-3">
+          {Array.from({ length: 8 }, (_, i) => (
+            <SkeletonRow key={i} />
+          ))}
+        </div>
       </div>
     );
   }
@@ -182,17 +215,34 @@ export default function DocumentGrid({
 
   if (viewMode === "list") {
     const showCb = Boolean(listSelection);
+    const headerColSpan = showCb ? 9 : 8;
     return (
       <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden overflow-x-auto">
-        <table className="w-full text-sm min-w-[760px]">
+        <table className="w-full text-sm min-w-[860px]">
           <thead>
+            {listSortControl ? (
+              <tr className="border-b border-[rgba(255,255,255,0.06)] bg-white/[0.02]">
+                <th
+                  colSpan={headerColSpan}
+                  scope="colgroup"
+                  className="px-3 py-2 text-left font-normal"
+                >
+                  <div className="flex flex-wrap items-center justify-start gap-2">
+                    <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
+                      Sort
+                    </span>
+                    {listSortControl}
+                  </div>
+                </th>
+              </tr>
+            ) : null}
             <tr className="border-b border-[rgba(255,255,255,0.08)] text-left text-[var(--text-secondary)]">
               {showCb && (
                 <th className="p-3 w-10">
                   <input
                     ref={headerCbRef}
                     type="checkbox"
-                    className="rounded border-white/20 bg-white/[0.06]"
+                    className="checkbox-on-dark"
                     checked={allSelected}
                     onChange={() => listSelection!.onSelectAllToggle()}
                     aria-label="Select all documents"
@@ -202,6 +252,7 @@ export default function DocumentGrid({
               <th className="p-3 font-medium">Title</th>
               <th className="p-3 font-medium">Source</th>
               <th className="p-3 font-medium">Scope</th>
+              <th className="p-3 font-medium">Tags</th>
               <th className="p-3 font-medium">Status</th>
               <th className="p-3 font-medium">Size</th>
               <th className="p-3 font-medium">Updated</th>
@@ -225,7 +276,7 @@ export default function DocumentGrid({
                     <td className="py-2.5 px-3 align-top">
                       <input
                         type="checkbox"
-                        className="rounded border-white/20 bg-white/[0.06] mt-1"
+                        className="checkbox-on-dark checkbox-on-dark-sm mt-1"
                         checked={checked}
                         onChange={() => listSelection!.onToggle(doc.id)}
                         aria-label={`Select ${doc.title}`}
@@ -236,10 +287,12 @@ export default function DocumentGrid({
                   <td className="py-2.5 px-3 align-top">
                     <div className="flex items-start gap-2 min-w-0">
                       {oversight && (
-                        <Shield
-                          className="w-3.5 h-3.5 text-gray-500 shrink-0 mt-1"
-                          aria-label="Other advisor private (oversight)"
-                        />
+                        <span title="This document belongs to another user" className="shrink-0 mt-1 inline-flex">
+                          <Shield
+                            className="w-3.5 h-3.5 text-gray-500"
+                            aria-label="This document belongs to another user"
+                          />
+                        </span>
                       )}
                       <div className="min-w-0 flex-1 max-w-[min(280px,40vw)]">
                         <button
@@ -260,6 +313,23 @@ export default function DocumentGrid({
                   </td>
                   <td className="py-2.5 px-3 align-top">
                     <ScopeBadge scope={effectiveUiScope(doc, scopeOverrides)} teams={MOCK_TEAMS} />
+                  </td>
+                  <td className="py-2.5 px-3 align-top max-w-[140px]">
+                    <div className="flex flex-wrap gap-1">
+                      {doc.tags.slice(0, 2).map((tag) => (
+                        <span
+                          key={tag}
+                          className="text-[10px] text-gray-500 bg-white/[0.03] px-1.5 py-0.5 rounded truncate max-w-[120px]"
+                          title={tag}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {doc.tags.length > 2 && (
+                        <span className="text-[10px] text-gray-600">+{doc.tags.length - 2}</span>
+                      )}
+                      {doc.tags.length === 0 && <span className="text-[10px] text-gray-600">—</span>}
+                    </div>
                   </td>
                   <td className="py-2.5 px-3 align-top">
                     <IngestionStatusBadge status={doc.ingestion_status} />
@@ -284,6 +354,8 @@ export default function DocumentGrid({
                         teams={teams}
                         onShareDocument={onShareDocument}
                         onDeleteDocument={onDeleteDocument}
+                        canExportDocuments={canExportDocuments}
+                        shareSubmenuLabel={shareSubmenuLabel}
                       />
                     </DropdownMenu>
                   </td>
@@ -314,7 +386,12 @@ export default function DocumentGrid({
             )}
           >
             {oversight && (
-              <Shield className="absolute top-2 left-12 z-20 w-3.5 h-3.5 text-gray-500" aria-hidden />
+              <span
+                className="absolute top-2 left-12 z-20 inline-flex"
+                title="This document belongs to another user"
+              >
+                <Shield className="w-3.5 h-3.5 text-gray-500" aria-hidden />
+              </span>
             )}
             <DemoBadge className="top-2 left-2 right-auto" />
             <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
@@ -331,6 +408,8 @@ export default function DocumentGrid({
                   teams={teams}
                   onShareDocument={onShareDocument}
                   onDeleteDocument={onDeleteDocument}
+                  canExportDocuments={canExportDocuments}
+                  shareSubmenuLabel={shareSubmenuLabel}
                 />
               </DropdownMenu>
             </div>

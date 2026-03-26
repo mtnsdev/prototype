@@ -73,6 +73,8 @@ export interface KnowledgeDocument {
   source_type: DataSourceType;
   source_name: string;
   data_layer: DataLayer;
+  /** Explicit Teams UI scope (private, team id, or mirrors_source). Falls back to data_layer + source defaults. */
+  kv_scope?: "private" | "mirrors_source" | string;
   /** @deprecated optional for legacy mocks */
   document_type?: DocumentType;
   file_type: string;

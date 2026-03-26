@@ -228,3 +228,18 @@ export interface ProductsPageState {
   isLoading: boolean;
   error: string | null;
 }
+
+// ─── Product Directory (`/dashboard/products` unified view) ────────────────
+export type {
+  DirectoryAgencyContact,
+  DirectoryAgencyNote,
+  DirectoryAmenityTag,
+  DirectoryCollectionOption,
+  DirectoryPartnerProgram,
+  DirectoryProduct,
+  DirectoryProductCategory,
+  DirectoryProductCollectionRef,
+  DirectoryProductPromotion,
+  DirectoryProductScope,
+  DirectoryProgramRegistryStatus,
+} from "./product-directory";

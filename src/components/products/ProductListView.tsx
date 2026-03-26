@@ -93,7 +93,7 @@ export default function ProductListView({
                   type="checkbox"
                   checked={products.length > 0 && selectedIds.size === products.length}
                   onChange={onToggleSelectAll}
-                  className="rounded border-white/20 bg-white/5"
+                  className="checkbox-on-dark"
                 />
               )}
             </th>
@@ -133,7 +133,7 @@ export default function ProductListView({
                       type="checkbox"
                       checked={selectedIds.has(id)}
                       onChange={() => onToggleSelect(id)}
-                      className="rounded border-white/20 bg-white/5"
+                      className="checkbox-on-dark"
                     />
                   )}
                 </td>

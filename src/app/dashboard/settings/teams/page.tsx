@@ -8,10 +8,17 @@ import { useUser } from "@/contexts/UserContext";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/contexts/ToastContext";
 import type { Team } from "@/types/teams";
-import { MOCK_TEAMS } from "@/lib/teamsMock";
+import { DEFAULT_TEAM_POLICIES, MOCK_TEAMS } from "@/lib/teamsMock";
 
 function cloneTeams(t: Team[]): Team[] {
-  return t.map((x) => ({ ...x, memberIds: [...x.memberIds] }));
+  return t.map((x) => ({
+    ...x,
+    memberIds: [...x.memberIds],
+    policies: {
+      ...x.policies,
+      sourceAccess: x.policies.sourceAccess === "all" ? "all" : [...x.policies.sourceAccess],
+    },
+  }));
 }
 
 export default function TeamsSettingsPage() {
@@ -38,6 +45,7 @@ export default function TeamsSettingsPage() {
         name: name.trim(),
         memberIds: user?.id != null ? [String(user.id)] : [],
         isDefault: false,
+        policies: { ...DEFAULT_TEAM_POLICIES },
         createdBy: user?.email ?? "admin",
         createdAt: new Date().toISOString(),
       },
