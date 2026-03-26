@@ -1,0 +1,534 @@
+@import "tailwindcss";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ==========================================
+   Enable Design System Tokens
+   ========================================== */
+
+:root {
+    /* Surface Colors (Warm Dark Grays) */
+    --surface-base: #0C0C0C;
+    --surface-elevated: #141414;
+    --surface-card: #161616;
+    --surface-card-hover: #1a1a1a;
+    --surface-interactive: rgba(255, 255, 255, 0.06);
+    --surface-interactive-hover: rgba(255, 255, 255, 0.10);
+    --surface-interactive-active: rgba(255, 255, 255, 0.14);
+
+    /* Text Colors (Warm Off-White) */
+    --text-primary: #F5F5F5;
+    --text-secondary: rgba(245, 245, 245, 0.64);
+    --text-tertiary: rgba(245, 245, 245, 0.44);
+    --text-quaternary: rgba(245, 245, 245, 0.28);
+    --text-disabled: rgba(245, 245, 245, 0.24);
+
+    /* Border Colors */
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-default: rgba(255, 255, 255, 0.12);
+    --border-strong: rgba(255, 255, 255, 0.20);
+
+    /* Brand Colors */
+    --brand-primary: #A0A0A0;
+    --brand-accent: #E8E8E8;
+
+    /* Semantic Colors (muted, elegant) */
+    --color-success: #7CB889;
+    --color-success-muted: rgba(124, 184, 137, 0.12);
+    --color-warning: #D4A574;
+    --color-warning-muted: rgba(212, 165, 116, 0.12);
+    --color-error: #C87A7A;
+    --color-error-muted: rgba(200, 122, 122, 0.12);
+    --color-info: #7AA3C8;
+    --color-info-muted: rgba(122, 163, 200, 0.12);
+
+    /* Muted accent palette (low saturation, elegant) */
+    --muted-success-bg: rgba(148, 163, 148, 0.14);
+    --muted-success-text: #94A394;
+    --muted-success-border: rgba(148, 163, 148, 0.25);
+    --muted-warning-bg: rgba(180, 170, 150, 0.14);
+    --muted-warning-text: #B4AA96;
+    --muted-warning-border: rgba(180, 170, 150, 0.25);
+    --muted-error-bg: rgba(170, 140, 140, 0.14);
+    --muted-error-text: #AA8C8C;
+    --muted-error-border: rgba(170, 140, 140, 0.25);
+    --muted-info-bg: rgba(140, 155, 175, 0.14);
+    --muted-info-text: #8C9BAF;
+    --muted-info-border: rgba(140, 155, 175, 0.25);
+    --muted-accent-bg: rgba(155, 150, 170, 0.12);
+    --muted-accent-text: #9B96AA;
+    --muted-accent-border: rgba(155, 150, 170, 0.22);
+    /* Preview / sample data — soft orange (not gold) */
+    --muted-amber-bg: rgba(200, 130, 80, 0.18);
+    --muted-amber-text: #C88260;
+    --muted-amber-border: rgba(200, 130, 80, 0.32);
+
+    /* Spacing (4px grid) */
+    --space-0: 0;
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-7: 32px;
+    --space-8: 48px;
+    --space-9: 64px;
+
+    /* Typography */
+    --font-sans: 'Libre Franklin', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+
+    /* Font Sizes */
+    --text-2xs: 10px;
+    --text-xs: 11px;
+    --text-sm: 12px;
+    --text-base: 13px;
+    --text-md: 14px;
+    --text-lg: 16px;
+    --text-xl: 20px;
+    --text-2xl: 24px;
+    --text-3xl: 32px;
+
+    /* Line Heights */
+    --leading-none: 1;
+    --leading-tight: 1.2;
+    --leading-snug: 1.3;
+    --leading-normal: 1.45;
+    --leading-relaxed: 1.55;
+
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --radius-2xl: 16px;
+    --radius-full: 9999px;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.3);
+    --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.35);
+
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-normal: 200ms ease;
+    --transition-slow: 300ms ease;
+
+    /* Legacy support */
+
+    --radius: 0.625rem;
+
+    --background: oklch(1 0 0);
+
+    --foreground: oklch(0.141 0.005 285.823);
+
+    --card: oklch(1 0 0);
+
+    --card-foreground: oklch(0.141 0.005 285.823);
+
+    --popover: oklch(1 0 0);
+
+    --popover-foreground: oklch(0.141 0.005 285.823);
+
+    --primary: oklch(0.21 0.006 285.885);
+
+    --primary-foreground: oklch(0.985 0 0);
+
+    --secondary: oklch(0.967 0.001 286.375);
+
+    --secondary-foreground: oklch(0.21 0.006 285.885);
+
+    --muted: oklch(0.967 0.001 286.375);
+
+    --muted-foreground: oklch(0.552 0.016 285.938);
+
+    --accent: oklch(0.967 0.001 286.375);
+
+    --accent-foreground: oklch(0.21 0.006 285.885);
+
+    --destructive: oklch(0.577 0.245 27.325);
+
+    --border: oklch(0.92 0.004 286.32);
+
+    --input: oklch(0.92 0.004 286.32);
+
+    --ring: oklch(0.705 0.015 286.067);
+
+    --chart-1: oklch(0.646 0.222 41.116);
+
+    --chart-2: oklch(0.6 0.118 184.704);
+
+    --chart-3: oklch(0.398 0.07 227.392);
+
+    --chart-4: oklch(0.828 0.189 84.429);
+
+    --chart-5: oklch(0.769 0.188 70.08);
+
+    --sidebar: oklch(0.985 0 0);
+
+    --sidebar-foreground: oklch(0.141 0.005 285.823);
+
+    --sidebar-primary: oklch(0.21 0.006 285.885);
+
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+
+    --sidebar-accent: oklch(0.967 0.001 286.375);
+
+    --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+
+    --sidebar-border: oklch(0.92 0.004 286.32);
+
+    --sidebar-ring: oklch(0.705 0.015 286.067);
+}
+
+@theme inline {
+    /* Muted palette (elegant, low saturation) */
+    --color-muted-success-bg: var(--muted-success-bg);
+    --color-muted-success-text: var(--muted-success-text);
+    --color-muted-success-border: var(--muted-success-border);
+    --color-muted-warning-bg: var(--muted-warning-bg);
+    --color-muted-warning-text: var(--muted-warning-text);
+    --color-muted-warning-border: var(--muted-warning-border);
+    --color-muted-error-bg: var(--muted-error-bg);
+    --color-muted-error-text: var(--muted-error-text);
+    --color-muted-error-border: var(--muted-error-border);
+    --color-muted-info-bg: var(--muted-info-bg);
+    --color-muted-info-text: var(--muted-info-text);
+    --color-muted-info-border: var(--muted-info-border);
+    --color-muted-accent-bg: var(--muted-accent-bg);
+    --color-muted-accent-text: var(--muted-accent-text);
+    --color-muted-accent-border: var(--muted-accent-border);
+    --color-muted-amber-bg: var(--muted-amber-bg);
+    --color-muted-amber-text: var(--muted-amber-text);
+    --color-muted-amber-border: var(--muted-amber-border);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    /* Avoid self-reference var(--font-sans) here — Tailwind v4 can hang resolving it. */
+    --font-sans: 'Libre Franklin', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+    --radius-2xl: calc(var(--radius) + 8px);
+    --radius-3xl: calc(var(--radius) + 12px);
+    --radius-4xl: calc(var(--radius) + 16px);
+}
+
+/* ==========================================
+   Base Styles
+   ========================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+body {
+    background: var(--surface-base);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+}
+
+/* ==========================================
+   Scrollbar Styling
+   ========================================== */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+/* ==========================================
+   Focus States (Accessibility)
+   ========================================== */
+
+:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.4);
+    outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.4);
+    outline-offset: 2px;
+}
+
+/* Chat input: no inner focus outline (outer bar has focus-within border only) */
+input.chat-input-no-focus-outline:focus-visible,
+.chat-input-bar input:focus,
+.chat-input-bar input:focus-visible {
+    outline: none !important;
+    outline-offset: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* ==========================================
+   Selection
+   ========================================== */
+
+::selection {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+}
+
+/* ==========================================
+   Compare Runs: dropdown list contrast
+   ========================================== */
+
+.compare-runs-dropdowns select option {
+    background: #fff;
+    color: #1a1a1a;
+}
+
+/* ==========================================
+   Chat: View places/sources hint pulse (respects reduced-motion)
+   ========================================== */
+
+@keyframes places-hint-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+.animate-places-hint-pulse {
+    animation: places-hint-pulse 1.25s ease-in-out 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-places-hint-pulse {
+        animation: none;
+    }
+}
+
+/* ==========================================
+   Chat: Place cards staggered slide-in (respects reduced-motion)
+   ========================================== */
+
+@keyframes card-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.animate-card-slide-in {
+    animation: card-slide-in 0.3s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-card-slide-in {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* ==========================================
+   Briefing Room: widget stagger fade-in
+   ========================================== */
+
+@keyframes briefing-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-briefing-fade-in {
+    animation: briefing-fade-in 0.4s ease-out forwards;
+    opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-briefing-fade-in {
+        animation: none;
+        opacity: 1;
+    }
+}
+
+/* ==========================================
+   Reduced Motion
+   ========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+.dark {
+    --background: oklch(0.141 0.005 285.823);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.21 0.006 285.885);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.21 0.006 285.885);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.92 0.004 286.32);
+    --primary-foreground: oklch(0.21 0.006 285.885);
+    --secondary: oklch(0.274 0.006 286.033);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.274 0.006 286.033);
+    --muted-foreground: oklch(0.705 0.015 286.067);
+    --accent: oklch(0.274 0.006 286.033);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.552 0.016 285.938);
+    --chart-1: oklch(0.488 0.243 264.376);
+    --chart-2: oklch(0.696 0.17 162.48);
+    --chart-3: oklch(0.769 0.188 70.08);
+    --chart-4: oklch(0.627 0.265 303.9);
+    --chart-5: oklch(0.645 0.246 16.439);
+    --sidebar: oklch(0.21 0.006 285.885);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.274 0.006 286.033);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.552 0.016 285.938);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    @apply border-border outline-ring/50;
+    }
+  body {
+    @apply bg-background text-foreground;
+    @apply bg-background text-foreground;
+    }
+}
+
+/* Dark surfaces: native checkboxes default to a light box — use custom styling */
+@layer components {
+  .checkbox-on-dark {
+    flex-shrink: 0;
+    cursor: pointer;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background-color: #0e0e14;
+    color-scheme: dark;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+  .checkbox-on-dark:checked {
+    border-color: #c9a96e;
+    background-color: #c9a96e;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2308080c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8 7 11.5 12.5 4.5'/%3E%3C/svg%3E");
+    background-size: 10px 10px;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  /* Partial “select all” (header checkbox indeterminate) — avoid browser default light fill */
+  .checkbox-on-dark:indeterminate {
+    border-color: rgba(201, 169, 110, 0.75);
+    background-color: #0e0e14;
+    background-image: linear-gradient(#c9a96e, #c9a96e);
+    background-size: 8px 2px;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .checkbox-on-dark-sm:indeterminate {
+    background-size: 7px 2px;
+  }
+  .checkbox-on-dark:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(201, 169, 110, 0.45);
+  }
+  .checkbox-on-dark:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+  .checkbox-on-dark-sm {
+    width: 0.875rem;
+    height: 0.875rem;
+    border-radius: 0.2rem;
+  }
+  .checkbox-on-dark-sm:checked {
+    background-size: 9px 9px;
+  }
+}

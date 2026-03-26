@@ -1,0 +1,25 @@
+---
+description: Frontend conventions for Next.js, React, TypeScript, and Tailwind
+alwaysApply: true
+---
+
+# Frontend Rules
+
+## Stack
+
+- **Next.js 16** (App Router), **React 19**, **TypeScript**
+- **Tailwind CSS** for styling; use **class-variance-authority (CVA)** with **clsx** and **tailwind-merge** for conditional/variant styles
+- **TanStack React Query** for server state; **Zod** for validation
+- **Radix UI** / **shadcn** components in `src/components/ui/`
+
+## Conventions
+
+- Use **functional components** and **hooks** only; no class components.
+- Prefer **server components** where possible; use `"use client"` only when needed (interactivity, hooks, browser APIs).
+- Colocate components under `src/components/` by feature (e.g. `dashboard/`, `library/`, `ui/`).
+- Use **typed props** with interfaces; avoid `any`.
+- For forms and API payloads, **validate with Zod** and surface errors in the UI.
+- Use **React Query** for fetching/mutations; keep loading and error states explicit in the UI.
+- Use **semantic HTML** and **accessible patterns** (labels, ARIA where needed); prefer Radix/shadcn primitives for complex widgets.
+- Keep **client-side state** minimal; lift state only as needed and prefer URL/search params for shareable state where appropriate.
+- Use **shadcn ui** as much as possible when implementing the frontend.

@@ -1,0 +1,62 @@
+{
+  "name": "enable-next",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "node scripts/start-dev.cjs",
+    "dev:stop": "node scripts/start-dev.cjs --stop",
+    "dev:fresh": "node scripts/start-dev.cjs --fresh",
+    "dev:4001": "node scripts/start-dev.cjs 4001",
+    "dev:raw": "next dev -p 4002",
+    "build": "next build",
+    "start": "next start -p 4002",
+    "lint": "eslint",
+    "test:logic": "tsc -p tsconfig.tests.json && node --test .test-build/tests/productDirectoryLogic.test.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.972.0",
+    "@tanstack/react-query": "^5.90.20",
+    "@tanstack/react-virtual": "^3.13.13",
+    "autoprefixer": "^10.4.23",
+    "bcryptjs": "^3.0.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cookie": "^1.1.1",
+    "dotenv": "^17.2.3",
+    "ioredis": "^5.9.2",
+    "leaflet": "^1.9.4",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^0.562.0",
+    "mongoose": "^9.1.5",
+    "next": "^16.1.4",
+    "postcss": "^8.5.6",
+    "radix-ui": "^1.4.3",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-leaflet": "^5.0.0",
+    "react-markdown": "^10.1.0",
+    "tailwind-merge": "^3.4.1",
+    "tailwindcss-animate": "^1.0.7",
+    "validator": "^13.15.26",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/cookie": "^0.6.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/leaflet": "^1.9.21",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/validator": "^13.15.10",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.4",
+    "shadcn": "^3.8.4",
+    "tailwindcss": "^4.1.18",
+    "tw-animate-css": "^1.4.0",
+    "typescript": "^5"
+  }
+}
