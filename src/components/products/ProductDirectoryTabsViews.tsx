@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Award, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Award, ChevronRight, Search } from "lucide-react";
 import type {
   DirectoryCollectionOption,
   DirectoryPartnerProgram,
@@ -155,6 +155,24 @@ function termsSignature(program: DirectoryPartnerProgram | undefined): string {
   return `${program.commissionRate ?? ""}::${(program.amenities ?? "").trim()}`;
 }
 
+function productMatchesPartnerAttachSearch(product: DirectoryProduct, rawQuery: string): boolean {
+  const q = rawQuery.trim().toLowerCase();
+  if (!q) return true;
+  const blob = [
+    product.name,
+    product.location,
+    product.city,
+    product.country,
+    product.region,
+    directoryCategoryLabel(product.type),
+    product.id,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  return blob.includes(q);
+}
+
 type PartnerPortalTabProps = {
   products: DirectoryProduct[];
   teams: Team[];
@@ -180,6 +198,11 @@ export function ProductDirectoryPartnerPortalTab({
   const [productOverrides, setProductOverrides] = useState<
     Record<string, Record<string, { commissionRate: number | null; amenities: string }>>
   >({});
+  const [attachProductSearchQuery, setAttachProductSearchQuery] = useState("");
+
+  useEffect(() => {
+    setAttachProductSearchQuery("");
+  }, [editingKey]);
 
   const beginEdit = (key: string, program: DirectoryPartnerProgram, attached: DirectoryProduct[]) => {
     const attachedIds = attached.map((p) => p.id);
@@ -305,8 +328,8 @@ export function ProductDirectoryPartnerPortalTab({
                     ) : null}
                     {display.contact ? <span className="text-[#6B6560]">· {display.contact}</span> : null}
                     {hasProductVariance ? (
-                      <span className="rounded border border-amber-400/25 bg-amber-400/10 px-1.5 py-0.5 text-[8px] text-amber-300">
-                        Product-specific terms
+                      <span className="text-[8px] font-normal normal-case tracking-normal text-[#6B6560]">
+                        · terms vary by product
                       </span>
                     ) : null}
                   </div>
@@ -496,20 +519,55 @@ export function ProductDirectoryPartnerPortalTab({
                           }
                           className="checkbox-on-dark"
                         />
-                        Product-specific commission & amenities
+                        Commission & amenities per product
                       </label>
                     </div>
                     {(useProductSpecificTerms[key] ?? false) ? (
-                      <p className="mt-1 text-[10px] leading-snug text-amber-300/85">
-                        Overrides below are specific to each attached product in this program. Global program values above remain unchanged.
+                      <p className="mt-1 text-[10px] leading-relaxed text-[#6B6560]">
+                        Each attached product can have its own commission and amenities; global fields above stay as defaults.
                       </p>
                     ) : (
-                      <p className="mt-1 text-[10px] leading-snug text-[#6B6560]">
-                        Toggle on if this program has different commission or amenities by product.
+                      <p className="mt-1 text-[10px] leading-relaxed text-[#6B6560]">
+                        Turn on when commission or amenities differ between properties on this program.
                       </p>
                     )}
+                    <div className="relative mt-2">
+                      <Search
+                        className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#4A4540]"
+                        aria-hidden
+                      />
+                      <input
+                        type="search"
+                        value={attachProductSearchQuery}
+                        onChange={(e) => setAttachProductSearchQuery(e.target.value)}
+                        placeholder="Search products to attach…"
+                        className="h-8 w-full rounded-lg border border-white/[0.10] bg-[#08080c] py-1.5 pl-8 pr-2 text-[11px] text-[#F5F0EB] outline-none placeholder:text-[#5C5852] transition-colors focus:border-[rgba(201,169,110,0.35)] focus:ring-1 focus:ring-[rgba(201,169,110,0.2)]"
+                        aria-label="Search products to attach to this program"
+                      />
+                    </div>
                     <div className="mt-2 max-h-44 space-y-1.5 overflow-y-auto pr-1">
-                      {products.map((p) => {
+                      {(() => {
+                        const draftIdsForAttach = attachedDraftIds[key] ?? attached.map((x) => x.id);
+                        const attachListProducts = [...products]
+                          .filter(
+                            (p) =>
+                              draftIdsForAttach.includes(p.id) ||
+                              productMatchesPartnerAttachSearch(p, attachProductSearchQuery)
+                          )
+                          .sort((a, b) => {
+                            const ca = draftIdsForAttach.includes(a.id) ? 0 : 1;
+                            const cb = draftIdsForAttach.includes(b.id) ? 0 : 1;
+                            if (ca !== cb) return ca - cb;
+                            return a.name.localeCompare(b.name);
+                          });
+                        if (attachListProducts.length === 0) {
+                          return (
+                            <p className="py-3 text-center text-[10px] text-[#6B6560]">
+                              No products match this search.
+                            </p>
+                          );
+                        }
+                        return attachListProducts.map((p) => {
                         const on = (attachedDraftIds[key] ?? attached.map((x) => x.id)).includes(p.id);
                         const override = productOverrides[key]?.[p.id] ?? {
                           commissionRate: display.commissionRate ?? null,
@@ -541,12 +599,18 @@ export function ProductDirectoryPartnerPortalTab({
                               </label>
                               <div className="flex items-center gap-1.5">
                                 {on && (useProductSpecificTerms[key] ?? false) ? (
-                                  <span className="rounded border border-amber-400/25 bg-amber-400/10 px-1 py-0.5 text-[8px] text-amber-300">
-                                    Custom
+                                  <span
+                                    className="text-[7px] font-medium uppercase tracking-[0.14em] text-[#A38F6E]"
+                                    title="Per-product overrides enabled"
+                                  >
+                                    per product
                                   </span>
                                 ) : isCustomInView && on ? (
-                                  <span className="rounded border border-amber-400/25 bg-amber-400/10 px-1 py-0.5 text-[8px] text-amber-300">
-                                    Custom
+                                  <span
+                                    className="text-[7px] font-medium uppercase tracking-[0.14em] text-[#A38F6E]"
+                                    title="Terms differ from program default"
+                                  >
+                                    varies
                                   </span>
                                 ) : null}
                                 <span className="text-[9px] text-[#6B6560]">{directoryCategoryLabel(p.type)}</span>
@@ -554,9 +618,9 @@ export function ProductDirectoryPartnerPortalTab({
                             </div>
                             {on && (useProductSpecificTerms[key] ?? false) ? (
                               <div className="mt-2 grid grid-cols-2 gap-1.5">
-                                <span className="col-span-2 rounded border border-amber-400/25 bg-amber-400/10 px-2 py-1 text-[9px] text-amber-300">
-                                  Product-specific override for this partner program
-                                </span>
+                                <p className="col-span-2 border-l border-[#C9A96E]/20 pl-2 text-[9px] leading-snug text-[#6B6560]">
+                                  Only for this property in the program.
+                                </p>
                                 <input
                                   type="number"
                                   min={0}
@@ -600,7 +664,8 @@ export function ProductDirectoryPartnerPortalTab({
                             ) : null}
                           </div>
                         );
-                      })}
+                      });
+                      })()}
                     </div>
                   </div>
                   {(display.activePromotions?.length ?? 0) > 0 ? (
@@ -760,8 +825,11 @@ export function ProductDirectoryPartnerPortalTab({
                     type="button"
                     onClick={() => onSelectProduct(p.id)}
                     className={cn(
-                      "w-[100px] shrink-0 overflow-hidden rounded-xl border border-white/[0.06] bg-[#08080c] text-left transition-colors",
-                      "hover:border-[rgba(201,169,110,0.25)]"
+                      "w-[100px] shrink-0 overflow-hidden rounded-xl border bg-[#08080c] text-left transition-colors",
+                      isCustom
+                        ? "border-white/[0.06] ring-1 ring-inset ring-[rgba(201,169,110,0.14)]"
+                        : "border-white/[0.06]",
+                      "hover:border-[rgba(201,169,110,0.22)]"
                     )}
                   >
                     <div className="aspect-[4/3] w-full overflow-hidden bg-[#14141c]">
@@ -769,12 +837,10 @@ export function ProductDirectoryPartnerPortalTab({
                     </div>
                     <div className="p-1.5">
                       <p className="line-clamp-2 text-[9px] font-medium leading-tight text-[#F5F0EB]">{p.name}</p>
-                      <div className="mt-0.5 flex items-center gap-1">
+                      <div className="mt-0.5 flex flex-wrap items-center gap-x-1 gap-y-0.5">
                         <p className="text-[8px] text-[#6B6560]">{directoryCategoryLabel(p.type)}</p>
                         {isCustom ? (
-                          <span className="rounded border border-amber-400/25 bg-amber-400/10 px-1 py-0.5 text-[7px] text-amber-300">
-                            Custom terms
-                          </span>
+                          <span className="text-[7px] font-medium text-[#A38F6E]">· custom terms</span>
                         ) : null}
                       </div>
                     </div>

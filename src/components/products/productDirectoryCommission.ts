@@ -73,6 +73,18 @@ export function getTopBookableProgramByCommission(product: DirectoryProduct): Di
   }, first);
 }
 
+/** Commission + amenities fingerprint — compare across programs on one product. */
+export function programTermsSignature(program: DirectoryPartnerProgram): string {
+  return `${program.commissionRate ?? ""}::${(program.amenities ?? "").trim()}`;
+}
+
+/** True when the product has 2+ bookable programs whose commission/amenities differ. */
+export function productHasDistinctPartnerTerms(product: DirectoryProduct): boolean {
+  const bookable = product.partnerPrograms.filter(isProgramBookable);
+  if (bookable.length < 2) return false;
+  return new Set(bookable.map(programTermsSignature)).size > 1;
+}
+
 export function daysUntilExpiry(iso: string | null | undefined): number | null {
   if (iso == null || iso === "") return null;
   try {

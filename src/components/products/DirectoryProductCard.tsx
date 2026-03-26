@@ -8,6 +8,7 @@ import { directoryCategoryColors, directoryCategoryLabel } from "./productDirect
 import {
   getTopBookableProgramByCommission,
   isProgramBookable,
+  productHasDistinctPartnerTerms,
   programDisplayCommissionRate,
   programDisplayName,
 } from "./productDirectoryCommission";
@@ -52,6 +53,7 @@ export default function DirectoryProductCard({
   const tierUi = DIRECTORY_TIER_FILTER_UI.find((t) => t.id === (product.tier ?? "unrated"));
   const tierStarCount = tierUi?.stars ?? 0;
   const tierStarColor = tierUi?.color ?? "#4A4540";
+  const showVariedTerms = productHasDistinctPartnerTerms(product);
 
   const clearLongPress = useCallback(() => {
     if (longPressTimer.current) {
@@ -175,7 +177,7 @@ export default function DirectoryProductCard({
         </button>
       </div>
 
-      <div className="p-3">
+      <div className="flex flex-1 flex-col p-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-1.5">
@@ -212,7 +214,7 @@ export default function DirectoryProductCard({
         </div>
 
         {activePrograms.length > 0 && (
-          <div className="mt-1.5 flex flex-wrap gap-1">
+          <div className="mt-1.5 flex flex-wrap items-center gap-1">
             {activePrograms.slice(0, 3).map((pp) => (
               <span
                 key={pp.id}
@@ -229,10 +231,11 @@ export default function DirectoryProductCard({
             {activePrograms.length > 3 && (
               <span className="self-center text-[8px] text-[#6B6560]">+{activePrograms.length - 3}</span>
             )}
+            {showVariedTerms ? (
+              <span className="text-[8px] font-medium text-[#A38F6E]">· custom terms</span>
+            ) : null}
           </div>
         )}
-
-        <p className="mt-1.5 line-clamp-2 text-[10px] leading-relaxed text-[#6B6560]">{product.description}</p>
 
         {product.updatedAt ? (
           <div className="mt-1 flex items-center justify-end gap-1">
