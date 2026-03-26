@@ -2,12 +2,15 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL;
-if (!BACKEND) {
-  throw new Error("NEXT_PUBLIC_BACKEND_URL is not set");
-}
-
 async function proxy(req: Request, pathParts: string[]) {
+  const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL;
+  if (!BACKEND) {
+    return new NextResponse(JSON.stringify({ detail: "Backend proxy is disabled" }), {
+      status: 404,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const targetUrl = new URL(`${BACKEND}/api/${pathParts.join("/")}`);
 
   // Preserve query string (?a=b)
@@ -62,8 +65,8 @@ async function proxy(req: Request, pathParts: string[]) {
 type Ctx = { params: Promise<{ path?: string[] }> | { path?: string[] } };
 
 async function getPath(ctx: Ctx): Promise<string[]> {
-  const p = await (ctx.params as Promise<{ path?: string[] }>);
-  return p?.path ?? [];
+  const params = await ctx.params;
+  return params?.path ?? [];
 }
 
 export async function GET(req: Request, ctx: Ctx) {
