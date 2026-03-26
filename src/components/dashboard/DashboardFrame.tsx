@@ -6,6 +6,8 @@ import { ChatProvider, useChatContextOptional } from "@/contexts/ChatContext";
 import { UserProvider } from "@/contexts/UserContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { KnowledgeVaultEmailProvider } from "@/contexts/KnowledgeVaultEmailContext";
+import { TeamsProvider } from "@/contexts/TeamsContext";
+import { KvShareSuggestionsProvider } from "@/contexts/KvShareSuggestionsContext";
 import ReportIssueLauncher from "@/components/ui/ReportIssueLauncher";
 
 function SidebarFallback() {
@@ -33,7 +35,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 </Suspense>
 
                 {/* Everything to the right of the sidebar is route-specific */}
-                <div className="flex-1 min-w-0">{children}</div>
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
                 <ReportIssueLauncher />
             </div>
         </div>
@@ -43,13 +45,17 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 export default function DashboardFrame({ children }: { children: React.ReactNode }) {
     return (
         <UserProvider>
-            <KnowledgeVaultEmailProvider>
-                <ChatProvider>
-                    <ToastProvider>
-                        <DashboardContent>{children}</DashboardContent>
-                    </ToastProvider>
-                </ChatProvider>
-            </KnowledgeVaultEmailProvider>
+            <TeamsProvider>
+                <KvShareSuggestionsProvider>
+                    <KnowledgeVaultEmailProvider>
+                        <ChatProvider>
+                            <ToastProvider>
+                                <DashboardContent>{children}</DashboardContent>
+                            </ToastProvider>
+                        </ChatProvider>
+                    </KnowledgeVaultEmailProvider>
+                </KvShareSuggestionsProvider>
+            </TeamsProvider>
         </UserProvider>
     );
 }

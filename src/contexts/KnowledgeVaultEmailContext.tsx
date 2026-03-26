@@ -166,3 +166,7 @@ export function useKnowledgeVaultEmails(): KnowledgeVaultEmailContextValue {
   if (!v) throw new Error("KnowledgeVaultEmailProvider is required");
   return v;
 }
+
+export function useKnowledgeVaultEmailsOptional(): KnowledgeVaultEmailContextValue | null {
+  return useContext(KnowledgeVaultEmailContext);
+}

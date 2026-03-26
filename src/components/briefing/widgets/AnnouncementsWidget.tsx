@@ -118,7 +118,7 @@ export default function AnnouncementsWidget({ isAdmin, staggerIndex = 0 }: Props
                 type="checkbox"
                 checked={pin}
                 onChange={(e) => setPin(e.target.checked)}
-                className="rounded"
+                className="checkbox-on-dark checkbox-on-dark-sm"
               />
               Pin to top
             </label>

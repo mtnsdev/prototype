@@ -936,7 +936,7 @@ function CreateRuleModal({
                                 id="descendants"
                                 checked={applyToDescendants}
                                 onChange={(e) => setApplyToDescendants(e.target.checked)}
-                                className="w-4 h-4 rounded border-[rgba(255,255,255,0.2)] bg-[#0C0C0C] text-blue-500 focus:ring-0 focus:ring-offset-0"
+                                className="checkbox-on-dark"
                             />
                             <Label htmlFor="descendants" className="text-[14px] text-[rgba(245,245,245,0.7)] font-normal cursor-pointer">
                                 Apply to all children (folders and documents inside)

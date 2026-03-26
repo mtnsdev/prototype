@@ -1,9 +1,70 @@
 "use client";
 
 import React from "react";
-import { AlertTriangle, ThumbsUp, ThumbsDown, MessageSquare, LayoutGrid } from "lucide-react";
-import { AnswerWithCitations } from "./AnswerWithCitations";
-import type { Message } from "./types";
+import { AlertTriangle, ThumbsUp, ThumbsDown, MessageSquare, LayoutGrid, Shield } from "lucide-react";
+import { ScopeBadge } from "@/components/ui/ScopeBadge";
+import { useTeamsOptional } from "@/contexts/TeamsContext";
+import { INITIAL_MOCK_TEAMS } from "@/lib/teamsMock";
+import { TEAM_EVERYONE_ID, type Team } from "@/types/teams";
+import { AnswerWithCitations, getOrderedCitations } from "./AnswerWithCitations";
+import type { Citation, Message } from "./types";
+
+function KnowledgeCitationFooter({
+  answer,
+  citations,
+  teams,
+  onCitationClick,
+}: {
+  answer: string;
+  citations: Citation[];
+  teams: Team[];
+  onCitationClick: (filename: string, pageNumber: number | string, pdfPath?: string) => void;
+}) {
+  if (!citations.length) return null;
+  const ordered = (() => {
+    const o = getOrderedCitations(answer, citations);
+    return o.length > 0 ? o : citations;
+  })();
+
+  return (
+    <div className="mt-4 pt-4 border-t border-[rgba(255,255,255,0.08)] space-y-2">
+      <div className="text-[11px] font-medium uppercase tracking-wider text-[rgba(245,245,245,0.45)]">
+        Sources
+      </div>
+      <ul className="space-y-2">
+        {ordered.map((c, i) => (
+          <li key={c.chunk_id ?? `${c.filename}-${c.page_number}-${i}`}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCitationClick(c.filename, c.page_number, c.pdf_path);
+              }}
+              className="w-full text-left rounded-lg border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.03)] px-3 py-2 hover:border-[rgba(174,133,80,0.35)] transition-colors"
+            >
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <ScopeBadge scope={c.kv_scope ?? TEAM_EVERYONE_ID} teams={teams} />
+                {c.is_other_user_private ? (
+                  <span
+                    className="inline-flex text-[rgba(160,140,180,0.65)]"
+                    title="Private document from another user"
+                  >
+                    <Shield className="w-3.5 h-3.5" aria-hidden />
+                  </span>
+                ) : null}
+                <span className="text-[13px] font-medium text-[#F5F5F5]">{c.filename}</span>
+                <span className="text-[11px] text-[rgba(245,245,245,0.45)]">p.{c.page_number}</span>
+              </div>
+              {c.excerpt ? (
+                <p className="text-[12px] text-[rgba(245,245,245,0.55)] line-clamp-2">{c.excerpt}</p>
+              ) : null}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 type BotMessageCardProps = {
   message: Message;
@@ -40,6 +101,8 @@ export function BotMessageCard({
   onSubmitFeedback,
   onOpenFeedbackComment,
 }: BotMessageCardProps) {
+  const teams = useTeamsOptional()?.teams ?? INITIAL_MOCK_TEAMS;
+
   if (message.role !== "bot" || !message.response) return null;
 
   const hasCards = (message.response?.cards?.length ?? 0) > 0;
@@ -178,7 +241,18 @@ export function BotMessageCard({
       )}
 
       {/* Answer */}
-      {message.response.answer && (
+      {message.response.can_answer === false &&
+      (!message.response.answer || !message.response.answer.trim()) ? (
+        <div className="space-y-3">
+          <p className="text-[14px] leading-relaxed text-[rgba(245,245,245,0.85)]">
+            No documents in your Knowledge Vault matched this question closely enough to answer with
+            confidence.
+          </p>
+          <p className="text-[13px] text-[rgba(245,245,245,0.5)]">
+            Add or connect sources in Knowledge Vault, or try rephrasing your question.
+          </p>
+        </div>
+      ) : message.response.answer?.trim() ? (
         <div className="space-y-3">
           <div className="prose prose-sm max-w-none prose-p:text-[rgba(245,245,245,0.88)] prose-headings:text-[#F5F5F5] prose-strong:text-[#F5F5F5] [&_ul]:list-outside [&_ul]:pl-6 [&_ol]:list-outside [&_ol]:pl-6 [&_li>p]:inline [&_li>p]:my-0">
             <AnswerWithCitations
@@ -190,7 +264,14 @@ export function BotMessageCard({
             />
           </div>
         </div>
-      )}
+      ) : null}
+
+      <KnowledgeCitationFooter
+        answer={message.response.answer || ""}
+        citations={message.response.citations || []}
+        teams={teams}
+        onCitationClick={onCitationClick}
+      />
 
       {/* Conflicts */}
       {message.response.conflicts && message.response.conflicts.length > 0 && (

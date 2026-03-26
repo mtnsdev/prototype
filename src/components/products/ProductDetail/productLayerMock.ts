@@ -124,6 +124,54 @@ export function getProductLayerMock(productId: string): {
       pendingSuggestions: 0,
     };
   }
+
+  /** Directory catalog ids (`productDirectoryMock`) — layered notes for any product. */
+  if (productId === "prod_001") {
+    return {
+      advisorDefaults: {
+        contact: "Yuki — yuki@aman.com",
+        notes: "Request high floors for city views. Onsen books out — reserve at booking.",
+        personalRating: 5,
+      },
+      agencyNotes: [
+        {
+          id: "an-prod001-1",
+          content:
+            "Strong FIT for honeymoon — request ocean-view upgrade language in proposals. Virtuoso breakfast always confirmed.",
+          author: "Kristin",
+          timeAgo: "1 week ago",
+          pinned: true,
+        },
+      ],
+      partnerPrograms: [],
+      pendingSuggestions: 0,
+    };
+  }
+  if (productId === "prod_005") {
+    return {
+      advisorDefaults: DMC_BALI_ADVISOR,
+      agencyNotes: [...DMC_BALI_AGENCY],
+      partnerPrograms: [],
+      pendingSuggestions: 0,
+    };
+  }
+  /** Any other directory catalog id — show sample agency context so the panel is never “empty”. */
+  if (productId.startsWith("prod_") || productId.includes("prod-")) {
+    return {
+      advisorDefaults: { ...EMPTY_ADVISOR },
+      agencyNotes: [
+        {
+          id: `ag-tip-${productId}`,
+          content:
+            "Verify rate and amenities on the latest partner sheet before quoting — property terms change seasonally.",
+          author: "Agency catalog",
+          timeAgo: "Tip",
+        },
+      ],
+      partnerPrograms: [],
+      pendingSuggestions: 0,
+    };
+  }
   if (productId === "fake-enable-3") {
     return {
       advisorDefaults: { ...EMPTY_ADVISOR, personalRating: 0 },

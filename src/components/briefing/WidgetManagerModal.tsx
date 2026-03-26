@@ -142,7 +142,7 @@ export default function WidgetManagerModal({ open, onClose, widgets, onSave }: P
                       type="checkbox"
                       checked={isVisible}
                       onChange={() => w && toggleVisible(w.id)}
-                      className="rounded border-white/20"
+                      className="checkbox-on-dark checkbox-on-dark-sm"
                     />
                     Visible
                   </label>
