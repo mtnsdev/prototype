@@ -1,7 +1,11 @@
 /**
  * Knowledge Vault API client. Uses mock data when backend is unavailable.
+ * When the API returns 200 with empty lists (common on PR previews: proxy hits a
+ * backend with no knowledge data), we fall back to mocks in preview mode so the
+ * vault is still demonstrable.
  */
 
+import { IS_PREVIEW_MODE } from "@/config/preview";
 import type {
   DataSource,
   KnowledgeDocument,
@@ -9,6 +13,29 @@ import type {
   KnowledgeDocumentListParams,
   KnowledgeDocumentListResponse,
 } from "@/types/knowledge-vault";
+
+function useMockWhenApiEmpty(): boolean {
+  if (typeof process === "undefined") return IS_PREVIEW_MODE;
+  const flag = process.env.NEXT_PUBLIC_KV_USE_MOCK_WHEN_EMPTY;
+  if (flag === "1" || flag === "true") return true;
+  return IS_PREVIEW_MODE;
+}
+
+function normalizeSourcesPayload(data: unknown): DataSource[] {
+  if (Array.isArray(data)) return data as DataSource[];
+  if (data && typeof data === "object" && Array.isArray((data as { sources?: unknown }).sources)) {
+    return (data as { sources: DataSource[] }).sources;
+  }
+  return [];
+}
+
+function normalizeDocumentsPayload(data: unknown): KnowledgeDocumentListResponse {
+  if (!data || typeof data !== "object") return { documents: [], total: 0 };
+  const o = data as Record<string, unknown>;
+  const documents = Array.isArray(o.documents) ? (o.documents as KnowledgeDocument[]) : [];
+  const total = typeof o.total === "number" ? o.total : documents.length;
+  return { documents, total };
+}
 
 function getAuthHeaders(): HeadersInit {
   const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
@@ -32,7 +59,12 @@ export async function fetchKnowledgeSources(agencyId?: string): Promise<DataSour
     const res = await fetch(`/api/knowledge/sources${q}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error();
     const data = await res.json();
-    return Array.isArray(data.sources) ? data.sources : data;
+    const sources = normalizeSourcesPayload(data);
+    if (sources.length === 0 && useMockWhenApiEmpty()) {
+      const { getMockDataSources } = await import("@/components/knowledge-vault/knowledgeVaultMockData");
+      return getMockDataSources();
+    }
+    return sources;
   } catch {
     const { getMockDataSources } = await import("@/components/knowledge-vault/knowledgeVaultMockData");
     return getMockDataSources();
@@ -75,7 +107,12 @@ export async function fetchKnowledgeDocuments(
   try {
     const res = await fetch(`/api/knowledge/documents${q}`, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error();
-    return res.json();
+    const body = normalizeDocumentsPayload(await res.json());
+    if (body.documents.length === 0 && (body.total === 0 || body.total == null) && useMockWhenApiEmpty()) {
+      const { filterMockDocuments } = await import("@/components/knowledge-vault/knowledgeVaultMockData");
+      return filterMockDocuments(params);
+    }
+    return body;
   } catch {
     const { filterMockDocuments } = await import("@/components/knowledge-vault/knowledgeVaultMockData");
     return filterMockDocuments(params);
