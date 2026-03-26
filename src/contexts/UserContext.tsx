@@ -44,12 +44,32 @@ export function UserProvider({ children }: { children: ReactNode }) {
             if (stored) {
                 const parsed = JSON.parse(stored);
                 setUserState(parsed);
+            } else {
+                // Auth is disabled in this prototype; provide a default demo user.
+                setUserState({
+                    id: 1,
+                    email: "demo@enable.local",
+                    username: "Demo Admin",
+                    agency_id: null,
+                    role: "admin",
+                    status: "active",
+                    has_password: false,
+                });
             }
             const dirAdmin = localStorage.getItem(DIRECTORY_ADMIN_DEMO_KEY);
             if (dirAdmin === "1") setDirectoryViewAsAdminState(true);
         } catch (error) {
             console.error("Failed to parse stored user data:", error);
             localStorage.removeItem(USER_STORAGE_KEY);
+            setUserState({
+                id: 1,
+                email: "demo@enable.local",
+                username: "Demo Admin",
+                agency_id: null,
+                role: "admin",
+                status: "active",
+                has_password: false,
+            });
         } finally {
             setIsLoading(false);
         }

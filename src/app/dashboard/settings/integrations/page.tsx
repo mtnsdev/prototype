@@ -64,7 +64,8 @@ function DriveConnectionCard({
         try {
             const token = localStorage.getItem("auth_token");
             if (!token) {
-                router.push("/login");
+                setError("Auth is disabled in this prototype.");
+                setLoading(false);
                 return;
             }
             const res = await fetch(
@@ -75,7 +76,8 @@ function DriveConnectionCard({
                 }
             );
             if (res.status === 401) {
-                router.push("/login");
+                setError("Auth is disabled in this prototype.");
+                setLoading(false);
                 return;
             }
             if (!res.ok) throw new Error("Failed to fetch status");

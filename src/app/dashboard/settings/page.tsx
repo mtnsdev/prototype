@@ -56,13 +56,6 @@ export default function SettingsPage() {
     const [isChangingPassword, setIsChangingPassword] = useState(false);
 
     useEffect(() => {
-        // Check if user is authenticated
-        const token = localStorage.getItem("auth_token");
-        if (!token) {
-            router.push("/login");
-            return;
-        }
-
         // Wait for user context to load
         if (!isUserLoading) {
             if (user) {
@@ -101,7 +94,7 @@ export default function SettingsPage() {
         setIsSigningOut(true);
         // Local-only logout - clear user data and token
         clearUser();
-        router.push("/login");
+        router.push("/dashboard");
     };
 
     const handlePasswordChange = async () => {

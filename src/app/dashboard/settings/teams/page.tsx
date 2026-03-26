@@ -31,7 +31,7 @@ export default function TeamsSettingsPage() {
 
   const canAccess = useMemo(() => {
     if (typeof window === "undefined") return true;
-    return Boolean(localStorage.getItem("auth_token"));
+    return true;
   }, []);
 
   const createTeam = useCallback(() => {
@@ -63,10 +63,7 @@ export default function TeamsSettingsPage() {
     [toast]
   );
 
-  if (!canAccess) {
-    router.push("/login");
-    return null;
-  }
+  // Auth is disabled in this prototype.
 
   if (!isAdmin) {
     return (

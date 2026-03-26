@@ -126,7 +126,7 @@ export default function Sidebar({
             localStorage.removeItem("user_data");
             document.cookie = "auth_token=; Path=/; Max-Age=0; SameSite=Lax";
         }
-        router.push("/login");
+        router.push("/dashboard");
     };
 
     const handleNewChat = () => {
