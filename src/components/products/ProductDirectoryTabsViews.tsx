@@ -78,9 +78,9 @@ export function ProductDirectoryCollectionsTab({
 
   if (collections.length === 0) {
     return (
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-6 py-12 text-center">
-        <p className="text-[12px] font-medium text-[#F5F0EB]">No collections yet</p>
-        <p className="mt-1 text-[10px] text-[#6B6560]">Create a collection from a product or ask your admin.</p>
+      <div className="rounded-xl border border-border bg-white/[0.02] px-6 py-12 text-center">
+        <p className="text-sm font-medium text-foreground">No collections yet</p>
+        <p className="mt-1 text-2xs text-muted-foreground">Create a collection from a product or ask your admin.</p>
       </div>
     );
   }
@@ -96,13 +96,13 @@ export function ProductDirectoryCollectionsTab({
         />
       </div>
       {filteredCollections.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.02] px-6 py-12 text-center">
-          <p className="text-[13px] font-medium text-[#F5F0EB]">No collections match your search</p>
-          <p className="mt-1 text-[11px] text-[#6B6560]">Try another term, or clear the filter.</p>
+        <div className="rounded-2xl border border-dashed border-input bg-white/[0.02] px-6 py-12 text-center">
+          <p className="text-compact font-medium text-foreground">No collections match your search</p>
+          <p className="mt-1 text-xs text-muted-foreground">Try another term, or clear the filter.</p>
           <button
             type="button"
             onClick={() => setCollectionSearchQuery("")}
-            className="mt-4 text-[11px] font-semibold text-[#C9A96E] transition-colors hover:text-[#d4b47e]"
+            className="mt-4 text-xs font-semibold text-brand-cta transition-colors hover:text-[#d4b47e]"
           >
             Clear search
           </button>
@@ -119,9 +119,9 @@ export function ProductDirectoryCollectionsTab({
             key={col.id}
             type="button"
             onClick={() => onOpenCollection(col.id)}
-            className="group overflow-hidden rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0c0c12] text-left transition-colors hover:border-[rgba(201,169,110,0.2)] hover:bg-[#101018]"
+            className="group overflow-hidden rounded-xl border border-border bg-popover text-left transition-colors hover:border-brand-cta/20 hover:bg-[#101018]"
           >
-            <div className="grid aspect-square grid-cols-2 grid-rows-2 gap-px bg-[#08080c] p-px">
+            <div className="grid aspect-square grid-cols-2 grid-rows-2 gap-px bg-inset p-px">
               {preview.map((p) => (
                 <div key={p.id} className="relative min-h-0 min-w-0 overflow-hidden bg-[#14141c]">
                   <img
@@ -136,7 +136,7 @@ export function ProductDirectoryCollectionsTab({
                 ? Array.from({ length: placeholders }).map((_, i) => (
                     <div
                       key={`empty-${i}`}
-                      className="flex min-h-0 min-w-0 items-center justify-center bg-[#0e0e14] text-[8px] text-[#3a3632]"
+                      className="flex min-h-0 min-w-0 items-center justify-center bg-white/[0.04] text-[8px] text-muted-foreground/55"
                     >
                       Empty
                     </div>
@@ -146,18 +146,18 @@ export function ProductDirectoryCollectionsTab({
             <div className="p-2">
               <div className="min-w-0">
                 <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                  <p className="min-w-0 truncate text-[11px] font-medium text-[#F5F0EB]">{col.name}</p>
+                  <p className="min-w-0 truncate text-xs font-medium text-foreground">{col.name}</p>
                   {col.isSystem ? (
-                    <span className="shrink-0 text-[9px] text-[#6B6560] bg-white/[0.03] border border-white/[0.04] px-1.5 py-0.5 rounded">
+                    <span className="shrink-0 text-[9px] text-muted-foreground bg-white/[0.03] border border-white/[0.04] px-1.5 py-0.5 rounded">
                       Auto
                     </span>
                   ) : null}
                 </div>
                 {col.description ? (
-                  <p className="mt-0.5 line-clamp-2 text-[9px] leading-snug text-[#6B6560]">{col.description}</p>
+                  <p className="mt-0.5 line-clamp-2 text-[9px] leading-snug text-muted-foreground">{col.description}</p>
                 ) : null}
                 <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                  <span className="text-[9px] text-[#9B9590]">
+                  <span className="text-[9px] text-muted-foreground">
                     {members.length} product{members.length !== 1 ? "s" : ""}
                   </span>
                   <ScopeBadge scope={collectionScopeForBadge(col)} teams={teams} />
@@ -329,12 +329,12 @@ function PortalSectionTitle({ step, children }: { step: number; children: React.
   return (
     <div className="mb-3 flex items-center gap-2.5">
       <span
-        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[rgba(201,169,110,0.14)] text-[10px] font-bold tabular-nums text-[#C9A96E]"
+        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[rgba(201,169,110,0.14)] text-2xs font-bold tabular-nums text-brand-cta"
         aria-hidden
       >
         {step}
       </span>
-      <h4 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9B9590]">{children}</h4>
+      <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{children}</h4>
     </div>
   );
 }
@@ -613,10 +613,10 @@ export function ProductDirectoryPartnerPortalTab({
         if (!open) setDiscardDialog(null);
       }}
     >
-      <DialogContent className="border-[rgba(255,255,255,0.1)] bg-[#0c0c12] sm:max-w-md" showCloseButton>
+      <DialogContent className="border-input bg-popover sm:max-w-md" showCloseButton>
         <DialogHeader>
-          <DialogTitle className="text-[#F5F0EB]">{discardDialog?.title}</DialogTitle>
-          <DialogDescription className="text-[#9B9590]">{discardDialog?.description}</DialogDescription>
+          <DialogTitle className="text-foreground">{discardDialog?.title}</DialogTitle>
+          <DialogDescription className="text-muted-foreground">{discardDialog?.description}</DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => setDiscardDialog(null)}>
@@ -638,10 +638,10 @@ export function ProductDirectoryPartnerPortalTab({
   if (rows.length === 0) {
     return (
       <>
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-6 py-12 text-center">
-          <Award className="mx-auto mb-3 h-8 w-8 text-[#4A4540]" aria-hidden />
-          <p className="text-[13px] font-medium text-[#F5F0EB]">No partner programs yet</p>
-          <p className="mt-1 text-[11px] text-[#6B6560]">
+        <div className="rounded-xl border border-border bg-white/[0.02] px-6 py-12 text-center">
+          <Award className="mx-auto mb-3 h-8 w-8 text-muted-foreground/65" aria-hidden />
+          <p className="text-compact font-medium text-foreground">No partner programs yet</p>
+          <p className="mt-1 text-xs text-muted-foreground">
             Programs show up here when at least one product lists that partner agreement. Add or edit partner programs from
             each product’s detail panel under Partner programs.
           </p>
@@ -654,7 +654,7 @@ export function ProductDirectoryPartnerPortalTab({
   return (
     <div className="space-y-6">
       {!isAdmin && (
-        <p className="inline-flex w-fit max-w-full items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-[11px] text-[#6B6560]">
+        <p className="inline-flex w-fit max-w-full items-center gap-2 rounded-lg border border-border bg-white/[0.02] px-3 py-2 text-xs text-muted-foreground">
           <Lock className="h-3.5 w-3.5 shrink-0 text-[#5C5852]" aria-hidden />
           Read-only for advisors. Ask an agency admin to update programs.
         </p>
@@ -673,10 +673,10 @@ export function ProductDirectoryPartnerPortalTab({
               type="button"
               onClick={() => setPortalExpiryFilter(opt.id)}
               className={cn(
-                "flex shrink-0 items-center rounded-full border px-2.5 py-1 text-[10px] whitespace-nowrap transition-colors",
+                "flex shrink-0 items-center rounded-full border px-2.5 py-1 text-2xs whitespace-nowrap transition-colors",
                 portalExpiryFilter === opt.id
-                  ? "border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.08)] text-[#C9A96E]"
-                  : "border-transparent text-[#6B6560] hover:text-[#9B9590]"
+                  ? "border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
+                  : "border-transparent text-muted-foreground hover:text-muted-foreground"
               )}
             >
               {opt.label}
@@ -686,9 +686,9 @@ export function ProductDirectoryPartnerPortalTab({
       </div>
 
       {filteredRows.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.02] px-6 py-12 text-center">
-          <p className="text-[13px] font-medium text-[#F5F0EB]">No programs match</p>
-          <p className="mt-1 text-[11px] text-[#6B6560]">
+        <div className="rounded-2xl border border-dashed border-input bg-white/[0.02] px-6 py-12 text-center">
+          <p className="text-compact font-medium text-foreground">No programs match</p>
+          <p className="mt-1 text-xs text-muted-foreground">
             Try another search, or adjust the expiry filter to see more programs.
           </p>
           <button
@@ -697,7 +697,7 @@ export function ProductDirectoryPartnerPortalTab({
               setPortalSearchQuery("");
               setPortalExpiryFilter("all");
             }}
-            className="mt-4 text-[11px] font-semibold text-[#C9A96E] transition-colors hover:text-[#d4b47e]"
+            className="mt-4 text-xs font-semibold text-brand-cta transition-colors hover:text-[#d4b47e]"
           >
             Clear search and expiry filter
           </button>
@@ -748,18 +748,18 @@ export function ProductDirectoryPartnerPortalTab({
             key={key}
             id={partnerProgramCardDomId(key)}
             className={cn(
-              "scroll-mt-4 overflow-hidden rounded-2xl border bg-[#0c0c12] transition-all duration-200",
+              "scroll-mt-4 overflow-hidden rounded-2xl border bg-popover transition-all duration-200",
               isEditing
                 ? "border-[rgba(201,169,110,0.28)] shadow-xl shadow-black/50 ring-1 ring-[rgba(201,169,110,0.14)]"
-                : "border-white/[0.06] hover:border-white/[0.10] hover:shadow-lg hover:shadow-black/25"
+                : "border-border hover:border-white/[0.10] hover:shadow-lg hover:shadow-black/25"
             )}
           >
             <div className="border-b border-white/[0.05] p-4 sm:p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Award className="h-4 w-4 shrink-0 text-[#C9A96E]" aria-hidden />
-                    <h3 className="text-[15px] font-semibold tracking-tight text-[#F5F0EB]">
+                    <Award className="h-4 w-4 shrink-0 text-brand-cta" aria-hidden />
+                    <h3 className="text-base font-semibold tracking-tight text-foreground">
                       {programDisplayName(display)}
                     </h3>
                     {urgencyPill ? (
@@ -772,11 +772,11 @@ export function ProductDirectoryPartnerPortalTab({
                         {urgencyPill.label}
                       </span>
                     ) : null}
-                    <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-0.5 text-[9px] font-medium tabular-nums text-[#9B9590]">
+                    <span className="rounded-full border border-border bg-white/[0.03] px-2 py-0.5 text-[9px] font-medium tabular-nums text-muted-foreground">
                       {attached.length} propert{attached.length === 1 ? "y" : "ies"}
                     </span>
                   </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-[#9B9590]">
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-2xs text-muted-foreground">
                     {display.scope === "enable" ? (
                       <span className="rounded bg-[rgba(91,138,110,0.12)] px-1.5 py-0.5 text-[8px] text-[#5B8A6E]">
                         Enable
@@ -788,7 +788,7 @@ export function ProductDirectoryPartnerPortalTab({
                       <span className="font-semibold text-[#B8976E]">Up to {displayRate}%</span>
                     ) : null}
                     {display.expiryDate ? (
-                      <span className="text-[#6B6560]">
+                      <span className="text-muted-foreground">
                         Until{" "}
                         {new Date(display.expiryDate).toLocaleDateString("en-US", {
                           month: "short",
@@ -797,18 +797,18 @@ export function ProductDirectoryPartnerPortalTab({
                         })}
                       </span>
                     ) : null}
-                    {display.contact ? <span className="text-[#6B6560]">· {display.contact}</span> : null}
+                    {display.contact ? <span className="text-muted-foreground">· {display.contact}</span> : null}
                     {hasProductVariance ? (
-                      <span className="text-[8px] font-normal normal-case tracking-normal text-[#6B6560]">
+                      <span className="text-[8px] font-normal normal-case tracking-normal text-muted-foreground">
                         · terms vary by product
                       </span>
                     ) : null}
                   </div>
                   {display.amenities ? (
-                    <p className="mt-2 text-[11px] leading-relaxed text-[#9B9590]">{display.amenities}</p>
+                    <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{display.amenities}</p>
                   ) : null}
                   {(display.lastEditedAt || display.lastEditedByName) ? (
-                    <p className="mt-1 text-[9px] text-[#6B6560]">
+                    <p className="mt-1 text-[9px] text-muted-foreground">
                       Last edited{" "}
                       {display.lastEditedByName ? `by ${display.lastEditedByName}` : ""}
                       {display.lastEditedAt
@@ -826,7 +826,7 @@ export function ProductDirectoryPartnerPortalTab({
                     {!isEditing ? (
                       <button
                         type="button"
-                        className="rounded-lg border border-[rgba(201,169,110,0.35)] bg-[rgba(201,169,110,0.08)] px-3 py-1.5 text-[11px] font-medium text-[#C9A96E] transition-colors hover:bg-[rgba(201,169,110,0.14)]"
+                        className="rounded-lg border border-brand-cta/35 bg-[rgba(201,169,110,0.08)] px-3 py-1.5 text-xs font-medium text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.14)]"
                         onClick={() => beginEdit(key, program, attached)}
                       >
                         Edit program
@@ -834,21 +834,21 @@ export function ProductDirectoryPartnerPortalTab({
                     ) : (
                       <div className="flex flex-wrap items-center justify-end gap-2">
                         {hasUnsaved ? (
-                          <span className="order-last w-full text-right text-[10px] text-amber-200/90 sm:order-none sm:w-auto sm:text-left">
+                          <span className="order-last w-full text-right text-2xs text-amber-200/90 sm:order-none sm:w-auto sm:text-left">
                             Unsaved changes — Save or Cancel to leave
                           </span>
                         ) : (
-                          <span className="order-last w-full text-right text-[10px] text-[#6B6560] sm:order-none sm:w-auto sm:text-left">
+                          <span className="order-last w-full text-right text-2xs text-muted-foreground sm:order-none sm:w-auto sm:text-left">
                             No changes yet
                           </span>
                         )}
                         <button
                           type="button"
                           className={cn(
-                            "rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all",
+                            "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
                             hasUnsaved
-                              ? "bg-[#C9A96E] text-[#08080c] shadow-sm hover:bg-[#d4b47e]"
-                              : "cursor-not-allowed bg-white/[0.04] text-[#4A4540] opacity-50"
+                              ? "bg-brand-cta text-[#08080c] shadow-sm hover:bg-[#d4b47e]"
+                              : "cursor-not-allowed bg-white/[0.04] text-muted-foreground/65 opacity-50"
                           )}
                           onClick={() => {
                             if (!onAdminSaveProgram) return;
@@ -866,7 +866,7 @@ export function ProductDirectoryPartnerPortalTab({
                         </button>
                         <button
                           type="button"
-                          className="rounded-lg border border-white/[0.1] bg-transparent px-3 py-1.5 text-[11px] text-[#9B9590] transition-colors hover:border-white/[0.16] hover:bg-white/[0.04] hover:text-[#F5F0EB]"
+                          className="rounded-lg border border-input bg-transparent px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-white/[0.16] hover:bg-white/[0.04] hover:text-foreground"
                           onClick={() => requestEndEditing(hasUnsaved)}
                         >
                           Cancel
@@ -882,7 +882,7 @@ export function ProductDirectoryPartnerPortalTab({
                   <PortalSectionTitle step={1}>Program details</PortalSectionTitle>
                   <div className="grid gap-3 sm:grid-cols-2">
                   <label className="block">
-                    <span className="mb-1 block text-[10px] font-medium text-[#9B9590]">Program name</span>
+                    <span className="mb-1 block text-2xs font-medium text-muted-foreground">Program name</span>
                     <input
                       value={drafts[key]?.programName ?? drafts[key]?.name ?? ""}
                       onChange={(e) =>
@@ -891,11 +891,11 @@ export function ProductDirectoryPartnerPortalTab({
                           [key]: { ...prev[key], programName: e.target.value, name: e.target.value },
                         }))
                       }
-                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-[#0a0a0f] px-3 text-[12px] text-[#F5F0EB] outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
+                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
                     />
                   </label>
                   <label className="block">
-                    <span className="mb-1 block text-[10px] font-medium text-[#9B9590]">Commission %</span>
+                    <span className="mb-1 block text-2xs font-medium text-muted-foreground">Commission %</span>
                     <input
                       type="number"
                       min={0}
@@ -907,11 +907,11 @@ export function ProductDirectoryPartnerPortalTab({
                           [key]: { ...prev[key], commissionRate: e.target.value === "" ? null : Number(e.target.value) },
                         }))
                       }
-                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-[#0a0a0f] px-3 text-[12px] text-[#F5F0EB] outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
+                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
                     />
                   </label>
                   <label className="block">
-                    <span className="mb-1 block text-[10px] font-medium text-[#9B9590]">Status</span>
+                    <span className="mb-1 block text-2xs font-medium text-muted-foreground">Status</span>
                     <select
                       value={drafts[key]?.status ?? "active"}
                       onChange={(e) =>
@@ -920,14 +920,14 @@ export function ProductDirectoryPartnerPortalTab({
                           [key]: { ...prev[key], status: e.target.value as "active" | "inactive" },
                         }))
                       }
-                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-[#0a0a0f] px-3 text-[12px] text-[#F5F0EB] outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
+                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
                     >
                       <option value="active">Active</option>
                       <option value="inactive">Inactive</option>
                     </select>
                   </label>
                   <label className="block">
-                    <span className="mb-1 block text-[10px] font-medium text-[#9B9590]">Scope</span>
+                    <span className="mb-1 block text-2xs font-medium text-muted-foreground">Scope</span>
                     <select
                       value={drafts[key]?.scope === "enable" ? "enable" : (drafts[key]?.scope ?? "enable")}
                       onChange={(e) =>
@@ -936,7 +936,7 @@ export function ProductDirectoryPartnerPortalTab({
                           [key]: { ...prev[key], scope: e.target.value === "enable" ? "enable" : e.target.value },
                         }))
                       }
-                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-[#0a0a0f] px-3 text-[12px] text-[#F5F0EB] outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
+                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
                     >
                       <option value="enable">Enable</option>
                       {teams.map((t) => (
@@ -947,7 +947,7 @@ export function ProductDirectoryPartnerPortalTab({
                     </select>
                   </label>
                   <label className="block">
-                    <span className="mb-1 block text-[10px] font-medium text-[#9B9590]">Expiry</span>
+                    <span className="mb-1 block text-2xs font-medium text-muted-foreground">Expiry</span>
                     <input
                       type="date"
                       value={(drafts[key]?.expiryDate ?? "").slice(0, 10)}
@@ -957,37 +957,37 @@ export function ProductDirectoryPartnerPortalTab({
                           [key]: { ...prev[key], expiryDate: e.target.value ? `${e.target.value}T12:00:00.000Z` : null },
                         }))
                       }
-                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-[#0a0a0f] px-3 text-[12px] text-[#F5F0EB] outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
+                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
                     />
                   </label>
                   <label className="block">
-                    <span className="mb-1 block text-[10px] font-medium text-[#9B9590]">Contact</span>
+                    <span className="mb-1 block text-2xs font-medium text-muted-foreground">Contact</span>
                     <input
                       value={drafts[key]?.contact ?? ""}
                       onChange={(e) =>
                         setDrafts((prev) => ({ ...prev, [key]: { ...prev[key], contact: e.target.value } }))
                       }
-                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-[#0a0a0f] px-3 text-[12px] text-[#F5F0EB] outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
+                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
                     />
                   </label>
                   <label className="block sm:col-span-2">
-                    <span className="mb-1 block text-[10px] font-medium text-[#9B9590]">Amenities</span>
+                    <span className="mb-1 block text-2xs font-medium text-muted-foreground">Amenities</span>
                     <textarea
                       rows={2}
                       value={drafts[key]?.amenities ?? ""}
                       onChange={(e) =>
                         setDrafts((prev) => ({ ...prev, [key]: { ...prev[key], amenities: e.target.value } }))
                       }
-                      className="w-full resize-none rounded-lg border border-white/[0.14] bg-[#0a0a0f] px-3 py-2 text-[12px] text-[#F5F0EB] outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
+                      className="w-full resize-none rounded-lg border border-white/[0.14] bg-inset px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
                     />
                   </label>
                   </div>
 
                   <PortalSectionTitle step={2}>Linked properties</PortalSectionTitle>
-                  <div className="rounded-lg border border-white/[0.08] bg-[#0a0a0f]/70 p-3">
+                  <div className="rounded-lg border border-border bg-inset/70 p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-[11px] font-medium text-[#F5F0EB]">Products on this program</p>
-                      <label className="flex items-center gap-2 text-[10px] text-[#9B9590]">
+                      <p className="text-xs font-medium text-foreground">Products on this program</p>
+                      <label className="flex items-center gap-2 text-2xs text-muted-foreground">
                         <input
                           type="checkbox"
                           checked={useProductSpecificTerms[key] ?? false}
@@ -1000,11 +1000,11 @@ export function ProductDirectoryPartnerPortalTab({
                       </label>
                     </div>
                     {(useProductSpecificTerms[key] ?? false) ? (
-                      <p className="mt-1 text-[10px] leading-relaxed text-[#6B6560]">
+                      <p className="mt-1 text-2xs leading-relaxed text-muted-foreground">
                         Each attached product can have its own commission and amenities; global fields above stay as defaults.
                       </p>
                     ) : (
-                      <p className="mt-1 text-[10px] leading-relaxed text-[#6B6560]">
+                      <p className="mt-1 text-2xs leading-relaxed text-muted-foreground">
                         Turn on when commission or amenities differ between properties on this program.
                       </p>
                     )}
@@ -1034,7 +1034,7 @@ export function ProductDirectoryPartnerPortalTab({
                           });
                         if (attachListProducts.length === 0) {
                           return (
-                            <p className="py-3 text-center text-[10px] text-[#6B6560]">
+                            <p className="py-3 text-center text-2xs text-muted-foreground">
                               No products match this search.
                             </p>
                           );
@@ -1048,9 +1048,9 @@ export function ProductDirectoryPartnerPortalTab({
                         const matchedProgram = p.partnerPrograms.find((pp) => programFilterId(pp) === key);
                         const isCustomInView = termsSignature(matchedProgram) !== baselineSig;
                         return (
-                          <div key={p.id} className="rounded-md border border-white/[0.06] bg-[#08080c] p-2">
+                          <div key={p.id} className="rounded-md border border-border bg-inset p-2">
                             <div className="flex items-center justify-between gap-2">
-                              <label className="flex min-w-0 items-center gap-2 text-[10px] text-[#C8C0B8]">
+                              <label className="flex min-w-0 items-center gap-2 text-2xs text-[#C8C0B8]">
                                 <input
                                   type="checkbox"
                                   checked={on}
@@ -1085,12 +1085,12 @@ export function ProductDirectoryPartnerPortalTab({
                                     varies
                                   </span>
                                 ) : null}
-                                <span className="text-[9px] text-[#6B6560]">{directoryCategoryLabel(p.type)}</span>
+                                <span className="text-[9px] text-muted-foreground">{directoryCategoryLabel(p.type)}</span>
                               </div>
                             </div>
                             {on && (useProductSpecificTerms[key] ?? false) ? (
                               <div className="mt-2 grid grid-cols-2 gap-1.5">
-                                <p className="col-span-2 border-l border-[#C9A96E]/20 pl-2 text-[9px] leading-snug text-[#6B6560]">
+                                <p className="col-span-2 border-l border-brand-cta/20 pl-2 text-[9px] leading-snug text-muted-foreground">
                                   Only for this property in the program.
                                 </p>
                                 <input
@@ -1111,7 +1111,7 @@ export function ProductDirectoryPartnerPortalTab({
                                     }))
                                   }
                                   placeholder="Commission %"
-                                  className="h-8 rounded border border-white/[0.08] bg-[#0a0a0f] px-2 text-[10px] text-[#F5F0EB] outline-none"
+                                  className="h-8 rounded border border-border bg-inset px-2 text-2xs text-foreground outline-none"
                                 />
                                 <input
                                   value={override.amenities}
@@ -1130,7 +1130,7 @@ export function ProductDirectoryPartnerPortalTab({
                                     }))
                                   }
                                   placeholder="Amenities override"
-                                  className="h-8 rounded border border-white/[0.08] bg-[#0a0a0f] px-2 text-[10px] text-[#F5F0EB] outline-none"
+                                  className="h-8 rounded border border-border bg-inset px-2 text-2xs text-foreground outline-none"
                                 />
                               </div>
                             ) : null}
@@ -1143,12 +1143,12 @@ export function ProductDirectoryPartnerPortalTab({
                   <PortalSectionTitle step={3}>Time-bound incentives</PortalSectionTitle>
                   <div className="rounded-lg border border-amber-400/25 bg-amber-400/[0.07] p-3">
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                      <p className="max-w-md text-[10px] leading-relaxed text-[#6B6560]">
+                      <p className="max-w-md text-2xs leading-relaxed text-muted-foreground">
                         Optional bonuses or rate lifts. Windows should fall on or before the program expiry above.
                       </p>
                       <button
                         type="button"
-                        className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-amber-400/35 bg-amber-400/10 px-2.5 py-1.5 text-[10px] font-medium text-amber-200 transition-colors hover:bg-amber-400/15"
+                        className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-amber-400/35 bg-amber-400/10 px-2.5 py-1.5 text-2xs font-medium text-amber-200 transition-colors hover:bg-amber-400/15"
                         onClick={() =>
                           setDrafts((prev) => ({
                             ...prev,
@@ -1167,7 +1167,7 @@ export function ProductDirectoryPartnerPortalTab({
                       </button>
                     </div>
                     {(display.activePromotions?.length ?? 0) === 0 ? (
-                      <p className="rounded-md border border-dashed border-white/[0.08] bg-[#0a0a0f]/50 px-3 py-3 text-center text-[10px] text-[#6B6560]">
+                      <p className="rounded-md border border-dashed border-border bg-inset/50 px-3 py-3 text-center text-2xs text-muted-foreground">
                         No incentives yet. Use Add incentive to capture title, details, effective %, and date windows.
                       </p>
                     ) : (
@@ -1175,15 +1175,15 @@ export function ProductDirectoryPartnerPortalTab({
                         {display.activePromotions.map((pr) => (
                           <div
                             key={pr.id}
-                            className="rounded-md border border-white/[0.06] bg-[#0a0a0f] px-2.5 py-2"
+                            className="rounded-md border border-border bg-inset px-2.5 py-2"
                           >
                             <div className="mb-2 flex items-start justify-between gap-2">
-                              <span className="text-[9px] font-medium uppercase tracking-wider text-[#6B6560]">
+                              <span className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
                                 Incentive
                               </span>
                               <button
                                 type="button"
-                                className="rounded-md border border-white/[0.08] p-1 text-[#9B9590] transition-colors hover:border-red-400/30 hover:bg-red-400/10 hover:text-red-300"
+                                className="rounded-md border border-border p-1 text-muted-foreground transition-colors hover:border-red-400/30 hover:bg-red-400/10 hover:text-red-300"
                                 aria-label="Remove incentive"
                                 onClick={() =>
                                   setDrafts((prev) => ({
@@ -1199,7 +1199,7 @@ export function ProductDirectoryPartnerPortalTab({
                               </button>
                             </div>
                             <label className="mb-2 block">
-                              <span className="mb-0.5 block text-[9px] text-[#6B6560]">Title (optional)</span>
+                              <span className="mb-0.5 block text-[9px] text-muted-foreground">Title (optional)</span>
                               <input
                                 value={pr.title ?? ""}
                                 onChange={(e) =>
@@ -1214,11 +1214,11 @@ export function ProductDirectoryPartnerPortalTab({
                                   }))
                                 }
                                 placeholder="e.g. Q2 booking bonus"
-                                className="h-8 w-full rounded border border-white/[0.08] bg-[#08080c] px-2 text-[11px] text-[#F5F0EB] outline-none placeholder:text-[#4A4540]"
+                                className="h-8 w-full rounded border border-border bg-inset px-2 text-xs text-foreground outline-none placeholder:text-muted-foreground/65"
                               />
                             </label>
                             <label className="mb-2 block">
-                              <span className="mb-0.5 block text-[9px] text-[#6B6560]">Details</span>
+                              <span className="mb-0.5 block text-[9px] text-muted-foreground">Details</span>
                               <textarea
                                 rows={2}
                                 value={pr.details ?? ""}
@@ -1234,11 +1234,11 @@ export function ProductDirectoryPartnerPortalTab({
                                   }))
                                 }
                                 placeholder="Stacking rules, eligible room types, advisor notes…"
-                                className="w-full resize-none rounded border border-white/[0.08] bg-[#08080c] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none placeholder:text-[#4A4540]"
+                                className="w-full resize-none rounded border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none placeholder:text-muted-foreground/65"
                               />
                             </label>
                             <div className="grid gap-2 sm:grid-cols-3">
-                              <label className="flex items-center gap-1 text-[10px] text-[#9B9590]">
+                              <label className="flex items-center gap-1 text-2xs text-muted-foreground">
                                 Effective rate
                                 <input
                                   type="number"
@@ -1258,11 +1258,11 @@ export function ProductDirectoryPartnerPortalTab({
                                       },
                                     }))
                                   }
-                                  className="w-16 rounded border border-white/[0.08] bg-[#08080c] px-1 py-0.5 text-[10px] text-[#F5F0EB] outline-none"
+                                  className="w-16 rounded border border-border bg-inset px-1 py-0.5 text-2xs text-foreground outline-none"
                                 />
                                 %
                               </label>
-                              <label className="text-[9px] text-[#6B6560]">
+                              <label className="text-[9px] text-muted-foreground">
                                 Booking window
                                 <div className="mt-0.5 flex items-center gap-1">
                                   <input
@@ -1279,7 +1279,7 @@ export function ProductDirectoryPartnerPortalTab({
                                         },
                                       }))
                                     }
-                                    className="h-7 w-full rounded border border-white/[0.08] bg-[#08080c] px-1.5 text-[10px] text-[#F5F0EB] outline-none"
+                                    className="h-7 w-full rounded border border-border bg-inset px-1.5 text-2xs text-foreground outline-none"
                                   />
                                   <span>→</span>
                                   <input
@@ -1296,11 +1296,11 @@ export function ProductDirectoryPartnerPortalTab({
                                         },
                                       }))
                                     }
-                                    className="h-7 w-full rounded border border-white/[0.08] bg-[#08080c] px-1.5 text-[10px] text-[#F5F0EB] outline-none"
+                                    className="h-7 w-full rounded border border-border bg-inset px-1.5 text-2xs text-foreground outline-none"
                                   />
                                 </div>
                               </label>
-                              <label className="text-[9px] text-[#6B6560]">
+                              <label className="text-[9px] text-muted-foreground">
                                 Travel window
                                 <div className="mt-0.5 flex items-center gap-1">
                                   <input
@@ -1317,7 +1317,7 @@ export function ProductDirectoryPartnerPortalTab({
                                         },
                                       }))
                                     }
-                                    className="h-7 w-full rounded border border-white/[0.08] bg-[#08080c] px-1.5 text-[10px] text-[#F5F0EB] outline-none"
+                                    className="h-7 w-full rounded border border-border bg-inset px-1.5 text-2xs text-foreground outline-none"
                                   />
                                   <span>→</span>
                                   <input
@@ -1334,7 +1334,7 @@ export function ProductDirectoryPartnerPortalTab({
                                         },
                                       }))
                                     }
-                                    className="h-7 w-full rounded border border-white/[0.08] bg-[#08080c] px-1.5 text-[10px] text-[#F5F0EB] outline-none"
+                                    className="h-7 w-full rounded border border-border bg-inset px-1.5 text-2xs text-foreground outline-none"
                                   />
                                 </div>
                               </label>
@@ -1356,11 +1356,11 @@ export function ProductDirectoryPartnerPortalTab({
                     {display.activePromotions.map((pr) => (
                       <li
                         key={pr.id}
-                        className="border-b border-white/[0.04] pb-3 text-[10px] last:border-0 last:pb-0"
+                        className="border-b border-white/[0.04] pb-3 text-2xs last:border-0 last:pb-0"
                       >
                         <div className="flex flex-wrap items-baseline justify-between gap-2">
-                          <span className="font-semibold text-[#C9A96E]">{pr.effectiveRate}% effective</span>
-                          <span className="text-[#6B6560]">
+                          <span className="font-semibold text-brand-cta">{pr.effectiveRate}% effective</span>
+                          <span className="text-muted-foreground">
                             Book {new Date(pr.bookingStart).toLocaleDateString()} –{" "}
                             {new Date(pr.bookingEnd).toLocaleDateString()} · Travel{" "}
                             {new Date(pr.travelStart).toLocaleDateString()} –{" "}
@@ -1368,10 +1368,10 @@ export function ProductDirectoryPartnerPortalTab({
                           </span>
                         </div>
                         {pr.title?.trim() ? (
-                          <p className="mt-1 text-[11px] font-medium text-[#F5F0EB]">{pr.title.trim()}</p>
+                          <p className="mt-1 text-xs font-medium text-foreground">{pr.title.trim()}</p>
                         ) : null}
                         {pr.details?.trim() ? (
-                          <p className="mt-1 whitespace-pre-wrap text-[10px] leading-relaxed text-[#9B9590]">
+                          <p className="mt-1 whitespace-pre-wrap text-2xs leading-relaxed text-muted-foreground">
                             {pr.details.trim()}
                           </p>
                         ) : null}
@@ -1382,18 +1382,18 @@ export function ProductDirectoryPartnerPortalTab({
               ) : null}
             </div>
 
-            <div className="border-t border-white/[0.05] bg-[#08080c]/35 px-4 py-4 sm:px-5">
+            <div className="border-t border-white/[0.05] bg-inset/35 px-4 py-4 sm:px-5">
               <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#4A4540]">
+                  <p className="text-2xs font-semibold uppercase tracking-[0.14em] text-muted-foreground/65">
                     Properties on this program
                   </p>
-                  <p className="mt-0.5 text-[10px] text-[#6B6560]">Select a card to open full product details</p>
+                  <p className="mt-0.5 text-2xs text-muted-foreground">Select a card to open full product details</p>
                 </div>
-                <span className="text-[10px] font-medium tabular-nums text-[#6B6560]">{attached.length} linked</span>
+                <span className="text-2xs font-medium tabular-nums text-muted-foreground">{attached.length} linked</span>
               </div>
               {attached.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-white/[0.08] py-8 text-center text-[11px] text-[#6B6560]">
+                <p className="rounded-xl border border-dashed border-border py-8 text-center text-xs text-muted-foreground">
                   No products linked yet. Admins can attach them while editing this program.
                 </p>
               ) : (
@@ -1411,17 +1411,17 @@ export function ProductDirectoryPartnerPortalTab({
                     onClick={() => onSelectProduct(p.id)}
                     aria-label={`Open ${p.name} in product directory`}
                     className={cn(
-                      "group flex h-[164px] w-[118px] shrink-0 snap-start flex-col overflow-hidden rounded-xl border bg-[#08080c] text-left transition-all duration-200",
+                      "group flex h-[164px] w-[118px] shrink-0 snap-start flex-col overflow-hidden rounded-xl border bg-inset text-left transition-all duration-200",
                       isCustom
                         ? "border-[rgba(201,169,110,0.22)] ring-1 ring-inset ring-[rgba(201,169,110,0.12)]"
                         : "border-white/[0.07]",
-                      "hover:-translate-y-0.5 hover:border-[rgba(201,169,110,0.35)] hover:shadow-md hover:shadow-black/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,169,110,0.45)]"
+                      "hover:-translate-y-0.5 hover:border-brand-cta/35 hover:shadow-md hover:shadow-black/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(201,169,110,0.45)]"
                     )}
                   >
                     {/* Fixed 118×76 image box — img fills edge-to-edge, no letterboxing */}
                     <div className="relative h-[76px] w-full shrink-0 overflow-hidden bg-[#14141c]">
                       {brokenProductImages[p.id] ? (
-                        <div className="flex h-full w-full items-center justify-center bg-[#1a1a22] px-1 text-center text-[8px] font-medium leading-tight text-[#4A4540]">
+                        <div className="flex h-full w-full items-center justify-center bg-[#1a1a22] px-1 text-center text-[8px] font-medium leading-tight text-muted-foreground/65">
                           Image unavailable
                         </div>
                       ) : (
@@ -1440,12 +1440,12 @@ export function ProductDirectoryPartnerPortalTab({
                       )}
                     </div>
                     <div className="flex min-h-0 flex-1 flex-col gap-0.5 p-2 pt-1.5">
-                      <p className="line-clamp-2 text-[10px] font-medium leading-snug text-[#F5F0EB]">{p.name}</p>
+                      <p className="line-clamp-2 text-2xs font-medium leading-snug text-foreground">{p.name}</p>
                       {placeLine ? (
-                        <p className="line-clamp-1 text-[8px] leading-tight text-[#9B9590]">{placeLine}</p>
+                        <p className="line-clamp-1 text-[8px] leading-tight text-muted-foreground">{placeLine}</p>
                       ) : null}
                       <div className="mt-auto flex flex-wrap items-center gap-x-1 gap-y-0.5">
-                        <span className="text-[8px] text-[#6B6560]">{directoryCategoryLabel(p.type)}</span>
+                        <span className="text-[8px] text-muted-foreground">{directoryCategoryLabel(p.type)}</span>
                         {isCustom ? (
                           <span className="rounded-sm bg-[rgba(201,169,110,0.1)] px-1 py-px text-[7px] font-semibold uppercase tracking-wide text-[#B8976E]">
                             Custom

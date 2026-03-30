@@ -265,10 +265,11 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#0C0C0C] overflow-hidden">
+    <div className="h-full flex flex-col bg-background overflow-hidden">
       {IS_PREVIEW_MODE && <PreviewBanner feature="Product Cards" variant="full" dismissible sampleDataOnly />}
       <ProductTabBar activeTab={activeTab} />
-      <ProductToolbar
+      <div className="relative z-10 shrink-0 px-6 pb-0 pt-4">
+        <ProductToolbar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         categoryFilter={categoryFilter}
@@ -299,7 +300,9 @@ export default function ProductsPage() {
         onBulkEnrich={selectedIds.size > 0 ? () => setEnrichModalOpen(true) : undefined}
         onBulkExport={selectedIds.size > 0 ? () => {} : undefined}
         isEnableTab={activeTab === "enable"}
-      />
+        resultTotal={totalCount}
+        />
+      </div>
 
       {error && (
         <div className="px-4 py-2 text-sm text-[var(--muted-amber-text)] bg-[var(--muted-amber-bg)] border-b border-[var(--muted-amber-border)]">

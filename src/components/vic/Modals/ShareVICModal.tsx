@@ -83,7 +83,7 @@ export default function ShareVICModal({ vic, onClose, onSaved }: Props) {
         </DialogHeader>
         <div className="space-y-4 text-sm">
           <div>
-            <Label className="text-[rgba(245,245,245,0.6)]">Sharing level</Label>
+            <Label className="text-muted-foreground">Sharing level</Label>
             <div className="mt-1.5 space-y-2">
               {(["none", "basic", "full"] as const).map((l) => (
                 <label key={l} className="flex items-start gap-2 cursor-pointer">
@@ -94,20 +94,20 @@ export default function ShareVICModal({ vic, onClose, onSaved }: Props) {
                     onChange={() => setLevel(l)}
                     className="mt-1 rounded border-white/20 bg-white/5"
                   />
-                  <span className="text-[#F5F5F5] capitalize">{l === "none" ? "Private" : l}</span>
-                  <span className="text-[rgba(245,245,245,0.5)] text-xs">— {LEVEL_DESCRIPTIONS[l]}</span>
+                  <span className="text-foreground capitalize">{l === "none" ? "Private" : l}</span>
+                  <span className="text-muted-foreground/75 text-xs">— {LEVEL_DESCRIPTIONS[l]}</span>
                 </label>
               ))}
             </div>
           </div>
 
           <div>
-            <Label className="text-[rgba(245,245,245,0.6)]">Share with advisors</Label>
+            <Label className="text-muted-foreground">Share with advisors</Label>
             <div className="mt-1.5 flex gap-2 flex-wrap">
               <select
                 value={addAdvisorId}
                 onChange={(e) => setAddAdvisorId(e.target.value)}
-                className="rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5] min-w-[140px]"
+                className="rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground min-w-[140px]"
               >
                 <option value="">Select advisor</option>
                 {MOCK_ADVISORS.filter((a) => !sharedWith.some((s) => s.advisor_id === a.id)).map((a) => (
@@ -117,7 +117,7 @@ export default function ShareVICModal({ vic, onClose, onSaved }: Props) {
               <select
                 value={addAccessLevel}
                 onChange={(e) => setAddAccessLevel(e.target.value as "view" | "edit")}
-                className="rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]"
+                className="rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
               >
                 <option value="view">View</option>
                 <option value="edit">Edit</option>
@@ -129,9 +129,9 @@ export default function ShareVICModal({ vic, onClose, onSaved }: Props) {
             {sharedWith.length > 0 && (
               <ul className="mt-2 space-y-1.5">
                 {sharedWith.map((s) => (
-                  <li key={s.advisor_id} className="flex items-center justify-between py-1.5 border-b border-[rgba(255,255,255,0.06)] last:border-0">
-                    <span className="text-[#F5F5F5]">{s.advisor_name ?? s.advisor_id} · {s.access_level}</span>
-                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-[rgba(245,245,245,0.5)]" onClick={() => handleRemove(s.advisor_id)}>
+                  <li key={s.advisor_id} className="flex items-center justify-between py-1.5 border-b border-border last:border-0">
+                    <span className="text-foreground">{s.advisor_name ?? s.advisor_id} · {s.access_level}</span>
+                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground/75" onClick={() => handleRemove(s.advisor_id)}>
                       <X size={14} />
                     </Button>
                   </li>
@@ -148,7 +148,7 @@ export default function ShareVICModal({ vic, onClose, onSaved }: Props) {
               onChange={(e) => setSharedToAgency(e.target.checked)}
               className="checkbox-on-dark"
             />
-            <Label htmlFor="agency_visibility" className="font-normal text-[#F5F5F5]">Make visible in Agency Directory</Label>
+            <Label htmlFor="agency_visibility" className="font-normal text-foreground">Make visible in Agency Directory</Label>
           </div>
         </div>
         <DialogFooter>

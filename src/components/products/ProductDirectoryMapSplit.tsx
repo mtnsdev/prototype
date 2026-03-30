@@ -18,7 +18,7 @@ import { DIRECTORY_PRODUCT_TYPE_CONFIG } from "./productDirectoryProductTypes";
 const ProductDirectoryMapLeaflet = dynamic(() => import("./ProductDirectoryMapLeaflet"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full min-h-[320px] w-full items-center justify-center rounded-r-xl bg-[#06060a] text-[11px] text-[#6B6560]">
+    <div className="flex h-full min-h-[320px] w-full items-center justify-center rounded-r-xl bg-background text-xs text-muted-foreground">
       Loading map…
     </div>
   ),
@@ -111,16 +111,16 @@ export default function ProductDirectoryMapSplit({
   return (
     <div
       ref={splitContainerRef}
-      className="flex min-h-[min(520px,calc(100vh-220px))] overflow-hidden rounded-xl border border-[rgba(255,255,255,0.03)] bg-[#08080c]"
+      className="flex min-h-[min(520px,calc(100vh-220px))] overflow-hidden rounded-xl border border-border bg-inset"
     >
       <div
-        className="flex min-w-0 shrink-0 flex-col overflow-hidden border-r border-[rgba(255,255,255,0.03)]"
+        className="flex min-w-0 shrink-0 flex-col overflow-hidden border-r border-border"
         style={{ width: `${listFrac * 100}%` }}
       >
         {withoutCoordsCount > 0 ? (
-          <div className="shrink-0 border-b border-[rgba(255,255,255,0.04)] bg-[rgba(201,169,110,0.04)] px-2 py-1.5">
-            <p className="text-[9px] leading-snug text-[#9B9590]">
-              <span className="font-medium text-[#C9A96E]">{withoutCoordsCount}</span>{" "}
+          <div className="shrink-0 border-b border-border bg-[rgba(201,169,110,0.04)] px-2 py-1.5">
+            <p className="text-[9px] leading-snug text-muted-foreground">
+              <span className="font-medium text-brand-cta">{withoutCoordsCount}</span>{" "}
               {withoutCoordsCount === 1 ? "product has" : "products have"} no coordinates — no pins. Open details from
               this list.
             </p>
@@ -161,8 +161,8 @@ export default function ProductDirectoryMapSplit({
                       missingPin && !selected && "opacity-[0.72]"
                     )}
                   >
-                    <p className="truncate text-[11px] font-medium leading-tight text-[#F5F0EB]">{product.name}</p>
-                    <p className="truncate text-[9px] text-[#9B9590]">{directoryProductPlaceLabel(product)}</p>
+                    <p className="truncate text-xs font-medium leading-tight text-foreground">{product.name}</p>
+                    <p className="truncate text-[9px] text-muted-foreground">{directoryProductPlaceLabel(product)}</p>
                     <div className="mt-0.5 flex flex-wrap items-center gap-1">
                       <span
                         className="inline-block rounded px-1 py-px text-[8px] leading-tight"
@@ -175,7 +175,7 @@ export default function ProductDirectoryMapSplit({
                         {directoryCategoryLabel(product.type)}
                       </span>
                       {missingPin ? (
-                        <span className="text-[7px] text-[#6B6560]" title="No latitude/longitude on file">
+                        <span className="text-[7px] text-muted-foreground" title="No latitude/longitude on file">
                           No pin
                         </span>
                       ) : null}
@@ -183,7 +183,7 @@ export default function ProductDirectoryMapSplit({
                     {externalSearchCollectionId &&
                     product.collectionIds.includes(externalSearchCollectionId) ? (
                       <span
-                        className="mt-0.5 flex items-center gap-0.5 text-[8px] text-[#6B6560]"
+                        className="mt-0.5 flex items-center gap-0.5 text-[8px] text-muted-foreground"
                         title={
                           externalSearchTooltip?.(product.id) ??
                           "Saved from chat or external search to your External Search collection."
@@ -214,7 +214,7 @@ export default function ProductDirectoryMapSplit({
         }}
       />
 
-      <div className="relative min-h-[320px] min-w-0 flex-1 overflow-hidden rounded-r-xl bg-[#06060a]">
+      <div className="relative min-h-[320px] min-w-0 flex-1 overflow-hidden rounded-r-xl bg-background">
         <ProductDirectoryMapLeaflet
           geoPins={geoPins}
           selectedId={selectedId}
@@ -227,11 +227,11 @@ export default function ProductDirectoryMapSplit({
         />
 
         {showMapEmpty && (
-          <div className="pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center bg-[#06060a]/65 p-4 backdrop-blur-[1px]">
-            <div className="max-w-[220px] rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#0c0c12]/95 px-3 py-2.5 text-center shadow-lg">
-              <MapPin className="mx-auto mb-1.5 h-4 w-4 text-[#4A4540]" aria-hidden />
-              <p className="text-[10px] font-medium text-[#F5F0EB]">No pins for this list</p>
-              <p className="mt-1 text-[9px] leading-snug text-[#6B6560]">
+          <div className="pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center bg-background/65 p-4 backdrop-blur-[1px]">
+            <div className="max-w-[220px] rounded-lg border border-border bg-popover/95 px-3 py-2.5 text-center shadow-lg">
+              <MapPin className="mx-auto mb-1.5 h-4 w-4 text-muted-foreground/65" aria-hidden />
+              <p className="text-2xs font-medium text-foreground">No pins for this list</p>
+              <p className="mt-1 text-[9px] leading-snug text-muted-foreground">
                 Add latitude and longitude to products to plot them on the map.
               </p>
             </div>
@@ -239,14 +239,14 @@ export default function ProductDirectoryMapSplit({
         )}
 
         {clusterProducts && clusterProducts.length > 0 && (
-          <div className="absolute bottom-3 left-3 right-3 z-[1000] rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0c0c12] p-2.5 shadow-xl">
+          <div className="absolute bottom-3 left-3 right-3 z-[1000] rounded-xl border border-border bg-popover p-2.5 shadow-xl">
             <div className="mb-1.5 flex items-center justify-between">
-              <p className="text-[9px] font-medium uppercase tracking-[0.08em] text-[#4A4540]">
+              <p className="text-[9px] font-medium uppercase tracking-[0.08em] text-muted-foreground/65">
                 {clusterProducts.length} in this area
               </p>
               <button
                 type="button"
-                className="text-[9px] text-[#6B6560] hover:text-[#C9A96E]"
+                className="text-[9px] text-muted-foreground hover:text-brand-cta"
                 onClick={onClusterClose}
               >
                 Close
@@ -257,7 +257,7 @@ export default function ProductDirectoryMapSplit({
                 <button
                   key={p.id}
                   type="button"
-                  className="w-full rounded-md px-1.5 py-1 text-left text-[10px] text-[#9B9590] hover:bg-[rgba(255,255,255,0.04)] hover:text-[#F5F0EB]"
+                  className="w-full rounded-md px-1.5 py-1 text-left text-2xs text-muted-foreground hover:bg-[rgba(255,255,255,0.04)] hover:text-foreground"
                   onClick={() => {
                     onSelectProduct(p.id);
                     onClusterClose();
@@ -266,7 +266,7 @@ export default function ProductDirectoryMapSplit({
                   <span className="block truncate">{p.name}</span>
                   {externalSearchCollectionId && p.collectionIds.includes(externalSearchCollectionId) ? (
                     <span
-                      className="mt-0.5 flex items-center gap-0.5 text-[8px] text-[#6B6560]"
+                      className="mt-0.5 flex items-center gap-0.5 text-[8px] text-muted-foreground"
                       title={
                         externalSearchTooltip?.(p.id) ??
                         "Saved from chat or external search to your External Search collection."
@@ -283,11 +283,11 @@ export default function ProductDirectoryMapSplit({
         )}
 
         {typesOnMap.size > 0 ? (
-          <div className="pointer-events-none absolute bottom-2 left-2 right-2 z-[400] flex flex-wrap justify-center gap-x-2 gap-y-0.5 rounded-md border border-[rgba(255,255,255,0.04)] bg-[#08080c]/92 px-2 py-1 backdrop-blur-sm">
+          <div className="pointer-events-none absolute bottom-2 left-2 right-2 z-[400] flex flex-wrap justify-center gap-x-2 gap-y-0.5 rounded-md border border-border bg-inset/92 px-2 py-1 backdrop-blur-sm">
             {DIRECTORY_PRODUCT_TYPE_CONFIG.filter((t) => typesOnMap.has(t.id)).map((t) => (
-              <span key={t.id} className="inline-flex items-center gap-0.5 text-[7px] text-[#9B9590]">
+              <span key={t.id} className="inline-flex items-center gap-0.5 text-[7px] text-muted-foreground">
                 <span
-                  className="h-1 w-1 shrink-0 rounded-full border border-white/10"
+                  className="h-1 w-1 shrink-0 rounded-full border border-input"
                   style={{ backgroundColor: getDirectoryCategoryPinColor(t.id) }}
                   aria-hidden
                 />

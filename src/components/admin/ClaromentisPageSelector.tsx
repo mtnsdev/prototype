@@ -65,16 +65,16 @@ export default function ClaromentisPageSelector({
     };
 
     return (
-        <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0C0C0C] overflow-hidden">
+        <div className="rounded-xl border border-border bg-background overflow-hidden">
             {/* Search */}
-            <div className="flex items-center gap-2 px-3 py-2 border-b border-[rgba(255,255,255,0.06)]">
-                <Search size={14} className="text-[rgba(245,245,245,0.4)] shrink-0" />
+            <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
+                <Search size={14} className="text-muted-foreground/55 shrink-0" />
                 <Input
                     type="text"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search pages..."
-                    className="flex-1 h-auto py-1.5 border-0 bg-transparent text-[13px] shadow-none focus-visible:ring-0"
+                    className="flex-1 h-auto py-1.5 border-0 bg-transparent text-compact shadow-none focus-visible:ring-0"
                 />
             </div>
 
@@ -82,12 +82,12 @@ export default function ClaromentisPageSelector({
             <div className="max-h-[200px] overflow-y-auto">
                 {loading ? (
                     <div className="flex items-center justify-center py-6">
-                        <Loader2 size={18} className="animate-spin text-[rgba(245,245,245,0.4)]" />
+                        <Loader2 size={18} className="animate-spin text-muted-foreground/55" />
                     </div>
                 ) : error ? (
-                    <p className="text-[13px] text-[#C87A7A] px-3 py-4">{error}</p>
+                    <p className="text-compact text-[var(--color-error)] px-3 py-4">{error}</p>
                 ) : pages.length === 0 ? (
-                    <p className="text-[13px] text-[rgba(245,245,245,0.4)] px-3 py-4 text-center">
+                    <p className="text-compact text-muted-foreground/55 px-3 py-4 text-center">
                         {search ? "No pages match your search" : "No intranet pages found"}
                     </p>
                 ) : (
@@ -109,9 +109,9 @@ export default function ClaromentisPageSelector({
                                         className="checkbox-on-dark checkbox-on-dark-sm shrink-0 pointer-events-none"
                                     />
                                     <FileText size={14} className="text-purple-400 shrink-0" />
-                                    <span className="text-[13px] text-[#F5F5F5] truncate">{page.title}</span>
+                                    <span className="text-compact text-foreground truncate">{page.title}</span>
                                     {page.is_admin_only && (
-                                        <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 shrink-0">
+                                        <span className="ml-auto text-2xs px-1.5 py-0.5 rounded bg-amber-500/15 text-[var(--color-warning)] shrink-0">
                                             Admin only
                                         </span>
                                     )}
@@ -124,7 +124,7 @@ export default function ClaromentisPageSelector({
 
             {/* Selection count */}
             {selectedPageIds.length > 0 && (
-                <div className="px-3 py-2 border-t border-[rgba(255,255,255,0.06)] text-[12px] text-[rgba(245,245,245,0.5)]">
+                <div className="px-3 py-2 border-t border-border text-sm text-muted-foreground/75">
                     {selectedPageIds.length} page{selectedPageIds.length !== 1 ? "s" : ""} selected
                 </div>
             )}

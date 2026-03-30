@@ -25,7 +25,7 @@ type TableCellProps = {
 export function KvTagsTableCell({ tags, showEmptyDash = true, className }: TableCellProps) {
   if (tags.length === 0) {
     return showEmptyDash ? (
-      <span className={cn("text-[11px] tabular-nums", TEXT_FAINT, className)}>—</span>
+      <span className={cn("text-xs tabular-nums", TEXT_FAINT, className)}>—</span>
     ) : null;
   }
 
@@ -34,7 +34,7 @@ export function KvTagsTableCell({ tags, showEmptyDash = true, className }: Table
 
   return (
     <div className={cn("flex items-center gap-1.5 min-w-0 max-w-[min(280px,34vw)]", className)}>
-      <span className={cn("text-[11px] truncate min-w-0 flex-1 leading-snug", TEXT_PRIMARY)} title={titleHover}>
+      <span className={cn("text-xs truncate min-w-0 flex-1 leading-snug", TEXT_PRIMARY)} title={titleHover}>
         {joined}
       </span>
       <TagOverflowMenu tags={tags} />
@@ -56,8 +56,8 @@ export function KvTagsFullWidthRow({ tags, emailLike, className }: FullRowProps)
   if (emailLike) {
     return (
       <div className={cn("flex flex-wrap items-baseline gap-x-3 gap-y-1 w-full min-w-0", className)}>
-        <span className={cn("text-[10px] font-medium uppercase tracking-wider shrink-0", TEXT_LABEL)}>Tags</span>
-        <span className={cn("text-[11px]", TEXT_FAINT)}>—</span>
+        <span className={cn("text-2xs font-medium uppercase tracking-wider shrink-0", TEXT_LABEL)}>Tags</span>
+        <span className={cn("text-xs", TEXT_FAINT)}>—</span>
       </div>
     );
   }
@@ -65,8 +65,8 @@ export function KvTagsFullWidthRow({ tags, emailLike, className }: FullRowProps)
   if (tags.length === 0) {
     return (
       <div className={cn("flex flex-wrap items-baseline gap-x-3 gap-y-1 w-full min-w-0", className)}>
-        <span className={cn("text-[10px] font-medium uppercase tracking-wider shrink-0", TEXT_LABEL)}>Tags</span>
-        <span className={cn("text-[11px]", TEXT_FAINT)}>—</span>
+        <span className={cn("text-2xs font-medium uppercase tracking-wider shrink-0", TEXT_LABEL)}>Tags</span>
+        <span className={cn("text-xs", TEXT_FAINT)}>—</span>
       </div>
     );
   }
@@ -76,12 +76,12 @@ export function KvTagsFullWidthRow({ tags, emailLike, className }: FullRowProps)
 
   return (
     <div className={cn("flex flex-wrap items-start gap-x-3 gap-y-1 w-full min-w-0", className)}>
-      <span className={cn("text-[10px] font-medium uppercase tracking-wider shrink-0 pt-0.5", TEXT_LABEL)}>
+      <span className={cn("text-2xs font-medium uppercase tracking-wider shrink-0 pt-0.5", TEXT_LABEL)}>
         Tags
       </span>
       <div className="flex min-w-0 flex-1 items-start gap-2">
         <p
-          className={cn("text-[11px] leading-relaxed min-w-0 flex-1 break-words", TEXT_PRIMARY)}
+          className={cn("text-xs leading-relaxed min-w-0 flex-1 break-words", TEXT_PRIMARY)}
           title={titleHover}
         >
           {joined}
@@ -98,7 +98,7 @@ export function KvTagsFullWidthRow({ tags, emailLike, className }: FullRowProps)
 export function KvTagsTitleSubline({ tags, emailLike, className }: FullRowProps) {
   if (emailLike) {
     return (
-      <div className={cn("mt-1 flex min-w-0 items-center gap-2 text-[10px] leading-tight", className)}>
+      <div className={cn("mt-1 flex min-w-0 items-center gap-2 text-2xs leading-tight", className)}>
         <span className={cn("shrink-0 font-medium uppercase tracking-wider", TEXT_LABEL)}>Tags</span>
         <span className={TEXT_FAINT}>—</span>
       </div>
@@ -107,7 +107,7 @@ export function KvTagsTitleSubline({ tags, emailLike, className }: FullRowProps)
 
   if (tags.length === 0) {
     return (
-      <div className={cn("mt-1 flex min-w-0 items-center gap-2 text-[10px] leading-tight", className)}>
+      <div className={cn("mt-1 flex min-w-0 items-center gap-2 text-2xs leading-tight", className)}>
         <span className={cn("shrink-0 font-medium uppercase tracking-wider", TEXT_LABEL)}>Tags</span>
         <span className={TEXT_FAINT}>—</span>
       </div>
@@ -116,7 +116,7 @@ export function KvTagsTitleSubline({ tags, emailLike, className }: FullRowProps)
 
   const joined = tags.join(SEP);
   return (
-    <div className={cn("mt-1 flex min-w-0 items-center gap-2 text-[10px] leading-tight", className)}>
+    <div className={cn("mt-1 flex min-w-0 items-center gap-2 text-2xs leading-tight", className)}>
       <span className={cn("shrink-0 font-medium uppercase tracking-wider", TEXT_LABEL)}>Tags</span>
       <span className={cn("min-w-0 truncate", TEXT_PRIMARY)} title={tags.join(" → ")}>
         {joined}
@@ -133,7 +133,7 @@ function TagOverflowMenu({ tags }: { tags: string[] }) {
         <button
           type="button"
           className={cn(
-            "shrink-0 inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[10px] tabular-nums transition-colors",
+            "shrink-0 inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-2xs tabular-nums transition-colors",
             "text-[var(--text-quaternary)] hover:text-[var(--text-tertiary)]",
             "bg-transparent hover:bg-white/[0.03] border border-transparent hover:border-white/[0.05]"
           )}
@@ -146,11 +146,11 @@ function TagOverflowMenu({ tags }: { tags: string[] }) {
       <DropdownMenuContent
         align="end"
         sideOffset={4}
-        className="min-w-[220px] max-w-[min(320px,90vw)] bg-[#111111] border-white/[0.06] p-0 overflow-hidden shadow-lg"
+        className="min-w-[220px] max-w-[min(320px,90vw)] bg-[#111111] border-border p-0 overflow-hidden shadow-lg"
       >
         <div
           className={cn(
-            "px-3 py-2 text-[10px] font-medium uppercase tracking-wider border-b border-white/[0.04]",
+            "px-3 py-2 text-2xs font-medium uppercase tracking-wider border-b border-white/[0.04]",
             TEXT_LABEL
           )}
         >
@@ -161,7 +161,7 @@ function TagOverflowMenu({ tags }: { tags: string[] }) {
             <li
               key={t}
               className={cn(
-                "text-[11px] pl-2 py-1 border-l border-white/[0.06] leading-snug break-words",
+                "text-xs pl-2 py-1 border-l border-border leading-snug break-words",
                 TEXT_PRIMARY
               )}
             >
@@ -184,7 +184,7 @@ export function KvTagsInline({ tags, className }: InlineProps) {
   const joined = tags.join(SEP);
   return (
     <p
-      className={cn("text-[10px] truncate leading-snug", TEXT_PRIMARY, className)}
+      className={cn("text-2xs truncate leading-snug", TEXT_PRIMARY, className)}
       title={tags.join(" → ")}
     >
       {joined}
@@ -199,7 +199,7 @@ export function KvTagsDiscreteTitleSubline({ tags, className }: InlineProps) {
   return (
     <p
       className={cn(
-        "mt-1 text-[10px] leading-snug truncate font-normal text-[var(--text-quaternary)] opacity-90",
+        "mt-1 text-2xs leading-snug truncate font-normal text-[var(--text-quaternary)] opacity-90",
         className
       )}
       title={tags.join(" → ")}
@@ -227,7 +227,7 @@ export function KvTagsDetailList({ tags, className }: DetailProps) {
         <li
           key={t}
           className={cn(
-            "text-[11px] pl-2 py-0.5 border-l border-white/[0.06] leading-snug break-words",
+            "text-xs pl-2 py-0.5 border-l border-border leading-snug break-words",
             TEXT_PRIMARY
           )}
         >

@@ -38,7 +38,7 @@ function confidenceColor(confidence: string | undefined): string {
     case "low":
       return "text-[var(--muted-error-text)]";
     default:
-      return "text-[rgba(245,245,245,0.7)]";
+      return "text-muted-foreground";
   }
 }
 
@@ -84,13 +84,13 @@ export default function AcuitySourceBadge({ provenance, fieldLabel, onMarkVerifi
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2">
             <Sparkles size={14} className="text-violet-400 shrink-0" />
-            <span className="font-medium text-[#F5F5F5]">{provider}</span>
+            <span className="font-medium text-foreground">{provider}</span>
           </div>
-          <p className="text-xs text-[rgba(245,245,245,0.55)]">
+          <p className="text-xs text-muted-foreground/75">
             {sourcedAt} · <span className={confidenceColor(conf)}>{conf} confidence</span>
           </p>
           {provenance.raw_excerpt && (
-            <blockquote className="text-xs text-[rgba(245,245,245,0.75)] border-l-2 border-violet-500/40 pl-2 italic">
+            <blockquote className="text-xs text-muted-foreground border-l-2 border-violet-500/40 pl-2 italic">
               &ldquo;{provenance.raw_excerpt}&rdquo;
             </blockquote>
           )}
@@ -102,7 +102,7 @@ export default function AcuitySourceBadge({ provenance, fieldLabel, onMarkVerifi
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs border-white/10 text-[#F5F5F5]"
+                className="h-7 text-xs border-input text-foreground"
                 onClick={() => {
                   setVerified(true);
                   onMarkVerified?.();
@@ -112,7 +112,7 @@ export default function AcuitySourceBadge({ provenance, fieldLabel, onMarkVerifi
                 Accept
               </Button>
               {onEdit && (
-                <Button variant="outline" size="sm" className="h-7 text-xs border-white/10 text-[#F5F5F5]" onClick={onEdit}>
+                <Button variant="outline" size="sm" className="h-7 text-xs border-input text-foreground" onClick={onEdit}>
                   Edit
                 </Button>
               )}

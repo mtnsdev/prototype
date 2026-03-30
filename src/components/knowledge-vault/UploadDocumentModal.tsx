@@ -63,11 +63,15 @@ export default function UploadDocumentModal({ open, onClose, onUploaded }: Props
       formData.set("data_layer", dataLayer);
       const { uploadKnowledgeDocuments } = await import("@/lib/knowledge-vault-api");
       await uploadKnowledgeDocuments(formData);
-      toast("Documents uploaded. Processing…");
+      toast({ title: "Documents uploaded. Processing…", tone: "success" });
       onUploaded();
       handleClose();
     } catch {
-      toast("Upload failed — using mock. Documents will appear after refresh.");
+      toast({
+        title: "Upload failed — using mock",
+        description: "Documents will appear after refresh.",
+        tone: "destructive",
+      });
       onUploaded();
       handleClose();
     } finally {
@@ -79,9 +83,9 @@ export default function UploadDocumentModal({ open, onClose, onUploaded }: Props
 
   return (
     <Dialog open onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className="bg-[#1a1a1a] border-white/10 max-w-lg">
+      <DialogContent className="bg-accent border-input max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-[#F5F5F5]">
+          <DialogTitle className="text-foreground">
             Upload Document {step > 1 && `— Step ${step} of 3`}
           </DialogTitle>
         </DialogHeader>
@@ -92,9 +96,9 @@ export default function UploadDocumentModal({ open, onClose, onUploaded }: Props
             onDrop={onDrop}
             className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center hover:border-white/30 transition-colors"
           >
-            <Upload size={40} className="mx-auto text-[rgba(245,245,245,0.4)] mb-4" />
-            <p className="text-[#F5F5F5] font-medium">Drop files here or click to browse</p>
-            <p className="text-xs text-[rgba(245,245,245,0.5)] mt-1">
+            <Upload size={40} className="mx-auto text-muted-foreground/55 mb-4" />
+            <p className="text-foreground font-medium">Drop files here or click to browse</p>
+            <p className="text-xs text-muted-foreground/75 mt-1">
               PDF, DOCX, XLSX, CSV, HTML, TXT, images
             </p>
             <input
@@ -115,7 +119,7 @@ export default function UploadDocumentModal({ open, onClose, onUploaded }: Props
               Select files
             </Button>
             {files.length > 0 && (
-              <p className="text-sm text-[rgba(245,245,245,0.7)] mt-4">
+              <p className="text-sm text-muted-foreground mt-4">
                 {files.length} file{files.length !== 1 ? "s" : ""} selected
               </p>
             )}
@@ -125,17 +129,17 @@ export default function UploadDocumentModal({ open, onClose, onUploaded }: Props
         {step === 2 && (
           <div className="space-y-4">
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Title</Label>
+              <Label className="text-muted-foreground">Title</Label>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="mt-1 w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-[#F5F5F5]"
+                className="mt-1 w-full rounded border border-input bg-white/5 px-3 py-2 text-sm text-foreground"
               />
             </div>
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Data layer</Label>
+              <Label className="text-muted-foreground">Data layer</Label>
               <div className="flex gap-4 mt-2">
-                <label className="flex items-center gap-2 text-sm text-[rgba(245,245,245,0.8)]">
+                <label className="flex items-center gap-2 text-sm text-muted-foreground">
                   <input
                     type="radio"
                     name="layer"
@@ -144,7 +148,7 @@ export default function UploadDocumentModal({ open, onClose, onUploaded }: Props
                   />
                   Agency
                 </label>
-                <label className="flex items-center gap-2 text-sm text-[rgba(245,245,245,0.8)]">
+                <label className="flex items-center gap-2 text-sm text-muted-foreground">
                   <input
                     type="radio"
                     name="layer"
@@ -160,18 +164,18 @@ export default function UploadDocumentModal({ open, onClose, onUploaded }: Props
 
         {step === 3 && (
           <div className="space-y-3">
-            <p className="text-sm text-[rgba(245,245,245,0.7)]">Review and upload</p>
-            <div className="rounded-lg bg-white/5 border border-white/10 p-3 space-y-1">
-              <p className="font-medium text-[#F5F5F5]">{title || "Untitled"}</p>
-              <p className="text-xs text-[rgba(245,245,245,0.5)]">{dataLayer} layer</p>
-              <p className="text-xs text-[rgba(245,245,245,0.5)]">
+            <p className="text-sm text-muted-foreground">Review and upload</p>
+            <div className="rounded-lg bg-white/5 border border-input p-3 space-y-1">
+              <p className="font-medium text-foreground">{title || "Untitled"}</p>
+              <p className="text-xs text-muted-foreground/75">{dataLayer} layer</p>
+              <p className="text-xs text-muted-foreground/75">
                 {files.length} file{files.length !== 1 ? "s" : ""}
               </p>
             </div>
           </div>
         )}
 
-        <DialogFooter className="border-t border-white/10 pt-4">
+        <DialogFooter className="border-t border-input pt-4">
           {step > 1 ? (
             <Button variant="ghost" onClick={() => setStep((s) => s - 1)}>
               Back

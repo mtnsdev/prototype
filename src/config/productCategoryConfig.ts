@@ -131,8 +131,8 @@ export const VERIFICATION_BADGES: Record<VerificationStatus, { label: string; va
 export const PARTNERSHIP_TIER_COLORS: Record<PartnershipTier, string> = {
   preferred: "text-[var(--muted-amber-text)] bg-[var(--muted-amber-bg)] border-[var(--muted-amber-border)]",
   partner: "text-[var(--muted-info-text)] bg-[var(--muted-info-bg)] border-[var(--muted-info-border)]",
-  standard: "text-[rgba(245,245,245,0.7)] bg-white/10 border-[rgba(255,255,255,0.12)]",
-  none: "text-[rgba(245,245,245,0.5)] bg-white/5 border-[rgba(255,255,255,0.08)]",
+  standard: "text-muted-foreground bg-white/10 border-input",
+  none: "text-muted-foreground/75 bg-white/5 border-border",
 };
 
 export const PARTNERSHIP_TIER_LABELS: Record<PartnershipTier, string> = {

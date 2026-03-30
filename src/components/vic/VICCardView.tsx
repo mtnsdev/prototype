@@ -35,7 +35,7 @@ export default function VICCardView({
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] h-48 animate-pulse" />
+          <div key={i} className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] h-48 animate-pulse" />
         ))}
       </div>
     );

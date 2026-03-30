@@ -80,7 +80,7 @@ export default function ItineraryEventCard({
       onClick={onEventClick}
       onKeyDown={onEventClick ? (e) => e.key === "Enter" && onEventClick() : undefined}
       className={cn(
-        "rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-3 flex items-start gap-3",
+        "rounded-lg border border-border bg-[rgba(255,255,255,0.03)] p-3 flex items-start gap-3",
         leftBorderClass,
         event.status === "cancelled" && "line-through opacity-80",
         onEventClick && "cursor-pointer hover:bg-white/[0.04] transition-colors"
@@ -96,22 +96,22 @@ export default function ItineraryEventCard({
         />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-[#F5F5F5]">{event.title}</p>
+        <p className="font-medium text-foreground">{event.title}</p>
         {timeRange ? (
-          <p className="text-xs text-[rgba(245,245,245,0.6)] mt-0.5">{timeRange}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{timeRange}</p>
         ) : null}
         {event.description && (
-          <p className="text-xs text-[rgba(245,245,245,0.5)] mt-1 line-clamp-2">{event.description}</p>
+          <p className="text-xs text-muted-foreground/75 mt-1 line-clamp-2">{event.description}</p>
         )}
         {event.confirmation_number && (
-          <span className="inline-block text-xs px-1.5 py-0.5 rounded bg-white/10 text-[rgba(245,245,245,0.8)] mt-1">
+          <span className="inline-block text-xs px-1.5 py-0.5 rounded bg-white/10 text-muted-foreground mt-1">
             Conf: #{event.confirmation_number}
           </span>
         )}
         {event.source_product_id && (
           <Link
             href={`/dashboard/products/${event.source_product_id}`}
-            className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-white/10 text-[rgba(245,245,245,0.8)] hover:bg-white/15 mt-1.5"
+            className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-white/10 text-muted-foreground hover:bg-white/15 mt-1.5"
             onClick={(e) => e.stopPropagation()}
           >
             {event.source_product_name ?? event.source_product_category ?? "Product"} →
@@ -121,18 +121,18 @@ export default function ItineraryEventCard({
       <div className="shrink-0 flex flex-col items-end gap-0.5 text-right" onClick={(e) => e.stopPropagation()}>
         {event.client_price != null && event.client_price > 0 ? (
           <>
-            <span className="font-medium text-[#F5F5F5]">{currency}{event.client_price.toLocaleString()}</span>
+            <span className="font-medium text-foreground">{currency}{event.client_price.toLocaleString()}</span>
             {canViewFinancials && marginPct > 0 && (
-              <span className={cn("text-[10px]", marginColor(marginPct))}>{marginPct}% margin</span>
+              <span className={cn("text-2xs", marginColor(marginPct))}>{marginPct}% margin</span>
             )}
           </>
         ) : event.client_price === 0 ? (
-          <span className="text-xs text-[rgba(245,245,245,0.5)]">included</span>
+          <span className="text-xs text-muted-foreground/75">included</span>
         ) : null}
         {canEdit && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-[rgba(245,245,245,0.5)]">
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/75">
                 <MoreHorizontal size={16} />
               </Button>
             </DropdownMenuTrigger>

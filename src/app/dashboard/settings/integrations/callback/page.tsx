@@ -95,29 +95,29 @@ export default function GoogleDriveOAuthCallbackPage() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-[#0C0C0C] flex items-center justify-center p-6">
-            <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] p-8 max-w-sm w-full text-center">
+        <div className="min-h-screen bg-background flex items-center justify-center p-6">
+            <div className="rounded-2xl border border-border bg-card p-8 max-w-sm w-full text-center">
                 {status === "loading" && (
                     <>
-                        <Loader2 size={32} className="animate-spin text-[rgba(245,245,245,0.6)] mx-auto mb-4" />
-                        <p className="text-[15px] text-[#F5F5F5]">{message}</p>
+                        <Loader2 size={32} className="animate-spin text-muted-foreground mx-auto mb-4" />
+                        <p className="text-base text-foreground">{message}</p>
                     </>
                 )}
                 {status === "success" && (
                     <>
-                        <p className="text-[15px] text-[#F5F5F5]">{message}</p>
-                        <p className="text-[13px] text-[rgba(245,245,245,0.5)] mt-2">You can close this window.</p>
+                        <p className="text-base text-foreground">{message}</p>
+                        <p className="text-compact text-muted-foreground/75 mt-2">You can close this window.</p>
                     </>
                 )}
                 {status === "error" && (
                     <>
-                        <AlertCircle size={32} className="text-[#C87A7A] mx-auto mb-4" />
-                        <p className="text-[15px] text-[#F5F5F5]">{message}</p>
+                        <AlertCircle size={32} className="text-[var(--color-error)] mx-auto mb-4" />
+                        <p className="text-base text-foreground">{message}</p>
                         <Button
                             type="button"
                             variant="ghost"
                             onClick={() => window.close()}
-                            className="mt-4 text-[13px] text-[rgba(245,245,245,0.6)] hover:text-[#F5F5F5]"
+                            className="mt-4 text-compact text-muted-foreground hover:text-foreground"
                         >
                             Close window
                         </Button>

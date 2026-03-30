@@ -23,3 +23,18 @@ alwaysApply: true
 - Use **semantic HTML** and **accessible patterns** (labels, ARIA where needed); prefer Radix/shadcn primitives for complex widgets.
 - Keep **client-side state** minimal; lift state only as needed and prefer URL/search params for shareable state where appropriate.
 - Use **shadcn ui** as much as possible when implementing the frontend.
+
+## Design tokens (Tailwind)
+
+- **Do not** use Tailwind **`gray-*` / `slate-*`** scales in `className` strings — map to semantic tokens: `text-foreground`, `text-muted-foreground`, `border-border`, `bg-background`, `bg-card`, `bg-popover`, and `text-foreground/[0.xx]` when you need stepped contrast. ESLint warns on `className="…gray-…"` / `slate-` (template literals are not covered).
+- **Tables and dense lists** should use shared helpers from `src/lib/list-ui.ts` where possible.
+
+## Modals and floating surfaces
+
+- **Centered dialogs** (`DialogContent`): default shell is **`bg-background`** with `border-border` (see `src/components/ui/dialog.tsx`). Override with `bg-background` unless you need a deliberate lift (`bg-card` for nested emphasis only).
+- **Dropdown-style panels** (menus, autocomplete lists): prefer **`bg-popover`** and **`text-popover-foreground`** so they match `dropdown-menu` / `popover`.
+- **AlertDialog**: when added, use the same **`bg-background`** rule as `DialogContent`.
+
+## Focus visible
+
+- **Global** `globals.css` sets a single **`:focus-visible` outline** for native focusables. **shadcn `Button`** and several Radix triggers use **`focus-visible:ring-*`** instead; avoid adding a second global rule that duplicates the same outline on `button`/`a`/`input` (that stacks visually). Prefer **ring on components** for custom controls; keep **outline** for unstyled native elements.

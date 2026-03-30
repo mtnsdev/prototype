@@ -85,7 +85,7 @@ export default function SourcesSettingsPage() {
             : s
         )
       );
-      toast("Default access updated (demo)");
+      toast({ title: "Default access updated (demo)", tone: "success" });
     },
     [toast]
   );
@@ -97,9 +97,9 @@ export default function SourcesSettingsPage() {
 
   if (!isAdmin) {
     return (
-      <div className="h-full overflow-y-auto bg-[#06060a] p-6">
-        <p className="text-sm text-gray-400">You need admin access to configure source defaults.</p>
-        <Button variant="outline" className="mt-4 border-white/10" asChild>
+      <div className="h-full overflow-y-auto bg-background p-6">
+        <p className="text-sm text-muted-foreground/90">You need admin access to configure source defaults.</p>
+        <Button variant="outline" className="mt-4 border-input" asChild>
           <Link href="/dashboard/settings">Back to settings</Link>
         </Button>
       </div>
@@ -107,11 +107,11 @@ export default function SourcesSettingsPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-[#06060a] text-[#F5F5F5]">
+    <div className="h-full overflow-y-auto bg-background text-foreground">
       <div className="max-w-2xl mx-auto p-6 space-y-6">
         <Link
           href="/dashboard/settings"
-          className="inline-flex items-center gap-1 text-[11px] text-gray-500 hover:text-gray-300 mb-2"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-2"
         >
           <ChevronLeft className="w-3 h-3" />
           Settings
@@ -122,7 +122,7 @@ export default function SourcesSettingsPage() {
           </div>
           <div>
             <h1 className="text-xl font-semibold text-white">Knowledge sources</h1>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               Default access for new documents per connection. Private vs team visibility uses your Teams model.
             </p>
           </div>
@@ -136,14 +136,14 @@ export default function SourcesSettingsPage() {
             >
               <div className="min-w-0">
                 <span className="text-xs text-white block">{source.label}</span>
-                <span className="text-[10px] text-gray-500 block mt-0.5">
+                <span className="text-2xs text-muted-foreground block mt-0.5">
                   Connected by {source.connectedBy} · {source.documentCount} documents
                 </span>
               </div>
               <select
                 value={source.defaultScope}
                 onChange={(e) => updateDefault(source.id, e.target.value)}
-                className="text-[10px] bg-white/[0.03] border border-white/[0.04] rounded-lg px-2 py-1.5 text-gray-400 outline-none shrink-0"
+                className="text-2xs bg-white/[0.03] border border-white/[0.04] rounded-lg px-2 py-1.5 text-muted-foreground/90 outline-none shrink-0"
               >
                 <option value="private">Private</option>
                 {MOCK_TEAMS.map((t) => (

@@ -31,7 +31,7 @@ export default function ProductTabBar({ activeTab, onTabChange, className }: Pro
   return (
     <div
       className={cn(
-        "flex border-b border-[rgba(255,255,255,0.08)] bg-[#0C0C0C]",
+        "flex border-b border-border bg-background",
         className
       )}
     >
@@ -41,10 +41,10 @@ export default function ProductTabBar({ activeTab, onTabChange, className }: Pro
           type="button"
           onClick={() => setTab(value)}
           className={cn(
-            "px-4 py-3 text-[13px] font-medium transition-colors border-b-2 -mb-px",
+            "px-4 py-3 text-compact font-medium transition-colors border-b-2 -mb-px",
             activeTab === value
-              ? "text-[#F5F5F5] border-[#F5F5F5]"
-              : "text-[rgba(245,245,245,0.5)] border-transparent hover:text-[rgba(245,245,245,0.8)]"
+              ? "text-foreground border-[#F5F5F5]"
+              : "text-muted-foreground/75 border-transparent hover:text-muted-foreground"
           )}
         >
           {label}

@@ -28,6 +28,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import {
+    listTableClass,
+    listTheadRowClass,
+    listTbodyRowClass,
+    listThClass,
+} from "@/lib/list-ui";
+
 const API_BASE = "/api/admin/bulk-test";
 
 const GEMINI_MODEL_OPTIONS = [
@@ -455,7 +463,7 @@ export default function BulkTestPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex gap-2 flex-wrap border-b border-[rgba(255,255,255,0.08)] pb-4">
+            <div className="flex gap-2 flex-wrap border-b border-border pb-4">
                 {tabs.map((t) => {
                     const Icon = t.icon;
                     return (
@@ -463,7 +471,7 @@ export default function BulkTestPage() {
                             key={t.id}
                             variant="ghost"
                             onClick={() => setTab(t.id)}
-                            className={`gap-2 font-medium ${tab === t.id ? "bg-[rgba(255,255,255,0.08)] text-[#F5F5F5]" : "text-[rgba(245,245,245,0.5)] hover:bg-[rgba(255,255,255,0.04)]"}`}
+                            className={`gap-2 font-medium ${tab === t.id ? "bg-[rgba(255,255,255,0.08)] text-foreground" : "text-muted-foreground/75 hover:bg-[rgba(255,255,255,0.04)]"}`}
                         >
                             <Icon size={16} />
                             {t.label}
@@ -476,25 +484,25 @@ export default function BulkTestPage() {
                 <div className="space-y-6">
                     {dashboardLoading ? (
                         <div className="flex items-center justify-center py-12">
-                            <Loader2 size={32} className="animate-spin text-[rgba(245,245,245,0.4)]" />
+                            <Loader2 size={32} className="animate-spin text-muted-foreground/55" />
                         </div>
                     ) : (
                         <>
                             {dashboard?.divergence_alert && (
                                 <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-4 flex items-center gap-2">
-                                    <AlertTriangle size={20} className="text-amber-400 shrink-0" />
-                                    <span className="text-[14px] text-amber-200">{dashboard.divergence_alert}</span>
+                                    <AlertTriangle size={20} className="text-[var(--color-warning)] shrink-0" />
+                                    <span className="text-base text-amber-200">{dashboard.divergence_alert}</span>
                                 </div>
                             )}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] p-6">
-                                    <h3 className="text-[16px] font-semibold text-[#F5F5F5] mb-4">Latest Bulk Test Run</h3>
+                                <div className="rounded-2xl bg-card border border-border p-6">
+                                    <h3 className="text-lg font-semibold text-foreground mb-4">Latest Bulk Test Run</h3>
                                     {dashboard?.latest_run ? (
-                                        <div className="space-y-2 text-[14px]">
-                                            <p className="text-[rgba(245,245,245,0.8)]">
+                                        <div className="space-y-2 text-base">
+                                            <p className="text-muted-foreground">
                                                 Run #{dashboard.latest_run.id} · {new Date(dashboard.latest_run.created_at).toLocaleString()}
                                                 {dashboard.latest_run.model_name && (
-                                                    <span className="text-[rgba(245,245,245,0.6)]"> · {dashboard.latest_run.model_name}</span>
+                                                    <span className="text-muted-foreground"> · {dashboard.latest_run.model_name}</span>
                                                 )}
                                             </p>
                                             <p>
@@ -503,24 +511,24 @@ export default function BulkTestPage() {
                                                 <span className="text-red-400">{dashboard.latest_run.summary?.failed ?? 0} failed</span>
                                             </p>
                                             {dashboard.latest_run.summary?.avg_score != null && (
-                                                <p className="text-[rgba(245,245,245,0.8)]">Average score: {dashboard.latest_run.summary.avg_score}/10</p>
+                                                <p className="text-muted-foreground">Average score: {dashboard.latest_run.summary.avg_score}/10</p>
                                             )}
                                             {dashboard.latest_run.summary?.duration_sec != null && (
-                                                <p className="text-[rgba(245,245,245,0.6)]">Duration: {dashboard.latest_run.summary.duration_sec}s</p>
+                                                <p className="text-muted-foreground">Duration: {dashboard.latest_run.summary.duration_sec}s</p>
                                             )}
                                         </div>
                                     ) : (
-                                        <p className="text-[14px] text-[rgba(245,245,245,0.5)]">No completed run yet.</p>
+                                        <p className="text-base text-muted-foreground/75">No completed run yet.</p>
                                     )}
                                 </div>
-                                <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] p-6">
-                                    <h3 className="text-[16px] font-semibold text-[#F5F5F5] mb-4">User Feedback (last 7 days)</h3>
+                                <div className="rounded-2xl bg-card border border-border p-6">
+                                    <h3 className="text-lg font-semibold text-foreground mb-4">User Feedback (last 7 days)</h3>
                                     {dashboard?.feedback_last_7_days ? (
-                                        <div className="space-y-2 text-[14px]">
-                                            <p className="text-[rgba(245,245,245,0.8)]">
+                                        <div className="space-y-2 text-base">
+                                            <p className="text-muted-foreground">
                                                 Responses with feedback: {dashboard.feedback_last_7_days.total_with_feedback}
                                             </p>
-                                            <p className="text-[rgba(245,245,245,0.8)]">
+                                            <p className="text-muted-foreground">
                                                 Thumbs up: {dashboard.feedback_last_7_days.thumbs_up_count}
                                             </p>
                                             <p>
@@ -531,13 +539,13 @@ export default function BulkTestPage() {
                                             </p>
                                         </div>
                                     ) : (
-                                        <p className="text-[14px] text-[rgba(245,245,245,0.5)]">No feedback data.</p>
+                                        <p className="text-base text-muted-foreground/75">No feedback data.</p>
                                     )}
                                 </div>
                                 {dashboard?.coverage != null && (
-                                    <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] p-6 md:col-span-2">
-                                        <h3 className="text-[16px] font-semibold text-[#F5F5F5] mb-4">Test coverage</h3>
-                                        <p className="text-[14px] text-[rgba(245,245,245,0.8)]">
+                                    <div className="rounded-2xl bg-card border border-border p-6 md:col-span-2">
+                                        <h3 className="text-lg font-semibold text-foreground mb-4">Test coverage</h3>
+                                        <p className="text-base text-muted-foreground">
                                             {dashboard.coverage.covered_count} of {dashboard.coverage.feedback_questions_count} distinct user questions (with feedback) are covered by bulk tests
                                             {dashboard.coverage.coverage_pct != null && ` (${dashboard.coverage.coverage_pct}%)`}.
                                         </p>
@@ -552,19 +560,19 @@ export default function BulkTestPage() {
             {error && (
                 <div className="rounded-xl bg-[rgba(200,122,122,0.1)] border border-[rgba(200,122,122,0.3)] p-4 flex items-center gap-2">
                     <AlertTriangle size={18} className="text-red-400" />
-                    <span className="text-[14px] text-[#C87A7A]">{error}</span>
+                    <span className="text-base text-[var(--color-error)]">{error}</span>
                 </div>
             )}
 
             {tab === "run" && (
                 <div className="space-y-6">
-                    <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] p-6">
-                        <h3 className="text-[16px] font-semibold text-[#F5F5F5] mb-2">Run Bulk Test</h3>
-                        <p className="text-[14px] text-[rgba(245,245,245,0.6)] mb-4">
+                    <div className="rounded-2xl bg-card border border-border p-6">
+                        <h3 className="text-lg font-semibold text-foreground mb-2">Run Bulk Test</h3>
+                        <p className="text-base text-muted-foreground mb-4">
                             Execute all active questions through the RAG pipeline and score answers (1–10). Results are stored and regressions flagged.
                         </p>
                         <div className="mb-4 flex flex-wrap items-center gap-3">
-                            <label className="text-[14px] font-medium text-[rgba(245,245,245,0.8)]">
+                            <label className="text-base font-medium text-muted-foreground">
                                 Gemini model
                             </label>
                             <Select
@@ -572,7 +580,7 @@ export default function BulkTestPage() {
                                 onValueChange={setGeminiModel}
                                 disabled={running}
                             >
-                                <SelectTrigger className="w-[200px] bg-[rgba(255,255,255,0.06)] border-[rgba(255,255,255,0.12)] text-[#F5F5F5] focus-visible:ring-amber-500/50">
+                                <SelectTrigger className="w-[200px] bg-[rgba(255,255,255,0.06)] border-input text-foreground focus-visible:ring-amber-500/50">
                                     <SelectValue placeholder="Select model" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -587,7 +595,7 @@ export default function BulkTestPage() {
                         <Button
                             onClick={startRun}
                             disabled={running || questions.filter((q) => q.is_active).length === 0}
-                            className="gap-2 bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500/30"
+                            className="gap-2 bg-amber-500/20 text-[var(--color-warning)] border-amber-500/30 hover:bg-amber-500/30"
                         >
                             {running ? (
                                 <>
@@ -616,10 +624,10 @@ export default function BulkTestPage() {
                     </div>
 
                     {lastRun && (
-                        <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] overflow-hidden">
-                            <div className="p-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between flex-wrap gap-2">
-                                <h3 className="text-[16px] font-semibold text-[#F5F5F5]">Last Run Results</h3>
-                                <span className="text-[13px] text-[rgba(245,245,245,0.5)]">
+                        <div className="rounded-2xl bg-card border border-border overflow-hidden">
+                            <div className="p-4 border-b border-border flex items-center justify-between flex-wrap gap-2">
+                                <h3 className="text-lg font-semibold text-foreground">Last Run Results</h3>
+                                <span className="text-compact text-muted-foreground/75">
                                     {lastRun.model_name && <span>{lastRun.model_name} · </span>}
                                     {lastRun.summary?.passed ?? 0} passed / {lastRun.summary?.failed ?? 0} failed
                                     {lastRun.summary?.avg_score != null && ` · Avg ${lastRun.summary.avg_score}/10`}
@@ -627,20 +635,20 @@ export default function BulkTestPage() {
                                 </span>
                             </div>
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left text-[14px]">
+                                <table className={cn(listTableClass(), "text-left text-base")}>
                                     <thead>
-                                        <tr className="border-b border-[rgba(255,255,255,0.08)]">
-                                            <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Question</th>
-                                            <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-20">Score</th>
-                                            <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-24">Status</th>
-                                            <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-24">Regression</th>
-                                            <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-24">Detail</th>
+                                        <tr className={listTheadRowClass}>
+                                            <th className={cn(listThClass, "text-muted-foreground/75 font-medium")}>Question</th>
+                                            <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-20")}>Score</th>
+                                            <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-24")}>Status</th>
+                                            <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-24")}>Regression</th>
+                                            <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-24")}>Detail</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {(lastRun.results ?? []).map((res) => (
-                                            <tr key={res.id} className="border-b border-[rgba(255,255,255,0.06)]">
-                                                <td className="p-3 text-[#F5F5F5] max-w-md truncate">{res.question_text ?? `Q#${res.question_id}`}</td>
+                                            <tr key={res.id} className={listTbodyRowClass}>
+                                                <td className="p-3 text-foreground max-w-md truncate">{res.question_text ?? `Q#${res.question_id}`}</td>
                                                 <td className="p-3">{res.quality_score ?? "—"}</td>
                                                 <td className="p-3">
                                                     {res.passed ? (
@@ -655,9 +663,9 @@ export default function BulkTestPage() {
                                                 </td>
                                                 <td className="p-3">
                                                     {res.regression_detected ? (
-                                                        <span className="text-amber-400">Yes</span>
+                                                        <span className="text-[var(--color-warning)]">Yes</span>
                                                     ) : (
-                                                        <span className="text-[rgba(245,245,245,0.4)]">—</span>
+                                                        <span className="text-muted-foreground/55">—</span>
                                                     )}
                                                 </td>
                                                 <td className="p-3">
@@ -689,37 +697,37 @@ export default function BulkTestPage() {
                             : "";
                         return (
                             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setRunResultDetailId(null)}>
-                                <div className="rounded-2xl bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
-                                    <div className="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.08)]">
-                                        <h4 className="text-[16px] font-semibold text-[#F5F5F5]">Test detail</h4>
-                                        <Button type="button" variant="ghost" size="icon" onClick={() => setRunResultDetailId(null)} className="p-1.5 text-[rgba(245,245,245,0.6)] hover:text-[#F5F5F5]">
+                                <div className="rounded-2xl bg-accent border border-input shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex items-center justify-between p-4 border-b border-border">
+                                        <h4 className="text-lg font-semibold text-foreground">Test detail</h4>
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => setRunResultDetailId(null)} className="p-1.5 text-muted-foreground hover:text-foreground">
                                             <X size={20} />
                                         </Button>
                                     </div>
-                                    <div className="p-4 overflow-y-auto space-y-4 text-[14px]">
+                                    <div className="p-4 overflow-y-auto space-y-4 text-base">
                                         <div>
-                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Question</div>
-                                            <p className="text-[#F5F5F5] whitespace-pre-wrap">{res.question_text ?? `Q#${res.question_id}`}</p>
+                                            <div className="text-sm text-muted-foreground/75 mb-1">Question</div>
+                                            <p className="text-foreground whitespace-pre-wrap">{res.question_text ?? `Q#${res.question_id}`}</p>
                                         </div>
                                         <div>
-                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Generated answer</div>
-                                            <p className="text-[#F5F5F5] whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">{res.answer ?? "—"}</p>
+                                            <div className="text-sm text-muted-foreground/75 mb-1">Generated answer</div>
+                                            <p className="text-foreground whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">{res.answer ?? "—"}</p>
                                         </div>
                                         {reasoning && (
                                             <div>
-                                                <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Reasoning</div>
-                                                <p className="text-[rgba(245,245,245,0.8)] whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">{reasoning}</p>
+                                                <div className="text-sm text-muted-foreground/75 mb-1">Reasoning</div>
+                                                <p className="text-muted-foreground whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">{reasoning}</p>
                                             </div>
                                         )}
-                                        <div className="flex flex-wrap gap-4 text-[13px]">
-                                            <span className="text-[rgba(245,245,245,0.6)]">Score: <span className="text-[#F5F5F5]">{res.quality_score ?? "—"}</span></span>
-                                            <span className="text-[rgba(245,245,245,0.6)]">Status: {res.passed ? <span className="text-green-400">Pass</span> : <span className="text-red-400">Fail</span>}</span>
+                                        <div className="flex flex-wrap gap-4 text-compact">
+                                            <span className="text-muted-foreground">Score: <span className="text-foreground">{res.quality_score ?? "—"}</span></span>
+                                            <span className="text-muted-foreground">Status: {res.passed ? <span className="text-green-400">Pass</span> : <span className="text-red-400">Fail</span>}</span>
                                             {res.regression_detected && res.previous_score != null && (
-                                                <span className="text-amber-400">Regression (previous score: {res.previous_score})</span>
+                                                <span className="text-[var(--color-warning)]">Regression (previous score: {res.previous_score})</span>
                                             )}
                                         </div>
                                         {res.error && (
-                                            <p className="text-[#C87A7A] text-[13px]">{res.error}</p>
+                                            <p className="text-[var(--color-error)] text-compact">{res.error}</p>
                                         )}
                                     </div>
                                 </div>
@@ -730,33 +738,33 @@ export default function BulkTestPage() {
             )}
 
             {tab === "history" && (
-                <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] overflow-hidden">
-                    <div className="p-4 border-b border-[rgba(255,255,255,0.08)]">
-                        <h3 className="text-[16px] font-semibold text-[#F5F5F5]">Run History</h3>
+                <div className="rounded-2xl bg-card border border-border overflow-hidden">
+                    <div className="p-4 border-b border-border">
+                        <h3 className="text-lg font-semibold text-foreground">Run History</h3>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-[14px]">
+                        <table className={cn(listTableClass(), "text-left text-base")}>
                             <thead>
-                                <tr className="border-b border-[rgba(255,255,255,0.08)]">
-                                    <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Run #</th>
-                                    <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Date</th>
-                                    <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Model</th>
-                                    <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Status</th>
-                                    <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Passed / Failed</th>
-                                    <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Avg Score</th>
-                                    <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Duration</th>
+                                <tr className={listTheadRowClass}>
+                                    <th className={cn(listThClass, "text-muted-foreground/75 font-medium")}>Run #</th>
+                                    <th className={cn(listThClass, "text-muted-foreground/75 font-medium")}>Date</th>
+                                    <th className={cn(listThClass, "text-muted-foreground/75 font-medium")}>Model</th>
+                                    <th className={cn(listThClass, "text-muted-foreground/75 font-medium")}>Status</th>
+                                    <th className={cn(listThClass, "text-muted-foreground/75 font-medium")}>Passed / Failed</th>
+                                    <th className={cn(listThClass, "text-muted-foreground/75 font-medium")}>Avg Score</th>
+                                    <th className={cn(listThClass, "text-muted-foreground/75 font-medium")}>Duration</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {runs.map((run) => (
                                     <tr
                                         key={run.id}
-                                        className="border-b border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.03)]"
+                                        className={cn(listTbodyRowClass, "hover:bg-white/[0.03]")}
                                     >
                                         <td className="p-3">
                                             <button
                                                 type="button"
-                                                className="text-amber-400 hover:underline text-left"
+                                                className="text-[var(--color-warning)] hover:underline text-left"
                                                 onClick={async () => {
                                                     try {
                                                         const r = await fetch(`${API_BASE}/runs/${run.id}`, {
@@ -775,10 +783,10 @@ export default function BulkTestPage() {
                                                 #{run.id}
                                             </button>
                                         </td>
-                                        <td className="p-3 text-[rgba(245,245,245,0.8)]">
+                                        <td className="p-3 text-muted-foreground">
                                             {new Date(run.created_at).toLocaleString()}
                                         </td>
-                                        <td className="p-3 text-[rgba(245,245,245,0.7)]">
+                                        <td className="p-3 text-muted-foreground">
                                             {run.model_name ?? "—"}
                                         </td>
                                         <td className="p-3">
@@ -788,7 +796,7 @@ export default function BulkTestPage() {
                                                         ? "text-green-400"
                                                         : run.status === "failed"
                                                           ? "text-red-400"
-                                                          : "text-[rgba(245,245,245,0.7)]"
+                                                          : "text-muted-foreground"
                                                 }
                                             >
                                                 {run.status}
@@ -805,11 +813,11 @@ export default function BulkTestPage() {
                         </table>
                     </div>
                     {runs.length === 0 && (
-                        <div className="p-8 text-center text-[rgba(245,245,245,0.5)] text-[14px]">No runs yet. Start one from the Run Test tab.</div>
+                        <div className="p-8 text-center text-muted-foreground/75 text-base">No runs yet. Start one from the Run Test tab.</div>
                     )}
                     {runsTotal > 0 && (
-                        <div className="p-3 border-t border-[rgba(255,255,255,0.08)] flex items-center justify-between gap-4 flex-wrap">
-                            <span className="text-[13px] text-[rgba(245,245,245,0.6)]">
+                        <div className="p-3 border-t border-border flex items-center justify-between gap-4 flex-wrap">
+                            <span className="text-compact text-muted-foreground">
                                 Showing {(runsPage - 1) * RUNS_PAGE_SIZE + 1}–{Math.min(runsPage * RUNS_PAGE_SIZE, runsTotal)} of {runsTotal}
                             </span>
                             <div className="flex items-center gap-2">
@@ -817,7 +825,7 @@ export default function BulkTestPage() {
                                     type="button"
                                     onClick={() => setRunsPage((p) => Math.max(1, p - 1))}
                                     disabled={runsPage <= 1}
-                                    className="px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.08)] text-[#F5F5F5] hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50 disabled:pointer-events-none text-[13px]"
+                                    className="px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.08)] text-foreground hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50 disabled:pointer-events-none text-compact"
                                 >
                                     Previous
                                 </button>
@@ -825,7 +833,7 @@ export default function BulkTestPage() {
                                     type="button"
                                     onClick={() => setRunsPage((p) => p + 1)}
                                     disabled={runsPage * RUNS_PAGE_SIZE >= runsTotal}
-                                    className="px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.08)] text-[#F5F5F5] hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50 disabled:pointer-events-none text-[13px]"
+                                    className="px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.08)] text-foreground hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50 disabled:pointer-events-none text-compact"
                                 >
                                     Next
                                 </button>
@@ -837,16 +845,16 @@ export default function BulkTestPage() {
 
             {tab === "compare" && (
                 <div className="space-y-6">
-                    <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] p-6">
-                        <h3 className="text-[16px] font-semibold text-[#F5F5F5] mb-4">Compare Two Runs</h3>
+                    <div className="rounded-2xl bg-card border border-border p-6">
+                        <h3 className="text-lg font-semibold text-foreground mb-4">Compare Two Runs</h3>
                         <div className="compare-runs-dropdowns flex flex-wrap items-end gap-4">
                             <div>
-                                <label className="block text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Run A</label>
+                                <label className="block text-sm text-muted-foreground/75 mb-1">Run A</label>
                                 <Select
                                     value={runA != null ? String(runA) : "__none__"}
                                     onValueChange={(v) => setRunA(v === "__none__" ? null : Number(v))}
                                 >
-                                    <SelectTrigger className="min-w-[200px] bg-[rgba(255,255,255,0.06)] border-[rgba(255,255,255,0.12)] text-[#F5F5F5] focus-visible:ring-amber-500/50">
+                                    <SelectTrigger className="min-w-[200px] bg-[rgba(255,255,255,0.06)] border-input text-foreground focus-visible:ring-amber-500/50">
                                         <SelectValue placeholder="Select run" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -861,12 +869,12 @@ export default function BulkTestPage() {
                                 </Select>
                             </div>
                             <div>
-                                <label className="block text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Run B</label>
+                                <label className="block text-sm text-muted-foreground/75 mb-1">Run B</label>
                                 <Select
                                     value={runB != null ? String(runB) : "__none__"}
                                     onValueChange={(v) => setRunB(v === "__none__" ? null : Number(v))}
                                 >
-                                    <SelectTrigger className="min-w-[200px] bg-[rgba(255,255,255,0.06)] border-[rgba(255,255,255,0.12)] text-[#F5F5F5] focus-visible:ring-amber-500/50">
+                                    <SelectTrigger className="min-w-[200px] bg-[rgba(255,255,255,0.06)] border-input text-foreground focus-visible:ring-amber-500/50">
                                         <SelectValue placeholder="Select run" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -883,7 +891,7 @@ export default function BulkTestPage() {
                             <button
                                 onClick={loadCompare}
                                 disabled={compareLoading || runA == null || runB == null || runA === runB}
-                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[rgba(255,255,255,0.08)] text-[#F5F5F5] hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50"
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[rgba(255,255,255,0.08)] text-foreground hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50"
                             >
                                 {compareLoading ? <Loader2 size={16} className="animate-spin" /> : <GitCompare size={16} />}
                                 Compare
@@ -892,35 +900,35 @@ export default function BulkTestPage() {
                     </div>
 
                     {compareData && (
-                        <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] overflow-hidden">
-                            <div className="p-4 border-b border-[rgba(255,255,255,0.08)] flex flex-wrap gap-4 text-[14px]">
-                                <span className="text-[rgba(245,245,245,0.6)]">
+                        <div className="rounded-2xl bg-card border border-border overflow-hidden">
+                            <div className="p-4 border-b border-border flex flex-wrap gap-4 text-base">
+                                <span className="text-muted-foreground">
                                     Run A: #{compareData.run_a.id}
                                     {compareData.run_a.model_name ? ` (${compareData.run_a.model_name})` : ""}
                                     {" "}({compareData.run_a.summary?.passed ?? 0}/{compareData.run_a.summary?.failed ?? 0}, avg {compareData.run_a.summary?.avg_score ?? "—"})
                                 </span>
-                                <span className="text-[rgba(245,245,245,0.6)]">
+                                <span className="text-muted-foreground">
                                     Run B: #{compareData.run_b.id}
                                     {compareData.run_b.model_name ? ` (${compareData.run_b.model_name})` : ""}
                                     {" "}({compareData.run_b.summary?.passed ?? 0}/{compareData.run_b.summary?.failed ?? 0}, avg {compareData.run_b.summary?.avg_score ?? "—"})
                                 </span>
                             </div>
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left text-[14px]">
+                                <table className={cn(listTableClass(), "text-left text-base")}>
                                     <thead>
-                                        <tr className="border-b border-[rgba(255,255,255,0.08)]">
-                                            <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Question</th>
-                                            <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-20">Score A</th>
-                                            <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-20">Score B</th>
-                                            <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-24">Pass A</th>
-                                            <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-24">Pass B</th>
-                                            <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-24">Detail</th>
+                                        <tr className={listTheadRowClass}>
+                                            <th className={cn(listThClass, "text-muted-foreground/75 font-medium")}>Question</th>
+                                            <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-20")}>Score A</th>
+                                            <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-20")}>Score B</th>
+                                            <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-24")}>Pass A</th>
+                                            <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-24")}>Pass B</th>
+                                            <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-24")}>Detail</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {compareData.rows.map((row, i) => (
-                                            <tr key={row.question_id + "-" + i} className="border-b border-[rgba(255,255,255,0.06)]">
-                                                <td className="p-3 text-[#F5F5F5] max-w-xs truncate">{row.question_text ?? `Q#${row.question_id}`}</td>
+                                            <tr key={row.question_id + "-" + i} className={listTbodyRowClass}>
+                                                <td className="p-3 text-foreground max-w-xs truncate">{row.question_text ?? `Q#${row.question_id}`}</td>
                                                 <td className="p-3">{row.result_a?.quality_score ?? "—"}</td>
                                                 <td className="p-3">{row.result_b?.quality_score ?? "—"}</td>
                                                 <td className="p-3">
@@ -934,7 +942,7 @@ export default function BulkTestPage() {
                                                         type="button"
                                                         onClick={() => setCompareDetailRow(i)}
                                                         title="More detail"
-                                                        className="inline-flex items-center justify-center p-2 rounded-lg bg-[rgba(255,255,255,0.08)] text-[#F5F5F5] hover:bg-[rgba(255,255,255,0.12)]"
+                                                        className="inline-flex items-center justify-center p-2 rounded-lg bg-[rgba(255,255,255,0.08)] text-foreground hover:bg-[rgba(255,255,255,0.12)]"
                                                     >
                                                         <Eye size={18} />
                                                     </button>
@@ -958,60 +966,60 @@ export default function BulkTestPage() {
                             : "";
                         return (
                             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setCompareDetailRow(null)}>
-                                <div className="rounded-2xl bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] shadow-xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
-                                    <div className="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.08)]">
-                                        <h4 className="text-[16px] font-semibold text-[#F5F5F5]">Test detail</h4>
-                                        <button type="button" onClick={() => setCompareDetailRow(null)} className="p-1.5 rounded-lg text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.08)] hover:text-[#F5F5F5]">
+                                <div className="rounded-2xl bg-accent border border-input shadow-xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex items-center justify-between p-4 border-b border-border">
+                                        <h4 className="text-lg font-semibold text-foreground">Test detail</h4>
+                                        <button type="button" onClick={() => setCompareDetailRow(null)} className="p-1.5 rounded-lg text-muted-foreground hover:bg-[rgba(255,255,255,0.08)] hover:text-foreground">
                                             <X size={20} />
                                         </button>
                                     </div>
-                                    <div className="p-4 overflow-y-auto space-y-4 text-[14px]">
+                                    <div className="p-4 overflow-y-auto space-y-4 text-base">
                                         <div>
-                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Question</div>
-                                            <p className="text-[#F5F5F5] whitespace-pre-wrap">{row.question_text ?? `Q#${row.question_id}`}</p>
+                                            <div className="text-sm text-muted-foreground/75 mb-1">Question</div>
+                                            <p className="text-foreground whitespace-pre-wrap">{row.question_text ?? `Q#${row.question_id}`}</p>
                                         </div>
                                         <div>
-                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Expected / sample answer</div>
-                                            <p className="text-[#F5F5F5] whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">{row.expected_answer ?? "—"}</p>
+                                            <div className="text-sm text-muted-foreground/75 mb-1">Expected / sample answer</div>
+                                            <p className="text-foreground whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">{row.expected_answer ?? "—"}</p>
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="rounded-xl border border-[rgba(255,255,255,0.08)] overflow-hidden">
-                                                <div className="px-3 py-2 bg-[rgba(255,255,255,0.06)] text-[12px] font-medium text-[rgba(245,245,245,0.7)] border-b border-[rgba(255,255,255,0.08)]">
+                                            <div className="rounded-xl border border-border overflow-hidden">
+                                                <div className="px-3 py-2 bg-[rgba(255,255,255,0.06)] text-sm font-medium text-muted-foreground border-b border-border">
                                                     Run A {row.result_a != null && `· Score ${row.result_a.quality_score ?? "—"} · ${row.result_a.passed ? "Pass" : "Fail"}`}
                                                 </div>
                                                 <div className="p-3 space-y-3">
                                                     <div>
-                                                        <div className="text-[11px] text-[rgba(245,245,245,0.5)] uppercase tracking-wide mb-1">Generated answer</div>
-                                                        <p className="text-[#F5F5F5] whitespace-pre-wrap text-[13px]">{row.result_a?.answer ?? "—"}</p>
+                                                        <div className="text-xs text-muted-foreground/75 uppercase tracking-wide mb-1">Generated answer</div>
+                                                        <p className="text-foreground whitespace-pre-wrap text-compact">{row.result_a?.answer ?? "—"}</p>
                                                     </div>
                                                     {reasoningA && (
                                                         <div>
-                                                            <div className="text-[11px] text-[rgba(245,245,245,0.5)] uppercase tracking-wide mb-1">Reasoning</div>
-                                                            <p className="text-[rgba(245,245,245,0.8)] whitespace-pre-wrap text-[13px]">{reasoningA}</p>
+                                                            <div className="text-xs text-muted-foreground/75 uppercase tracking-wide mb-1">Reasoning</div>
+                                                            <p className="text-muted-foreground whitespace-pre-wrap text-compact">{reasoningA}</p>
                                                         </div>
                                                     )}
                                                     {row.result_a?.error && (
-                                                        <p className="text-[#C87A7A] text-[13px]">{row.result_a.error}</p>
+                                                        <p className="text-[var(--color-error)] text-compact">{row.result_a.error}</p>
                                                     )}
                                                 </div>
                                             </div>
-                                            <div className="rounded-xl border border-[rgba(255,255,255,0.08)] overflow-hidden">
-                                                <div className="px-3 py-2 bg-[rgba(255,255,255,0.06)] text-[12px] font-medium text-[rgba(245,245,245,0.7)] border-b border-[rgba(255,255,255,0.08)]">
+                                            <div className="rounded-xl border border-border overflow-hidden">
+                                                <div className="px-3 py-2 bg-[rgba(255,255,255,0.06)] text-sm font-medium text-muted-foreground border-b border-border">
                                                     Run B {row.result_b != null && `· Score ${row.result_b.quality_score ?? "—"} · ${row.result_b.passed ? "Pass" : "Fail"}`}
                                                 </div>
                                                 <div className="p-3 space-y-3">
                                                     <div>
-                                                        <div className="text-[11px] text-[rgba(245,245,245,0.5)] uppercase tracking-wide mb-1">Generated answer</div>
-                                                        <p className="text-[#F5F5F5] whitespace-pre-wrap text-[13px]">{row.result_b?.answer ?? "—"}</p>
+                                                        <div className="text-xs text-muted-foreground/75 uppercase tracking-wide mb-1">Generated answer</div>
+                                                        <p className="text-foreground whitespace-pre-wrap text-compact">{row.result_b?.answer ?? "—"}</p>
                                                     </div>
                                                     {reasoningB && (
                                                         <div>
-                                                            <div className="text-[11px] text-[rgba(245,245,245,0.5)] uppercase tracking-wide mb-1">Reasoning</div>
-                                                            <p className="text-[rgba(245,245,245,0.8)] whitespace-pre-wrap text-[13px]">{reasoningB}</p>
+                                                            <div className="text-xs text-muted-foreground/75 uppercase tracking-wide mb-1">Reasoning</div>
+                                                            <p className="text-muted-foreground whitespace-pre-wrap text-compact">{reasoningB}</p>
                                                         </div>
                                                     )}
                                                     {row.result_b?.error && (
-                                                        <p className="text-[#C87A7A] text-[13px]">{row.result_b.error}</p>
+                                                        <p className="text-[var(--color-error)] text-compact">{row.result_b.error}</p>
                                                     )}
                                                 </div>
                                             </div>
@@ -1026,30 +1034,30 @@ export default function BulkTestPage() {
 
             {tab === "chat-history" && (
                 <div className="space-y-6">
-                    <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] overflow-hidden">
-                        <div className="p-4 border-b border-[rgba(255,255,255,0.08)]">
-                            <h3 className="text-[16px] font-semibold text-[#F5F5F5]">Chat History</h3>
-                            <p className="text-[12px] text-[rgba(245,245,245,0.5)] mt-1">
+                    <div className="rounded-2xl bg-card border border-border overflow-hidden">
+                        <div className="p-4 border-b border-border">
+                            <h3 className="text-lg font-semibold text-foreground">Chat History</h3>
+                            <p className="text-sm text-muted-foreground/75 mt-1">
                                 All user questions from chat_messages with answers and feedback
                             </p>
                         </div>
                         {chatMessagesLoading ? (
                             <div className="flex justify-center py-12">
-                                <Loader2 size={28} className="animate-spin text-[rgba(245,245,245,0.4)]" />
+                                <Loader2 size={28} className="animate-spin text-muted-foreground/55" />
                             </div>
                         ) : (
                             <>
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-[14px]">
+                                    <table className={cn(listTableClass(), "text-left text-base")}>
                                         <thead>
-                                            <tr className="border-b border-[rgba(255,255,255,0.08)]">
-                                                <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Question</th>
-                                                <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Answer</th>
-                                                <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-24">Feedback</th>
-                                                <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-20">Can Answer</th>
-                                                <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-28">User</th>
-                                                <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-36">Date</th>
-                                                <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-20">Actions</th>
+                                            <tr className={listTheadRowClass}>
+                                                <th className={cn(listThClass, "text-muted-foreground/75 font-medium")}>Question</th>
+                                                <th className={cn(listThClass, "text-muted-foreground/75 font-medium")}>Answer</th>
+                                                <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-24")}>Feedback</th>
+                                                <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-20")}>Can Answer</th>
+                                                <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-28")}>User</th>
+                                                <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-36")}>Date</th>
+                                                <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-20")}>Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -1065,12 +1073,12 @@ export default function BulkTestPage() {
                                                 return (
                                                     <tr
                                                         key={pair.assistant_message_id}
-                                                        className="border-b border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.02)]"
+                                                        className={cn(listTbodyRowClass, "hover:bg-white/[0.02]")}
                                                     >
-                                                        <td className="p-3 text-[#F5F5F5] max-w-[220px]">
+                                                        <td className="p-3 text-foreground max-w-[220px]">
                                                             {truncate(pair.question, 80)}
                                                         </td>
-                                                        <td className="p-3 text-[rgba(245,245,245,0.8)] max-w-[220px]">
+                                                        <td className="p-3 text-muted-foreground max-w-[220px]">
                                                             {truncate(pair.answer, 80)}
                                                         </td>
                                                         <td className="p-3">
@@ -1083,7 +1091,7 @@ export default function BulkTestPage() {
                                                                     <ThumbsDown size={14} /> {feedbackLabel}
                                                                 </span>
                                                             ) : (
-                                                                <span className="text-[rgba(245,245,245,0.4)]">—</span>
+                                                                <span className="text-muted-foreground/55">—</span>
                                                             )}
                                                         </td>
                                                         <td className="p-3">
@@ -1092,20 +1100,20 @@ export default function BulkTestPage() {
                                                             ) : pair.can_answer === false ? (
                                                                 <span className="text-red-400">No</span>
                                                             ) : (
-                                                                <span className="text-[rgba(245,245,245,0.4)]">—</span>
+                                                                <span className="text-muted-foreground/55">—</span>
                                                             )}
                                                         </td>
-                                                        <td className="p-3 text-[12px] text-[rgba(245,245,245,0.7)]">
+                                                        <td className="p-3 text-sm text-muted-foreground">
                                                             {pair.user_email ?? "—"}
                                                         </td>
-                                                        <td className="p-3 text-[12px] text-[rgba(245,245,245,0.6)]">
+                                                        <td className="p-3 text-sm text-muted-foreground">
                                                             {new Date(pair.created_at).toLocaleString()}
                                                         </td>
                                                         <td className="p-3">
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setChatMessageDetailIndex(i)}
-                                                                className="inline-flex items-center gap-1 text-[rgba(245,245,245,0.8)] hover:text-[#F5F5F5] hover:underline text-[13px]"
+                                                                className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground hover:underline text-compact"
                                                                 title="View full details"
                                                             >
                                                                 <Eye size={14} /> View
@@ -1118,13 +1126,13 @@ export default function BulkTestPage() {
                                     </table>
                                 </div>
                                 {chatMessages.length === 0 && (
-                                    <div className="p-8 text-center text-[rgba(245,245,245,0.5)] text-[14px]">
+                                    <div className="p-8 text-center text-muted-foreground/75 text-base">
                                         No chat messages yet.
                                     </div>
                                 )}
                                 {chatMessagesTotal > 0 && (
-                                    <div className="p-3 border-t border-[rgba(255,255,255,0.08)] flex items-center justify-between gap-4 flex-wrap">
-                                        <span className="text-[13px] text-[rgba(245,245,245,0.6)]">
+                                    <div className="p-3 border-t border-border flex items-center justify-between gap-4 flex-wrap">
+                                        <span className="text-compact text-muted-foreground">
                                             Showing {(chatMessagesPage - 1) * CHAT_MESSAGES_PAGE_SIZE + 1}–
                                             {Math.min(chatMessagesPage * CHAT_MESSAGES_PAGE_SIZE, chatMessagesTotal)} of {chatMessagesTotal}
                                         </span>
@@ -1133,7 +1141,7 @@ export default function BulkTestPage() {
                                                 type="button"
                                                 onClick={() => fetchChatMessages(chatMessagesPage - 1)}
                                                 disabled={chatMessagesPage <= 1}
-                                                className="px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.08)] text-[#F5F5F5] hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50 disabled:pointer-events-none text-[13px]"
+                                                className="px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.08)] text-foreground hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50 disabled:pointer-events-none text-compact"
                                             >
                                                 Previous
                                             </button>
@@ -1141,7 +1149,7 @@ export default function BulkTestPage() {
                                                 type="button"
                                                 onClick={() => fetchChatMessages(chatMessagesPage + 1)}
                                                 disabled={chatMessagesPage * CHAT_MESSAGES_PAGE_SIZE >= chatMessagesTotal}
-                                                className="px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.08)] text-[#F5F5F5] hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50 disabled:pointer-events-none text-[13px]"
+                                                className="px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.08)] text-foreground hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50 disabled:pointer-events-none text-compact"
                                             >
                                                 Next
                                             </button>
@@ -1163,33 +1171,33 @@ export default function BulkTestPage() {
                                 onClick={() => setChatMessageDetailIndex(null)}
                             >
                                 <div
-                                    className="rounded-2xl bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col"
+                                    className="rounded-2xl bg-accent border border-input shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col"
                                     onClick={(e) => e.stopPropagation()}
                                 >
-                                    <div className="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.08)]">
-                                        <h4 className="text-[16px] font-semibold text-[#F5F5F5]">Chat message details</h4>
+                                    <div className="flex items-center justify-between p-4 border-b border-border">
+                                        <h4 className="text-lg font-semibold text-foreground">Chat message details</h4>
                                         <button
                                             type="button"
                                             onClick={() => setChatMessageDetailIndex(null)}
-                                            className="p-1.5 rounded-lg text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.08)] hover:text-[#F5F5F5]"
+                                            className="p-1.5 rounded-lg text-muted-foreground hover:bg-[rgba(255,255,255,0.08)] hover:text-foreground"
                                         >
                                             <X size={20} />
                                         </button>
                                     </div>
-                                    <div className="p-4 overflow-y-auto space-y-4 text-[14px]">
+                                    <div className="p-4 overflow-y-auto space-y-4 text-base">
                                         <div>
-                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Question</div>
-                                            <p className="text-[#F5F5F5] whitespace-pre-wrap">{pair.question}</p>
+                                            <div className="text-sm text-muted-foreground/75 mb-1">Question</div>
+                                            <p className="text-foreground whitespace-pre-wrap">{pair.question}</p>
                                         </div>
                                         <div>
-                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Answer</div>
-                                            <p className="text-[#F5F5F5] whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">
+                                            <div className="text-sm text-muted-foreground/75 mb-1">Answer</div>
+                                            <p className="text-foreground whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">
                                                 {pair.answer}
                                             </p>
                                         </div>
                                         <div>
-                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Feedback</div>
-                                            <p className="text-[#F5F5F5]">
+                                            <div className="text-sm text-muted-foreground/75 mb-1">Feedback</div>
+                                            <p className="text-foreground">
                                                 {pair.feedback_rating === 1 && (
                                                     <span className="text-green-400 inline-flex items-center gap-1">
                                                         <ThumbsUp size={16} /> Thumbs up
@@ -1201,38 +1209,38 @@ export default function BulkTestPage() {
                                                     </span>
                                                 )}
                                                 {pair.feedback_rating == null && (
-                                                    <span className="text-[rgba(245,245,245,0.5)]">—</span>
+                                                    <span className="text-muted-foreground/75">—</span>
                                                 )}
                                                 {pair.feedback_comment && (
-                                                    <span className="block mt-2 text-[rgba(245,245,245,0.8)]">
+                                                    <span className="block mt-2 text-muted-foreground">
                                                         Comment: {pair.feedback_comment}
                                                     </span>
                                                 )}
                                             </p>
                                         </div>
                                         <div>
-                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Can answer</div>
-                                            <p className="text-[#F5F5F5]">
+                                            <div className="text-sm text-muted-foreground/75 mb-1">Can answer</div>
+                                            <p className="text-foreground">
                                                 {pair.can_answer === true ? "Yes" : pair.can_answer === false ? "No" : "—"}
                                             </p>
                                         </div>
                                         {citations.length > 0 && (
                                             <div>
-                                                <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Citations</div>
-                                                <pre className="text-[12px] text-[rgba(245,245,245,0.8)] whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3 max-h-40 overflow-y-auto">
+                                                <div className="text-sm text-muted-foreground/75 mb-1">Citations</div>
+                                                <pre className="text-sm text-muted-foreground whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3 max-h-40 overflow-y-auto">
                                                     {JSON.stringify(citations, null, 2)}
                                                 </pre>
                                             </div>
                                         )}
                                         {conflicts.length > 0 && (
                                             <div>
-                                                <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Conflicts</div>
-                                                <pre className="text-[12px] text-[rgba(245,245,245,0.8)] whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3 max-h-40 overflow-y-auto">
+                                                <div className="text-sm text-muted-foreground/75 mb-1">Conflicts</div>
+                                                <pre className="text-sm text-muted-foreground whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3 max-h-40 overflow-y-auto">
                                                     {JSON.stringify(conflicts, null, 2)}
                                                 </pre>
                                             </div>
                                         )}
-                                        <div className="text-[12px] text-[rgba(245,245,245,0.5)]">
+                                        <div className="text-sm text-muted-foreground/75">
                                             User: {pair.user_email ?? "—"} · Session #{pair.session_id} ·{" "}
                                             {new Date(pair.created_at).toLocaleString()}
                                         </div>
@@ -1247,13 +1255,13 @@ export default function BulkTestPage() {
             {tab === "questions" && (
                 <div className="space-y-6">
                     {suggestions.length > 0 && (
-                        <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] p-6">
-                            <h3 className="text-[16px] font-semibold text-[#F5F5F5] mb-2">Suggestions from user feedback (&lt;70% satisfaction)</h3>
-                            <p className="text-[14px] text-[rgba(245,245,245,0.6)] mb-4">
+                        <div className="rounded-2xl bg-card border border-border p-6">
+                            <h3 className="text-lg font-semibold text-foreground mb-2">Suggestions from user feedback (&lt;70% satisfaction)</h3>
+                            <p className="text-base text-muted-foreground mb-4">
                                 Add these real user questions to the bulk test suite with one click.
                             </p>
                             {suggestionsLoading ? (
-                                <div className="flex items-center gap-2 text-[14px] text-[rgba(245,245,245,0.5)]">
+                                <div className="flex items-center gap-2 text-base text-muted-foreground/75">
                                     <Loader2 size={16} className="animate-spin" /> Loading suggestions…
                                 </div>
                             ) : (
@@ -1261,18 +1269,18 @@ export default function BulkTestPage() {
                                     {suggestions.map((s) => (
                                         <li
                                             key={s.sample_message_id}
-                                            className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)]"
+                                            className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-[rgba(255,255,255,0.03)] border border-border"
                                         >
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-[14px] text-[#F5F5F5] truncate">{s.question_text}</p>
-                                                <p className="text-[12px] text-[rgba(245,245,245,0.5)]">
+                                                <p className="text-base text-foreground truncate">{s.question_text}</p>
+                                                <p className="text-sm text-muted-foreground/75">
                                                     {s.thumbs_up_pct}% thumbs up · {s.total_count} responses
                                                 </p>
                                             </div>
                                             <button
                                                 onClick={() => addFromFeedback(s.sample_message_id)}
                                                 disabled={addingFromFeedback === s.sample_message_id}
-                                                className="shrink-0 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30 disabled:opacity-50 text-[13px]"
+                                                className="shrink-0 px-3 py-1.5 rounded-lg bg-amber-500/20 text-[var(--color-warning)] border border-amber-500/30 hover:bg-amber-500/30 disabled:opacity-50 text-compact"
                                             >
                                                 {addingFromFeedback === s.sample_message_id ? "Adding…" : "Add to bulk test"}
                                             </button>
@@ -1282,46 +1290,46 @@ export default function BulkTestPage() {
                             )}
                         </div>
                     )}
-                    <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] p-6">
-                        <h3 className="text-[16px] font-semibold text-[#F5F5F5] mb-2">
+                    <div className="rounded-2xl bg-card border border-border p-6">
+                        <h3 className="text-lg font-semibold text-foreground mb-2">
                             {editingId != null ? "Edit Question" : "Add Question"}
                         </h3>
                         <div className="space-y-3 max-w-2xl">
                             <div>
-                                <Label className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Question</Label>
+                                <Label className="text-sm text-muted-foreground/75 mb-1">Question</Label>
                                 <Input
                                     value={formQuestion}
                                     onChange={(e) => setFormQuestion(e.target.value)}
                                     placeholder="e.g. What is the policy on annual leave?"
-                                    className="w-full bg-[rgba(255,255,255,0.06)] border-[rgba(255,255,255,0.1)] rounded-lg"
+                                    className="w-full bg-[rgba(255,255,255,0.06)] border-input rounded-lg"
                                 />
                             </div>
                             <div>
-                                <Label className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Expected answer / criteria (optional)</Label>
+                                <Label className="text-sm text-muted-foreground/75 mb-1">Expected answer / criteria (optional)</Label>
                                 <textarea
                                     value={formExpected}
                                     onChange={(e) => setFormExpected(e.target.value)}
                                     placeholder="Optional: used by LLM to score the answer"
                                     rows={2}
-                                    className="w-full bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] rounded-lg px-3 py-2 text-[14px] text-[#F5F5F5]"
+                                    className="w-full bg-[rgba(255,255,255,0.06)] border border-input rounded-lg px-3 py-2 text-base text-foreground"
                                 />
                             </div>
                             <div>
-                                <Label className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Min score (1–10) to pass</Label>
+                                <Label className="text-sm text-muted-foreground/75 mb-1">Min score (1–10) to pass</Label>
                                 <input
                                     type="number"
                                     min={1}
                                     max={10}
                                     value={formMinScore}
                                     onChange={(e) => setFormMinScore(Number(e.target.value))}
-                                    className="w-20 bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] rounded-lg px-3 py-2 text-[14px] text-[#F5F5F5]"
+                                    className="w-20 bg-[rgba(255,255,255,0.06)] border border-input rounded-lg px-3 py-2 text-base text-foreground"
                                 />
                             </div>
                             <div className="flex gap-2">
                                 <Button
                                     onClick={saveQuestion}
                                     disabled={saving || !formQuestion.trim()}
-                                    className="bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500/30"
+                                    className="bg-amber-500/20 text-[var(--color-warning)] border-amber-500/30 hover:bg-amber-500/30"
                                 >
                                     {saving ? "Saving…" : editingId != null ? "Update" : "Add"}
                                 </Button>
@@ -1334,7 +1342,7 @@ export default function BulkTestPage() {
                                             setFormExpected("");
                                             setFormMinScore(7);
                                         }}
-                                        className="bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,245,0.8)]"
+                                        className="bg-[rgba(255,255,255,0.06)] text-muted-foreground"
                                     >
                                         Cancel
                                     </Button>
@@ -1343,28 +1351,28 @@ export default function BulkTestPage() {
                         </div>
                     </div>
 
-                    <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] overflow-hidden">
-                        <div className="p-4 border-b border-[rgba(255,255,255,0.08)]">
-                            <h3 className="text-[16px] font-semibold text-[#F5F5F5]">Questions ({questions.length})</h3>
+                    <div className="rounded-2xl bg-card border border-border overflow-hidden">
+                        <div className="p-4 border-b border-border">
+                            <h3 className="text-lg font-semibold text-foreground">Questions ({questions.length})</h3>
                             {latestRunForQuestions && (
-                                <p className="text-[12px] text-[rgba(245,245,245,0.5)] mt-1">
+                                <p className="text-sm text-muted-foreground/75 mt-1">
                                     Latest answers/scores from Run #{latestRunForQuestions.id} ({latestRunForQuestions.model_name ?? "—"})
                                 </p>
                             )}
                         </div>
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left text-[14px]">
+                            <table className={cn(listTableClass(), "text-left text-base")}>
                                 <thead>
-                                    <tr className="border-b border-[rgba(255,255,255,0.08)]">
-                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium">Question</th>
-                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium min-w-[120px]">Expected answer</th>
-                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium min-w-[120px]">Latest answer</th>
-                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-16">Score</th>
-                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-16">Pass</th>
-                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-20">Source</th>
-                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-20">Min</th>
-                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-16">Active</th>
-                                        <th className="p-3 text-[rgba(245,245,245,0.5)] font-medium w-32">Actions</th>
+                                    <tr className={listTheadRowClass}>
+                                        <th className={cn(listThClass, "text-muted-foreground/75 font-medium")}>Question</th>
+                                        <th className={cn(listThClass, "text-muted-foreground/75 font-medium min-w-[120px]")}>Expected answer</th>
+                                        <th className={cn(listThClass, "text-muted-foreground/75 font-medium min-w-[120px]")}>Latest answer</th>
+                                        <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-16")}>Score</th>
+                                        <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-16")}>Pass</th>
+                                        <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-20")}>Source</th>
+                                        <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-20")}>Min</th>
+                                        <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-16")}>Active</th>
+                                        <th className={cn(listThClass, "text-muted-foreground/75 font-medium w-32")}>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1375,12 +1383,12 @@ export default function BulkTestPage() {
                                         const truncate = (s: string | null | undefined, max: number) =>
                                             s && s.length > max ? s.slice(0, max) + "…" : s ?? "—";
                                         return (
-                                            <tr key={q.id} className="border-b border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.02)]">
-                                                <td className="p-3 text-[#F5F5F5] max-w-[200px]">{truncate(q.question, 60)}</td>
-                                                <td className="p-3 text-[rgba(245,245,245,0.8)] max-w-[150px]" title={q.expected_answer ?? undefined}>
+                                            <tr key={q.id} className={cn(listTbodyRowClass, "hover:bg-white/[0.02]")}>
+                                                <td className="p-3 text-foreground max-w-[200px]">{truncate(q.question, 60)}</td>
+                                                <td className="p-3 text-muted-foreground max-w-[150px]" title={q.expected_answer ?? undefined}>
                                                     {truncate(q.expected_answer, 50)}
                                                 </td>
-                                                <td className="p-3 text-[rgba(245,245,245,0.8)] max-w-[150px]" title={latestResult?.answer ?? undefined}>
+                                                <td className="p-3 text-muted-foreground max-w-[150px]" title={latestResult?.answer ?? undefined}>
                                                     {truncate(latestResult?.answer, 50)}
                                                 </td>
                                                 <td className="p-3">{latestResult?.quality_score ?? "—"}</td>
@@ -1392,10 +1400,10 @@ export default function BulkTestPage() {
                                                             <span className="text-red-400">No</span>
                                                         )
                                                     ) : (
-                                                        <span className="text-[rgba(245,245,245,0.4)]">—</span>
+                                                        <span className="text-muted-foreground/55">—</span>
                                                     )}
                                                 </td>
-                                                <td className="p-3 text-[12px] text-[rgba(245,245,245,0.6)]">
+                                                <td className="p-3 text-sm text-muted-foreground">
                                                     {q.source === "user_feedback" ? "Feedback" : q.source ?? "Manual"}
                                                 </td>
                                                 <td className="p-3">{q.min_score}</td>
@@ -1403,7 +1411,7 @@ export default function BulkTestPage() {
                                                 <td className="p-3 flex gap-2 flex-wrap">
                                                     <button
                                                         onClick={() => setQuestionDetailId(q.id)}
-                                                        className="text-[rgba(245,245,245,0.8)] hover:text-[#F5F5F5] hover:underline text-[13px] inline-flex items-center gap-1"
+                                                        className="text-muted-foreground hover:text-foreground hover:underline text-compact inline-flex items-center gap-1"
                                                         title="View full details"
                                                     >
                                                         <Eye size={14} /> View
@@ -1415,13 +1423,13 @@ export default function BulkTestPage() {
                                                             setFormExpected(q.expected_answer ?? "");
                                                             setFormMinScore(q.min_score);
                                                         }}
-                                                        className="text-amber-400 hover:underline text-[13px]"
+                                                        className="text-[var(--color-warning)] hover:underline text-compact"
                                                     >
                                                         Edit
                                                     </button>
                                                     <button
                                                         onClick={() => setDeleteQuestionId(q.id)}
-                                                        className="text-red-400 hover:underline text-[13px]"
+                                                        className="text-red-400 hover:underline text-compact"
                                                     >
                                                         Delete
                                                     </button>
@@ -1433,7 +1441,7 @@ export default function BulkTestPage() {
                             </table>
                         </div>
                         {questions.length === 0 && (
-                            <div className="p-8 text-center text-[rgba(245,245,245,0.5)] text-[14px]">
+                            <div className="p-8 text-center text-muted-foreground/75 text-base">
                                 No questions yet. Add one above to get started.
                             </div>
                         )}
@@ -1451,27 +1459,27 @@ export default function BulkTestPage() {
                             : "";
                         return (
                             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setQuestionDetailId(null)}>
-                                <div className="rounded-2xl bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
-                                    <div className="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.08)]">
-                                        <h4 className="text-[16px] font-semibold text-[#F5F5F5]">Question details</h4>
-                                        <button type="button" onClick={() => setQuestionDetailId(null)} className="p-1.5 rounded-lg text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.08)] hover:text-[#F5F5F5]">
+                                <div className="rounded-2xl bg-accent border border-input shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex items-center justify-between p-4 border-b border-border">
+                                        <h4 className="text-lg font-semibold text-foreground">Question details</h4>
+                                        <button type="button" onClick={() => setQuestionDetailId(null)} className="p-1.5 rounded-lg text-muted-foreground hover:bg-[rgba(255,255,255,0.08)] hover:text-foreground">
                                             <X size={20} />
                                         </button>
                                     </div>
-                                    <div className="p-4 overflow-y-auto space-y-4 text-[14px]">
+                                    <div className="p-4 overflow-y-auto space-y-4 text-base">
                                         <div>
-                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Question</div>
-                                            <p className="text-[#F5F5F5] whitespace-pre-wrap">{q.question}</p>
+                                            <div className="text-sm text-muted-foreground/75 mb-1">Question</div>
+                                            <p className="text-foreground whitespace-pre-wrap">{q.question}</p>
                                         </div>
                                         <div>
-                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Expected answer / criteria</div>
-                                            <p className="text-[#F5F5F5] whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">
+                                            <div className="text-sm text-muted-foreground/75 mb-1">Expected answer / criteria</div>
+                                            <p className="text-foreground whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">
                                                 {q.expected_answer ?? "—"}
                                             </p>
                                         </div>
                                         <div>
-                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Source</div>
-                                            <p className="text-[rgba(245,245,245,0.8)]">
+                                            <div className="text-sm text-muted-foreground/75 mb-1">Source</div>
+                                            <p className="text-muted-foreground">
                                                 {q.source === "user_feedback" ? (
                                                     <span>From user feedback {q.source_message_id && `(message #${q.source_message_id})`}</span>
                                                 ) : (
@@ -1480,35 +1488,35 @@ export default function BulkTestPage() {
                                             </p>
                                         </div>
                                         <div>
-                                            <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Latest generated answer {latestRunForQuestions && `(Run #${latestRunForQuestions.id})`}</div>
-                                            <p className="text-[#F5F5F5] whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">
+                                            <div className="text-sm text-muted-foreground/75 mb-1">Latest generated answer {latestRunForQuestions && `(Run #${latestRunForQuestions.id})`}</div>
+                                            <p className="text-foreground whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">
                                                 {latestResult?.answer ?? "— No run result yet —"}
                                             </p>
                                         </div>
                                         {reasoning && (
                                             <div>
-                                                <div className="text-[12px] text-[rgba(245,245,245,0.5)] mb-1">Scoring reasoning</div>
-                                                <p className="text-[rgba(245,245,245,0.8)] whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">{reasoning}</p>
+                                                <div className="text-sm text-muted-foreground/75 mb-1">Scoring reasoning</div>
+                                                <p className="text-muted-foreground whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">{reasoning}</p>
                                             </div>
                                         )}
-                                        <div className="flex flex-wrap gap-4 text-[13px] pt-2 border-t border-[rgba(255,255,255,0.08)]">
-                                            <span className="text-[rgba(245,245,245,0.6)]">Min score: <span className="text-[#F5F5F5]">{q.min_score}/10</span></span>
-                                            <span className="text-[rgba(245,245,245,0.6)]">Active: <span className="text-[#F5F5F5]">{q.is_active ? "Yes" : "No"}</span></span>
+                                        <div className="flex flex-wrap gap-4 text-compact pt-2 border-t border-border">
+                                            <span className="text-muted-foreground">Min score: <span className="text-foreground">{q.min_score}/10</span></span>
+                                            <span className="text-muted-foreground">Active: <span className="text-foreground">{q.is_active ? "Yes" : "No"}</span></span>
                                             {latestResult != null && (
                                                 <>
-                                                    <span className="text-[rgba(245,245,245,0.6)]">Latest score: <span className="text-[#F5F5F5]">{latestResult.quality_score ?? "—"}/10</span></span>
-                                                    <span className="text-[rgba(245,245,245,0.6)]">Pass: {latestResult.passed ? <span className="text-green-400">Yes</span> : <span className="text-red-400">No</span>}</span>
+                                                    <span className="text-muted-foreground">Latest score: <span className="text-foreground">{latestResult.quality_score ?? "—"}/10</span></span>
+                                                    <span className="text-muted-foreground">Pass: {latestResult.passed ? <span className="text-green-400">Yes</span> : <span className="text-red-400">No</span>}</span>
                                                     {latestResult.regression_detected && latestResult.previous_score != null && (
-                                                        <span className="text-amber-400">Regression (previous: {latestResult.previous_score})</span>
+                                                        <span className="text-[var(--color-warning)]">Regression (previous: {latestResult.previous_score})</span>
                                                     )}
                                                     {latestResult.response_time_ms != null && (
-                                                        <span className="text-[rgba(245,245,245,0.6)]">Response: {latestResult.response_time_ms}ms</span>
+                                                        <span className="text-muted-foreground">Response: {latestResult.response_time_ms}ms</span>
                                                     )}
                                                 </>
                                             )}
                                         </div>
                                         {latestResult?.error && (
-                                            <p className="text-[#C87A7A] text-[13px]">{latestResult.error}</p>
+                                            <p className="text-[var(--color-error)] text-compact">{latestResult.error}</p>
                                         )}
                                     </div>
                                 </div>
@@ -1521,17 +1529,17 @@ export default function BulkTestPage() {
                         const q = questions.find((x) => x.id === deleteQuestionId);
                         return (
                             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setDeleteQuestionId(null)}>
-                                <div className="rounded-2xl bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] shadow-xl max-w-md w-full p-5" onClick={(e) => e.stopPropagation()}>
-                                    <h4 className="text-[16px] font-semibold text-[#F5F5F5] mb-2">Delete question?</h4>
+                                <div className="rounded-2xl bg-accent border border-input shadow-xl max-w-md w-full p-5" onClick={(e) => e.stopPropagation()}>
+                                    <h4 className="text-lg font-semibold text-foreground mb-2">Delete question?</h4>
                                     {q && (
-                                        <p className="text-[14px] text-[rgba(245,245,245,0.8)] mb-4 line-clamp-3">{q.question}</p>
+                                        <p className="text-base text-muted-foreground mb-4 line-clamp-3">{q.question}</p>
                                     )}
-                                    <p className="text-[13px] text-[rgba(245,245,245,0.5)] mb-4">This cannot be undone.</p>
+                                    <p className="text-compact text-muted-foreground/75 mb-4">This cannot be undone.</p>
                                     <div className="flex justify-end gap-2">
                                         <button
                                             type="button"
                                             onClick={() => setDeleteQuestionId(null)}
-                                            className="px-4 py-2 rounded-lg bg-[rgba(255,255,255,0.08)] text-[#F5F5F5] hover:bg-[rgba(255,255,255,0.12)] text-[14px]"
+                                            className="px-4 py-2 rounded-lg bg-[rgba(255,255,255,0.08)] text-foreground hover:bg-[rgba(255,255,255,0.12)] text-base"
                                         >
                                             Cancel
                                         </button>
@@ -1541,7 +1549,7 @@ export default function BulkTestPage() {
                                                 const ok = await deleteQuestion(deleteQuestionId);
                                                 if (ok) setDeleteQuestionId(null);
                                             }}
-                                            className="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 text-[14px]"
+                                            className="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 text-base"
                                         >
                                             Delete
                                         </button>

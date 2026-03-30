@@ -93,14 +93,36 @@ export function buildCmdKIndex(): CmdKResult[] {
 
 export function filterCmdKIndex(items: CmdKResult[], q: string): CmdKResult[] {
   const s = q.trim().toLowerCase();
-  if (!s) return items.slice(0, 24);
+  if (!s) return items.slice(0, 40);
   return items
     .filter((it) => {
       if (it.kind === "doc")
         return it.title.toLowerCase().includes(s) || it.subtitle.toLowerCase().includes(s);
       if (it.kind === "product")
-        return it.title.toLowerCase().includes(s) || it.subtitle.toLowerCase().includes(s);
+        return (
+          it.title.toLowerCase().includes(s) ||
+          it.subtitle.toLowerCase().includes(s) ||
+          it.typeLabel.toLowerCase().includes(s)
+        );
       return it.title.toLowerCase().includes(s) || it.subtitle.toLowerCase().includes(s);
     })
-    .slice(0, 20);
+    .slice(0, 24);
+}
+
+/** Boost results that match the current dashboard section (Cmd+K scope). */
+export function cmdKScopeScore(pathname: string, it: CmdKResult): number {
+  let score = 0;
+  if (pathname.startsWith("/dashboard/products") && it.kind === "product") score += 4;
+  else if (pathname.startsWith("/dashboard/knowledge") && it.kind === "doc") score += 4;
+  else if (pathname.startsWith("/dashboard/vics") && it.kind === "vic") score += 4;
+  else if (pathname.startsWith("/dashboard/chat") && it.kind === "doc") score += 1;
+  return score;
+}
+
+export function sortCmdKByPathScope(pathname: string, items: CmdKResult[]): CmdKResult[] {
+  return [...items].sort((a, b) => {
+    const ds = cmdKScopeScore(pathname, b) - cmdKScopeScore(pathname, a);
+    if (ds !== 0) return ds;
+    return a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
+  });
 }

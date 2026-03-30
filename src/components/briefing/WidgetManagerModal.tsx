@@ -85,9 +85,9 @@ export default function WidgetManagerModal({ open, onClose, widgets, onSave }: P
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="bg-[#1a1a1a] border-white/10 max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="bg-accent border-input max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-[#F5F5F5]">Customize Briefing Room</DialogTitle>
+          <DialogTitle className="text-foreground">Customize Briefing Room</DialogTitle>
         </DialogHeader>
         <div className="overflow-y-auto space-y-3 py-2">
           {WIDGET_META.map((meta) => {
@@ -96,15 +96,15 @@ export default function WidgetManagerModal({ open, onClose, widgets, onSave }: P
             return (
               <div
                 key={meta.type}
-                className="flex items-center justify-between gap-4 rounded-lg border border-[rgba(255,255,255,0.08)] bg-white/[0.03] p-3"
+                className="flex items-center justify-between gap-4 rounded-lg border border-border bg-white/[0.03] p-3"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-[#F5F5F5] shrink-0">
+                  <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-foreground shrink-0">
                     <meta.Icon size={20} />
                   </div>
                   <div>
-                    <p className="font-medium text-[#F5F5F5]">{meta.label}</p>
-                    <p className="text-xs text-[rgba(245,245,245,0.5)]">{meta.description}</p>
+                    <p className="font-medium text-foreground">{meta.label}</p>
+                    <p className="text-xs text-muted-foreground/75">{meta.description}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
@@ -113,7 +113,7 @@ export default function WidgetManagerModal({ open, onClose, widgets, onSave }: P
                       <select
                         value={w.size}
                         onChange={(e) => setSize(w.id, e.target.value as WidgetSize)}
-                        className="rounded border border-white/10 bg-white/5 px-2 py-1 text-xs text-[#F5F5F5]"
+                        className="rounded border border-input bg-white/5 px-2 py-1 text-xs text-foreground"
                       >
                         <option value="small">Small</option>
                         <option value="medium">Medium</option>
@@ -137,7 +137,7 @@ export default function WidgetManagerModal({ open, onClose, widgets, onSave }: P
                       </Button>
                     </>
                   )}
-                  <label className="flex items-center gap-1.5 text-sm text-[rgba(245,245,245,0.8)]">
+                  <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <input
                       type="checkbox"
                       checked={isVisible}
@@ -151,11 +151,11 @@ export default function WidgetManagerModal({ open, onClose, widgets, onSave }: P
             );
           })}
         </div>
-        <DialogFooter className="border-t border-white/10 pt-4">
-          <Button variant="outline" onClick={reset} className="border-white/10 text-[#F5F5F5]">
+        <DialogFooter className="border-t border-input pt-4">
+          <Button variant="outline" onClick={reset} className="border-input text-foreground">
             Reset to default
           </Button>
-          <Button variant="outline" onClick={onClose} className="border-white/10 text-[#F5F5F5]">
+          <Button variant="outline" onClick={onClose} className="border-input text-foreground">
             Cancel
           </Button>
           <Button onClick={handleSave}>Save</Button>

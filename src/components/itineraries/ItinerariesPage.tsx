@@ -296,7 +296,7 @@ export default function ItinerariesPage() {
   }, [itinerariesForStageCounts]);
 
   const chipBtn =
-    "flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-[#9B9590] transition-colors hover:bg-white/[0.06]";
+    "flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-muted-foreground transition-colors hover:bg-white/[0.06]";
 
   const isEmpty = !isLoading && itineraries.length === 0 && !hasActiveFilters;
   const noResults = !isLoading && itineraries.length === 0 && hasActiveFilters;
@@ -304,11 +304,11 @@ export default function ItinerariesPage() {
   const canViewFinancials_ = canViewFinancials(currentUser);
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#08080c] text-[#F5F5F5]">
-      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-[rgba(255,255,255,0.08)] pl-6 pr-[4.5rem] py-3">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-inset text-foreground">
+      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-border pl-6 pr-[4.5rem] py-3">
         <div className="min-w-0">
-          <h1 className="text-sm font-semibold leading-none text-[#F5F5F5]">Itineraries</h1>
-          <p className="mt-1 text-[11px] leading-snug text-[rgba(245,245,245,0.5)]">
+          <h1 className="text-sm font-semibold leading-none text-foreground">Itineraries</h1>
+          <p className="mt-1 text-xs leading-snug text-muted-foreground/75">
             {hasActiveFilters ? (
               <>
                 <span>
@@ -372,59 +372,59 @@ export default function ItinerariesPage() {
             <button type="button" className={chipBtn} onClick={() => setSearchQuery("")} aria-label="Clear search">
               &quot;{searchQuery.trim().slice(0, 24)}
               {searchQuery.trim().length > 24 ? "…" : ""}&quot;
-              <span className="text-[#6B6560]">✕</span>
+              <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
           {statusFilter ? (
             <button type="button" className={chipBtn} onClick={() => setStatusFilter(null)} aria-label="Clear status">
               {ITINERARY_STATUS_BADGES[statusFilter].label}
-              <span className="text-[#6B6560]">✕</span>
+              <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
           {vicFilter ? (
             <button type="button" className={chipBtn} onClick={() => setVicFilter(null)} aria-label="Clear client filter">
               Client
-              <span className="text-[#6B6560]">✕</span>
+              <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
           {destinationFilter ? (
             <button type="button" className={chipBtn} onClick={() => setDestinationFilter(null)} aria-label="Clear destination">
               {destinationFilter.slice(0, 28)}
               {destinationFilter.length > 28 ? "…" : ""}
-              <span className="text-[#6B6560]">✕</span>
+              <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
           {dateFrom ? (
             <button type="button" className={chipBtn} onClick={() => setDateFrom("")} aria-label="Clear start date">
               From {dateFrom}
-              <span className="text-[#6B6560]">✕</span>
+              <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
           {dateTo ? (
             <button type="button" className={chipBtn} onClick={() => setDateTo("")} aria-label="Clear end date">
               To {dateTo}
-              <span className="text-[#6B6560]">✕</span>
+              <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
           {pipelineFilter ? (
             <button type="button" className={chipBtn} onClick={() => setPipelineFilter(null)} aria-label="Clear pipeline">
               {PIPELINE_STAGE_LABEL_MAP[pipelineFilter]}
-              <span className="text-[#6B6560]">✕</span>
+              <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
           {upcomingTrips ? (
             <button type="button" className={chipBtn} onClick={() => setUpcomingTrips(false)} aria-label="Clear upcoming filter">
               Upcoming trips
-              <span className="text-[#6B6560]">✕</span>
+              <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
         </div>
       )}
 
       {upcomingTrips && (
-        <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-lg border border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.06)] px-3 py-2 text-[11px] text-[#C9A96E] mx-6">
+        <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-lg border border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.06)] px-3 py-2 text-xs text-brand-cta mx-6">
           <span>Showing upcoming trips: Committed, Preparing, Final Review, or Traveling.</span>
-          <button type="button" onClick={() => setUpcomingTrips(false)} className="font-medium text-[#E8D5B5] hover:text-[#F5F0EB]">
+          <button type="button" onClick={() => setUpcomingTrips(false)} className="font-medium text-[#E8D5B5] hover:text-foreground">
             Clear
           </button>
         </div>

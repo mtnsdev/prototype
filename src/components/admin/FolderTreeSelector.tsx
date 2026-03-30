@@ -228,7 +228,7 @@ function TreeNode({
 
   const getIconClasses = () => {
     if (node.is_shared_drive) return "bg-purple-500/10 text-purple-400";
-    if (node.node_type === "folder") return "bg-amber-500/10 text-amber-400";
+    if (node.node_type === "folder") return "bg-amber-500/10 text-[var(--color-warning)]";
     return "bg-blue-500/10 text-blue-400";
   };
 
@@ -257,7 +257,7 @@ function TreeNode({
           type="button"
           variant="ghost"
           size="icon-xs"
-          className="w-5 h-5 shrink-0 text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5]"
+          className="w-5 h-5 shrink-0 text-muted-foreground/75 hover:text-foreground"
           onClick={(e) => {
             e.stopPropagation();
             handleExpand();
@@ -294,7 +294,7 @@ function TreeNode({
         >
           {getIcon()}
         </div>
-        <span className="text-[14px] text-[#F5F5F5] truncate flex-1">{node.title}</span>
+        <span className="text-base text-foreground truncate flex-1">{node.title}</span>
       </div>
       {isExpandable && isExpanded && cached && (
         <div>
@@ -394,7 +394,7 @@ export function FolderTreeSelector({
 
   if (loading && rootNodes.length === 0) {
     return (
-      <div className="flex items-center justify-center py-6 text-[rgba(245,245,245,0.5)] text-[14px]">
+      <div className="flex items-center justify-center py-6 text-muted-foreground/75 text-base">
         <Loader2 size={18} className="animate-spin mr-2" />
         {mode === "google-drive" ? "Loading Google Drive folders…" : "Loading folder tree…"}
       </div>
@@ -403,7 +403,7 @@ export function FolderTreeSelector({
   if (error) {
     return (
       <div className="py-4">
-        <p className="text-[14px] text-red-400 mb-2">{error}</p>
+        <p className="text-base text-red-400 mb-2">{error}</p>
         <Button type="button" variant="outline" size="sm" onClick={loadRoot}>
           Retry
         </Button>
@@ -412,7 +412,7 @@ export function FolderTreeSelector({
   }
   if (rootNodes.length === 0) {
     return (
-      <div className="py-4 text-[14px] text-[rgba(245,245,245,0.5)]">
+      <div className="py-4 text-base text-muted-foreground/75">
         {mode === "google-drive"
           ? "No folders available. The connected root folder may be empty or inaccessible."
           : "No folders yet. Sync the folder tree from the admin panel first."}
@@ -421,7 +421,7 @@ export function FolderTreeSelector({
   }
 
   return (
-    <div className="max-h-[280px] overflow-y-auto rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0C0C0C] p-2">
+    <div className="max-h-[280px] overflow-y-auto rounded-xl border border-border bg-background p-2">
       {rootNodes.map((node) => (
         <TreeNode
           key={String(node.external_id)}

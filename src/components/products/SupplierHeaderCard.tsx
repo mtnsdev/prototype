@@ -26,28 +26,28 @@ export default function SupplierHeaderCard({ supplier, className }: Props) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-4 flex flex-wrap items-center gap-4",
+        "rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-4 flex flex-wrap items-center gap-4",
         className
       )}
     >
       <div>
-        <h3 className="font-semibold text-[#F5F5F5]">{supplier.name}</h3>
+        <h3 className="font-semibold text-foreground">{supplier.name}</h3>
         {supplier.type && (
-          <p className="text-xs text-[rgba(245,245,245,0.5)]">{supplier.type}</p>
+          <p className="text-xs text-muted-foreground/75">{supplier.type}</p>
         )}
       </div>
       {supplier.property_count != null && (
-        <span className="text-sm text-[rgba(245,245,245,0.7)]">
+        <span className="text-sm text-muted-foreground">
           {supplier.property_count} propert{supplier.property_count === 1 ? "y" : "ies"}
         </span>
       )}
       {supplier.avg_commission != null && (
-        <span className="text-sm text-[rgba(245,245,245,0.7)]">
+        <span className="text-sm text-muted-foreground">
           Avg commission: {supplier.avg_commission}%
         </span>
       )}
       {supplier.key_contact && (
-        <span className="text-sm text-[rgba(245,245,245,0.6)]">
+        <span className="text-sm text-muted-foreground">
           Contact: {supplier.key_contact}
         </span>
       )}

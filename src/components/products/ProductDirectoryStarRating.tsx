@@ -13,7 +13,7 @@ export function ProductDirectoryStarRating({ value, onChange }: Props) {
           key={n}
           type="button"
           onClick={() => onChange(n)}
-          className="text-[16px] leading-none text-[#C9A96E] hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A96E]/40 rounded"
+          className="text-lg leading-none text-brand-cta hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A96E]/40 rounded"
           aria-label={`${n} star${n > 1 ? "s" : ""}`}
           aria-pressed={value >= n}
         >

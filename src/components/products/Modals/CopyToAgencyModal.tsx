@@ -41,21 +41,21 @@ export default function CopyToAgencyModal({ open, onClose, product, onCopied }: 
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="bg-[#1a1a1a] border-white/10">
+      <DialogContent className="bg-accent border-input">
         <DialogHeader>
-          <DialogTitle className="text-[#F5F5F5]">Copy to Agency</DialogTitle>
+          <DialogTitle className="text-foreground">Copy to Agency</DialogTitle>
         </DialogHeader>
-        <p className="text-sm text-[rgba(245,245,245,0.8)]">
+        <p className="text-sm text-muted-foreground">
           Creates an agency copy you can customize. The original stays linked for updates.
         </p>
         {product && (
-          <p className="text-sm text-[rgba(245,245,245,0.6)]">
-            Product: <strong className="text-[#F5F5F5]">{product.name}</strong>
+          <p className="text-sm text-muted-foreground">
+            Product: <strong className="text-foreground">{product.name}</strong>
           </p>
         )}
         {error && <p className="text-sm text-red-400">{error}</p>}
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} className="border-white/10 text-[#F5F5F5]">
+          <Button variant="outline" onClick={onClose} className="border-input text-foreground">
             Cancel
           </Button>
           <Button onClick={handleCopy} disabled={loading || !product}>

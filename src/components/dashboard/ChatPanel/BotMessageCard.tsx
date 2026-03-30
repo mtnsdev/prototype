@@ -27,8 +27,8 @@ function KnowledgeCitationFooter({
   })();
 
   return (
-    <div className="mt-4 pt-4 border-t border-[rgba(255,255,255,0.08)] space-y-2">
-      <div className="text-[11px] font-medium uppercase tracking-wider text-[rgba(245,245,245,0.45)]">
+    <div className="mt-4 pt-4 border-t border-border space-y-2">
+      <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground/75">
         Sources
       </div>
       <ul className="space-y-2">
@@ -40,7 +40,7 @@ function KnowledgeCitationFooter({
                 e.stopPropagation();
                 onCitationClick(c.filename, c.page_number, c.pdf_path);
               }}
-              className="w-full text-left rounded-lg border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.03)] px-3 py-2 hover:border-[rgba(174,133,80,0.35)] transition-colors"
+              className="w-full text-left rounded-lg border border-border bg-[rgba(255,255,255,0.03)] px-3 py-2 hover:border-[rgba(174,133,80,0.35)] transition-colors"
             >
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <ScopeBadge scope={c.kv_scope ?? TEAM_EVERYONE_ID} teams={teams} />
@@ -52,11 +52,11 @@ function KnowledgeCitationFooter({
                     <Shield className="w-3.5 h-3.5" aria-hidden />
                   </span>
                 ) : null}
-                <span className="text-[13px] font-medium text-[#F5F5F5]">{c.filename}</span>
-                <span className="text-[11px] text-[rgba(245,245,245,0.45)]">p.{c.page_number}</span>
+                <span className="text-compact font-medium text-foreground">{c.filename}</span>
+                <span className="text-xs text-muted-foreground/75">p.{c.page_number}</span>
               </div>
               {c.excerpt ? (
-                <p className="text-[12px] text-[rgba(245,245,245,0.55)] line-clamp-2">{c.excerpt}</p>
+                <p className="text-sm text-muted-foreground/75 line-clamp-2">{c.excerpt}</p>
               ) : null}
             </button>
           </li>
@@ -133,27 +133,27 @@ export function BotMessageCard({
           : undefined
       }
       className={[
-        "bg-[#161616] rounded-2xl rounded-bl-md p-5 space-y-5 shadow-lg border transition-colors duration-200",
+        "bg-card rounded-2xl rounded-bl-md p-5 space-y-5 shadow-lg border transition-colors duration-200",
         hasPanelContent ? "cursor-pointer" : "",
-        isPanelOpen ? "border-[rgba(174,133,80,0.6)]" : hasPanelContent ? "border-[rgba(255,255,255,0.08)] group-hover:border-[rgba(174,133,80,0.6)]" : "border-[rgba(255,255,255,0.08)]",
+        isPanelOpen ? "border-[rgba(174,133,80,0.6)]" : hasPanelContent ? "border-border group-hover:border-[rgba(174,133,80,0.6)]" : "border-border",
       ].join(" ")}
     >
       {/* Header: badges + View/Hide hint */}
       {hasPanelContent && (
-        <div className="flex items-center justify-between gap-3 pb-3 border-b border-[rgba(255,255,255,0.08)]">
+        <div className="flex items-center justify-between gap-3 pb-3 border-b border-border">
           <div className="flex flex-wrap gap-2">
             {hasCards && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-[rgba(212,165,116,0.2)] text-[rgba(212,165,116,0.95)]">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[rgba(212,165,116,0.2)] text-[rgba(212,165,116,0.95)]">
                 {message.response!.cards!.length} place{message.response!.cards!.length !== 1 ? "s" : ""} found
               </span>
             )}
             {hasWebCitations && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-[rgba(212,165,116,0.2)] text-[rgba(212,165,116,0.95)]">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[rgba(212,165,116,0.2)] text-[rgba(212,165,116,0.95)]">
                 {message.response!.web_citations!.length} web source{message.response!.web_citations!.length !== 1 ? "s" : ""} found
               </span>
             )}
             {hasCitations && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-[rgba(212,165,116,0.2)] text-[rgba(212,165,116,0.95)]">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[rgba(212,165,116,0.2)] text-[rgba(212,165,116,0.95)]">
                 {citationCount} knowledge source{citationCount !== 1 ? "s" : ""} found
               </span>
             )}
@@ -176,7 +176,7 @@ export function BotMessageCard({
                   }
                 }}
                 className={[
-                  "inline-flex items-center gap-2 text-[12px] font-medium text-[rgba(212,165,116,0.95)] hover:text-[#D4A574] transition-colors",
+                  "inline-flex items-center gap-2 text-sm font-medium text-[rgba(212,165,116,0.95)] hover:text-[var(--color-warning)] transition-colors",
                   !hintPulseSeen.has(messageIndex) && hasCards ? "animate-places-hint-pulse" : "",
                 ]
                   .filter(Boolean)
@@ -200,7 +200,7 @@ export function BotMessageCard({
                   }
                 }}
                 className={[
-                  "inline-flex items-center gap-2 text-[12px] font-medium text-[rgba(212,165,116,0.95)] hover:text-[#D4A574] transition-colors",
+                  "inline-flex items-center gap-2 text-sm font-medium text-[rgba(212,165,116,0.95)] hover:text-[var(--color-warning)] transition-colors",
                   !hintPulseSeen.has(messageIndex) && hasWebCitations ? "animate-places-hint-pulse" : "",
                 ]
                   .filter(Boolean)
@@ -224,7 +224,7 @@ export function BotMessageCard({
                   }
                 }}
                 className={[
-                  "inline-flex items-center gap-2 text-[12px] font-medium text-[rgba(212,165,116,0.95)] hover:text-[#D4A574] transition-colors",
+                  "inline-flex items-center gap-2 text-sm font-medium text-[rgba(212,165,116,0.95)] hover:text-[var(--color-warning)] transition-colors",
                   !hintPulseSeen.has(messageIndex) && hasCitations ? "animate-places-hint-pulse" : "",
                 ]
                   .filter(Boolean)
@@ -244,17 +244,17 @@ export function BotMessageCard({
       {message.response.can_answer === false &&
       (!message.response.answer || !message.response.answer.trim()) ? (
         <div className="space-y-3">
-          <p className="text-[14px] leading-relaxed text-[rgba(245,245,245,0.85)]">
+          <p className="text-base leading-relaxed text-[rgba(245,245,245,0.85)]">
             No documents in your Knowledge Vault matched this question closely enough to answer with
             confidence.
           </p>
-          <p className="text-[13px] text-[rgba(245,245,245,0.5)]">
+          <p className="text-compact text-muted-foreground/75">
             Add or connect sources in Knowledge Vault, or try rephrasing your question.
           </p>
         </div>
       ) : message.response.answer?.trim() ? (
         <div className="space-y-3">
-          <div className="prose prose-sm max-w-none prose-p:text-[rgba(245,245,245,0.88)] prose-headings:text-[#F5F5F5] prose-strong:text-[#F5F5F5] [&_ul]:list-outside [&_ul]:pl-6 [&_ol]:list-outside [&_ol]:pl-6 [&_li>p]:inline [&_li>p]:my-0">
+          <div className="prose prose-sm max-w-none prose-p:text-foreground/90 prose-headings:text-foreground prose-strong:text-foreground [&_ul]:list-outside [&_ul]:pl-6 [&_ol]:list-outside [&_ol]:pl-6 [&_li>p]:inline [&_li>p]:my-0">
             <AnswerWithCitations
               answer={message.response.answer}
               citations={message.response.citations || []}
@@ -276,24 +276,24 @@ export function BotMessageCard({
       {/* Conflicts */}
       {message.response.conflicts && message.response.conflicts.length > 0 && (
         <div className="space-y-3 pt-2">
-          <h4 className="text-[12px] font-medium uppercase tracking-wider text-[#D4A574]">Conflicts Found</h4>
+          <h4 className="text-sm font-medium uppercase tracking-wider text-[var(--color-warning)]">Conflicts Found</h4>
           {message.response.conflicts.map((conflict, idx) => (
             <div key={idx} className="bg-[rgba(212,165,116,0.1)] border border-[rgba(212,165,116,0.2)] p-4 rounded-xl">
-              <h5 className="font-medium text-[#D4A574] mb-3 flex items-center gap-2 text-[13px]">
+              <h5 className="font-medium text-[var(--color-warning)] mb-3 flex items-center gap-2 text-compact">
                 <AlertTriangle className="w-4 h-4" />
                 {conflict.attribute.replace(/_/g, " ")}
               </h5>
               <ul className="space-y-3">
                 {conflict.claims.map((claim, claimIdx) => (
-                  <li key={claimIdx} className="text-[rgba(245,245,245,0.8)]">
-                    <div className="font-medium mb-1 text-[13px] text-[#F5F5F5]">Claim {claimIdx + 1}:</div>
-                    <div className="text-[13px] mb-2 leading-relaxed">{claim.claim}</div>
+                  <li key={claimIdx} className="text-muted-foreground">
+                    <div className="font-medium mb-1 text-compact text-foreground">Claim {claimIdx + 1}:</div>
+                    <div className="text-compact mb-2 leading-relaxed">{claim.claim}</div>
                     {claim.excerpt && (
-                      <div className="text-[12px] text-[rgba(245,245,245,0.6)] italic mb-2 pl-3 border-l-2 border-[rgba(212,165,116,0.4)]">
+                      <div className="text-sm text-muted-foreground italic mb-2 pl-3 border-l-2 border-[rgba(212,165,116,0.4)]">
                         &ldquo;{claim.excerpt}&rdquo;
                       </div>
                     )}
-                    <div className="text-[11px] text-[rgba(245,245,245,0.5)]">
+                    <div className="text-xs text-muted-foreground/75">
                       <button
                         onClick={() => onCitationClick(claim.filename, claim.page_number, claim.pdf_path)}
                         className="text-[#7AA3C8] hover:text-[#9BBDD8] hover:underline transition-colors"
@@ -312,13 +312,13 @@ export function BotMessageCard({
 
       {/* Feedback */}
       {message.id != null && currentSessionId != null && message.feedback_rating == null && (message.feedback_comment == null || message.feedback_comment === "") && (
-        <div className="pt-3 mt-3 border-t border-[rgba(255,255,255,0.08)]">
+        <div className="pt-3 mt-3 border-t border-border">
           <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => onSubmitFeedback(message.id!, { rating: 1 })}
               disabled={feedbackSubmitting === message.id}
-              className="inline-flex items-center justify-center p-2 rounded-lg bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.1)] border border-transparent transition-colors"
+              className="inline-flex items-center justify-center p-2 rounded-lg bg-[rgba(255,255,255,0.06)] text-muted-foreground hover:bg-[rgba(255,255,255,0.1)] border border-transparent transition-colors"
               title="Thumbs up"
             >
               <ThumbsUp className="w-3.5 h-3.5" />
@@ -327,7 +327,7 @@ export function BotMessageCard({
               type="button"
               onClick={() => onSubmitFeedback(message.id!, { rating: -1 })}
               disabled={feedbackSubmitting === message.id}
-              className="inline-flex items-center justify-center p-2 rounded-lg bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.1)] border border-transparent transition-colors"
+              className="inline-flex items-center justify-center p-2 rounded-lg bg-[rgba(255,255,255,0.06)] text-muted-foreground hover:bg-[rgba(255,255,255,0.1)] border border-transparent transition-colors"
               title="Thumbs down"
             >
               <ThumbsDown className="w-3.5 h-3.5" />
@@ -335,7 +335,7 @@ export function BotMessageCard({
             <button
               type="button"
               onClick={() => onOpenFeedbackComment(message.id!)}
-              className="inline-flex items-center justify-center p-2 rounded-lg bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.1)] border border-transparent transition-colors"
+              className="inline-flex items-center justify-center p-2 rounded-lg bg-[rgba(255,255,255,0.06)] text-muted-foreground hover:bg-[rgba(255,255,255,0.1)] border border-transparent transition-colors"
               title="Add a comment"
             >
               <MessageSquare className="w-3.5 h-3.5" />

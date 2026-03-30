@@ -346,12 +346,14 @@ export default function ChatPanel({
         toast({
           title: "Saved to External Search",
           description: "View it under Product directory → External Search collection.",
+          tone: "success",
         });
       } else {
         toast({
           title: "Could not save",
           description:
             "This product may be missing from your directory or External Search is unavailable for your account.",
+          tone: "destructive",
         });
       }
     },
@@ -393,7 +395,7 @@ export default function ChatPanel({
 
   return (
     <>
-      <div className="h-full flex flex-col lg:flex-row overflow-hidden bg-[#0C0C0C]">
+      <div className="h-full flex flex-col lg:flex-row overflow-hidden bg-background">
         <section className="h-full flex flex-col overflow-hidden flex-1 min-w-0">
           <ChatHeader
             isEmptyState={isEmptyState}
@@ -415,8 +417,8 @@ export default function ChatPanel({
             {showConversationLoader && (
               <div className="flex items-center justify-center h-full">
                 <div className="flex flex-col items-center gap-3">
-                  <Loader2 className="w-8 h-8 animate-spin text-[rgba(245,245,245,0.4)]" />
-                  <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Loading conversation...</span>
+                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground/55" />
+                  <span className="text-compact text-muted-foreground/75">Loading conversation...</span>
                 </div>
               </div>
             )}
@@ -426,7 +428,7 @@ export default function ChatPanel({
                 <div key={i} className="space-y-4">
                   {m.role === "user" && (
                     <div className="ml-auto max-w-[80%]">
-                      <div className="rounded-2xl rounded-br-md px-4 py-3 text-[14px] leading-relaxed bg-[#AE8550] text-white font-medium shadow-md">
+                      <div className="rounded-2xl rounded-br-md px-4 py-3 text-base leading-relaxed bg-brand-chat-user text-white font-medium shadow-md">
                         {m.text}
                       </div>
                     </div>
@@ -489,7 +491,7 @@ export default function ChatPanel({
 
                   {m.role === "bot" && !m.response && m.text && (
                     <div className="mr-auto max-w-[85%]">
-                      <div className="rounded-2xl rounded-bl-md px-4 py-3 text-[14px] leading-relaxed bg-[#161616] text-[rgba(245,245,245,0.88)] border border-[rgba(255,255,255,0.08)] shadow-sm">
+                      <div className="rounded-2xl rounded-bl-md px-4 py-3 text-base leading-relaxed bg-card text-foreground/90 border border-border shadow-sm">
                         {m.text}
                       </div>
                     </div>
@@ -499,15 +501,15 @@ export default function ChatPanel({
 
             {showSendingLoader && !isEmptyState && (
               <div className="mr-auto max-w-[85%]">
-                <div className="bg-[#161616] border border-[rgba(255,255,255,0.08)] rounded-2xl rounded-bl-md px-4 py-3 shadow-sm space-y-2">
+                <div className="bg-card border border-border rounded-2xl rounded-bl-md px-4 py-3 shadow-sm space-y-2">
                   {thinkingSteps.length === 0 ? (
                     <div className="flex items-center gap-3">
-                      <Loader2 className="w-4 h-4 animate-spin text-[rgba(245,245,245,0.5)] shrink-0" />
-                      <span className="text-[14px] text-[rgba(245,245,245,0.6)]">Thinking...</span>
+                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground/75 shrink-0" />
+                      <span className="text-base text-muted-foreground">Thinking...</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-3 text-[14px] text-[rgba(245,245,245,0.9)]">
-                      <Loader2 className="w-4 h-4 animate-spin text-[rgba(245,245,245,0.6)] shrink-0" />
+                    <div className="flex items-center gap-3 text-base text-[rgba(245,245,245,0.9)]">
+                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0" />
                       <span>{thinkingSteps[thinkingSteps.length - 1].message}</span>
                     </div>
                   )}
@@ -518,14 +520,14 @@ export default function ChatPanel({
           </div>
 
           {showScrollToBottom && !isEmptyState && (
-            <div className="shrink-0 flex justify-center py-1 bg-[#0C0C0C]">
+            <div className="shrink-0 flex justify-center py-1 bg-background">
               <button
                 type="button"
                 onClick={scrollToBottom}
                 className={[
-                  "flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium",
-                  "bg-[#161616] hover:bg-[#1e1e1e] text-[rgba(245,245,245,0.9)]",
-                  "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(174,133,80,0.3)]",
+                  "flex items-center gap-2 px-4 py-2 rounded-full text-compact font-medium",
+                  "bg-card hover:bg-accent text-[rgba(245,245,245,0.9)]",
+                  "border border-input hover:border-[rgba(174,133,80,0.3)]",
                   "shadow-md hover:shadow-lg transition-all duration-150",
                 ].join(" ")}
                 title="Scroll to bottom"

@@ -44,7 +44,7 @@ export default function ProductDirectoryDetailPanel({
         onClick={onClose}
       />
       <aside
-        className="fixed inset-y-0 right-0 z-40 flex w-full max-w-[420px] flex-col overflow-hidden border-l border-white/[0.06] bg-[#08080c] shadow-2xl animate-in slide-in-from-right duration-200 ease-out"
+        className="fixed inset-y-0 right-0 z-40 flex w-full max-w-[420px] flex-col overflow-hidden border-l border-border bg-inset shadow-2xl animate-in slide-in-from-right duration-200 ease-out"
       >
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
           <ProductDirectoryDetailBody

@@ -227,7 +227,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
       ? "bg-amber-500 text-white hover:bg-amber-600"
       : effPublish.state === "never" || (!effPublish.version && itinerary?.publish_state === "never")
         ? "bg-emerald-600 text-white hover:bg-emerald-700"
-        : "bg-gray-700 text-gray-400 hover:bg-gray-600";
+        : "bg-foreground/25 text-muted-foreground/90 hover:bg-foreground/35";
 
   const isMonaco = itinerary?.id === "itin-001";
 
@@ -260,8 +260,8 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
 
   if (loading) {
     return (
-      <div className="h-full flex flex-col bg-[#08080c] overflow-hidden">
-        <div className="shrink-0 h-10 px-4 border-b border-[rgba(255,255,255,0.08)] flex items-center gap-3">
+      <div className="h-full flex flex-col bg-inset overflow-hidden">
+        <div className="shrink-0 h-10 px-4 border-b border-border flex items-center gap-3">
           <div className="h-8 w-8 rounded bg-white/10 animate-pulse" />
           <div className="h-5 w-48 bg-white/10 rounded animate-pulse" />
         </div>
@@ -292,11 +292,11 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-[#08080c] overflow-hidden">
+    <div className="h-full flex flex-col bg-inset overflow-hidden">
       {IS_PREVIEW_MODE && <PreviewBanner feature="Itinerary" variant="compact" sampleDataOnly />}
       <div className="shrink-0 flex flex-col">
         <div className="px-4 pt-3">
-          <Button variant="ghost" size="sm" asChild className="text-[rgba(245,245,245,0.7)] hover:text-[#F5F5F5]">
+          <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground">
             <Link href="/dashboard/itineraries" className="inline-flex items-center gap-1">
               <ArrowLeft size={18} /> Back to Itineraries
             </Link>
@@ -317,20 +317,20 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
                 {statusBadge?.label ?? itinerary.status}
               </span>
               {effPublish.state === "published_clean" && effPublish.version > 0 && (
-                <span className="flex items-center gap-1.5 text-xs text-gray-400">
+                <span className="flex items-center gap-1.5 text-xs text-white/70">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   Published · v{effPublish.version} · {daysAgoShort(effPublish.at)}
                 </span>
               )}
               {effPublish.state === "unpublished_changes" && (
-                <span className="flex items-center gap-1.5 text-xs text-amber-400">
+                <span className="flex items-center gap-1.5 text-xs text-[var(--color-warning)]">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                   Unpublished changes
                 </span>
               )}
               {(effPublish.state === "never" || effPublish.version === 0) && itinerary.publish_state !== "published_clean" && publishLocal?.state !== "published_clean" && (
-                <span className="flex items-center gap-1.5 text-xs text-gray-500">
-                  <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
+                <span className="flex items-center gap-1.5 text-xs text-white/60">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/45" />
                   Not yet published
                 </span>
               )}
@@ -343,10 +343,10 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
           </div>
         </div>
       </div>
-      <header className="shrink-0 border-b border-[rgba(255,255,255,0.08)] px-4 py-2 flex flex-wrap items-center gap-2">
+      <header className="shrink-0 border-b border-border px-4 py-2 flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           {canEdit && (
-            <Button variant="outline" size="sm" asChild className="border-white/10 text-[#F5F5F5]">
+            <Button variant="outline" size="sm" asChild className="border-input text-foreground">
               <Link href={`/dashboard/itineraries/${itineraryId}/edit`}>
                 <Pencil size={14} className="mr-1" /> Edit
               </Link>
@@ -354,12 +354,12 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
           )}
           <Button
             size="sm"
-            className="bg-white text-gray-900 hover:bg-gray-100 rounded-lg px-4 py-2 font-medium"
+            className="bg-white text-neutral-900 hover:bg-neutral-100 rounded-lg px-4 py-2 font-medium"
             onClick={() => setShareModalOpen(true)}
           >
             <Share2 size={14} className="mr-1" /> Share with Client
           </Button>
-          <Button size="sm" variant="outline" className="border-white/10 text-[#F5F5F5]" onClick={() => setGuestPortalOpen(true)}>
+          <Button size="sm" variant="outline" className="border-input text-foreground" onClick={() => setGuestPortalOpen(true)}>
             <Globe size={14} className="mr-1" /> Guest Portal
           </Button>
           <StatusChangeDropdown
@@ -375,7 +375,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
           <Button
             variant="outline"
             size="sm"
-            className="border-white/10 text-[#F5F5F5]"
+            className="border-input text-foreground"
             onClick={async () => {
               try {
                 const { duplicateItinerary } = await import("@/lib/itineraries-api");
@@ -391,7 +391,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="border-white/10 text-[#F5F5F5] px-2">
+              <Button variant="outline" size="sm" className="border-input text-foreground px-2">
                 <MoreHorizontal size={16} />
               </Button>
             </DropdownMenuTrigger>
@@ -400,14 +400,14 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
             </DropdownMenuContent>
           </DropdownMenu>
           {canDelete && (
-            <Button variant="outline" size="sm" onClick={() => setDeleteModalOpen(true)} className="border-white/10 text-red-400">
+            <Button variant="outline" size="sm" onClick={() => setDeleteModalOpen(true)} className="border-input text-red-400">
               <Trash2 size={14} className="mr-1" /> Delete
             </Button>
           )}
         </div>
       </header>
 
-      <div className="shrink-0 px-4 py-3 border-b border-white/[0.06] relative bg-[#08080c]">
+      <div className="shrink-0 px-4 py-3 border-b border-border relative bg-inset">
         <div className="w-full overflow-x-auto mb-2">
           <div className="flex items-center min-w-max px-1">
             {PIPELINE_STAGES.map((stage, i) => {
@@ -435,8 +435,8 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
                       isCurrent
                         ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.1)]"
                         : isPast
-                          ? "bg-white/5 text-gray-400 border border-white/10"
-                          : "bg-white/[0.02] text-gray-600 border border-white/5 hover:border-white/10"
+                          ? "bg-white/5 text-muted-foreground/90 border border-input"
+                          : "bg-white/[0.02] text-muted-foreground/70 border border-white/5 hover:border-input"
                     )}
                   >
                     <Icon className="w-3 h-3 shrink-0" />
@@ -450,9 +450,9 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
         {pipelineTarget != null && (
           <div
             ref={pipelinePopoverRef}
-            className="absolute left-4 top-[calc(100%-4px)] z-50 bg-gray-900 border border-white/10 rounded-xl p-3 shadow-xl w-64"
+            className="absolute left-4 top-[calc(100%-4px)] z-50 bg-popover border border-input rounded-xl p-3 text-popover-foreground shadow-xl w-64"
           >
-            <p className="text-xs text-gray-400 mb-2">
+            <p className="text-xs text-muted-foreground/90 mb-2">
               Move to{" "}
               <span className="text-white font-medium">
                 {PIPELINE_STAGES.find((s) => s.key === pipelineTarget)?.label}
@@ -464,12 +464,12 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
               onChange={(e) => setPipelineNote(e.target.value)}
               placeholder="Add a note (optional)..."
               rows={3}
-              className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-gray-300 placeholder:text-gray-600 resize-none mb-2"
+              className="w-full bg-white/5 border border-input rounded-lg p-2 text-xs text-foreground/88 placeholder:text-muted-foreground/55 resize-none mb-2"
             />
             <div className="flex justify-end gap-2">
               <button
                 type="button"
-                className="text-xs text-gray-500 hover:text-gray-400"
+                className="text-xs text-muted-foreground hover:text-foreground"
                 onClick={() => {
                   setPipelineTarget(null);
                   setPipelineNote("");
@@ -490,13 +490,13 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
         {relevantTemplates.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 mb-1">
             <Mail className="w-3 h-3 text-rose-400/50 shrink-0" />
-            <span className="text-[10px] text-gray-500">Templates for this stage:</span>
+            <span className="text-2xs text-muted-foreground">Templates for this stage:</span>
             {relevantTemplates.map((t) => (
               <button
                 key={t.id}
                 type="button"
                 onClick={() => showToast(`Opening "${t.title}" — coming in v2`)}
-                className="text-[10px] text-rose-400/70 hover:text-rose-400 underline decoration-rose-400/20 hover:decoration-rose-400/40"
+                className="text-2xs text-rose-400/70 hover:text-rose-400 underline decoration-rose-400/20 hover:decoration-rose-400/40"
               >
                 {t.title}
               </button>
@@ -506,13 +506,13 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
       </div>
 
       {hasMultiOption && (
-        <div className="shrink-0 px-4 py-2 border-b border-white/[0.06] flex flex-wrap items-center gap-2">
+        <div className="shrink-0 px-4 py-2 border-b border-border flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => setOptionIndex(0)}
             className={cn(
               "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
-              optionIndex === 0 ? "bg-white/10 text-[#F5F5F5]" : "text-gray-500 hover:text-gray-300"
+              optionIndex === 0 ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground"
             )}
           >
             Option 1 — Classic Tuscany (current)
@@ -524,7 +524,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
               onClick={() => setOptionIndex(i + 1)}
               className={cn(
                 "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
-                optionIndex === i + 1 ? "bg-blue-500/20 text-blue-300 border border-blue-500/30" : "text-gray-500 hover:text-gray-300"
+                optionIndex === i + 1 ? "bg-blue-500/20 text-blue-300 border border-blue-500/30" : "text-muted-foreground hover:text-foreground"
               )}
             >
               Option {i + 2} — {opt.name}
@@ -533,12 +533,12 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
           <Button
             variant="ghost"
             size="sm"
-            className="text-gray-500"
+            className="text-muted-foreground"
             onClick={() => showToast("Option creation — coming soon")}
           >
             <Plus size={14} className="mr-1" /> Add Option
           </Button>
-          <Button variant="outline" size="sm" className="border-white/10 ml-auto" onClick={() => setCompareOpen(true)}>
+          <Button variant="outline" size="sm" className="border-input ml-auto" onClick={() => setCompareOpen(true)}>
             Compare Options
           </Button>
         </div>

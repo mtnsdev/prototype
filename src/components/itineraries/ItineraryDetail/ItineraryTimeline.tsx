@@ -87,7 +87,7 @@ export default function ItineraryTimeline({ itinerary, canEdit, canViewFinancial
           <Button
             variant="ghost"
             size="sm"
-            className="text-[rgba(245,245,245,0.7)]"
+            className="text-muted-foreground"
             onClick={expandAll}
             disabled={allExpanded}
           >
@@ -96,7 +96,7 @@ export default function ItineraryTimeline({ itinerary, canEdit, canViewFinancial
           <Button
             variant="ghost"
             size="sm"
-            className="text-[rgba(245,245,245,0.7)]"
+            className="text-muted-foreground"
             onClick={collapseAll}
             disabled={allCollapsed}
           >
@@ -105,10 +105,10 @@ export default function ItineraryTimeline({ itinerary, canEdit, canViewFinancial
         </div>
       )}
       {days.length === 0 ? (
-        <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-8 text-center">
-          <p className="text-[rgba(245,245,245,0.6)] text-sm">No days yet. Add days to build your timeline.</p>
+        <div className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-8 text-center">
+          <p className="text-muted-foreground text-sm">No days yet. Add days to build your timeline.</p>
           {canEdit && (
-            <p className="text-xs text-[rgba(245,245,245,0.5)] mt-2">Edit itinerary to add days.</p>
+            <p className="text-xs text-muted-foreground/75 mt-2">Edit itinerary to add days.</p>
           )}
         </div>
       ) : (
@@ -119,7 +119,7 @@ export default function ItineraryTimeline({ itinerary, canEdit, canViewFinancial
             return (
               <div
                 key={day.day_number}
-                className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] overflow-hidden"
+                className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] overflow-hidden"
               >
                 <button
                   type="button"
@@ -127,26 +127,26 @@ export default function ItineraryTimeline({ itinerary, canEdit, canViewFinancial
                   className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-white/[0.04]"
                 >
                   {isExpanded ? (
-                    <ChevronDown size={18} className="text-[rgba(245,245,245,0.5)] shrink-0" />
+                    <ChevronDown size={18} className="text-muted-foreground/75 shrink-0" />
                   ) : (
-                    <ChevronRight size={18} className="text-[rgba(245,245,245,0.5)] shrink-0" />
+                    <ChevronRight size={18} className="text-muted-foreground/75 shrink-0" />
                   )}
-                  <span className="font-medium text-[#F5F5F5]">
+                  <span className="font-medium text-foreground">
                     Day {day.day_number}
                     {day.date && ` — ${formatDayDate(day.date)}`}
                     {day.location && ` · ${day.location}`}
                   </span>
                   {day.title && (
-                    <span className="text-sm text-[rgba(245,245,245,0.6)] truncate"> — {day.title}</span>
+                    <span className="text-sm text-muted-foreground truncate"> — {day.title}</span>
                   )}
-                  <span className="text-xs text-[rgba(245,245,245,0.4)] ml-auto">
+                  <span className="text-xs text-muted-foreground/55 ml-auto">
                     {eventCount} event{eventCount !== 1 ? "s" : ""}
                   </span>
                 </button>
                 {isExpanded && (
-                  <div className="border-t border-[rgba(255,255,255,0.06)] px-4 pb-4 pt-2 space-y-2">
+                  <div className="border-t border-border px-4 pb-4 pt-2 space-y-2">
                     {(day.events ?? []).length === 0 ? (
-                      <p className="text-sm text-[rgba(245,245,245,0.5)] py-2">
+                      <p className="text-sm text-muted-foreground/75 py-2">
                         No events yet. Add your first event.
                       </p>
                     ) : (
@@ -169,18 +169,18 @@ export default function ItineraryTimeline({ itinerary, canEdit, canViewFinancial
                       <Button
                         variant="outline"
                         size="sm"
-                        className="border-white/10 text-[rgba(245,245,245,0.7)]"
+                        className="border-input text-muted-foreground"
                         onClick={() => setAddEventDay(day)}
                       >
                         <Plus size={14} className="mr-1" /> Add event
                       </Button>
                     )}
                     {day.notes && (
-                      <div className="rounded-lg bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] p-2 mt-2">
-                        <p className="text-xs text-[rgba(245,245,245,0.7)]">{day.notes}</p>
+                      <div className="rounded-lg bg-[rgba(255,255,255,0.04)] border border-border p-2 mt-2">
+                        <p className="text-xs text-muted-foreground">{day.notes}</p>
                       </div>
                     )}
-                    <p className="text-xs text-[rgba(245,245,245,0.45)] pt-1 border-t border-[rgba(255,255,255,0.04)] mt-2">
+                    <p className="text-xs text-muted-foreground/75 pt-1 border-t border-border mt-2">
                       {(day.events ?? []).length} event{(day.events ?? []).length !== 1 ? "s" : ""}
                       {dayClientTotal(day) > 0 && (
                         <> · {itinerary.currency === "EUR" ? "€" : itinerary.currency} {dayClientTotal(day).toLocaleString()} client</>
@@ -201,7 +201,7 @@ export default function ItineraryTimeline({ itinerary, canEdit, canViewFinancial
           <Button
             variant="outline"
             size="sm"
-            className="border-white/10 text-[rgba(245,245,245,0.7)]"
+            className="border-input text-muted-foreground"
             onClick={handleAddDay}
             disabled={addingDay}
           >

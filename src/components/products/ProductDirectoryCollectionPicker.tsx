@@ -111,12 +111,12 @@ export default function ProductDirectoryCollectionPicker({
       onClick={onClose}
     >
       <div
-        className="flex max-h-[min(92vh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-[rgba(255,255,255,0.08)] bg-[#0e0e14] shadow-2xl sm:rounded-2xl"
+        className="flex max-h-[min(92vh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-border bg-background shadow-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="shrink-0 border-b border-[rgba(255,255,255,0.06)] px-5 pb-4 pt-5">
+        <div className="shrink-0 border-b border-border px-5 pb-4 pt-5">
           <div className="flex gap-3">
-            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-white/[0.06] bg-[#08080c]">
+            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-border bg-inset">
               {product.imageUrl ? (
                 <img src={product.imageUrl} alt="" className="h-full w-full object-cover" />
               ) : (
@@ -126,18 +126,18 @@ export default function ProductDirectoryCollectionPicker({
               )}
             </div>
             <div className="min-w-0 flex-1 pt-0.5">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-[#6B6560]">Add to collections</p>
-              <h2 id="collection-picker-title" className="mt-0.5 text-[15px] font-semibold leading-snug text-[#F5F5F5]">
+              <p className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">Add to collections</p>
+              <h2 id="collection-picker-title" className="mt-0.5 text-base font-semibold leading-snug text-foreground">
                 {product.name}
               </h2>
-              <p className="mt-1 text-[11px] leading-snug text-[rgba(245,245,245,0.45)]">
+              <p className="mt-1 text-xs leading-snug text-muted-foreground/75">
                 Choose lists, create a new one, then save.
               </p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#6B6560] transition-colors hover:bg-white/[0.06] hover:text-[#F5F5F5]"
+              className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
               aria-label="Close"
             >
               <X className="h-4 w-4" />
@@ -145,11 +145,11 @@ export default function ProductDirectoryCollectionPicker({
           </div>
 
           <div className="relative mt-4">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#4A4540]" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/65" />
             <input
               type="search"
               placeholder="Search by name or team…"
-              className="w-full rounded-xl border border-white/[0.08] bg-[#08080c] py-2.5 pl-10 pr-3 text-[13px] text-[#F5F5F5] placeholder:text-[#4A4540] outline-none transition-colors focus:border-[rgba(201,169,110,0.35)] focus:ring-1 focus:ring-[rgba(201,169,110,0.2)]"
+              className="w-full rounded-xl border border-border bg-inset py-2.5 pl-10 pr-3 text-compact text-foreground placeholder:text-muted-foreground/65 outline-none transition-colors focus:border-brand-cta/35 focus:ring-1 focus:ring-brand-cta/20"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -161,7 +161,7 @@ export default function ProductDirectoryCollectionPicker({
             <button
               type="button"
               onClick={openCreate}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[rgba(201,169,110,0.3)] bg-[rgba(201,169,110,0.04)] py-2.5 text-[12px] font-medium text-[#C9A96E] transition-colors hover:bg-[rgba(201,169,110,0.08)]"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[rgba(201,169,110,0.3)] bg-[rgba(201,169,110,0.04)] py-2.5 text-sm font-medium text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.08)]"
             >
               <Plus className="h-4 w-4" />
               New collection
@@ -169,46 +169,46 @@ export default function ProductDirectoryCollectionPicker({
           ) : (
             <div className="space-y-3 rounded-xl border border-[rgba(201,169,110,0.22)] bg-[rgba(201,169,110,0.06)] p-3">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-semibold text-[#F5F5F5]">New collection</span>
+                <span className="text-xs font-semibold text-foreground">New collection</span>
                 <button
                   type="button"
                   onClick={() => setCreateOpen(false)}
-                  className="rounded-lg p-1 text-[#6B6560] transition-colors hover:bg-white/[0.06] hover:text-[#F5F5F5]"
+                  className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
                   aria-label="Close create form"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
               <label className="block">
-                <span className="mb-1 block text-[10px] text-[#6B6560]">Name</span>
+                <span className="mb-1 block text-2xs text-muted-foreground">Name</span>
                 <input
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="e.g. Honeymoon shortlist"
-                  className="w-full rounded-lg border border-white/[0.08] bg-[#08080c] px-3 py-2 text-[13px] text-[#F5F5F5] outline-none placeholder:text-[#4A4540] focus:border-[rgba(201,169,110,0.35)]"
+                  className="w-full rounded-lg border border-border bg-inset px-3 py-2 text-compact text-foreground outline-none placeholder:text-muted-foreground/65 focus:border-brand-cta/35"
                 />
               </label>
               <label className="block">
-                <span className="mb-1 block text-[10px] text-[#6B6560]">Description (optional)</span>
+                <span className="mb-1 block text-2xs text-muted-foreground">Description (optional)</span>
                 <textarea
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
                   rows={2}
                   placeholder="Short note for your team or future you"
-                  className="w-full resize-none rounded-lg border border-white/[0.08] bg-[#08080c] px-3 py-2 text-[12px] text-[#F5F5F5] outline-none placeholder:text-[#4A4540] focus:border-[rgba(201,169,110,0.35)]"
+                  className="w-full resize-none rounded-lg border border-border bg-inset px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/65 focus:border-brand-cta/35"
                 />
               </label>
               <div>
-                <span className="mb-1.5 block text-[10px] text-[#6B6560]">Who can see it</span>
+                <span className="mb-1.5 block text-2xs text-muted-foreground">Who can see it</span>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => setNewScope("private")}
                     className={cn(
-                      "rounded-lg border px-3 py-1.5 text-[11px] font-medium transition-colors",
+                      "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
                       newScope === "private"
-                        ? "border-[#C9A96E] bg-[rgba(201,169,110,0.12)] text-[#F5F5F5]"
-                        : "border-white/[0.08] text-[#9B9590] hover:border-white/[0.12]"
+                        ? "border-brand-cta bg-[rgba(201,169,110,0.12)] text-foreground"
+                        : "border-border text-muted-foreground hover:border-white/[0.12]"
                     )}
                   >
                     Private
@@ -217,10 +217,10 @@ export default function ProductDirectoryCollectionPicker({
                     type="button"
                     onClick={() => setNewScope("team")}
                     className={cn(
-                      "rounded-lg border px-3 py-1.5 text-[11px] font-medium transition-colors",
+                      "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
                       newScope === "team"
-                        ? "border-[#C9A96E] bg-[rgba(201,169,110,0.12)] text-[#F5F5F5]"
-                        : "border-white/[0.08] text-[#9B9590] hover:border-white/[0.12]"
+                        ? "border-brand-cta bg-[rgba(201,169,110,0.12)] text-foreground"
+                        : "border-border text-muted-foreground hover:border-white/[0.12]"
                     )}
                   >
                     Team
@@ -229,11 +229,11 @@ export default function ProductDirectoryCollectionPicker({
               </div>
               {newScope === "team" ? (
                 <label className="block">
-                  <span className="mb-1 block text-[10px] text-[#6B6560]">Team</span>
+                  <span className="mb-1 block text-2xs text-muted-foreground">Team</span>
                   <select
                     value={newTeamId}
                     onChange={(e) => setNewTeamId(e.target.value)}
-                    className="w-full rounded-lg border border-white/[0.08] bg-[#08080c] px-3 py-2 text-[12px] text-[#F5F5F5] outline-none focus:border-[rgba(201,169,110,0.35)]"
+                    className="w-full rounded-lg border border-border bg-inset px-3 py-2 text-sm text-foreground outline-none focus:border-brand-cta/35"
                   >
                     {teamOptions.map((t) => (
                       <option key={t.id} value={t.id}>
@@ -243,14 +243,14 @@ export default function ProductDirectoryCollectionPicker({
                   </select>
                 </label>
               ) : null}
-              <p className="text-[10px] leading-snug text-[#6B6560]">
+              <p className="text-2xs leading-snug text-muted-foreground">
                 The list is pre-filled with this product; save at the bottom when you’re done.
               </p>
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => setCreateOpen(false)}
-                  className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.04] py-2 text-[12px] font-medium text-[#F5F5F5] transition-colors hover:bg-white/[0.07]"
+                  className="flex-1 rounded-lg border border-border bg-white/[0.04] py-2 text-sm font-medium text-foreground transition-colors hover:bg-white/[0.07]"
                 >
                   Cancel
                 </button>
@@ -258,7 +258,7 @@ export default function ProductDirectoryCollectionPicker({
                   type="button"
                   disabled={!newName.trim() || (newScope === "team" && !newTeamId)}
                   onClick={submitCreate}
-                  className="flex-1 rounded-lg bg-[#C9A96E] py-2 text-[12px] font-semibold text-[#0a0a0f] transition-colors hover:bg-[#D4B383] disabled:opacity-40"
+                  className="flex-1 rounded-lg bg-brand-cta py-2 text-sm font-semibold text-brand-cta-foreground transition-colors hover:bg-brand-cta-hover disabled:opacity-40"
                 >
                   Create
                 </button>
@@ -267,13 +267,13 @@ export default function ProductDirectoryCollectionPicker({
           )}
 
           {filtered.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-white/[0.08] bg-white/[0.02] px-4 py-8 text-center">
-              <p className="text-[13px] font-medium text-[#9B9590]">
+            <div className="rounded-xl border border-dashed border-border bg-white/[0.02] px-4 py-8 text-center">
+              <p className="text-compact font-medium text-muted-foreground">
                 {collections.length === 0 && !searchTerm.trim()
                   ? "No collections yet"
                   : "No collections match"}
               </p>
-              <p className="mt-1 text-[11px] text-[#6B6560]">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {collections.length === 0 && !searchTerm.trim()
                   ? "Create a collection above to get started."
                   : "Try another search or create a new list."}
@@ -295,15 +295,15 @@ export default function ProductDirectoryCollectionPicker({
                       className={cn(
                         "flex w-full items-start gap-3 rounded-xl border px-3 py-3 text-left transition-colors",
                         isOn
-                          ? "border-[rgba(201,169,110,0.35)] bg-[rgba(201,169,110,0.08)]"
-                          : "border-white/[0.06] bg-[#08080c] hover:border-white/[0.1] hover:bg-white/[0.03]"
+                          ? "border-brand-cta/35 bg-[rgba(201,169,110,0.08)]"
+                          : "border-border bg-inset hover:border-input hover:bg-white/[0.03]"
                       )}
                     >
                       <span
                         className={cn(
                           "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors",
                           isOn
-                            ? "border-[#C9A96E] bg-[#C9A96E] text-[#0a0a0f]"
+                            ? "border-brand-cta bg-brand-cta text-brand-cta-foreground"
                             : "border-white/[0.12] bg-transparent"
                         )}
                         aria-hidden
@@ -313,25 +313,25 @@ export default function ProductDirectoryCollectionPicker({
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">
                           {collection.isSystem || collection.icon === "search" ? (
-                            <Search className="h-3.5 w-3.5 shrink-0 text-[#9B9590]" aria-hidden />
+                            <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
                           ) : (
-                            <Folder className="h-3.5 w-3.5 shrink-0 text-[#6B6560]" aria-hidden />
+                            <Folder className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
                           )}
-                          <p className="text-[13px] font-medium text-[#F5F5F5]">{collection.name}</p>
+                          <p className="text-compact font-medium text-foreground">{collection.name}</p>
                           {collection.isSystem ? (
-                            <span className="text-[9px] text-[#6B6560] bg-white/[0.03] border border-white/[0.04] px-1.5 py-0.5 rounded">
+                            <span className="text-[9px] text-muted-foreground bg-white/[0.03] border border-white/[0.04] px-1.5 py-0.5 rounded">
                               Auto
                             </span>
                           ) : null}
                         </div>
                         {collection.description ? (
-                          <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-[#6B6560]">
+                          <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-muted-foreground">
                             {collection.description}
                           </p>
                         ) : null}
                         <div className="mt-2 flex flex-wrap items-center gap-2">
                           <ScopeBadge scope={scopeForBadge} teams={teams} />
-                          <span className="text-[10px] text-[#4A4540]">
+                          <span className="text-2xs text-muted-foreground/65">
                             {count} product{count !== 1 ? "s" : ""}
                           </span>
                         </div>
@@ -344,23 +344,23 @@ export default function ProductDirectoryCollectionPicker({
           )}
         </div>
 
-        <div className="shrink-0 space-y-3 border-t border-[rgba(255,255,255,0.06)] bg-[#0a0a0f]/90 px-5 py-4 backdrop-blur-md">
+        <div className="shrink-0 space-y-3 border-t border-border bg-inset/90 px-5 py-4 backdrop-blur-md">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-[11px] text-[#6B6560]">
-              <span className="text-[#9B9590]">{selected.length}</span> collection
+            <p className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground">{selected.length}</span> collection
               {selected.length !== 1 ? "s" : ""} selected
             </p>
             <div className="flex gap-2">
               <button
                 type="button"
-                className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-[12px] font-medium text-[#F5F5F5] transition-colors hover:bg-white/[0.07] sm:flex-initial sm:min-w-[96px]"
+                className="flex-1 rounded-xl border border-border bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-white/[0.07] sm:flex-initial sm:min-w-[96px]"
                 onClick={onClose}
               >
                 Cancel
               </button>
               <button
                 type="button"
-                className="flex-1 rounded-xl bg-[#C9A96E] px-4 py-2.5 text-[12px] font-semibold text-[#0a0a0f] transition-colors hover:bg-[#D4B383] sm:flex-initial sm:min-w-[120px]"
+                className="flex-1 rounded-xl bg-brand-cta px-4 py-2.5 text-sm font-semibold text-brand-cta-foreground transition-colors hover:bg-brand-cta-hover sm:flex-initial sm:min-w-[120px]"
                 onClick={() => onSave(selected)}
               >
                 Save

@@ -11,9 +11,9 @@ function simpleMarkdown(text: string): React.ReactNode {
   const lines = text.split("\n");
   return lines.map((line, i) => {
     if (line.startsWith("**") && line.endsWith("**")) {
-      return <p key={i} className="font-semibold text-[#F5F5F5] mb-1">{line.slice(2, -2)}</p>;
+      return <p key={i} className="font-semibold text-foreground mb-1">{line.slice(2, -2)}</p>;
     }
-    return <p key={i} className="text-sm text-[rgba(245,245,245,0.8)] mb-1">{line}</p>;
+    return <p key={i} className="text-sm text-muted-foreground mb-1">{line}</p>;
   });
 }
 
@@ -29,10 +29,10 @@ export default function FreeTextWidget({ content }: Props) {
           value={body}
           onChange={(e) => setBody(e.target.value)}
           rows={6}
-          className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-[#F5F5F5]"
+          className="w-full rounded-md border border-input bg-white/5 px-3 py-2 text-sm text-foreground"
         />
         <div className="flex gap-2">
-          <Button size="sm" onClick={() => setEditing(false)} className="bg-white/10 text-[#F5F5F5]">
+          <Button size="sm" onClick={() => setEditing(false)} className="bg-white/10 text-foreground">
             Save
           </Button>
           <Button size="sm" variant="ghost" onClick={() => { setBody(content.body); setEditing(false); }}>
@@ -46,18 +46,18 @@ export default function FreeTextWidget({ content }: Props) {
   return (
     <div className="space-y-2">
       {content.pinned && (
-        <div className="flex items-center gap-1 text-xs text-[rgba(245,245,245,0.5)]">
+        <div className="flex items-center gap-1 text-xs text-muted-foreground/75">
           <Pin size={12} /> Pinned
         </div>
       )}
       <div className="text-sm prose prose-invert max-w-none">{simpleMarkdown(body)}</div>
       {(author || content.author) && (
-        <p className="text-xs text-[rgba(245,245,245,0.5)]">{content.author ?? author}</p>
+        <p className="text-xs text-muted-foreground/75">{content.author ?? author}</p>
       )}
       <Button
         variant="ghost"
         size="xs"
-        className="text-[rgba(245,245,245,0.6)]"
+        className="text-muted-foreground"
         onClick={() => setEditing(true)}
       >
         <Pencil size={12} className="mr-1" /> Edit

@@ -15,6 +15,19 @@ import PreviewBanner from "@/components/ui/PreviewBanner";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 import { useToast } from "@/contexts/ToastContext";
 import { cn } from "@/lib/utils";
+import {
+  directoryFilterSelectContentClass,
+  directoryFilterSelectItemClass,
+  directoryFilterSelectTriggerClass,
+} from "@/components/ui/page-search-field";
+import {
+  listSurfaceClass,
+  listTableClass,
+  listTheadRowClass,
+  listTbodyRowClass,
+  listTdClass,
+  listMutedCellClass,
+} from "@/lib/list-ui";
 
 const REVENUE = [
   { m: "Oct", v: 12 },
@@ -58,26 +71,34 @@ export default function AnalyticsPage() {
   const [askFocus, setAskFocus] = useState(false);
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-auto bg-[#0C0C0C]">
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-auto bg-background">
       {IS_PREVIEW_MODE && <PreviewBanner feature="Analytics" variant="full" dismissible sampleDataOnly />}
       <div className="max-w-6xl mx-auto p-6 space-y-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-2xl font-semibold text-[#F5F5F5] flex items-center gap-2">
+          <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
             <BarChart3 size={28} className="text-blue-400" /> Analytics
           </h1>
           <div className="flex items-center gap-2">
             <Select value={range} onValueChange={setRange}>
-              <SelectTrigger className="w-[160px] bg-white/5 border-white/10 text-[#F5F5F5]">
-                <SelectValue />
+              <SelectTrigger className={cn(directoryFilterSelectTriggerClass, "w-[min(100%,168px)]")}>
+                <SelectValue placeholder="Period" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="month">This month</SelectItem>
-                <SelectItem value="quarter">This quarter</SelectItem>
-                <SelectItem value="year">This year</SelectItem>
-                <SelectItem value="all">All time</SelectItem>
+              <SelectContent className={directoryFilterSelectContentClass}>
+                <SelectItem className={directoryFilterSelectItemClass} value="month">
+                  This month
+                </SelectItem>
+                <SelectItem className={directoryFilterSelectItemClass} value="quarter">
+                  This quarter
+                </SelectItem>
+                <SelectItem className={directoryFilterSelectItemClass} value="year">
+                  This year
+                </SelectItem>
+                <SelectItem className={directoryFilterSelectItemClass} value="all">
+                  All time
+                </SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" className="border-white/10" onClick={() => showToast("Export — coming soon")}>
+            <Button variant="outline" className="border-input" onClick={() => showToast("Export — coming soon")}>
               <Download size={14} className="mr-1" /> Export
             </Button>
           </div>
@@ -90,17 +111,17 @@ export default function AnalyticsPage() {
             { label: "Revenue", val: "€98,500", sub: "+32% vs Q3", up: true },
             { label: "Margin", val: "25.0%", sub: "Gross", up: true },
           ].map((k) => (
-            <div key={k.label} className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-5">
-              <p className="text-xs text-gray-500 uppercase tracking-wider">{k.label}</p>
-              <p className="text-3xl font-bold text-[#F5F5F5] mt-1">{k.val}</p>
+            <div key={k.label} className="rounded-xl border border-border bg-white/[0.03] p-5">
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">{k.label}</p>
+              <p className="text-3xl font-bold text-foreground mt-1">{k.val}</p>
               <p className={cn("text-sm mt-1", k.up ? "text-emerald-500" : "text-red-400")}>{k.sub}</p>
             </div>
           ))}
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-6">
-            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Revenue by month</h2>
+          <div className="rounded-xl border border-border bg-white/[0.03] p-6">
+            <h2 className="text-sm font-semibold text-muted-foreground/90 uppercase tracking-wider mb-4">Revenue by month</h2>
             <div className="flex items-end justify-between gap-2 h-48 pt-4">
               {REVENUE.map((r) => (
                 <div key={r.m} className="flex-1 flex flex-col items-center gap-2">
@@ -108,14 +129,14 @@ export default function AnalyticsPage() {
                     className="w-full max-w-[48px] mx-auto rounded-t-md bg-gradient-to-t from-violet-600 to-violet-400/80 min-h-[8px] transition-all"
                     style={{ height: `${(r.v / maxRev) * 100}%` }}
                   />
-                  <span className="text-[10px] text-gray-500">{r.m}</span>
-                  <span className="text-xs text-gray-400">€{r.v}K</span>
+                  <span className="text-2xs text-muted-foreground">{r.m}</span>
+                  <span className="text-xs text-muted-foreground/90">€{r.v}K</span>
                 </div>
               ))}
             </div>
           </div>
-          <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-6">
-            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Trips by status</h2>
+          <div className="rounded-xl border border-border bg-white/[0.03] p-6">
+            <h2 className="text-sm font-semibold text-muted-foreground/90 uppercase tracking-wider mb-4">Trips by status</h2>
             <div className="flex items-center justify-center gap-8 py-4">
               <div
                 className="w-36 h-36 rounded-full shrink-0"
@@ -127,7 +148,7 @@ export default function AnalyticsPage() {
               />
               <ul className="text-sm space-y-1">
                 {STATUS_DONUT.map((s) => (
-                  <li key={s.label} className="flex items-center gap-2 text-gray-400">
+                  <li key={s.label} className="flex items-center gap-2 text-muted-foreground/90">
                     <span className="w-2 h-2 rounded-full shrink-0" style={{ background: s.color }} />
                     {s.label}: {s.n}
                   </li>
@@ -137,32 +158,32 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/[0.08] overflow-hidden">
-          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider px-4 py-3 border-b border-white/[0.06]">
+        <div className={cn(listSurfaceClass, "overflow-hidden")}>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3 border-b border-white/[0.08]">
             Top VICs
           </h2>
-          <table className="w-full text-sm">
+          <table className={listTableClass()}>
             <thead>
-              <tr className="text-left text-gray-500 border-b border-white/[0.06]">
-                <th className="px-4 py-2 font-medium">VIC</th>
-                <th className="px-4 py-2 font-medium">Trips</th>
-                <th className="px-4 py-2 font-medium">Revenue</th>
-                <th className="px-4 py-2 font-medium">Last Trip</th>
-                <th className="px-4 py-2 font-medium">Acuity</th>
+              <tr className={listTheadRowClass}>
+                <th className="px-4 py-2 text-left font-medium">VIC</th>
+                <th className="px-4 py-2 text-left font-medium">Trips</th>
+                <th className="px-4 py-2 text-left font-medium">Revenue</th>
+                <th className="px-4 py-2 text-left font-medium">Last Trip</th>
+                <th className="px-4 py-2 text-left font-medium">Acuity</th>
               </tr>
             </thead>
             <tbody>
               {TOP_VICS.map((row) => (
-                <tr key={row.id} className="border-b border-white/[0.04] hover:bg-white/[0.04]">
-                  <td className="px-4 py-3">
-                    <Link href={`/dashboard/vics/${row.id}`} className="text-[#F5F5F5] hover:underline">
+                <tr key={row.id} className={listTbodyRowClass}>
+                  <td className={cn(listTdClass, "px-4")}>
+                    <Link href={`/dashboard/vics/${row.id}`} className="text-foreground hover:underline">
                       {row.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-gray-400">{row.trips}</td>
-                  <td className="px-4 py-3 text-gray-400">{row.rev}</td>
-                  <td className="px-4 py-3 text-gray-400">{row.last}</td>
-                  <td className="px-4 py-3 text-gray-400">{row.acuity}</td>
+                  <td className={cn(listTdClass, listMutedCellClass, "px-4")}>{row.trips}</td>
+                  <td className={cn(listTdClass, listMutedCellClass, "px-4")}>{row.rev}</td>
+                  <td className={cn(listTdClass, listMutedCellClass, "px-4")}>{row.last}</td>
+                  <td className={cn(listTdClass, listMutedCellClass, "px-4")}>{row.acuity}</td>
                 </tr>
               ))}
             </tbody>
@@ -171,14 +192,14 @@ export default function AnalyticsPage() {
 
         <div
           className={cn(
-            "rounded-xl border border-white/10 p-4 transition-colors bg-blue-500/5",
+            "rounded-xl border border-input p-4 transition-colors bg-blue-500/5",
             askFocus && "border-blue-500/25"
           )}
         >
           <div className="flex items-center gap-2 rounded-lg bg-black/20 border border-blue-500/10 px-4 py-3">
             <span className="text-blue-400">✦</span>
             <input
-              className="flex-1 bg-transparent text-[#F5F5F5] placeholder:text-gray-500 text-sm outline-none"
+              className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground text-sm outline-none"
               placeholder="Ask a question about your data..."
               onFocus={() => setAskFocus(true)}
               onBlur={() => setAskFocus(false)}
@@ -186,7 +207,7 @@ export default function AnalyticsPage() {
                 if (e.key === "Enter") showToast("AI Analytics — coming in v2");
               }}
             />
-            <Button size="sm" className="bg-slate-600 hover:bg-slate-500" onClick={() => showToast("AI Analytics — coming in v2")}>
+            <Button size="sm" className="bg-foreground/20 hover:bg-foreground/30 text-foreground" onClick={() => showToast("AI Analytics — coming in v2")}>
               →
             </Button>
           </div>

@@ -10,6 +10,9 @@ export type DirectoryProductSortOption =
   | "recently-added"
   | "enrichment-desc";
 
+/** Default browse sort — name A→Z; commission toggle only tie-breaks, never overrides this. */
+export const DEFAULT_DIRECTORY_PRODUCT_SORT: DirectoryProductSortOption = "name-asc";
+
 export const DIRECTORY_PRODUCT_SORT_OPTIONS: { id: DirectoryProductSortOption; label: string }[] = [
   { id: "name-asc", label: "Name A → Z" },
   { id: "name-desc", label: "Name Z → A" },

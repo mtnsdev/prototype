@@ -86,33 +86,33 @@ function PermissionTreeNode({
                 <span className="w-4 shrink-0">
                     {hasChildren ? (
                         expanded ? (
-                            <ChevronDown size={14} className="text-[rgba(245,245,245,0.4)]" />
+                            <ChevronDown size={14} className="text-muted-foreground/55" />
                         ) : (
-                            <ChevronRight size={14} className="text-[rgba(245,245,245,0.4)]" />
+                            <ChevronRight size={14} className="text-muted-foreground/55" />
                         )
                     ) : null}
                 </span>
 
                 {/* Type icon */}
                 {isFolder ? (
-                    <Folder size={14} className="text-amber-400 shrink-0" />
+                    <Folder size={14} className="text-[var(--color-warning)] shrink-0" />
                 ) : (
                     <FileText size={14} className="text-blue-400 shrink-0" />
                 )}
 
                 {/* Label */}
-                <span className="flex-1 text-[13px] text-[rgba(245,245,245,0.8)] truncate">
+                <span className="flex-1 text-compact text-muted-foreground truncate">
                     {label}
                 </span>
 
                 {/* can_view badge */}
                 {item.can_view ? (
-                    <span className="flex items-center gap-1 text-[11px] text-emerald-400 shrink-0">
+                    <span className="flex items-center gap-1 text-xs text-emerald-400 shrink-0">
                         <CheckCircle2 size={12} />
                         Allowed
                     </span>
                 ) : (
-                    <span className="flex items-center gap-1 text-[11px] text-red-400 shrink-0">
+                    <span className="flex items-center gap-1 text-xs text-red-400 shrink-0">
                         <XCircle size={12} />
                         Denied
                     </span>
@@ -200,20 +200,20 @@ export function UserPermissionsModal({
 
     return (
         <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
-            <DialogContent className="w-full max-w-2xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden border-[rgba(255,255,255,0.1)]">
+            <DialogContent className="w-full max-w-2xl max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden border-input">
                 {/* Header */}
-                <DialogHeader className="px-6 py-4 border-b border-[rgba(255,255,255,0.08)] shrink-0">
-                    <DialogTitle className="text-[16px] text-[#F5F5F5]">
+                <DialogHeader className="px-6 py-4 border-b border-border shrink-0">
+                    <DialogTitle className="text-lg text-foreground">
                         Intranet access
                     </DialogTitle>
-                    <p className="text-[12px] text-[rgba(245,245,245,0.45)] mt-0.5">
+                    <p className="text-sm text-muted-foreground/75 mt-0.5">
                         {userEmail}
                     </p>
                 </DialogHeader>
 
                 {/* Toolbar */}
-                <div className="px-6 py-3 border-b border-[rgba(255,255,255,0.06)] flex items-center justify-between shrink-0">
-                    <div className="flex items-center gap-4 text-[12px]">
+                <div className="px-6 py-3 border-b border-border flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-4 text-sm">
                         {data && (
                             <>
                                 <span className="text-emerald-400">
@@ -221,7 +221,7 @@ export function UserPermissionsModal({
                                 </span>
                                 <span className="text-red-400">{deniedCount} denied</span>
                                 {syncedAt && (
-                                    <span className="text-[rgba(245,245,245,0.35)]">
+                                    <span className="text-muted-foreground/55">
                                         Last synced {syncedAt}
                                     </span>
                                 )}
@@ -258,7 +258,7 @@ export function UserPermissionsModal({
                 {/* Sync message */}
                 {syncMessage && (
                     <div className="px-6 py-2 bg-[rgba(251,191,36,0.08)] border-b border-[rgba(251,191,36,0.15)] shrink-0">
-                        <p className="text-[12px] text-amber-400 flex items-center gap-2">
+                        <p className="text-sm text-[var(--color-warning)] flex items-center gap-2">
                             <AlertCircle size={12} />
                             {syncMessage}
                         </p>
@@ -269,11 +269,11 @@ export function UserPermissionsModal({
                 <div className="flex-1 overflow-y-auto p-4">
                     {isLoading ? (
                         <div className="flex items-center justify-center py-12">
-                            <Loader2 className="w-6 h-6 animate-spin text-[rgba(245,245,245,0.4)]" />
+                            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground/55" />
                         </div>
                     ) : error ? (
                         <div className="py-8 text-center">
-                            <p className="text-[13px] text-[#C87A7A]">{error}</p>
+                            <p className="text-compact text-[var(--color-error)]">{error}</p>
                         </div>
                     ) : treeRoots.length === 0 ? (
                         <div className="py-12 text-center">
@@ -281,10 +281,10 @@ export function UserPermissionsModal({
                                 size={40}
                                 className="mx-auto text-[rgba(245,245,245,0.2)] mb-3"
                             />
-                            <p className="text-[14px] text-[rgba(245,245,245,0.5)]">
+                            <p className="text-base text-muted-foreground/75">
                                 No synced permissions yet
                             </p>
-                            <p className="text-[12px] text-[rgba(245,245,245,0.35)] mt-1">
+                            <p className="text-sm text-muted-foreground/55 mt-1">
                                 Click &quot;Sync Now&quot; to fetch this user&apos;s intranet access.
                             </p>
                         </div>

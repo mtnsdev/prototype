@@ -223,16 +223,16 @@ export default function AddEventModal({ open, onClose, itineraryId, dayNumber, o
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="bg-[#0e0e14] border-[rgba(255,255,255,0.06)] max-w-lg">
+      <DialogContent className="bg-background border-border max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-[#F5F5F5]">
+          <DialogTitle className="text-foreground">
             {isEdit ? "Edit event" : "Add event"} — Day {dayNumber}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
-            <Label className="text-[rgba(245,245,245,0.8)]">Event type</Label>
+            <Label className="text-muted-foreground">Event type</Label>
             <div className="grid grid-cols-4 gap-2 mt-2">
               {EVENT_TYPES.map(({ value, label, Icon }) => (
                 <button
@@ -242,8 +242,8 @@ export default function AddEventModal({ open, onClose, itineraryId, dayNumber, o
                   className={cn(
                     "p-2 rounded-lg border text-center text-xs transition-colors",
                     eventType === value
-                      ? "border-[#F5F5F5] bg-white/10 text-[#F5F5F5]"
-                      : "border-white/10 bg-white/5 text-[rgba(245,245,245,0.7)] hover:border-white/20"
+                      ? "border-[#F5F5F5] bg-white/10 text-foreground"
+                      : "border-input bg-white/5 text-muted-foreground hover:border-white/20"
                   )}
                 >
                   <span className="block mx-auto mb-1"><Icon size={20} /></span>
@@ -253,47 +253,47 @@ export default function AddEventModal({ open, onClose, itineraryId, dayNumber, o
             </div>
           </div>
           <div>
-            <Label className="text-[rgba(245,245,245,0.8)]">Title *</Label>
+            <Label className="text-muted-foreground">Title *</Label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Check-in at Four Seasons"
-              className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+              className="mt-1 bg-white/5 border-input text-foreground"
             />
           </div>
           <div>
-            <Label className="text-[rgba(245,245,245,0.8)]">Description</Label>
+            <Label className="text-muted-foreground">Description</Label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
-              className="mt-1 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-[#F5F5F5]"
+              className="mt-1 w-full rounded-md border border-input bg-white/5 px-3 py-2 text-sm text-foreground"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Start time</Label>
+              <Label className="text-muted-foreground">Start time</Label>
               <Input
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+                className="mt-1 bg-white/5 border-input text-foreground"
               />
             </div>
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">End time</Label>
+              <Label className="text-muted-foreground">End time</Label>
               <Input
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+                className="mt-1 bg-white/5 border-input text-foreground"
               />
             </div>
           </div>
           <div>
-            <Label className="text-[rgba(245,245,245,0.8)]">Status</Label>
+            <Label className="text-muted-foreground">Status</Label>
             <Select value={status} onValueChange={(v) => setStatus(v as ItineraryEvent["status"])}>
-              <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]">
+              <SelectTrigger className="mt-1 bg-white/5 border-input text-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -306,79 +306,79 @@ export default function AddEventModal({ open, onClose, itineraryId, dayNumber, o
             </Select>
           </div>
           <div>
-            <Label className="text-[rgba(245,245,245,0.8)]">Confirmation number</Label>
+            <Label className="text-muted-foreground">Confirmation number</Label>
             <Input
               value={confirmationNumber}
               onChange={(e) => setConfirmationNumber(e.target.value)}
               placeholder="e.g. ABC123"
-              className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+              className="mt-1 bg-white/5 border-input text-foreground"
             />
           </div>
           {eventType === "stay" && (
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label className="text-[rgba(245,245,245,0.8)]">Check-in time</Label>
-                <Input type="time" value={checkInTime} onChange={(e) => setCheckInTime(e.target.value)} className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]" />
+                <Label className="text-muted-foreground">Check-in time</Label>
+                <Input type="time" value={checkInTime} onChange={(e) => setCheckInTime(e.target.value)} className="mt-1 bg-white/5 border-input text-foreground" />
               </div>
               <div>
-                <Label className="text-[rgba(245,245,245,0.8)]">Check-out time</Label>
-                <Input type="time" value={checkOutTime} onChange={(e) => setCheckOutTime(e.target.value)} className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]" />
+                <Label className="text-muted-foreground">Check-out time</Label>
+                <Input type="time" value={checkOutTime} onChange={(e) => setCheckOutTime(e.target.value)} className="mt-1 bg-white/5 border-input text-foreground" />
               </div>
               <div>
-                <Label className="text-[rgba(245,245,245,0.8)]">Room type</Label>
-                <Input value={roomType} onChange={(e) => setRoomType(e.target.value)} placeholder="e.g. Deluxe Suite" className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]" />
+                <Label className="text-muted-foreground">Room type</Label>
+                <Input value={roomType} onChange={(e) => setRoomType(e.target.value)} placeholder="e.g. Deluxe Suite" className="mt-1 bg-white/5 border-input text-foreground" />
               </div>
             </div>
           )}
           {eventType === "meal" && (
             <div className="space-y-2">
               <div>
-                <Label className="text-[rgba(245,245,245,0.8)]">Cuisine</Label>
-                <Input value={cuisine} onChange={(e) => setCuisine(e.target.value)} placeholder="e.g. French" className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]" />
+                <Label className="text-muted-foreground">Cuisine</Label>
+                <Input value={cuisine} onChange={(e) => setCuisine(e.target.value)} placeholder="e.g. French" className="mt-1 bg-white/5 border-input text-foreground" />
               </div>
               <div>
-                <Label className="text-[rgba(245,245,245,0.8)]">Dietary notes</Label>
-                <Input value={dietaryNotes} onChange={(e) => setDietaryNotes(e.target.value)} placeholder="e.g. Vegetarian" className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]" />
+                <Label className="text-muted-foreground">Dietary notes</Label>
+                <Input value={dietaryNotes} onChange={(e) => setDietaryNotes(e.target.value)} placeholder="e.g. Vegetarian" className="mt-1 bg-white/5 border-input text-foreground" />
               </div>
             </div>
           )}
           {eventType === "transfer" && (
             <div className="space-y-2">
               <div>
-                <Label className="text-[rgba(245,245,245,0.8)]">Pickup location</Label>
-                <Input value={pickupLocation} onChange={(e) => setPickupLocation(e.target.value)} className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]" />
+                <Label className="text-muted-foreground">Pickup location</Label>
+                <Input value={pickupLocation} onChange={(e) => setPickupLocation(e.target.value)} className="mt-1 bg-white/5 border-input text-foreground" />
               </div>
               <div>
-                <Label className="text-[rgba(245,245,245,0.8)]">Dropoff location</Label>
-                <Input value={dropoffLocation} onChange={(e) => setDropoffLocation(e.target.value)} className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]" />
+                <Label className="text-muted-foreground">Dropoff location</Label>
+                <Input value={dropoffLocation} onChange={(e) => setDropoffLocation(e.target.value)} className="mt-1 bg-white/5 border-input text-foreground" />
               </div>
               <div>
-                <Label className="text-[rgba(245,245,245,0.8)]">Vehicle type</Label>
-                <Input value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} placeholder="e.g. Private car" className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]" />
+                <Label className="text-muted-foreground">Vehicle type</Label>
+                <Input value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} placeholder="e.g. Private car" className="mt-1 bg-white/5 border-input text-foreground" />
               </div>
             </div>
           )}
           {eventType === "flight" && (
             <div className="space-y-2">
               <div>
-                <Label className="text-[rgba(245,245,245,0.8)]">Flight number</Label>
-                <Input value={flightNumber} onChange={(e) => setFlightNumber(e.target.value)} placeholder="e.g. AF 1234" className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]" />
+                <Label className="text-muted-foreground">Flight number</Label>
+                <Input value={flightNumber} onChange={(e) => setFlightNumber(e.target.value)} placeholder="e.g. AF 1234" className="mt-1 bg-white/5 border-input text-foreground" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-[rgba(245,245,245,0.8)]">Departure airport</Label>
-                  <Input value={departureAirport} onChange={(e) => setDepartureAirport(e.target.value)} className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]" />
+                  <Label className="text-muted-foreground">Departure airport</Label>
+                  <Input value={departureAirport} onChange={(e) => setDepartureAirport(e.target.value)} className="mt-1 bg-white/5 border-input text-foreground" />
                 </div>
                 <div>
-                  <Label className="text-[rgba(245,245,245,0.8)]">Arrival airport</Label>
-                  <Input value={arrivalAirport} onChange={(e) => setArrivalAirport(e.target.value)} className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]" />
+                  <Label className="text-muted-foreground">Arrival airport</Label>
+                  <Input value={arrivalAirport} onChange={(e) => setArrivalAirport(e.target.value)} className="mt-1 bg-white/5 border-input text-foreground" />
                 </div>
               </div>
             </div>
           )}
           {eventTypeToProductCategory(eventType) && (
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Link product</Label>
+              <Label className="text-muted-foreground">Link product</Label>
               <Input
                 value={linkedProduct ? linkedProduct.name : productSearch}
                 onChange={(e) => {
@@ -387,22 +387,22 @@ export default function AddEventModal({ open, onClose, itineraryId, dayNumber, o
                 }}
                 onFocus={() => productSearch.length >= 2 && setProductResults(productResults)}
                 placeholder="Search products by category…"
-                className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+                className="mt-1 bg-white/5 border-input text-foreground"
               />
               {linkedProduct ? (
-                <div className="mt-2 flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-2">
-                  <span className="text-sm text-[#F5F5F5]">{linkedProduct.name}</span>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => { setLinkedProduct(null); setProductSearch(""); }} className="text-[rgba(245,245,245,0.7)]">
+                <div className="mt-2 flex items-center justify-between rounded-lg border border-input bg-white/5 p-2">
+                  <span className="text-sm text-foreground">{linkedProduct.name}</span>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => { setLinkedProduct(null); setProductSearch(""); }} className="text-muted-foreground">
                     Clear
                   </Button>
                 </div>
               ) : productResults.length > 0 && (
-                <ul className="mt-1 max-h-32 overflow-y-auto rounded-lg border border-white/10 bg-[#08080c]">
+                <ul className="mt-1 max-h-32 overflow-y-auto rounded-lg border border-input bg-inset">
                   {productResults.map((p) => (
                     <li key={p.id}>
                       <button
                         type="button"
-                        className="w-full px-3 py-2 text-left text-sm text-[#F5F5F5] hover:bg-white/10"
+                        className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-white/10"
                         onClick={() => {
                           setLinkedProduct(p);
                           setTitle(p.name);
@@ -420,25 +420,25 @@ export default function AddEventModal({ open, onClose, itineraryId, dayNumber, o
           )}
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Client price</Label>
-              <Input type="number" min={0} step={0.01} value={clientPrice} onChange={(e) => setClientPrice(e.target.value)} className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]" />
+              <Label className="text-muted-foreground">Client price</Label>
+              <Input type="number" min={0} step={0.01} value={clientPrice} onChange={(e) => setClientPrice(e.target.value)} className="mt-1 bg-white/5 border-input text-foreground" />
             </div>
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Net cost</Label>
-              <Input type="number" min={0} step={0.01} value={netCost} onChange={(e) => setNetCost(e.target.value)} className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]" />
+              <Label className="text-muted-foreground">Net cost</Label>
+              <Input type="number" min={0} step={0.01} value={netCost} onChange={(e) => setNetCost(e.target.value)} className="mt-1 bg-white/5 border-input text-foreground" />
             </div>
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Commission %</Label>
-              <Input type="number" min={0} max={100} step={0.1} value={commissionRate} onChange={(e) => setCommissionRate(e.target.value)} className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]" />
+              <Label className="text-muted-foreground">Commission %</Label>
+              <Input type="number" min={0} max={100} step={0.1} value={commissionRate} onChange={(e) => setCommissionRate(e.target.value)} className="mt-1 bg-white/5 border-input text-foreground" />
             </div>
           </div>
           <div>
-            <Label className="text-[rgba(245,245,245,0.8)]">Custom notes</Label>
+            <Label className="text-muted-foreground">Custom notes</Label>
             <textarea
               value={customNotes}
               onChange={(e) => setCustomNotes(e.target.value)}
               rows={2}
-              className="mt-1 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-[#F5F5F5]"
+              className="mt-1 w-full rounded-md border border-input bg-white/5 px-3 py-2 text-sm text-foreground"
             />
           </div>
         </div>
@@ -446,7 +446,7 @@ export default function AddEventModal({ open, onClose, itineraryId, dayNumber, o
         {error && <p className="text-sm text-red-400">{error}</p>}
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} className="border-white/10 text-[#F5F5F5]">
+          <Button variant="outline" onClick={onClose} className="border-input text-foreground">
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={saving || !title.trim()}>

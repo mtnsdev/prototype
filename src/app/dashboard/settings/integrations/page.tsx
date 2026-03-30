@@ -207,9 +207,9 @@ function DriveConnectionCard({
 
     if (loading) {
         return (
-            <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
+            <section className="rounded-2xl border border-border bg-card overflow-hidden">
                 <div className="flex items-center justify-center py-8">
-                    <Loader2 size={20} className="animate-spin text-[rgba(245,245,245,0.5)]" />
+                    <Loader2 size={20} className="animate-spin text-muted-foreground/75" />
                 </div>
             </section>
         );
@@ -217,19 +217,19 @@ function DriveConnectionCard({
 
     return (
         <>
-            <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
+            <section className="rounded-2xl border border-border bg-card overflow-hidden">
                 {/* Header */}
-                <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-white/10">
-                        <Cloud size={18} className="text-[rgba(245,245,245,0.6)]" />
+                <div className="px-5 py-4 border-b border-border flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-input">
+                        <Cloud size={18} className="text-muted-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                            <h2 className="text-[15px] font-semibold text-[#F5F5F5]">{label}</h2>
-                            <CardIcon size={14} className="text-[rgba(245,245,245,0.4)]" />
+                            <h2 className="text-base font-semibold text-foreground">{label}</h2>
+                            <CardIcon size={14} className="text-muted-foreground/55" />
                         </div>
                         {connectionType === "agency" && (
-                            <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-0.5">
+                            <p className="text-xs text-muted-foreground/55 mt-0.5">
                                 Shared with all workspace users
                             </p>
                         )}
@@ -237,17 +237,17 @@ function DriveConnectionCard({
                     {driveStatus?.connected && (
                         <span className="ml-auto">
                             {driveStatus.sync_status === "running" ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[12px] font-medium bg-amber-500/15 text-amber-400 border border-amber-500/25">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-sm font-medium bg-amber-500/15 text-[var(--color-warning)] border border-amber-500/25">
                                     <Loader2 size={12} className="animate-spin" />
                                     Syncing...
                                 </span>
                             ) : driveStatus.sync_status === "failed" || driveStatus.status === "token_expired" ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[12px] font-medium bg-red-500/15 text-red-400 border border-red-500/25">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-sm font-medium bg-red-500/15 text-red-400 border border-red-500/25">
                                     <AlertCircle size={12} />
                                     Error
                                 </span>
                             ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[12px] font-medium bg-green-500/15 text-green-400 border border-green-500/25">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-sm font-medium bg-green-500/15 text-green-400 border border-green-500/25">
                                     <CheckCircle size={12} />
                                     Connected
                                 </span>
@@ -259,14 +259,14 @@ function DriveConnectionCard({
                 {/* Body */}
                 <div className="p-5 space-y-4">
                     {error && (
-                        <div className="rounded-lg bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)] px-3 py-2 text-[13px] text-[#C87A7A]">
+                        <div className="rounded-lg bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)] px-3 py-2 text-compact text-[var(--color-error)]">
                             {error}
                         </div>
                     )}
 
                     {!driveStatus?.connected ? (
                         <>
-                            <p className="text-[13px] text-[rgba(245,245,245,0.5)]">{description}</p>
+                            <p className="text-compact text-muted-foreground/75">{description}</p>
                             <Button onClick={handleConnect} className="gap-2">
                                 <Cloud size={16} />
                                 Connect {connectionType === "personal" ? "Personal" : "Admin"} Drive
@@ -275,15 +275,15 @@ function DriveConnectionCard({
                     ) : (
                         <>
                             {driveStatus.folder_name && (
-                                <p className="text-[13px] text-[rgba(245,245,245,0.6)]">
-                                    Folder: <span className="text-[#F5F5F5] font-medium">{driveStatus.folder_name}</span>
+                                <p className="text-compact text-muted-foreground">
+                                    Folder: <span className="text-foreground font-medium">{driveStatus.folder_name}</span>
                                 </p>
                             )}
-                            <p className="text-[13px] text-[rgba(245,245,245,0.5)]">
+                            <p className="text-compact text-muted-foreground/75">
                                 Last synced: {formatTime(driveStatus.last_synced_at)} · {driveStatus.files_indexed} indexed, {driveStatus.files_pending} pending
                             </p>
                             {driveStatus.sync_error && (
-                                <p className="text-[13px] text-[#C87A7A]">{driveStatus.sync_error}</p>
+                                <p className="text-compact text-[var(--color-error)]">{driveStatus.sync_error}</p>
                             )}
                             <div className="flex flex-wrap gap-2">
                                 <Button onClick={handleSyncNow} disabled={syncing || driveStatus.sync_status === "running"} className="gap-2">
@@ -298,7 +298,7 @@ function DriveConnectionCard({
                                     <FolderOpen size={16} />
                                     Change folder
                                 </Button>
-                                <Button variant="destructive" onClick={handleDisconnect} className="gap-2 bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border-[rgba(200,122,122,0.2)] text-[#C87A7A]">
+                                <Button variant="destructive" onClick={handleDisconnect} className="gap-2 bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border-[rgba(200,122,122,0.2)] text-[var(--color-error)]">
                                     <LogOut size={16} />
                                     Disconnect
                                 </Button>
@@ -438,34 +438,34 @@ function ClaromentisConnectionCard() {
 
     if (loading) {
         return (
-            <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
+            <section className="rounded-2xl border border-border bg-card overflow-hidden">
                 <div className="flex items-center justify-center py-8">
-                    <Loader2 size={20} className="animate-spin text-[rgba(245,245,245,0.5)]" />
+                    <Loader2 size={20} className="animate-spin text-muted-foreground/75" />
                 </div>
             </section>
         );
     }
 
     return (
-        <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
+        <section className="rounded-2xl border border-border bg-card overflow-hidden">
             {/* Header */}
-            <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-white/10">
-                    <Link2 size={18} className="text-[rgba(245,245,245,0.6)]" />
+            <div className="px-5 py-4 border-b border-border flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-input">
+                    <Link2 size={18} className="text-muted-foreground" />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h2 className="text-[15px] font-semibold text-[#F5F5F5]">Intranet account</h2>
-                    <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-0.5">
+                    <h2 className="text-base font-semibold text-foreground">Intranet account</h2>
+                    <p className="text-xs text-muted-foreground/55 mt-0.5">
                         Connect your personal intranet account for search and browsing
                     </p>
                 </div>
                 {isConnected && (
-                    <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[12px] font-medium bg-green-500/15 text-green-400 border border-green-500/25">
+                    <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-sm font-medium bg-green-500/15 text-green-400 border border-green-500/25">
                         <CheckCircle size={12} /> Connected
                     </span>
                 )}
                 {isError && (
-                    <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[12px] font-medium bg-red-500/15 text-red-400 border border-red-500/25">
+                    <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-sm font-medium bg-red-500/15 text-red-400 border border-red-500/25">
                         <AlertCircle size={12} /> Error
                     </span>
                 )}
@@ -474,24 +474,24 @@ function ClaromentisConnectionCard() {
             {/* Body */}
             <div className="p-5 space-y-4">
                 {error && (
-                    <div className="rounded-lg bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)] px-3 py-2 text-[13px] text-[#C87A7A]">
+                    <div className="rounded-lg bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)] px-3 py-2 text-compact text-[var(--color-error)]">
                         {error}
                     </div>
                 )}
 
                 {isError && status?.last_error && (
-                    <div className="rounded-lg bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)] px-3 py-2 text-[13px] text-[#C87A7A]">
+                    <div className="rounded-lg bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)] px-3 py-2 text-compact text-[var(--color-error)]">
                         {status.last_error} — re-enter your credentials below to reconnect.
                     </div>
                 )}
 
                 {isConnected && !isError && (
                     <div className="space-y-1">
-                        <p className="text-[13px] text-[rgba(245,245,245,0.6)]">
-                            Signed in as <span className="text-[#F5F5F5] font-medium">{status?.claromentis_username}</span>
+                        <p className="text-compact text-muted-foreground">
+                            Signed in as <span className="text-foreground font-medium">{status?.claromentis_username}</span>
                         </p>
                         {status?.last_connected_at && (
-                            <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
+                            <p className="text-sm text-muted-foreground/55">
                                 Connected {formatTime(status.last_connected_at)}
                             </p>
                         )}
@@ -506,7 +506,7 @@ function ClaromentisConnectionCard() {
                                 {syncing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                                 Sync now
                             </Button>
-                            <Button variant="destructive" onClick={handleDisconnect} className="gap-2 bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border-[rgba(200,122,122,0.2)] text-[#C87A7A]">
+                            <Button variant="destructive" onClick={handleDisconnect} className="gap-2 bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border-[rgba(200,122,122,0.2)] text-[var(--color-error)]">
                                 <LogOut size={16} />
                                 Disconnect
                             </Button>
@@ -524,7 +524,7 @@ function ClaromentisConnectionCard() {
                                 onChange={(e) => setUsername(e.target.value)}
                                 required
                                 autoComplete="username"
-                                className="rounded-xl bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]"
+                                className="rounded-xl bg-[rgba(255,255,255,0.05)] border-input"
                             />
                             <Input
                                 type="password"
@@ -533,7 +533,7 @@ function ClaromentisConnectionCard() {
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
                                 autoComplete="current-password"
-                                className="rounded-xl bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]"
+                                className="rounded-xl bg-[rgba(255,255,255,0.05)] border-input"
                             />
                             <Input
                                 type="url"
@@ -541,7 +541,7 @@ function ClaromentisConnectionCard() {
                                 value={baseUrl}
                                 onChange={(e) => setBaseUrl(e.target.value)}
                                 autoComplete="off"
-                                className="rounded-xl bg-[rgba(255,255,255,0.05)] border-[rgba(255,255,255,0.1)]"
+                                className="rounded-xl bg-[rgba(255,255,255,0.05)] border-input"
                             />
                         </div>
                         <Button type="submit" disabled={submitting} className="gap-2">
@@ -565,15 +565,15 @@ function EmailForwardingCard() {
     const address = `${agencySlug}@ingest.enable.travel`;
 
     return (
-        <div className="bg-white/[0.02] border border-white/[0.06] rounded-[20px] p-5">
+        <div className="bg-white/[0.02] border border-border rounded-[20px] p-5">
             <div className="flex items-center gap-2 mb-3">
                 <Mail className="w-4 h-4 text-sky-400" />
-                <span className="text-xs font-semibold tracking-wider text-gray-400 uppercase">
+                <span className="text-xs font-semibold tracking-wider text-muted-foreground/90 uppercase">
                     Email Forwarding
                 </span>
             </div>
 
-            <p className="text-xs text-gray-500 mb-4">
+            <p className="text-xs text-muted-foreground mb-4">
                 Forward any email to this address and it will appear in your Knowledge Vault. Attachments are
                 extracted and stored as separate documents.
             </p>
@@ -584,16 +584,16 @@ function EmailForwardingCard() {
                     type="button"
                     onClick={() => {
                         void navigator.clipboard.writeText(address);
-                        toast("Email address copied");
+                        toast({ title: "Email address copied", tone: "success" });
                     }}
-                    className="text-gray-500 hover:text-gray-300 transition-colors shrink-0 p-1"
+                    className="text-muted-foreground hover:text-foreground transition-colors shrink-0 p-1"
                     aria-label="Copy address"
                 >
                     <Copy className="w-4 h-4" />
                 </button>
             </div>
 
-            <p className="text-[10px] text-gray-600 mt-3">
+            <p className="text-2xs text-muted-foreground/70 mt-3">
                 We match forwarded emails to your advisor account using your registered email address. All ingested
                 content is private to you by default.
             </p>
@@ -609,17 +609,17 @@ export default function IntegrationsPage() {
     const isAdmin = user?.role === "admin";
 
     return (
-        <div className="h-full overflow-y-auto bg-[#0C0C0C]">
+        <div className="h-full overflow-y-auto bg-background">
             <div className="max-w-2xl mx-auto p-6 space-y-6">
                 <div className="mb-8">
                     <Link
                         href="/dashboard/settings"
-                        className="text-[13px] text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] mb-2 inline-block"
+                        className="text-compact text-muted-foreground/75 hover:text-foreground mb-2 inline-block"
                     >
                         ← Settings
                     </Link>
-                    <h1 className="text-[24px] font-semibold text-[#F5F5F5] tracking-tight">Integrations</h1>
-                    <p className="text-[14px] text-[rgba(245,245,245,0.5)] mt-1">Connect data sources for search and RAG</p>
+                    <h1 className="text-2xl font-semibold text-foreground tracking-tight">Integrations</h1>
+                    <p className="text-base text-muted-foreground/75 mt-1">Connect data sources for search and RAG</p>
                 </div>
 
                 <EmailForwardingCard />

@@ -53,14 +53,14 @@ export default function AcuitySettingsSection() {
   };
 
   if (loading) {
-    return <p className="text-sm text-[rgba(245,245,245,0.5)]">Loading settings…</p>;
+    return <p className="text-sm text-muted-foreground/75">Loading settings…</p>;
   }
 
   return (
-    <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
-      <div className="border-b border-[rgba(255,255,255,0.08)] px-5 py-4">
-        <h2 className="text-lg font-semibold text-[#F5F5F5]">Acuity Intelligence Settings</h2>
-        <p className="text-sm text-[rgba(245,245,245,0.5)] mt-1">
+    <section className="rounded-2xl border border-border bg-card overflow-hidden">
+      <div className="border-b border-border px-5 py-4">
+        <h2 className="text-lg font-semibold text-foreground">Acuity Intelligence Settings</h2>
+        <p className="text-sm text-muted-foreground/75 mt-1">
           These settings determine how Acuity tailors its VIC intelligence profiles for your organisation.
         </p>
       </div>
@@ -83,7 +83,7 @@ export default function AcuitySettingsSection() {
               <option key={opt} value={opt} />
             ))}
           </datalist>
-          <p className="text-xs text-[rgba(245,245,245,0.5)] mt-1">
+          <p className="text-xs text-muted-foreground/75 mt-1">
             Suggestions: luxury hotel, fashion house, travel advisor, jeweller, real estate, private bank
           </p>
         </div>
@@ -118,7 +118,7 @@ export default function AcuitySettingsSection() {
             onChange={(e) => setSettings((s) => ({ ...s, requester_focus: e.target.value }))}
             placeholder="e.g. dining preferences and activity interests for personalising guest stays"
             rows={2}
-            className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]"
+            className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
           />
         </div>
 
@@ -126,7 +126,7 @@ export default function AcuitySettingsSection() {
           {saving ? "Saving…" : "Save Settings"}
         </Button>
 
-        <p className="text-xs text-[rgba(245,245,245,0.5)]">
+        <p className="text-xs text-muted-foreground/75">
           These settings apply to all Acuity runs in this workspace. Changes take effect on the next run.
         </p>
       </form>

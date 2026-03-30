@@ -58,7 +58,7 @@ export default function ProductDirectoryLocationDropdown({ selectedCountries, on
 
   const summary =
     selectedCountries.length === 0 ? null : (
-      <span className="truncate text-[#F5F0EB]">
+      <span className="truncate text-foreground">
         {selectedCountries.slice(0, 2).join(", ")}
         {selectedCountries.length > 2 && ` +${selectedCountries.length - 2}`}
       </span>
@@ -74,28 +74,28 @@ export default function ProductDirectoryLocationDropdown({ selectedCountries, on
           "flex max-w-[220px] items-center gap-2 rounded-lg border px-3 py-1.5 text-left transition-colors",
           selectedCountries.length > 0
             ? "border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.06)]"
-            : "border-[rgba(255,255,255,0.03)] bg-[#0c0c12] hover:border-[rgba(255,255,255,0.06)]"
+            : "border-border bg-popover hover:border-border"
         )}
       >
         {selectedCountries.length === 0 ? (
           <>
-            <MapPin className="h-3 w-3 shrink-0 text-[#4A4540]" />
-            <span className="text-[11px] text-[#9B9590]">Location</span>
+            <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/65" />
+            <span className="text-xs text-muted-foreground">Location</span>
           </>
         ) : (
-          <span className="min-w-0 flex-1 text-[11px]">{summary}</span>
+          <span className="min-w-0 flex-1 text-xs">{summary}</span>
         )}
-        <ChevronDown className="h-3 w-3 shrink-0 text-[#4A4540]" />
+        <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground/65" />
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-[60] mt-1 w-64 max-h-80 overflow-y-auto rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0c0c12] shadow-xl">
-          <div className="sticky top-0 z-[1] border-b border-[rgba(255,255,255,0.03)] bg-[#0c0c12] p-2">
+        <div className="absolute left-0 top-full z-[60] mt-1 w-64 max-h-80 overflow-y-auto rounded-xl border border-border bg-popover shadow-xl">
+          <div className="sticky top-0 z-[1] border-b border-border bg-popover p-2">
             <input
               ref={inputRef}
               type="text"
               placeholder="Search countries..."
-              className="w-full rounded-lg border-none bg-[rgba(255,255,255,0.03)] px-2 py-1.5 text-[11px] text-[#F5F0EB] placeholder-[#4A4540] focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/40"
+              className="w-full rounded-lg border-none bg-[rgba(255,255,255,0.03)] px-2 py-1.5 text-xs text-foreground placeholder-[#4A4540] focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/40"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -103,12 +103,12 @@ export default function ProductDirectoryLocationDropdown({ selectedCountries, on
           {filteredGroups.map((group) => (
             <div key={group.region}>
               <div className="flex items-center justify-between bg-[rgba(255,255,255,0.02)] px-3 py-1.5">
-                <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-[#4A4540]">
+                <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-muted-foreground/65">
                   {group.region}
                 </span>
                 <button
                   type="button"
-                  className="text-[9px] text-[#6B6560] transition-colors hover:text-[#9B9590]"
+                  className="text-[9px] text-muted-foreground transition-colors hover:text-muted-foreground"
                   onClick={() => toggleRegion(group.region)}
                 >
                   {isRegionFullySelected(group.region, selectedCountries) ? "Clear" : "All"}
@@ -120,11 +120,11 @@ export default function ProductDirectoryLocationDropdown({ selectedCountries, on
                   <button
                     key={country}
                     type="button"
-                    className="flex w-full items-center justify-between px-3 py-1.5 text-left text-[11px] text-[#9B9590] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+                    className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-[rgba(255,255,255,0.04)]"
                     onClick={() => toggleCountry(country)}
                   >
                     <span>{country}</span>
-                    {on ? <Check className="h-3 w-3 shrink-0 text-[#C9A96E]" /> : <span className="h-3 w-3 shrink-0" />}
+                    {on ? <Check className="h-3 w-3 shrink-0 text-brand-cta" /> : <span className="h-3 w-3 shrink-0" />}
                   </button>
                 );
               })}

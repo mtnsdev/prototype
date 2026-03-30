@@ -4,7 +4,7 @@ export const ITINERARY_STATUS_BADGES: Record<
   ItineraryStatus,
   { label: string; className: string }
 > = {
-  draft: { label: "Draft", className: "bg-white/10 text-[rgba(245,245,245,0.7)] border-white/20" },
+  draft: { label: "Draft", className: "bg-white/10 text-muted-foreground border-white/20" },
   proposed: { label: "Proposed", className: "bg-[var(--muted-info-bg)] text-[var(--muted-info-text)] border-[var(--muted-info-border)]" },
   confirmed: { label: "Confirmed", className: "bg-[var(--muted-success-bg)] text-[var(--muted-success-text)] border-[var(--muted-success-border)]" },
   in_progress: { label: "In progress", className: "bg-[var(--muted-amber-bg)] text-[var(--muted-amber-text)] border-[var(--muted-amber-border)]" },

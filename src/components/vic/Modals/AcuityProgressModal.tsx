@@ -67,7 +67,7 @@ export default function AcuityProgressModal({ vicIds, onClose, onStart }: Props)
                 style={{ width: `${total ? (doneCount / total) * 100 : 0}%` }}
               />
             </div>
-            <p className="text-sm text-[rgba(245,245,245,0.7)] mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               {doneCount} / {total} complete
             </p>
           </div>

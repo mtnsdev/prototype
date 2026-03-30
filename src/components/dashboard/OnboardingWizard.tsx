@@ -112,13 +112,13 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   // Screen 1 — Overview
   if (screen === "overview") {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0C0C0C]/95 backdrop-blur-sm p-4">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-sm p-4">
         <div className="max-w-lg w-full">
           <div className="text-center mb-8">
-            <h1 className="text-[24px] font-semibold text-[#F5F5F5] mb-2">
+            <h1 className="text-2xl font-semibold text-foreground mb-2">
               Connect your knowledge sources
             </h1>
-            <p className="text-[14px] text-[rgba(245,245,245,0.6)]">
+            <p className="text-base text-muted-foreground">
               TravelLustre&apos;s answers are only as good as the sources behind them. Let&apos;s set yours up.
             </p>
           </div>
@@ -126,15 +126,15 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             {inactiveSources.map((src) => (
               <div
                 key={src.key}
-                className="flex items-center justify-between gap-3 p-4 rounded-xl bg-[#161616] border border-[rgba(255,255,255,0.08)]"
+                className="flex items-center justify-between gap-3 p-4 rounded-xl bg-card border border-border"
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
-                    <Database className="w-5 h-5 text-[rgba(245,245,245,0.6)]" />
+                    <Database className="w-5 h-5 text-muted-foreground" />
                   </div>
                   <div className="min-w-0">
-                    <p className="font-medium text-[#F5F5F5] truncate">{src.label}</p>
-                    <p className="text-[12px] text-[rgba(245,245,245,0.5)] truncate">{src.description}</p>
+                    <p className="font-medium text-foreground truncate">{src.label}</p>
+                    <p className="text-sm text-muted-foreground/75 truncate">{src.description}</p>
                   </div>
                 </div>
                 {src.connectHref ? (
@@ -144,19 +144,19 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     </Button>
                   </Link>
                 ) : (
-                  <span className="text-[11px] text-[rgba(245,245,245,0.4)] shrink-0">Coming soon</span>
+                  <span className="text-xs text-muted-foreground/55 shrink-0">Coming soon</span>
                 )}
               </div>
             ))}
           </div>
           <div className="flex flex-col gap-2">
-            <Button onClick={handleContinue} className="w-full bg-[#AE8550] hover:bg-[#C4975E]">
+            <Button onClick={handleContinue} className="w-full bg-brand-chat-user hover:bg-[#C4975E]">
               Continue →
             </Button>
             <button
               type="button"
               onClick={handleSkipSetup}
-              className="text-[13px] text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] underline"
+              className="text-compact text-muted-foreground/75 hover:text-foreground underline"
             >
               Skip setup
             </button>
@@ -169,30 +169,30 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   // Screen 2 — Per-source (one screen per inactive source)
   if (screen === "connect" && currentSource) {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0C0C0C]/95 backdrop-blur-sm p-4">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-sm p-4">
         <div className="max-w-md w-full">
-          <p className="text-[12px] text-[rgba(245,245,245,0.5)] mb-4">
+          <p className="text-sm text-muted-foreground/75 mb-4">
             Source {currentSourceIndex + 1} of {notYetConnected.length}
           </p>
-          <div className="p-6 rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.1)] mb-6">
+          <div className="p-6 rounded-2xl bg-card border border-input mb-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
                 <Database className="w-6 h-6 text-[#AE8550]" />
               </div>
-              <h2 className="text-[18px] font-semibold text-[#F5F5F5]">{currentSource.label}</h2>
+              <h2 className="text-lg font-semibold text-foreground">{currentSource.label}</h2>
             </div>
-            <p className="text-[14px] text-[rgba(245,245,245,0.7)] mb-6">{currentSource.description}</p>
+            <p className="text-base text-muted-foreground mb-6">{currentSource.description}</p>
             {currentSource.connectHref ? (
               <div className="flex flex-col gap-2">
                 <Link href={currentSource.connectHref} className="block" onClick={() => setConnectedKeys((s) => new Set(s).add(currentSource.key))}>
-                  <Button className="w-full bg-[#AE8550] hover:bg-[#C4975E]">
+                  <Button className="w-full bg-brand-chat-user hover:bg-[#C4975E]">
                     Connect {currentSource.label}
                   </Button>
                 </Link>
                 <button
                   type="button"
                   onClick={handleSkipSource}
-                  className="text-[13px] text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] underline"
+                  className="text-compact text-muted-foreground/75 hover:text-foreground underline"
                 >
                   Skip for now
                 </button>
@@ -201,7 +201,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               <>
                 {/* TODO: wire OAuth */}
                 <Button disabled className="w-full opacity-60">Coming soon</Button>
-                <button type="button" onClick={handleSkipSource} className="mt-2 text-[13px] text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] underline">
+                <button type="button" onClick={handleSkipSource} className="mt-2 text-compact text-muted-foreground/75 hover:text-foreground underline">
                   Skip for now
                 </button>
               </>
@@ -214,29 +214,29 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
   // Screen 3 — Confirmation
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0C0C0C]/95 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-sm p-4">
       <div className="max-w-md w-full">
-        <h1 className="text-[24px] font-semibold text-[#F5F5F5] mb-2 text-center">You&apos;re all set</h1>
-        <p className="text-[14px] text-[rgba(245,245,245,0.6)] mb-6 text-center">
+        <h1 className="text-2xl font-semibold text-foreground mb-2 text-center">You&apos;re all set</h1>
+        <p className="text-base text-muted-foreground mb-6 text-center">
           Start asking questions — you can connect more sources anytime in Settings.
         </p>
         <div className="space-y-2 mb-8">
           {inactiveSources.filter((s) => s.connected).map((s) => (
-            <div key={s.key} className="flex items-center gap-3 p-3 rounded-lg bg-[#161616]">
+            <div key={s.key} className="flex items-center gap-3 p-3 rounded-lg bg-card">
               <Check className="w-5 h-5 text-[#7AC889] shrink-0" />
-              <span className="text-[14px] text-[#F5F5F5]">{s.label}</span>
+              <span className="text-base text-foreground">{s.label}</span>
             </div>
           ))}
           {inactiveSources.filter((s) => !s.connected).map((s) => (
-            <div key={s.key} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-[#161616]/60">
-              <span className="text-[14px] text-[rgba(245,245,245,0.6)]">{s.label}</span>
-              <Link href="/dashboard/settings/integrations" className="text-[12px] text-[#AE8550] hover:underline">
+            <div key={s.key} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-card/60">
+              <span className="text-base text-muted-foreground">{s.label}</span>
+              <Link href="/dashboard/settings/integrations" className="text-sm text-[#AE8550] hover:underline">
                 Connect later
               </Link>
             </div>
           ))}
         </div>
-        <Button onClick={handleStartChatting} className="w-full bg-[#AE8550] hover:bg-[#C4975E] text-white">
+        <Button onClick={handleStartChatting} className="w-full bg-brand-chat-user hover:bg-[#C4975E] text-white">
           Start chatting →
         </Button>
       </div>

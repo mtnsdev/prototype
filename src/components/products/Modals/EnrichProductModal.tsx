@@ -128,16 +128,16 @@ export default function EnrichProductModal({ open, onClose, product, products: b
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="bg-[#1a1a1a] border-white/10 max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-accent border-input max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-[#F5F5F5]">
+          <DialogTitle className="text-foreground">
             {isBulk ? `Enrich ${targets.length} products` : "Enrich with AI"}
           </DialogTitle>
         </DialogHeader>
 
         {step === "pick" && (
           <>
-            <p className="text-sm text-[rgba(245,245,245,0.7)] mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               Choose fields to generate or improve with AI. You can review and accept suggestions before saving.
             </p>
             <div className="space-y-2">
@@ -149,12 +149,12 @@ export default function EnrichProductModal({ open, onClose, product, products: b
                     onChange={() => toggleField(f.id)}
                     className="checkbox-on-dark"
                   />
-                  <span className="text-sm text-[#F5F5F5]">{f.label}</span>
+                  <span className="text-sm text-foreground">{f.label}</span>
                 </label>
               ))}
             </div>
             {isBulk && (
-              <p className="text-xs text-[rgba(245,245,245,0.5)] mt-2">
+              <p className="text-xs text-muted-foreground/75 mt-2">
                 All selected products will be enriched for the chosen fields. Progress will be shown during the run.
               </p>
             )}
@@ -163,15 +163,15 @@ export default function EnrichProductModal({ open, onClose, product, products: b
 
         {step === "review" && !isBulk && Object.keys(suggestions).length > 0 && (
           <div className="space-y-4">
-            <p className="text-sm text-[rgba(245,245,245,0.7)]">Review AI suggestions and accept or reject each.</p>
+            <p className="text-sm text-muted-foreground">Review AI suggestions and accept or reject each.</p>
             {selectedFields.map((fieldId) => {
               const label = ENRICH_FIELDS.find((f) => f.id === fieldId)?.label ?? fieldId;
               const value = suggestions[fieldId];
               if (value == null) return null;
               return (
-                <div key={fieldId} className="rounded-lg border border-white/10 p-3 bg-white/5">
+                <div key={fieldId} className="rounded-lg border border-input p-3 bg-white/5">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-[rgba(245,245,245,0.8)]">{label}</span>
+                    <span className="text-xs font-medium text-muted-foreground">{label}</span>
                     <div className="flex gap-1">
                       <Button
                         variant="outline"
@@ -206,7 +206,7 @@ export default function EnrichProductModal({ open, onClose, product, products: b
                 style={{ width: `${(bulkProgress.total ? (bulkProgress.current / bulkProgress.total) * 100 : 0)}%` }}
               />
             </div>
-            <p className="text-xs text-[rgba(245,245,245,0.5)] mt-2">
+            <p className="text-xs text-muted-foreground/75 mt-2">
               {bulkProgress.current} / {bulkProgress.total} products
             </p>
           </div>
@@ -217,7 +217,7 @@ export default function EnrichProductModal({ open, onClose, product, products: b
         <DialogFooter className="gap-2 flex-wrap">
           {step === "review" && !isBulk ? (
             <>
-              <Button variant="outline" onClick={() => setStep("pick")} className="border-white/10 text-[#F5F5F5]">
+              <Button variant="outline" onClick={() => setStep("pick")} className="border-input text-foreground">
                 Back
               </Button>
               <Button onClick={handleSaveAccepted} disabled={loading}>
@@ -226,7 +226,7 @@ export default function EnrichProductModal({ open, onClose, product, products: b
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={onClose} className="border-white/10 text-[#F5F5F5]">
+              <Button variant="outline" onClick={onClose} className="border-input text-foreground">
                 Cancel
               </Button>
               <Button onClick={runEnrich} disabled={loading || selectedFields.length === 0}>

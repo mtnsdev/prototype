@@ -7,7 +7,7 @@ const statusConfig: Record<
   AcuityStatus,
   { label: string; className: string; animated?: boolean }
 > = {
-  not_run: { label: "Not Run", className: "bg-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.6)]" },
+  not_run: { label: "Not Run", className: "bg-[rgba(255,255,255,0.08)] text-muted-foreground" },
   running: {
     label: "Running",
     className: "bg-[var(--muted-info-bg)] text-[var(--muted-info-text)] border border-[var(--muted-info-border)]",

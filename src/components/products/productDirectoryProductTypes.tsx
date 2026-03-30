@@ -106,3 +106,23 @@ export function directoryCategoryLabel(type: DirectoryProductCategory | string):
 export function directoryCategoryMarkerColor(type: DirectoryProductCategory | string): string {
   return directoryCategoryColors(type).color;
 }
+
+/** Map free-text type labels (e.g. from search index) to category colors — single source for chips. */
+export function inferDirectoryCategoryFromTypeLabel(typeLabel: string): DirectoryProductCategory {
+  const s = typeLabel.trim().toLowerCase();
+  const exact = DIRECTORY_PRODUCT_TYPE_CONFIG.find((pt) => pt.label.toLowerCase() === s);
+  if (exact) return exact.id;
+  if (s.includes("dmc")) return "dmc";
+  if (s.includes("experience") || s.includes("tour")) return "experience";
+  if (s.includes("cruise")) return "cruise";
+  if (s.includes("villa")) return "villa";
+  if (s.includes("restaurant")) return "restaurant";
+  if (s.includes("wellness") || s.includes("spa")) return "wellness";
+  if (s.includes("transport")) return "transport";
+  if (s.includes("hotel") || s.includes("resort")) return "hotel";
+  return "hotel";
+}
+
+export function chipStyleFromProductTypeLabel(typeLabel: string) {
+  return directoryCategoryColors(inferDirectoryCategoryFromTypeLabel(typeLabel));
+}

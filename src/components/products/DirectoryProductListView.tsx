@@ -13,6 +13,7 @@ import {
   programDisplayName,
 } from "./productDirectoryCommission";
 import { DIRECTORY_TIER_FILTER_UI } from "./productDirectoryFilterConfig";
+import { listCardRowBaseClass } from "@/lib/list-ui";
 
 type Props = {
   products: DirectoryProduct[];
@@ -148,10 +149,10 @@ export default function DirectoryProductListView({
               onPointerLeave={clearLongPress}
               onPointerCancel={clearLongPress}
               className={cn(
-                "group flex cursor-pointer gap-2 rounded-lg border px-2 py-1.5 transition-all",
+                listCardRowBaseClass,
                 bulkOn
-                  ? "border-[rgba(201,169,110,0.30)] ring-1 ring-[rgba(201,169,110,0.15)] bg-[rgba(255,255,255,0.02)]"
-                  : "border-[rgba(255,255,255,0.03)] bg-[#0c0c12] hover:border-[rgba(255,255,255,0.06)]"
+                  ? "border-brand-cta/30 bg-brand-cta/[0.08] ring-1 ring-brand-cta/15"
+                  : ""
               )}
             >
               <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md">
@@ -171,12 +172,12 @@ export default function DirectoryProductListView({
                     className={cn(
                       "absolute left-0.5 top-0.5 z-10 flex h-4 w-4 items-center justify-center rounded border transition-all",
                       bulkOn
-                        ? "border-[#C9A96E] bg-[#C9A96E]"
+                        ? "border-brand-cta bg-brand-cta"
                         : "border-white/20 bg-black/40 backdrop-blur-sm hover:border-white/40"
                     )}
                     aria-label={bulkOn ? "Deselect" : "Select"}
                   >
-                    {bulkOn ? <Check className="h-2.5 w-2.5 text-[#08080c]" strokeWidth={3} /> : null}
+                    {bulkOn ? <Check className="h-2.5 w-2.5 text-primary-foreground" strokeWidth={3} /> : null}
                   </button>
                 )}
                 <button
@@ -188,7 +189,7 @@ export default function DirectoryProductListView({
                   }}
                   className={cn(
                     "absolute bottom-0.5 right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/40 text-white/50 backdrop-blur-sm transition-all hover:bg-black/60 hover:text-white",
-                    bm ? "text-[#C9A96E] opacity-100" : "opacity-0 group-hover:opacity-100"
+                    bm ? "text-brand-cta opacity-100" : "opacity-0 group-hover:opacity-100"
                   )}
                 >
                   <Plus className="h-2.5 w-2.5" strokeWidth={2.5} />
@@ -198,7 +199,7 @@ export default function DirectoryProductListView({
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex min-w-0 items-center gap-1">
-                      <h3 className="truncate text-[12px] font-medium leading-tight text-[#F5F0EB]">
+                      <h3 className="truncate text-sm font-medium leading-tight text-foreground">
                         {product.name}
                       </h3>
                       {tierStarCount > 0 ? (
@@ -211,10 +212,10 @@ export default function DirectoryProductListView({
                         </div>
                       ) : null}
                     </div>
-                    <p className="truncate text-[10px] leading-tight text-[#9B9590]">
+                    <p className="truncate text-2xs leading-tight text-muted-foreground">
                       {directoryProductPlaceLabel(product)}
                       {product.priceTier ? (
-                        <span className="ml-1 text-[9px] text-[#6B6560]">{product.priceTier}</span>
+                        <span className="ml-1 text-[9px] text-muted-foreground">{product.priceTier}</span>
                       ) : null}
                     </p>
                   </div>
@@ -236,7 +237,7 @@ export default function DirectoryProductListView({
                     {showRemoveFromCollection && onRemoveFromFilteredCollection && (
                       <button
                         type="button"
-                        className="text-[8px] text-[#6B6560] transition-colors hover:text-[#C9A96E]"
+                        className="text-[8px] text-muted-foreground transition-colors hover:text-brand-cta"
                         onClick={(e) => {
                           e.stopPropagation();
                           onRemoveFromFilteredCollection(product.id);
@@ -250,7 +251,7 @@ export default function DirectoryProductListView({
                 <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
                   <ProductDirectoryCategoryBadge type={product.type} compact />
                   {product.activePromotion && (
-                    <span className="inline-flex items-center gap-0.5 rounded border border-[rgba(201,169,110,0.12)] bg-[rgba(201,169,110,0.06)] px-1 py-px text-[8px] text-[#C9A96E]">
+                    <span className="inline-flex items-center gap-0.5 rounded border border-[rgba(201,169,110,0.12)] bg-[rgba(201,169,110,0.06)] px-1 py-px text-[8px] text-brand-cta">
                       <Sparkles className="h-2 w-2 shrink-0" />
                       {canViewCommissions ? (
                         <>
@@ -270,22 +271,22 @@ export default function DirectoryProductListView({
                   )}
                   {canViewCommissions && topProg != null && topRate != null && (
                     <span className="text-[9px] text-[#B8976E]">
-                      {topRate}% <span className="text-[#6B6560]">· {programDisplayName(topProg)}</span>
+                      {topRate}% <span className="text-muted-foreground">· {programDisplayName(topProg)}</span>
                     </span>
                   )}
                   {!canViewCommissions && topProg != null && topRate != null && (
-                    <span className="text-[8px] text-[#6B6560]">Rate on file</span>
+                    <span className="text-[8px] text-muted-foreground">Rate on file</span>
                   )}
                   {canViewCommissions && topRate == null && (
-                    <span className="text-[8px] text-[#6B6560]">Unrated</span>
+                    <span className="text-[8px] text-muted-foreground">Unrated</span>
                   )}
-                  <span className="text-[8px] text-[#6B6560]">
+                  <span className="text-[8px] text-muted-foreground">
                     {product.partnerProgramCount} prog · {product.collectionCount} lists
                   </span>
                   {externalSearchCollectionId &&
                   product.collectionIds.includes(externalSearchCollectionId) ? (
                     <span
-                      className="inline-flex items-center gap-0.5 text-[8px] text-[#6B6560]"
+                      className="inline-flex items-center gap-0.5 text-[8px] text-muted-foreground"
                       title={
                         externalSearchTooltip?.(product.id) ??
                         "Saved from chat or external search to your External Search collection."

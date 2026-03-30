@@ -65,7 +65,7 @@ function getAttachmentIcon(mimeType: string) {
     return <Table className="w-3.5 h-3.5 text-[var(--muted-success-text)]" aria-hidden />;
   if (mimeType.includes("document") || mimeType.includes("word"))
     return <FileText className="w-3.5 h-3.5 text-[var(--muted-info-text)]" aria-hidden />;
-  return <Paperclip className="w-3.5 h-3.5 text-gray-400" aria-hidden />;
+  return <Paperclip className="w-3.5 h-3.5 text-muted-foreground/90" aria-hidden />;
 }
 
 type EmailIngestionViewProps = {
@@ -140,10 +140,10 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
           type="button"
           onClick={() => setFilter(f)}
           className={cn(
-            "text-[10px] px-3 py-1.5 rounded-lg transition-colors",
+            "text-2xs px-3 py-1.5 rounded-lg transition-colors",
             filter === f
               ? "bg-[var(--muted-info-bg)] text-[var(--muted-info-text)] border border-[var(--muted-info-border)]"
-              : "text-gray-500 hover:text-gray-300 border border-transparent"
+              : "text-muted-foreground hover:text-foreground border border-transparent"
           )}
         >
           {f === "all" ? "All" : f === "recent" ? "Last 7 days" : "Unprocessed"}
@@ -154,8 +154,8 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
       ))}
     </div>
       {isAdmin ? (
-        <p className="text-[10px] text-gray-600 flex items-start gap-1.5 leading-relaxed">
-          <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-gray-500" aria-hidden />
+        <p className="text-2xs text-muted-foreground/70 flex items-start gap-1.5 leading-relaxed">
+          <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-muted-foreground" aria-hidden />
           Thread and attachment access changes are recorded in the session log below (scroll down).
         </p>
       ) : null}
@@ -174,7 +174,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
 
   if (emails.length === 0) {
     return (
-      <div className="rounded-xl border border-white/[0.08] bg-[#161616] min-h-[400px] flex items-center justify-center">
+      <div className="rounded-xl border border-border bg-card min-h-[400px] flex items-center justify-center">
         <EmptyState
           icon={Mail}
           title="No emails yet"
@@ -194,7 +194,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
         {filterBar}
 
         {filtered.length === 0 ? (
-          <div className="rounded-xl border border-white/[0.08] bg-[#161616] py-8">
+          <div className="rounded-xl border border-border bg-card py-8">
             <EmptyState
               icon={Search}
               title="No emails match this filter"
@@ -226,12 +226,12 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                     <span className="w-1.5 h-1.5 bg-[color-mix(in_srgb,var(--color-info)_72%,transparent)] rounded-full flex-shrink-0" />
                   )}
                 </div>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-muted-foreground">
                   {entry.senderName} · {formatReceived(entry.receivedAt)}
                 </span>
               </div>
               {entry.attachments.length > 0 && (
-                <span className="text-[10px] text-gray-500 bg-white/[0.03] px-2 py-1 rounded flex-shrink-0">
+                <span className="text-2xs text-muted-foreground bg-white/[0.03] px-2 py-1 rounded flex-shrink-0">
                   {entry.attachments.length} file{entry.attachments.length > 1 ? "s" : ""}
                 </span>
               )}
@@ -239,7 +239,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                 {entry.tags.slice(0, 2).map((tag) => (
                   <span
                     key={tag}
-                    className="text-[10px] text-gray-500 bg-white/[0.03] px-1.5 py-0.5 rounded"
+                    className="text-2xs text-muted-foreground bg-white/[0.03] px-1.5 py-0.5 rounded"
                   >
                     {tag}
                   </span>
@@ -254,9 +254,9 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
 
       {(emailForPanel || attachmentPanel) && (
         <>
-        <aside className="hidden md:flex w-[380px] shrink-0 flex-col border-l border-white/[0.08] bg-[#0a0a0f] overflow-hidden">
-          <div className="shrink-0 flex items-center justify-between p-3 border-b border-white/[0.08]">
-            <span className="text-xs font-medium text-gray-400">Details</span>
+        <aside className="hidden md:flex w-[380px] shrink-0 flex-col border-l border-border bg-inset overflow-hidden">
+          <div className="shrink-0 flex items-center justify-between p-3 border-b border-border">
+            <span className="text-xs font-medium text-muted-foreground/90">Details</span>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPanel(null)}>
               <X className="w-4 h-4" />
             </Button>
@@ -267,17 +267,17 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Mail className="w-4 h-4 text-[var(--muted-info-text)]" />
-                    <span className="text-[10px] text-[var(--muted-info-text)] uppercase tracking-wider font-semibold">
+                    <span className="text-2xs text-[var(--muted-info-text)] uppercase tracking-wider font-semibold">
                       Forwarded Email
                     </span>
                   </div>
                   <h2 className="text-lg font-semibold text-white">{emailForPanel.subject}</h2>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-gray-400">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground/90">
                     <span>From: {emailForPanel.senderName}</span>
-                    <span className="text-gray-600">·</span>
-                    <span className="text-gray-500">{formatReceived(emailForPanel.receivedAt)}</span>
-                    <span className="text-gray-600">·</span>
-                    <span className="text-gray-500">
+                    <span className="text-muted-foreground/70">·</span>
+                    <span className="text-muted-foreground">{formatReceived(emailForPanel.receivedAt)}</span>
+                    <span className="text-muted-foreground/70">·</span>
+                    <span className="text-muted-foreground">
                       Forwarded by {emailForPanel.forwardedByName}
                     </span>
                   </div>
@@ -295,7 +295,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                       trigger={
                         <button
                           type="button"
-                          className="text-[10px] text-gray-500 hover:text-[var(--muted-info-text)] transition-colors flex items-center gap-1"
+                          className="text-2xs text-muted-foreground hover:text-[var(--muted-info-text)] transition-colors flex items-center gap-1"
                         >
                           <Share2 className="w-3 h-3" />
                           Share with…
@@ -306,18 +306,18 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-gray-600 uppercase tracking-wider">Tags</span>
+                  <span className="text-2xs text-muted-foreground/70 uppercase tracking-wider">Tags</span>
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {emailForPanel.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="text-[10px] text-gray-400 bg-white/[0.04] px-2 py-1 rounded-lg flex items-center gap-1"
+                        className="text-2xs text-muted-foreground/90 bg-white/[0.04] px-2 py-1 rounded-lg flex items-center gap-1"
                       >
                         {tag}
                         <button
                           type="button"
                           onClick={() => removeEmailTag(emailForPanel.id, tag)}
-                          className="text-gray-600 hover:text-gray-400"
+                          className="text-muted-foreground/70 hover:text-muted-foreground"
                         >
                           <X className="w-2.5 h-2.5" />
                         </button>
@@ -327,7 +327,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                       <button
                         type="button"
                         onClick={() => setTagInputEmail(true)}
-                        className="text-[10px] text-gray-600 hover:text-gray-400 px-2 py-1"
+                        className="text-2xs text-muted-foreground/70 hover:text-muted-foreground px-2 py-1"
                       >
                         + Add tag
                       </button>
@@ -343,12 +343,12 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                               setTagInputEmail(false);
                             }
                           }}
-                          className="text-[10px] bg-white/[0.03] border border-white/[0.06] rounded px-2 py-1 w-28 text-gray-300 outline-none"
+                          className="text-2xs bg-white/[0.03] border border-border rounded px-2 py-1 w-28 text-foreground/88 outline-none"
                           placeholder="tag"
                         />
                         <button
                           type="button"
-                          className="text-[10px] text-[var(--muted-info-text)]"
+                          className="text-2xs text-[var(--muted-info-text)]"
                           onClick={() => {
                             addEmailTag(emailForPanel.id, tagDraft);
                             setTagDraft("");
@@ -363,11 +363,11 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-gray-600 uppercase tracking-wider mb-2 block">
+                  <span className="text-2xs text-muted-foreground/70 uppercase tracking-wider mb-2 block">
                     Email Content
                   </span>
                   <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4 max-h-48 overflow-y-auto">
-                    <p className="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap">
+                    <p className="text-xs text-foreground/88 leading-relaxed whitespace-pre-wrap">
                       {emailForPanel.bodyText}
                     </p>
                   </div>
@@ -375,7 +375,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
 
                 {emailForPanel.attachments.length > 0 && (
                   <div>
-                    <span className="text-[10px] text-gray-600 uppercase tracking-wider mb-2 block">
+                    <span className="text-2xs text-muted-foreground/70 uppercase tracking-wider mb-2 block">
                       Attachments ({emailForPanel.attachments.length})
                     </span>
                     <div className="space-y-2">
@@ -394,7 +394,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                             </div>
                             <div className="flex-1 min-w-0">
                               <span className="text-xs text-white truncate block">{att.filename}</span>
-                              <span className="text-[10px] text-gray-600">{formatFileSize(att.size)}</span>
+                              <span className="text-2xs text-muted-foreground/70">{formatFileSize(att.size)}</span>
                             </div>
                           </button>
                           <ScopeBadge scope={att.scope} teams={MOCK_TEAMS} className="flex-shrink-0" />
@@ -408,7 +408,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                               trigger={
                                 <button
                                   type="button"
-                                  className="text-[10px] text-gray-600 hover:text-[var(--muted-info-text)] transition-colors flex-shrink-0"
+                                  className="text-2xs text-muted-foreground/70 hover:text-[var(--muted-info-text)] transition-colors flex-shrink-0"
                                   title="Share with…"
                                 >
                                   <Share2 className="w-3 h-3" />
@@ -418,7 +418,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                           )}
                           <button
                             type="button"
-                            className="text-gray-600 hover:text-gray-400 flex-shrink-0 p-0.5"
+                            className="text-muted-foreground/70 hover:text-muted-foreground flex-shrink-0 p-0.5"
                             aria-label="Open attachment details"
                             onClick={() => openAttachment(emailForPanel, att)}
                           >
@@ -456,7 +456,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Paperclip className="w-4 h-4 text-[var(--muted-info-text)]" />
-                    <span className="text-[10px] text-[var(--muted-info-text)] uppercase tracking-wider font-semibold">
+                    <span className="text-2xs text-[var(--muted-info-text)] uppercase tracking-wider font-semibold">
                       Email Attachment
                     </span>
                   </div>
@@ -464,7 +464,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                   <button
                     type="button"
                     onClick={() => setPanel({ kind: "email", id: attachmentPanel.email.id })}
-                    className="flex items-center gap-1.5 mt-2 text-xs text-gray-500 hover:text-[var(--muted-info-text)] transition-colors text-left"
+                    className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground hover:text-[var(--muted-info-text)] transition-colors text-left"
                   >
                     <Mail className="w-3 h-3 shrink-0" />
                     From: &quot;{attachmentPanel.email.subject}&quot;
@@ -483,7 +483,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                       trigger={
                         <button
                           type="button"
-                          className="text-[10px] text-gray-500 hover:text-[var(--muted-info-text)] transition-colors flex items-center gap-1"
+                          className="text-2xs text-muted-foreground hover:text-[var(--muted-info-text)] transition-colors flex items-center gap-1"
                         >
                           <Share2 className="w-3 h-3" />
                           Share with…
@@ -494,12 +494,12 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-gray-600 uppercase tracking-wider">Tags</span>
+                  <span className="text-2xs text-muted-foreground/70 uppercase tracking-wider">Tags</span>
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {(attachmentPanel.attachment.tags ?? []).map((tag) => (
                       <span
                         key={tag}
-                        className="text-[10px] text-gray-400 bg-white/[0.04] px-2 py-1 rounded-lg flex items-center gap-1"
+                        className="text-2xs text-muted-foreground/90 bg-white/[0.04] px-2 py-1 rounded-lg flex items-center gap-1"
                       >
                         {tag}
                         <button
@@ -511,7 +511,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                               tag
                             )
                           }
-                          className="text-gray-600 hover:text-gray-400"
+                          className="text-muted-foreground/70 hover:text-muted-foreground"
                         >
                           <X className="w-2.5 h-2.5" />
                         </button>
@@ -521,7 +521,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                       <button
                         type="button"
                         onClick={() => setTagInputAtt(true)}
-                        className="text-[10px] text-gray-600 hover:text-gray-400 px-2 py-1"
+                        className="text-2xs text-muted-foreground/70 hover:text-muted-foreground px-2 py-1"
                       >
                         + Add tag
                       </button>
@@ -541,12 +541,12 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                               setTagInputAtt(false);
                             }
                           }}
-                          className="text-[10px] bg-white/[0.03] border border-white/[0.06] rounded px-2 py-1 w-28 text-gray-300 outline-none"
+                          className="text-2xs bg-white/[0.03] border border-border rounded px-2 py-1 w-28 text-foreground/88 outline-none"
                           placeholder="tag"
                         />
                         <button
                           type="button"
-                          className="text-[10px] text-[var(--muted-info-text)]"
+                          className="text-2xs text-[var(--muted-info-text)]"
                           onClick={() => {
                             addAttachmentTag(
                               attachmentPanel.email.id,
@@ -566,10 +566,10 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
 
                 <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4 text-center">
                   {attachmentPanel.attachment.mimeType === "application/pdf" ? (
-                    <div className="text-xs text-gray-500">
-                      <FileText className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                    <div className="text-xs text-muted-foreground">
+                      <FileText className="w-8 h-8 text-muted-foreground/70 mx-auto mb-2" />
                       <p>PDF Preview</p>
-                      <p className="text-[10px] text-gray-600 mt-1">
+                      <p className="text-2xs text-muted-foreground/70 mt-1">
                         {attachmentPanel.attachment.filename} ·{" "}
                         {formatFileSize(attachmentPanel.attachment.size)}
                       </p>
@@ -582,10 +582,10 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                       className="max-w-full rounded-lg"
                     />
                   ) : (
-                    <div className="text-xs text-gray-500">
-                      <Paperclip className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                    <div className="text-xs text-muted-foreground">
+                      <Paperclip className="w-8 h-8 text-muted-foreground/70 mx-auto mb-2" />
                       <p>{attachmentPanel.attachment.filename}</p>
-                      <p className="text-[10px] text-gray-600 mt-1">
+                      <p className="text-2xs text-muted-foreground/70 mt-1">
                         {formatFileSize(attachmentPanel.attachment.size)}
                       </p>
                     </div>
@@ -596,8 +596,8 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
           </div>
         </aside>
 
-        <div className="md:hidden fixed inset-0 z-50 bg-[#06060a] flex flex-col">
-          <div className="shrink-0 flex items-center justify-between p-3 border-b border-white/[0.08]">
+        <div className="md:hidden fixed inset-0 z-50 bg-background flex flex-col">
+          <div className="shrink-0 flex items-center justify-between p-3 border-b border-border">
             <span className="text-sm font-medium text-white">Details</span>
             <Button variant="ghost" size="icon" onClick={() => setPanel(null)}>
               <X className="w-5 h-5" />
@@ -610,15 +610,15 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Mail className="w-4 h-4 text-[var(--muted-info-text)]" />
-                    <span className="text-[10px] text-[var(--muted-info-text)] uppercase tracking-wider font-semibold">
+                    <span className="text-2xs text-[var(--muted-info-text)] uppercase tracking-wider font-semibold">
                       Forwarded Email
                     </span>
                   </div>
                   <h2 className="text-lg font-semibold text-white">{emailForPanel.subject}</h2>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-gray-400">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground/90">
                     <span>From: {emailForPanel.senderName}</span>
-                    <span className="text-gray-600">·</span>
-                    <span className="text-gray-500">{formatReceived(emailForPanel.receivedAt)}</span>
+                    <span className="text-muted-foreground/70">·</span>
+                    <span className="text-muted-foreground">{formatReceived(emailForPanel.receivedAt)}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
@@ -633,7 +633,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                       trigger={
                         <button
                           type="button"
-                          className="text-[10px] text-gray-500 hover:text-[var(--muted-info-text)] transition-colors flex items-center gap-1"
+                          className="text-2xs text-muted-foreground hover:text-[var(--muted-info-text)] transition-colors flex items-center gap-1"
                         >
                           <Share2 className="w-3 h-3" />
                           Share with…
@@ -643,9 +643,9 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                   )}
                 </div>
                 <div>
-                  <span className="text-[10px] text-gray-600 uppercase tracking-wider">Email Content</span>
+                  <span className="text-2xs text-muted-foreground/70 uppercase tracking-wider">Email Content</span>
                   <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4 mt-2 max-h-64 overflow-y-auto">
-                    <p className="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap">
+                    <p className="text-xs text-foreground/88 leading-relaxed whitespace-pre-wrap">
                       {emailForPanel.bodyText}
                     </p>
                   </div>
@@ -675,13 +675,13 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Paperclip className="w-4 h-4 text-[var(--muted-info-text)]" />
-                    <span className="text-[10px] text-[var(--muted-info-text)] uppercase tracking-wider font-semibold">
+                    <span className="text-2xs text-[var(--muted-info-text)] uppercase tracking-wider font-semibold">
                       Email Attachment
                     </span>
                   </div>
                   <h2 className="text-lg font-semibold text-white">{attachmentPanel.attachment.filename}</h2>
                 </div>
-                <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4 text-center text-xs text-gray-500">
+                <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4 text-center text-xs text-muted-foreground">
                   Preview / download — see desktop for full controls.
                 </div>
               </>

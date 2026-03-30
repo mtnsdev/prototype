@@ -74,18 +74,18 @@ export default function AddToItineraryModal({ open, onClose, product, onAdded }:
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="bg-[#1a1a1a] border-white/10 max-w-md">
+      <DialogContent className="bg-accent border-input max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-[#F5F5F5]">Add to Itinerary</DialogTitle>
+          <DialogTitle className="text-foreground">Add to Itinerary</DialogTitle>
         </DialogHeader>
-        <p className="text-sm text-[rgba(245,245,245,0.7)]">
-          Add <strong className="text-[#F5F5F5]">{product?.name ?? "this product"}</strong> to an itinerary.
+        <p className="text-sm text-muted-foreground">
+          Add <strong className="text-foreground">{product?.name ?? "this product"}</strong> to an itinerary.
         </p>
         <div className="space-y-4">
           <div>
-            <Label className="text-[rgba(245,245,245,0.8)]">Itinerary</Label>
+            <Label className="text-muted-foreground">Itinerary</Label>
             <Select value={itineraryId} onValueChange={setItineraryId}>
-              <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]">
+              <SelectTrigger className="mt-1 bg-white/5 border-input text-foreground">
                 <SelectValue placeholder="Select itinerary" />
               </SelectTrigger>
               <SelectContent>
@@ -98,19 +98,19 @@ export default function AddToItineraryModal({ open, onClose, product, onAdded }:
             </Select>
           </div>
           <div>
-            <Label className="text-[rgba(245,245,245,0.8)]">Day</Label>
+            <Label className="text-muted-foreground">Day</Label>
             <Input
               type="number"
               min={1}
               value={day}
               onChange={(e) => setDay(parseInt(e.target.value, 10) || 1)}
-              className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+              className="mt-1 bg-white/5 border-input text-foreground"
             />
           </div>
           <div>
-            <Label className="text-[rgba(245,245,245,0.8)]">Event type</Label>
+            <Label className="text-muted-foreground">Event type</Label>
             <Select value={eventType} onValueChange={setEventType}>
-              <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]">
+              <SelectTrigger className="mt-1 bg-white/5 border-input text-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -123,19 +123,19 @@ export default function AddToItineraryModal({ open, onClose, product, onAdded }:
             </Select>
           </div>
           <div>
-            <Label className="text-[rgba(245,245,245,0.8)]">Notes (optional)</Label>
+            <Label className="text-muted-foreground">Notes (optional)</Label>
             <textarea
               value={customNotes}
               onChange={(e) => setCustomNotes(e.target.value)}
               placeholder="Custom notes for this event"
               rows={2}
-              className="mt-1 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)]"
+              className="mt-1 w-full rounded-md border border-input bg-white/5 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/75"
             />
           </div>
         </div>
         {error && <p className="text-sm text-red-400">{error}</p>}
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} className="border-white/10 text-[#F5F5F5]">
+          <Button variant="outline" onClick={onClose} className="border-input text-foreground">
             Cancel
           </Button>
           <Button onClick={handleAdd} disabled={loading || !itineraryId}>

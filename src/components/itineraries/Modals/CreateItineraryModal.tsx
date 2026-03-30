@@ -186,9 +186,9 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="bg-[#0e0e14] border-[rgba(255,255,255,0.06)] max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-background border-border max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-[#F5F5F5]">Create itinerary</DialogTitle>
+          <DialogTitle className="text-foreground">Create itinerary</DialogTitle>
         </DialogHeader>
 
         <div className="flex gap-2 mb-4">
@@ -197,7 +197,7 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
               key={s.id}
               className={cn(
                 "flex-1 py-1.5 rounded text-center text-xs font-medium",
-                step === s.id ? "bg-white/15 text-[#F5F5F5]" : "bg-white/5 text-[rgba(245,245,245,0.5)]"
+                step === s.id ? "bg-white/15 text-foreground" : "bg-white/5 text-muted-foreground/75"
               )}
             >
               {s.id}. {s.label}
@@ -208,57 +208,57 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
         {step === 1 && (
           <div className="space-y-4">
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Trip name *</Label>
+              <Label className="text-muted-foreground">Trip name *</Label>
               <Input
                 value={tripName}
                 onChange={(e) => setTripName(e.target.value)}
                 placeholder="Max 200 characters"
-                className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+                className="mt-1 bg-white/5 border-input text-foreground"
                 maxLength={200}
               />
             </div>
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Description</Label>
+              <Label className="text-muted-foreground">Description</Label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Trip summary"
                 rows={3}
-                className="mt-1 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-[#F5F5F5]"
+                className="mt-1 w-full rounded-md border border-input bg-white/5 px-3 py-2 text-sm text-foreground"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-[rgba(245,245,245,0.8)]">Start date</Label>
+                <Label className="text-muted-foreground">Start date</Label>
                 <Input
                   type="date"
                   value={tripStartDate}
                   onChange={(e) => setTripStartDate(e.target.value)}
-                  className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+                  className="mt-1 bg-white/5 border-input text-foreground"
                 />
               </div>
               <div>
-                <Label className="text-[rgba(245,245,245,0.8)]">End date</Label>
+                <Label className="text-muted-foreground">End date</Label>
                 <Input
                   type="date"
                   value={tripEndDate}
                   onChange={(e) => setTripEndDate(e.target.value)}
-                  className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+                  className="mt-1 bg-white/5 border-input text-foreground"
                 />
                 {!endDateValid && <p className="text-xs text-red-400 mt-0.5">End date must be after start date.</p>}
               </div>
             </div>
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Destinations</Label>
+              <Label className="text-muted-foreground">Destinations</Label>
               <div className="flex gap-2 mt-1">
                 <Input
                   value={destinationInput}
                   onChange={(e) => setDestinationInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addDestination())}
                   placeholder="e.g. Paris, France"
-                  className="bg-white/5 border-white/10 text-[#F5F5F5]"
+                  className="bg-white/5 border-input text-foreground"
                 />
-                <Button type="button" variant="outline" size="sm" onClick={addDestination} className="border-white/10">
+                <Button type="button" variant="outline" size="sm" onClick={addDestination} className="border-input">
                   Add
                 </Button>
               </div>
@@ -267,7 +267,7 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
                   {destinations.map((d) => (
                     <span
                       key={d}
-                      className="text-xs px-2 py-0.5 rounded bg-white/10 text-[#F5F5F5] flex items-center gap-1"
+                      className="text-xs px-2 py-0.5 rounded bg-white/10 text-foreground flex items-center gap-1"
                     >
                       {d}
                       <button type="button" onClick={() => setDestinations((prev) => prev.filter((x) => x !== d))} className="hover:text-red-400">
@@ -280,19 +280,19 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-[rgba(245,245,245,0.8)]">Traveler count</Label>
+                <Label className="text-muted-foreground">Traveler count</Label>
                 <Input
                   type="number"
                   min={1}
                   value={travelerCount === "" ? "" : travelerCount}
                   onChange={(e) => setTravelerCount(e.target.value === "" ? "" : parseInt(e.target.value, 10))}
-                  className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+                  className="mt-1 bg-white/5 border-input text-foreground"
                 />
               </div>
               <div>
-                <Label className="text-[rgba(245,245,245,0.8)]">Currency</Label>
+                <Label className="text-muted-foreground">Currency</Label>
                 <Select value={currency} onValueChange={setCurrency}>
-                  <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]">
+                  <SelectTrigger className="mt-1 bg-white/5 border-input text-foreground">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -306,16 +306,16 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
               </div>
             </div>
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Tags</Label>
+              <Label className="text-muted-foreground">Tags</Label>
               <div className="flex gap-2 mt-1">
                 <Input
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag())}
                   placeholder="Add tag"
-                  className="bg-white/5 border-white/10 text-[#F5F5F5]"
+                  className="bg-white/5 border-input text-foreground"
                 />
-                <Button type="button" variant="outline" size="sm" onClick={addTag} className="border-white/10">
+                <Button type="button" variant="outline" size="sm" onClick={addTag} className="border-input">
                   Add
                 </Button>
               </div>
@@ -324,7 +324,7 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
                   {tags.map((t) => (
                     <span
                       key={t}
-                      className="text-xs px-2 py-0.5 rounded bg-white/10 text-[#F5F5F5] flex items-center gap-1"
+                      className="text-xs px-2 py-0.5 rounded bg-white/10 text-foreground flex items-center gap-1"
                     >
                       {t}
                       <button type="button" onClick={() => setTags((prev) => prev.filter((x) => x !== t))} className="hover:text-red-400">
@@ -341,18 +341,18 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
         {step === 2 && (
           <div className="space-y-4">
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Search VIC *</Label>
+              <Label className="text-muted-foreground">Search VIC *</Label>
               <Input
                 value={vicSearch}
                 onChange={(e) => setVicSearch(e.target.value)}
                 placeholder="Type to search VICs"
-                className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+                className="mt-1 bg-white/5 border-input text-foreground"
               />
             </div>
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Select VIC</Label>
+              <Label className="text-muted-foreground">Select VIC</Label>
               <Select value={vicId} onValueChange={setVicId}>
-                <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]">
+                <SelectTrigger className="mt-1 bg-white/5 border-input text-foreground">
                   <SelectValue placeholder="Choose a VIC" />
                 </SelectTrigger>
                 <SelectContent>
@@ -365,9 +365,9 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
               </Select>
             </div>
             {selectedVic && (
-              <div className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm">
-                <p className="font-medium text-[#F5F5F5]">{(selectedVic as VIC).full_name}</p>
-                <p className="text-[rgba(245,245,245,0.6)]">
+              <div className="rounded-lg border border-input bg-white/5 p-3 text-sm">
+                <p className="font-medium text-foreground">{(selectedVic as VIC).full_name}</p>
+                <p className="text-muted-foreground">
                   {[(selectedVic as VIC).home_city, (selectedVic as VIC).home_country].filter(Boolean).join(", ") || "—"}
                 </p>
               </div>
@@ -378,20 +378,20 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
         {step === 3 && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Label className="text-[rgba(245,245,245,0.8)]">Number of days</Label>
+              <Label className="text-muted-foreground">Number of days</Label>
               <Input
                 type="number"
                 min={1}
                 value={dayCount}
                 onChange={(e) => setDayCount(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                className="w-20 bg-white/5 border-white/10 text-[#F5F5F5]"
+                className="w-20 bg-white/5 border-input text-foreground"
               />
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setDayCount((c) => c + 1)}
-                className="border-white/10"
+                className="border-input"
               >
                 Add Day
               </Button>
@@ -399,12 +399,12 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {Array.from({ length: dayCount }, (_, i) => i + 1).map((d) => (
                 <div key={d} className="flex items-center gap-2">
-                  <span className="text-sm text-[rgba(245,245,245,0.6)] w-16">Day {d}</span>
+                  <span className="text-sm text-muted-foreground w-16">Day {d}</span>
                   <Input
                     value={dayTitles[d] ?? ""}
                     onChange={(e) => setDayTitles((prev) => ({ ...prev, [d]: e.target.value }))}
                     placeholder="Optional title"
-                    className="flex-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+                    className="flex-1 bg-white/5 border-input text-foreground"
                   />
                 </div>
               ))}
@@ -416,11 +416,11 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
 
         <DialogFooter className="gap-2 flex-wrap">
           {step > 1 ? (
-            <Button variant="outline" onClick={() => setStep((s) => s - 1)} className="border-white/10 text-[#F5F5F5]">
+            <Button variant="outline" onClick={() => setStep((s) => s - 1)} className="border-input text-foreground">
               <ChevronLeft size={16} className="mr-1" /> Back
             </Button>
           ) : (
-            <Button variant="outline" onClick={onClose} className="border-white/10 text-[#F5F5F5]">
+            <Button variant="outline" onClick={onClose} className="border-input text-foreground">
               Cancel
             </Button>
           )}

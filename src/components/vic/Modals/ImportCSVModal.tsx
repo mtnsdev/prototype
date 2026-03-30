@@ -13,6 +13,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import {
+  listSurfaceClass,
+  listScrollClass,
+  listTableClass,
+  listTheadRowClass,
+  listTbodyRowClass,
+  listTdClass,
+  listThClass,
+  listMutedCellClass,
+} from "@/lib/list-ui";
 
 const STEPS = [
   { id: 1, label: "Upload" },
@@ -193,7 +203,7 @@ export default function ImportCSVModal({ onClose, onImported }: Props) {
           <DialogTitle>Import VICs from CSV</DialogTitle>
         </DialogHeader>
 
-        <div className="flex items-center gap-2 border-b border-[rgba(255,255,255,0.08)] pb-3">
+        <div className="flex items-center gap-2 border-b border-border pb-3">
           {STEPS.map((s) => (
             <button
               key={s.id}
@@ -201,13 +211,13 @@ export default function ImportCSVModal({ onClose, onImported }: Props) {
               onClick={() => step > s.id && setStep(s.id)}
               className={cn(
                 "rounded-full w-8 h-8 flex items-center justify-center text-xs font-medium transition-colors",
-                step === s.id ? "bg-[#F5F5F5] text-[#08080c]" : step > s.id ? "bg-white/20 text-[#F5F5F5]" : "bg-white/10 text-[rgba(245,245,245,0.5)]"
+                step === s.id ? "bg-[#F5F5F5] text-[#08080c]" : step > s.id ? "bg-white/20 text-foreground" : "bg-white/10 text-muted-foreground/75"
               )}
             >
               {s.id}
             </button>
           ))}
-          <span className="text-xs text-[rgba(245,245,245,0.5)] ml-1">
+          <span className="text-xs text-muted-foreground/75 ml-1">
             {STEPS.find((s) => s.id === step)?.label}
           </span>
         </div>
@@ -229,10 +239,10 @@ export default function ImportCSVModal({ onClose, onImported }: Props) {
                   className="hidden"
                   onChange={handleFile}
                 />
-                <Upload className="w-10 h-10 mx-auto text-[rgba(245,245,245,0.5)] mb-2" />
-                <p className="text-sm text-[rgba(245,245,245,0.8)]">Click to select a CSV file</p>
+                <Upload className="w-10 h-10 mx-auto text-muted-foreground/75 mb-2" />
+                <p className="text-sm text-muted-foreground">Click to select a CSV file</p>
               </div>
-              <p className="text-xs text-[rgba(245,245,245,0.5)]">
+              <p className="text-xs text-muted-foreground/75">
                 Step 2 will let you map your columns to VIC fields. Full name is required.
               </p>
             </div>
@@ -241,7 +251,7 @@ export default function ImportCSVModal({ onClose, onImported }: Props) {
           {/* Step 2: Map columns */}
           {step === 2 && (
             <div className="space-y-4">
-              <p className="text-sm text-[rgba(245,245,245,0.7)]">
+              <p className="text-sm text-muted-foreground">
                 Map each VIC field to a column from your CSV (or leave as — to skip).
               </p>
               <div className="space-y-3">
@@ -254,7 +264,7 @@ export default function ImportCSVModal({ onClose, onImported }: Props) {
                     <select
                       value={columnMap[key] ?? (key === "full_name" ? headers[0] ?? "" : "")}
                       onChange={(e) => setMapping(key, e.target.value)}
-                      className="flex-1 rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]"
+                      className="flex-1 rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
                     >
                       <option value="">—</option>
                       {headers.map((h) => (
@@ -270,16 +280,16 @@ export default function ImportCSVModal({ onClose, onImported }: Props) {
           {/* Step 3: Preview */}
           {step === 3 && (
             <div className="space-y-4">
-              <p className="text-sm text-[rgba(245,245,245,0.7)]">
+              <p className="text-sm text-muted-foreground">
                 <strong>{validCount}</strong> rows will be imported.
                 {rowsSkipped > 0 && ` ${rowsSkipped} rows skipped (no full name).`}
               </p>
-              <div className="overflow-x-auto rounded border border-[rgba(255,255,255,0.1)]">
-                <table className="w-full text-sm">
+              <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden")}>
+                <table className={listTableClass()}>
                   <thead>
-                    <tr className="border-b border-[rgba(255,255,255,0.1)]">
+                    <tr className={listTheadRowClass}>
                       {VIC_FIELDS.map((f) => (
-                        <th key={f.key} className="px-3 py-2 text-left font-medium text-[rgba(245,245,245,0.8)] whitespace-nowrap">
+                        <th key={f.key} className={cn(listThClass, "whitespace-nowrap")}>
                           {f.label}
                         </th>
                       ))}
@@ -287,9 +297,9 @@ export default function ImportCSVModal({ onClose, onImported }: Props) {
                   </thead>
                   <tbody>
                     {previewRows.map((row, i) => (
-                      <tr key={i} className="border-b border-[rgba(255,255,255,0.06)]">
+                      <tr key={i} className={listTbodyRowClass}>
                         {VIC_FIELDS.map((f) => (
-                          <td key={f.key} className="px-3 py-2 text-[rgba(245,245,245,0.7)] max-w-[140px] truncate">
+                          <td key={f.key} className={cn(listTdClass, listMutedCellClass, "max-w-[140px] truncate")}>
                             {row[f.key]}
                           </td>
                         ))}
@@ -309,7 +319,7 @@ export default function ImportCSVModal({ onClose, onImported }: Props) {
                 <select
                   value={duplicateMode}
                   onChange={(e) => setDuplicateMode(e.target.value as typeof duplicateMode)}
-                  className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]"
+                  className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
                 >
                   {DUPLICATE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
@@ -321,7 +331,7 @@ export default function ImportCSVModal({ onClose, onImported }: Props) {
                 <select
                   value={defaultRelationshipStatus}
                   onChange={(e) => setDefaultRelationshipStatus(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]"
+                  className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
                 >
                   {DEFAULT_STATUS_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
@@ -334,18 +344,18 @@ export default function ImportCSVModal({ onClose, onImported }: Props) {
           {/* Step 5: Result */}
           {step === 5 && (
             <div className="space-y-4">
-              <p className="text-sm text-[rgba(245,245,245,0.8)]">
+              <p className="text-sm text-muted-foreground">
                 <strong>{imported}</strong> VICs have been imported.
                 {rowsSkipped > 0 && ` ${rowsSkipped} rows were skipped (missing name).`}
               </p>
-              <p className="text-sm text-[rgba(245,245,245,0.7)]">
+              <p className="text-sm text-muted-foreground">
                 Run Acuity Intelligence on all {imported} imported VICs?
               </p>
             </div>
           )}
         </div>
 
-        <DialogFooter className="border-t border-[rgba(255,255,255,0.08)] pt-3 shrink-0">
+        <DialogFooter className="border-t border-border pt-3 shrink-0">
           <div className="flex items-center justify-between w-full">
             <div>
               {step > 1 && step < 5 && (

@@ -56,11 +56,11 @@ export default function TagInput({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <div className="flex flex-wrap gap-2 p-2 rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] min-h-[38px]">
+      <div className="flex flex-wrap gap-2 p-2 rounded-md border border-input bg-[rgba(255,255,255,0.04)] min-h-[38px]">
         {value.map((tag, i) => (
           <span
             key={`${tag}-${i}`}
-            className="inline-flex items-center gap-1 rounded bg-white/10 px-2 py-0.5 text-sm text-[#F5F5F5]"
+            className="inline-flex items-center gap-1 rounded bg-white/10 px-2 py-0.5 text-sm text-foreground"
           >
             {tag}
             <button
@@ -82,16 +82,16 @@ export default function TagInput({
             onKeyDown={handleKeyDown}
             onBlur={() => input.trim() && addTag(input)}
             placeholder={placeholder}
-            className="flex-1 min-w-[80px] h-7 bg-transparent border-0 outline-none text-sm text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)]"
+            className="flex-1 min-w-[80px] h-7 bg-transparent border-0 outline-none text-sm text-foreground placeholder:text-muted-foreground/75"
             maxLength={MAX_TAG_LENGTH}
           />
         )}
       </div>
       {value.length >= MAX_TAGS && (
-        <p className="text-xs text-[rgba(245,245,245,0.5)]">Max {MAX_TAGS} tags</p>
+        <p className="text-xs text-muted-foreground/75">Max {MAX_TAGS} tags</p>
       )}
       {input && filteredSuggestions.length > 0 && (
-        <ul className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0e0e14] py-1 max-h-32 overflow-y-auto shadow-2xl">
+        <ul className="rounded-xl border border-border bg-popover py-1 text-popover-foreground max-h-32 overflow-y-auto shadow-2xl">
           {filteredSuggestions.slice(0, 8).map((s) => (
             <li key={s}>
               <button

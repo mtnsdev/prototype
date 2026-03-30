@@ -25,7 +25,7 @@ function AccessDeniedContent() {
                     icon: Clock,
                     title: "Session Expired",
                     description: "Your session has expired. Please sign in again to continue.",
-                    iconColor: "text-amber-400",
+                    iconColor: "text-[var(--color-warning)]",
                     bgColor: "from-amber-500/20 to-amber-600/10",
                     borderColor: "border-amber-500/20",
                 };
@@ -34,9 +34,9 @@ function AccessDeniedContent() {
                     icon: ShieldX,
                     title: "Access Denied",
                     description: "You don't have access to this application. This is an invite-only system. If you need access, please contact an administrator.",
-                    iconColor: "text-[rgba(245,245,245,0.6)]",
+                    iconColor: "text-muted-foreground",
                     bgColor: "from-white/8 to-white/4",
-                    borderColor: "border-white/10",
+                    borderColor: "border-input",
                 };
         }
     };
@@ -45,7 +45,7 @@ function AccessDeniedContent() {
     const Icon = content.icon;
 
     return (
-        <div className="min-h-screen bg-[#0C0C0C] flex items-center justify-center p-6">
+        <div className="min-h-screen bg-background flex items-center justify-center p-6">
             <div className="w-full max-w-md">
                 {/* Icon */}
                 <div className="flex justify-center mb-6">
@@ -58,10 +58,10 @@ function AccessDeniedContent() {
 
                 {/* Content */}
                 <div className="text-center mb-8">
-                    <h1 className="text-[24px] font-semibold text-[#F5F5F5] tracking-tight mb-3">
+                    <h1 className="text-2xl font-semibold text-foreground tracking-tight mb-3">
                         {content.title}
                     </h1>
-                    <p className="text-[15px] text-[rgba(245,245,245,0.5)] leading-relaxed">
+                    <p className="text-base text-muted-foreground/75 leading-relaxed">
                         {content.description}
                     </p>
                 </div>
@@ -70,7 +70,7 @@ function AccessDeniedContent() {
                 <div className="space-y-3">
                     <Link
                         href="/login"
-                        className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-[rgba(255,255,255,0.1)] text-[14px] font-medium text-[#F5F5F5] transition-colors"
+                        className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-input text-base font-medium text-foreground transition-colors"
                     >
                         <ArrowLeft size={16} />
                         Back to Sign In
@@ -79,7 +79,7 @@ function AccessDeniedContent() {
                     {/* {reason !== "session_expired" && (
                         <a
                             href="mailto:admin@example.com"
-                            className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-transparent hover:bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-[14px] font-medium text-[rgba(245,245,245,0.6)] transition-colors"
+                            className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-transparent hover:bg-[rgba(255,255,255,0.04)] border border-border text-base font-medium text-muted-foreground transition-colors"
                         >
                             <Mail size={16} />
                             Contact Administrator
@@ -88,7 +88,7 @@ function AccessDeniedContent() {
                 </div>
 
                 {/* Footer */}
-                <p className="text-center text-[12px] text-[rgba(245,245,245,0.3)] mt-8">
+                <p className="text-center text-sm text-[rgba(245,245,245,0.3)] mt-8">
                     This is an invite-only application. Access is restricted to authorized users.
                 </p>
             </div>
@@ -98,7 +98,7 @@ function AccessDeniedContent() {
 
 export default function AccessDeniedPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-[#0C0C0C]" />}>
+        <Suspense fallback={<div className="min-h-screen bg-background" />}>
             <AccessDeniedContent />
         </Suspense>
     );

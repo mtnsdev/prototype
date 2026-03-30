@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import {
     MessageSquare,
     PanelLeftClose,
@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useUserOptional } from "@/contexts/UserContext";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 import { cn } from "@/lib/utils";
@@ -36,7 +37,10 @@ export type Conversation = {
 type Props = {
     collapsed: boolean;
     onToggle: () => void;
-    // Chat-specific props
+    /** Full-width mobile sheet; hides rail collapse control */
+    layout?: "rail" | "drawer";
+    /** Close mobile drawer after navigation */
+    onRequestClose?: () => void;
     selectedConversationId?: number | null;
     onSelectConversation?: (id: number | null) => void;
     onOpenHistory?: () => void;
@@ -46,6 +50,8 @@ type Props = {
 export default function Sidebar({
     collapsed,
     onToggle,
+    layout = "rail",
+    onRequestClose,
     selectedConversationId,
     onSelectConversation,
     onOpenHistory,
@@ -55,21 +61,10 @@ export default function Sidebar({
     const router = useRouter();
     const userContext = useUserOptional();
     const [recentConversations, setRecentConversations] = useState<Conversation[]>([]);
-    const [userPopoverOpen, setUserPopoverOpen] = useState(false);
-    const popoverRef = useRef<HTMLDivElement>(null);
     const isOnChatPage = pathname.startsWith("/dashboard/chat");
-    // Close popover when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-                setUserPopoverOpen(false);
-            }
-        };
-        if (userPopoverOpen) {
-            document.addEventListener("mousedown", handleClickOutside);
-            return () => document.removeEventListener("mousedown", handleClickOutside);
-        }
-    }, [userPopoverOpen]);
+    const isDrawer = layout === "drawer";
+    const showLabels = !collapsed || isDrawer;
+    const navClose = isDrawer ? onRequestClose : undefined;
 
 
     useEffect(() => {
@@ -117,30 +112,43 @@ export default function Sidebar({
             router.push("/dashboard/chat");
         }
         onSelectConversation?.(null);
+        onRequestClose?.();
     };
 
     return (
         <aside
-            className={[
-                "h-full border-r bg-[#0C0C0C]/80 backdrop-blur-xl",
-                "transition-all duration-200 ease-out",
-                "border-[rgba(255,255,255,0.08)]",
-                collapsed ? "w-16" : "w-64",
-            ].join(" ")}
+            className={cn(
+                "h-full border-r border-border bg-background/90 backdrop-blur-xl transition-all duration-200 ease-out",
+                isDrawer ? "w-full min-w-0" : collapsed ? "w-16" : "w-64"
+            )}
         >
             <div className="h-full flex flex-col">
                 {/* Header */}
                 <div
-                    className={[
-                        "flex min-h-14 border-b border-[rgba(255,255,255,0.08)]",
-                        collapsed
-                            ? "flex-col items-center gap-2 px-2 py-3"
-                            : "items-center justify-between px-3 py-3",
-                    ].join(" ")}
+                    className={cn(
+                        "flex min-h-14 border-b border-border",
+                        !showLabels ? "flex-col items-center gap-2 px-2 py-3" : "items-center justify-between px-3 py-3"
+                    )}
                 >
-                    {collapsed ? (
+                    {isDrawer ? (
+                        <div className="flex items-center gap-2.5 min-w-0 pr-8">
+                            <div className="h-8 w-8 shrink-0 rounded-md bg-white/5 flex items-center justify-center border border-input">
+                                <Image
+                                    src="/TL_logo.svg"
+                                    alt="Travel Lustre Logo"
+                                    width={18}
+                                    height={18}
+                                    className="opacity-90"
+                                />
+                            </div>
+                            <div className="truncate min-w-0">
+                                <p className="text-sm font-semibold leading-none text-foreground">TRAVELLUSTRE</p>
+                                <p className="text-xs text-muted-foreground/75 mt-1">Created by Enable VIC</p>
+                            </div>
+                        </div>
+                    ) : !showLabels ? (
                         <>
-                            <div className="h-8 w-8 shrink-0 rounded-md bg-white/5 flex items-center justify-center border border-white/10">
+                            <div className="h-8 w-8 shrink-0 rounded-md bg-white/5 flex items-center justify-center border border-input">
                                 <Image
                                     src="/TL_logo.svg"
                                     alt="Travel Lustre Logo"
@@ -163,7 +171,7 @@ export default function Sidebar({
                     ) : (
                         <>
                             <div className="flex items-center gap-2.5 min-w-0">
-                                <div className="h-8 w-8 shrink-0 rounded-md bg-white/5 flex items-center justify-center border border-white/10">
+                                <div className="h-8 w-8 shrink-0 rounded-md bg-white/5 flex items-center justify-center border border-input">
                                     <Image
                                         src="/TL_logo.svg"
                                         alt="Travel Lustre Logo"
@@ -173,8 +181,8 @@ export default function Sidebar({
                                     />
                                 </div>
                                 <div className="truncate min-w-0">
-                                    <p className="text-sm font-semibold leading-none text-[#F5F5F5]">TRAVELLUSTRE</p>
-                                    <p className="text-[11px] text-[rgba(245,245,245,0.5)] mt-1">Created by Enable VIC</p>
+                                    <p className="text-sm font-semibold leading-none text-foreground">TRAVELLUSTRE</p>
+                                    <p className="text-xs text-muted-foreground/75 mt-1">Created by Enable VIC</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
@@ -194,42 +202,48 @@ export default function Sidebar({
                 </div>
 
                 {/* New Chat — always visible so user can start a chat from any page */}
-                <div className="border-b border-[rgba(255,255,255,0.08)] p-2.5">
+                <div className="border-b border-border p-2.5">
                     <Button
-                        variant="outline"
+                        variant="cta"
                         onClick={handleNewChat}
                         className={cn(
-                            "group w-full gap-2.5 rounded-lg border-white/10 bg-white/8 hover:border-white/15 hover:bg-white/12",
-                            collapsed ? "justify-center" : ""
+                            "group w-full gap-2.5 rounded-lg font-medium",
+                            !showLabels ? "justify-center px-0" : ""
                         )}
+                        aria-label={showLabels ? undefined : "New chat"}
                     >
-                        <Plus size={16} className="text-white/70 transition-colors group-hover:text-white/90" />
-                        {!collapsed && <span className="text-sm font-medium text-[#F5F5F5]">New Chat</span>}
+                        <Plus size={16} className="opacity-90" aria-hidden />
+                        {showLabels && <span className="text-sm">New Chat</span>}
                     </Button>
                 </div>
 
                 {/* Recent Conversations (only on chat page) */}
-                {isOnChatPage && !collapsed && recentConversations.length > 0 && (
-                    <div className="p-2.5 border-b border-[rgba(255,255,255,0.08)] flex-shrink-0">
-                        <p className="text-[11px] font-medium uppercase tracking-wider text-[rgba(245,245,245,0.4)] px-2 mb-2">Recent</p>
+                {isOnChatPage && showLabels && recentConversations.length > 0 && (
+                    <div className="p-2.5 border-b border-border flex-shrink-0">
+                        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground/55 px-2 mb-2">Recent</p>
                         <div className="space-y-0.5">
                             {recentConversations.map((conv) => (
                                 <Button
                                     key={conv.id}
                                     variant="ghost"
-                                    onClick={() => onSelectConversation?.(conv.id)}
-                                    className={`w-full justify-start px-3 py-2 rounded-md text-[13px] truncate font-normal h-auto ${selectedConversationId === conv.id ? "bg-white/10 text-[#F5F5F5]" : "text-[rgba(245,245,245,0.7)] hover:bg-white/6 hover:text-[#F5F5F5]"}`}
+                                    onClick={() => {
+                                        onSelectConversation?.(conv.id);
+                                        navClose?.();
+                                    }}
+                                    className={`w-full justify-start px-3 py-2 rounded-md text-compact truncate font-normal h-auto ${selectedConversationId === conv.id ? "bg-white/10 text-foreground" : "text-muted-foreground hover:bg-white/6 hover:text-foreground"}`}
                                     title={conv.title}
                                 >
                                     {conv.title}
                                 </Button>
                             ))}
                         </div>
-                        {/* History Button */}
                         <Button
                             variant="ghost"
-                            onClick={onOpenHistory}
-                            className="w-full justify-start gap-2 px-3 py-2 mt-2 rounded-md text-[13px] font-normal h-auto text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-white/5"
+                            onClick={() => {
+                                onOpenHistory?.();
+                                navClose?.();
+                            }}
+                            className="w-full justify-start gap-2 px-3 py-2 mt-2 rounded-md text-compact font-normal h-auto text-muted-foreground/75 hover:text-muted-foreground hover:bg-white/5"
                         >
                             <History size={14} />
                             <span>View all history</span>
@@ -238,10 +252,11 @@ export default function Sidebar({
                 )}
 
                 {/* Nav */}
-                <nav className="p-2.5 space-y-1 flex-1 overflow-y-auto">
+                <nav className="p-2.5 space-y-1 flex-1 overflow-y-auto" aria-label="Main">
                     <NavLink
                         href="/dashboard"
-                        collapsed={collapsed}
+                        collapsed={!showLabels}
+                        onNavigate={navClose}
                         icon={<LayoutDashboard size={18} />}
                         label="Briefing Room"
                         active={pathname === "/dashboard"}
@@ -249,7 +264,8 @@ export default function Sidebar({
                     />
                     <NavLink
                         href="/dashboard/chat"
-                        collapsed={collapsed}
+                        collapsed={!showLabels}
+                        onNavigate={navClose}
                         icon={<MessageSquare size={18} />}
                         label="Chat"
                         active={pathname.startsWith("/dashboard/chat")}
@@ -257,7 +273,8 @@ export default function Sidebar({
 
                     <NavLink
                         href="/dashboard/vics"
-                        collapsed={collapsed}
+                        collapsed={!showLabels}
+                        onNavigate={navClose}
                         icon={<Users size={18} />}
                         label="VICs"
                         active={pathname.startsWith("/dashboard/vics")}
@@ -266,7 +283,8 @@ export default function Sidebar({
 
                     <NavLink
                         href="/dashboard/itineraries"
-                        collapsed={collapsed}
+                        collapsed={!showLabels}
+                        onNavigate={navClose}
                         icon={<Route size={18} />}
                         label="Itineraries"
                         active={pathname.startsWith("/dashboard/itineraries")}
@@ -275,7 +293,8 @@ export default function Sidebar({
 
                     <NavLink
                         href="/dashboard/knowledge-vault"
-                        collapsed={collapsed}
+                        collapsed={!showLabels}
+                        onNavigate={navClose}
                         icon={<BookOpen size={18} />}
                         label="Knowledge"
                         active={
@@ -287,7 +306,8 @@ export default function Sidebar({
 
                     <NavLink
                         href="/dashboard/products"
-                        collapsed={collapsed}
+                        collapsed={!showLabels}
+                        onNavigate={navClose}
                         icon={<Building2 size={18} />}
                         label="Products"
                         active={pathname.startsWith("/dashboard/products")}
@@ -296,7 +316,8 @@ export default function Sidebar({
 
                     <NavLink
                         href="/dashboard/analytics"
-                        collapsed={collapsed}
+                        collapsed={!showLabels}
+                        onNavigate={navClose}
                         icon={<BarChart3 size={18} />}
                         label="Analytics"
                         active={pathname.startsWith("/dashboard/analytics")}
@@ -305,7 +326,8 @@ export default function Sidebar({
 
                     <NavLink
                         href="/dashboard/automations"
-                        collapsed={collapsed}
+                        collapsed={!showLabels}
+                        onNavigate={navClose}
                         icon={<Zap size={18} />}
                         label="Automations"
                         active={pathname.startsWith("/dashboard/automations")}
@@ -321,63 +343,68 @@ export default function Sidebar({
                     /> */}
                 </nav>
 
-                {/* Footer - User Popover */}
-                <div className="mt-auto p-2.5 border-t border-[rgba(255,255,255,0.08)] relative" ref={popoverRef}>
-                    <Button
-                        variant="ghost"
-                        onClick={() => setUserPopoverOpen(!userPopoverOpen)}
-                        className="w-full rounded-lg p-2.5 bg-white/4 hover:bg-white/8 h-auto justify-start gap-2.5 font-normal border border-transparent hover:border-white/8 text-left group"
-                        title="User menu"
-                    >
-                        {!collapsed ? (
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2.5">
-                                    <div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center">
-                                        <User size={14} className="text-white/60" />
+                <div className="mt-auto border-t border-border p-2.5">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                className="group w-full rounded-lg border border-transparent bg-white/4 p-2.5 text-left font-normal h-auto justify-start gap-2.5 hover:border-white/8 hover:bg-white/8"
+                                title="User menu"
+                                aria-label="User menu"
+                            >
+                                {showLabels ? (
+                                    <div className="flex w-full items-center justify-between">
+                                        <div className="flex min-w-0 items-center gap-2.5">
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10">
+                                                <User size={14} className="text-white/60" aria-hidden />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs text-muted-foreground/75">Signed in</p>
+                                                <p className="truncate text-compact font-medium text-foreground">
+                                                    {userContext?.user?.username ||
+                                                        userContext?.user?.email?.split("@")[0] ||
+                                                        "User"}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <ChevronRight
+                                            size={14}
+                                            className="shrink-0 text-muted-foreground/55 transition-colors group-hover:text-muted-foreground group-data-[state=open]:rotate-90"
+                                            aria-hidden
+                                        />
                                     </div>
-                                    <div className="min-w-0">
-                                        <p className="text-[11px] text-[rgba(245,245,245,0.5)]">Signed in</p>
-                                        <p className="text-[13px] font-medium text-[#F5F5F5] truncate">
-                                            {userContext?.user?.username || userContext?.user?.email?.split("@")[0] || "User"}
-                                        </p>
+                                ) : (
+                                    <div className="flex w-full justify-center">
+                                        <User
+                                            size={16}
+                                            className="text-muted-foreground/55 group-hover:text-muted-foreground"
+                                            aria-hidden
+                                        />
                                     </div>
-                                </div>
-                                <ChevronRight
-                                    size={14}
-                                    className={[
-                                        "text-[rgba(245,245,245,0.4)] group-hover:text-[rgba(245,245,245,0.7)] transition-all",
-                                        userPopoverOpen ? "rotate-90" : ""
-                                    ].join(" ")}
-                                />
-                            </div>
-                        ) : (
-                            <div className="flex justify-center">
-                                <User size={16} className="text-[rgba(245,245,245,0.4)] group-hover:text-[rgba(245,245,245,0.7)] transition-colors" />
-                            </div>
-                        )}
-                    </Button>
-
-                    {/* User Popover Menu */}
-                    {userPopoverOpen && (
-                        <div className={[
-                            "absolute bottom-full mb-2 rounded-lg",
-                            "bg-[#1a1a1a] border border-[rgba(255,255,255,0.1)]",
-                            "shadow-xl overflow-hidden",
-                            "z-50",
-                            collapsed ? "left-1/2 -translate-x-1/2 w-40" : "left-2.5 right-2.5",
-                        ].join(" ")}>
+                                )}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent
+                            side="top"
+                            align={showLabels ? "start" : "center"}
+                            sideOffset={8}
+                            className="w-[min(calc(100vw-2rem),16rem)] border-input bg-card p-0 shadow-xl"
+                        >
                             <Link
                                 href="/dashboard/settings"
-                                onClick={() => setUserPopoverOpen(false)}
-                                className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[rgba(245,245,245,0.8)] hover:bg-white/8 hover:text-[#F5F5F5] transition-colors"
+                                onClick={() => navClose?.()}
+                                className="flex items-center gap-2.5 px-3 py-2.5 text-compact text-muted-foreground transition-colors hover:bg-white/8 hover:text-foreground"
                             >
-                                <Settings size={14} className="text-[rgba(245,245,245,0.5)]" />
+                                <Settings size={14} className="text-muted-foreground/75" aria-hidden />
                                 <span>Settings</span>
                             </Link>
                             {userContext && (
                                 <>
-                                    <div className="flex items-center justify-between px-3 py-2 border-t border-white/[0.04]">
-                                        <span className="text-[10px] text-gray-500">KV admin</span>
+                                    <div
+                                        className="flex items-center justify-between border-t border-white/[0.04] px-3 py-2"
+                                        onPointerDown={(e) => e.preventDefault()}
+                                    >
+                                        <span className="text-2xs text-muted-foreground">KV admin</span>
                                         <button
                                             type="button"
                                             role="switch"
@@ -386,23 +413,26 @@ export default function Sidebar({
                                                 userContext.setKvViewAsAdmin(!userContext.kvViewAsAdmin)
                                             }
                                             className={cn(
-                                                "relative w-7 h-4 rounded-full transition-colors shrink-0",
+                                                "relative h-4 w-7 shrink-0 rounded-full transition-colors",
                                                 userContext.kvViewAsAdmin ? "bg-blue-500/20" : "bg-white/[0.06]"
                                             )}
                                         >
                                             <span className="sr-only">Toggle Knowledge Vault admin demo view</span>
                                             <span
                                                 className={cn(
-                                                    "absolute top-0.5 w-3 h-3 rounded-full transition-transform pointer-events-none",
+                                                    "pointer-events-none absolute top-0.5 h-3 w-3 rounded-full transition-transform",
                                                     userContext.kvViewAsAdmin
                                                         ? "translate-x-3.5 bg-blue-400"
-                                                        : "translate-x-0.5 bg-gray-500"
+                                                        : "translate-x-0.5 bg-muted-foreground/40"
                                                 )}
                                             />
                                         </button>
                                     </div>
-                                    <div className="flex items-center justify-between px-3 py-2 border-t border-white/[0.04]">
-                                        <span className="text-[10px] text-gray-500">Products admin</span>
+                                    <div
+                                        className="flex items-center justify-between border-t border-white/[0.04] px-3 py-2"
+                                        onPointerDown={(e) => e.preventDefault()}
+                                    >
+                                        <span className="text-2xs text-muted-foreground">Products admin</span>
                                         <button
                                             type="button"
                                             role="switch"
@@ -413,7 +443,7 @@ export default function Sidebar({
                                                 )
                                             }
                                             className={cn(
-                                                "relative w-7 h-4 rounded-full transition-colors shrink-0",
+                                                "relative h-4 w-7 shrink-0 rounded-full transition-colors",
                                                 userContext.directoryViewAsAdmin
                                                     ? "bg-blue-500/20"
                                                     : "bg-white/[0.06]"
@@ -424,30 +454,29 @@ export default function Sidebar({
                                             </span>
                                             <span
                                                 className={cn(
-                                                    "absolute top-0.5 w-3 h-3 rounded-full transition-transform pointer-events-none",
+                                                    "pointer-events-none absolute top-0.5 h-3 w-3 rounded-full transition-transform",
                                                     userContext.directoryViewAsAdmin
                                                         ? "translate-x-3.5 bg-blue-400"
-                                                        : "translate-x-0.5 bg-gray-500"
+                                                        : "translate-x-0.5 bg-muted-foreground/40"
                                                 )}
                                             />
                                         </button>
                                     </div>
                                 </>
                             )}
-                            <div className="h-px bg-[rgba(255,255,255,0.08)]" />
+                            <div className="h-px bg-border" />
                             <Button
                                 variant="ghost"
                                 onClick={() => {
-                                    setUserPopoverOpen(false);
                                     handleSignOut();
                                 }}
-                                className="w-full justify-start gap-2.5 px-3 py-2.5 text-[13px] font-normal text-[rgba(245,245,245,0.8)] hover:bg-white/8 hover:text-[#F5F5F5] rounded-none"
+                                className="h-auto w-full justify-start gap-2.5 rounded-none px-3 py-2.5 text-compact font-normal text-muted-foreground hover:bg-white/8 hover:text-foreground"
                             >
-                                <LogOut size={14} className="text-[rgba(245,245,245,0.5)]" />
+                                <LogOut size={14} className="text-muted-foreground/75" aria-hidden />
                                 <span>Sign out</span>
                             </Button>
-                        </div>
-                    )}
+                        </PopoverContent>
+                    </Popover>
                 </div>
             </div>
         </aside>
@@ -458,7 +487,7 @@ function NavTag({ variant }: { variant: "sample" | "construction" | "coming_soon
     if (variant === "coming_soon") {
         return (
             <span
-                className="shrink-0 ml-auto rounded-md px-2 py-0.5 text-[10px] font-medium text-violet-400 border border-violet-400/30"
+                className="shrink-0 ml-auto rounded-md px-2 py-0.5 text-2xs font-medium text-violet-400 border border-violet-400/30"
                 title="Planned feature — preview coming soon."
             >
                 Coming soon
@@ -473,7 +502,7 @@ function NavTag({ variant }: { variant: "sample" | "construction" | "coming_soon
     return (
         <span
             className={cn(
-                "shrink-0 ml-auto rounded-md px-2 py-0.5 text-[10px] font-medium",
+                "shrink-0 ml-auto rounded-md px-2 py-0.5 text-2xs font-medium",
                 isSample
                     ? "bg-[var(--muted-amber-bg)] text-[var(--muted-amber-text)] border border-[var(--muted-amber-border)]"
                     : "bg-[var(--muted-info-bg)] text-[var(--muted-info-text)] border border-[var(--muted-info-border)]"
@@ -488,6 +517,7 @@ function NavTag({ variant }: { variant: "sample" | "construction" | "coming_soon
 function NavLink({
     href,
     collapsed,
+    onNavigate,
     icon,
     label,
     active,
@@ -497,6 +527,7 @@ function NavLink({
 }: {
     href: string;
     collapsed: boolean;
+    onNavigate?: () => void;
     icon: React.ReactNode;
     label: string;
     active?: boolean;
@@ -509,18 +540,19 @@ function NavLink({
     return (
         <Link
             href={href}
+            onClick={() => onNavigate?.()}
             className={[
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px]",
+                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-compact",
                 "transition-all duration-150 ease-out",
                 active
                     ? "bg-white/[0.06] text-white font-medium"
-                    : "text-gray-500 hover:text-gray-300 hover:bg-white/[0.03]",
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/[0.03]",
             ].join(" ")}
         >
             <span
                 className={cn(
                     "shrink-0 inline-flex items-center justify-center relative",
-                    active ? "text-white" : "text-gray-500"
+                    active ? "text-white" : "text-muted-foreground"
                 )}
             >
                 {icon}
@@ -530,7 +562,7 @@ function NavLink({
                     <span className="truncate flex-1 min-w-0">{label}</span>
                     {notificationPill != null && notificationPill > 0 && (
                         <span
-                            className="shrink-0 ml-auto min-w-[1.25rem] h-5 px-1 rounded-full bg-sky-500/15 text-sky-400 text-[10px] font-semibold flex items-center justify-center"
+                            className="shrink-0 ml-auto min-w-[1.25rem] h-5 px-1 rounded-full bg-sky-500/15 text-sky-400 text-2xs font-semibold flex items-center justify-center"
                             title="Unprocessed forwarded emails"
                         >
                             {notificationPill > 9 ? "9+" : notificationPill}
@@ -539,7 +571,7 @@ function NavLink({
                     {navTag && <NavTag variant={navTag} />}
                     {badge && !navTag && (
                         <span
-                            className="shrink-0 ml-auto rounded-md px-2 py-0.5 text-[11px] font-normal text-[rgba(245,245,245,0.4)] bg-white/[0.05] border border-white/[0.08]"
+                            className="shrink-0 ml-auto rounded-md px-2 py-0.5 text-xs font-normal text-muted-foreground/55 bg-white/[0.05] border border-border"
                             title="This feature is not fully implemented yet"
                         >
                             {badge}
@@ -573,23 +605,23 @@ function IntegrationItem({
             variant="ghost"
             onClick={isClickable ? onClick : undefined}
             disabled={!isClickable}
-            className={`w-full justify-between py-1.5 px-2 rounded-md text-[12px] font-normal h-auto ${isClickable ? "cursor-pointer hover:bg-white/6" : "cursor-default"} ${active ? "bg-white/8" : ""}`}
+            className={`w-full justify-between py-1.5 px-2 rounded-md text-sm font-normal h-auto ${isClickable ? "cursor-pointer hover:bg-white/6" : "cursor-default"} ${active ? "bg-white/8" : ""}`}
         >
-            <span className={status === "active" ? "text-[rgba(245,245,245,0.8)]" : "text-[rgba(245,245,245,0.45)]"}>
+            <span className={status === "active" ? "text-muted-foreground" : "text-muted-foreground/75"}>
                 {name}
             </span>
             {status === "active" ? (
                 showInactive ? (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[rgba(245,245,245,0.08)] text-[rgba(245,245,245,0.45)]">
+                    <span className="text-2xs px-1.5 py-0.5 rounded bg-[rgba(245,245,245,0.08)] text-muted-foreground/75">
                         Inactive
                     </span>
                 ) : (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[rgba(122,200,137,0.15)] text-[#7AC889]">
+                    <span className="text-2xs px-1.5 py-0.5 rounded bg-[rgba(122,200,137,0.15)] text-[#7AC889]">
                         Active
                     </span>
                 )
             ) : (
-                <span className="text-[10px] text-[rgba(245,245,245,0.35)]">
+                <span className="text-2xs text-muted-foreground/55">
                     Coming soon
                 </span>
             )}

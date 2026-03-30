@@ -114,10 +114,10 @@ export default function PdfModal({ isOpen, onClose, filename, pageNumber = 1, pd
                             <FileText size={20} className="text-[rgba(0,0,0,0.5)]" />
                         </div>
                         <div className="min-w-0">
-                            <DialogTitle className="text-[15px] font-semibold text-[#0C0C0C] truncate">
+                            <DialogTitle className="text-base font-semibold text-[#0C0C0C] truncate">
                                 {filename}
                             </DialogTitle>
-                            <p className="text-[12px] text-[rgba(0,0,0,0.5)] mt-0.5">
+                            <p className="text-sm text-[rgba(0,0,0,0.5)] mt-0.5">
                                 {customUrl ? "Document Preview" : `Page ${pageNumber}`}
                             </p>
                         </div>
@@ -142,7 +142,7 @@ export default function PdfModal({ isOpen, onClose, filename, pageNumber = 1, pd
                     )}
                     {!customUrl && error && (
                         <div className="absolute inset-0 flex items-center justify-center p-6 bg-[#e5e5e5] z-10">
-                            <p className="text-[15px] text-[rgba(0,0,0,0.7)]">{error}</p>
+                            <p className="text-base text-[rgba(0,0,0,0.7)]">{error}</p>
                         </div>
                     )}
                     {iframeSrc && !error && (

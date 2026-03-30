@@ -67,11 +67,11 @@ export default function ProductDirectoryMultiSelectDropdown({
         aria-expanded={open}
         aria-haspopup="listbox"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 rounded-lg border border-[rgba(255,255,255,0.03)] bg-[#0c0c12] px-3 py-1.5 text-left transition-colors hover:border-[rgba(255,255,255,0.06)]"
+        className="flex items-center gap-2 rounded-lg border border-border bg-popover px-3 py-1.5 text-left transition-colors hover:border-border"
       >
-        <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-[#4A4540]">{fieldLabel}</span>
-        <span className="max-w-[120px] truncate text-[11px] text-[#9B9590]">{summary}</span>
-        <ChevronDown className="ml-auto h-3 w-3 shrink-0 text-[#4A4540]" />
+        <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-muted-foreground/65">{fieldLabel}</span>
+        <span className="max-w-[120px] truncate text-xs text-muted-foreground">{summary}</span>
+        <ChevronDown className="ml-auto h-3 w-3 shrink-0 text-muted-foreground/65" />
       </button>
 
       {selected.length > 0 && (
@@ -81,12 +81,12 @@ export default function ProductDirectoryMultiSelectDropdown({
             return (
               <span
                 key={v}
-                className="inline-flex items-center gap-0.5 rounded-md border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.04)] px-1.5 py-0.5 text-[9px] text-[#9B9590]"
+                className="inline-flex items-center gap-0.5 rounded-md border border-border bg-[rgba(255,255,255,0.04)] px-1.5 py-0.5 text-[9px] text-muted-foreground"
               >
                 <span className="max-w-[100px] truncate">{label}</span>
                 <button
                   type="button"
-                  className="rounded p-0.5 text-[#4A4540] hover:text-[#F5F0EB]"
+                  className="rounded p-0.5 text-muted-foreground/65 hover:text-foreground"
                   aria-label={`Remove ${label}`}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -103,7 +103,7 @@ export default function ProductDirectoryMultiSelectDropdown({
 
       {open && (
         <div
-          className="absolute left-0 top-full z-50 mt-1 max-h-56 w-52 overflow-y-auto rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0c0c12] shadow-xl"
+          className="absolute left-0 top-full z-50 mt-1 max-h-56 w-52 overflow-y-auto rounded-xl border border-border bg-popover shadow-xl"
           role="listbox"
         >
           {options.map((opt) => {
@@ -114,18 +114,18 @@ export default function ProductDirectoryMultiSelectDropdown({
                 type="button"
                 role="option"
                 aria-selected={isOn}
-                className="flex w-full items-center justify-between px-3 py-2 text-left text-[11px] text-[#9B9590] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+                className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-[rgba(255,255,255,0.04)]"
                 onClick={() => toggle(opt.value)}
               >
                 <span className="truncate pr-2">{opt.label}</span>
-                {isOn ? <Check className="h-3 w-3 shrink-0 text-[#C9A96E]" /> : <span className="h-3 w-3 shrink-0" />}
+                {isOn ? <Check className="h-3 w-3 shrink-0 text-brand-cta" /> : <span className="h-3 w-3 shrink-0" />}
               </button>
             );
           })}
           {footerAction && (
             <button
               type="button"
-              className="w-full border-t border-[rgba(255,255,255,0.06)] px-3 py-2 text-left text-[11px] text-[#C9A96E] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+              className="w-full border-t border-border px-3 py-2 text-left text-xs text-brand-cta transition-colors hover:bg-[rgba(255,255,255,0.04)]"
               onClick={() => {
                 setOpen(false);
                 footerAction.onClick();

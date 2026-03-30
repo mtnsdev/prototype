@@ -155,16 +155,16 @@ export default function HistoryDrawer({
             />
 
             {/* Drawer */}
-            <div className="fixed right-0 top-0 h-full w-[400px] max-w-full bg-[#0C0C0C] border-l border-[rgba(255,255,255,0.08)] z-50 flex flex-col shadow-2xl">
+            <div className="fixed right-0 top-0 h-full w-[400px] max-w-full bg-background border-l border-border z-50 flex flex-col shadow-2xl">
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(255,255,255,0.08)]">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-border">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-white/10">
-                            <Clock size={18} className="text-[rgba(245,245,245,0.6)]" />
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-input">
+                            <Clock size={18} className="text-muted-foreground" />
                         </div>
                         <div>
-                            <h2 className="text-[15px] font-semibold text-[#F5F5F5]">Chat History</h2>
-                            <p className="text-[11px] text-[rgba(245,245,245,0.45)]">
+                            <h2 className="text-base font-semibold text-foreground">Chat History</h2>
+                            <p className="text-xs text-muted-foreground/75">
                                 {conversations.length} conversation{conversations.length !== 1 ? "s" : ""}
                             </p>
                         </div>
@@ -173,25 +173,25 @@ export default function HistoryDrawer({
                         variant="ghost"
                         size="icon"
                         onClick={onClose}
-                        className="w-8 h-8 rounded-lg text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] hover:bg-white/8"
+                        className="w-8 h-8 rounded-lg text-muted-foreground/75 hover:text-foreground hover:bg-white/8"
                     >
                         <X size={18} />
                     </Button>
                 </div>
 
                 {/* Search */}
-                <div className="p-4 border-b border-[rgba(255,255,255,0.08)]">
+                <div className="p-4 border-b border-border">
                     <div className="relative">
                         <Search
                             size={16}
-                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[rgba(245,245,245,0.35)]"
+                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/55"
                         />
                         <Input
                             type="text"
                             placeholder="Search conversations..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 rounded-xl bg-[#161616] border-[rgba(255,255,255,0.08)] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.35)]"
+                            className="w-full pl-10 rounded-xl bg-card border-border text-foreground placeholder-[rgba(245,245,245,0.35)]"
                         />
                     </div>
                 </div>
@@ -201,9 +201,9 @@ export default function HistoryDrawer({
                     {error ? (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                             <div className="w-14 h-14 rounded-2xl bg-[rgba(200,122,122,0.1)] flex items-center justify-center mb-4">
-                                <AlertCircle size={24} className="text-[#C87A7A]" />
+                                <AlertCircle size={24} className="text-[var(--color-error)]" />
                             </div>
-                            <p className="text-[14px] text-[rgba(245,245,245,0.7)]">{error}</p>
+                            <p className="text-base text-muted-foreground">{error}</p>
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -215,16 +215,16 @@ export default function HistoryDrawer({
                         </div>
                     ) : showLoader ? (
                         <div className="flex flex-col items-center justify-center py-12">
-                            <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)]" />
-                            <span className="text-[13px] text-[rgba(245,245,245,0.5)] mt-3">Loading history...</span>
+                            <Loader2 size={24} className="animate-spin text-muted-foreground/55" />
+                            <span className="text-compact text-muted-foreground/75 mt-3">Loading history...</span>
                         </div>
                     ) : conversations.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                             <div className="w-14 h-14 rounded-2xl bg-[rgba(255,255,255,0.04)] flex items-center justify-center mb-4">
-                                <MessageSquare size={24} className="text-[rgba(245,245,245,0.25)]" />
+                                <MessageSquare size={24} className="text-muted-foreground/55" />
                             </div>
-                            <p className="text-[14px] text-[rgba(245,245,245,0.5)]">No conversations found</p>
-                            <p className="text-[12px] text-[rgba(245,245,245,0.35)] mt-1">
+                            <p className="text-base text-muted-foreground/75">No conversations found</p>
+                            <p className="text-sm text-muted-foreground/55 mt-1">
                                 {searchQuery ? "Try a different search term" : "Start a new chat to get started"}
                             </p>
                         </div>
@@ -289,7 +289,7 @@ function ConversationGroup({
 }) {
     return (
         <div>
-            <h3 className="text-[11px] font-medium text-[rgba(245,245,245,0.4)] uppercase tracking-wider mb-2 px-1">
+            <h3 className="text-xs font-medium text-muted-foreground/55 uppercase tracking-wider mb-2 px-1">
                 {title}
             </h3>
             <div className="space-y-0.5">
@@ -310,13 +310,13 @@ function ConversationGroup({
                             "px-3 py-2.5 rounded-xl text-left",
                             "transition-all duration-150",
                             selectedId === conv.id
-                                ? "bg-white/10 border border-[rgba(255,255,255,0.12)]"
+                                ? "bg-white/10 border border-input"
                                 : "hover:bg-white/6 border border-transparent",
                         ].join(" ")}
                     >
                         <span className={[
-                            "text-[13px] truncate flex-1 mr-3",
-                            selectedId === conv.id ? "text-[#F5F5F5] font-medium" : "text-[rgba(245,245,245,0.75)]",
+                            "text-compact truncate flex-1 mr-3",
+                            selectedId === conv.id ? "text-foreground font-medium" : "text-muted-foreground",
                         ].join(" ")}>
                             {conv.title}
                         </span>
@@ -327,7 +327,7 @@ function ConversationGroup({
                             className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-[rgba(200,122,122,0.15)] h-auto w-auto"
                             title="Delete conversation"
                         >
-                            <Trash2 size={14} className="text-[rgba(245,245,245,0.4)] hover:text-[#C87A7A]" />
+                            <Trash2 size={14} className="text-muted-foreground/55 hover:text-[var(--color-error)]" />
                         </Button>
                     </div>
                 ))}

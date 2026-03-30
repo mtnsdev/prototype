@@ -146,7 +146,7 @@ export default function SyncStatusButton() {
 
     if (loading && !status) {
         return (
-            <div className="flex items-center gap-2 text-[13px] text-[rgba(245,245,245,0.5)]">
+            <div className="flex items-center gap-2 text-compact text-muted-foreground/75">
                 <Loader2 size={14} className="animate-spin" />
                 <span>Loading…</span>
             </div>
@@ -155,7 +155,7 @@ export default function SyncStatusButton() {
 
     if (error && !status) {
         return (
-            <div className="flex items-center gap-2 text-[13px] text-[rgba(245,245,245,0.45)]">
+            <div className="flex items-center gap-2 text-compact text-muted-foreground/75">
                 <AlertCircle size={14} />
                 <span>Status unavailable</span>
             </div>
@@ -170,7 +170,7 @@ export default function SyncStatusButton() {
                 size="sm"
                 onClick={handleClick}
                 disabled={isRunning}
-                className="gap-2 text-[13px]"
+                className="gap-2 text-compact"
             >
                 {isRunning ? (
                     <>
@@ -192,13 +192,13 @@ export default function SyncStatusButton() {
             </Button>
             {hasError && (
                 <p
-                    className="text-[11px] text-[#C87A7A] max-w-[220px] truncate"
+                    className="text-xs text-[var(--color-error)] max-w-[220px] truncate"
                     title={status?.last_run_error ?? triggerError ?? error ?? undefined}
                 >
                 </p>
             )}
             {timedOut && (
-                <p className="text-[11px] text-[rgba(245,245,245,0.5)]">Sync may still be running</p>
+                <p className="text-xs text-muted-foreground/75">Sync may still be running</p>
             )}
         </div>
     );

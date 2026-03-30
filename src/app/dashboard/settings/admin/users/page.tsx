@@ -63,12 +63,12 @@ type UsersResponse = {
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; icon: typeof UserCheck }> = {
     active: { bg: "bg-green-500/10", text: "text-green-400", icon: UserCheck },
-    invited: { bg: "bg-amber-500/10", text: "text-amber-400", icon: Clock },
+    invited: { bg: "bg-amber-500/10", text: "text-[var(--color-warning)]", icon: Clock },
     disabled: { bg: "bg-red-500/10", text: "text-red-400", icon: UserX },
 };
 
 const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
-    admin: { bg: "bg-amber-500/10", text: "text-amber-400" },
+    admin: { bg: "bg-amber-500/10", text: "text-[var(--color-warning)]" },
     user: { bg: "bg-blue-500/10", text: "text-blue-400" },
 };
 
@@ -161,7 +161,7 @@ function ActionMenu({
     return createPortal(
         <div
             ref={menuRef}
-            className="fixed w-48 rounded-xl bg-[#1A1A1A] border border-[rgba(255,255,255,0.1)] shadow-xl overflow-hidden"
+            className="fixed w-48 rounded-xl bg-accent border border-input shadow-xl overflow-hidden"
             style={{
                 top: position.top,
                 left: position.left,
@@ -362,10 +362,10 @@ export default function UsersPage() {
             {/* Invite result banner */}
             {inviteMessage && (
                 <div
-                    className={`p-3.5 rounded-xl border text-[13px] flex items-center justify-between gap-3 ${
+                    className={`p-3.5 rounded-xl border text-compact flex items-center justify-between gap-3 ${
                         inviteMessage.type === "success"
                             ? "bg-[rgba(52,211,153,0.08)] border-[rgba(52,211,153,0.2)] text-emerald-400"
-                            : "bg-[rgba(251,191,36,0.08)] border-[rgba(251,191,36,0.2)] text-amber-400"
+                            : "bg-[rgba(251,191,36,0.08)] border-[rgba(251,191,36,0.2)] text-[var(--color-warning)]"
                     }`}
                 >
                     <span>{inviteMessage.text}</span>
@@ -379,13 +379,13 @@ export default function UsersPage() {
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 <div className="flex items-center gap-3 flex-1 w-full sm:w-auto">
                     <div className="relative flex-1 sm:max-w-xs">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(245,245,245,0.4)]" />
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/55" />
                         <Input
                             type="text"
                             placeholder="Search users..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 rounded-xl bg-[#161616] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5]"
+                            className="w-full pl-9 rounded-xl bg-card border-border text-base text-foreground"
                         />
                     </div>
 
@@ -394,7 +394,7 @@ export default function UsersPage() {
                         value={roleFilter ?? "__all__"}
                         onValueChange={(v) => setRoleFilter(v === "__all__" ? null : v)}
                     >
-                        <SelectTrigger className="w-[140px] rounded-xl bg-[#161616] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                        <SelectTrigger className="w-[140px] rounded-xl bg-card border-border text-base text-foreground focus:border-[rgba(255,255,255,0.2)]">
                             <SelectValue placeholder="All Roles" />
                         </SelectTrigger>
                         <SelectContent>
@@ -409,7 +409,7 @@ export default function UsersPage() {
                         value={statusFilter ?? "__all__"}
                         onValueChange={(v) => setStatusFilter(v === "__all__" ? null : v)}
                     >
-                        <SelectTrigger className="w-[140px] rounded-xl bg-[#161616] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                        <SelectTrigger className="w-[140px] rounded-xl bg-card border-border text-base text-foreground focus:border-[rgba(255,255,255,0.2)]">
                             <SelectValue placeholder="All Status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -428,29 +428,29 @@ export default function UsersPage() {
             </div>
 
             {/* Users Table */}
-            <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] overflow-hidden">
+            <div className="rounded-2xl bg-card border border-border overflow-hidden">
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12">
-                        <Loader2 className="w-6 h-6 animate-spin text-[rgba(245,245,245,0.4)]" />
+                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground/55" />
                     </div>
                 ) : error ? (
                     <div className="p-6 text-center">
-                        <p className="text-[14px] text-[#C87A7A]">{error}</p>
+                        <p className="text-base text-[var(--color-error)]">{error}</p>
                     </div>
                 ) : users.length === 0 ? (
                     <div className="p-12 text-center">
                         <Users size={48} className="mx-auto text-[rgba(245,245,245,0.2)] mb-4" />
-                        <p className="text-[14px] text-[rgba(245,245,245,0.5)]">No users found</p>
+                        <p className="text-base text-muted-foreground/75">No users found</p>
                     </div>
                 ) : (
                     <Table>
                         <TableHeader>
-                            <TableRow className="border-b border-[rgba(255,255,255,0.08)] hover:bg-transparent">
-                                <TableHead className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">User</TableHead>
-                                <TableHead className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Role</TableHead>
-                                <TableHead className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Status</TableHead>
-                                <TableHead className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Last Login</TableHead>
-                                <TableHead className="text-left px-5 py-4 text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">Created</TableHead>
+                            <TableRow className="border-b border-border hover:bg-transparent">
+                                <TableHead className="text-left px-5 py-4 text-sm font-medium text-muted-foreground/75 uppercase tracking-wider">User</TableHead>
+                                <TableHead className="text-left px-5 py-4 text-sm font-medium text-muted-foreground/75 uppercase tracking-wider">Role</TableHead>
+                                <TableHead className="text-left px-5 py-4 text-sm font-medium text-muted-foreground/75 uppercase tracking-wider">Status</TableHead>
+                                <TableHead className="text-left px-5 py-4 text-sm font-medium text-muted-foreground/75 uppercase tracking-wider">Last Login</TableHead>
+                                <TableHead className="text-left px-5 py-4 text-sm font-medium text-muted-foreground/75 uppercase tracking-wider">Created</TableHead>
                                 <TableHead className="w-12"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -461,29 +461,29 @@ export default function UsersPage() {
                                 const StatusIcon = statusStyle.icon;
 
                                 return (
-                                    <TableRow key={user.id} className="border-b border-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.02)]">
+                                    <TableRow key={user.id} className="border-b border-border hover:bg-[rgba(255,255,255,0.02)]">
                                         <TableCell className="px-5 py-4">
                                             <div>
-                                                <p className="text-[14px] font-medium text-[#F5F5F5]">{user.username}</p>
-                                                <p className="text-[13px] text-[rgba(245,245,245,0.5)]">{user.email}</p>
+                                                <p className="text-base font-medium text-foreground">{user.username}</p>
+                                                <p className="text-compact text-muted-foreground/75">{user.email}</p>
                                             </div>
                                         </TableCell>
                                         <TableCell className="px-5 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium ${roleStyle.bg} ${roleStyle.text}`}>
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-medium ${roleStyle.bg} ${roleStyle.text}`}>
                                                 {user.role === "admin" && <Shield size={12} />}
                                                 {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                                             </span>
                                         </TableCell>
                                         <TableCell className="px-5 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium ${statusStyle.bg} ${statusStyle.text}`}>
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-medium ${statusStyle.bg} ${statusStyle.text}`}>
                                                 <StatusIcon size={12} />
                                                 {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="px-5 py-4 text-[13px] text-[rgba(245,245,245,0.5)]">
+                                        <TableCell className="px-5 py-4 text-compact text-muted-foreground/75">
                                             {formatDate(user.last_login_at)}
                                         </TableCell>
-                                        <TableCell className="px-5 py-4 text-[13px] text-[rgba(245,245,245,0.5)]">
+                                        <TableCell className="px-5 py-4 text-compact text-muted-foreground/75">
                                             {formatDate(user.created_at)}
                                         </TableCell>
                                         <TableCell className="px-2 py-4">
@@ -494,7 +494,7 @@ export default function UsersPage() {
                                                 onClick={() => setActionMenuUser(actionMenuUser === user.id ? null : user.id)}
                                                 className="p-2"
                                             >
-                                                <MoreVertical size={16} className="text-[rgba(245,245,245,0.5)]" />
+                                                <MoreVertical size={16} className="text-muted-foreground/75" />
                                             </Button>
 
                                             <ActionMenu
@@ -504,7 +504,7 @@ export default function UsersPage() {
                                             >
                                                 <Button
                                                     variant="ghost"
-                                                    className="w-full justify-start font-normal text-[rgba(245,245,245,0.8)]"
+                                                    className="w-full justify-start font-normal text-muted-foreground"
                                                     onClick={() => {
                                                         setEditingUser(user);
                                                         setActionMenuUser(null);
@@ -514,19 +514,19 @@ export default function UsersPage() {
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
-                                                    className="w-full justify-start font-normal gap-2 text-[rgba(245,245,245,0.8)]"
+                                                    className="w-full justify-start font-normal gap-2 text-muted-foreground"
                                                     onClick={() => {
                                                         setPermissionsUser(user);
                                                         setActionMenuUser(null);
                                                     }}
                                                 >
-                                                    <Eye size={13} className="text-[rgba(245,245,245,0.5)]" />
+                                                    <Eye size={13} className="text-muted-foreground/75" />
                                                     View Permissions
                                                 </Button>
                                                 {user.status !== "disabled" && (
                                                     <Button
                                                         variant="ghost"
-                                                        className="w-full justify-start font-normal text-[#C87A7A]"
+                                                        className="w-full justify-start font-normal text-[var(--color-error)]"
                                                         onClick={() => handleDisableUser(user.id)}
                                                     >
                                                         Disable User
@@ -554,7 +554,7 @@ export default function UsersPage() {
             {/* Pagination */}
             {total > 20 && (
                 <div className="flex items-center justify-between">
-                    <p className="text-[13px] text-[rgba(245,245,245,0.5)]">
+                    <p className="text-compact text-muted-foreground/75">
                         Showing {((page - 1) * 20) + 1} to {Math.min(page * 20, total)} of {total} users
                     </p>
                     <div className="flex gap-2">
@@ -647,14 +647,14 @@ function InviteUserModal({
 
     return (
         <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto border-[rgba(255,255,255,0.1)]">
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto border-input">
                 <DialogHeader>
-                    <DialogTitle className="text-[16px] text-[#F5F5F5]">Invite User</DialogTitle>
+                    <DialogTitle className="text-lg text-foreground">Invite User</DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                        <Label className="text-sm text-muted-foreground/75 uppercase tracking-wider">
                             Email Address
                         </Label>
                         <Input
@@ -663,16 +663,16 @@ function InviteUserModal({
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="user@example.com"
                             required
-                            className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)]"
+                            className="rounded-xl bg-background border-border"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                        <Label className="text-sm text-muted-foreground/75 uppercase tracking-wider">
                             Role
                         </Label>
                         <Select value={role} onValueChange={setRole}>
-                            <SelectTrigger className="w-full rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                            <SelectTrigger className="w-full rounded-xl bg-background border-border text-base text-foreground focus:border-[rgba(255,255,255,0.2)]">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -683,14 +683,14 @@ function InviteUserModal({
                     </div>
 
                     {/* Password Section */}
-                    <div className="pt-2 border-t border-[rgba(255,255,255,0.08)]">
-                        <p className="text-[12px] text-[rgba(245,245,245,0.5)] mb-3">
+                    <div className="pt-2 border-t border-border">
+                        <p className="text-sm text-muted-foreground/75 mb-3">
                             Set a password for email/password login, or leave empty for Google OAuth only.
                         </p>
                         
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                                <Label className="text-sm text-muted-foreground/75 uppercase tracking-wider">
                                     Password (Optional)
                                 </Label>
                                 <Input
@@ -698,13 +698,13 @@ function InviteUserModal({
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="Enter password"
-                                    className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)]"
+                                    className="rounded-xl bg-background border-border"
                                 />
                             </div>
                             
                             {password && (
                                 <div className="space-y-2">
-                                    <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                                    <Label className="text-sm text-muted-foreground/75 uppercase tracking-wider">
                                         Confirm Password
                                     </Label>
                                     <Input
@@ -712,24 +712,24 @@ function InviteUserModal({
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         placeholder="Confirm password"
-                                        className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)]"
+                                        className="rounded-xl bg-background border-border"
                                     />
                                 </div>
                             )}
 
                             {passwordError && (
-                                <p className="text-[13px] text-[#C87A7A]">{passwordError}</p>
+                                <p className="text-compact text-[var(--color-error)]">{passwordError}</p>
                             )}
 
                             {password && (
-                                <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
+                                <p className="text-sm text-muted-foreground/55">
                                     Password must be at least 8 characters with at least one letter and one number.
                                 </p>
                             )}
 
                             {password && (
                                 <div className="p-3 rounded-xl bg-[rgba(251,191,36,0.08)] border border-[rgba(251,191,36,0.2)]">
-                                    <p className="text-[12px] text-amber-400 leading-relaxed">
+                                    <p className="text-sm text-[var(--color-warning)] leading-relaxed">
                                         <strong>Temporary password.</strong> The user will be required to change it immediately after their first login.
                                     </p>
                                 </div>
@@ -815,25 +815,25 @@ function EditUserModal({
 
     return (
         <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto border-[rgba(255,255,255,0.1)]">
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto border-input">
                 <DialogHeader>
-                    <DialogTitle className="text-[16px] text-[#F5F5F5]">Edit User</DialogTitle>
+                    <DialogTitle className="text-lg text-foreground">Edit User</DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                        <Label className="text-sm text-muted-foreground/75 uppercase tracking-wider">
                             Email
                         </Label>
-                        <p className="text-[14px] text-[rgba(245,245,245,0.7)]">{user.email}</p>
+                        <p className="text-base text-muted-foreground">{user.email}</p>
                     </div>
 
                     <div className="space-y-2">
-                        <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                        <Label className="text-sm text-muted-foreground/75 uppercase tracking-wider">
                             Role
                         </Label>
                         <Select value={role} onValueChange={setRole}>
-                            <SelectTrigger className="w-full rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                            <SelectTrigger className="w-full rounded-xl bg-background border-border text-base text-foreground focus:border-[rgba(255,255,255,0.2)]">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -844,11 +844,11 @@ function EditUserModal({
                     </div>
 
                     <div className="space-y-2">
-                        <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                        <Label className="text-sm text-muted-foreground/75 uppercase tracking-wider">
                             Status
                         </Label>
                         <Select value={status} onValueChange={setStatus}>
-                            <SelectTrigger className="w-full rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)] text-[14px] text-[#F5F5F5] focus:border-[rgba(255,255,255,0.2)]">
+                            <SelectTrigger className="w-full rounded-xl bg-background border-border text-base text-foreground focus:border-[rgba(255,255,255,0.2)]">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -875,7 +875,7 @@ function EditUserModal({
                         type="button"
                         variant="ghost"
                         onClick={() => setShowPasswordSection(!showPasswordSection)}
-                        className="gap-2 font-normal text-[rgba(245,245,245,0.6)] hover:text-[rgba(245,245,245,0.8)]"
+                        className="gap-2 font-normal text-muted-foreground hover:text-muted-foreground"
                     >
                         <Key size={14} />
                         {showPasswordSection ? "Hide Password Options" : "Change Password"}
@@ -886,9 +886,9 @@ function EditUserModal({
                     </Button>
                     
                     {showPasswordSection && (
-                        <div className="mt-4 p-4 rounded-xl bg-[#0C0C0C] border border-[rgba(255,255,255,0.08)] space-y-4">
+                        <div className="mt-4 p-4 rounded-xl bg-background border border-border space-y-4">
                             <div className="space-y-2">
-                                <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                                <Label className="text-sm text-muted-foreground/75 uppercase tracking-wider">
                                     New Password
                                 </Label>
                                 <Input
@@ -896,12 +896,12 @@ function EditUserModal({
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
                                     placeholder="Enter new password"
-                                    className="rounded-xl bg-[#161616] border-[rgba(255,255,255,0.08)]"
+                                    className="rounded-xl bg-card border-border"
                                 />
                             </div>
                             
                             <div className="space-y-2">
-                                <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                                <Label className="text-sm text-muted-foreground/75 uppercase tracking-wider">
                                     Confirm Password
                                 </Label>
                                 <Input
@@ -909,15 +909,15 @@ function EditUserModal({
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     placeholder="Confirm new password"
-                                    className="rounded-xl bg-[#161616] border-[rgba(255,255,255,0.08)]"
+                                    className="rounded-xl bg-card border-border"
                                 />
                             </div>
                             
                             {passwordError && (
-                                <p className="text-[13px] text-[#C87A7A]">{passwordError}</p>
+                                <p className="text-compact text-[var(--color-error)]">{passwordError}</p>
                             )}
                             
-                            <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
+                            <p className="text-sm text-muted-foreground/55">
                                 Password must be at least 8 characters with at least one letter and one number.
                             </p>
                             
@@ -925,7 +925,7 @@ function EditUserModal({
                                 type="button"
                                 onClick={handlePasswordChange}
                                 disabled={isChangingPassword || !newPassword || !confirmPassword}
-                                className="w-full bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/30 text-amber-400"
+                                className="w-full bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/30 text-[var(--color-warning)]"
                             >
                                 {isChangingPassword ? "Changing Password..." : "Change Password"}
                             </Button>

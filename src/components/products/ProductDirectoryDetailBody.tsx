@@ -615,7 +615,7 @@ export function ProductDirectoryDetailBody({
   return (
     <div className="flex min-h-0 flex-col pb-0">
       {/* Block 1 — Hero + Identity */}
-      <div className="relative h-[200px] w-full shrink-0 overflow-hidden bg-[#0c0c12]">
+      <div className="relative h-[200px] w-full shrink-0 overflow-hidden bg-popover">
         {product.imageUrl ? (
           <img
             src={product.imageUrl}
@@ -648,29 +648,29 @@ export function ProductDirectoryDetailBody({
               {typeEntry?.label ?? product.type}
             </span>
             {product.tier && product.tier !== "unrated" && tierStars > 0 ? (
-              <span className="text-[10px] text-[#C9A96E]">{"★".repeat(tierStars)}</span>
+              <span className="text-2xs text-brand-cta">{"★".repeat(tierStars)}</span>
             ) : null}
             {product.priceTier ? (
-              <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[9px] text-[#9B9590]">
+              <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[9px] text-muted-foreground">
                 {product.priceTier}
               </span>
             ) : null}
           </div>
           <h2 className="text-lg font-semibold leading-tight text-white drop-shadow-sm">{product.name}</h2>
-          <p className="mt-0.5 text-[11px] text-white/70">{placeLine}</p>
+          <p className="mt-0.5 text-xs text-white/70">{placeLine}</p>
         </div>
       </div>
 
       {galleryImages.length > 0 ? (
-        <div className="shrink-0 border-b border-white/[0.06] bg-[#0a0a0f] px-3 py-2.5">
-          <p className="mb-2 text-[9px] font-medium uppercase tracking-wider text-[#6B6560]">Gallery</p>
+        <div className="shrink-0 border-b border-border bg-inset px-3 py-2.5">
+          <p className="mb-2 text-[9px] font-medium uppercase tracking-wider text-muted-foreground">Gallery</p>
           <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/15">
             {galleryImages.map((url, i) => (
               <img
                 key={`${url}-${i}`}
                 src={url}
                 alt={`${product.name} — gallery ${i + 1}`}
-                className="h-[72px] w-[108px] shrink-0 rounded-lg border border-white/[0.06] object-cover"
+                className="h-[72px] w-[108px] shrink-0 rounded-lg border border-border object-cover"
                 loading="lazy"
               />
             ))}
@@ -680,118 +680,118 @@ export function ProductDirectoryDetailBody({
 
       <div className="space-y-5 px-5 pb-2">
       {/* Block 2 — Quick Facts */}
-      <div className="relative z-10 -mt-2 rounded-xl border border-white/[0.06] bg-[#0e0e14] p-3">
+      <div className="relative z-10 -mt-2 rounded-xl border border-border bg-white/[0.03] p-3">
         <div className="grid grid-cols-3 gap-x-4 gap-y-2.5">
           <div>
-            <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Type</p>
-            <p className="mt-0.5 text-[11px] font-medium text-[#F5F0EB]">
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Type</p>
+            <p className="mt-0.5 text-xs font-medium text-foreground">
               {typeEntry?.label ?? product.type}
             </p>
           </div>
           <div>
-            <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Tier</p>
-            <p className="mt-0.5 text-[11px] font-medium text-[#F5F0EB]">
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Tier</p>
+            <p className="mt-0.5 text-xs font-medium text-foreground">
               {product.tier ? directoryTierLabel(product.tier) : "—"}
             </p>
           </div>
           <div>
-            <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Price</p>
-            <p className="mt-0.5 text-[11px] font-medium text-[#F5F0EB]">{product.priceTier ?? "—"}</p>
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Price</p>
+            <p className="mt-0.5 text-xs font-medium text-foreground">{product.priceTier ?? "—"}</p>
           </div>
 
           {product.type === "hotel" && (
             <>
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Star Rating</p>
-                <p className="mt-0.5 text-[11px] font-medium text-[#C9A96E]">
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Star Rating</p>
+                <p className="mt-0.5 text-xs font-medium text-brand-cta">
                   {product.starRating
                     ? `${"★".repeat(product.starRating)} ${product.starRating}/5`
                     : "—"}
                 </p>
               </div>
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Rooms</p>
-                <p className="mt-0.5 text-[11px] font-medium text-[#F5F0EB]">{product.roomCount ?? "—"}</p>
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Rooms</p>
+                <p className="mt-0.5 text-xs font-medium text-foreground">{product.roomCount ?? "—"}</p>
               </div>
             </>
           )}
           {product.type === "restaurant" && (
             <>
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Michelin</p>
-                <p className="mt-0.5 text-[11px] font-medium text-[#C9A96E]">
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Michelin</p>
+                <p className="mt-0.5 text-xs font-medium text-brand-cta">
                   {product.michelinStars ? "★".repeat(product.michelinStars) : "—"}
                 </p>
               </div>
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Cuisine</p>
-                <p className="mt-0.5 text-[11px] font-medium text-[#F5F0EB]">{product.cuisine ?? "—"}</p>
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Cuisine</p>
+                <p className="mt-0.5 text-xs font-medium text-foreground">{product.cuisine ?? "—"}</p>
               </div>
             </>
           )}
           {product.type === "experience" && (
             <>
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Duration</p>
-                <p className="mt-0.5 text-[11px] font-medium text-[#F5F0EB]">{product.duration ?? "—"}</p>
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Duration</p>
+                <p className="mt-0.5 text-xs font-medium text-foreground">{product.duration ?? "—"}</p>
               </div>
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Group Size</p>
-                <p className="mt-0.5 text-[11px] font-medium text-[#F5F0EB]">{product.groupSize ?? "—"}</p>
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Group Size</p>
+                <p className="mt-0.5 text-xs font-medium text-foreground">{product.groupSize ?? "—"}</p>
               </div>
             </>
           )}
           {product.type === "cruise" && (
             <>
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Cruise Line</p>
-                <p className="mt-0.5 text-[11px] font-medium text-[#F5F0EB]">{product.cruiseLine ?? "—"}</p>
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Cruise Line</p>
+                <p className="mt-0.5 text-xs font-medium text-foreground">{product.cruiseLine ?? "—"}</p>
               </div>
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Duration</p>
-                <p className="mt-0.5 text-[11px] font-medium text-[#F5F0EB]">{product.duration ?? "—"}</p>
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Duration</p>
+                <p className="mt-0.5 text-xs font-medium text-foreground">{product.duration ?? "—"}</p>
               </div>
             </>
           )}
           {product.type === "dmc" && (
             <div className="col-span-2">
-              <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Destinations</p>
-              <p className="mt-0.5 text-[11px] font-medium text-[#F5F0EB]">{product.destinations ?? "—"}</p>
+              <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Destinations</p>
+              <p className="mt-0.5 text-xs font-medium text-foreground">{product.destinations ?? "—"}</p>
             </div>
           )}
           {product.type === "villa" && (
             <>
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Bedrooms</p>
-                <p className="mt-0.5 text-[11px] font-medium text-[#F5F0EB]">{product.bedrooms ?? "—"}</p>
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Bedrooms</p>
+                <p className="mt-0.5 text-xs font-medium text-foreground">{product.bedrooms ?? "—"}</p>
               </div>
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Max Guests</p>
-                <p className="mt-0.5 text-[11px] font-medium text-[#F5F0EB]">{product.maxGuests ?? "—"}</p>
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Max Guests</p>
+                <p className="mt-0.5 text-xs font-medium text-foreground">{product.maxGuests ?? "—"}</p>
               </div>
             </>
           )}
           {product.type === "wellness" && (
             <div className="col-span-2">
-              <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Specialty</p>
-              <p className="mt-0.5 text-[11px] font-medium text-[#F5F0EB]">{product.specialty ?? "—"}</p>
+              <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Specialty</p>
+              <p className="mt-0.5 text-xs font-medium text-foreground">{product.specialty ?? "—"}</p>
             </div>
           )}
           {product.type === "transport" && (
             <>
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Vehicle Type</p>
-                <p className="mt-0.5 text-[11px] font-medium text-[#F5F0EB]">{product.vehicleType ?? "—"}</p>
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Vehicle Type</p>
+                <p className="mt-0.5 text-xs font-medium text-foreground">{product.vehicleType ?? "—"}</p>
               </div>
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Capacity</p>
-                <p className="mt-0.5 text-[11px] font-medium text-[#F5F0EB]">{product.capacity ?? "—"}</p>
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Capacity</p>
+                <p className="mt-0.5 text-xs font-medium text-foreground">{product.capacity ?? "—"}</p>
               </div>
             </>
           )}
 
           <div>
-            <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Enrichment</p>
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Enrichment</p>
             <div className="mt-1 flex items-center gap-1.5">
               <div className="flex gap-[2px]">
                 {[0, 1, 2, 3, 4].map((i) => (
@@ -804,15 +804,15 @@ export function ProductDirectoryDetailBody({
                   />
                 ))}
               </div>
-              <span className="text-[9px] text-[#6B6560]">
+              <span className="text-[9px] text-muted-foreground">
                 {enrichment}/5
               </span>
             </div>
           </div>
 
           <div>
-            <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Updated</p>
-            <p className="mt-0.5 text-[11px] font-medium text-[#F5F0EB]">
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Updated</p>
+            <p className="mt-0.5 text-xs font-medium text-foreground">
               {product.updatedAt ? relativeTime(product.updatedAt) : "—"}
             </p>
           </div>
@@ -821,13 +821,13 @@ export function ProductDirectoryDetailBody({
 
       {/* Block 3 — Description + Tags + Website */}
       <div className="space-y-3">
-        <p className="text-[12px] leading-relaxed text-[rgba(245,240,235,0.75)]">{product.description}</p>
+        <p className="text-sm leading-relaxed text-[rgba(245,240,235,0.75)]">{product.description}</p>
         {(product.tags?.length ?? 0) > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {product.tags!.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-white/[0.06] bg-white/[0.02] px-2 py-0.5 text-[9px] lowercase text-[#9B9590]"
+                className="rounded-full border border-border bg-white/[0.02] px-2 py-0.5 text-[9px] lowercase text-muted-foreground"
               >
                 {tag}
               </span>
@@ -839,7 +839,7 @@ export function ProductDirectoryDetailBody({
             href={product.website}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-[10px] text-[#C9A96E]/70 transition-colors hover:text-[#C9A96E]"
+            className="inline-flex items-center gap-1.5 text-2xs text-brand-cta/70 transition-colors hover:text-brand-cta"
           >
             <ExternalLink className="h-3 w-3 shrink-0" />
             {product.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}
@@ -848,12 +848,12 @@ export function ProductDirectoryDetailBody({
       </div>
 
       {/* Block 4 — Partner Programs */}
-      <div className="border-t border-white/[0.06] pt-4">
+      <div className="border-t border-border pt-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Award className="h-3.5 w-3.5 shrink-0 text-[#C9A96E]" />
-            <span className="text-[11px] font-medium text-[#F5F0EB]">Partner Programs</span>
-            <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-[#6B6560]">
+            <Award className="h-3.5 w-3.5 shrink-0 text-brand-cta" />
+            <span className="text-xs font-medium text-foreground">Partner Programs</span>
+            <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-muted-foreground">
               {(showPartnerProgramEditor ? localPartnerPrograms : product.partnerPrograms).length}
             </span>
           </div>
@@ -862,7 +862,7 @@ export function ProductDirectoryDetailBody({
               <button
                 type="button"
                 onClick={cancelPartnerProgramsEdit}
-                className="shrink-0 rounded-lg border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[10px] text-[#9B9590] transition-colors hover:bg-white/[0.08] hover:text-[#F5F0EB]"
+                className="shrink-0 rounded-lg border border-border bg-white/[0.04] px-2.5 py-1 text-2xs text-muted-foreground transition-colors hover:bg-white/[0.08] hover:text-foreground"
               >
                 Cancel editing
               </button>
@@ -870,7 +870,7 @@ export function ProductDirectoryDetailBody({
               <button
                 type="button"
                 onClick={beginPartnerProgramsEdit}
-                className="flex shrink-0 items-center gap-1 rounded-lg border border-[rgba(201,169,110,0.35)] bg-[rgba(201,169,110,0.08)] px-2.5 py-1 text-[10px] text-[#C9A96E] transition-colors hover:bg-[rgba(201,169,110,0.14)]"
+                className="flex shrink-0 items-center gap-1 rounded-lg border border-brand-cta/35 bg-[rgba(201,169,110,0.08)] px-2.5 py-1 text-2xs text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.14)]"
               >
                 <Pencil className="h-3 w-3" aria-hidden />
                 Edit programs
@@ -879,14 +879,14 @@ export function ProductDirectoryDetailBody({
           ) : null}
         </div>
         {showPartnerProgramEditor ? (
-          <p className="mb-2 text-[9px] text-[#6B6560]">Edit below, then use Save all program changes.</p>
+          <p className="mb-2 text-[9px] text-muted-foreground">Edit below, then use Save all program changes.</p>
         ) : null}
 
         {showPartnerProgramEditor ? (
           <>
             {localPartnerPrograms.length === 0 ? (
               <div className="rounded-xl border border-white/[0.03] bg-white/[0.015] py-6 text-center">
-                <p className="text-[10px] text-[#6B6560]">No partner programs linked</p>
+                <p className="text-2xs text-muted-foreground">No partner programs linked</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -898,7 +898,7 @@ export function ProductDirectoryDetailBody({
                       className="space-y-2 rounded-xl border border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.04)] p-3"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-[9px] font-medium uppercase tracking-wider text-[#6B6560]">
+                        <span className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
                           Program {index + 1}
                         </span>
                         <button
@@ -912,32 +912,32 @@ export function ProductDirectoryDetailBody({
                       </div>
                       <div className="grid gap-2 sm:grid-cols-2">
                         <label className="block sm:col-span-2">
-                          <span className="mb-0.5 block text-[9px] text-[#6B6560]">Display name</span>
+                          <span className="mb-0.5 block text-[9px] text-muted-foreground">Display name</span>
                           <input
                             value={program.programName ?? program.name}
                             onChange={(e) =>
                               updateProgramAt(index, { programName: e.target.value, name: e.target.value })
                             }
-                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                            className="w-full rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
                           />
                         </label>
                         <label className="block">
-                          <span className="mb-0.5 block text-[9px] text-[#6B6560]">Program id (filter key)</span>
+                          <span className="mb-0.5 block text-[9px] text-muted-foreground">Program id (filter key)</span>
                           <input
                             value={program.programId ?? ""}
                             onChange={(e) => updateProgramAt(index, { programId: e.target.value })}
-                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                            className="w-full rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
                           />
                         </label>
                         <label className="block">
-                          <span className="mb-0.5 block text-[9px] text-[#6B6560]">Scope</span>
+                          <span className="mb-0.5 block text-[9px] text-muted-foreground">Scope</span>
                           <select
                             value={scopeVal}
                             onChange={(e) => {
                               const v = e.target.value;
                               updateProgramAt(index, { scope: v === "enable" ? "enable" : v });
                             }}
-                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                            className="w-full rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
                           >
                             <option value="enable">Enable</option>
                             {teams.map((t) => (
@@ -948,7 +948,7 @@ export function ProductDirectoryDetailBody({
                           </select>
                         </label>
                         <label className="block">
-                          <span className="mb-0.5 block text-[9px] text-[#6B6560]">Status</span>
+                          <span className="mb-0.5 block text-[9px] text-muted-foreground">Status</span>
                           <select
                             value={program.status ?? "active"}
                             onChange={(e) =>
@@ -956,14 +956,14 @@ export function ProductDirectoryDetailBody({
                                 status: e.target.value as "active" | "inactive",
                               })
                             }
-                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                            className="w-full rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
                           >
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                           </select>
                         </label>
                         <label className="block">
-                          <span className="mb-0.5 block text-[9px] text-[#6B6560]">Commission %</span>
+                          <span className="mb-0.5 block text-[9px] text-muted-foreground">Commission %</span>
                           <input
                             type="number"
                             step="0.1"
@@ -975,11 +975,11 @@ export function ProductDirectoryDetailBody({
                                 commissionRate: v === "" ? null : Number(v),
                               });
                             }}
-                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                            className="w-full rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
                           />
                         </label>
                         <label className="block">
-                          <span className="mb-0.5 block text-[9px] text-[#6B6560]">Agreement expiry</span>
+                          <span className="mb-0.5 block text-[9px] text-muted-foreground">Agreement expiry</span>
                           <input
                             type="date"
                             value={
@@ -993,39 +993,39 @@ export function ProductDirectoryDetailBody({
                                 expiryDate: v ? `${v}T12:00:00.000Z` : null,
                               });
                             }}
-                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                            className="w-full rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
                           />
                         </label>
                         <label className="block sm:col-span-2">
-                          <span className="mb-0.5 block text-[9px] text-[#6B6560]">Contact</span>
+                          <span className="mb-0.5 block text-[9px] text-muted-foreground">Contact</span>
                           <input
                             value={program.contact ?? ""}
                             onChange={(e) => updateProgramAt(index, { contact: e.target.value })}
-                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                            className="w-full rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
                           />
                         </label>
                         <label className="block sm:col-span-2">
-                          <span className="mb-0.5 block text-[9px] text-[#6B6560]">Amenities copy</span>
+                          <span className="mb-0.5 block text-[9px] text-muted-foreground">Amenities copy</span>
                           <textarea
                             value={program.amenities ?? ""}
                             onChange={(e) => updateProgramAt(index, { amenities: e.target.value })}
                             rows={3}
-                            className="w-full resize-none rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                            className="w-full resize-none rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
                           />
                         </label>
                       </div>
                       {(program.activePromotions?.length ?? 0) > 0 ? (
-                        <div className="rounded-lg border border-white/[0.06] bg-[#0a0a0f]/80 p-2">
+                        <div className="rounded-lg border border-border bg-inset/80 p-2">
                           <p className="mb-1.5 text-[9px] font-medium uppercase tracking-wider text-[#B8976E]">
                             Promotions (effective %)
                           </p>
                           <div className="space-y-2">
                             {program.activePromotions.map((pr) => (
-                              <div key={pr.id} className="flex flex-wrap items-center gap-2 text-[10px] text-[#9B9590]">
+                              <div key={pr.id} className="flex flex-wrap items-center gap-2 text-2xs text-muted-foreground">
                                 <input
                                   type="number"
                                   step="0.1"
-                                  className="w-16 rounded border border-white/[0.08] bg-[#08080c] px-1.5 py-1 text-[11px] text-[#F5F0EB]"
+                                  className="w-16 rounded border border-border bg-inset px-1.5 py-1 text-xs text-foreground"
                                   value={pr.effectiveRate}
                                   onChange={(e) =>
                                     updatePromotionRate(index, pr.id, Number(e.target.value) || 0)
@@ -1048,7 +1048,7 @@ export function ProductDirectoryDetailBody({
             <div className="mt-2 flex flex-col gap-2">
               <button
                 type="button"
-                className="w-full rounded-lg border border-[#C9A96E] bg-[rgba(201,169,110,0.1)] px-3 py-2 text-[11px] font-medium text-[#C9A96E] transition-colors hover:bg-[rgba(201,169,110,0.15)]"
+                className="w-full rounded-lg border border-brand-cta bg-[rgba(201,169,110,0.1)] px-3 py-2 text-xs font-medium text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.15)]"
                 onClick={addPartnerProgram}
               >
                 + Link program
@@ -1057,7 +1057,7 @@ export function ProductDirectoryDetailBody({
                 <button
                   type="button"
                   onClick={savePartnerProgramsFromState}
-                  className="w-full rounded-lg border border-white/[0.08] bg-white/[0.06] px-3 py-2 text-[11px] font-medium text-[#F5F0EB] transition-colors hover:bg-white/[0.09]"
+                  className="w-full rounded-lg border border-border bg-white/[0.06] px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-white/[0.09]"
                 >
                   Save all program changes
                 </button>
@@ -1066,7 +1066,7 @@ export function ProductDirectoryDetailBody({
           </>
         ) : product.partnerPrograms.length === 0 ? (
           <div className="rounded-xl border border-white/[0.03] bg-white/[0.015] py-6 text-center">
-            <p className="text-[10px] text-[#6B6560]">No partner programs linked</p>
+            <p className="text-2xs text-muted-foreground">No partner programs linked</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -1098,7 +1098,7 @@ export function ProductDirectoryDetailBody({
                 >
                   <div className="flex items-center justify-between px-3 pb-1.5 pt-2.5">
                     <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-                      <span className="text-[11px] font-medium text-[#F5F0EB]">{programDisplayName(program)}</span>
+                      <span className="text-xs font-medium text-foreground">{programDisplayName(program)}</span>
                       {program.scope === "enable" ? (
                         <span className="shrink-0 rounded bg-[rgba(91,138,110,0.12)] px-1.5 py-0.5 text-[8px] text-[#5B8A6E]">
                           Enable
@@ -1107,7 +1107,7 @@ export function ProductDirectoryDetailBody({
                         <ScopeBadge scope={program.scope} teams={teams} className="shrink-0" />
                       ) : null}
                       {!active ? (
-                        <span className="text-[8px] uppercase text-[#6B6560]">Inactive</span>
+                        <span className="text-[8px] uppercase text-muted-foreground">Inactive</span>
                       ) : null}
                       {hasCustomTerms ? (
                         <span className="rounded border border-amber-400/25 bg-amber-400/10 px-1.5 py-0.5 text-[8px] text-amber-300">
@@ -1121,18 +1121,18 @@ export function ProductDirectoryDetailBody({
                       <p className="mb-1 text-[8px] font-medium uppercase tracking-wider text-[#B8976E]">
                         Offers
                       </p>
-                      <ul className="space-y-1 text-[9px] text-[#9B9590]">
+                      <ul className="space-y-1 text-[9px] text-muted-foreground">
                         {program.activePromotions.map((pr) => (
                           <li key={pr.id} className="space-y-0.5">
                             <div>
-                              <span className="font-semibold text-[#C9A96E]">{pr.effectiveRate}%</span> · book{" "}
+                              <span className="font-semibold text-brand-cta">{pr.effectiveRate}%</span> · book{" "}
                               {pr.bookingStart.slice(0, 10)}–{pr.bookingEnd.slice(0, 10)}
                             </div>
                             {pr.title?.trim() ? (
-                              <p className="text-[10px] font-medium text-[#F5F0EB]">{pr.title.trim()}</p>
+                              <p className="text-2xs font-medium text-foreground">{pr.title.trim()}</p>
                             ) : null}
                             {pr.details?.trim() ? (
-                              <p className="whitespace-pre-wrap text-[9px] leading-snug text-[#6B6560]">
+                              <p className="whitespace-pre-wrap text-[9px] leading-snug text-muted-foreground">
                                 {pr.details.trim()}
                               </p>
                             ) : null}
@@ -1154,10 +1154,10 @@ export function ProductDirectoryDetailBody({
                     </div>
                   )}
                   {program.amenities ? (
-                    <p className="px-3 pb-2 text-[10px] leading-relaxed text-[#9B9590]">{program.amenities}</p>
+                    <p className="px-3 pb-2 text-2xs leading-relaxed text-muted-foreground">{program.amenities}</p>
                   ) : null}
                   {(program.lastEditedAt || program.lastEditedByName) ? (
-                    <p className="px-3 pb-2 text-[9px] text-[#6B6560]">
+                    <p className="px-3 pb-2 text-[9px] text-muted-foreground">
                       Last edited {program.lastEditedByName ? `by ${program.lastEditedByName}` : ""}
                       {program.lastEditedAt
                         ? ` · ${new Date(program.lastEditedAt).toLocaleDateString("en-US", {
@@ -1171,13 +1171,13 @@ export function ProductDirectoryDetailBody({
                   {showFooter ? (
                     <div className="flex items-center gap-3 border-t border-white/[0.04] bg-white/[0.015] px-3 py-2">
                       {canViewCommissions && displayRate != null ? (
-                        <span className="text-[11px] font-semibold text-[#B8976E]">{displayRate}%</span>
+                        <span className="text-xs font-semibold text-[#B8976E]">{displayRate}%</span>
                       ) : null}
                       {program.expiryDate != null && program.expiryDate !== "" ? (
                         <span
                           className={cn(
                             "ml-auto text-[9px]",
-                            isExpiring ? "text-amber-400" : "text-[#6B6560]"
+                            isExpiring ? "text-[var(--color-warning)]" : "text-muted-foreground"
                           )}
                         >
                           {isExpiring ? "Expires " : "Until "}
@@ -1198,21 +1198,21 @@ export function ProductDirectoryDetailBody({
       </div>
 
       {/* Contacts — personal (private) then agency (shared) */}
-      <div className="border-t border-white/[0.06] pt-4">
+      <div className="border-t border-border pt-4">
         <div className="mb-3 flex items-center gap-2">
-          <Contact className="h-3.5 w-3.5 shrink-0 text-[#C9A96E]" />
-          <span className="text-[11px] font-medium text-[#F5F0EB]">Contacts</span>
+          <Contact className="h-3.5 w-3.5 shrink-0 text-brand-cta" />
+          <span className="text-xs font-medium text-foreground">Contacts</span>
         </div>
 
         <div className="rounded-xl border border-[rgba(160,140,180,0.10)] bg-[rgba(160,140,180,0.03)] p-3">
           <div className="mb-3 flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
               <Lock className="h-3 w-3 shrink-0" style={{ color: "rgba(160,140,180,0.50)" }} />
-              <span className="text-[10px] font-medium" style={{ color: "rgba(160,140,180,0.60)" }}>
+              <span className="text-2xs font-medium" style={{ color: "rgba(160,140,180,0.60)" }}>
                 Private
               </span>
               {personalContacts.length > 0 ? (
-                <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-[#6B6560]">
+                <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-muted-foreground">
                   {personalContacts.length}
                 </span>
               ) : null}
@@ -1226,7 +1226,7 @@ export function ProductDirectoryDetailBody({
             </button>
           </div>
           {personalContacts.length === 0 ? (
-            <p className="py-2 text-center text-[10px] text-[#4A4540]">None yet</p>
+            <p className="py-2 text-center text-2xs text-muted-foreground/65">None yet</p>
           ) : (
             <div className="space-y-1.5">
               {personalContacts.map((c) => (
@@ -1236,27 +1236,27 @@ export function ProductDirectoryDetailBody({
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[11px] font-medium text-[#F5F0EB]">{c.name}</span>
-                      <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[8px] text-[#9B9590]">{c.role}</span>
+                      <span className="text-xs font-medium text-foreground">{c.name}</span>
+                      <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[8px] text-muted-foreground">{c.role}</span>
                     </div>
                     <div className="mt-0.5 flex flex-wrap items-center gap-2">
                       {c.email && c.email !== "—" ? (
                         <a
                           href={`mailto:${c.email}`}
-                          className="text-[9px] text-[#C9A96E]/60 transition-colors hover:text-[#C9A96E]"
+                          className="text-[9px] text-brand-cta/60 transition-colors hover:text-brand-cta"
                         >
                           {c.email}
                         </a>
                       ) : null}
                       {c.phone && c.phone !== "—" ? (
-                        <span className="text-[9px] text-[#6B6560]">{c.phone}</span>
+                        <span className="text-[9px] text-muted-foreground">{c.phone}</span>
                       ) : null}
                     </div>
-                    {c.note ? <p className="mt-0.5 text-[9px] text-[#9B9590]">{c.note}</p> : null}
+                    {c.note ? <p className="mt-0.5 text-[9px] text-muted-foreground">{c.note}</p> : null}
                     <button
                       type="button"
                       onClick={() => requestContactUpgrade(c)}
-                      className="mt-1.5 flex items-center gap-1 text-[9px] text-[#9B9590] transition-colors hover:text-[#C9A96E]"
+                      className="mt-1.5 flex items-center gap-1 text-[9px] text-muted-foreground transition-colors hover:text-brand-cta"
                     >
                       <Share2 className="h-3 w-3 shrink-0" />
                       Suggest to agency…
@@ -1266,7 +1266,7 @@ export function ProductDirectoryDetailBody({
                     <button
                       type="button"
                       onClick={() => openPersonalContactFormForEdit(c)}
-                      className="flex items-center gap-0.5 text-[9px] text-[#4A4540] transition-colors hover:text-[#C9A96E]"
+                      className="flex items-center gap-0.5 text-[9px] text-muted-foreground/65 transition-colors hover:text-brand-cta"
                     >
                       <Pencil className="h-2.5 w-2.5" /> Edit
                     </button>
@@ -1283,46 +1283,46 @@ export function ProductDirectoryDetailBody({
             </div>
           )}
           {personalContactFormOpen && (
-            <div className="mt-2 space-y-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5">
-              <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">
+            <div className="mt-2 space-y-1.5 rounded-xl border border-border bg-white/[0.02] p-2.5">
+              <p className="text-[9px] uppercase tracking-wider text-muted-foreground">
                 {editingPersonalContactId ? "Edit contact" : "New contact"}
               </p>
               <input
                 value={pcName}
                 onChange={(e) => setPcName(e.target.value)}
                 placeholder="Name *"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-[11px] text-[rgba(245,240,235,0.7)] outline-none placeholder:text-[#4A4540]"
+                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
               />
               <input
                 value={pcRole}
                 onChange={(e) => setPcRole(e.target.value)}
                 placeholder="Role *"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-[11px] text-[rgba(245,240,235,0.7)] outline-none placeholder:text-[#4A4540]"
+                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
               />
               <input
                 value={pcEmail}
                 onChange={(e) => setPcEmail(e.target.value)}
                 placeholder="Email"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-[11px] text-[rgba(245,240,235,0.7)] outline-none placeholder:text-[#4A4540]"
+                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
               />
               <input
                 value={pcPhone}
                 onChange={(e) => setPcPhone(e.target.value)}
                 placeholder="Phone"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-[11px] text-[rgba(245,240,235,0.7)] outline-none placeholder:text-[#4A4540]"
+                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
               />
               <input
                 value={pcNote}
                 onChange={(e) => setPcNote(e.target.value)}
                 placeholder="Note (optional)"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-[11px] text-[rgba(245,240,235,0.7)] outline-none placeholder:text-[#4A4540]"
+                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
               />
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   disabled={!pcName.trim() || !pcRole.trim()}
                   onClick={savePersonalContact}
-                  className="text-[10px] text-[rgba(160,140,180,0.75)] transition-colors hover:text-[rgba(160,140,180,1)] disabled:opacity-30"
+                  className="text-2xs text-[rgba(160,140,180,0.75)] transition-colors hover:text-[rgba(160,140,180,1)] disabled:opacity-30"
                 >
                   Save
                 </button>
@@ -1337,7 +1337,7 @@ export function ProductDirectoryDetailBody({
                     setPcPhone("");
                     setPcNote("");
                   }}
-                  className="text-[10px] text-[#6B6560] transition-colors hover:text-[#9B9590]"
+                  className="text-2xs text-muted-foreground transition-colors hover:text-muted-foreground"
                 >
                   Cancel
                 </button>
@@ -1348,7 +1348,7 @@ export function ProductDirectoryDetailBody({
 
         <div className="my-4 flex items-center gap-3">
           <div className="h-px flex-1 bg-white/[0.04]" />
-          <span className="text-[9px] uppercase tracking-wider text-[#4A4540]">Agency</span>
+          <span className="text-[9px] uppercase tracking-wider text-muted-foreground/65">Agency</span>
           <div className="h-px flex-1 bg-white/[0.04]" />
         </div>
 
@@ -1357,7 +1357,7 @@ export function ProductDirectoryDetailBody({
             <div className="flex items-center gap-2">
               <UserPlus className="h-3.5 w-3.5 text-[rgba(140,160,180,0.5)]" aria-hidden />
               {agencyContacts.length > 0 ? (
-                <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-[#6B6560]">
+                <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-muted-foreground">
                   {agencyContacts.length}
                 </span>
               ) : null}
@@ -1372,8 +1372,8 @@ export function ProductDirectoryDetailBody({
           </div>
           {agencyContacts.length === 0 ? (
             <div className="rounded-xl border border-white/[0.03] bg-white/[0.015] py-5 text-center">
-              <UserPlus className="mx-auto mb-1.5 h-4 w-4 text-[#4A4540]" />
-              <p className="text-[10px] text-[#6B6560]">None yet</p>
+              <UserPlus className="mx-auto mb-1.5 h-4 w-4 text-muted-foreground/65" />
+              <p className="text-2xs text-muted-foreground">None yet</p>
               <button
                 type="button"
                 onClick={openAgencyContactFormForAdd}
@@ -1393,25 +1393,25 @@ export function ProductDirectoryDetailBody({
                   >
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[11px] font-medium text-[#F5F0EB]">{c.name}</span>
-                        <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[8px] text-[#9B9590]">{c.role}</span>
+                        <span className="text-xs font-medium text-foreground">{c.name}</span>
+                        <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[8px] text-muted-foreground">{c.role}</span>
                       </div>
                       <div className="mt-0.5 flex flex-wrap items-center gap-2">
                         {c.email && c.email !== "—" ? (
                           <a
                             href={`mailto:${c.email}`}
-                            className="text-[9px] text-[#C9A96E]/60 transition-colors hover:text-[#C9A96E]"
+                            className="text-[9px] text-brand-cta/60 transition-colors hover:text-brand-cta"
                           >
                             {c.email}
                           </a>
                         ) : null}
                         {c.phone && c.phone !== "—" ? (
-                          <span className="text-[9px] text-[#6B6560]">{c.phone}</span>
+                          <span className="text-[9px] text-muted-foreground">{c.phone}</span>
                         ) : null}
                       </div>
-                      {c.note ? <p className="mt-0.5 text-[9px] italic text-[#6B6560]">{c.note}</p> : null}
+                      {c.note ? <p className="mt-0.5 text-[9px] italic text-muted-foreground">{c.note}</p> : null}
                       {c.addedBy ? (
-                        <span className="mt-0.5 block text-[8px] text-[#4A4540]">Added by {c.addedBy}</span>
+                        <span className="mt-0.5 block text-[8px] text-muted-foreground/65">Added by {c.addedBy}</span>
                       ) : null}
                     </div>
                     {canEdit ? (
@@ -1419,7 +1419,7 @@ export function ProductDirectoryDetailBody({
                         <button
                           type="button"
                           onClick={() => openAgencyContactFormForEdit(c)}
-                          className="flex items-center gap-0.5 text-[9px] text-[#4A4540] transition-colors hover:text-[#C9A96E]"
+                          className="flex items-center gap-0.5 text-[9px] text-muted-foreground/65 transition-colors hover:text-brand-cta"
                         >
                           <Pencil className="h-2.5 w-2.5" /> Edit
                         </button>
@@ -1438,46 +1438,46 @@ export function ProductDirectoryDetailBody({
             </div>
           )}
           {agencyContactFormOpen && (
-            <div className="mt-2 space-y-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5">
-              <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">
+            <div className="mt-2 space-y-1.5 rounded-xl border border-border bg-white/[0.02] p-2.5">
+              <p className="text-[9px] uppercase tracking-wider text-muted-foreground">
                 {editingAgencyContactId ? "Edit contact" : "New contact"}
               </p>
               <input
                 value={newAgencyContactName}
                 onChange={(e) => setNewAgencyContactName(e.target.value)}
                 placeholder="Name *"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-[11px] text-[rgba(245,240,235,0.7)] outline-none placeholder:text-[#4A4540]"
+                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
               />
               <input
                 value={newAgencyContactRole}
                 onChange={(e) => setNewAgencyContactRole(e.target.value)}
                 placeholder="Role *"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-[11px] text-[rgba(245,240,235,0.7)] outline-none placeholder:text-[#4A4540]"
+                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
               />
               <input
                 value={newAgencyContactEmail}
                 onChange={(e) => setNewAgencyContactEmail(e.target.value)}
                 placeholder="Email"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-[11px] text-[rgba(245,240,235,0.7)] outline-none placeholder:text-[#4A4540]"
+                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
               />
               <input
                 value={newAgencyContactPhone}
                 onChange={(e) => setNewAgencyContactPhone(e.target.value)}
                 placeholder="Phone"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-[11px] text-[rgba(245,240,235,0.7)] outline-none placeholder:text-[#4A4540]"
+                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
               />
               <input
                 value={newAgencyContactNote}
                 onChange={(e) => setNewAgencyContactNote(e.target.value)}
                 placeholder="Note (optional)"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-[11px] text-[rgba(245,240,235,0.7)] outline-none placeholder:text-[#4A4540]"
+                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
               />
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   disabled={!newAgencyContactName.trim() || !newAgencyContactRole.trim()}
                   onClick={saveAgencyContact}
-                  className="text-[10px] text-[rgba(140,160,180,0.7)] transition-colors hover:text-[rgba(140,160,180,1)] disabled:opacity-30"
+                  className="text-2xs text-[rgba(140,160,180,0.7)] transition-colors hover:text-[rgba(140,160,180,1)] disabled:opacity-30"
                 >
                   Save contact
                 </button>
@@ -1492,7 +1492,7 @@ export function ProductDirectoryDetailBody({
                     setNewAgencyContactPhone("");
                     setNewAgencyContactNote("");
                   }}
-                  className="text-[10px] text-[#6B6560] transition-colors hover:text-[#9B9590]"
+                  className="text-2xs text-muted-foreground transition-colors hover:text-muted-foreground"
                 >
                   Cancel
                 </button>
@@ -1503,23 +1503,23 @@ export function ProductDirectoryDetailBody({
       </div>
 
       {/* Notes — personal then agency */}
-      <div className="border-t border-white/[0.06] pt-4">
+      <div className="border-t border-border pt-4">
         <div className="mb-3 flex items-center gap-2">
-          <StickyNote className="h-3.5 w-3.5 shrink-0 text-[#C9A96E]" />
-          <span className="text-[11px] font-medium text-[#F5F0EB]">Notes</span>
+          <StickyNote className="h-3.5 w-3.5 shrink-0 text-brand-cta" />
+          <span className="text-xs font-medium text-foreground">Notes</span>
         </div>
 
         <div className="rounded-xl border border-[rgba(160,140,180,0.10)] bg-[rgba(160,140,180,0.03)] p-3">
           <div className="mb-3 flex items-center gap-1.5">
             <Lock className="h-3 w-3 shrink-0" style={{ color: "rgba(160,140,180,0.50)" }} />
-            <span className="text-[10px] font-medium" style={{ color: "rgba(160,140,180,0.60)" }}>
+            <span className="text-2xs font-medium" style={{ color: "rgba(160,140,180,0.60)" }}>
               Private
             </span>
           </div>
 
           <div className="mb-3 space-y-2">
             {personalNotes.length === 0 ? (
-              <p className="py-1 text-center text-[10px] text-[#4A4540]">None yet</p>
+              <p className="py-1 text-center text-2xs text-muted-foreground/65">None yet</p>
             ) : (
               personalNotes.map((note) => (
                 <div
@@ -1532,7 +1532,7 @@ export function ProductDirectoryDetailBody({
                         value={editPersonalNoteDraft}
                         onChange={(e) => setEditPersonalNoteDraft(e.target.value)}
                         rows={3}
-                        className="w-full resize-none rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 text-xs text-[#C8C0B8] outline-none"
+                        className="w-full resize-none rounded-lg border border-border bg-white/[0.03] px-2 py-1.5 text-xs text-[#C8C0B8] outline-none"
                       />
                       <div className="mt-1.5 flex gap-2">
                         <button
@@ -1548,7 +1548,7 @@ export function ProductDirectoryDetailBody({
                             setEditingPersonalNoteId(null);
                             setEditPersonalNoteDraft("");
                           }}
-                          className="text-[9px] text-[#6B6560]"
+                          className="text-[9px] text-muted-foreground"
                         >
                           Cancel
                         </button>
@@ -1558,14 +1558,14 @@ export function ProductDirectoryDetailBody({
                     <>
                       <p className="text-xs leading-relaxed text-[#C8C0B8]">{note.text}</p>
                       <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                        <span className="text-[9px] text-[#4A4540]">{relativeTime(note.createdAt)}</span>
+                        <span className="text-[9px] text-muted-foreground/65">{relativeTime(note.createdAt)}</span>
                         <button
                           type="button"
                           onClick={() => {
                             setEditingPersonalNoteId(note.id);
                             setEditPersonalNoteDraft(note.text);
                           }}
-                          className="flex items-center gap-0.5 text-[9px] text-[#4A4540] hover:text-[#C9A96E]"
+                          className="flex items-center gap-0.5 text-[9px] text-muted-foreground/65 hover:text-brand-cta"
                         >
                           <Pencil className="h-2.5 w-2.5" /> Edit
                         </button>
@@ -1579,7 +1579,7 @@ export function ProductDirectoryDetailBody({
                         <button
                           type="button"
                           onClick={() => requestUpgradeToAgency(note.text)}
-                          className="ml-auto flex items-center gap-1 text-[9px] text-[#9B9590] transition-colors hover:text-[#C9A96E]"
+                          className="ml-auto flex items-center gap-1 text-[9px] text-muted-foreground transition-colors hover:text-brand-cta"
                         >
                           <Share2 className="h-3 w-3 shrink-0" />
                           Suggest to agency
@@ -1598,19 +1598,19 @@ export function ProductDirectoryDetailBody({
               onChange={(e) => setNewPersonalNote(e.target.value)}
               placeholder="Write a private note…"
               rows={2}
-              className="min-h-0 flex-1 resize-none rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 text-xs text-[#C8C0B8] outline-none placeholder:text-[#4A4540]"
+              className="min-h-0 flex-1 resize-none rounded-lg border border-border bg-white/[0.03] px-2 py-1.5 text-xs text-[#C8C0B8] outline-none placeholder:text-muted-foreground/65"
             />
             <button
               type="button"
               onClick={addPersonalNote}
-              className="self-end px-2 text-[10px] text-[rgba(160,140,180,0.65)] transition-colors hover:text-[rgba(160,140,180,0.9)]"
+              className="self-end px-2 text-2xs text-[rgba(160,140,180,0.65)] transition-colors hover:text-[rgba(160,140,180,0.9)]"
             >
               Add
             </button>
           </div>
 
           <div className="mt-3 border-t border-white/[0.05] pt-3">
-            <p className="mb-1 text-[9px] uppercase tracking-wider text-[#6B6560]">My rating</p>
+            <p className="mb-1 text-[9px] uppercase tracking-wider text-muted-foreground">My rating</p>
             <div className="flex items-center gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -1619,7 +1619,7 @@ export function ProductDirectoryDetailBody({
                   onClick={() => setPersonalRating(star)}
                   className={cn(
                     "h-5 w-5 text-xs",
-                    star <= personalRating ? "text-[#C9A96E]" : "text-[#2A2520]"
+                    star <= personalRating ? "text-brand-cta" : "text-[#2A2520]"
                   )}
                 >
                   ★
@@ -1631,7 +1631,7 @@ export function ProductDirectoryDetailBody({
 
         <div className="my-4 flex items-center gap-3">
           <div className="h-px flex-1 bg-white/[0.04]" />
-          <span className="text-[9px] uppercase tracking-wider text-[#4A4540]">Agency</span>
+          <span className="text-[9px] uppercase tracking-wider text-muted-foreground/65">Agency</span>
           <div className="h-px flex-1 bg-white/[0.04]" />
         </div>
 
@@ -1639,7 +1639,7 @@ export function ProductDirectoryDetailBody({
           <div className="mb-3 flex items-center gap-2">
             <Users className="h-3 w-3 shrink-0" style={{ color: "rgba(140,160,180,0.50)" }} aria-hidden />
             {agencyNotes.length > 0 ? (
-              <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-[#6B6560]">
+              <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-muted-foreground">
                 {agencyNotes.length}
               </span>
             ) : null}
@@ -1647,7 +1647,7 @@ export function ProductDirectoryDetailBody({
 
           <div className="mb-3 space-y-2">
             {agencyNotes.length === 0 ? (
-              <p className="py-2 text-center text-[10px] text-[#4A4540]">None yet</p>
+              <p className="py-2 text-center text-2xs text-muted-foreground/65">None yet</p>
             ) : (
               agencyNotes.map((note) => (
                 <div
@@ -1655,7 +1655,7 @@ export function ProductDirectoryDetailBody({
                   className="rounded-xl border border-white/[0.04] bg-white/[0.03] p-3"
                 >
                   {note.pendingUpgrade && (
-                    <div className="mb-1.5 flex flex-wrap items-center gap-1 text-[9px] text-[#C9A96E]">
+                    <div className="mb-1.5 flex flex-wrap items-center gap-1 text-[9px] text-brand-cta">
                       <Clock className="h-3 w-3 shrink-0" />
                       <span>
                         Pending approval — suggested by{" "}
@@ -1687,7 +1687,7 @@ export function ProductDirectoryDetailBody({
                         value={editAgencyNoteDraft}
                         onChange={(e) => setEditAgencyNoteDraft(e.target.value)}
                         rows={3}
-                        className="w-full resize-none rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 text-xs text-[#C8C0B8] outline-none"
+                        className="w-full resize-none rounded-lg border border-border bg-white/[0.03] px-2 py-1.5 text-xs text-[#C8C0B8] outline-none"
                       />
                       <div className="mt-2 flex gap-2">
                         <button
@@ -1703,7 +1703,7 @@ export function ProductDirectoryDetailBody({
                             setEditingAgencyNoteId(null);
                             setEditAgencyNoteDraft("");
                           }}
-                          className="text-[9px] text-[#6B6560]"
+                          className="text-[9px] text-muted-foreground"
                         >
                           Cancel
                         </button>
@@ -1713,9 +1713,9 @@ export function ProductDirectoryDetailBody({
                     <>
                       <p className="text-xs leading-relaxed text-[#C8C0B8]">{note.text}</p>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <span className="text-[10px] text-[#9B9590]">{note.authorName}</span>
-                        <span className="text-[10px] text-[#4A4540]">·</span>
-                        <span className="text-[10px] text-[#4A4540]">{relativeTime(note.createdAt)}</span>
+                        <span className="text-2xs text-muted-foreground">{note.authorName}</span>
+                        <span className="text-2xs text-muted-foreground/65">·</span>
+                        <span className="text-2xs text-muted-foreground/65">{relativeTime(note.createdAt)}</span>
                         {note.pinned ? (
                           <span className="ml-auto text-[9px] text-amber-500/60">Pinned</span>
                         ) : null}
@@ -1724,7 +1724,7 @@ export function ProductDirectoryDetailBody({
                         <div className="mt-2 flex gap-2">
                           <button
                             type="button"
-                            className="flex items-center gap-0.5 text-[#4A4540] transition-colors hover:text-[#C9A96E]"
+                            className="flex items-center gap-0.5 text-muted-foreground/65 transition-colors hover:text-brand-cta"
                             onClick={() => {
                               setEditingAgencyNoteId(note.id);
                               setEditAgencyNoteDraft(note.text);
@@ -1734,7 +1734,7 @@ export function ProductDirectoryDetailBody({
                           </button>
                           <button
                             type="button"
-                            className="text-[#4A4540] transition-colors hover:text-[#C9A96E]"
+                            className="text-muted-foreground/65 transition-colors hover:text-brand-cta"
                             onClick={() => deleteAgencyNote(note.id)}
                           >
                             Delete
@@ -1757,7 +1757,7 @@ export function ProductDirectoryDetailBody({
                 if (e.key === "Enter") postAgencyNote();
               }}
               placeholder="Post to agency…"
-              className="flex-1 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-xs text-[#C8C0B8] outline-none placeholder:text-[#4A4540]"
+              className="flex-1 rounded-lg border border-border bg-white/[0.03] px-3 py-2 text-xs text-[#C8C0B8] outline-none placeholder:text-muted-foreground/65"
             />
             <button
               type="button"
@@ -1772,11 +1772,11 @@ export function ProductDirectoryDetailBody({
       </div>
 
       {/* Collections (compact) — last before sticky actions */}
-      <div className="border-t border-white/[0.06] pb-2 pt-4">
+      <div className="border-t border-border pb-2 pt-4">
         <div className="mb-3 flex items-center gap-2">
-          <Bookmark className="h-3.5 w-3.5 shrink-0 text-[#C9A96E]" />
-          <span className="text-[11px] font-medium text-[#F5F0EB]">Collections</span>
-          <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-[#6B6560]">
+          <Bookmark className="h-3.5 w-3.5 shrink-0 text-brand-cta" />
+          <span className="text-xs font-medium text-foreground">Collections</span>
+          <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-muted-foreground">
             {product.collections.length}
           </span>
         </div>
@@ -1784,10 +1784,10 @@ export function ProductDirectoryDetailBody({
           {product.collections.map((collection) => (
             <div
               key={collection.id}
-              className="flex items-center justify-between gap-3 rounded-lg border border-[rgba(255,255,255,0.03)] bg-[#0c0c12] p-2.5"
+              className="flex items-center justify-between gap-3 rounded-lg border border-border bg-popover p-2.5"
             >
-              <div className="min-w-0 flex-1 text-[10px]">
-                <p className="font-medium text-[#F5F0EB]">{collection.name}</p>
+              <div className="min-w-0 flex-1 text-2xs">
+                <p className="font-medium text-foreground">{collection.name}</p>
                 <div className="mt-2">
                   <ScopeBadge scope={collection.scope} teams={teams} />
                 </div>
@@ -1795,7 +1795,7 @@ export function ProductDirectoryDetailBody({
               {canRemoveFromCollection(collection.id) && (
                 <button
                   type="button"
-                  className="text-[#4A4540] transition-colors hover:text-[#C9A96E]"
+                  className="text-muted-foreground/65 transition-colors hover:text-brand-cta"
                   onClick={() => removeFromCollection(collection.id)}
                 >
                   Remove
@@ -1808,30 +1808,30 @@ export function ProductDirectoryDetailBody({
       </div>
 
       {/* Block 7 — Sticky quick actions + inline collection picker */}
-      <div className="sticky bottom-0 z-10 mt-4 border-t border-white/[0.06] bg-[#0a0a0f]/95 backdrop-blur-sm">
+      <div className="sticky bottom-0 z-10 mt-4 border-t border-border bg-inset/95 backdrop-blur-sm">
         {inlinePickerEnabled && panelCollectionOpen && (
           <div className="max-h-[220px] overflow-y-auto border-b border-white/[0.04] px-4 py-3">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-[10px] font-medium text-[#F5F0EB]">Add to collection</span>
+              <span className="text-2xs font-medium text-foreground">Add to collection</span>
               <button
                 type="button"
                 onClick={() => {
                   setPanelCollectionOpen(false);
                   setPanelCollectionSearch("");
                 }}
-                className="text-[9px] text-[#6B6560] transition-colors hover:text-[#9B9590]"
+                className="text-[9px] text-muted-foreground transition-colors hover:text-muted-foreground"
               >
                 Cancel
               </button>
             </div>
             <div className="mb-2 flex items-center gap-1.5 rounded-lg border border-white/[0.05] bg-white/[0.03] px-2 py-1.5">
-              <Search className="h-3 w-3 shrink-0 text-[#4A4540]" />
+              <Search className="h-3 w-3 shrink-0 text-muted-foreground/65" />
               <input
                 value={panelCollectionSearch}
                 onChange={(e) => setPanelCollectionSearch(e.target.value)}
                 placeholder="Search collections..."
                 autoFocus
-                className="flex-1 bg-transparent text-[10px] text-[#F5F0EB] outline-none placeholder:text-[#4A4540]"
+                className="flex-1 bg-transparent text-2xs text-foreground outline-none placeholder:text-muted-foreground/65"
               />
             </div>
             <div className="space-y-1">
@@ -1853,15 +1853,15 @@ export function ProductDirectoryDetailBody({
                         setPanelCollectionSearch("");
                       }}
                       className={cn(
-                        "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-[10px] transition-colors",
+                        "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-2xs transition-colors",
                         alreadyIn
-                          ? "cursor-default bg-white/[0.01] text-[#6B6560]"
-                          : "text-[#F5F0EB] hover:bg-white/[0.04]"
+                          ? "cursor-default bg-white/[0.01] text-muted-foreground"
+                          : "text-foreground hover:bg-white/[0.04]"
                       )}
                     >
                       <div className="min-w-0">
                         <span className="block truncate">{col.name}</span>
-                        <span className="text-[8px] text-[#6B6560]">
+                        <span className="text-[8px] text-muted-foreground">
                           {count} product{count !== 1 ? "s" : ""}
                         </span>
                       </div>
@@ -1881,7 +1881,7 @@ export function ProductDirectoryDetailBody({
                 if (onRequestCreateCollection) onRequestCreateCollection();
                 else onOpenCollectionPicker();
               }}
-              className="mt-1.5 flex w-full items-center gap-1.5 rounded-lg px-2.5 py-2 text-left text-[10px] text-[#C9A96E]/60 transition-colors hover:bg-[rgba(201,169,110,0.04)] hover:text-[#C9A96E]"
+              className="mt-1.5 flex w-full items-center gap-1.5 rounded-lg px-2.5 py-2 text-left text-2xs text-brand-cta/60 transition-colors hover:bg-[rgba(201,169,110,0.04)] hover:text-brand-cta"
             >
               <Plus className="h-3 w-3 shrink-0" />
               New collection
@@ -1892,7 +1892,7 @@ export function ProductDirectoryDetailBody({
           <button
             type="button"
             onClick={onAddToItinerary}
-            className="flex-1 rounded-lg border border-[#C9A96E]/20 bg-[#C9A96E]/10 py-2 text-center text-[10px] font-medium text-[#F5F0EB] transition-colors hover:bg-[#C9A96E]/15"
+            className="flex-1 rounded-lg border border-brand-cta/20 bg-brand-cta/10 py-2 text-center text-2xs font-medium text-foreground transition-colors hover:bg-brand-cta/15"
           >
             Add to Itinerary
           </button>
@@ -1910,17 +1910,17 @@ export function ProductDirectoryDetailBody({
               }
             }}
             className={cn(
-              "flex-1 rounded-lg border py-2 text-center text-[10px] font-medium transition-colors",
+              "flex-1 rounded-lg border py-2 text-center text-2xs font-medium transition-colors",
               inlinePickerEnabled && panelCollectionOpen
-                ? "border-[#C9A96E]/20 bg-[#C9A96E]/10 text-[#C9A96E]"
-                : "border-white/[0.06] bg-white/[0.03] text-[#F5F0EB] hover:bg-white/[0.06]"
+                ? "border-brand-cta/20 bg-brand-cta/10 text-brand-cta"
+                : "border-border bg-white/[0.03] text-foreground hover:bg-white/[0.06]"
             )}
           >
             Add to Collection
         </button>
           <Link
             href={`/dashboard/products/${product.id}`}
-            className="flex-1 rounded-lg border border-white/[0.04] bg-white/[0.02] py-2 text-center text-[10px] font-medium text-[#9B9590] transition-colors hover:bg-white/[0.04] hover:text-[#F5F0EB]"
+            className="flex-1 rounded-lg border border-white/[0.04] bg-white/[0.02] py-2 text-center text-2xs font-medium text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground"
           >
             Full Page →
           </Link>
@@ -1929,25 +1929,25 @@ export function ProductDirectoryDetailBody({
 
       {upgradeConfirmOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-80 rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[#0c0c12] p-5 shadow-2xl">
-            <h3 className="mb-2 text-sm font-medium text-[#F5F0EB]">Suggest to agency?</h3>
-            <div className="mb-3 rounded-lg border border-[rgba(255,255,255,0.04)] bg-[rgba(255,255,255,0.03)] p-2.5">
-              <p className="line-clamp-3 text-xs italic text-[#9B9590]">&quot;{upgradeConfirmText}&quot;</p>
+          <div className="w-80 rounded-2xl border border-border bg-popover p-5 shadow-2xl">
+            <h3 className="mb-2 text-sm font-medium text-foreground">Suggest to agency?</h3>
+            <div className="mb-3 rounded-lg border border-border bg-[rgba(255,255,255,0.03)] p-2.5">
+              <p className="line-clamp-3 text-xs italic text-muted-foreground">&quot;{upgradeConfirmText}&quot;</p>
             </div>
-            <p className="mb-4 text-[10px] leading-relaxed text-[#6B6560]">
+            <p className="mb-4 text-2xs leading-relaxed text-muted-foreground">
               Needs admin approval. Your private note is unchanged.
             </p>
             <div className="flex justify-end gap-2">
               <button
                 type="button"
-                className="px-3 py-1.5 text-xs text-[#9B9590] transition-colors hover:text-[#F5F0EB]"
+                className="px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
                 onClick={() => setUpgradeConfirmOpen(false)}
               >
                 Cancel
               </button>
               <button
                 type="button"
-                className="rounded-lg bg-[#C9A96E] px-3 py-1.5 text-xs font-medium text-[#08080c] transition-colors hover:bg-[#D4B383]"
+                className="rounded-lg bg-brand-cta px-3 py-1.5 text-xs font-medium text-[#08080c] transition-colors hover:bg-brand-cta-hover"
                 onClick={confirmUpgrade}
               >
                 Submit
@@ -1959,25 +1959,25 @@ export function ProductDirectoryDetailBody({
 
       {contactUpgradeOpen && contactUpgradeTarget && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-80 rounded-2xl border border-white/[0.06] bg-[#0c0c12] p-5 shadow-2xl">
-            <h3 className="mb-2 text-sm font-medium text-[#F5F0EB]">Share contact with agency?</h3>
+          <div className="w-80 rounded-2xl border border-border bg-popover p-5 shadow-2xl">
+            <h3 className="mb-2 text-sm font-medium text-foreground">Share contact with agency?</h3>
             <div className="mb-3 rounded-lg border border-white/[0.04] bg-white/[0.03] p-2.5">
-              <p className="text-xs font-medium text-[#F5F0EB]">{contactUpgradeTarget.name}</p>
-              <p className="text-[10px] text-[#9B9590]">{contactUpgradeTarget.role}</p>
-              <p className="text-[10px] text-[#6B6560]">
+              <p className="text-xs font-medium text-foreground">{contactUpgradeTarget.name}</p>
+              <p className="text-2xs text-muted-foreground">{contactUpgradeTarget.role}</p>
+              <p className="text-2xs text-muted-foreground">
                 {contactUpgradeTarget.email.trim() || "—"}
               </p>
             </div>
-            <p className="mb-1 text-[10px] leading-relaxed text-[#6B6560]">
+            <p className="mb-1 text-2xs leading-relaxed text-muted-foreground">
               This contact will be submitted for admin approval before becoming visible to the team.
             </p>
-            <p className="mb-4 text-[10px] leading-relaxed text-[#6B6560]">
+            <p className="mb-4 text-2xs leading-relaxed text-muted-foreground">
               Your private contact will remain intact.
             </p>
             <div className="flex justify-end gap-2">
               <button
                 type="button"
-                className="px-3 py-1.5 text-xs text-[#9B9590] transition-colors hover:text-[#F5F0EB]"
+                className="px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
                 onClick={() => {
                   setContactUpgradeOpen(false);
                   setContactUpgradeTarget(null);

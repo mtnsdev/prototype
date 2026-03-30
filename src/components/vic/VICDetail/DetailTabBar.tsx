@@ -28,7 +28,7 @@ type Props = {
 
 export default function DetailTabBar({ activeTab, onTabChange }: Props) {
   return (
-    <div className="flex flex-wrap gap-1 border-b border-[rgba(255,255,255,0.08)] -mx-1 overflow-x-auto">
+    <div className="flex flex-wrap gap-1 border-b border-border -mx-1 overflow-x-auto">
       {DETAIL_TABS.map((tab) => (
         <button
           key={tab.id}
@@ -37,8 +37,8 @@ export default function DetailTabBar({ activeTab, onTabChange }: Props) {
           className={cn(
             "px-3 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition-colors",
             activeTab === tab.id
-              ? "text-[#F5F5F5] border-[#F5F5F5]"
-              : "text-[rgba(245,245,245,0.5)] border-transparent hover:text-[rgba(245,245,245,0.8)]"
+              ? "text-foreground border-[#F5F5F5]"
+              : "text-muted-foreground/75 border-transparent hover:text-muted-foreground"
           )}
         >
           {tab.label}

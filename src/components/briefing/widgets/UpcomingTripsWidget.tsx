@@ -14,8 +14,8 @@ function formatDeparture(dateStr: string): string {
 function statusDot(status: string) {
   if (status === "confirmed") return "bg-emerald-500";
   if (status === "proposed") return "bg-blue-500";
-  if (status === "draft" || status === "in_progress") return "bg-gray-500";
-  return "bg-gray-500";
+  if (status === "draft" || status === "in_progress") return "bg-muted-foreground/40";
+  return "bg-muted-foreground/40";
 }
 
 function statusLabel(status: string) {
@@ -44,14 +44,14 @@ export default function UpcomingTripsWidget({ content, staggerIndex = 0, isAdmin
       >
         <div className="flex flex-col items-center justify-center py-10 text-center">
           {isAdmin ? (
-            <Compass size={28} className="text-gray-600 mb-2" />
+            <Compass size={28} className="text-muted-foreground/70 mb-2" />
           ) : (
-            <Plane size={28} className="text-gray-600 mb-2" />
+            <Plane size={28} className="text-muted-foreground/70 mb-2" />
           )}
           {isAdmin && (
-            <p className="text-[10px] text-gray-600 mb-1">Across all advisors</p>
+            <p className="text-2xs text-muted-foreground/70 mb-1">Across all advisors</p>
           )}
-          <p className="text-sm text-gray-500">No upcoming trips — create one?</p>
+          <p className="text-sm text-muted-foreground">No upcoming trips — create one?</p>
           <Link
             href="/dashboard/itineraries?filter=upcoming"
             className="text-sm text-emerald-400 hover:text-emerald-300 mt-1"
@@ -69,14 +69,14 @@ export default function UpcomingTripsWidget({ content, staggerIndex = 0, isAdmin
       icon={isAdmin ? <Compass size={20} /> : <Plane size={20} />}
       title={isAdmin ? "Agency Trips" : "Upcoming Trips"}
       rightElement={
-        <span className="text-[10px] text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded-full font-medium">
+        <span className="text-2xs text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded-full font-medium">
           {total}
         </span>
       }
       staggerIndex={staggerIndex}
     >
       {isAdmin && (
-        <p className="text-[10px] text-gray-600 mt-0.5 -mb-1">Across all advisors</p>
+        <p className="text-2xs text-muted-foreground/70 mt-0.5 -mb-1">Across all advisors</p>
       )}
       <ul className="space-y-2">
         {items.map((trip) => {
@@ -90,26 +90,26 @@ export default function UpcomingTripsWidget({ content, staggerIndex = 0, isAdmin
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-medium text-white truncate">{trip.trip_name}</p>
-                  <span className="text-xs text-gray-500 shrink-0">
+                  <span className="text-xs text-muted-foreground shrink-0">
                     {formatDeparture(trip.departure_date)}
                   </span>
                 </div>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <p className="text-xs text-muted-foreground/90 mt-0.5">
                   {trip.vic_name}
                   {isAdmin && trip.advisor_name && (
-                    <span className="text-gray-600"> · {trip.advisor_name}</span>
+                    <span className="text-muted-foreground/70"> · {trip.advisor_name}</span>
                   )}
                 </p>
                 <div className="flex items-center gap-2 mt-1.5">
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-muted-foreground">
                     {trip.destinations.slice(0, 2).join(", ")}
                   </span>
                   <span
                     className={cn(
-                      "text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full border",
+                      "text-2xs uppercase tracking-wider px-1.5 py-0.5 rounded-full border",
                       trip.status === "confirmed" && "border-emerald-500/40 text-emerald-400",
                       trip.status === "proposed" && "border-blue-500/40 text-blue-400",
-                      (trip.status === "draft" || trip.status === "in_progress") && "border-gray-500/40 text-gray-400"
+                      (trip.status === "draft" || trip.status === "in_progress") && "border-input/40 text-muted-foreground/90"
                     )}
                   >
                     {statusLabel(trip.status)}
@@ -126,7 +126,7 @@ export default function UpcomingTripsWidget({ content, staggerIndex = 0, isAdmin
                       style={{ width: `${fillPct}%` }}
                     />
                   </div>
-                  <span className="text-xs text-gray-500 shrink-0">
+                  <span className="text-xs text-muted-foreground shrink-0">
                     in {trip.days_until_departure} days
                   </span>
                 </div>

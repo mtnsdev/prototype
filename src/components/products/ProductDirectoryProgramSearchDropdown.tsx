@@ -40,9 +40,9 @@ export default function ProductDirectoryProgramSearchDropdown({ selectedProgramI
 
   const summary =
     selectedProgramIds.length === 0 ? (
-      <span className="text-[11px] text-[#9B9590]">Program</span>
+      <span className="text-xs text-muted-foreground">Program</span>
     ) : (
-      <span className="truncate text-[11px] text-[#F5F0EB]">
+      <span className="truncate text-xs text-foreground">
         {AGENCY_PROGRAM_OPTIONS.filter((p) => selectedProgramIds.includes(p.id))
           .slice(0, 2)
           .map((p) => p.name)
@@ -60,22 +60,22 @@ export default function ProductDirectoryProgramSearchDropdown({ selectedProgramI
         className={cn(
           "flex max-w-[200px] items-center gap-2 rounded-lg border px-3 py-1.5 text-left transition-colors",
           selectedProgramIds.length > 0
-            ? "border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] text-[#C9A96E]"
-            : "border-[rgba(255,255,255,0.03)] bg-[#0c0c12] text-[#9B9590] hover:border-[rgba(255,255,255,0.06)]"
+            ? "border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
+            : "border-border bg-popover text-muted-foreground hover:border-border"
         )}
       >
         {summary}
-        <ChevronDown className="ml-auto h-3 w-3 shrink-0 text-[#4A4540]" />
+        <ChevronDown className="ml-auto h-3 w-3 shrink-0 text-muted-foreground/65" />
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-[60] mt-1 w-56 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0c0c12] shadow-xl">
-          <div className="sticky top-0 z-[1] border-b border-[rgba(255,255,255,0.03)] bg-[#0c0c12] p-2">
+        <div className="absolute left-0 top-full z-[60] mt-1 w-56 rounded-xl border border-border bg-popover shadow-xl">
+          <div className="sticky top-0 z-[1] border-b border-border bg-popover p-2">
             <input
               ref={inputRef}
               type="text"
               placeholder="Search programs..."
-              className="w-full rounded-lg border-none bg-[rgba(255,255,255,0.03)] px-2 py-1.5 text-[11px] text-[#F5F0EB] placeholder-[#4A4540] focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/40"
+              className="w-full rounded-lg border-none bg-[rgba(255,255,255,0.03)] px-2 py-1.5 text-xs text-foreground placeholder-[#4A4540] focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/40"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -87,7 +87,7 @@ export default function ProductDirectoryProgramSearchDropdown({ selectedProgramI
                 <button
                   key={program.id}
                   type="button"
-                  className="flex w-full items-center justify-between px-3 py-2 text-left text-[11px] text-[#9B9590] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+                  className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-[rgba(255,255,255,0.04)]"
                   onClick={() =>
                     onChange(
                       on ? selectedProgramIds.filter((id) => id !== program.id) : [...selectedProgramIds, program.id]
@@ -95,16 +95,16 @@ export default function ProductDirectoryProgramSearchDropdown({ selectedProgramI
                   }
                 >
                   <span>{program.name}</span>
-                  {on ? <Check className="h-3 w-3 shrink-0 text-[#C9A96E]" /> : <span className="h-3 w-3 shrink-0" />}
+                  {on ? <Check className="h-3 w-3 shrink-0 text-brand-cta" /> : <span className="h-3 w-3 shrink-0" />}
                 </button>
               );
             })}
           </div>
           {selectedProgramIds.length > 0 && (
-            <div className="border-t border-[rgba(255,255,255,0.03)] p-1">
+            <div className="border-t border-border p-1">
               <button
                 type="button"
-                className="w-full py-1.5 text-[10px] text-[#6B6560] transition-colors hover:text-[#9B9590]"
+                className="w-full py-1.5 text-2xs text-muted-foreground transition-colors hover:text-muted-foreground"
                 onClick={() => onChange([])}
               >
                 Clear selection

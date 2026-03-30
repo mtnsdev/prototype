@@ -1,20 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition, type CSSProperties } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type CSSProperties } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Building2, FileText, Search } from "lucide-react";
 import { useGlobalSearch } from "@/contexts/GlobalSearchContext";
 import { useTeams } from "@/contexts/TeamsContext";
 import { ScopeBadge } from "@/components/ui/ScopeBadge";
-import { buildCmdKIndex, filterCmdKIndex, type CmdKResult } from "@/lib/globalSearchIndex";
+import {
+  buildCmdKIndex,
+  filterCmdKIndex,
+  sortCmdKByPathScope,
+  type CmdKResult,
+} from "@/lib/globalSearchIndex";
+import { getCmdKRecents, pushCmdKRecent, type CmdKRecent } from "@/lib/cmdkRecents";
+import { chipStyleFromProductTypeLabel } from "@/components/products/productDirectoryProductTypes";
 import { cn } from "@/lib/utils";
-
-function categoryBadgeClass(typeLabel: string): string {
-  if (typeLabel.includes("DMC")) return "bg-[rgba(130,160,160,0.08)] text-[#82A0A0] border-[rgba(130,160,160,0.12)]";
-  if (typeLabel.includes("Experience")) return "bg-[rgba(160,140,170,0.08)] text-[#A08CAA] border-[rgba(160,140,170,0.12)]";
-  if (typeLabel.includes("Cruise")) return "bg-[rgba(130,150,180,0.08)] text-[#8296B4] border-[rgba(130,150,180,0.12)]";
-  return "bg-[rgba(180,160,130,0.08)] text-[#B8A082] border-[rgba(180,160,130,0.12)]";
-}
 
 function avatarStyle(initials: string): CSSProperties {
   const a = initials.charCodeAt(0) || 65;
@@ -27,36 +27,148 @@ function avatarStyle(initials: string): CSSProperties {
   };
 }
 
+type Row =
+  | { rowKind: "section"; id: string; label: string }
+  | { rowKind: "hit"; id: string; hit: CmdKResult }
+  | { rowKind: "recent"; id: string; hit: CmdKRecent };
+
 export default function GlobalCommandPalette() {
   const { open, closeSearch } = useGlobalSearch();
   const router = useRouter();
+  const pathname = usePathname();
   const { teams } = useTeams();
   const [query, setQuery] = useState("");
   const [, startTransition] = useTransition();
+  const [activeFlat, setActiveFlat] = useState(0);
+  const [recents, setRecents] = useState<CmdKRecent[]>([]);
+  const listRef = useRef<HTMLDivElement>(null);
   const index = useMemo(() => buildCmdKIndex(), []);
 
-  const filtered = useMemo(() => filterCmdKIndex(index, query), [index, query]);
+  useEffect(() => {
+    if (open) setRecents(getCmdKRecents());
+  }, [open]);
 
-  const grouped = useMemo(() => {
+  const filtered = useMemo(() => {
+    const base = filterCmdKIndex(index, query);
+    return sortCmdKByPathScope(pathname, base);
+  }, [index, query, pathname]);
+
+  const rows = useMemo((): Row[] => {
+    const out: Row[] = [];
+    const q = query.trim();
+
+    if (!q && recents.length > 0) {
+      out.push({ rowKind: "section", id: "sec-recent", label: "Recent" });
+      recents.slice(0, 6).forEach((r, i) => {
+        out.push({ rowKind: "recent", id: `recent-${i}-${r.href}`, hit: r });
+      });
+    }
+
     const docs = filtered.filter((x): x is Extract<CmdKResult, { kind: "doc" }> => x.kind === "doc");
     const products = filtered.filter((x): x is Extract<CmdKResult, { kind: "product" }> => x.kind === "product");
     const vics = filtered.filter((x): x is Extract<CmdKResult, { kind: "vic" }> => x.kind === "vic");
-    return { docs, products, vics };
-  }, [filtered]);
+
+    if (docs.length > 0) {
+      out.push({ rowKind: "section", id: "sec-docs", label: "Documents" });
+      docs.forEach((d, i) => out.push({ rowKind: "hit", id: `doc-${d.id}-${i}`, hit: d }));
+    }
+    if (products.length > 0) {
+      out.push({ rowKind: "section", id: "sec-products", label: "Products" });
+      products.forEach((p, i) => out.push({ rowKind: "hit", id: `prod-${p.id}-${i}`, hit: p }));
+    }
+    if (vics.length > 0) {
+      out.push({ rowKind: "section", id: "sec-vics", label: "Clients" });
+      vics.forEach((v, i) => out.push({ rowKind: "hit", id: `vic-${v.id}-${i}`, hit: v }));
+    }
+
+    return out;
+  }, [filtered, query, recents]);
+
+  const selectable = useMemo(
+    () => rows.filter((r): r is Extract<Row, { rowKind: "hit" | "recent" }> => r.rowKind !== "section"),
+    [rows]
+  );
 
   useEffect(() => {
-    if (!open) {
-      setQuery("");
+    setActiveFlat(0);
+  }, [query, open, selectable.length]);
+
+  useEffect(() => {
+    if (activeFlat >= selectable.length) setActiveFlat(Math.max(0, selectable.length - 1));
+  }, [activeFlat, selectable.length]);
+
+  const go = useCallback(
+    (href: string, title: string, kind: CmdKRecent["kind"]) => {
+      pushCmdKRecent({ href, title, kind });
+      closeSearch();
+      startTransition(() => router.push(href));
+    },
+    [closeSearch, router]
+  );
+
+  const activateCurrent = useCallback(() => {
+    const sel = selectable[activeFlat];
+    if (!sel) return;
+    if (sel.rowKind === "recent") {
+      go(sel.hit.href, sel.hit.title, sel.hit.kind);
+      return;
     }
+    const h = sel.hit;
+    if (h.kind === "doc") go(h.href, h.title, "doc");
+    else if (h.kind === "product") go(h.href, h.title, "product");
+    else go(h.href, h.title, "vic");
+  }, [selectable, activeFlat, go]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeSearch();
+        return;
+      }
+
+      const n = selectable.length;
+      if (n === 0) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setActiveFlat((i) => (i + 1) % n);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setActiveFlat((i) => (i - 1 + n) % n);
+        return;
+      }
+      if (e.key === "Enter") {
+        const t = e.target as HTMLElement;
+        if (t.closest("input")) {
+          e.preventDefault();
+          activateCurrent();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [open, closeSearch, selectable.length, activateCurrent]);
+
+  useEffect(() => {
+    if (!open) setQuery("");
   }, [open]);
+
+  useEffect(() => {
+    const el = listRef.current?.querySelector(`[data-cmdk-active="true"]`);
+    el?.scrollIntoView({ block: "nearest" });
+  }, [activeFlat, open, selectable]);
 
   if (!open) return null;
 
-  const go = (href: string) => {
-    closeSearch();
-    startTransition(() => router.push(href));
-  };
+  const activeId = selectable[activeFlat]?.id;
 
+  let flat = -1;
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] px-4">
       <button
@@ -65,118 +177,183 @@ export default function GlobalCommandPalette() {
         aria-label="Close search"
         onClick={closeSearch}
       />
-      <div className="relative w-full max-w-xl bg-[#0c0c12] border border-[rgba(255,255,255,0.06)] rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-[rgba(255,255,255,0.03)]">
-          <Search className="w-4 h-4 text-[#6B6560] shrink-0" />
+      <div
+        className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-border bg-popover shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Global search"
+      >
+        <div className="flex items-center gap-3 border-b border-border px-5 py-4">
+          <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
           <input
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search everything…"
-            className="flex-1 bg-transparent text-[14px] text-[#F5F0EB] placeholder:text-[#4A4540] outline-none"
+            aria-autocomplete="list"
+            aria-controls="cmdk-listbox"
+            className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground/65 outline-none"
           />
-          <kbd className="text-[9px] text-[#4A4540] border border-[rgba(255,255,255,0.06)] rounded px-1.5 py-0.5 shrink-0">
+          <kbd className="shrink-0 rounded border border-border px-1.5 py-0.5 text-[9px] text-muted-foreground/65">
             ESC
           </kbd>
         </div>
 
-        <div className="max-h-[50vh] overflow-y-auto py-2">
-          {grouped.docs.length > 0 && (
-            <>
-              <div className="px-3 py-1">
-                <span className="text-[9px] tracking-[0.08em] uppercase text-[#4A4540] px-2">Documents</span>
-              </div>
-              {grouped.docs.map((doc) => (
-                <button
-                  key={doc.id}
-                  type="button"
-                  onClick={() => go(doc.href)}
-                  className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-[rgba(255,255,255,0.02)] transition-colors text-left"
-                >
-                  <FileText className="w-4 h-4 text-[#4A4540] shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[13px] text-[#F5F0EB] block truncate">{doc.title}</span>
-                    <span className="text-[10px] text-[#4A4540]">{doc.subtitle}</span>
+        <div
+          ref={listRef}
+          id="cmdk-listbox"
+          role="listbox"
+          aria-activedescendant={activeId ? `cmdk-${activeId}` : undefined}
+          className="max-h-[50vh] overflow-y-auto py-2"
+        >
+          {rows.length === 0 || selectable.length === 0 ? (
+            <div className="px-5 py-10 text-center text-sm text-muted-foreground">No matches</div>
+          ) : (
+            rows.map((row) => {
+              if (row.rowKind === "section") {
+                return (
+                  <div key={row.id} className="px-3 py-1" role="presentation">
+                    <span className="px-2 text-[9px] uppercase tracking-[0.08em] text-muted-foreground/65">
+                      {row.label}
+                    </span>
                   </div>
-                  <ScopeBadge scope={doc.scope} teams={teams} />
-                </button>
-              ))}
-            </>
-          )}
+                );
+              }
 
-          {grouped.products.length > 0 && (
-            <>
-              <div className="px-3 py-1 mt-1">
-                <span className="text-[9px] tracking-[0.08em] uppercase text-[#4A4540] px-2">Products</span>
-              </div>
-              {grouped.products.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => go(p.href)}
-                  className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-[rgba(255,255,255,0.02)] transition-colors text-left"
-                >
-                  <Building2 className="w-4 h-4 text-[#4A4540] shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[13px] text-[#F5F0EB] block truncate">{p.title}</span>
-                    <span className="text-[10px] text-[#4A4540]">{p.subtitle}</span>
-                  </div>
-                  <span
+              flat += 1;
+              const isActive = flat === activeFlat;
+              const optId = `cmdk-${row.id}`;
+
+              if (row.rowKind === "recent") {
+                const r = row.hit;
+                return (
+                  <button
+                    key={row.id}
+                    id={optId}
+                    type="button"
+                    role="option"
+                    aria-selected={isActive}
+                    data-cmdk-active={isActive ? "true" : undefined}
+                    onClick={() => go(r.href, r.title, r.kind)}
+                    onMouseEnter={() => setActiveFlat(flat)}
                     className={cn(
-                      "text-[9px] tracking-[0.04em] px-2 py-0.5 rounded border shrink-0",
-                      categoryBadgeClass(p.typeLabel)
+                      "flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors",
+                      isActive ? "bg-muted/80" : "hover:bg-muted/50"
                     )}
                   >
-                    {p.typeLabel}
-                  </span>
-                </button>
-              ))}
-            </>
-          )}
+                    <span className="shrink-0 text-2xs uppercase tracking-wide text-muted-foreground/65">
+                      {r.kind}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-compact text-foreground">{r.title}</span>
+                  </button>
+                );
+              }
 
-          {grouped.vics.length > 0 && (
-            <>
-              <div className="px-3 py-1 mt-1">
-                <span className="text-[9px] tracking-[0.08em] uppercase text-[#4A4540] px-2">Clients</span>
-              </div>
-              {grouped.vics.map((v) => (
+              const data = row.hit;
+              if (data.kind === "doc") {
+                return (
+                  <button
+                    key={row.id}
+                    id={optId}
+                    type="button"
+                    role="option"
+                    aria-selected={isActive}
+                    data-cmdk-active={isActive ? "true" : undefined}
+                    onClick={() => go(data.href, data.title, "doc")}
+                    onMouseEnter={() => setActiveFlat(flat)}
+                    className={cn(
+                      "flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors",
+                      isActive ? "bg-muted/80" : "hover:bg-muted/50"
+                    )}
+                  >
+                    <FileText className="h-4 w-4 shrink-0 text-muted-foreground/65" aria-hidden />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-compact block truncate text-foreground">{data.title}</span>
+                      <span className="text-2xs text-muted-foreground/65">{data.subtitle}</span>
+                    </div>
+                    <ScopeBadge scope={data.scope} teams={teams} />
+                  </button>
+                );
+              }
+
+              if (data.kind === "product") {
+                const chip = chipStyleFromProductTypeLabel(data.typeLabel);
+                return (
+                  <button
+                    key={row.id}
+                    id={optId}
+                    type="button"
+                    role="option"
+                    aria-selected={isActive}
+                    data-cmdk-active={isActive ? "true" : undefined}
+                    onClick={() => go(data.href, data.title, "product")}
+                    onMouseEnter={() => setActiveFlat(flat)}
+                    className={cn(
+                      "flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors",
+                      isActive ? "bg-muted/80" : "hover:bg-muted/50"
+                    )}
+                  >
+                    <Building2 className="h-4 w-4 shrink-0 text-muted-foreground/65" aria-hidden />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-compact block truncate text-foreground">{data.title}</span>
+                      <span className="text-2xs text-muted-foreground/65">{data.subtitle}</span>
+                    </div>
+                    <span
+                      className="shrink-0 rounded border px-2 py-0.5 text-[9px] tracking-[0.04em]"
+                      style={{
+                        background: chip.bg,
+                        color: chip.color,
+                        borderColor: chip.border,
+                      }}
+                    >
+                      {data.typeLabel}
+                    </span>
+                  </button>
+                );
+              }
+
+              return (
                 <button
-                  key={v.id}
+                  key={row.id}
+                  id={optId}
                   type="button"
-                  onClick={() => go(v.href)}
-                  className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-[rgba(255,255,255,0.02)] transition-colors text-left"
+                  role="option"
+                  aria-selected={isActive}
+                  data-cmdk-active={isActive ? "true" : undefined}
+                  onClick={() => go(data.href, data.title, "vic")}
+                  onMouseEnter={() => setActiveFlat(flat)}
+                  className={cn(
+                    "flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors",
+                    isActive ? "bg-muted/80" : "hover:bg-muted/50"
+                  )}
                 >
                   <div
-                    style={avatarStyle(v.initials)}
-                    className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[9px]"
+                    style={avatarStyle(data.initials)}
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[9px]"
                   >
-                    {v.initials}
+                    {data.initials}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[13px] text-[#F5F0EB] block truncate">{v.title}</span>
-                    <span className="text-[10px] text-[#4A4540]">{v.subtitle}</span>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-compact block truncate text-foreground">{data.title}</span>
+                    <span className="text-2xs text-muted-foreground/65">{data.subtitle}</span>
                   </div>
                 </button>
-              ))}
-            </>
-          )}
-
-          {filtered.length === 0 && (
-            <div className="px-5 py-10 text-center text-[12px] text-[#6B6560]">No matches</div>
+              );
+            })
           )}
         </div>
 
-        <div className="px-5 py-2.5 border-t border-[rgba(255,255,255,0.03)] flex items-center gap-4 text-[9px] text-[#4A4540]">
+        <div className="flex items-center gap-4 border-t border-border px-5 py-2.5 text-[9px] text-muted-foreground/65">
           <span>
-            <kbd className="border border-[rgba(255,255,255,0.06)] rounded px-1 py-0.5 mr-1">↑↓</kbd>
+            <kbd className="mr-1 rounded border border-border px-1 py-0.5">↑↓</kbd>
             Navigate
           </span>
           <span>
-            <kbd className="border border-[rgba(255,255,255,0.06)] rounded px-1 py-0.5 mr-1">↵</kbd>
+            <kbd className="mr-1 rounded border border-border px-1 py-0.5">↵</kbd>
             Open
           </span>
           <span>
-            <kbd className="border border-[rgba(255,255,255,0.06)] rounded px-1 py-0.5 mr-1">ESC</kbd>
+            <kbd className="mr-1 rounded border border-border px-1 py-0.5">ESC</kbd>
             Close
           </span>
         </div>

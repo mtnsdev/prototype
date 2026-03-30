@@ -41,15 +41,15 @@ export default function ProductDirectoryCommissionDropdown({
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 rounded-lg border border-[rgba(255,255,255,0.03)] bg-[#0c0c12] px-3 py-1.5 text-left transition-colors hover:border-[rgba(255,255,255,0.06)]"
+        className="flex items-center gap-2 rounded-lg border border-border bg-popover px-3 py-1.5 text-left transition-colors hover:border-border"
       >
-        <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-[#4A4540]">Commission</span>
-        <span className={cn("text-[11px]", active ? "text-[#B8976E]" : "text-[#9B9590]")}>{label}</span>
-        <ChevronDown className="ml-auto h-3 w-3 shrink-0 text-[#4A4540]" />
+        <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-muted-foreground/65">Commission</span>
+        <span className={cn("text-xs", active ? "text-[#B8976E]" : "text-muted-foreground")}>{label}</span>
+        <ChevronDown className="ml-auto h-3 w-3 shrink-0 text-muted-foreground/65" />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-[60] mt-1 w-52 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0c0c12] py-1 shadow-xl">
+        <div className="absolute right-0 top-full z-[60] mt-1 w-52 rounded-xl border border-border bg-popover py-1 shadow-xl">
           {COMMISSION_BRACKETS.map((b) => {
             const selected = b.id === "any" ? bracketId == null : bracketId === b.id;
             return (
@@ -57,8 +57,8 @@ export default function ProductDirectoryCommissionDropdown({
                 key={b.id}
                 type="button"
                 className={cn(
-                  "w-full px-3 py-2 text-left text-[11px] transition-colors hover:bg-[rgba(255,255,255,0.04)]",
-                  selected ? "text-[#C9A96E]" : "text-[#9B9590]"
+                  "w-full px-3 py-2 text-left text-xs transition-colors hover:bg-[rgba(255,255,255,0.04)]",
+                  selected ? "text-brand-cta" : "text-muted-foreground"
                 )}
                 onClick={() => {
                   onBracketChange(b.id === "any" ? null : b.id);
@@ -68,8 +68,8 @@ export default function ProductDirectoryCommissionDropdown({
               </button>
             );
           })}
-          <div className="border-t border-[rgba(255,255,255,0.06)] px-3 py-2">
-            <label className="flex cursor-pointer items-center gap-2 text-[10px] text-[#9B9590]">
+          <div className="border-t border-border px-3 py-2">
+            <label className="flex cursor-pointer items-center gap-2 text-2xs text-muted-foreground">
               <input
                 type="checkbox"
                 className="checkbox-on-dark checkbox-on-dark-sm"

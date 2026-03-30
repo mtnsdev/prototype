@@ -14,7 +14,7 @@ export default function ItineraryEditRoute() {
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
-      <div className="p-6 text-[rgba(245,245,245,0.5)]">Redirecting…</div>
+      <div className="p-6 text-muted-foreground/75">Redirecting…</div>
     </div>
   );
 }

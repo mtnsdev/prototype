@@ -9,10 +9,10 @@ import ImageWithFallback from "@/components/ui/ImageWithFallback";
 import { cn } from "@/lib/utils";
 
 const COLUMNS: { status: ItineraryStatus; label: string; headerClass: string }[] = [
-  { status: "draft", label: "Draft", headerClass: "text-gray-400 border-gray-600/40" },
+  { status: "draft", label: "Draft", headerClass: "text-muted-foreground/90 border-border/40" },
   { status: "proposed", label: "Proposed", headerClass: "text-blue-400 border-blue-500/30" },
   { status: "confirmed", label: "Confirmed", headerClass: "text-emerald-400 border-emerald-500/30" },
-  { status: "in_progress", label: "In progress", headerClass: "text-amber-400 border-amber-500/30" },
+  { status: "in_progress", label: "In progress", headerClass: "text-[var(--color-warning)] border-amber-500/30" },
   { status: "completed", label: "Completed", headerClass: "text-teal-400 border-teal-500/30" },
 ];
 
@@ -36,11 +36,11 @@ export default function ItineraryKanbanView({ itineraries }: Props) {
           return (
             <div
               key={col.status}
-              className="flex h-full min-h-0 w-[260px] shrink-0 flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.02]"
+              className="flex h-full min-h-0 w-[260px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-white/[0.02]"
             >
               <div
                 className={cn(
-                  "shrink-0 border-b px-3 py-2.5 text-xs font-semibold uppercase tracking-wider border-white/[0.06]",
+                  "shrink-0 border-b px-3 py-2.5 text-xs font-semibold uppercase tracking-wider border-border",
                   col.headerClass
                 )}
               >
@@ -48,7 +48,7 @@ export default function ItineraryKanbanView({ itineraries }: Props) {
               </div>
               <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2">
                 {colItems.length === 0 ? (
-                  <p className="text-xs text-center text-[rgba(245,245,245,0.35)] py-8 px-2">
+                  <p className="text-xs text-center text-muted-foreground/55 py-8 px-2">
                     No trips {col.label.toLowerCase()} yet
                   </p>
                 ) : (
@@ -61,9 +61,9 @@ export default function ItineraryKanbanView({ itineraries }: Props) {
                         type="button"
                         title="Drag to move — coming soon"
                         onClick={() => router.push(`/dashboard/itineraries/${id}`)}
-                        className="text-left rounded-lg border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/[0.12] transition-all group overflow-hidden w-full"
+                        className="text-left rounded-lg border border-border bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/[0.12] transition-all group overflow-hidden w-full"
                       >
-                        <div className="relative h-20 w-full bg-[#0c0c12]">
+                        <div className="relative h-20 w-full bg-popover">
                           <ImageWithFallback
                             fallbackType="trip"
                             src={it.hero_image_url}
@@ -79,16 +79,16 @@ export default function ItineraryKanbanView({ itineraries }: Props) {
                           </span>
                         </div>
                         <div className="p-2.5 pt-2">
-                          <p className="text-sm font-semibold text-[#F5F5F5] line-clamp-2 leading-snug">{it.trip_name}</p>
-                          <p className="text-xs text-[rgba(245,245,245,0.45)] mt-1">{vicShort(it.primary_vic_name)}</p>
-                          <p className="text-xs text-[rgba(245,245,245,0.4)] mt-0.5">
+                          <p className="text-sm font-semibold text-foreground line-clamp-2 leading-snug">{it.trip_name}</p>
+                          <p className="text-xs text-muted-foreground/75 mt-1">{vicShort(it.primary_vic_name)}</p>
+                          <p className="text-xs text-muted-foreground/55 mt-0.5">
                             {hasDates ? formatDateRange(it.trip_start_date, it.trip_end_date) : "No dates"}
                           </p>
                           <div className="flex flex-wrap gap-1 mt-1.5">
                             {(it.destinations ?? []).slice(0, 2).map((d) => (
                               <span
                                 key={d}
-                                className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/[0.06] text-[rgba(245,245,245,0.55)] truncate max-w-full"
+                                className="text-2xs px-1.5 py-0.5 rounded-full bg-white/[0.06] text-muted-foreground/75 truncate max-w-full"
                               >
                                 {d.split(",")[0]}
                               </span>

@@ -35,7 +35,7 @@ export function StatusBadge({ status }: { status: BuilderDisplayStatus }) {
     Confirmed: "border-[rgba(91,138,110,0.12)] bg-[rgba(91,138,110,0.08)] text-[#5B8A6E]",
     Completed: "border-[rgba(91,138,110,0.12)] bg-[rgba(91,138,110,0.08)] text-[#5B8A6E]",
     Preparing: "border-[rgba(184,151,110,0.12)] bg-[rgba(184,151,110,0.08)] text-[#B8976E]",
-    Draft: "border-[rgba(107,101,96,0.12)] bg-[rgba(107,101,96,0.08)] text-[#6B6560]",
+    Draft: "border-[rgba(107,101,96,0.12)] bg-[rgba(107,101,96,0.08)] text-muted-foreground",
     Cancelled: "border-[rgba(166,107,107,0.12)] bg-[rgba(166,107,107,0.08)] text-[#A66B6B]",
   }[status];
   return (

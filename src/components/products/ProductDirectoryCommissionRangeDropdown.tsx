@@ -68,20 +68,20 @@ export default function ProductDirectoryCommissionRangeDropdown({
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          "flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[11px] transition-colors",
+          "flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs transition-colors",
           commissionFilterActive
             ? "border-[rgba(184,151,110,0.20)] bg-[rgba(184,151,110,0.08)] text-[#B8976E]"
-            : "border-[rgba(255,255,255,0.03)] bg-[#0c0c12] text-[#9B9590] hover:border-[rgba(255,255,255,0.06)]"
+            : "border-border bg-popover text-muted-foreground hover:border-border"
         )}
       >
         {commissionFilterActive ? `${lo}% – ${hi}%` : "Commission"}
-        <ChevronDown className="h-3 w-3 shrink-0 text-[#4A4540]" />
+        <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground/65" />
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-[60] mt-1 w-72 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0c0c12] p-4 shadow-xl">
+        <div className="absolute left-0 top-full z-[60] mt-1 w-72 rounded-xl border border-border bg-popover p-4 shadow-xl">
           <div className="mb-3 flex items-center justify-between gap-3">
-            <span id={filterLabelId} className="text-[11px] font-medium text-[#F5F0EB]">
+            <span id={filterLabelId} className="text-xs font-medium text-foreground">
               Filter by range
             </span>
             <ProductDirectoryFilterSwitch
@@ -147,11 +147,11 @@ export default function ProductDirectoryCommissionRangeDropdown({
             />
           </div>
 
-          <p className="mb-3 text-center text-[13px] font-medium tabular-nums text-[#B8976E]">
+          <p className="mb-3 text-center text-compact font-medium tabular-nums text-[#B8976E]">
             {lo}% – {hi}%
           </p>
 
-          <div className="mb-4 flex justify-between text-[9px] text-[#4A4540]">
+          <div className="mb-4 flex justify-between text-[9px] text-muted-foreground/65">
             <span>0%</span>
             <span>5%</span>
             <span>10%</span>
@@ -169,7 +169,7 @@ export default function ProductDirectoryCommissionRangeDropdown({
                   onCommissionRangeChange(p.range);
                   onCommissionFilterActiveChange(true);
                 }}
-                className="rounded-md bg-white/[0.03] px-2 py-1 text-[9px] text-[#6B6560] transition-colors hover:bg-white/[0.06] hover:text-[#9B9590]"
+                className="rounded-md bg-white/[0.03] px-2 py-1 text-[9px] text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-muted-foreground"
               >
                 {p.label}
               </button>
@@ -177,8 +177,8 @@ export default function ProductDirectoryCommissionRangeDropdown({
           </div>
 
           <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/[0.04] pt-3">
-            <span id={sortLabelId} className="text-[10px] text-[#9B9590]">
-              Sort by highest commission
+            <span id={sortLabelId} className="text-2xs text-muted-foreground">
+              Break ties by highest commission
             </span>
             <ProductDirectoryFilterSwitch
               checked={sortByCommission}

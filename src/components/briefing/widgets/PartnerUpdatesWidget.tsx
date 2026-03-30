@@ -18,7 +18,7 @@ export default function PartnerUpdatesWidget({ content }: Props) {
   const items = content.items ?? [];
   if (items.length === 0) {
     return (
-      <p className="text-sm text-[rgba(245,245,245,0.5)] py-4">No partner updates.</p>
+      <p className="text-sm text-muted-foreground/75 py-4">No partner updates.</p>
     );
   }
   return (
@@ -26,11 +26,11 @@ export default function PartnerUpdatesWidget({ content }: Props) {
       {items.map((item) => (
         <li
           key={item.id}
-          className="rounded-lg border border-[rgba(255,255,255,0.06)] bg-white/[0.03] p-3"
+          className="rounded-lg border border-border bg-white/[0.03] p-3"
         >
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium text-[#F5F5F5] text-sm">{item.partner_name}</span>
-            <span className="text-xs px-1.5 py-0.5 rounded bg-white/10 text-[rgba(245,245,245,0.8)]">
+            <span className="font-medium text-foreground text-sm">{item.partner_name}</span>
+            <span className="text-xs px-1.5 py-0.5 rounded bg-white/10 text-muted-foreground">
               {UPDATE_LABELS[item.update_type] ?? item.update_type}
             </span>
             {item.action_required && (
@@ -39,10 +39,10 @@ export default function PartnerUpdatesWidget({ content }: Props) {
               </span>
             )}
           </div>
-          <p className="font-medium text-[#F5F5F5] text-sm mt-1">{item.title}</p>
-          <p className="text-xs text-[rgba(245,245,245,0.6)] mt-0.5 line-clamp-2">{item.description}</p>
+          <p className="font-medium text-foreground text-sm mt-1">{item.title}</p>
+          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.description}</p>
           {item.effective_date && (
-            <p className="text-xs text-[rgba(245,245,245,0.5)] mt-1">
+            <p className="text-xs text-muted-foreground/75 mt-1">
               {new Date(item.effective_date).toLocaleDateString()}
             </p>
           )}

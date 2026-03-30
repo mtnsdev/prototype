@@ -21,7 +21,7 @@ export default function ProductEditRoute() {
   }, [id, router]);
 
   return (
-    <div className="p-6 text-[rgba(245,245,245,0.6)]">
+    <div className="p-6 text-muted-foreground">
       Loading…
     </div>
   );

@@ -35,9 +35,21 @@ import { KvTagsDiscreteTitleSubline } from "./KvTagsDisplay";
 import { useToast } from "@/contexts/ToastContext";
 import type { KvSortColumn, KvSortOption } from "@/lib/knowledgeVaultSort";
 import { kvSortActiveColumn, kvSortIsAsc } from "@/lib/knowledgeVaultSort";
+import {
+  listMutedCellClass,
+  listPrimaryTextClass,
+  listSurfaceClass,
+  listScrollClass,
+  listTableClass,
+  listTdClass,
+  listThCheckboxClass,
+  listThClass,
+  listTheadRowClass,
+  listTbodyRowClass,
+} from "@/lib/list-ui";
 
 const SOURCE_BADGE =
-  "text-xs px-1.5 py-0.5 rounded-md bg-white/[0.08] text-[rgba(245,245,245,0.75)] border border-white/10 max-w-[160px] truncate";
+  "text-xs px-1.5 py-0.5 rounded-md bg-white/[0.06] text-foreground/[0.55] border border-white/[0.08] max-w-[160px] truncate";
 
 type TeamOpt = { id: string; name: string };
 
@@ -119,32 +131,32 @@ function ListSortableHeader({
   })();
 
   return (
-    <th className={cn("p-3 font-medium text-left", className)} scope="col">
+    <th className={cn(listThClass, "text-left font-medium", className)} scope="col">
       <button
         type="button"
         onClick={() => onColumnClick(column)}
         title={titleText}
         aria-label={listSortableAriaLabel(column, active, asc)}
         className={cn(
-          "group inline-flex cursor-pointer items-center gap-1 rounded-md px-1.5 py-1 -mx-1 -my-0.5 text-left text-[var(--text-secondary)] transition-colors",
-          "hover:bg-white/[0.06] hover:text-[#F5F5F5]",
-          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#C9A96E]/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[#161616]",
-          active && "text-[#F5F5F5]"
+          "group -mx-1 -my-0.5 inline-flex cursor-pointer items-center gap-1 rounded-md px-1.5 py-1 text-left text-muted-foreground transition-colors",
+          "hover:bg-white/[0.06] hover:text-foreground",
+          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+          active && "text-foreground"
         )}
         aria-sort={active ? (asc ? "ascending" : "descending") : undefined}
       >
-        <span className="border-b border-dotted border-current/40 group-hover:border-solid group-hover:border-[#C9A96E]/50 pb-px">
+        <span className="border-b border-dotted border-current/40 group-hover:border-solid group-hover:border-brand-cta/50 pb-px">
           {label}
         </span>
         {active ? (
           asc ? (
-            <ChevronUp className="h-3.5 w-3.5 shrink-0 text-[#C9A96E]" aria-hidden />
+            <ChevronUp className="h-3.5 w-3.5 shrink-0 text-brand-cta" aria-hidden />
           ) : (
-            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[#C9A96E]" aria-hidden />
+            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-brand-cta" aria-hidden />
           )
         ) : (
           <ArrowUpDown
-            className="h-3 w-3 shrink-0 text-[#6B6560] opacity-80 transition-opacity group-hover:opacity-100 group-hover:text-[#9B9590]"
+            className="h-3 w-3 shrink-0 text-muted-foreground opacity-80 transition-opacity group-hover:opacity-100 group-hover:text-muted-foreground"
             aria-hidden
           />
         )}
@@ -191,11 +203,11 @@ function DocumentActionsMenu({
             {shareSubmenuLabel}
             <ChevronRight className="ml-auto h-3.5 w-3.5" aria-hidden />
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="bg-[#1a1a1a] border-white/10 py-1">
+          <DropdownMenuSubContent className="border border-border bg-popover py-1">
             {teams.map((team) => (
               <DropdownMenuItem
                 key={team.id}
-                className="w-full text-left px-3 py-1.5 text-xs text-gray-400 focus:text-white hover:bg-white/[0.04]"
+                className="w-full text-left px-3 py-1.5 text-xs text-muted-foreground/90 focus:text-white hover:bg-white/[0.04]"
                 onClick={() => onShareDocument?.(doc, team.id)}
               >
                 {team.name}
@@ -251,8 +263,8 @@ export default function DocumentGrid({
 
   if (loading && !listRefetching) {
     return (
-      <div className="overflow-hidden rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#161616]">
-        <div className="space-y-2 p-3">
+      <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden p-3")}>
+        <div className="space-y-2">
           {Array.from({ length: 8 }, (_, i) => (
             <SkeletonRow key={i} />
           ))}
@@ -286,7 +298,7 @@ export default function DocumentGrid({
             };
     const EmptyIcon = empty.icon;
     return (
-      <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#161616]">
+      <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden")}>
         <EmptyState
           icon={EmptyIcon}
           title={empty.title}
@@ -299,7 +311,7 @@ export default function DocumentGrid({
 
   if (!loading && documents.length === 0) {
     return (
-      <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#161616]">
+      <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden")}>
         <EmptyState
           icon={Search}
           title="No documents found"
@@ -310,26 +322,28 @@ export default function DocumentGrid({
   }
 
   const stickyCbClass =
-    "sticky left-0 z-[2] bg-[#161616] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.65)]";
+    "sticky left-0 z-[2] bg-background shadow-[4px_0_12px_-4px_rgba(0,0,0,0.65)]";
   const stickyTitleClass = cn(
-    "sticky z-[2] bg-[#161616] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.65)]",
+    "sticky z-[2] bg-background shadow-[4px_0_12px_-4px_rgba(0,0,0,0.65)]",
     "left-10"
   );
   return (
     <div
       className={cn(
-        "rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden overflow-x-auto transition-opacity",
+        listSurfaceClass,
+        listScrollClass,
+        "overflow-hidden transition-opacity",
         loading && listRefetching && "opacity-[0.72]"
       )}
       aria-busy={loading && listRefetching ? true : undefined}
     >
-      <table className="w-full text-sm min-w-[720px]">
+      <table className={listTableClass("min-w-[720px]")}>
         <caption className="sr-only">
           Document list. Use the Title, Size, and Updated column headers to change sort order.
         </caption>
         <thead>
-          <tr className="border-b border-[rgba(255,255,255,0.08)] text-left text-[var(--text-secondary)]">
-            <th className={cn("p-3 w-10", stickyCbClass)} scope="col">
+          <tr className={listTheadRowClass}>
+            <th className={cn(listThCheckboxClass, stickyCbClass)} scope="col">
               <input
                 ref={headerCbRef}
                 type="checkbox"
@@ -339,98 +353,100 @@ export default function DocumentGrid({
                 aria-label="Select all documents on this page"
               />
             </th>
-              <ListSortableHeader
-                label="Title"
-                column="title"
-                sortOption={listSort.option}
-                onColumnClick={listSort.onColumnClick}
-                className={stickyTitleClass}
-              />
-              <th className="p-3 font-medium" scope="col">
-                Source
-              </th>
-              <th className="p-3 font-medium" scope="col">
-                Access
-              </th>
-              <th className="p-3 font-medium" scope="col">
-                Status
-              </th>
-              <ListSortableHeader
-                label="Size"
-                column="file_size_kb"
-                sortOption={listSort.option}
-                onColumnClick={listSort.onColumnClick}
-              />
-              <ListSortableHeader
-                label="Updated"
-                column="last_updated"
-                sortOption={listSort.option}
-                onColumnClick={listSort.onColumnClick}
-              />
-              <th className="p-3 w-10" scope="col" />
-            </tr>
-          </thead>
-          <tbody>
-            {documents.map((doc) => {
-              const oversight = isOversightPrivate?.(doc) ?? false;
-              const rowTone = cn(
-                "hover:bg-white/[0.02]",
-                doc.ingestion_status === "not_indexed" && "border-l-4 border-l-white/10",
-                oversight && "opacity-60"
-              );
-              const checked = selectedSet.has(doc.id);
-              return (
-                <tr key={doc.id} className={cn(rowTone, "border-b border-[rgba(255,255,255,0.06)]")}>
-                  <td className={cn("py-2.5 px-3 align-top", stickyCbClass)}>
-                    <input
-                      type="checkbox"
-                      className="checkbox-on-dark checkbox-on-dark-sm mt-1"
-                      checked={checked}
-                      onChange={() => listSelection.onToggle(doc.id)}
-                      aria-label={`Select ${doc.title}`}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </td>
-                  <td className={cn("py-2.5 px-3 align-top", stickyTitleClass)}>
-                    <div className="flex items-start gap-2 min-w-0">
-                      {oversight && (
-                        <span title="This document belongs to another user" className="shrink-0 mt-1 inline-flex">
-                          <Shield
-                            className="w-3.5 h-3.5 text-gray-500"
-                            aria-label="This document belongs to another user"
-                          />
-                        </span>
-                      )}
-                      <div className="min-w-0 flex-1 max-w-[min(280px,40vw)]">
-                        <button
-                          type="button"
-                          onClick={() => onSelectDocument(doc)}
-                          className="font-medium text-[#F5F5F5] hover:underline text-left truncate max-w-full block"
-                        >
-                          {doc.title}
-                        </button>
-                        <KvTagsDiscreteTitleSubline tags={doc.tags} />
-                      </div>
+            <ListSortableHeader
+              label="Title"
+              column="title"
+              sortOption={listSort.option}
+              onColumnClick={listSort.onColumnClick}
+              className={stickyTitleClass}
+            />
+            <th className={cn(listThClass, "font-medium")} scope="col">
+              Source
+            </th>
+            <th className={cn(listThClass, "font-medium")} scope="col">
+              Access
+            </th>
+            <th className={cn(listThClass, "font-medium")} scope="col">
+              Status
+            </th>
+            <ListSortableHeader
+              label="Size"
+              column="file_size_kb"
+              sortOption={listSort.option}
+              onColumnClick={listSort.onColumnClick}
+            />
+            <ListSortableHeader
+              label="Updated"
+              column="last_updated"
+              sortOption={listSort.option}
+              onColumnClick={listSort.onColumnClick}
+            />
+            <th className={cn(listThClass, "w-10")} scope="col" />
+          </tr>
+        </thead>
+        <tbody>
+          {documents.map((doc) => {
+            const oversight = isOversightPrivate?.(doc) ?? false;
+            const rowTone = cn(
+              listTbodyRowClass,
+              doc.ingestion_status === "not_indexed" && "border-l-4 border-l-border",
+              oversight && "opacity-60"
+            );
+            const checked = selectedSet.has(doc.id);
+            const docTd = cn(listTdClass, "align-top");
+            return (
+              <tr key={doc.id} className={rowTone}>
+                <td className={cn(docTd, stickyCbClass)}>
+                  <input
+                    type="checkbox"
+                    className="checkbox-on-dark checkbox-on-dark-sm mt-1"
+                    checked={checked}
+                    onChange={() => listSelection.onToggle(doc.id)}
+                    aria-label={`Select ${doc.title}`}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </td>
+                <td className={cn(docTd, stickyTitleClass)}>
+                  <div className="flex min-w-0 items-start gap-2">
+                    {oversight && (
+                      <span title="This document belongs to another user" className="mt-1 inline-flex shrink-0">
+                        <Shield
+                          className="h-3.5 w-3.5 text-muted-foreground"
+                          aria-label="This document belongs to another user"
+                        />
+                      </span>
+                    )}
+                    <div className="max-w-[min(280px,40vw)] min-w-0 flex-1">
+                      <button
+                        type="button"
+                        onClick={() => onSelectDocument(doc)}
+                        className={cn(
+                          listPrimaryTextClass,
+                          "block max-w-full truncate text-left hover:underline"
+                        )}
+                      >
+                        {doc.title}
+                      </button>
+                      <KvTagsDiscreteTitleSubline tags={doc.tags} />
                     </div>
-                  </td>
-                  <td className="py-2.5 px-3 align-top">
-                    <span className={cn(SOURCE_BADGE, "inline-block max-w-[180px]")} title={doc.source_name}>
-                      {doc.source_name}
-                    </span>
-                  </td>
-                  <td className="py-2.5 px-3 align-top">
-                    <ScopeBadge scope={effectiveUiScope(doc, scopeOverrides)} teams={MOCK_TEAMS} />
-                  </td>
-                  <td className="py-2.5 px-3 align-top">
-                    <IngestionStatusBadge status={doc.ingestion_status} />
-                  </td>
-                  <td className="py-2.5 px-3 align-top text-[var(--text-tertiary)]">
-                    {(doc.file_size_kb / 1024).toFixed(2)} MB
-                  </td>
-                  <td className="py-2.5 px-3 align-top text-[var(--text-tertiary)]">
-                    {new Date(doc.last_updated).toLocaleDateString()}
-                  </td>
-                  <td className="py-2.5 px-3 align-top">
+                  </div>
+                </td>
+                <td className={docTd}>
+                  <span className={cn(SOURCE_BADGE, "inline-block max-w-[180px]")} title={doc.source_name}>
+                    {doc.source_name}
+                  </span>
+                </td>
+                <td className={docTd}>
+                  <ScopeBadge scope={effectiveUiScope(doc, scopeOverrides)} teams={MOCK_TEAMS} />
+                </td>
+                <td className={docTd}>
+                  <IngestionStatusBadge status={doc.ingestion_status} />
+                </td>
+                <td className={cn(docTd, listMutedCellClass)}>{(doc.file_size_kb / 1024).toFixed(2)} MB</td>
+                <td className={cn(docTd, listMutedCellClass)}>
+                  {new Date(doc.last_updated).toLocaleDateString()}
+                </td>
+                <td className={docTd}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">

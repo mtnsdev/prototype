@@ -40,6 +40,7 @@ import {
   compareProductsByRegistryCommission,
   DIRECTORY_TIER_FILTER_UI,
   type DirectoryProductSortOption,
+  DEFAULT_DIRECTORY_PRODUCT_SORT,
 } from "./productDirectoryFilterConfig";
 import {
   applyDirectoryProductFilters,
@@ -158,11 +159,11 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <span className="text-[13px] font-medium text-[#F5F0EB]">Comparing {products.length} products</span>
+        <span className="text-compact font-medium text-foreground">Comparing {products.length} products</span>
         <button
           type="button"
           onClick={onClose}
-          className="text-[11px] text-[#9B9590] transition-colors hover:text-[#F5F0EB]"
+          className="text-xs text-muted-foreground transition-colors hover:text-foreground"
         >
           ✕ Close comparison
         </button>
@@ -194,16 +195,16 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
               />
               <div className="space-y-3 p-3">
                 <div>
-                  <h3 className="text-[13px] font-medium text-[#F5F0EB]">{product.name}</h3>
-                  <p className="text-[10px] text-[#9B9590]">
+                  <h3 className="text-compact font-medium text-foreground">{product.name}</h3>
+                  <p className="text-2xs text-muted-foreground">
                     {product.city && product.country ? `${product.city}, ${product.country}` : product.location}
                   </p>
                 </div>
 
                 <div className={diffWrapClass(typeDiffers)}>
-                  <p className="mb-1 text-[9px] uppercase tracking-wider text-[#4A4540]">Type</p>
+                  <p className="mb-1 text-[9px] uppercase tracking-wider text-muted-foreground/65">Type</p>
                   <span
-                    className="inline-block rounded-full px-2 py-0.5 text-[10px]"
+                    className="inline-block rounded-full px-2 py-0.5 text-2xs"
                     style={{ background: cat.bg, color: cat.color, border: `1px solid ${cat.border}` }}
                   >
                     {directoryCategoryLabel(product.type)}
@@ -211,7 +212,7 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
                 </div>
 
                 <div className={diffWrapClass(progDiffers)}>
-                  <p className="mb-1 text-[9px] uppercase tracking-wider text-[#4A4540]">Programs</p>
+                  <p className="mb-1 text-[9px] uppercase tracking-wider text-muted-foreground/65">Programs</p>
                   {active.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
                       {active.map((pp) => (
@@ -229,12 +230,12 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
                       ))}
                     </div>
                   ) : (
-                    <span className="text-[10px] italic text-[#4A4540]">None</span>
+                    <span className="text-2xs italic text-muted-foreground/65">None</span>
                   )}
                 </div>
 
                 <div className={diffWrapClass(amenityDiffers)}>
-                  <p className="mb-1 text-[9px] uppercase tracking-wider text-[#4A4540]">Client amenities</p>
+                  <p className="mb-1 text-[9px] uppercase tracking-wider text-muted-foreground/65">Client amenities</p>
                   {topProgram && (topProgram.amenityTags?.length ?? 0) > 0 ? (
                     <div className="flex flex-wrap gap-1">
                       {(topProgram.amenityTags ?? []).map((tag) => (
@@ -248,17 +249,17 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
                       ))}
                     </div>
                   ) : (
-                    <span className="text-[10px] italic text-[#4A4540]">Direct booking</span>
+                    <span className="text-2xs italic text-muted-foreground/65">Direct booking</span>
                   )}
                 </div>
 
                 {canViewCommissions && (
                   <div className={diffWrapClass(!!commDiffers)}>
-                    <p className="mb-1 text-[9px] uppercase tracking-wider text-[#4A4540]">Commission</p>
+                    <p className="mb-1 text-[9px] uppercase tracking-wider text-muted-foreground/65">Commission</p>
                     {topRate != null ? (
-                      <span className="text-[14px] font-medium text-[#B8976E]">{topRate}%</span>
+                      <span className="text-base font-medium text-[#B8976E]">{topRate}%</span>
                     ) : (
-                      <span className="text-[10px] italic text-[#4A4540]">—</span>
+                      <span className="text-2xs italic text-muted-foreground/65">—</span>
                     )}
                   </div>
                 )}
@@ -278,7 +279,7 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
                           background: product.hasTeamData ? "rgba(140,160,180,0.60)" : "rgba(255,255,255,0.06)",
                         }}
                       />
-                      <span className="text-[9px] text-[#6B6560]">Team data</span>
+                      <span className="text-[9px] text-muted-foreground">Team data</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <span
@@ -287,7 +288,7 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
                           background: product.hasAdvisorNotes ? "rgba(160,140,180,0.60)" : "rgba(255,255,255,0.06)",
                         }}
                       />
-                      <span className="text-[9px] text-[#6B6560]">My notes</span>
+                      <span className="text-[9px] text-muted-foreground">My notes</span>
                     </div>
                   </div>
                 </div>
@@ -295,7 +296,7 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
                 <button
                   type="button"
                   onClick={() => onViewFullDetails(product)}
-                  className="w-full rounded-lg bg-white/[0.03] py-1.5 text-[10px] text-[#9B9590] transition-colors hover:bg-white/[0.06] hover:text-[#F5F0EB]"
+                  className="w-full rounded-lg bg-white/[0.03] py-1.5 text-2xs text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
                 >
                   View full details
                 </button>
@@ -387,7 +388,7 @@ export default function ProductDirectoryPage() {
   const [sortByCommission, setSortByCommission] = useState(false);
   const [selectedTiers, setSelectedTiers] = useState<DirectoryTierLevel[]>([]);
   const [selectedPriceTiers, setSelectedPriceTiers] = useState<DirectoryPriceTier[]>([]);
-  const [sortBy, setSortBy] = useState<DirectoryProductSortOption>("name-asc");
+  const [sortBy, setSortBy] = useState<DirectoryProductSortOption>(DEFAULT_DIRECTORY_PRODUCT_SORT);
   const urlViewParam = searchParams.get("view");
   const viewFromUrl: "grid" | "list" | "map" =
     urlViewParam === "list" || urlViewParam === "map" ? urlViewParam : "grid";
@@ -666,6 +667,7 @@ export default function ProductDirectoryPage() {
     setSelectedTiers([]);
     setSelectedPriceTiers([]);
     setSortByCommission(false);
+    setSortBy(DEFAULT_DIRECTORY_PRODUCT_SORT);
   }, []);
 
   const sortedProducts = useMemo(() => {
@@ -677,36 +679,49 @@ export default function ProductDirectoryPage() {
       return Number.isNaN(t) ? 0 : t;
     };
 
-    if (sortByCommission && canViewCommissions) {
-      list.sort(compareProductsByRegistryCommission);
-      return list;
-    }
+    /** Commission filter’s “highest commission” only tie-breaks; main Sort dropdown always wins. */
+    const withCommissionTieBreak = (a: (typeof list)[0], b: (typeof list)[0], primary: number): number => {
+      if (primary !== 0) return primary;
+      if (sortByCommission && canViewCommissions && sortBy !== "commission-desc") {
+        return compareProductsByRegistryCommission(a, b);
+      }
+      return 0;
+    };
 
     switch (sortBy) {
       case "name-asc":
-        list.sort((a, b) => a.name.localeCompare(b.name));
+        list.sort((a, b) => withCommissionTieBreak(a, b, a.name.localeCompare(b.name)));
         return list;
       case "name-desc":
-        list.sort((a, b) => b.name.localeCompare(a.name));
+        list.sort((a, b) => withCommissionTieBreak(a, b, b.name.localeCompare(a.name)));
         return list;
       case "commission-desc":
         if (!canViewCommissions) {
           list.sort((a, b) => a.name.localeCompare(b.name));
           return list;
         }
-        list.sort(compareProductsByRegistryCommission);
+        list.sort((a, b) => {
+          const c = compareProductsByRegistryCommission(a, b);
+          if (c !== 0) return c;
+          return a.name.localeCompare(b.name);
+        });
         return list;
       case "tier-desc":
-        list.sort(
-          (a, b) =>
+        list.sort((a, b) =>
+          withCommissionTieBreak(
+            a,
+            b,
             DIRECTORY_TIER_SORT_RANK[a.tier ?? "unrated"] - DIRECTORY_TIER_SORT_RANK[b.tier ?? "unrated"]
+          )
         );
         return list;
       case "recently-added":
-        list.sort((a, b) => addedOrUpdatedTs(b) - addedOrUpdatedTs(a));
+        list.sort((a, b) => withCommissionTieBreak(a, b, addedOrUpdatedTs(b) - addedOrUpdatedTs(a)));
         return list;
       case "enrichment-desc":
-        list.sort((a, b) => (b.enrichmentScore ?? 0) - (a.enrichmentScore ?? 0));
+        list.sort((a, b) =>
+          withCommissionTieBreak(a, b, (b.enrichmentScore ?? 0) - (a.enrichmentScore ?? 0))
+        );
         return list;
       default:
         return list;
@@ -799,7 +814,7 @@ export default function ProductDirectoryPage() {
         return next;
       });
       setPickerProductId(null);
-      toast("Collections updated");
+      toast({ title: "Collections updated", tone: "success" });
     },
     [patchProduct, toast]
   );
@@ -825,7 +840,7 @@ export default function ProductDirectoryPage() {
       });
 
       setDirectoryCollections((prev) => [...prev, newCol]);
-      toast(`Created “${newCol.name}”`);
+      toast({ title: `Created “${newCol.name}”`, tone: "success" });
       return id;
     },
     [uid, user, pickerProductId, products, toast]
@@ -835,7 +850,7 @@ export default function ProductDirectoryPage() {
     (programKey: string, payload: PartnerPortalAdminSavePayload): boolean => {
       const validationError = validatePartnerPortalAdminPayload(payload);
       if (validationError) {
-        toast(validationError);
+        toast({ title: validationError, tone: "destructive" });
         return false;
       }
       const editorName = user?.username ?? user?.email?.split("@")[0] ?? "Admin";
@@ -854,9 +869,11 @@ export default function ProductDirectoryPage() {
         updatedCount = result.updatedCount;
         return result.products;
       });
-      toast(
-        `Updated program across ${updatedCount} product${updatedCount !== 1 ? "s" : ""} (saved in this browser until API sync)`
-      );
+      toast({
+        title: `Updated program across ${updatedCount} product${updatedCount !== 1 ? "s" : ""}`,
+        description: "Saved in this browser until API sync.",
+        tone: "success",
+      });
       return true;
     },
     [toast, uid, user]
@@ -877,11 +894,11 @@ export default function ProductDirectoryPage() {
   const submitCreateCollectionModal = useCallback(() => {
     const name = createCollectionName.trim();
     if (!name) {
-      toast("Collection name is required");
+      toast({ title: "Collection name is required", tone: "destructive" });
       return;
     }
     if (createCollectionScope === "team" && !createCollectionTeamId) {
-      toast("Pick a team");
+      toast({ title: "Pick a team", tone: "destructive" });
       return;
     }
 
@@ -920,7 +937,10 @@ export default function ProductDirectoryPage() {
           return { ...p, collectionIds: nextIds, collections: refs, collectionCount: nextIds.length };
         })
       );
-      toast(`Created "${name}" and added ${ids.length} product${ids.length !== 1 ? "s" : ""}`);
+      toast({
+        title: `Created "${name}" and added ${ids.length} product${ids.length !== 1 ? "s" : ""}`,
+        tone: "success",
+      });
       setBulkCollectionOpen(false);
       clearSelection();
     } else {
@@ -945,7 +965,11 @@ export default function ProductDirectoryPage() {
   ]);
 
   const handleAddToItinerary = useCallback(() => {
-    toast("Add to itinerary (connect API when ready)");
+    toast({
+      title: "Add to itinerary",
+      description: "Connect API when ready.",
+      tone: "success",
+    });
   }, [toast]);
 
   const handleQuickAddToCollection = useCallback(
@@ -994,7 +1018,7 @@ export default function ProductDirectoryPage() {
         });
         return next;
       });
-      toast("Removed from collection");
+      toast({ title: "Removed from collection", tone: "success" });
     },
     [collectionFilter, products, patchProduct, toast]
   );
@@ -1024,7 +1048,10 @@ export default function ProductDirectoryPage() {
         }
         return catalog;
       });
-      toast(`Added ${added} product${added !== 1 ? "s" : ""} to ${col.name}`);
+      toast({
+        title: `Added ${added} product${added !== 1 ? "s" : ""} to ${col.name}`,
+        tone: "success",
+      });
       setBulkCollectionOpen(false);
       clearSelection();
     },
@@ -1049,7 +1076,10 @@ export default function ProductDirectoryPage() {
       }
       return catalog;
     });
-    toast(`Removed ${ids.length} product${ids.length !== 1 ? "s" : ""} from ${activeCollectionMeta.name}`);
+    toast({
+      title: `Removed ${ids.length} product${ids.length !== 1 ? "s" : ""} from ${activeCollectionMeta.name}`,
+      tone: "success",
+    });
     clearSelection();
   }, [collectionFilter, activeCollectionMeta, selectedProductIds, products, patchProduct, toast, clearSelection]);
 
@@ -1066,11 +1096,11 @@ export default function ProductDirectoryPage() {
     : null;
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col bg-[#08080c] text-[#F5F5F5]">
-      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-[rgba(255,255,255,0.08)] pl-6 pr-[4.5rem] py-3">
+    <div className="flex h-full min-h-0 flex-1 flex-col bg-inset text-foreground">
+      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-border pl-6 pr-[4.5rem] py-3">
         <div className="min-w-0">
-          <h1 className="text-sm font-semibold leading-none text-[#F5F5F5]">Product Directory</h1>
-          <p className="mt-1 text-[11px] leading-snug text-[rgba(245,245,245,0.5)]">
+          <h1 className="text-sm font-semibold leading-none text-foreground">Product Directory</h1>
+          <p className="mt-1 text-xs leading-snug text-muted-foreground/75">
             {mainTab === "browse"
               ? `${sortedProducts.length} product${sortedProducts.length !== 1 ? "s" : ""}`
               : mainTab === "collections"
@@ -1080,7 +1110,7 @@ export default function ProductDirectoryPage() {
         </div>
       </header>
 
-      <div className="flex shrink-0 gap-0.5 border-b border-[rgba(255,255,255,0.08)] pl-6 pr-[4.5rem]">
+      <div className="flex shrink-0 gap-0.5 border-b border-border pl-6 pr-[4.5rem]">
         {(
           [
             { id: "browse" as const, label: "Products" },
@@ -1093,13 +1123,13 @@ export default function ProductDirectoryPage() {
             type="button"
             onClick={() => trySetMainTab(t.id)}
             className={cn(
-              "relative px-3 py-2.5 text-[11px] font-medium transition-colors",
-              mainTab === t.id ? "text-[#F5F5F5]" : "text-[#6B6560] hover:text-[#9B9590]"
+              "relative px-3 py-2.5 text-xs font-medium transition-colors",
+              mainTab === t.id ? "text-foreground" : "text-muted-foreground hover:text-muted-foreground"
             )}
           >
             {t.label}
             {mainTab === t.id ? (
-              <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-[#C9A96E]" />
+              <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-brand-cta" />
             ) : null}
           </button>
         ))}
@@ -1158,32 +1188,32 @@ export default function ProductDirectoryPage() {
             <button
               type="button"
               onClick={() => setSearchQuery("")}
-              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-[#9B9590] transition-colors hover:bg-white/[0.06]"
+              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-muted-foreground transition-colors hover:bg-white/[0.06]"
             >
               &quot;{debouncedSearch.slice(0, 24)}
               {debouncedSearch.length > 24 ? "…" : ""}&quot;
-              <span className="text-[#6B6560]">✕</span>
+              <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
           {activeTypeFilters.length > 0 ? (
             <button
               type="button"
               onClick={() => setActiveTypeFilters([])}
-              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-[#9B9590] transition-colors hover:bg-white/[0.06]"
+              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-muted-foreground transition-colors hover:bg-white/[0.06]"
             >
               {activeTypeFilters.map((id) => directoryCategoryLabel(id)).join(", ")}
-              <span className="text-[#6B6560]">✕</span>
+              <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
           {locationCountries.length > 0 ? (
             <button
               type="button"
               onClick={() => setLocationCountries([])}
-              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-[#9B9590] transition-colors hover:bg-white/[0.06]"
+              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-muted-foreground transition-colors hover:bg-white/[0.06]"
             >
               {locationCountries.slice(0, 2).join(", ")}
               {locationCountries.length > 2 ? ` +${locationCountries.length - 2}` : ""}
-              <span className="text-[#6B6560]">✕</span>
+              <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
           {collectionFilter.length > 0 ? (
@@ -1195,7 +1225,7 @@ export default function ProductDirectoryPage() {
               {collectionFilter.length === 1
                 ? availableCollections.find((c) => c.id === collectionFilter[0])?.name ?? "Collection"
                 : `${collectionFilter.length} collections`}
-              <span className="text-[#6B6560]">✕</span>
+              <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
           {selectedProgramIds.length > 0 ? (
@@ -1207,7 +1237,7 @@ export default function ProductDirectoryPage() {
               {AGENCY_PROGRAM_OPTIONS.filter((p) => selectedProgramIds.includes(p.id))
                 .map((p) => p.name)
                 .join(", ")}
-              <span className="text-[#6B6560]">✕</span>
+              <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
           {selectedAmenities.length > 0 ? (
@@ -1217,7 +1247,7 @@ export default function ProductDirectoryPage() {
               className="flex items-center gap-1 rounded-full bg-[rgba(91,138,110,0.06)] px-2 py-0.5 text-[9px] text-[#5B8A6E] transition-colors hover:bg-[rgba(91,138,110,0.10)]"
             >
               {selectedAmenities.map((b) => AMENITY_LABELS[b]).join(", ")}
-              <span className="text-[#6B6560]">✕</span>
+              <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
           {canViewCommissions && commissionFilterActive ? (
@@ -1230,33 +1260,33 @@ export default function ProductDirectoryPage() {
               className="flex items-center gap-1 rounded-full bg-[rgba(184,151,110,0.06)] px-2 py-0.5 text-[9px] text-[#B8976E] transition-colors hover:bg-[rgba(184,151,110,0.10)]"
             >
               {commissionRange[0]}%–{commissionRange[1]}%
-              <span className="text-[#6B6560]">✕</span>
+              <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
           {selectedTiers.length > 0 ? (
             <button
               type="button"
               onClick={() => setSelectedTiers([])}
-              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-[#9B9590] transition-colors hover:bg-white/[0.06]"
+              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-muted-foreground transition-colors hover:bg-white/[0.06]"
             >
               {selectedTiers.map((t) => DIRECTORY_TIER_FILTER_UI.find((x) => x.id === t)?.label ?? t).join(", ")}
-              <span className="text-[#6B6560]">✕</span>
+              <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
           {selectedPriceTiers.length > 0 ? (
             <button
               type="button"
               onClick={() => setSelectedPriceTiers([])}
-              className="flex items-center gap-1 rounded-full bg-[rgba(201,169,110,0.06)] px-2 py-0.5 text-[9px] text-[#C9A96E] transition-colors hover:bg-[rgba(201,169,110,0.10)]"
+              className="flex items-center gap-1 rounded-full bg-[rgba(201,169,110,0.06)] px-2 py-0.5 text-[9px] text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.10)]"
             >
               {selectedPriceTiers.join(" ")}
-              <span className="text-[#6B6560]">✕</span>
+              <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
           <button
             type="button"
             onClick={clearAllFilters}
-            className="px-1.5 text-[9px] text-[#6B6560] transition-colors hover:text-[#9B9590]"
+            className="px-1.5 text-[9px] text-muted-foreground transition-colors hover:text-muted-foreground"
           >
             Clear all
           </button>
@@ -1264,13 +1294,13 @@ export default function ProductDirectoryPage() {
       )}
 
       {headerCollection && activeCollectionMeta && (
-        <div className="mb-4 flex flex-col gap-3 rounded-xl border border-[rgba(255,255,255,0.03)] bg-[#0c0c12] p-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-popover p-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             {editingCollectionHeader && canEditActiveCollectionMetadata ? (
               <div className="space-y-2">
                 <input
                   type="text"
-                  className="w-full rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#08080c] px-2 py-1.5 text-[13px] text-[#F5F0EB]"
+                  className="w-full rounded-lg border border-border bg-inset px-2 py-1.5 text-compact text-foreground"
                   value={headerCollection.name}
                   onChange={(e) =>
                     setCollectionCopyEdits((prev) => ({
@@ -1285,7 +1315,7 @@ export default function ProductDirectoryPage() {
                   }
                 />
                 <textarea
-                  className="min-h-[52px] w-full resize-none rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#08080c] px-2 py-1.5 text-[11px] text-[#9B9590]"
+                  className="min-h-[52px] w-full resize-none rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-muted-foreground"
                   value={headerCollection.description ?? ""}
                   placeholder="Description"
                   onChange={(e) =>
@@ -1302,17 +1332,20 @@ export default function ProductDirectoryPage() {
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    className="text-[10px] text-[#C9A96E]"
+                    className="text-2xs text-brand-cta"
                     onClick={() => {
                       setEditingCollectionHeader(false);
-                      toast("Collection saved (demo — not persisted)");
+                      toast({
+                        title: "Collection saved (demo — not persisted)",
+                        tone: "success",
+                      });
                     }}
                   >
                     Save
                   </button>
                   <button
                     type="button"
-                    className="text-[10px] text-[#6B6560]"
+                    className="text-2xs text-muted-foreground"
                     onClick={() => {
                       setCollectionCopyEdits((prev) => {
                         const next = { ...prev };
@@ -1329,13 +1362,13 @@ export default function ProductDirectoryPage() {
             ) : (
               <>
                 <div className="mb-1 flex flex-wrap items-center gap-2">
-                  <h3 className="text-[14px] font-medium text-[#F5F0EB]">{headerCollection.name}</h3>
+                  <h3 className="text-base font-medium text-foreground">{headerCollection.name}</h3>
                   <ScopeBadge scope={collectionScopeForBadge(activeCollectionMeta)} teams={MOCK_TEAMS} />
                 </div>
                 {headerCollection.description ? (
-                  <p className="text-[11px] text-[#9B9590]">{headerCollection.description}</p>
+                  <p className="text-xs text-muted-foreground">{headerCollection.description}</p>
                 ) : null}
-                <p className="mt-1 text-[10px] text-[#6B6560]">
+                <p className="mt-1 text-2xs text-muted-foreground">
                   {activeCollectionProductCount} products
                   {activeCollectionMeta.ownerName ? ` · Created by ${activeCollectionMeta.ownerName}` : ""}
                 </p>
@@ -1347,7 +1380,7 @@ export default function ProductDirectoryPage() {
               {canEditActiveCollectionMetadata && (
                 <button
                   type="button"
-                  className="text-[10px] text-[#9B9590] transition-colors hover:text-[#F5F0EB]"
+                  className="text-2xs text-muted-foreground transition-colors hover:text-foreground"
                   onClick={() => setEditingCollectionHeader(true)}
                 >
                   Edit
@@ -1356,8 +1389,8 @@ export default function ProductDirectoryPage() {
               {canShareActiveCollection && (
                 <button
                   type="button"
-                  className="text-[10px] text-[#C9A96E] transition-colors hover:text-[#D4B383]"
-                  onClick={() => toast("Share with team (demo)")}
+                  className="text-2xs text-brand-cta transition-colors hover:text-[#D4B383]"
+                  onClick={() => toast({ title: "Share with team (demo)", tone: "success" })}
                 >
                   Share with…
                 </button>
@@ -1510,15 +1543,15 @@ export default function ProductDirectoryPage() {
           )}
 
           {sortedProducts.length === 0 && (
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-8 text-center">
-              <Search className="mx-auto mb-3 h-6 w-6 text-[#4A4540]" aria-hidden />
-              <p className="mb-1 text-[13px] font-medium text-[#F5F0EB]">No products match</p>
-              <p className="mb-4 text-[11px] text-[#6B6560]">Your current filters are too narrow.</p>
+            <div className="rounded-xl border border-border bg-white/[0.02] p-8 text-center">
+              <Search className="mx-auto mb-3 h-6 w-6 text-muted-foreground/65" aria-hidden />
+              <p className="mb-1 text-compact font-medium text-foreground">No products match</p>
+              <p className="mb-4 text-xs text-muted-foreground">Your current filters are too narrow.</p>
               {emptyStateHint ? (
                 <button
                   type="button"
                   onClick={emptyStateHint.onClear}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.12)] bg-[rgba(201,169,110,0.06)] px-3 py-1.5 text-[11px] text-[#C9A96E] transition-colors hover:bg-[rgba(201,169,110,0.10)]"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.12)] bg-[rgba(201,169,110,0.06)] px-3 py-1.5 text-xs text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.10)]"
                 >
                   {`Remove ${emptyStateHint.label} filter → ${emptyStateHint.count} result${emptyStateHint.count === 1 ? "" : "s"}`}
                 </button>
@@ -1526,7 +1559,7 @@ export default function ProductDirectoryPage() {
                 <button
                   type="button"
                   onClick={clearAllFilters}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-[11px] text-[#9B9590] transition-colors hover:bg-white/[0.06]"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-white/[0.06]"
                 >
                   Clear all filters
                 </button>
@@ -1581,8 +1614,8 @@ export default function ProductDirectoryPage() {
       )}
 
       {bulkCollectionOpen && (
-        <div className="fixed bottom-20 left-1/2 z-[50] w-64 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0c0c12] py-1 shadow-2xl">
-          <p className="px-3 py-2 text-[9px] uppercase tracking-wider text-[#4A4540]">
+        <div className="fixed bottom-20 left-1/2 z-[50] w-64 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl border border-border bg-popover py-1 shadow-2xl">
+          <p className="px-3 py-2 text-[9px] uppercase tracking-wider text-muted-foreground/65">
             Add {selectedProductIds.size} products to…
           </p>
           {[...availableCollections]
@@ -1604,7 +1637,7 @@ export default function ProductDirectoryPage() {
                 setBulkCollectionOpen(false);
                 openCreateCollectionModal("bulk");
               }}
-              className="flex w-full items-center gap-1 px-3 py-2 text-left text-xs text-[#C9A96E] transition-colors hover:bg-white/[0.04]"
+              className="flex w-full items-center gap-1 px-3 py-2 text-left text-xs text-brand-cta transition-colors hover:bg-white/[0.04]"
             >
               + New Collection
             </button>
@@ -1613,13 +1646,13 @@ export default function ProductDirectoryPage() {
       )}
 
       {selectedProductIds.size > 0 && !compareMode && mainTab === "browse" && (
-        <div className="fixed bottom-6 left-1/2 z-50 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center gap-3 rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#0c0c12]/95 px-5 py-3 shadow-2xl backdrop-blur-xl">
-          <span className="text-[12px] font-medium text-[#F5F0EB]">{selectedProductIds.size} selected</span>
+        <div className="fixed bottom-6 left-1/2 z-50 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center gap-3 rounded-2xl border border-border bg-popover/95 px-5 py-3 shadow-2xl backdrop-blur-xl">
+          <span className="text-sm font-medium text-foreground">{selectedProductIds.size} selected</span>
           <div className="h-5 w-px bg-white/[0.06]" />
           <button
             type="button"
             onClick={() => setBulkCollectionOpen(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.08)] px-3 py-1.5 text-[11px] text-[#C9A96E] transition-colors hover:bg-[rgba(201,169,110,0.12)]"
+            className="flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.08)] px-3 py-1.5 text-xs text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.12)]"
           >
             <Bookmark className="h-3.5 w-3.5" />
             Add to Collection
@@ -1628,7 +1661,7 @@ export default function ProductDirectoryPage() {
             <button
               type="button"
               onClick={bulkRemoveFromActiveCollection}
-              className="flex items-center gap-1.5 rounded-lg border border-[rgba(166,107,107,0.15)] bg-[rgba(166,107,107,0.08)] px-3 py-1.5 text-[11px] text-[#A66B6B] transition-colors hover:bg-[rgba(166,107,107,0.12)]"
+              className="flex items-center gap-1.5 rounded-lg border border-[rgba(166,107,107,0.15)] bg-[rgba(166,107,107,0.08)] px-3 py-1.5 text-xs text-[#A66B6B] transition-colors hover:bg-[rgba(166,107,107,0.12)]"
             >
               <Trash2 className="h-3.5 w-3.5" />
               Remove from Collection
@@ -1649,16 +1682,16 @@ export default function ProductDirectoryPage() {
               setCompareMode(true);
             }}
             className={cn(
-              "flex items-center gap-1.5 rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-[11px] text-[#9B9590] transition-colors disabled:opacity-30",
+              "flex items-center gap-1.5 rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-xs text-muted-foreground transition-colors disabled:opacity-30",
               selectedProductIds.size >= 2 &&
                 selectedProductIds.size <= 4 &&
-                "hover:bg-white/[0.06] hover:text-[#F5F0EB]"
+                "hover:bg-white/[0.06] hover:text-foreground"
             )}
           >
             <LayoutGrid className="h-3.5 w-3.5" />
             Compare
           </button>
-          <button type="button" onClick={clearSelection} className="px-2 py-1.5 text-[11px] text-[#6B6560] transition-colors hover:text-[#9B9590]">
+          <button type="button" onClick={clearSelection} className="px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:text-muted-foreground">
             ✕ Clear
           </button>
         </div>
@@ -1666,32 +1699,32 @@ export default function ProductDirectoryPage() {
 
       {createCollectionOpen && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#0c0c12] p-4">
-            <h3 className="text-sm font-semibold text-[#F5F0EB]">Create Collection</h3>
-            <p className="mt-1 text-[11px] text-[#6B6560]">Set the basics, then save.</p>
+          <div className="w-full max-w-md rounded-2xl border border-border bg-popover p-4">
+            <h3 className="text-sm font-semibold text-foreground">Create Collection</h3>
+            <p className="mt-1 text-xs text-muted-foreground">Set the basics, then save.</p>
             <div className="mt-3 space-y-2">
               <input
                 value={createCollectionName}
                 onChange={(e) => setCreateCollectionName(e.target.value)}
                 placeholder="Collection name"
-                className="w-full rounded-lg border border-white/[0.08] bg-[#08080c] px-3 py-2 text-[12px] text-[#F5F0EB] outline-none"
+                className="w-full rounded-lg border border-border bg-inset px-3 py-2 text-sm text-foreground outline-none"
               />
               <textarea
                 value={createCollectionDescription}
                 onChange={(e) => setCreateCollectionDescription(e.target.value)}
                 rows={2}
                 placeholder="Description (optional)"
-                className="w-full resize-none rounded-lg border border-white/[0.08] bg-[#08080c] px-3 py-2 text-[12px] text-[#F5F0EB] outline-none"
+                className="w-full resize-none rounded-lg border border-border bg-inset px-3 py-2 text-sm text-foreground outline-none"
               />
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setCreateCollectionScope("private")}
                   className={cn(
-                    "rounded-lg border px-3 py-1.5 text-[11px]",
+                    "rounded-lg border px-3 py-1.5 text-xs",
                     createCollectionScope === "private"
-                      ? "border-[#C9A96E] bg-[rgba(201,169,110,0.12)] text-[#F5F0EB]"
-                      : "border-white/[0.08] text-[#9B9590]"
+                      ? "border-brand-cta bg-[rgba(201,169,110,0.12)] text-foreground"
+                      : "border-border text-muted-foreground"
                   )}
                 >
                   Private
@@ -1700,10 +1733,10 @@ export default function ProductDirectoryPage() {
                   type="button"
                   onClick={() => setCreateCollectionScope("team")}
                   className={cn(
-                    "rounded-lg border px-3 py-1.5 text-[11px]",
+                    "rounded-lg border px-3 py-1.5 text-xs",
                     createCollectionScope === "team"
-                      ? "border-[#C9A96E] bg-[rgba(201,169,110,0.12)] text-[#F5F0EB]"
-                      : "border-white/[0.08] text-[#9B9590]"
+                      ? "border-brand-cta bg-[rgba(201,169,110,0.12)] text-foreground"
+                      : "border-border text-muted-foreground"
                   )}
                 >
                   Team
@@ -1713,7 +1746,7 @@ export default function ProductDirectoryPage() {
                 <select
                   value={createCollectionTeamId}
                   onChange={(e) => setCreateCollectionTeamId(e.target.value)}
-                  className="w-full rounded-lg border border-white/[0.08] bg-[#08080c] px-3 py-2 text-[12px] text-[#F5F0EB] outline-none"
+                  className="w-full rounded-lg border border-border bg-inset px-3 py-2 text-sm text-foreground outline-none"
                 >
                   {myCollectionTeams.map((t) => (
                     <option key={t.id} value={t.id}>
@@ -1726,14 +1759,14 @@ export default function ProductDirectoryPage() {
             <div className="mt-3 flex justify-end gap-2">
               <button
                 type="button"
-                className="rounded-lg px-3 py-1.5 text-[11px] text-[#9B9590]"
+                className="rounded-lg px-3 py-1.5 text-xs text-muted-foreground"
                 onClick={() => setCreateCollectionOpen(false)}
               >
                 Cancel
               </button>
               <button
                 type="button"
-                className="rounded-lg bg-[#C9A96E] px-3 py-1.5 text-[11px] font-medium text-[#08080c]"
+                className="rounded-lg bg-brand-cta px-3 py-1.5 text-xs font-medium text-[#08080c]"
                 onClick={submitCreateCollectionModal}
               >
                 Create
@@ -1749,10 +1782,10 @@ export default function ProductDirectoryPage() {
           if (!open) cancelLeavePartnerTab();
         }}
       >
-        <DialogContent className="border-white/[0.08] bg-[#0c0c12] text-[#F5F5F5] sm:max-w-md">
+        <DialogContent className="border-border bg-popover text-foreground sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Leave Partner portal?</DialogTitle>
-            <DialogDescription className="text-[#9B9590]">
+            <DialogDescription className="text-muted-foreground">
               You have unsaved edits. Switching tabs will discard your draft for this session.
             </DialogDescription>
           </DialogHeader>

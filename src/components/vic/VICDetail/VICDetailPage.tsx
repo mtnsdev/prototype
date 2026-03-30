@@ -123,7 +123,7 @@ export default function VICDetailPage({ vicId }: Props) {
     acuityRunning
       ? "text-[var(--muted-info-text)]"
       : acuityDaysAgo == null
-        ? "text-[rgba(245,245,245,0.5)]"
+        ? "text-muted-foreground/75"
         : acuityDaysAgo <= 7
           ? "text-[var(--muted-success-text)]"
           : acuityDaysAgo <= 30
@@ -142,21 +142,21 @@ export default function VICDetailPage({ vicId }: Props) {
 
   if (loading) {
     return (
-      <div className="h-full overflow-y-auto bg-[#08080c]">
+      <div className="h-full overflow-y-auto bg-inset">
         <div className="max-w-3xl mx-auto p-6 space-y-6">
           <div className="h-5 w-32 bg-white/10 rounded animate-pulse" />
           <div className="flex gap-4">
             <div className="h-9 w-48 bg-white/10 rounded animate-pulse" />
             <div className="h-9 w-24 bg-white/10 rounded animate-pulse" />
           </div>
-          <div className="flex gap-2 border-b border-[rgba(255,255,255,0.08)] pb-3">
+          <div className="flex gap-2 border-b border-border pb-3">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="h-8 w-8 rounded-full bg-white/10 animate-pulse" />
             ))}
           </div>
           <div className="space-y-4">
-            <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-4 h-40 animate-pulse" />
-            <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-4 h-24 animate-pulse" />
+            <div className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-4 h-40 animate-pulse" />
+            <div className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-4 h-24 animate-pulse" />
           </div>
         </div>
       </div>
@@ -170,9 +170,9 @@ export default function VICDetailPage({ vicId }: Props) {
           <div className="w-14 h-14 rounded-full bg-[var(--muted-error-bg)] flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl text-[var(--muted-error-text)]">!</span>
           </div>
-          <h2 className="text-lg font-semibold text-[#F5F5F5] mb-2">VIC not found</h2>
-          <p className="text-sm text-[rgba(245,245,245,0.6)] mb-4">{error ?? "This VIC may have been removed or you don’t have access."}</p>
-          <Link href="/dashboard/vics" className="inline-flex items-center gap-2 text-sm text-[rgba(245,245,245,0.8)] hover:text-[#F5F5F5]">
+          <h2 className="text-lg font-semibold text-foreground mb-2">VIC not found</h2>
+          <p className="text-sm text-muted-foreground mb-4">{error ?? "This VIC may have been removed or you don’t have access."}</p>
+          <Link href="/dashboard/vics" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft size={16} />
             Back to VICs
           </Link>
@@ -191,12 +191,12 @@ export default function VICDetailPage({ vicId }: Props) {
   ].filter(Boolean);
 
   return (
-    <div className="h-full overflow-y-auto bg-[#08080c]">
+    <div className="h-full overflow-y-auto bg-inset">
       {IS_PREVIEW_MODE && <PreviewBanner feature="VIC Profile" variant="compact" sampleDataOnly />}
       <div className="max-w-6xl mx-auto p-6 space-y-6">
         <Link
           href="/dashboard/vics"
-          className="inline-flex items-center gap-2 text-sm text-[rgba(245,245,245,0.6)] hover:text-[#F5F5F5]"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft size={16} />
           Back to VICs
@@ -206,9 +206,9 @@ export default function VICDetailPage({ vicId }: Props) {
           <div className="flex items-start gap-4 min-w-0">
             <ImageWithFallback fallbackType="avatar" alt={vic.full_name ?? "VIC"} name={vic.full_name ?? "?"} className="w-16 h-16 shrink-0" />
             <div className="min-w-0">
-              <h1 className="text-2xl font-semibold text-[#F5F5F5] tracking-tight">{vic.full_name}</h1>
+              <h1 className="text-2xl font-semibold text-foreground tracking-tight">{vic.full_name}</h1>
             {line2Parts.length > 0 && (
-              <p className="text-sm text-[rgba(245,245,245,0.55)] mt-1">
+              <p className="text-sm text-muted-foreground/75 mt-1">
                 {line2Parts.join(" · ")}
               </p>
             )}
@@ -218,12 +218,12 @@ export default function VICDetailPage({ vicId }: Props) {
           <div className="flex items-center gap-1">
             {canEdit && (
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditModalOpen(true)} title="Edit">
-                <Pencil size={16} className="text-[rgba(245,245,245,0.8)]" />
+                <Pencil size={16} className="text-muted-foreground" />
               </Button>
             )}
             {canShare && (
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShareModalOpen(true)} title="Share">
-                <Share2 size={16} className="text-[rgba(245,245,245,0.8)]" />
+                <Share2 size={16} className="text-muted-foreground" />
               </Button>
             )}
             <DropdownMenu>
@@ -231,7 +231,7 @@ export default function VICDetailPage({ vicId }: Props) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 gap-1 text-[rgba(245,245,245,0.8)]"
+                  className="h-8 gap-1 text-muted-foreground"
                   disabled={acuityRunning}
                   title="Run Acuity"
                 >
@@ -291,13 +291,12 @@ export default function VICDetailPage({ vicId }: Props) {
         </div>
       </div>
 
-      {deleteModalOpen && (
-        <DeleteConfirmModal
-          vic={vic}
-          onClose={() => setDeleteModalOpen(false)}
-          onConfirm={handleDeleteSuccess}
-        />
-      )}
+      <DeleteConfirmModal
+        open={deleteModalOpen}
+        vic={vic}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleDeleteSuccess}
+      />
       {editModalOpen && (
         <AddEditVICModal
           vic={vic}

@@ -54,7 +54,7 @@ const EVENT_GRADIENT: Record<EventType, string> = {
 };
 
 const AVATAR_COLORS = [
-  "bg-slate-700",
+  "bg-neutral-800",
   "bg-zinc-700",
   "bg-stone-700",
   "bg-neutral-700",

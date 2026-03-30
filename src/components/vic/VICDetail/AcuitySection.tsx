@@ -31,13 +31,13 @@ function confidenceBadgeClass(level: string): string {
     case "LOW":
       return "bg-[var(--muted-error-bg)] text-[var(--muted-error-text)] border border-[var(--muted-error-border)]";
     default:
-      return "bg-white/10 text-[rgba(245,245,245,0.8)]";
+      return "bg-white/10 text-muted-foreground";
   }
 }
 
 function SectionHeader({ children, ...props }: React.ComponentPropsWithoutRef<"h2">) {
   return (
-    <h2 {...props} className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.6)] mt-4 mb-2 first:mt-0 border-b border-[rgba(255,255,255,0.08)] pb-1.5">
+    <h2 {...props} className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-4 mb-2 first:mt-0 border-b border-border pb-1.5">
       {children}
     </h2>
   );
@@ -45,7 +45,7 @@ function SectionHeader({ children, ...props }: React.ComponentPropsWithoutRef<"h
 
 function H3Header({ children, ...props }: React.ComponentPropsWithoutRef<"h3">) {
   return (
-    <h3 {...props} className="text-sm font-semibold text-[#F5F5F5] mt-3 mb-1.5">
+    <h3 {...props} className="text-sm font-semibold text-foreground mt-3 mb-1.5">
       {children}
     </h3>
   );
@@ -71,9 +71,9 @@ export default function AcuitySection({ vic, onUpdate }: Props) {
   const acuityStatus = vic.acuity_status ?? (vic as unknown as { acuityStatus?: string }).acuityStatus;
   if (acuityStatus === "not_run") {
     return (
-      <section id="acuity" className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-5">
-        <h3 className="text-sm font-semibold text-[#F5F5F5] mb-3">Acuity Intelligence Profile</h3>
-        <p className="text-sm text-[rgba(245,245,245,0.6)] mb-4">
+      <section id="acuity" className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-5">
+        <h3 className="text-sm font-semibold text-foreground mb-3">Acuity Intelligence Profile</h3>
+        <p className="text-sm text-muted-foreground mb-4">
           No intelligence profile yet. Run Acuity to generate a detailed profile for this VIC.
         </p>
         <Button onClick={handleRun} disabled={loading}>
@@ -85,8 +85,8 @@ export default function AcuitySection({ vic, onUpdate }: Props) {
 
   if (acuityStatus === "running") {
     return (
-      <section id="acuity" className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-5">
-        <h3 className="text-sm font-semibold text-[#F5F5F5] mb-3">Acuity Intelligence Profile</h3>
+      <section id="acuity" className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-5">
+        <h3 className="text-sm font-semibold text-foreground mb-3">Acuity Intelligence Profile</h3>
         <div className="animate-pulse space-y-2">
           <div className="h-4 bg-white/10 rounded w-3/4" />
           <div className="h-4 bg-white/10 rounded w-full" />
@@ -99,8 +99,8 @@ export default function AcuitySection({ vic, onUpdate }: Props) {
 
   if (acuityStatus === "failed") {
     return (
-      <section id="acuity" className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-5">
-        <h3 className="text-sm font-semibold text-[#F5F5F5] mb-3">Acuity Intelligence Profile</h3>
+      <section id="acuity" className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-5">
+        <h3 className="text-sm font-semibold text-foreground mb-3">Acuity Intelligence Profile</h3>
         <p className="text-sm text-[var(--muted-error-text)] mb-4">Acuity failed for this VIC.</p>
         <Button onClick={handleRun} disabled={loading}>
           {loading ? "Retrying…" : "Retry"}
@@ -110,13 +110,13 @@ export default function AcuitySection({ vic, onUpdate }: Props) {
   }
 
   return (
-    <section id="acuity" className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-5">
+    <section id="acuity" className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-5">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-[#F5F5F5]">Acuity Intelligence Profile</h3>
+          <h3 className="text-sm font-semibold text-foreground">Acuity Intelligence Profile</h3>
           <AcuityStatusBadge status={(acuityStatus ?? "not_run") as "not_run" | "running" | "complete" | "failed"} />
           {(vic.acuity_last_run ?? (vic as unknown as { acuityLastRun?: string }).acuityLastRun) && (
-            <span className="text-xs text-[rgba(245,245,245,0.5)]">
+            <span className="text-xs text-muted-foreground/75">
               Last run: {formatDate(vic.acuity_last_run ?? (vic as unknown as { acuityLastRun?: string }).acuityLastRun)}
             </span>
           )}
@@ -131,7 +131,7 @@ export default function AcuitySection({ vic, onUpdate }: Props) {
           content={vic.acuity_profile ?? (vic as unknown as { acuityProfile?: string }).acuityProfile ?? ""}
         />
       ) : (
-        <p className="text-sm text-[rgba(245,245,245,0.5)]">No profile content.</p>
+        <p className="text-sm text-muted-foreground/75">No profile content.</p>
       )}
     </section>
   );

@@ -16,6 +16,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  listMutedCellClass,
+  listPrimaryTextClass,
+  listSurfaceClass,
+  listScrollClass,
+  listTableClass,
+  listTdCheckboxClass,
+  listTdClass,
+  listThCheckboxClass,
+  listThClass,
+  listTheadRowClass,
+  listTbodyRowClass,
+  listSurfaceWithState,
+} from "@/lib/list-ui";
 
 const COLUMNS: { key: string; label: string; sortable?: boolean; className?: string }[] = [
   { key: "_", label: "" },
@@ -74,20 +88,22 @@ export default function ProductListView({
 
   if (isLoading && products.length === 0) {
     return (
-      <div className="p-4 space-y-2">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="h-12 rounded-lg bg-white/5 animate-pulse" />
-        ))}
+      <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden p-3")}>
+        <div className="space-y-2">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-12 animate-pulse rounded-lg bg-white/[0.06]" />
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={cn("overflow-x-auto transition-opacity", isRefetching && "opacity-70")}>
-      <table className="w-full min-w-[1000px]">
+    <div className={cn(listSurfaceWithState({ refetching: isRefetching }), "transition-opacity")}>
+      <table className={listTableClass("min-w-[1000px]")}>
         <thead>
-          <tr className="border-b border-[rgba(255,255,255,0.08)] text-left text-xs font-medium uppercase tracking-wider text-[rgba(245,245,245,0.5)]">
-            <th className="w-10 py-3 pl-4">
+          <tr className={listTheadRowClass}>
+            <th className={listThCheckboxClass} scope="col">
               {!isEnableTab && (
                 <input
                   type="checkbox"
@@ -98,17 +114,15 @@ export default function ProductListView({
               )}
             </th>
             {COLUMNS.filter((c) => c.key !== "_").map((col) => (
-              <th
-                key={col.key}
-                className={cn("py-3 px-2", col.className)}
-              >
+              <th key={col.key} className={cn(listThClass, col.className)} scope="col">
                 {col.sortable ? (
                   <button
                     type="button"
                     onClick={() => handleSort(col.key)}
-                    className="hover:text-[#F5F5F5]"
+                    className="rounded-md hover:bg-white/[0.06] hover:text-foreground"
                   >
-                    {col.label} {sortBy === (col.key === "location" ? "city" : col.key) && (sortOrder === "asc" ? "↑" : "↓")}
+                    {col.label}{" "}
+                    {sortBy === (col.key === "location" ? "city" : col.key) && (sortOrder === "asc" ? "↑" : "↓")}
                   </button>
                 ) : (
                   col.label
@@ -123,11 +137,8 @@ export default function ProductListView({
             const ver = (p.verification_status ?? "unverified") as keyof typeof VERIFICATION_BADGES;
             const Icon = CATEGORY_ICONS[p.category];
             return (
-              <tr
-                key={id}
-                className="border-b border-[rgba(255,255,255,0.06)] hover:bg-white/[0.05]"
-              >
-                <td className="w-10 py-2 pl-4">
+              <tr key={id} className={listTbodyRowClass}>
+                <td className={listTdCheckboxClass}>
                   {!isEnableTab && (
                     <input
                       type="checkbox"
@@ -137,53 +148,57 @@ export default function ProductListView({
                     />
                   )}
                 </td>
-                <td className="py-2 px-2">
-                  <Link href={`/dashboard/products/${id}`} className="flex items-center gap-3 min-w-0 group">
-                    <span className="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-zinc-800 ring-1 ring-white/10">
+                <td className={listTdClass}>
+                  <Link href={`/dashboard/products/${id}`} className="group flex min-w-0 items-center gap-3">
+                    <span className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-white/[0.06] ring-1 ring-white/[0.08]">
                       <ImageWithFallback
                         fallbackType="product"
                         src={p.hero_image_url}
                         alt={p.name ?? ""}
                         productCategory={p.category as ProductCategory}
-                        className="w-full h-full object-cover rounded-lg opacity-90 group-hover:opacity-100 transition-opacity"
+                        className="h-full w-full rounded-lg object-cover opacity-90 transition-opacity group-hover:opacity-100"
                       />
                     </span>
-                    <span className="font-semibold text-[#F5F5F5] group-hover:underline truncate">
-                      {searchQuery ? highlightSearch(p.name || "—", searchQuery) : (p.name || "—")}
+                    <span className={cn(listPrimaryTextClass, "truncate group-hover:underline")}>
+                      {searchQuery ? highlightSearch(p.name || "—", searchQuery) : p.name || "—"}
                     </span>
                   </Link>
                 </td>
-                <td className="py-2 px-2 text-sm">
+                <td className={listTdClass}>
                   <span className="inline-flex items-center gap-1.5">
-                    {Icon && <Icon size={14} className="text-[rgba(245,245,245,0.6)]" />}
+                    {Icon && <Icon size={14} className="text-muted-foreground" />}
                     {CATEGORY_LABELS[p.category] ?? p.category}
                   </span>
                 </td>
-                <td className="py-2 px-2 text-sm text-[rgba(245,245,245,0.8)]">
+                <td className={cn(listTdClass, listMutedCellClass)}>
                   {[p.city, (p.country && COUNTRY_NAMES[p.country]) || p.country].filter(Boolean).join(", ") || "—"}
                 </td>
-                <td className="py-2 px-2">
-                  <span className="text-xs px-1.5 py-0.5 rounded border border-[rgba(255,255,255,0.15)] bg-white/5 text-[rgba(245,245,245,0.8)] capitalize">
+                <td className={listTdClass}>
+                  <span className="rounded border border-border-strong bg-muted/30 px-1.5 py-0.5 text-xs capitalize text-muted-foreground">
                     {p.status ?? "—"}
                   </span>
                 </td>
-                <td className="py-2 px-2 text-sm">
-                  <span className="text-xs px-1.5 py-0.5 rounded border border-[rgba(255,255,255,0.15)] text-[rgba(245,245,245,0.8)]">
+                <td className={listTdClass}>
+                  <span className="rounded border border-border-strong px-1.5 py-0.5 text-xs text-muted-foreground">
                     {p.partnership_tier ? PARTNERSHIP_TIER_LABELS[p.partnership_tier] : "—"}
                   </span>
                 </td>
-                <td className="py-2 px-2 text-sm">
-                  {p.price_range ? PRICE_RANGE_DISPLAY[p.price_range] : "—"}
-                </td>
-                <td className="py-2 px-2">
-                  <span className={cn("text-xs px-1.5 py-0.5 rounded border", VERIFICATION_BADGES[ver]?.variant === "default" && "bg-[var(--muted-success-bg)] text-[var(--muted-success-text)]")}>
+                <td className={listTdClass}>{p.price_range ? PRICE_RANGE_DISPLAY[p.price_range] : "—"}</td>
+                <td className={listTdClass}>
+                  <span
+                    className={cn(
+                      "rounded border px-1.5 py-0.5 text-xs",
+                      VERIFICATION_BADGES[ver]?.variant === "default" &&
+                        "border-[var(--muted-success-border)] bg-[var(--muted-success-bg)] text-[var(--muted-success-text)]"
+                    )}
+                  >
                     {VERIFICATION_BADGES[ver]?.label ?? ver}
                   </span>
                 </td>
-                <td className="py-2 px-2">
+                <td className={listTdClass}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-[rgba(245,245,245,0.6)]">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
                         <MoreHorizontal size={16} />
                       </Button>
                     </DropdownMenuTrigger>

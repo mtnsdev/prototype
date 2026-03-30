@@ -12,7 +12,6 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { Info, RefreshCw, Shield, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PageSearchField } from "@/components/ui/page-search-field";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,14 +24,7 @@ import { dataSourceTypeToPolicySourceId } from "@/lib/knowledgeDocumentScope";
 import { useToast } from "@/contexts/ToastContext";
 import { useKvShareSuggestions } from "@/contexts/KvShareSuggestionsContext";
 import { useTeams } from "@/contexts/TeamsContext";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
 import { fetchKnowledgeSources, fetchKnowledgeDocuments } from "@/lib/knowledge-vault-api";
 import type { DataLayer, DataSource, KnowledgeDocument } from "@/types/knowledge-vault";
 import KnowledgeVaultFilters, { type KnowledgeVaultFiltersState } from "./KnowledgeVaultFilters";
@@ -367,7 +359,7 @@ export default function KnowledgeVaultPage() {
       const d = documents.find((x) => x.id === docId);
       if (d && canAdminRescopeDocument(d)) applyDocScopeOverride(d, teamId);
       const label = MOCK_TEAMS.find((t) => t.id === teamId)?.name ?? teamId;
-      toast(`Access: ${label}`);
+      toast({ title: `Access: ${label}`, tone: "success" });
     });
     return () => kvShare.setApprovalHandler(null);
   }, [kvShare, documents, applyDocScopeOverride, toast]);
@@ -383,7 +375,7 @@ export default function KnowledgeVaultPage() {
       const name = team?.name ?? "team";
       if (isAdmin && canAdminRescopeDocument(doc)) {
         applyDocScopeOverride(doc, teamId);
-        toast(`Access: ${name}`);
+        toast({ title: `Access: ${name}`, tone: "success" });
         return;
       }
       if (!isAdmin) {
@@ -397,10 +389,14 @@ export default function KnowledgeVaultPage() {
           title: "Suggestion sent",
           description: `Suggested sharing "${doc.title}" with ${name}. An admin will review.`,
           duration: 4000,
+          tone: "success",
         });
         return;
       }
-      toast("Access can't be changed for this document.");
+      toast({
+        title: "Access can't be changed for this document.",
+        tone: "destructive",
+      });
     },
     [isAdmin, applyDocScopeOverride, toast, kvShare]
   );
@@ -436,6 +432,7 @@ export default function KnowledgeVaultPage() {
           title: "Suggestion sent",
           description: `Suggested sharing ${targets.length} document${targets.length > 1 ? "s" : ""} with ${name}. An admin will review.`,
           duration: 4000,
+          tone: "success",
         });
         return;
       }
@@ -456,17 +453,23 @@ export default function KnowledgeVaultPage() {
         }
         return next;
       });
-      toast(`Access updated for applicable documents — ${name}`);
+      toast({
+        title: `Access updated for applicable documents — ${name}`,
+        tone: "success",
+      });
     },
     [isAdmin, selectedDocIds, visibleDocuments, toast, kvShare, auditActorLabel]
   );
 
   const bulkDownload = useCallback(() => {
     if (!resolvedPolicies.canExportDocuments) {
-      toast("Your team policy doesn’t allow exporting documents.");
+      toast({
+        title: "Your team policy doesn’t allow exporting documents.",
+        tone: "destructive",
+      });
       return;
     }
-    toast("Download started (demo)");
+    toast({ title: "Download started (demo)", tone: "success" });
   }, [toast, resolvedPolicies.canExportDocuments]);
 
   const openDocument = useCallback((doc: KnowledgeDocument) => {
@@ -481,7 +484,11 @@ export default function KnowledgeVaultPage() {
 
   const confirmMoveToTrash = useCallback(() => {
     if (!deleteModal) return;
-    toast("Documents moved to trash (demo). They will be removed after 30 days unless restored.");
+    toast({
+      title: "Moved to trash (demo)",
+      description: "Documents will be removed after 30 days unless restored.",
+      tone: "success",
+    });
     if (deleteModal.mode === "bulk") {
       setSelectedDocIds([]);
     } else if (selectedDoc?.id === deleteModal.doc.id) {
@@ -648,39 +655,39 @@ export default function KnowledgeVaultPage() {
 
   const adminGovernanceFooter =
     isAdmin ? (
-      <div className="mt-8 space-y-3 border-t border-white/[0.06] pt-6">
-        <details className="group rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-          <summary className="cursor-pointer text-xs font-medium text-gray-400 hover:text-gray-300 list-none flex items-center justify-between gap-2">
+      <div className="mt-8 space-y-3 border-t border-border pt-6">
+        <details className="group rounded-xl border border-border bg-white/[0.02] px-4 py-3">
+          <summary className="cursor-pointer text-xs font-medium text-muted-foreground/90 hover:text-foreground list-none flex items-center justify-between gap-2">
             <span>{KV_OFFBOARDING_PLAYBOOK.title}</span>
-            <span className="text-[10px] text-gray-600 group-open:hidden">Show</span>
-            <span className="text-[10px] text-gray-600 hidden group-open:inline">Hide</span>
+            <span className="text-2xs text-muted-foreground/70 group-open:hidden">Show</span>
+            <span className="text-2xs text-muted-foreground/70 hidden group-open:inline">Hide</span>
           </summary>
-          <ul className="mt-3 space-y-2 text-[10px] text-gray-500 list-disc pl-4 leading-relaxed">
+          <ul className="mt-3 space-y-2 text-2xs text-muted-foreground list-disc pl-4 leading-relaxed">
             {KV_OFFBOARDING_PLAYBOOK.bullets.map((b, i) => (
               <li key={i}>{b}</li>
             ))}
           </ul>
         </details>
-        <details className="group rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-          <summary className="cursor-pointer text-xs font-medium text-gray-400 hover:text-gray-300 list-none flex items-center justify-between gap-2">
+        <details className="group rounded-xl border border-border bg-white/[0.02] px-4 py-3">
+          <summary className="cursor-pointer text-xs font-medium text-muted-foreground/90 hover:text-foreground list-none flex items-center justify-between gap-2">
             <span>Access change log — vault &amp; email (this session)</span>
-            <span className="text-[10px] text-gray-600 group-open:hidden">Show</span>
-            <span className="text-[10px] text-gray-600 hidden group-open:inline">Hide</span>
+            <span className="text-2xs text-muted-foreground/70 group-open:hidden">Show</span>
+            <span className="text-2xs text-muted-foreground/70 hidden group-open:inline">Hide</span>
           </summary>
           {kvAccessAuditLog.length === 0 ? (
-            <p className="mt-3 text-[10px] text-gray-600">
+            <p className="mt-3 text-2xs text-muted-foreground/70">
               No access changes yet. Vault document panel, bulk share, and email ingest (thread or attachment access)
               write here in this session (demo only — production should use an immutable audit service).
             </p>
           ) : (
-            <ul className="mt-3 max-h-48 overflow-y-auto space-y-2 text-[10px] text-gray-500">
+            <ul className="mt-3 max-h-48 overflow-y-auto space-y-2 text-2xs text-muted-foreground">
               {kvAccessAuditLog.map((e) => (
                 <li key={e.id} className="border-b border-white/[0.04] pb-2 last:border-0">
-                  <span className="text-gray-400">{new Date(e.at).toLocaleString()}</span>
+                  <span className="text-muted-foreground/90">{new Date(e.at).toLocaleString()}</span>
                   {" · "}
-                  <span className="text-gray-300">{e.actorLabel}</span>
+                  <span className="text-foreground/88">{e.actorLabel}</span>
                   <br />
-                  <span className="text-gray-400 truncate block" title={e.docTitle}>
+                  <span className="text-muted-foreground/90 truncate block" title={e.docTitle}>
                     {e.docTitle}
                   </span>
                   {formatKvAuditScope(e.fromScope)} → {formatKvAuditScope(e.toScope)}
@@ -693,17 +700,17 @@ export default function KnowledgeVaultPage() {
     ) : null;
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col bg-[#08080c] text-[#F5F5F5]">
-      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-[rgba(255,255,255,0.08)] pl-6 pr-[4.5rem] py-3">
+    <div className="flex h-full min-h-0 flex-1 flex-col bg-inset text-foreground">
+      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-border pl-6 pr-[4.5rem] py-3">
         <div className="min-w-0">
-          <h1 className="text-sm font-semibold leading-none text-[#F5F5F5]">Knowledge Vault</h1>
-          <p className="mt-1 text-[11px] leading-snug text-[rgba(245,245,245,0.5)]">
+          <h1 className="text-sm font-semibold leading-none text-foreground">Knowledge Vault</h1>
+          <p className="mt-1 text-xs leading-snug text-muted-foreground/75">
             {vaultDocFiltersActive ? (
               <>
                 {emailOnlyView ? (
                   <>Email ingestion · </>
                 ) : null}
-                <span className="border-b border-dotted border-gray-500 cursor-help" title={VAULT_CATALOG_COUNT_TOOLTIP}>
+                <span className="border-b border-dotted border-input cursor-help" title={VAULT_CATALOG_COUNT_TOOLTIP}>
                   {listCount} documents
                 </span>
                 {emailOnlyView ? null : <> matching · </>}
@@ -712,7 +719,7 @@ export default function KnowledgeVaultPage() {
               </>
             ) : (
               <>
-                <span className="border-b border-dotted border-gray-500 cursor-help" title={VAULT_CATALOG_COUNT_TOOLTIP}>
+                <span className="border-b border-dotted border-input cursor-help" title={VAULT_CATALOG_COUNT_TOOLTIP}>
                   {listCount} documents
                 </span>
                 {" · "}
@@ -726,7 +733,7 @@ export default function KnowledgeVaultPage() {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 border-white/10 px-2.5 text-[11px] text-[#F5F5F5]"
+              className="h-8 border-input px-2.5 text-xs text-foreground"
               onClick={() => {
                 setSelectedDoc(null);
                 setPermissionsOpen(true);
@@ -754,7 +761,7 @@ export default function KnowledgeVaultPage() {
                 <div
                   className={cn(
                     "absolute top-0.5 w-3 h-3 rounded-full transition-transform",
-                    showAllPrivateDocs ? "translate-x-3.5 bg-blue-400" : "translate-x-0.5 bg-gray-500"
+                    showAllPrivateDocs ? "translate-x-3.5 bg-blue-400" : "translate-x-0.5 bg-muted-foreground/40"
                   )}
                 />
               </div>
@@ -764,14 +771,14 @@ export default function KnowledgeVaultPage() {
                 checked={showAllPrivateDocs}
                 onChange={(e) => setShowAllPrivateDocs(e.target.checked)}
               />
-              <span className="text-[10px] text-gray-500">Show all</span>
-              {showAllPrivateDocs && <Shield className="w-3 h-3 text-gray-600 shrink-0" aria-hidden />}
+              <span className="text-2xs text-muted-foreground">Show all</span>
+              {showAllPrivateDocs && <Shield className="w-3 h-3 text-muted-foreground/70 shrink-0" aria-hidden />}
             </label>
           )}
           <Button
             variant="outline"
             size="sm"
-            className="h-8 border-white/10 px-2.5 text-[11px] text-[#F5F5F5]"
+            className="h-8 border-input px-2.5 text-xs text-foreground"
             onClick={load}
             disabled={loading}
           >
@@ -787,7 +794,7 @@ export default function KnowledgeVaultPage() {
       )}
 
       <div className="flex min-h-0 flex-1">
-        <main className="flex-1 min-w-0 overflow-auto flex flex-col bg-[#08080c]">
+        <main className="flex-1 min-w-0 overflow-auto flex flex-col bg-inset">
           <div className="p-4 space-y-4">
             <DataSourceCards
               sources={sources}
@@ -798,20 +805,14 @@ export default function KnowledgeVaultPage() {
               isSourcePolicyBlocked={isSourcePolicyBlocked}
               isAdmin={isAdmin}
             />
-            <div className="flex flex-col gap-2 border-b border-[rgba(255,255,255,0.03)] pb-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
-              <PageSearchField
-                className="min-w-0 w-full sm:min-w-[200px] sm:flex-1"
-                placeholder="Search documents…"
-                aria-label="Search documents"
-                value={searchQuery}
-                onChange={setSearchQuery}
-                disabled={emailOnlyView}
+            <div ref={filtersPanelRef} className="scroll-mt-6">
+              <KnowledgeVaultFilters
+                {...filterPanelProps}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchDisabled={emailOnlyView}
+                hideScopeToolbar={emailOnlyView}
               />
-              {!emailOnlyView && (
-                <div ref={filtersPanelRef} className="min-w-0 w-full scroll-mt-6 sm:flex-1 sm:min-w-[200px]">
-                  <KnowledgeVaultFilters {...filterPanelProps} />
-                </div>
-              )}
             </div>
 
             {emailOnlyView ? (
@@ -821,7 +822,7 @@ export default function KnowledgeVaultPage() {
               </>
             ) : (
               <>
-                <div className="flex items-center gap-2 text-[10px] text-gray-600">
+                <div className="flex items-center gap-2 text-2xs text-muted-foreground/70">
                   <Info className="w-3 h-3 shrink-0" aria-hidden />
                   <span>
                     Enable indexes PDFs, Word docs, spreadsheets, text files, and images. Other file types are
@@ -829,8 +830,8 @@ export default function KnowledgeVaultPage() {
                   </span>
                 </div>
                 {selectedDocIds.length > 0 && (
-                  <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white/[0.03] border border-white/[0.06] rounded-xl">
-                    <span className="text-xs text-gray-400">
+                  <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white/[0.03] border border-border rounded-xl">
+                    <span className="text-xs text-muted-foreground/90">
                       {selectedDocIds.length} document{selectedDocIds.length > 1 ? "s" : ""} selected
                       {allMatchingSelected && totalVisible > 0 ? " · All matching results" : null}
                     </span>
@@ -839,7 +840,7 @@ export default function KnowledgeVaultPage() {
                         <DropdownMenuTrigger asChild>
                           <button
                             type="button"
-                            className="text-[10px] px-3 py-1.5 rounded-lg bg-white/[0.04] text-gray-400 hover:text-white hover:bg-white/[0.06]"
+                            className="text-2xs px-3 py-1.5 rounded-lg bg-white/[0.04] text-muted-foreground/90 hover:text-white hover:bg-white/[0.06]"
                           >
                             {isAdmin ? "Share with…" : "Suggest sharing…"}
                           </button>
@@ -848,7 +849,7 @@ export default function KnowledgeVaultPage() {
                           {MOCK_TEAMS.map((team) => (
                             <DropdownMenuItem
                               key={team.id}
-                              className="text-xs text-gray-400 focus:text-white"
+                              className="text-xs text-muted-foreground/90 focus:text-white"
                               onClick={() => bulkShareWithTeam(team.id)}
                             >
                               {team.name}
@@ -859,7 +860,7 @@ export default function KnowledgeVaultPage() {
                       {resolvedPolicies.canExportDocuments ? (
                         <button
                           type="button"
-                          className="text-[10px] px-3 py-1.5 rounded-lg bg-white/[0.04] text-gray-400 hover:text-white hover:bg-white/[0.06]"
+                          className="text-2xs px-3 py-1.5 rounded-lg bg-white/[0.04] text-muted-foreground/90 hover:text-white hover:bg-white/[0.06]"
                           onClick={bulkDownload}
                         >
                           Download
@@ -868,7 +869,7 @@ export default function KnowledgeVaultPage() {
                       {isAdmin && (
                         <button
                           type="button"
-                          className="text-[10px] px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.06]"
+                          className="text-2xs px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.06]"
                           style={{ color: "#A66B6B" }}
                           onClick={bulkDelete}
                         >
@@ -879,7 +880,7 @@ export default function KnowledgeVaultPage() {
                   </div>
                 )}
                 {showSelectAllMatchingHint && (
-                  <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[#C9A96E]/20 bg-[#C9A96E]/[0.06] px-3 py-2 text-[11px] text-[#D4C4A8]">
+                  <div className="flex flex-wrap items-center gap-2 rounded-lg border border-brand-cta/20 bg-brand-cta/[0.06] px-3 py-2 text-xs text-[#D4C4A8]">
                     <span>
                       All {pageDocIds.length} on this page are selected. Select all {totalVisible} documents
                       matching your filters?
@@ -887,7 +888,7 @@ export default function KnowledgeVaultPage() {
                     <button
                       type="button"
                       onClick={selectAllMatchingVisible}
-                      className="font-medium text-[#C9A96E] underline-offset-2 hover:underline"
+                      className="font-medium text-brand-cta underline-offset-2 hover:underline"
                     >
                       Select all {totalVisible}
                     </button>
@@ -927,7 +928,7 @@ export default function KnowledgeVaultPage() {
                   listRefetching={listRefetching}
                 />
                 {!loading && totalVisible > 0 && (
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/[0.06] text-[11px] text-[var(--text-tertiary)]">
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border text-xs text-[var(--text-tertiary)]">
                     <span className="tabular-nums">
                       Showing {pageSummaryStart}–{pageSummaryEnd} of {totalVisible}
                     </span>
@@ -937,13 +938,13 @@ export default function KnowledgeVaultPage() {
                         type="button"
                         disabled={listPage <= 1}
                         onClick={() => setListPage((p) => Math.max(1, p - 1))}
-                        className="px-2 py-1 rounded-md bg-white/[0.04] text-gray-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+                        className="px-2 py-1 rounded-md bg-white/[0.04] text-muted-foreground/90 hover:text-white disabled:opacity-30 disabled:pointer-events-none"
                       >
                         Prev
                       </button>
                       {pageItems.map((item, idx) =>
                         item === "gap" ? (
-                          <span key={`g-${idx}`} className="px-1 text-gray-600">
+                          <span key={`g-${idx}`} className="px-1 text-muted-foreground/70">
                             …
                           </span>
                         ) : (
@@ -955,7 +956,7 @@ export default function KnowledgeVaultPage() {
                               "min-w-[2rem] px-2 py-1 rounded-md tabular-nums",
                               item === listPage
                                 ? "bg-white/15 text-white"
-                                : "bg-white/[0.04] text-gray-400 hover:text-white"
+                                : "bg-white/[0.04] text-muted-foreground/90 hover:text-white"
                             )}
                           >
                             {item}
@@ -966,7 +967,7 @@ export default function KnowledgeVaultPage() {
                         type="button"
                         disabled={listPage >= totalListPages}
                         onClick={() => setListPage((p) => Math.min(totalListPages, p + 1))}
-                        className="px-2 py-1 rounded-md bg-white/[0.04] text-gray-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+                        className="px-2 py-1 rounded-md bg-white/[0.04] text-muted-foreground/90 hover:text-white disabled:opacity-30 disabled:pointer-events-none"
                       >
                         Next
                       </button>
@@ -1009,56 +1010,36 @@ export default function KnowledgeVaultPage() {
                 title: "Suggestion sent",
                 description: `Suggested sharing "${d.title}" with ${teamName}. An admin will review.`,
                 duration: 4000,
+                tone: "success",
               });
             }}
           />
         )}
       </div>
 
-      <Dialog open={deleteModal != null} onOpenChange={(o) => !o && setDeleteModal(null)}>
-        <DialogContent className="bg-[#0e0e12] border border-white/[0.06] sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-white">Move to trash?</DialogTitle>
-            <DialogDescription className="text-gray-400 text-sm">
-              {deleteModal?.mode === "single" ? (
-                <>
-                  &quot;{deleteModal.doc.title}&quot; will be moved to trash and automatically deleted after 30
-                  days.
-                </>
-              ) : deleteModal?.mode === "bulk" ? (
-                <>
-                  {deleteModal.count} documents will be moved to trash and automatically deleted after 30 days.
-                </>
-              ) : null}
-              <br />
-              <br />
-              An admin can restore these documents within 30 days.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="border-white/[0.06] bg-white/[0.04] text-sm text-gray-300"
-              onClick={() => setDeleteModal(null)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              className="text-sm"
-              style={{
-                background: "rgba(166,107,107,0.10)",
-                border: "1px solid rgba(166,107,107,0.20)",
-                color: "#A66B6B",
-              }}
-              onClick={confirmMoveToTrash}
-            >
-              Move to trash
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DestructiveConfirmDialog
+        open={deleteModal != null}
+        onOpenChange={(o) => !o && setDeleteModal(null)}
+        title="Move to trash?"
+        description={
+          deleteModal?.mode === "single" ? (
+            <>
+              &quot;{deleteModal.doc.title}&quot; will be moved to trash and automatically deleted after 30 days.
+            </>
+          ) : deleteModal?.mode === "bulk" ? (
+            <>
+              {deleteModal.count} document{deleteModal.count !== 1 ? "s" : ""} will be moved to trash and
+              automatically deleted after 30 days.
+            </>
+          ) : null
+        }
+        consequence="An admin can restore these documents within 30 days."
+        confirmLabel="Move to trash"
+        cancelLabel="Cancel"
+        onConfirm={async () => {
+          confirmMoveToTrash();
+        }}
+      />
 
       <ConnectSourceModal open={connectOpen} onClose={() => setConnectOpen(false)} sources={sources} />
     </div>

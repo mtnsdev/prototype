@@ -123,9 +123,9 @@ export default function AddProductModal({ open, onClose, product, onSaved }: Pro
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="bg-[#1a1a1a] border-white/10 max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-accent border-input max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-[#F5F5F5]">{isEdit ? "Edit product" : "Add product"}</DialogTitle>
+          <DialogTitle className="text-foreground">{isEdit ? "Edit product" : "Add product"}</DialogTitle>
         </DialogHeader>
 
         <div className="flex gap-2 mb-4">
@@ -134,7 +134,7 @@ export default function AddProductModal({ open, onClose, product, onSaved }: Pro
               key={s.id}
               className={cn(
                 "flex-1 py-1.5 rounded text-center text-xs font-medium",
-                step === s.id ? "bg-white/15 text-[#F5F5F5]" : "bg-white/5 text-[rgba(245,245,245,0.5)]"
+                step === s.id ? "bg-white/15 text-foreground" : "bg-white/5 text-muted-foreground/75"
               )}
             >
               {s.id}. {s.label}
@@ -154,11 +154,11 @@ export default function AddProductModal({ open, onClose, product, onSaved }: Pro
                   className={cn(
                     "p-4 rounded-xl border text-left transition-colors",
                     category === cat
-                      ? "border-[#F5F5F5] bg-white/10 text-[#F5F5F5]"
-                      : "border-white/10 bg-white/5 text-[rgba(245,245,245,0.8)] hover:border-white/20"
+                      ? "border-[#F5F5F5] bg-white/10 text-foreground"
+                      : "border-input bg-white/5 text-muted-foreground hover:border-white/20"
                   )}
                 >
-                  <Icon className="h-8 w-8 mb-2 text-[rgba(245,245,245,0.8)]" />
+                  <Icon className="h-8 w-8 mb-2 text-muted-foreground" />
                   <span className="text-sm font-medium">{CATEGORY_LABELS[cat]}</span>
                 </button>
               );
@@ -169,12 +169,12 @@ export default function AddProductModal({ open, onClose, product, onSaved }: Pro
         {step === 2 && (
           <div className="space-y-4">
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Name *</Label>
+              <Label className="text-muted-foreground">Name *</Label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Product name (required, max 200 characters)"
-                className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+                className="mt-1 bg-white/5 border-input text-foreground"
                 maxLength={200}
               />
               {name.trim().length > 0 && name.trim().length > 200 && (
@@ -182,20 +182,20 @@ export default function AddProductModal({ open, onClose, product, onSaved }: Pro
               )}
             </div>
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Description</Label>
+              <Label className="text-muted-foreground">Description</Label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Brief description"
                 rows={3}
-                className="mt-1 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)]"
+                className="mt-1 w-full rounded-md border border-input bg-white/5 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/75"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-[rgba(245,245,245,0.8)]">Country *</Label>
+                <Label className="text-muted-foreground">Country *</Label>
                 <Select value={country} onValueChange={setCountry}>
-                  <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]">
+                  <SelectTrigger className="mt-1 bg-white/5 border-input text-foreground">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
@@ -208,37 +208,37 @@ export default function AddProductModal({ open, onClose, product, onSaved }: Pro
                 </Select>
               </div>
               <div>
-                <Label className="text-[rgba(245,245,245,0.8)]">City *</Label>
+                <Label className="text-muted-foreground">City *</Label>
                 <Input
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="City"
-                  className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+                  className="mt-1 bg-white/5 border-input text-foreground"
                 />
               </div>
             </div>
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Region</Label>
+              <Label className="text-muted-foreground">Region</Label>
               <Input
                 value={region}
                 onChange={(e) => setRegion(e.target.value)}
                 placeholder="Region"
-                className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+                className="mt-1 bg-white/5 border-input text-foreground"
               />
             </div>
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Address</Label>
+              <Label className="text-muted-foreground">Address</Label>
               <Input
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="Full address"
-                className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+                className="mt-1 bg-white/5 border-input text-foreground"
               />
             </div>
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Status</Label>
+              <Label className="text-muted-foreground">Status</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as Product["status"])}>
-                <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]">
+                <SelectTrigger className="mt-1 bg-white/5 border-input text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -256,9 +256,9 @@ export default function AddProductModal({ open, onClose, product, onSaved }: Pro
         {step === 3 && category && (
           <div className="space-y-4">
             <div>
-              <Label className="text-[rgba(245,245,245,0.8)]">Subcategory</Label>
+              <Label className="text-muted-foreground">Subcategory</Label>
               <Select value={subcategory} onValueChange={setSubcategory}>
-                <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]">
+                <SelectTrigger className="mt-1 bg-white/5 border-input text-foreground">
                   <SelectValue placeholder="Select subcategory" />
                 </SelectTrigger>
                 <SelectContent>
@@ -273,12 +273,12 @@ export default function AddProductModal({ open, onClose, product, onSaved }: Pro
             {category === "accommodation" && (
               <>
                 <div>
-                  <Label className="text-[rgba(245,245,245,0.8)]">Star rating</Label>
+                  <Label className="text-muted-foreground">Star rating</Label>
                   <Select
                     value={String((product as { star_rating?: number })?.star_rating ?? "")}
                     onValueChange={() => {}}
                   >
-                    <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]">
+                    <SelectTrigger className="mt-1 bg-white/5 border-input text-foreground">
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
@@ -291,30 +291,30 @@ export default function AddProductModal({ open, onClose, product, onSaved }: Pro
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-[rgba(245,245,245,0.8)]">Room count</Label>
+                  <Label className="text-muted-foreground">Room count</Label>
                   <Input
                     type="number"
                     placeholder="e.g. 100"
-                    className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+                    className="mt-1 bg-white/5 border-input text-foreground"
                   />
                 </div>
               </>
             )}
             {category === "activity" && (
               <div>
-                <Label className="text-[rgba(245,245,245,0.8)]">Duration</Label>
+                <Label className="text-muted-foreground">Duration</Label>
                 <Input
                   placeholder="e.g. 2 hours, half day"
-                  className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+                  className="mt-1 bg-white/5 border-input text-foreground"
                 />
               </div>
             )}
             {category === "restaurant" && (
               <>
                 <div>
-                  <Label className="text-[rgba(245,245,245,0.8)]">Michelin stars</Label>
+                  <Label className="text-muted-foreground">Michelin stars</Label>
                   <Select value="" onValueChange={() => {}}>
-                    <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]">
+                    <SelectTrigger className="mt-1 bg-white/5 border-input text-foreground">
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
@@ -327,10 +327,10 @@ export default function AddProductModal({ open, onClose, product, onSaved }: Pro
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-[rgba(245,245,245,0.8)]">Cuisine type</Label>
+                  <Label className="text-muted-foreground">Cuisine type</Label>
                   <Input
                     placeholder="e.g. French, Mediterranean"
-                    className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]"
+                    className="mt-1 bg-white/5 border-input text-foreground"
                   />
                 </div>
               </>
@@ -338,17 +338,17 @@ export default function AddProductModal({ open, onClose, product, onSaved }: Pro
             {category === "cruise" && (
               <>
                 <div>
-                  <Label className="text-[rgba(245,245,245,0.8)]">Ship name</Label>
-                  <Input placeholder="e.g. Seabourn Odyssey" className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]" />
+                  <Label className="text-muted-foreground">Ship name</Label>
+                  <Input placeholder="e.g. Seabourn Odyssey" className="mt-1 bg-white/5 border-input text-foreground" />
                 </div>
                 <div>
-                  <Label className="text-[rgba(245,245,245,0.8)]">Cruise line</Label>
-                  <Input placeholder="e.g. Seabourn" className="mt-1 bg-white/5 border-white/10 text-[#F5F5F5]" />
+                  <Label className="text-muted-foreground">Cruise line</Label>
+                  <Input placeholder="e.g. Seabourn" className="mt-1 bg-white/5 border-input text-foreground" />
                 </div>
               </>
             )}
             {["dmc", "service_provider", "transportation"].includes(category) && (
-              <p className="text-sm text-[rgba(245,245,245,0.5)]">
+              <p className="text-sm text-muted-foreground/75">
                 Category-specific fields can be added on the product detail page after creation.
               </p>
             )}
@@ -359,11 +359,11 @@ export default function AddProductModal({ open, onClose, product, onSaved }: Pro
 
         <DialogFooter className="gap-2 flex-wrap">
           {step > 1 ? (
-            <Button variant="outline" onClick={handleBack} className="border-white/10 text-[#F5F5F5]">
+            <Button variant="outline" onClick={handleBack} className="border-input text-foreground">
               <ChevronLeft size={16} className="mr-1" /> Back
             </Button>
           ) : (
-            <Button variant="outline" onClick={onClose} className="border-white/10 text-[#F5F5F5]">
+            <Button variant="outline" onClick={onClose} className="border-input text-foreground">
               Cancel
             </Button>
           )}

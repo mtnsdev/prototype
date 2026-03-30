@@ -15,6 +15,12 @@ export type OnboardingModalProps = {
 
 type Step = 1 | 2 | 3;
 
+const STEP_LIVE_MESSAGES: Record<Step, string> = {
+  1: "Welcome. Step 1 of 3.",
+  2: "Tip: use chat to ask about commissions and hotel details. Step 2 of 3.",
+  3: "Connect knowledge sources for accurate answers. Step 3 of 3.",
+};
+
 export function OnboardingModal({ onComplete, onSkip, onGoToWizard }: OnboardingModalProps) {
   const [step, setStep] = useState<Step>(1);
   const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
@@ -75,6 +81,18 @@ export function OnboardingModal({ onComplete, onSkip, onGoToWizard }: Onboarding
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
       style={{ pointerEvents: "auto" }}
     >
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {STEP_LIVE_MESSAGES[step]}
+      </p>
+      {(step === 2 || step === 3) && (
+        <button
+          type="button"
+          onClick={handleSkip}
+          className="absolute right-4 top-4 z-[102] rounded-md border border-border bg-background/80 px-3 py-1.5 text-compact text-muted-foreground backdrop-blur-sm transition-colors hover:bg-muted hover:text-foreground"
+        >
+          Skip tour
+        </button>
+      )}
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -98,28 +116,28 @@ export function OnboardingModal({ onComplete, onSkip, onGoToWizard }: Onboarding
 
       {/* Step 1: Welcome */}
       {step === 1 && (
-        <div className="relative bg-[#161616] border border-[rgba(255,255,255,0.1)] rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10">
+        <div className="relative bg-card border border-input rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-white/5 flex items-center justify-center border border-input">
             <Image src="/TL_logo.svg" alt="TravelLustre" width={40} height={40} />
           </div>
-          <h1 id="onboarding-title" className="text-[22px] font-semibold text-[#F5F5F5] mb-3">
+          <h1 id="onboarding-title" className="text-[22px] font-semibold text-foreground mb-3">
             Welcome to TravelLustre
           </h1>
-          <p className="text-[14px] text-[rgba(245,245,245,0.7)] leading-relaxed mb-8">
+          <p className="text-base text-muted-foreground leading-relaxed mb-8">
             Your AI assistant for luxury travel intelligence. Ask questions, find commissions, and build
             itineraries — all powered by your connected knowledge sources.
           </p>
           <div className="flex flex-col gap-3">
             <Button
               onClick={() => setStep(2)}
-              className="w-full bg-[#AE8550] hover:bg-[#C4975E] text-white"
+              className="w-full bg-brand-chat-user hover:bg-[#C4975E] text-white"
             >
               Get started →
             </Button>
             <button
               type="button"
               onClick={handleSkip}
-              className="text-[13px] text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] underline underline-offset-2"
+              className="text-compact text-muted-foreground/75 hover:text-foreground underline underline-offset-2"
             >
               Skip for now
             </button>
@@ -130,8 +148,8 @@ export function OnboardingModal({ onComplete, onSkip, onGoToWizard }: Onboarding
       {/* Step 2: Chat coach mark */}
       {step === 2 && (
         <div className="relative max-w-sm w-full mx-4">
-          <div className="bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] rounded-xl p-4 shadow-xl">
-            <p className="text-[14px] text-[#F5F5F5] leading-relaxed">
+          <div className="bg-accent border border-input rounded-xl p-4 shadow-xl">
+            <p className="text-base text-foreground leading-relaxed">
               Ask anything — commission rates, hotel amenities, GDS codes. TravelLustre searches your
               knowledge sources to answer.
             </p>
@@ -139,7 +157,7 @@ export function OnboardingModal({ onComplete, onSkip, onGoToWizard }: Onboarding
               <Button variant="outline" size="sm" onClick={() => setStep(1)} className="border-white/20">
                 ← Back
               </Button>
-              <Button size="sm" onClick={() => setStep(3)} className="bg-[#AE8550] hover:bg-[#C4975E]">
+              <Button size="sm" onClick={() => setStep(3)} className="bg-brand-chat-user hover:bg-[#C4975E]">
                 Next →
               </Button>
             </div>
@@ -147,7 +165,7 @@ export function OnboardingModal({ onComplete, onSkip, onGoToWizard }: Onboarding
           <button
             type="button"
             onClick={handleSkip}
-            className="block mt-3 text-[12px] text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] underline"
+            className="block mt-3 text-sm text-muted-foreground/75 hover:text-foreground underline"
           >
             Skip for now
           </button>
@@ -157,19 +175,19 @@ export function OnboardingModal({ onComplete, onSkip, onGoToWizard }: Onboarding
       {/* Step 3: Knowledge coach mark */}
       {step === 3 && (
         <div className="relative max-w-sm w-full mx-4">
-          <div className="bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] rounded-xl p-4 shadow-xl">
-            <p className="text-[14px] text-[#F5F5F5] leading-relaxed">
+          <div className="bg-accent border border-input rounded-xl p-4 shadow-xl">
+            <p className="text-base text-foreground leading-relaxed">
               These are the sources TravelLustre searches. Connect them to get accurate, up-to-date
               answers.
             </p>
             <div className="flex flex-col gap-2 mt-4">
               <Button
                 onClick={onGoToWizard}
-                className="w-full bg-[#AE8550] hover:bg-[#C4975E] text-white"
+                className="w-full bg-brand-chat-user hover:bg-[#C4975E] text-white"
               >
                 Connect your sources →
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleSkip} className="text-[rgba(245,245,245,0.7)]">
+              <Button variant="ghost" size="sm" onClick={handleSkip} className="text-muted-foreground">
                 I&apos;ll do this later
               </Button>
             </div>
@@ -182,7 +200,7 @@ export function OnboardingModal({ onComplete, onSkip, onGoToWizard }: Onboarding
           <button
             type="button"
             onClick={handleSkip}
-            className="block mt-3 text-[12px] text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] underline"
+            className="block mt-3 text-sm text-muted-foreground/75 hover:text-foreground underline"
           >
             Skip for now
           </button>

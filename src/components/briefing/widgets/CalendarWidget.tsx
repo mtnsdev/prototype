@@ -9,8 +9,8 @@ const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function eventIndicator(type: string) {
   if (type === "deadline") return { icon: "🔴", color: "text-red-400" };
-  if (type === "birthday") return { icon: "🎂", color: "text-amber-400" };
-  if (type === "passport_expiry") return { icon: "⚠", color: "text-amber-400" };
+  if (type === "birthday") return { icon: "🎂", color: "text-[var(--color-warning)]" };
+  if (type === "passport_expiry") return { icon: "⚠", color: "text-[var(--color-warning)]" };
   if (type === "trip_departure" || type === "trip_return") return { icon: "●", color: "text-emerald-400" };
   return { icon: "●", color: "text-violet-400" };
 }
@@ -45,9 +45,9 @@ export default function CalendarWidget({ content, staggerIndex = 0 }: Props) {
         staggerIndex={staggerIndex}
       >
         <div className="flex flex-col items-center justify-center py-10 text-center">
-          <CalendarIcon size={28} className="text-gray-600 mb-2" />
-          <p className="text-sm text-gray-500">Clear schedule today</p>
-          <p className="text-[10px] text-gray-600 mt-2 text-center">
+          <CalendarIcon size={28} className="text-muted-foreground/70 mb-2" />
+          <p className="text-sm text-muted-foreground">Clear schedule today</p>
+          <p className="text-2xs text-muted-foreground/70 mt-2 text-center">
             Google Calendar sync — coming soon
           </p>
         </div>
@@ -61,19 +61,19 @@ export default function CalendarWidget({ content, staggerIndex = 0 }: Props) {
       icon={<CalendarIcon size={20} />}
       title="Calendar"
       rightElement={
-        <span className="text-xs font-medium text-gray-500">{monthLabel}</span>
+        <span className="text-xs font-medium text-muted-foreground">{monthLabel}</span>
       }
       staggerIndex={staggerIndex}
     >
       <div className="rounded-xl bg-violet-500/5 p-4 mb-4">
         <p className="text-4xl font-bold text-white">{dateNum}</p>
-        <p className="text-sm text-gray-400 uppercase tracking-wider mt-0.5">{dayName}</p>
+        <p className="text-sm text-muted-foreground/90 uppercase tracking-wider mt-0.5">{dayName}</p>
         <ul className="mt-3 space-y-1.5">
           {todayEvents.slice(0, 2).map((ev) => {
             const ind = eventIndicator(ev.event_type);
             return (
               <li key={ev.id} className="flex items-center gap-2 text-sm">
-                {ev.time && <span className="text-gray-500 shrink-0 w-10">{ev.time}</span>}
+                {ev.time && <span className="text-muted-foreground shrink-0 w-10">{ev.time}</span>}
                 <span className="text-white truncate flex-1">{ev.title}</span>
                 <span className={cn("shrink-0", ind.color)}>{ind.icon}</span>
               </li>
@@ -93,11 +93,11 @@ export default function CalendarWidget({ content, staggerIndex = 0 }: Props) {
               <span className="font-semibold text-white w-7 shrink-0">
                 {d.getDate()}
               </span>
-              <span className="text-gray-500 w-9 shrink-0 uppercase text-xs">
+              <span className="text-muted-foreground w-9 shrink-0 uppercase text-xs">
                 {DAY_NAMES[d.getDay()].slice(0, 3)}
               </span>
               <span className="text-white truncate flex-1">{ev.title}</span>
-              {ev.time && <span className="text-xs text-gray-500 shrink-0">{ev.time}</span>}
+              {ev.time && <span className="text-xs text-muted-foreground shrink-0">{ev.time}</span>}
               <span className={cn("shrink-0", ind.color)}>{ind.icon}</span>
             </li>
           );
@@ -108,7 +108,7 @@ export default function CalendarWidget({ content, staggerIndex = 0 }: Props) {
           +{moreCount} more this month →
         </p>
       )}
-      <p className="text-[10px] text-gray-600 mt-2 text-center">
+      <p className="text-2xs text-muted-foreground/70 mt-2 text-center">
         Google Calendar sync — coming soon
       </p>
     </AppleWidgetCard>

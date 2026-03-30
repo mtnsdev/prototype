@@ -65,29 +65,29 @@ export default function VICCard({ vic, onEdit, onDelete, onShare, canEdit, canDe
   const isBasic = viewLevel === "basic";
 
   return (
-    <div className="relative rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-4 flex flex-col gap-3 hover:border-[rgba(255,255,255,0.12)] transition-colors min-h-[140px]">
+    <div className="relative rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-4 flex flex-col gap-3 hover:border-input transition-colors min-h-[140px]">
       <DemoBadge />
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-medium text-[#F5F5F5]">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-medium text-foreground">
           {initial(fullName)}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <Link href={`/dashboard/vics/${vicId}`} className="font-semibold text-[#F5F5F5] hover:underline block truncate">
+            <Link href={`/dashboard/vics/${vicId}`} className="font-semibold text-foreground hover:underline block truncate">
               {fullName}
             </Link>
             {!isBasic && <LifecycleIndicators vic={vic} className="shrink-0" />}
           </div>
           {preferredName && (
-            <p className="text-xs text-[rgba(245,245,245,0.5)] truncate">{preferredName}</p>
+            <p className="text-xs text-muted-foreground/75 truncate">{preferredName}</p>
           )}
-          <p className="text-sm text-[rgba(245,245,245,0.6)] truncate mt-0.5">{contact}</p>
-          {!isBasic && <p className="text-xs text-[rgba(245,245,245,0.5)] mt-0.5">{cityCountry}</p>}
+          <p className="text-sm text-muted-foreground truncate mt-0.5">{contact}</p>
+          {!isBasic && <p className="text-xs text-muted-foreground/75 mt-0.5">{cityCountry}</p>}
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
-              <MoreHorizontal size={16} className="text-[rgba(245,245,245,0.6)]" />
+              <MoreHorizontal size={16} className="text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -120,12 +120,12 @@ export default function VICCard({ vic, onEdit, onDelete, onShare, canEdit, canDe
       {!isBasic && (
         <div className="flex flex-wrap gap-1.5">
           {status && (
-            <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium text-[rgba(245,245,245,0.8)] capitalize">
+            <span className="rounded-full bg-white/10 px-2 py-0.5 text-2xs font-medium text-muted-foreground capitalize">
               {status.replace(/_/g, " ")}
             </span>
           )}
           {acuity && (
-            <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium capitalize", acuityBadgeClass(acuity))}>
+            <span className={cn("rounded-full px-2 py-0.5 text-2xs font-medium capitalize", acuityBadgeClass(acuity))}>
               {acuity.replace(/_/g, " ")}
             </span>
           )}
@@ -134,11 +134,11 @@ export default function VICCard({ vic, onEdit, onDelete, onShare, canEdit, canDe
       {!isBasic && tags.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {tags.slice(0, 4).map((t) => (
-            <span key={t} className="rounded bg-white/5 px-1.5 py-0.5 text-[11px] text-[rgba(245,245,245,0.7)]">
+            <span key={t} className="rounded bg-white/5 px-1.5 py-0.5 text-xs text-muted-foreground">
               {t}
             </span>
           ))}
-          {tags.length > 4 && <span className="text-[11px] text-[rgba(245,245,245,0.5)]">+{tags.length - 4}</span>}
+          {tags.length > 4 && <span className="text-xs text-muted-foreground/75">+{tags.length - 4}</span>}
         </div>
       )}
     </div>

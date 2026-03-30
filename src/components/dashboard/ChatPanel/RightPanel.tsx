@@ -45,7 +45,7 @@ export function RightPanel({
   return (
     <aside
       className={[
-        "shrink-0 overflow-hidden border-[rgba(255,255,255,0.08)] bg-[#0C0C0C] ease-out",
+        "shrink-0 overflow-hidden border-border bg-background ease-out",
         "w-full border-t lg:border-t-0 lg:border-l",
         "max-h-[38vh] lg:max-h-none",
         isOpen ? "lg:w-[420px] xl:w-[460px] min-w-0" : "w-0 min-w-0 lg:w-0 border-l-0",
@@ -55,17 +55,17 @@ export function RightPanel({
       aria-label={ariaLabel}
     >
       <div className="h-full flex flex-col">
-        <div className="shrink-0 px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between gap-2">
+        <div className="shrink-0 px-5 py-4 border-b border-border flex items-center justify-between gap-2">
           <div>
-            <h3 className="text-[14px] font-semibold text-[#F5F5F5]">{panelTitle}</h3>
-            <p className="text-[12px] text-[rgba(245,245,245,0.5)] mt-0.5">
+            <h3 className="text-base font-semibold text-foreground">{panelTitle}</h3>
+            <p className="text-sm text-muted-foreground/75 mt-0.5">
               {panelCount} result{panelCount !== 1 ? "s" : ""}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 p-2 rounded-lg text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.08)] hover:text-[#F5F5F5] transition-colors"
+            className="shrink-0 p-2 rounded-lg text-muted-foreground hover:bg-[rgba(255,255,255,0.08)] hover:text-foreground transition-colors"
             aria-label="Close panel"
           >
             <X className="w-4 h-4" />
@@ -89,31 +89,31 @@ export function RightPanel({
                     type="button"
                     onClick={() => onCitationClick?.(filename, cit.page_number ?? 1, cit.pdf_path)}
                     className={[
-                      "w-full text-left bg-[#161616] border rounded-xl p-3 transition-colors",
+                      "w-full text-left bg-card border rounded-xl p-3 transition-colors",
                       isHighlighted
                         ? "border-[rgba(174,133,80,0.6)] bg-[rgba(174,133,80,0.08)]"
-                        : "border-[rgba(255,255,255,0.1)] hover:border-[rgba(174,133,80,0.3)]",
+                        : "border-input hover:border-[rgba(174,133,80,0.3)]",
                     ].join(" ")}
                   >
                     <div className="flex items-start gap-3">
                       <div className="w-8 h-8 shrink-0 rounded bg-[rgba(255,255,255,0.08)] flex items-center justify-center">
-                        <FileText className="w-4 h-4 text-[rgba(245,245,245,0.5)]" aria-hidden />
+                        <FileText className="w-4 h-4 text-muted-foreground/75" aria-hidden />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-semibold text-[rgba(212,165,116,0.95)]">
+                          <span className="text-2xs font-semibold text-[rgba(212,165,116,0.95)]">
                             {displayNum}
                           </span>
-                          <span className="font-semibold text-[13px] leading-snug text-[#F5F5F5] truncate block">
+                          <span className="font-semibold text-compact leading-snug text-foreground truncate block">
                             {filename}
                           </span>
                         </div>
-                        <p className="text-[11px] text-[rgba(245,245,245,0.6)] mt-0.5">{sourceLabel}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{sourceLabel}</p>
                         {pageRef && (
-                          <p className="text-[11px] text-[rgba(245,245,245,0.5)] mt-1">{pageRef}</p>
+                          <p className="text-xs text-muted-foreground/75 mt-1">{pageRef}</p>
                         )}
                         {excerpt && (
-                          <p className="text-[12px] text-[rgba(245,245,245,0.7)] mt-2 line-clamp-2">
+                          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
                             {excerpt}
                             {excerpt.length >= 120 ? "…" : ""}
                           </p>
@@ -130,7 +130,7 @@ export function RightPanel({
               {webCitations.map((wc, idx) => (
                 <div
                   key={`${wc.url}-${idx}`}
-                  className="bg-[#161616] border border-[rgba(255,255,255,0.1)] rounded-xl p-3 hover:border-[rgba(174,133,80,0.3)] transition-colors relative group"
+                  className="bg-card border border-input rounded-xl p-3 hover:border-[rgba(174,133,80,0.3)] transition-colors relative group"
                 >
                   <div className="flex items-start gap-3">
                     {wc.favicon ? (
@@ -144,7 +144,7 @@ export function RightPanel({
                       />
                     ) : (
                       <div className="w-8 h-8 shrink-0 rounded bg-[rgba(255,255,255,0.08)] flex items-center justify-center">
-                        <Globe className="w-4 h-4 text-[rgba(245,245,245,0.5)]" aria-hidden />
+                        <Globe className="w-4 h-4 text-muted-foreground/75" aria-hidden />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
@@ -152,7 +152,7 @@ export function RightPanel({
                         href={wc.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-semibold text-[13px] leading-snug line-clamp-2 text-[#F5F5F5] hover:text-[#D4A574] hover:underline block"
+                        className="font-semibold text-compact leading-snug line-clamp-2 text-foreground hover:text-[var(--color-warning)] hover:underline block"
                       >
                         {wc.title || wc.url || "Web source"}
                       </a>
@@ -173,7 +173,7 @@ export function RightPanel({
                 const cardContent = (
                   <>
                     {card.primary_image_url ? (
-                      <div className="aspect-video relative bg-[#0C0C0C] overflow-hidden rounded-t-xl">
+                      <div className="aspect-video relative bg-background overflow-hidden rounded-t-xl">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={card.primary_image_url}
@@ -184,10 +184,10 @@ export function RightPanel({
                     ) : null}
                     <div className="p-3 space-y-2">
                       <div>
-                        <h4 className="font-semibold text-[#F5F5F5] text-[14px] leading-snug line-clamp-2">{card.name}</h4>
+                        <h4 className="font-semibold text-foreground text-base leading-snug line-clamp-2">{card.name}</h4>
                         <div className="flex flex-wrap items-center gap-2 mt-1.5">
                           {placeType && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[rgba(212,165,116,0.2)] text-[rgba(212,165,116,0.95)]">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[rgba(212,165,116,0.2)] text-[rgba(212,165,116,0.95)]">
                               {placeType}
                             </span>
                           )}
@@ -195,15 +195,15 @@ export function RightPanel({
                             <StarRating
                               value={Math.min(5, Math.max(0, Number(card.google_rating)))}
                               max={5}
-                              className="text-[#D4A574]"
+                              className="text-[var(--color-warning)]"
                               size={12}
                             />
                           )}
                         </div>
                       </div>
                       {(card.address || card.city || card.country) && (
-                        <p className="text-[12px] text-[rgba(245,245,245,0.7)] flex items-start gap-1.5 line-clamp-2">
-                          <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[rgba(245,245,245,0.5)]" aria-hidden />
+                        <p className="text-sm text-muted-foreground flex items-start gap-1.5 line-clamp-2">
+                          <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5 text-muted-foreground/75" aria-hidden />
                           <span>{[card.address, card.city, card.country].filter(Boolean).join(", ")}</span>
                         </p>
                       )}
@@ -211,7 +211,7 @@ export function RightPanel({
                         <a
                           href={`tel:${card.contact_phone}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="text-[12px] text-[#D4A574] hover:text-[#E5B87A] hover:underline block truncate"
+                          className="text-sm text-[var(--color-warning)] hover:text-[#E5B87A] hover:underline block truncate"
                         >
                           {card.contact_phone}
                         </a>
@@ -227,7 +227,7 @@ export function RightPanel({
                                 e.stopPropagation();
                                 onSavePlaceToExternalSearch(card.directory_product_id!);
                               }}
-                              className="inline-flex items-center gap-1 rounded-lg border border-[rgba(174,133,80,0.35)] bg-[rgba(174,133,80,0.12)] px-2 py-1 text-[11px] font-medium text-[#D4A574] transition-colors hover:border-[rgba(174,133,80,0.55)] hover:bg-[rgba(174,133,80,0.2)]"
+                              className="inline-flex items-center gap-1 rounded-lg border border-[rgba(174,133,80,0.35)] bg-[rgba(174,133,80,0.12)] px-2 py-1 text-xs font-medium text-[var(--color-warning)] transition-colors hover:border-[rgba(174,133,80,0.55)] hover:bg-[rgba(174,133,80,0.2)]"
                             >
                               <FolderPlus className="w-3 h-3 shrink-0" aria-hidden />
                               Save to External Search
@@ -239,7 +239,7 @@ export function RightPanel({
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 text-[12px] text-[#D4A574] hover:text-[#E5B87A]"
+                            className="inline-flex items-center gap-1 text-sm text-[var(--color-warning)] hover:text-[#E5B87A]"
                           >
                             <ExternalLink className="w-3 h-3 shrink-0" aria-hidden />
                             Map
@@ -251,7 +251,7 @@ export function RightPanel({
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 text-[12px] text-[#D4A574] hover:text-[#E5B87A]"
+                            className="inline-flex items-center gap-1 text-sm text-[var(--color-warning)] hover:text-[#E5B87A]"
                           >
                             <ExternalLink className="w-3 h-3 shrink-0" aria-hidden />
                             Website
@@ -262,7 +262,7 @@ export function RightPanel({
                   </>
                 );
                 const cardClass =
-                  "bg-[#161616] border border-[rgba(255,255,255,0.1)] rounded-xl overflow-hidden hover:border-[rgba(174,133,80,0.5)] transition-colors relative group block cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(174,133,80,0.5)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161616] animate-card-slide-in";
+                  "bg-card border border-input rounded-xl overflow-hidden hover:border-[rgba(174,133,80,0.5)] transition-colors relative group block cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(174,133,80,0.5)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161616] animate-card-slide-in";
                 return (
                   <div
                     key={`${card.google_maps_url || card.website || card.name}-${idx}`}

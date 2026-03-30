@@ -242,7 +242,7 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
         </DialogHeader>
 
         {/* Stepper */}
-        <div className="flex items-center gap-2 border-b border-[rgba(255,255,255,0.08)] pb-3">
+        <div className="flex items-center gap-2 border-b border-border pb-3">
           {STEPS.map((s, i) => (
             <div key={s.id} className="flex items-center gap-2">
               <button
@@ -253,13 +253,13 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
                   step === s.id
                     ? "bg-[#F5F5F5] text-[#08080c]"
                     : step > s.id
-                      ? "bg-white/20 text-[#F5F5F5]"
-                      : "bg-white/10 text-[rgba(245,245,245,0.5)]"
+                      ? "bg-white/20 text-foreground"
+                      : "bg-white/10 text-muted-foreground/75"
                 )}
               >
                 {s.id}
               </button>
-              <span className={cn("text-xs hidden sm:inline", step === s.id ? "text-[#F5F5F5]" : "text-[rgba(245,245,245,0.5)]")}>
+              <span className={cn("text-xs hidden sm:inline", step === s.id ? "text-foreground" : "text-muted-foreground/75")}>
                 {s.label}
               </span>
               {i < STEPS.length - 1 && (
@@ -294,7 +294,7 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
                 </div>
                 <div>
                   <Label htmlFor="title">Title</Label>
-                  <select id="title" value={form.title} onChange={(e) => update({ title: e.target.value })} className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]">
+                  <select id="title" value={form.title} onChange={(e) => update({ title: e.target.value })} className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground">
                     {TITLE_OPTIONS.map((o) => <option key={o || "x"} value={o}>{o || "—"}</option>)}
                   </select>
                 </div>
@@ -344,13 +344,13 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="time_zone">Time zone</Label>
-                  <select id="time_zone" value={form.time_zone} onChange={(e) => update({ time_zone: e.target.value })} className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]">
+                  <select id="time_zone" value={form.time_zone} onChange={(e) => update({ time_zone: e.target.value })} className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground">
                     {TIMEZONE_OPTIONS.map((z) => <option key={z || "x"} value={z}>{z || "—"}</option>)}
                   </select>
                 </div>
                 <div>
                   <Label htmlFor="language_primary">Primary language</Label>
-                  <select id="language_primary" value={form.language_primary} onChange={(e) => update({ language_primary: e.target.value })} className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]">
+                  <select id="language_primary" value={form.language_primary} onChange={(e) => update({ language_primary: e.target.value })} className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground">
                     {LANGUAGE_OPTIONS.map((l) => <option key={l || "x"} value={l}>{l || "—"}</option>)}
                   </select>
                 </div>
@@ -371,7 +371,7 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
                   id="assigned_advisor_id"
                   value={form.assigned_advisor_id}
                   onChange={(e) => update({ assigned_advisor_id: e.target.value })}
-                  className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]"
+                  className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
                 >
                   <option value="">— Select —</option>
                   {MOCK_ADVISORS.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
@@ -383,7 +383,7 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
                   id="secondary_advisor_id"
                   value={form.secondary_advisor_id}
                   onChange={(e) => update({ secondary_advisor_id: e.target.value })}
-                  className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]"
+                  className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
                 >
                   <option value="">—</option>
                   {MOCK_ADVISORS.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
@@ -399,7 +399,7 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
                   id="referral_source"
                   value={form.referral_source}
                   onChange={(e) => update({ referral_source: e.target.value })}
-                  className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]"
+                  className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
                 >
                   {REFERRAL_OPTIONS.map((o) => <option key={o || "x"} value={o}>{o || "—"}</option>)}
                 </select>
@@ -414,7 +414,7 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
                   id="relationship_status"
                   value={form.relationship_status}
                   onChange={(e) => update({ relationship_status: (e.target.value || "") as RelationshipStatus | "" })}
-                  className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]"
+                  className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
                 >
                   {RELATIONSHIP_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
@@ -427,10 +427,10 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
                   onChange={(e) => update({ vip_notes: e.target.value })}
                   maxLength={MAX.vip_notes}
                   rows={3}
-                  className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]"
+                  className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
                   placeholder="Internal notes about this client"
                 />
-                <p className="text-xs text-[rgba(245,245,245,0.5)]">{form.vip_notes.length}/{MAX.vip_notes}</p>
+                <p className="text-xs text-muted-foreground/75">{form.vip_notes.length}/{MAX.vip_notes}</p>
               </div>
             </div>
           )}
@@ -450,7 +450,7 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
                   onChange={(e) => update({ dietary_restrictions: e.target.value })}
                   maxLength={MAX.dietary_restrictions}
                   rows={2}
-                  className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]"
+                  className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
                   placeholder="e.g. Vegetarian, gluten-free"
                 />
               </div>
@@ -462,7 +462,7 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
                   onChange={(e) => update({ accessibility_needs: e.target.value })}
                   maxLength={MAX.accessibility_needs}
                   rows={2}
-                  className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]"
+                  className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -489,7 +489,7 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
           )}
         </div>
 
-        <DialogFooter className="border-t border-[rgba(255,255,255,0.08)] pt-3 shrink-0">
+        <DialogFooter className="border-t border-border pt-3 shrink-0">
           <div className="flex items-center justify-between w-full">
             <div>
               {step > 1 ? (

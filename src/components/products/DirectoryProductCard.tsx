@@ -14,6 +14,7 @@ import {
 } from "./productDirectoryCommission";
 import { DIRECTORY_TIER_FILTER_UI } from "./productDirectoryFilterConfig";
 import { relativeTime } from "./productDirectoryRelativeTime";
+import { productListingMetaLineClass, productListingTitleClass } from "@/lib/productListingPrimitives";
 
 type Props = {
   product: DirectoryProduct;
@@ -98,7 +99,7 @@ export default function DirectoryProductCard({
         "group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border transition-all",
         bulkSelected
           ? "border-[rgba(201,169,110,0.30)] ring-1 ring-[rgba(201,169,110,0.15)] bg-white/[0.02]"
-          : "border-white/[0.04] bg-white/[0.02] hover:border-white/[0.08] hover:bg-white/[0.04]"
+          : "border-white/[0.04] bg-white/[0.02] hover:border-border hover:bg-white/[0.04]"
       )}
       onClick={() => {
         if (ignoreNextClickRef.current) {
@@ -131,7 +132,7 @@ export default function DirectoryProductCard({
             className={cn(
               "absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded border transition-all",
               bulkSelected
-                ? "border-[#C9A96E] bg-[#C9A96E]"
+                ? "border-brand-cta bg-brand-cta"
                 : "border-white/20 bg-black/30 backdrop-blur-sm hover:border-white/40"
             )}
             aria-label={bulkSelected ? "Deselect" : "Select"}
@@ -177,7 +178,7 @@ export default function DirectoryProductCard({
           }}
           className={cn(
             "absolute bottom-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/40 text-white/50 backdrop-blur-sm transition-all hover:bg-black/60 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A96E]/40",
-            bookmarked ? "text-[#C9A96E] opacity-100" : "opacity-0 group-hover:opacity-100"
+            bookmarked ? "text-brand-cta opacity-100" : "opacity-0 group-hover:opacity-100"
           )}
         >
           <Plus className="h-3 w-3" strokeWidth={2.5} />
@@ -188,7 +189,7 @@ export default function DirectoryProductCard({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-1.5">
-              <h3 className="truncate text-[13px] font-medium text-[#F5F0EB]">{product.name}</h3>
+              <h3 className={productListingTitleClass}>{product.name}</h3>
               {tierStarCount > 0 ? (
                 <div className="flex shrink-0 gap-0.5">
                   {Array.from({ length: tierStarCount }, (_, i) => (
@@ -199,17 +200,17 @@ export default function DirectoryProductCard({
                 </div>
               ) : null}
             </div>
-            <p className="mt-0.5 text-[11px] text-[#9B9590]">
+            <p className={productListingMetaLineClass}>
               {placeLine}
               {product.priceTier ? (
-                <span className="ml-1.5 text-[10px] text-[#6B6560]">{product.priceTier}</span>
+                <span className="ml-1.5 text-2xs text-muted-foreground">{product.priceTier}</span>
               ) : null}
             </p>
           </div>
           {showRemoveFromCollection && onRemoveFromCollection && (
             <button
               type="button"
-              className="shrink-0 text-[9px] text-[#6B6560] transition-colors hover:text-[#C9A96E]"
+              className="shrink-0 text-[9px] text-muted-foreground transition-colors hover:text-brand-cta"
               onClick={(e) => {
                 e.stopPropagation();
                 onRemoveFromCollection();
@@ -236,7 +237,7 @@ export default function DirectoryProductCard({
               </span>
             ))}
             {activePrograms.length > 3 && (
-              <span className="self-center text-[8px] text-[#6B6560]">+{activePrograms.length - 3}</span>
+              <span className="self-center text-[8px] text-muted-foreground">+{activePrograms.length - 3}</span>
             )}
             {showVariedTerms ? (
               <span className="text-[8px] font-medium text-[#A38F6E]">· custom terms</span>
@@ -246,16 +247,16 @@ export default function DirectoryProductCard({
 
         {product.updatedAt ? (
           <div className="mt-1 flex items-center justify-end gap-1">
-            <Clock className="h-2.5 w-2.5 text-[#4A4540]" aria-hidden />
-            <span className="text-[8px] text-[#4A4540]">Updated {relativeTime(product.updatedAt)}</span>
+            <Clock className="h-2.5 w-2.5 text-muted-foreground/65" aria-hidden />
+            <span className="text-[8px] text-muted-foreground/65">Updated {relativeTime(product.updatedAt)}</span>
           </div>
         ) : null}
 
         {product.activePromotion && (
           <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.10)] bg-[rgba(201,169,110,0.06)] px-2 py-1.5">
-            <Sparkles className="h-3 w-3 shrink-0 text-[#C9A96E]" aria-hidden />
+            <Sparkles className="h-3 w-3 shrink-0 text-brand-cta" aria-hidden />
             {canViewCommissions ? (
-              <span className="text-[10px] text-[#C9A96E]">
+              <span className="text-2xs text-brand-cta">
                 {product.baseCommissionRate != null ? (
                   <>
                     <del className="opacity-50">{product.baseCommissionRate}%</del> {product.effectiveCommissionRate}%
@@ -265,26 +266,26 @@ export default function DirectoryProductCard({
                 )}
               </span>
             ) : (
-              <span className="text-[10px] text-[#C9A96E]">Active promotion</span>
+              <span className="text-2xs text-brand-cta">Active promotion</span>
             )}
-            <span className="rounded-full bg-[rgba(201,169,110,0.15)] px-1.5 py-0.5 text-[8px] font-medium text-[#C9A96E]">
+            <span className="rounded-full bg-[rgba(201,169,110,0.15)] px-1.5 py-0.5 text-[8px] font-medium text-brand-cta">
               promo
             </span>
           </div>
         )}
 
-        <div className="mt-auto min-h-[24px] border-t border-white/[0.04] pt-2 text-xs text-[#C9A96E]/80">
+        <div className="mt-auto min-h-[24px] border-t border-white/[0.04] pt-2 text-xs text-brand-cta/80">
           {canViewCommissions && topForCommission != null && topRate != null ? (
             <span className="flex flex-wrap items-center gap-1">
-              <span className="text-[10px] text-[#B8976E]">{topRate}%</span>
-              <span className="text-[9px] text-[#6B6560]">via {programDisplayName(topForCommission)}</span>
+              <span className="text-2xs text-[#B8976E]">{topRate}%</span>
+              <span className="text-[9px] text-muted-foreground">via {programDisplayName(topForCommission)}</span>
             </span>
           ) : !canViewCommissions && topForCommission != null && topRate != null ? (
-            <span className="text-[9px] text-[#6B6560]">Partner rate on file</span>
+            <span className="text-[9px] text-muted-foreground">Partner rate on file</span>
           ) : null}
           {showSavedFromSearch ? (
             <div
-              className="group relative mt-1.5 flex items-center gap-1 text-[9px] text-[#6B6560]"
+              className="group relative mt-1.5 flex items-center gap-1 text-[9px] text-muted-foreground"
               title={
                 savedFromSearchTitle ??
                 "Saved from chat or external search to your External Search collection."

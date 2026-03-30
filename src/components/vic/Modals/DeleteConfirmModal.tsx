@@ -3,26 +3,21 @@
 import { useState } from "react";
 import type { VIC } from "@/types/vic";
 import { deleteVIC, getVICId } from "@/lib/vic-api";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
 
 type Props = {
-  vic: VIC;
+  open: boolean;
+  vic: VIC | null;
   onClose: () => void;
   onConfirm: () => void;
 };
 
-export default function DeleteConfirmModal({ vic, onClose, onConfirm }: Props) {
+export default function DeleteConfirmModal({ open, vic, onClose, onConfirm }: Props) {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleDelete = async () => {
+  const handleConfirm = async () => {
+    if (!vic) return;
     setError(null);
     setDeleting(true);
     try {
@@ -36,24 +31,23 @@ export default function DeleteConfirmModal({ vic, onClose, onConfirm }: Props) {
   };
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete VIC</DialogTitle>
-        </DialogHeader>
-        <p className="text-sm text-[rgba(245,245,245,0.8)]">
-          Delete <strong>{vic.full_name}</strong>? This will also remove their Acuity intelligence profile.
-        </p>
-        {error && <p className="text-sm text-red-400">{error}</p>}
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-            {deleting ? "Deleting…" : "Delete"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <DestructiveConfirmDialog
+      open={open && vic != null}
+      onOpenChange={(o) => !o && onClose()}
+      title="Delete VIC"
+      description={
+        vic ? (
+          <>
+            Delete <span className="font-medium text-foreground">{vic.full_name}</span>? Their Acuity
+            intelligence profile will also be removed.
+          </>
+        ) : null
+      }
+      consequence="This cannot be undone."
+      onConfirm={handleConfirm}
+      loading={deleting}
+      error={error}
+      confirmLabel="Delete"
+    />
   );
 }

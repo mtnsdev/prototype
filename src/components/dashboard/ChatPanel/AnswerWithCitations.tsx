@@ -37,14 +37,14 @@ export function getOrderedCitations(answer: string, citations: Citation[]): Cita
 }
 
 const markdownComponentsBase = {
-  p: ({ children }: { children?: React.ReactNode }) => <p className="mb-3 text-[rgba(245,245,245,0.88)] leading-relaxed">{children}</p>,
-  ul: ({ children }: { children?: React.ReactNode }) => <ul className="list-disc list-outside pl-6 mb-3 space-y-1.5 text-[rgba(245,245,245,0.88)]">{children}</ul>,
-  ol: ({ children }: { children?: React.ReactNode }) => <ol className="list-decimal list-outside pl-6 mb-3 space-y-1.5 text-[rgba(245,245,245,0.88)]">{children}</ol>,
-  li: ({ children }: { children?: React.ReactNode }) => <li className="pl-1 text-[rgba(245,245,245,0.88)] [&>p]:inline [&>p]:my-0">{children}</li>,
-  strong: ({ children }: { children?: React.ReactNode }) => <strong className="font-semibold text-[#F5F5F5]">{children}</strong>,
-  h1: ({ children }: { children?: React.ReactNode }) => <h1 className="text-[#F5F5F5] font-semibold text-lg mb-2">{children}</h1>,
-  h2: ({ children }: { children?: React.ReactNode }) => <h2 className="text-[#F5F5F5] font-semibold text-base mb-2">{children}</h2>,
-  h3: ({ children }: { children?: React.ReactNode }) => <h3 className="text-[#F5F5F5] font-semibold text-sm mb-2">{children}</h3>,
+  p: ({ children }: { children?: React.ReactNode }) => <p className="mb-3 text-foreground/90 leading-relaxed">{children}</p>,
+  ul: ({ children }: { children?: React.ReactNode }) => <ul className="list-disc list-outside pl-6 mb-3 space-y-1.5 text-foreground/90">{children}</ul>,
+  ol: ({ children }: { children?: React.ReactNode }) => <ol className="list-decimal list-outside pl-6 mb-3 space-y-1.5 text-foreground/90">{children}</ol>,
+  li: ({ children }: { children?: React.ReactNode }) => <li className="pl-1 text-foreground/90 [&>p]:inline [&>p]:my-0">{children}</li>,
+  strong: ({ children }: { children?: React.ReactNode }) => <strong className="font-semibold text-foreground">{children}</strong>,
+  h1: ({ children }: { children?: React.ReactNode }) => <h1 className="text-foreground font-semibold text-lg mb-2">{children}</h1>,
+  h2: ({ children }: { children?: React.ReactNode }) => <h2 className="text-foreground font-semibold text-base mb-2">{children}</h2>,
+  h3: ({ children }: { children?: React.ReactNode }) => <h3 className="text-foreground font-semibold text-sm mb-2">{children}</h3>,
 };
 
 type AnswerWithCitationsProps = {
@@ -189,16 +189,16 @@ export function AnswerWithCitations({
 
     parts.push(
       <span key={`citation-group-${citationIndex++}`} className="inline-flex items-center gap-1 ml-1.5">
-        <span className="text-[rgba(245,245,245,0.4)] text-xs">[</span>
-        <span className="text-[rgba(245,245,245,0.6)] text-xs font-medium truncate max-w-30" title={filename}>
+        <span className="text-muted-foreground/55 text-xs">[</span>
+        <span className="text-muted-foreground text-xs font-medium truncate max-w-30" title={filename}>
           {filename}
         </span>
-        <span className="text-[rgba(245,245,245,0.4)] text-xs">:</span>
+        <span className="text-muted-foreground/55 text-xs">:</span>
         {pageNumbers.map((pageNum, pageIdx) => (
           <React.Fragment key={`page-${pageIdx}`}>
             <button
               onClick={() => onCitationClick(filename, pageNum, pdfPath)}
-              className="text-[#D4A574] hover:text-[#E5B87A] hover:bg-[rgba(212,165,116,0.12)] px-1.5 py-0.5 rounded-md cursor-pointer transition-all duration-150 inline-flex items-center gap-1 text-xs font-semibold border border-[rgba(212,165,116,0.3)] hover:border-[rgba(212,165,116,0.5)]"
+              className="text-[var(--color-warning)] hover:text-[#E5B87A] hover:bg-[rgba(212,165,116,0.12)] px-1.5 py-0.5 rounded-md cursor-pointer transition-all duration-150 inline-flex items-center gap-1 text-xs font-semibold border border-[rgba(212,165,116,0.3)] hover:border-[rgba(212,165,116,0.5)]"
               title={`View ${filename} page ${pageNum}`}
             >
               {pageNum}
@@ -207,7 +207,7 @@ export function AnswerWithCitations({
             {pageIdx < pageNumbers.length - 1 && <span className="text-[rgba(245,245,245,0.3)] text-xs mx-0.5">,</span>}
           </React.Fragment>
         ))}
-        <span className="text-[rgba(245,245,245,0.4)] text-xs">]</span>
+        <span className="text-muted-foreground/55 text-xs">]</span>
       </span>
     );
 

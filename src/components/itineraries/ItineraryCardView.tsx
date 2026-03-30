@@ -59,7 +59,7 @@ export default function ItineraryCardView({
         return (
           <div
             key={id}
-            className="relative rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] overflow-hidden flex flex-col min-h-[220px] hover:border-[rgba(255,255,255,0.12)] transition-colors"
+            className="relative rounded-xl border border-border bg-[rgba(255,255,255,0.03)] overflow-hidden flex flex-col min-h-[220px] hover:border-input transition-colors"
           >
             <DemoBadge />
             <div className="p-4 flex-1 flex flex-col gap-3">
@@ -67,13 +67,13 @@ export default function ItineraryCardView({
                 <div className="flex-1 min-w-0">
                   <Link
                     href={`/dashboard/itineraries/${id}`}
-                    className="font-semibold text-[#F5F5F5] hover:underline line-clamp-2 block"
+                    className="font-semibold text-foreground hover:underline line-clamp-2 block"
                   >
                     {it.trip_name || "Untitled"}
                   </Link>
                   <span
                     className={cn(
-                      "inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full font-medium",
+                      "inline-block mt-1 text-2xs px-2 py-0.5 rounded-full font-medium",
                       pipelineStageBadgeClass(ps)
                     )}
                   >
@@ -82,7 +82,7 @@ export default function ItineraryCardView({
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-[rgba(245,245,245,0.6)]">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground">
                       <MoreHorizontal size={16} />
                     </Button>
                   </DropdownMenuTrigger>
@@ -106,10 +106,10 @@ export default function ItineraryCardView({
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              <div className="flex items-center gap-2 text-sm text-[rgba(245,245,245,0.7)]">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
                   <User size={14} />
-                  <Link href={`/dashboard/vics/${it.primary_vic_id}`} className="hover:underline text-[#F5F5F5]">
+                  <Link href={`/dashboard/vics/${it.primary_vic_id}`} className="hover:underline text-foreground">
                     {it.primary_vic_name || it.primary_vic_id || "—"}
                   </Link>
                 </span>
@@ -118,13 +118,13 @@ export default function ItineraryCardView({
                 {(it.destinations ?? []).slice(0, 3).map((d) => (
                   <span
                     key={d}
-                    className="text-xs px-2 py-0.5 rounded bg-white/10 text-[rgba(245,245,245,0.8)]"
+                    className="text-xs px-2 py-0.5 rounded bg-white/10 text-muted-foreground"
                   >
                     {d}
                   </span>
                 ))}
               </div>
-              <p className="text-xs text-[rgba(245,245,245,0.5)]">
+              <p className="text-xs text-muted-foreground/75">
                 {formatDateRange(it.trip_start_date, it.trip_end_date)} · {it.days?.length ?? 0} days · {eventCount} events
               </p>
               <div className="flex flex-wrap gap-1.5 mt-auto">
@@ -137,12 +137,12 @@ export default function ItineraryCardView({
                   {statusBadge?.label ?? it.status}
                 </span>
                 {(it.tags ?? []).slice(0, 2).map((t) => (
-                  <span key={t} className="text-xs px-1.5 py-0.5 rounded bg-white/5 text-[rgba(245,245,245,0.6)]">
+                  <span key={t} className="text-xs px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground">
                     {t}
                   </span>
                 ))}
                 {canViewFinancials && it.total_client_price != null && (
-                  <span className="text-xs text-[rgba(245,245,245,0.8)] ml-auto">
+                  <span className="text-xs text-muted-foreground ml-auto">
                     {it.currency === "EUR" ? "€" : it.currency} {it.total_client_price.toLocaleString()}
                   </span>
                 )}

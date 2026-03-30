@@ -12,7 +12,7 @@ export function DemoBadge({ className }: Props) {
   return (
     <span
       className={cn(
-        "absolute top-2 right-2 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+        "absolute top-2 right-2 rounded px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wider",
         "bg-[var(--muted-amber-bg)] text-[var(--muted-amber-text)] border border-[var(--muted-amber-border)]",
         className
       )}

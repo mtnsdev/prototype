@@ -56,9 +56,9 @@ export default function LifecycleIndicators({ vic, className = "" }: Props) {
     <span className={`inline-flex items-center gap-1.5 ${className}`} title={
       [passportWarn && "Passport expires soon", birthdaySoon && "Birthday soon", inactive && "Inactive 6+ months"].filter(Boolean).join(" · ")
     }>
-      {passportWarn && <AlertCircle size={12} className="text-amber-400 shrink-0" aria-label="Passport expiry warning" />}
-      {birthdaySoon && <Cake size={12} className="text-[rgba(245,245,245,0.7)] shrink-0" aria-label="Birthday soon" />}
-      {inactive && <Clock size={12} className="text-[rgba(245,245,245,0.4)] shrink-0" aria-label="Inactive" />}
+      {passportWarn && <AlertCircle size={12} className="text-[var(--color-warning)] shrink-0" aria-label="Passport expiry warning" />}
+      {birthdaySoon && <Cake size={12} className="text-muted-foreground shrink-0" aria-label="Birthday soon" />}
+      {inactive && <Clock size={12} className="text-muted-foreground/55 shrink-0" aria-label="Inactive" />}
     </span>
   );
 }

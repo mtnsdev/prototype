@@ -16,7 +16,7 @@ function NewsThumb({ item }: { item: NewsAlertItem }) {
   }
   const letter = (item.source ?? "?")[0].toUpperCase();
   return (
-    <span className="w-8 h-8 rounded-lg shrink-0 bg-amber-500/15 flex items-center justify-center text-amber-400/90 text-sm font-medium">
+    <span className="w-8 h-8 rounded-lg shrink-0 bg-amber-500/15 flex items-center justify-center text-[var(--color-warning)]/90 text-sm font-medium">
       {letter}
     </span>
   );
@@ -35,7 +35,7 @@ function timeAgo(iso: string): string {
 function severityDot(severity: string) {
   if (severity === "urgent") return "bg-red-500";
   if (severity === "warning") return "bg-amber-500";
-  return "bg-gray-500";
+  return "bg-muted-foreground/40";
 }
 
 type Props = {
@@ -62,12 +62,12 @@ export default function NewsAlertsWidget({ content, staggerIndex = 0 }: Props) {
         title="News & Alerts"
         staggerIndex={staggerIndex}
       >
-        <p className="text-[10px] text-gray-600 -mt-2 mb-3 text-center md:text-left">
+        <p className="text-2xs text-muted-foreground/70 -mt-2 mb-3 text-center md:text-left">
           Based on your destinations and partners
         </p>
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <Bell size={28} className="text-gray-600 mb-2" />
-          <p className="text-sm text-gray-500">No alerts right now — your world is quiet</p>
+          <Bell size={28} className="text-muted-foreground/70 mb-2" />
+          <p className="text-sm text-muted-foreground">No alerts right now — your world is quiet</p>
         </div>
       </AppleWidgetCard>
     );
@@ -79,13 +79,13 @@ export default function NewsAlertsWidget({ content, staggerIndex = 0 }: Props) {
       icon={<Bell size={20} />}
       title="News & Alerts"
       rightElement={
-        <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-xs font-medium text-amber-400">
+        <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-xs font-medium text-[var(--color-warning)]">
           {total}
         </span>
       }
       staggerIndex={staggerIndex}
     >
-      <p className="text-[10px] text-gray-600 -mt-2 mb-3">
+      <p className="text-2xs text-muted-foreground/70 -mt-2 mb-3">
         Based on your destinations and partners
       </p>
       <div className="space-y-2">
@@ -101,11 +101,11 @@ export default function NewsAlertsWidget({ content, staggerIndex = 0 }: Props) {
             <div className={cn("w-2 h-2 rounded-full shrink-0 mt-1.5 self-start", severityDot(item.severity))} />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-white truncate">{item.headline}</p>
-              <p className="text-xs text-gray-400 truncate mt-0.5">{item.summary}</p>
-              <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground/90 truncate mt-0.5">{item.summary}</p>
+              <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-muted-foreground">
                 <span className="bg-white/[0.04] rounded px-1.5 py-0.5">{item.source}</span>
                 {item.tags?.map((tag) => (
-                  <span key={tag} className="text-[10px] text-gray-600">
+                  <span key={tag} className="text-2xs text-muted-foreground/70">
                     {tag}
                   </span>
                 ))}
@@ -119,7 +119,7 @@ export default function NewsAlertsWidget({ content, staggerIndex = 0 }: Props) {
       {total > 3 && (
         <Link
           href="#"
-          className="inline-block mt-4 text-xs text-amber-400 hover:text-amber-300 transition-colors"
+          className="inline-block mt-4 text-xs text-[var(--color-warning)] hover:text-amber-300 transition-colors"
         >
           View all {total} alerts →
         </Link>

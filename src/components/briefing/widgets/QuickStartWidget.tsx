@@ -51,8 +51,8 @@ export default function QuickStartWidget({ content, staggerIndex = 0 }: Props) {
         staggerIndex={staggerIndex}
       >
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <Zap size={28} className="text-gray-600 mb-2" />
-          <p className="text-sm text-gray-500">No quick actions</p>
+          <Zap size={28} className="text-muted-foreground/70 mb-2" />
+          <p className="text-sm text-muted-foreground">No quick actions</p>
         </div>
       </AppleWidgetCard>
     );
@@ -86,15 +86,15 @@ export default function QuickStartWidget({ content, staggerIndex = 0 }: Props) {
                 size={24}
                 className={cn(
                   "transition-colors",
-                  isAcuityVic ? "text-violet-400 group-hover:text-violet-300" : "text-gray-400 group-hover:text-white"
+                  isAcuityVic ? "text-violet-400 group-hover:text-violet-300" : "text-muted-foreground/90 group-hover:text-white"
                 )}
               />
               {isAcuityVic ? (
-                <span className="text-[10px] leading-tight text-violet-200/90 mt-2 text-center font-medium">
+                <span className="text-2xs leading-tight text-violet-200/90 mt-2 text-center font-medium">
                   Acuity Lookup
                 </span>
               ) : (
-                <span className="text-xs text-gray-400 mt-2 group-hover:text-white transition-colors truncate w-full">
+                <span className="text-xs text-muted-foreground/90 mt-2 group-hover:text-white transition-colors truncate w-full">
                   {action.label
                     .replace("Create Itinerary", "Create Itin.")
                     .replace("Browse Products", "Browse Prods.")

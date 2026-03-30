@@ -1,9 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type FeedbackCommentModalProps = {
-  messageId: number;
+  messageId: number; // retained for parent keying / future analytics
   draftComment: string;
   isSubmitting: boolean;
   onDraftChange: (value: string) => void;
@@ -12,7 +13,7 @@ type FeedbackCommentModalProps = {
 };
 
 export function FeedbackCommentModal({
-  messageId,
+  messageId: _messageId,
   draftComment,
   isSubmitting,
   onDraftChange,
@@ -20,36 +21,25 @@ export function FeedbackCommentModal({
   onSubmit,
 }: FeedbackCommentModalProps) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
-      onClick={onClose}
-      role="presentation"
-    >
-      <div
-        className="bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] rounded-xl shadow-xl max-w-md w-full p-5 flex flex-col gap-4"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-labelledby="feedback-comment-title"
+    <Dialog open onOpenChange={(next) => !next && onClose()}>
+      <DialogContent
+        className="max-w-md border-border bg-card p-5 text-card-foreground sm:max-w-md"
+        showCloseButton
       >
-        <h3 id="feedback-comment-title" className="text-[14px] font-semibold text-[#F5F5F5]">
-          Add feedback comment
-        </h3>
+        <DialogHeader className="space-y-0 text-left">
+          <DialogTitle className="text-base font-semibold text-foreground">Add feedback comment</DialogTitle>
+        </DialogHeader>
         <textarea
           placeholder="Your comment (optional)"
           value={draftComment}
           onChange={(e) => onDraftChange(e.target.value)}
-          className="min-h-[100px] w-full rounded-lg border border-[rgba(255,255,255,0.12)] bg-[rgba(0,0,0,0.2)] px-3 py-2 text-[13px] text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)] focus:outline-none focus:ring-1 focus:ring-[#AE8550] resize-y max-h-48"
+          className="min-h-[100px] w-full max-h-48 resize-y rounded-lg border border-input bg-inset px-3 py-2 text-compact text-foreground placeholder:text-muted-foreground/75 focus:outline-none focus:ring-1 focus:ring-brand-chat-user"
           maxLength={2000}
           autoFocus
+          aria-label="Feedback comment"
         />
         <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="text-[rgba(245,245,245,0.7)]"
-          >
+          <Button type="button" variant="ghost" size="sm" onClick={onClose} className="text-muted-foreground">
             Cancel
           </Button>
           <Button
@@ -57,12 +47,12 @@ export function FeedbackCommentModal({
             size="sm"
             onClick={onSubmit}
             disabled={isSubmitting}
-            className="bg-[rgba(174,133,80,0.2)] text-[#D4A574] hover:bg-[rgba(174,133,80,0.3)] border-[rgba(174,133,80,0.3)]"
+            className="border border-[var(--color-warning)]/30 bg-[var(--color-warning-muted)] text-[var(--color-warning)] hover:bg-[var(--color-warning-muted)]/80"
           >
             {isSubmitting ? "Saving…" : "Submit"}
           </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

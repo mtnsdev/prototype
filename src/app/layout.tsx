@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Libre_Franklin } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const libreFranklin = Libre_Franklin({
+  variable: "--font-app-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -24,7 +25,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${libreFranklin.variable} ${geistMono.variable} antialiased`}>
+        <a href="#main-content" className="skip-to-main">
+          Skip to main content
+        </a>
         {children}
       </body>
     </html>

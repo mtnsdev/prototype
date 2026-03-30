@@ -14,6 +14,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import {
+  listSurfaceClass,
+  listScrollClass,
+  listTableClass,
+  listTheadRowClass,
+  listThClass,
+  listTbodyRowClass,
+  listTdClass,
+  listMutedCellClass,
+} from "@/lib/list-ui";
 import type { PipelineStage } from "@/types/itinerary";
 import { PIPELINE_STAGE_LABEL_MAP, pipelineStageBadgeClass } from "@/config/pipelineStages";
 
@@ -54,21 +64,23 @@ export default function ItineraryListView({
   const router = useRouter();
   if (isLoading && itineraries.length === 0) {
     return (
-      <div className="p-4 space-y-2">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="h-12 rounded-lg bg-white/5 animate-pulse" />
-        ))}
+      <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden p-3")}>
+        <div className="space-y-2">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-12 rounded-lg bg-white/[0.04] animate-pulse" />
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[900px]">
+    <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden")}>
+      <table className={listTableClass("min-w-[900px]")}>
         <thead>
-          <tr className="border-b border-[rgba(255,255,255,0.08)] text-left text-xs font-medium uppercase tracking-wider text-[rgba(245,245,245,0.5)]">
+          <tr className={cn(listTheadRowClass, "uppercase tracking-wider text-muted-foreground/80")}>
             {COLUMNS.map((col) => (
-              <th key={col.key} className="py-3 px-2">
+              <th key={col.key} className={listThClass}>
                 {col.label}
               </th>
             ))}
@@ -86,40 +98,40 @@ export default function ItineraryListView({
             return (
               <tr
                 key={id}
-                className="border-b border-[rgba(255,255,255,0.06)] hover:bg-white/[0.05] cursor-pointer"
+                className={cn(listTbodyRowClass, "cursor-pointer")}
                 onClick={() => router.push(`/dashboard/itineraries/${id}`)}
               >
-                <td className="py-2 px-2">
+                <td className={listTdClass}>
                   <Link
                     href={`/dashboard/itineraries/${id}`}
-                    className="font-medium text-[#F5F5F5] hover:underline"
+                    className="font-medium text-foreground hover:underline"
                   >
                     {it.trip_name || "—"}
                   </Link>
                 </td>
-                <td className="py-2 px-2 text-sm text-[rgba(245,245,245,0.8)]" onClick={(e) => e.stopPropagation()}>
+                <td className={cn(listTdClass, listMutedCellClass)} onClick={(e) => e.stopPropagation()}>
                   <Link
                     href={`/dashboard/vics/${it.primary_vic_id}`}
-                    className="hover:underline text-[#F5F5F5]"
+                    className="hover:underline text-foreground"
                   >
                     {it.primary_vic_name || it.primary_vic_id || "—"}
                   </Link>
                 </td>
-                <td className="py-2 px-2 text-sm text-[rgba(245,245,245,0.7)] max-w-[200px] truncate">
+                <td className={cn(listTdClass, listMutedCellClass, "max-w-[200px] truncate")}>
                   {(it.destinations ?? []).join(", ") || "—"}
                 </td>
-                <td className="py-2 px-2 text-sm text-[rgba(245,245,245,0.8)]">
+                <td className={cn(listTdClass, listMutedCellClass)}>
                   {formatDateRange(it.trip_start_date, it.trip_end_date)}
                 </td>
-                <td className="py-2 px-2 text-sm text-[rgba(245,245,245,0.7)]">
+                <td className={cn(listTdClass, listMutedCellClass)}>
                   {it.days?.length ?? 0} days
                 </td>
-                <td className="py-2 px-2">
-                  <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-medium", pipelineStageBadgeClass(ps))}>
+                <td className={listTdClass}>
+                  <span className={cn("text-2xs px-2 py-0.5 rounded-full font-medium", pipelineStageBadgeClass(ps))}>
                     {plLabel}
                   </span>
                 </td>
-                <td className="py-2 px-2">
+                <td className={listTdClass}>
                   <span
                     className={cn(
                       "text-xs px-1.5 py-0.5 rounded border",
@@ -129,16 +141,16 @@ export default function ItineraryListView({
                     {statusBadge?.label ?? it.status}
                   </span>
                 </td>
-                <td className="py-2 px-2 text-sm text-[rgba(245,245,245,0.7)]">
+                <td className={cn(listTdClass, listMutedCellClass)}>
                   {eventCount}
                 </td>
-                <td className="py-2 px-2 text-sm text-[rgba(245,245,245,0.8)]">
+                <td className={cn(listTdClass, listMutedCellClass)}>
                   {totalPrice > 0 ? `${currencySym}${totalPrice.toLocaleString()}` : "—"}
                 </td>
-                <td className="py-2 px-2" onClick={(e) => e.stopPropagation()}>
+                <td className={listTdClass} onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-[rgba(245,245,245,0.6)]">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
                         <MoreHorizontal size={16} />
                       </Button>
                     </DropdownMenuTrigger>

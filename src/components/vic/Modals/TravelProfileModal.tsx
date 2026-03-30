@@ -87,9 +87,9 @@ export default function TravelProfileModal({ vic, existingTypes, onClose, onSave
 
         {step === "type" ? (
           <div className="space-y-3">
-            <p className="text-sm text-[rgba(245,245,245,0.7)]">Select profile type (only types not already added):</p>
+            <p className="text-sm text-muted-foreground">Select profile type (only types not already added):</p>
             {availableTypes.length === 0 ? (
-              <p className="text-sm text-[rgba(245,245,245,0.5)]">All profile types already exist for this VIC.</p>
+              <p className="text-sm text-muted-foreground/75">All profile types already exist for this VIC.</p>
             ) : (
               <div className="grid grid-cols-2 gap-2">
                 {availableTypes.map((t) => (
@@ -108,7 +108,7 @@ export default function TravelProfileModal({ vic, existingTypes, onClose, onSave
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto space-y-3 py-2">
-            <p className="text-xs text-[rgba(245,245,245,0.5)] capitalize">Profile: {profileType.replace(/_/g, " ")}</p>
+            <p className="text-xs text-muted-foreground/75 capitalize">Profile: {profileType.replace(/_/g, " ")}</p>
             <div>
               <Label>Accommodation preferences</Label>
               <Input value={accommodation} onChange={(e) => setAccommodation(e.target.value)} className="mt-1" placeholder="e.g. Hotels, Villas" />
@@ -123,7 +123,7 @@ export default function TravelProfileModal({ vic, existingTypes, onClose, onSave
             </div>
             <div>
               <Label>Travel pace</Label>
-              <select value={pace} onChange={(e) => setPace(e.target.value)} className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]">
+              <select value={pace} onChange={(e) => setPace(e.target.value)} className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground">
                 {PACE_OPTIONS.map((o) => <option key={o || "x"} value={o}>{o || "—"}</option>)}
               </select>
             </div>
@@ -133,7 +133,7 @@ export default function TravelProfileModal({ vic, existingTypes, onClose, onSave
             </div>
             <div>
               <Label>Budget range</Label>
-              <select value={budget} onChange={(e) => setBudget(e.target.value)} className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]">
+              <select value={budget} onChange={(e) => setBudget(e.target.value)} className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground">
                 {BUDGET_OPTIONS.map((o) => <option key={o || "x"} value={o}>{o || "—"}</option>)}
               </select>
             </div>
@@ -143,13 +143,13 @@ export default function TravelProfileModal({ vic, existingTypes, onClose, onSave
             </div>
             <div>
               <Label>Cabin class</Label>
-              <select value={cabinClass} onChange={(e) => setCabinClass(e.target.value)} className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]">
+              <select value={cabinClass} onChange={(e) => setCabinClass(e.target.value)} className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground">
                 {CABIN_OPTIONS.map((o) => <option key={o || "x"} value={o}>{o ? o.replace(/_/g, " ") : "—"}</option>)}
               </select>
             </div>
             <div>
               <Label>Seat preference</Label>
-              <select value={seatPreference} onChange={(e) => setSeatPreference(e.target.value)} className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]">
+              <select value={seatPreference} onChange={(e) => setSeatPreference(e.target.value)} className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground">
                 {SEAT_OPTIONS.map((o) => <option key={o || "x"} value={o}>{o || "—"}</option>)}
               </select>
             </div>
@@ -159,16 +159,16 @@ export default function TravelProfileModal({ vic, existingTypes, onClose, onSave
             </div>
             <div>
               <Label>Accessibility needs</Label>
-              <textarea value={accessibility} onChange={(e) => setAccessibility(e.target.value)} rows={2} className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]" />
+              <textarea value={accessibility} onChange={(e) => setAccessibility(e.target.value)} rows={2} className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground" />
             </div>
             <div>
               <Label>Special requirements</Label>
-              <textarea value={specialReq} onChange={(e) => setSpecialReq(e.target.value)} rows={2} className="mt-1 w-full rounded-md border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-[#F5F5F5]" />
+              <textarea value={specialReq} onChange={(e) => setSpecialReq(e.target.value)} rows={2} className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground" />
             </div>
           </div>
         )}
 
-        <DialogFooter className="border-t border-[rgba(255,255,255,0.08)] pt-3 shrink-0">
+        <DialogFooter className="border-t border-border pt-3 shrink-0">
           {step === "form" ? (
             <>
               <Button type="button" variant="outline" onClick={() => setStep("type")}>Back</Button>

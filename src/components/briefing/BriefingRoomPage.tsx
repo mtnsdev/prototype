@@ -115,7 +115,7 @@ export default function BriefingRoomPage() {
   const quickActions = quickStartContent?.actions?.slice(0, 6) ?? [];
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col bg-[#0a0a0b]">
+    <div className="flex h-full min-h-0 flex-1 flex-col bg-background">
       {IS_PREVIEW_MODE && <PreviewBanner feature="Briefing Room" variant="full" dismissible sampleDataOnly />}
       {/* Elegant header with subtle gradient */}
       <header className="shrink-0 relative overflow-hidden">
@@ -123,24 +123,24 @@ export default function BriefingRoomPage() {
         <div className="relative px-6 py-6 md:px-8 md:py-8">
           <div className="flex flex-wrap items-center justify-between gap-6">
             <div>
-              <p className="text-xs font-medium uppercase tracking-widest text-[rgba(245,245,245,0.4)] mb-1">
+              <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground/55 mb-1">
                 Dashboard
               </p>
-              <h1 className="text-2xl md:text-3xl font-semibold text-[#F5F5F5] tracking-tight">
+              <h1 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
                 {getGreeting()}, {firstName}
               </h1>
-              <p className="text-sm text-[rgba(245,245,245,0.55)] mt-1">
+              <p className="text-sm text-muted-foreground/75 mt-1">
                 Your briefing and priorities at a glance
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-xs font-medium text-[rgba(245,245,245,0.5)] bg-white/[0.04] border border-[rgba(255,255,255,0.06)] rounded-full px-4 py-2">
+              <span className="text-xs font-medium text-muted-foreground/75 bg-white/[0.04] border border-border rounded-full px-4 py-2">
                 {dateTime}
               </span>
               <button
                 type="button"
                 title="Coming soon"
-                className="p-2 rounded-lg text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-white/[0.06] transition-colors"
+                className="p-2 rounded-lg text-muted-foreground/75 hover:text-muted-foreground hover:bg-white/[0.06] transition-colors"
                 aria-label="Customize"
               >
                 <Settings size={18} />
@@ -148,7 +148,7 @@ export default function BriefingRoomPage() {
             </div>
           </div>
           {quickActions.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1 mt-5 pt-5 border-t border-white/[0.06]">
+            <div className="flex flex-wrap items-center gap-1 mt-5 pt-5 border-t border-border">
               {quickActions.map((action) => {
                 const Icon = QUICK_START_ICONS[action.icon] ?? Zap;
                 const href = QUICK_START_ROUTES[action.label] ?? action.route ?? "#";
@@ -163,7 +163,7 @@ export default function BriefingRoomPage() {
                       "flex items-center gap-2 rounded-lg px-3 py-2 transition-colors",
                       acuityVic
                         ? "text-violet-300 hover:text-violet-200 bg-violet-500/10 hover:bg-violet-500/15 border border-violet-500/20"
-                        : "text-[rgba(245,245,245,0.6)] hover:text-[#F5F5F5] hover:bg-white/[0.06]"
+                        : "text-muted-foreground hover:text-foreground hover:bg-white/[0.06]"
                     )}
                   >
                     <Icon size={18} className={acuityVic ? "text-violet-400" : undefined} />
@@ -184,7 +184,7 @@ export default function BriefingRoomPage() {
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div
                   key={i}
-                  className="rounded-[20px] border border-white/[0.08] bg-white/[0.02] h-64 animate-pulse"
+                  className="rounded-[20px] border border-border bg-white/[0.02] h-64 animate-pulse"
                 />
               ))}
             </div>

@@ -18,7 +18,7 @@ const privateStyle = {
 export function ScopeBadge({ scope, teams, className = "" }: Props) {
   if (scope === "private") {
     return (
-      <span className={`text-[10px] px-1.5 py-0.5 rounded ${className}`.trim()} style={privateStyle}>
+      <span className={`text-2xs px-1.5 py-0.5 rounded ${className}`.trim()} style={privateStyle}>
         Private
       </span>
     );
@@ -26,7 +26,7 @@ export function ScopeBadge({ scope, teams, className = "" }: Props) {
   if (scope === "mirrors_source") {
     return (
       <span
-        className={`text-[10px] px-1.5 py-0.5 rounded ${className}`.trim()}
+        className={`text-2xs px-1.5 py-0.5 rounded ${className}`.trim()}
         style={{
           background: "rgba(140,160,180,0.06)",
           color: "rgba(140,160,180,0.45)",
@@ -45,7 +45,7 @@ export function ScopeBadge({ scope, teams, className = "" }: Props) {
     border: `1px solid ${isEveryone ? "rgba(140,160,180,0.10)" : "rgba(140,170,160,0.10)"}`,
   } as const;
   return (
-    <span className={`text-[10px] px-1.5 py-0.5 rounded ${className}`.trim()} style={style}>
+    <span className={`text-2xs px-1.5 py-0.5 rounded ${className}`.trim()} style={style}>
       {team?.name || "Team"}
     </span>
   );

@@ -76,13 +76,13 @@ export default function AnnouncementsWidget({ isAdmin, staggerIndex = 0 }: Props
 
   return (
     <div
-      className="bg-white/[0.02] border border-white/[0.06] rounded-[20px] p-5 animate-briefing-fade-in"
+      className="bg-white/[0.02] border border-border rounded-[20px] p-5 animate-briefing-fade-in"
       style={{ animationDelay: `${staggerIndex * 50}ms` }}
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Megaphone className="w-4 h-4 text-amber-400" />
-          <span className="text-xs font-semibold tracking-wider text-gray-400 uppercase">
+          <Megaphone className="w-4 h-4 text-[var(--color-warning)]" />
+          <span className="text-xs font-semibold tracking-wider text-muted-foreground/90 uppercase">
             Announcements
           </span>
         </div>
@@ -90,7 +90,7 @@ export default function AnnouncementsWidget({ isAdmin, staggerIndex = 0 }: Props
           <button
             type="button"
             onClick={() => setShowEditor(true)}
-            className="text-[10px] text-amber-400 hover:text-amber-300"
+            className="text-2xs text-[var(--color-warning)] hover:text-amber-300"
           >
             + New
           </button>
@@ -104,16 +104,16 @@ export default function AnnouncementsWidget({ isAdmin, staggerIndex = 0 }: Props
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Title..."
-            className="w-full bg-transparent text-sm text-white placeholder:text-gray-600 font-medium mb-2 outline-none"
+            className="w-full bg-transparent text-sm text-white placeholder:text-muted-foreground/55 font-medium mb-2 outline-none"
           />
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
             placeholder="Write your announcement..."
-            className="w-full bg-transparent text-xs text-gray-300 placeholder:text-gray-600 resize-none h-20 outline-none leading-relaxed"
+            className="w-full bg-transparent text-xs text-foreground/88 placeholder:text-muted-foreground/55 resize-none h-20 outline-none leading-relaxed"
           />
           <div className="flex items-center justify-between mt-2">
-            <label className="flex items-center gap-1.5 text-[10px] text-gray-500 cursor-pointer">
+            <label className="flex items-center gap-1.5 text-2xs text-muted-foreground cursor-pointer">
               <input
                 type="checkbox"
                 checked={pin}
@@ -126,14 +126,14 @@ export default function AnnouncementsWidget({ isAdmin, staggerIndex = 0 }: Props
               <button
                 type="button"
                 onClick={() => setShowEditor(false)}
-                className="text-[10px] text-gray-500 hover:text-gray-400"
+                className="text-2xs text-muted-foreground hover:text-muted-foreground"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={publish}
-                className="text-[10px] text-amber-400 hover:text-amber-300 font-medium"
+                className="text-2xs text-[var(--color-warning)] hover:text-amber-300 font-medium"
               >
                 Publish
               </button>
@@ -150,17 +150,17 @@ export default function AnnouncementsWidget({ isAdmin, staggerIndex = 0 }: Props
           >
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-xs font-medium text-white">{a.title}</span>
-              {a.pinned && <Pin className="w-3 h-3 text-amber-400/60 shrink-0" />}
+              {a.pinned && <Pin className="w-3 h-3 text-[var(--color-warning)]/60 shrink-0" />}
             </div>
-            <p className="text-xs text-gray-400 leading-relaxed whitespace-pre-wrap">
+            <p className="text-xs text-muted-foreground/90 leading-relaxed whitespace-pre-wrap">
               {a.content}
             </p>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
-              <span className="text-[10px] text-gray-600">
+              <span className="text-2xs text-muted-foreground/70">
                 {a.author} · {a.timeAgo}
               </span>
               {a.data_layer === "agency" && (
-                <span className="text-[10px] text-blue-400/60 bg-blue-500/5 px-1.5 py-0.5 rounded">
+                <span className="text-2xs text-blue-400/60 bg-blue-500/5 px-1.5 py-0.5 rounded">
                   Agency
                 </span>
               )}
@@ -170,7 +170,7 @@ export default function AnnouncementsWidget({ isAdmin, staggerIndex = 0 }: Props
       </div>
 
       {list.length === 0 && (
-        <p className="text-xs text-gray-600 text-center py-4">No announcements yet</p>
+        <p className="text-xs text-muted-foreground/70 text-center py-4">No announcements yet</p>
       )}
     </div>
   );

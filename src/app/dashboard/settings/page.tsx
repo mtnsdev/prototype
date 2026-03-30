@@ -160,44 +160,44 @@ export default function SettingsPage() {
 
     if (isLoading) {
         return (
-            <div className="h-full flex items-center justify-center bg-[#0C0C0C]">
+            <div className="h-full flex items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-[rgba(245,245,245,0.4)]" />
-                    <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Loading settings...</span>
+                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground/55" />
+                    <span className="text-compact text-muted-foreground/75">Loading settings...</span>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="h-full overflow-y-auto bg-[#0C0C0C]">
+        <div className="h-full overflow-y-auto bg-background">
             <div className="max-w-2xl mx-auto p-6 space-y-6">
                 {/* Page Header */}
                 <div className="mb-8">
-                    <h1 className="text-[24px] font-semibold text-[#F5F5F5] tracking-tight">Settings</h1>
-                    <p className="text-[14px] text-[rgba(245,245,245,0.5)] mt-1">Manage your account preferences</p>
+                    <h1 className="text-2xl font-semibold text-foreground tracking-tight">Settings</h1>
+                    <p className="text-base text-muted-foreground/75 mt-1">Manage your account preferences</p>
                 </div>
 
                 {/* Profile Section */}
-                <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
-                    <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-white/10">
-                            <User size={18} className="text-[rgba(245,245,245,0.6)]" />
+                <section className="rounded-2xl border border-border bg-card overflow-hidden">
+                    <div className="px-5 py-4 border-b border-border flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-input">
+                            <User size={18} className="text-muted-foreground" />
                         </div>
-                        <h2 className="text-[15px] font-semibold text-[#F5F5F5]">Profile</h2>
+                        <h2 className="text-base font-semibold text-foreground">Profile</h2>
                     </div>
 
                     <div className="p-5 space-y-5">
                         {/* Email */}
                         <div className="flex items-start gap-4">
                             <div className="w-10 h-10 rounded-lg bg-[rgba(255,255,255,0.04)] flex items-center justify-center shrink-0">
-                                <Mail size={18} className="text-[rgba(245,245,245,0.4)]" />
+                                <Mail size={18} className="text-muted-foreground/55" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                                <Label className="text-sm text-muted-foreground/75 uppercase tracking-wider">
                                     Email
                                 </Label>
-                                <p className="text-[15px] text-[#F5F5F5] mt-1 truncate">
+                                <p className="text-base text-foreground mt-1 truncate">
                                     {profile?.email}
                                 </p>
                             </div>
@@ -206,13 +206,13 @@ export default function SettingsPage() {
                         {/* Username */}
                         <div className="flex items-start gap-4">
                             <div className="w-10 h-10 rounded-lg bg-[rgba(255,255,255,0.04)] flex items-center justify-center shrink-0">
-                                <AtSign size={18} className="text-[rgba(245,245,245,0.4)]" />
+                                <AtSign size={18} className="text-muted-foreground/55" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                                <Label className="text-sm text-muted-foreground/75 uppercase tracking-wider">
                                     Username
                                 </Label>
-                                <p className="text-[15px] text-[#F5F5F5] mt-1 truncate">
+                                <p className="text-base text-foreground mt-1 truncate">
                                     {profile?.username}
                                 </p>
                             </div>
@@ -221,21 +221,21 @@ export default function SettingsPage() {
                 </section>
 
                 {/* Security Section — only for users who registered with a password */}
-                {user?.has_password && <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
-                    <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-white/10">
-                            <Key size={18} className="text-[rgba(245,245,245,0.6)]" />
+                {user?.has_password && <section className="rounded-2xl border border-border bg-card overflow-hidden">
+                    <div className="px-5 py-4 border-b border-border flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-input">
+                            <Key size={18} className="text-muted-foreground" />
                         </div>
-                        <h2 className="text-[15px] font-semibold text-[#F5F5F5]">Security</h2>
+                        <h2 className="text-base font-semibold text-foreground">Security</h2>
                     </div>
 
                     <div className="p-5 space-y-4">
-                        <p className="text-[13px] text-[rgba(245,245,245,0.5)]">
+                        <p className="text-compact text-muted-foreground/75">
                             Change your password. You will be signed out after changing your password.
                         </p>
                         
                         <div className="space-y-2">
-                            <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                            <Label className="text-sm text-muted-foreground/75 uppercase tracking-wider">
                                 Current Password
                             </Label>
                             <Input
@@ -243,12 +243,12 @@ export default function SettingsPage() {
                                 value={currentPassword}
                                 onChange={(e) => setCurrentPassword(e.target.value)}
                                 placeholder="Enter current password"
-                                className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)]"
+                                className="rounded-xl bg-background border-border"
                             />
                         </div>
                         
                         <div className="space-y-2">
-                            <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                            <Label className="text-sm text-muted-foreground/75 uppercase tracking-wider">
                                 New Password
                             </Label>
                             <Input
@@ -256,12 +256,12 @@ export default function SettingsPage() {
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
                                 placeholder="Enter new password"
-                                className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)]"
+                                className="rounded-xl bg-background border-border"
                             />
                         </div>
                         
                         <div className="space-y-2">
-                            <Label className="text-[12px] text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                            <Label className="text-sm text-muted-foreground/75 uppercase tracking-wider">
                                 Confirm New Password
                             </Label>
                             <Input
@@ -269,19 +269,19 @@ export default function SettingsPage() {
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 placeholder="Confirm new password"
-                                className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.08)]"
+                                className="rounded-xl bg-background border-border"
                             />
                         </div>
                         
                         {passwordError && (
-                            <p className="text-[13px] text-[#C87A7A]">{passwordError}</p>
+                            <p className="text-compact text-[var(--color-error)]">{passwordError}</p>
                         )}
                         
                         {passwordSuccess && (
-                            <p className="text-[13px] text-green-400">Password changed successfully. Redirecting to login...</p>
+                            <p className="text-compact text-green-400">Password changed successfully. Redirecting to login...</p>
                         )}
                         
-                        <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
+                        <p className="text-sm text-muted-foreground/55">
                             Password must be at least 8 characters with at least one letter and one number.
                         </p>
                         
@@ -306,23 +306,23 @@ export default function SettingsPage() {
                 </section>}
 
                 {/* Account Section */}
-                <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
-                    <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-white/10">
-                            <LogOut size={18} className="text-[rgba(245,245,245,0.6)]" />
+                <section className="rounded-2xl border border-border bg-card overflow-hidden">
+                    <div className="px-5 py-4 border-b border-border flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-input">
+                            <LogOut size={18} className="text-muted-foreground" />
                         </div>
-                        <h2 className="text-[15px] font-semibold text-[#F5F5F5]">Account</h2>
+                        <h2 className="text-base font-semibold text-foreground">Account</h2>
                     </div>
 
                     <div className="p-5">
-                        <p className="text-[13px] text-[rgba(245,245,245,0.5)] mb-4">
+                        <p className="text-compact text-muted-foreground/75 mb-4">
                             Sign out of your account on this device.
                         </p>
                         <Button
                             variant="destructive"
                             onClick={handleSignOut}
                             disabled={isSigningOut}
-                            className="gap-2 bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border-[rgba(200,122,122,0.2)] text-[#C87A7A] hover:text-[#D89A9A]"
+                            className="gap-2 bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border-[rgba(200,122,122,0.2)] text-[var(--color-error)] hover:text-[#D89A9A]"
                         >
                             {isSigningOut ? (
                                 <>
@@ -340,25 +340,25 @@ export default function SettingsPage() {
                 </section>
 
                 {/* Integrations Section */}
-                <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
-                    <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-white/10">
-                            <Plug size={18} className="text-[rgba(245,245,245,0.6)]" />
+                <section className="rounded-2xl border border-border bg-card overflow-hidden">
+                    <div className="px-5 py-4 border-b border-border flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-input">
+                            <Plug size={18} className="text-muted-foreground" />
                         </div>
-                        <h2 className="text-[15px] font-semibold text-[#F5F5F5]">Integrations</h2>
+                        <h2 className="text-base font-semibold text-foreground">Integrations</h2>
                     </div>
                     <div className="p-5">
-                        <p className="text-[13px] text-[rgba(245,245,245,0.5)] mb-4">
+                        <p className="text-compact text-muted-foreground/75 mb-4">
                             Connect Google Drive and other data sources for search.
                         </p>
                         <Link
                             href="/dashboard/settings/integrations"
                             className={[
                                 "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
-                                "text-[14px] font-medium",
+                                "text-base font-medium",
                                 "bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)]",
-                                "border border-[rgba(255,255,255,0.1)]",
-                                "text-[#F5F5F5]",
+                                "border border-input",
+                                "text-foreground",
                                 "transition-all duration-150",
                             ].join(" ")}
                         >
@@ -371,16 +371,16 @@ export default function SettingsPage() {
 
                 {/* Admin Section - Only visible to admins */}
                 {(user?.role === "admin" || user?.role === "agency_admin") && (
-                    <section className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden">
-                        <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center gap-3">
+                    <section className="rounded-2xl border border-border bg-card overflow-hidden">
+                        <div className="px-5 py-4 border-b border-border flex items-center gap-3">
                             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center border border-amber-500/20">
-                                <Shield size={18} className="text-amber-400" />
+                                <Shield size={18} className="text-[var(--color-warning)]" />
                             </div>
-                            <h2 className="text-[15px] font-semibold text-[#F5F5F5]">Administration</h2>
+                            <h2 className="text-base font-semibold text-foreground">Administration</h2>
                         </div>
 
                         <div className="p-5 space-y-3">
-                            <p className="text-[13px] text-[rgba(245,245,245,0.5)]">
+                            <p className="text-compact text-muted-foreground/75">
                                 Teams, knowledge source defaults, and workspace admin.
                             </p>
                             <div className="flex flex-col gap-2">
@@ -388,10 +388,10 @@ export default function SettingsPage() {
                                     href="/dashboard/settings/teams"
                                     className={[
                                         "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
-                                        "text-[14px] font-medium",
+                                        "text-base font-medium",
                                         "bg-white/[0.06] hover:bg-white/[0.1]",
-                                        "border border-white/[0.08]",
-                                        "text-[#F5F5F5]",
+                                        "border border-border",
+                                        "text-foreground",
                                         "transition-all duration-150",
                                     ].join(" ")}
                                 >
@@ -403,10 +403,10 @@ export default function SettingsPage() {
                                     href="/dashboard/settings/sources"
                                     className={[
                                         "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
-                                        "text-[14px] font-medium",
+                                        "text-base font-medium",
                                         "bg-white/[0.06] hover:bg-white/[0.1]",
-                                        "border border-white/[0.08]",
-                                        "text-[#F5F5F5]",
+                                        "border border-border",
+                                        "text-foreground",
                                         "transition-all duration-150",
                                     ].join(" ")}
                                 >
@@ -418,10 +418,10 @@ export default function SettingsPage() {
                                     href="/dashboard/settings/admin"
                                     className={[
                                         "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
-                                        "text-[14px] font-medium",
+                                        "text-base font-medium",
                                         "bg-[rgba(251,191,36,0.12)] hover:bg-[rgba(251,191,36,0.18)]",
                                         "border border-[rgba(251,191,36,0.2)] hover:border-[rgba(251,191,36,0.35)]",
-                                        "text-amber-400 hover:text-amber-300",
+                                        "text-[var(--color-warning)] hover:text-amber-300",
                                         "transition-all duration-150",
                                     ].join(" ")}
                                 >

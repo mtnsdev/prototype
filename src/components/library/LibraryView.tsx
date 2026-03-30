@@ -140,7 +140,7 @@ function AccessLevelBadge({ level }: { level?: string }) {
         admin_only: {
             label: "Admin only",
             icon: <Lock size={10} />,
-            className: "bg-amber-500/15 text-amber-400 border-amber-500/25",
+            className: "bg-amber-500/15 text-[var(--color-warning)] border-amber-500/25",
         },
         user_specific: {
             label: "Restricted",
@@ -160,7 +160,7 @@ function AccessLevelBadge({ level }: { level?: string }) {
     return (
         <span
             className={[
-                "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border",
+                "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-2xs font-medium border",
                 c.className,
             ].join(" ")}
         >
@@ -190,7 +190,7 @@ function DrivePreviewButton({
             }}
             className={[
                 "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md",
-                "text-[11px] font-medium",
+                "text-xs font-medium",
                 "bg-[rgba(122,163,200,0.1)] hover:bg-[rgba(122,163,200,0.18)]",
                 "border border-[rgba(122,163,200,0.2)] hover:border-[rgba(122,163,200,0.35)]",
                 "text-[#7AA3C8] hover:text-[#9BBDD8]",
@@ -239,7 +239,7 @@ function DriveTreeNodeItem({
                 {isFolder && hasChildren ? (
                     <button
                         type="button"
-                        className="w-5 h-5 flex items-center justify-center text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors"
+                        className="w-5 h-5 flex items-center justify-center text-muted-foreground/75 hover:text-foreground transition-colors"
                         onClick={(e) => {
                             e.stopPropagation();
                             onToggleExpand(node.path);
@@ -257,7 +257,7 @@ function DriveTreeNodeItem({
                         "w-7 h-7 rounded-md flex items-center justify-center shrink-0",
                         isFolder
                             ? "bg-[rgba(122,163,200,0.1)] text-[#7AA3C8]"
-                            : "bg-[rgba(245,245,245,0.06)] text-[rgba(245,245,245,0.5)]",
+                            : "bg-[rgba(245,245,245,0.06)] text-muted-foreground/75",
                     ].join(" ")}
                 >
                     {isFolder ? <Folder size={14} /> : <FileText size={14} />}
@@ -267,8 +267,8 @@ function DriveTreeNodeItem({
                 <div className="flex-1 min-w-0">
                     <p
                         className={[
-                            "text-[13px] truncate",
-                            isFolder ? "text-[#F5F5F5] font-medium" : "text-[rgba(245,245,245,0.8)]",
+                            "text-compact truncate",
+                            isFolder ? "text-foreground font-medium" : "text-muted-foreground",
                         ].join(" ")}
                     >
                         {node.name}
@@ -282,7 +282,7 @@ function DriveTreeNodeItem({
 
                 {/* Sync status indicator */}
                 {node.file && !isFolder && node.file.index_status === "pending" && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/25">
+                    <span className="text-2xs px-1.5 py-0.5 rounded bg-amber-500/15 text-[var(--color-warning)] border border-amber-500/25">
                         Indexing...
                     </span>
                 )}
@@ -428,17 +428,17 @@ function DriveLibraryContent({
     const folderCount = files.filter((f) => f.is_folder).length;
 
     return (
-        <div className="h-full p-6 flex flex-col min-h-0 bg-[#0C0C0C]">
-            <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden flex flex-col min-h-0 flex-1">
+        <div className="h-full p-6 flex flex-col min-h-0 bg-background">
+            <div className="rounded-2xl border border-border bg-card overflow-hidden flex flex-col min-h-0 flex-1">
                 {/* Header */}
-                <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between shrink-0">
+                <div className="px-5 py-4 border-b border-border flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-white/10">
-                            <Cloud size={16} className="text-[rgba(245,245,245,0.6)]" />
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-input">
+                            <Cloud size={16} className="text-muted-foreground" />
                         </div>
                         <div>
-                            <h1 className="text-sm font-semibold leading-none text-[#F5F5F5]">{headerLabel}</h1>
-                            <p className="mt-1 text-[11px] leading-snug text-[rgba(245,245,245,0.5)]">
+                            <h1 className="text-sm font-semibold leading-none text-foreground">{headerLabel}</h1>
+                            <p className="mt-1 text-xs leading-snug text-muted-foreground/75">
                                 {fileCount} files, {folderCount} folders
                             </p>
                         </div>
@@ -450,7 +450,7 @@ function DriveLibraryContent({
                             size="sm"
                             onClick={handleRefresh}
                             disabled={loading}
-                            className="gap-2 text-[13px]"
+                            className="gap-2 text-compact"
                         >
                             {loading ? (
                                 <>
@@ -472,7 +472,7 @@ function DriveLibraryContent({
                 </div>
 
                 {/* Search */}
-                <div className="px-5 py-3 border-b border-[rgba(255,255,255,0.08)] shrink-0">
+                <div className="px-5 py-3 border-b border-border shrink-0">
                     <PageSearchField
                         placeholder="Search files and folders…"
                         aria-label="Search files and folders"
@@ -480,7 +480,7 @@ function DriveLibraryContent({
                         onChange={setSearchQuery}
                     />
                     {isSearchMode && (
-                        <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-2">
+                        <p className="text-xs text-muted-foreground/55 mt-2">
                             {filteredFiles.length} result{filteredFiles.length !== 1 ? "s" : ""}
                         </p>
                     )}
@@ -489,22 +489,22 @@ function DriveLibraryContent({
                 {/* Content */}
                 <div className="min-h-0 flex-1 overflow-y-auto py-2">
                     {error ? (
-                        <div className="px-5 py-6 text-[14px] text-[#C87A7A] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
+                        <div className="px-5 py-6 text-base text-[var(--color-error)] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
                             {error}
                         </div>
                     ) : showLoading && files.length === 0 ? (
                         <div className="px-5 py-10 text-center">
                             <div className="flex flex-col items-center gap-3">
-                                <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)]" />
-                                <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Loading files...</span>
+                                <Loader2 size={24} className="animate-spin text-muted-foreground/55" />
+                                <span className="text-compact text-muted-foreground/75">Loading files...</span>
                             </div>
                         </div>
                     ) : files.length === 0 ? (
                         <div className="px-5 py-10 text-center">
                             <div className="flex flex-col items-center gap-2">
                                 <Cloud size={32} className="text-[rgba(245,245,245,0.2)]" />
-                                <span className="text-[14px] text-[rgba(245,245,245,0.5)]">No available files</span>
-                                <span className="text-[12px] text-[rgba(245,245,245,0.35)]">
+                                <span className="text-base text-muted-foreground/75">No available files</span>
+                                <span className="text-sm text-muted-foreground/55">
                                     {connectionType === "agency"
                                         ? "No folders have been shared with you yet. Contact your admin for access."
                                         : "Files will appear here after syncing your Google Drive folder."}
@@ -518,8 +518,8 @@ function DriveLibraryContent({
                                 <div className="px-5 py-10 text-center">
                                     <div className="flex flex-col items-center gap-2">
                                         <Search size={32} className="text-[rgba(245,245,245,0.2)]" />
-                                        <span className="text-[14px] text-[rgba(245,245,245,0.5)]">No results found</span>
-                                        <span className="text-[12px] text-[rgba(245,245,245,0.35)]">
+                                        <span className="text-base text-muted-foreground/75">No results found</span>
+                                        <span className="text-sm text-muted-foreground/55">
                                             Try a different search term
                                         </span>
                                     </div>
@@ -528,24 +528,24 @@ function DriveLibraryContent({
                                 filteredFiles.map((file) => (
                                     <div
                                         key={`drive-${file.id}`}
-                                        className="flex items-center gap-3 px-5 py-3 border-b border-[rgba(255,255,255,0.06)] hover:bg-white/4 transition-colors"
+                                        className="flex items-center gap-3 px-5 py-3 border-b border-border hover:bg-white/4 transition-colors"
                                     >
                                         <div
                                             className={[
                                                 "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
                                                 file.is_folder
                                                     ? "bg-[rgba(122,163,200,0.1)] text-[#7AA3C8]"
-                                                    : "bg-[rgba(245,245,245,0.06)] text-[rgba(245,245,245,0.5)]",
+                                                    : "bg-[rgba(245,245,245,0.06)] text-muted-foreground/75",
                                             ].join(" ")}
                                         >
                                             {file.is_folder ? <Folder size={16} /> : <FileText size={16} />}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-[13px] text-[#F5F5F5] truncate font-medium">
+                                            <p className="text-compact text-foreground truncate font-medium">
                                                 {file.filename || "Untitled"}
                                             </p>
                                             {file.drive_path && (
-                                                <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-0.5 truncate">
+                                                <p className="text-xs text-muted-foreground/55 mt-0.5 truncate">
                                                     {file.drive_path}
                                                 </p>
                                             )}
@@ -594,10 +594,10 @@ function DriveLibraryContent({
                                     <FileText size={20} className="text-[rgba(0,0,0,0.5)]" />
                                 </div>
                                 <div className="min-w-0">
-                                    <h2 className="text-[15px] font-semibold text-[#0C0C0C] truncate">
+                                    <h2 className="text-base font-semibold text-[#0C0C0C] truncate">
                                         {previewModal.filename}
                                     </h2>
-                                    <p className="text-[12px] text-[rgba(0,0,0,0.5)] mt-0.5">
+                                    <p className="text-sm text-[rgba(0,0,0,0.5)] mt-0.5">
                                         Google Drive Preview
                                     </p>
                                 </div>
@@ -620,7 +620,7 @@ function DriveLibraryContent({
                             )}
                             {previewModal.error && (
                                 <div className="absolute inset-0 flex items-center justify-center p-6 bg-[#e5e5e5] z-10">
-                                    <p className="text-[15px] text-[rgba(0,0,0,0.7)]">{previewModal.error}</p>
+                                    <p className="text-base text-[rgba(0,0,0,0.7)]">{previewModal.error}</p>
                                 </div>
                             )}
                             {previewModal.blobUrl && !previewModal.error && (
@@ -701,7 +701,7 @@ function TreeNode({
                 {isFolder ? (
                     <button
                         type="button"
-                        className="w-5 h-5 flex items-center justify-center text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors"
+                        className="w-5 h-5 flex items-center justify-center text-muted-foreground/75 hover:text-foreground transition-colors"
                         onClick={(e) => {
                             e.stopPropagation();
                             onToggleExpand(item.id);
@@ -724,7 +724,7 @@ function TreeNode({
                     "w-7 h-7 rounded-md flex items-center justify-center shrink-0",
                     isFolder
                         ? "bg-[rgba(122,163,200,0.1)] text-[#7AA3C8]"
-                        : "bg-[rgba(245,245,245,0.06)] text-[rgba(245,245,245,0.5)]",
+                        : "bg-[rgba(245,245,245,0.06)] text-muted-foreground/75",
                 ].join(" ")}>
                     {isFolder ? <Folder size={14} /> : <FileText size={14} />}
                 </div>
@@ -732,8 +732,8 @@ function TreeNode({
                 {/* Title */}
                 <div className="flex-1 min-w-0">
                     <p className={[
-                        "text-[13px] truncate",
-                        isFolder ? "text-[#F5F5F5] font-medium" : "text-[rgba(245,245,245,0.8)]",
+                        "text-compact truncate",
+                        isFolder ? "text-foreground font-medium" : "text-muted-foreground",
                     ].join(" ")}>
                         {item.kind === "page" ? item.name : item.title}
                     </p>
@@ -797,7 +797,7 @@ function PreviewButton({
             }}
             className={[
                 "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md",
-                "text-[11px] font-medium",
+                "text-xs font-medium",
                 "bg-[rgba(122,163,200,0.1)] hover:bg-[rgba(122,163,200,0.18)]",
                 "border border-[rgba(122,163,200,0.2)] hover:border-[rgba(122,163,200,0.35)]",
                 "text-[#7AA3C8] hover:text-[#9BBDD8]",
@@ -859,13 +859,13 @@ function SearchResultItem({
             ? "bg-[rgba(122,163,200,0.1)] text-[#7AA3C8]"
             : isPage
                 ? "bg-[rgba(156,163,175,0.12)] text-[#9CA3AF]"
-                : "bg-[rgba(245,245,245,0.06)] text-[rgba(245,245,245,0.5)]";
+                : "bg-[rgba(245,245,245,0.06)] text-muted-foreground/75";
 
     return (
         <div
             className={[
                 "flex items-center gap-3 px-5 py-3",
-                "border-b border-[rgba(255,255,255,0.06)]",
+                "border-b border-border",
                 "hover:bg-white/4 transition-colors",
             ].join(" ")}
         >
@@ -876,10 +876,10 @@ function SearchResultItem({
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-                <p className="text-[13px] text-[#F5F5F5] truncate font-medium">
+                <p className="text-compact text-foreground truncate font-medium">
                     {title}
                 </p>
-                <p className="text-[11px] text-[rgba(245,245,245,0.45)] mt-0.5">
+                <p className="text-xs text-muted-foreground/75 mt-0.5">
                     {item.kind === "folder"
                         ? `Folder • ID ${item.id}`
                         : item.kind === "page"
@@ -896,7 +896,7 @@ function SearchResultItem({
                     onClick={() => onOpenPreview(title, previewUrl)}
                     className={[
                         "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md",
-                        "text-[11px] font-medium",
+                        "text-xs font-medium",
                         "bg-[rgba(122,163,200,0.1)] hover:bg-[rgba(122,163,200,0.18)]",
                         "border border-[rgba(122,163,200,0.2)] hover:border-[rgba(122,163,200,0.35)]",
                         "text-[#7AA3C8] hover:text-[#9BBDD8]",
@@ -913,7 +913,7 @@ function SearchResultItem({
                     onClick={() => onOpenPreview(title, undefined, item.pdf_path ?? undefined)}
                     className={[
                         "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md",
-                        "text-[11px] font-medium",
+                        "text-xs font-medium",
                         "bg-[rgba(156,163,175,0.1)] hover:bg-[rgba(156,163,175,0.18)]",
                         "border border-[rgba(156,163,175,0.2)] hover:border-[rgba(156,163,175,0.35)]",
                         "text-[#9CA3AF] hover:text-[#D1D5DB]",
@@ -1185,26 +1185,26 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
     // Knowledge Root view — full-page tree with 2 root rows: Documents + Pages (and search)
     if (navigationMode === "knowledge-root") {
         return (
-            <div className="h-full p-6 flex flex-col min-h-0 bg-[#0C0C0C]">
-                <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden flex flex-col min-h-0 flex-1">
+            <div className="h-full p-6 flex flex-col min-h-0 bg-background">
+                <div className="rounded-2xl border border-border bg-card overflow-hidden flex flex-col min-h-0 flex-1">
                     {/* Header */}
-                    <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] shrink-0 flex items-center justify-between">
+                    <div className="px-5 py-4 border-b border-border shrink-0 flex items-center justify-between">
                         <div>
-                            <h1 className="text-sm font-semibold leading-none text-[#F5F5F5]">Knowledge Library</h1>
-                            <p className="mt-1 text-[11px] leading-snug text-[rgba(245,245,245,0.5)]">Knowledge</p>
+                            <h1 className="text-sm font-semibold leading-none text-foreground">Knowledge Library</h1>
+                            <p className="mt-1 text-xs leading-snug text-muted-foreground/75">Knowledge</p>
                         </div>
                         <SyncStatusButton />
                     </div>
 
                     {/* Search bar for intranet */}
-                    <div className="px-5 py-3 border-b border-[rgba(255,255,255,0.08)] shrink-0">
+                    <div className="px-5 py-3 border-b border-border shrink-0">
                         <PageSearchField
                             placeholder="Search files and folders…"
                             aria-label="Search files and folders"
                             value={searchQuery}
                             onChange={setSearchQuery}
                         />
-                        <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-2">
+                        <p className="text-xs text-muted-foreground/55 mt-2">
                             {searchQuery.trim().length < 2
                                 ? "Type at least 2 characters to search all documents and folders."
                                 : `Searching documents and pages${searchDocuments.length + searchPages.length > 0 ? ` • ${searchDocuments.length} document(s), ${searchPages.length} page(s)` : searchTotal !== null ? ` • ${searchTotal} document(s)` : ""}`}
@@ -1216,36 +1216,36 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                         {isSearchMode ? (
                             <>
                                 {searchError ? (
-                                    <div className="px-5 py-6 text-[14px] text-[#C87A7A] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
+                                    <div className="px-5 py-6 text-base text-[var(--color-error)] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
                                         {searchError}
                                     </div>
                                 ) : showSearchLoader && searchDocuments.length === 0 && searchPages.length === 0 ? (
                                     <div className="px-5 py-10 text-center">
                                         <div className="flex flex-col items-center gap-3">
-                                            <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)]" />
-                                            <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Searching...</span>
+                                            <Loader2 size={24} className="animate-spin text-muted-foreground/55" />
+                                            <span className="text-compact text-muted-foreground/75">Searching...</span>
                                         </div>
                                     </div>
                                 ) : searchDocuments.length === 0 && searchPages.length === 0 ? (
                                     <div className="px-5 py-10 text-center">
                                         <div className="flex flex-col items-center gap-2">
                                             <Search size={32} className="text-[rgba(245,245,245,0.2)]" />
-                                            <span className="text-[14px] text-[rgba(245,245,245,0.5)]">No results found</span>
-                                            <span className="text-[12px] text-[rgba(245,245,245,0.35)]">Try a different search term</span>
+                                            <span className="text-base text-muted-foreground/75">No results found</span>
+                                            <span className="text-sm text-muted-foreground/55">Try a different search term</span>
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="flex flex-col h-full min-h-0">
                                         {/* Tabs */}
-                                        <div className="flex shrink-0 border-b border-[rgba(255,255,255,0.08)]">
+                                        <div className="flex shrink-0 border-b border-border">
                                             <button
                                                 type="button"
                                                 onClick={() => setRootViewTab("documents")}
                                                 className={[
-                                                    "flex-1 px-4 py-3 text-[13px] font-medium transition-colors",
+                                                    "flex-1 px-4 py-3 text-compact font-medium transition-colors",
                                                     rootViewTab === "documents"
                                                         ? "text-[#7AA3C8] border-b-2 border-[#7AA3C8] bg-[rgba(122,163,200,0.06)]"
-                                                        : "text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-[rgba(255,255,255,0.03)]",
+                                                        : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-[rgba(255,255,255,0.03)]",
                                                 ].join(" ")}
                                             >
                                                 Documents ({searchDocuments.length}{searchTotal != null && searchTotal > searchDocuments.length ? ` of ${searchTotal}` : ""})
@@ -1254,10 +1254,10 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                 type="button"
                                                 onClick={() => setRootViewTab("pages")}
                                                 className={[
-                                                    "flex-1 px-4 py-3 text-[13px] font-medium transition-colors",
+                                                    "flex-1 px-4 py-3 text-compact font-medium transition-colors",
                                                     rootViewTab === "pages"
                                                         ? "text-[#9CA3AF] border-b-2 border-[#9CA3AF] bg-[rgba(156,163,175,0.06)]"
-                                                        : "text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-[rgba(255,255,255,0.03)]",
+                                                        : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-[rgba(255,255,255,0.03)]",
                                                 ].join(" ")}
                                             >
                                                 Pages ({searchPages.length})
@@ -1268,7 +1268,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                             {rootViewTab === "documents" ? (
                                                 <>
                                                     {searchDocuments.length === 0 ? (
-                                                        <div className="px-5 py-8 text-center text-[12px] text-[rgba(245,245,245,0.4)]">No documents match your search.</div>
+                                                        <div className="px-5 py-8 text-center text-sm text-muted-foreground/55">No documents match your search.</div>
                                                     ) : (
                                                         <>
                                                             {searchDocuments.map((item) => (
@@ -1279,17 +1279,17 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                                 />
                                                             ))}
                                                             {searchNextOffset !== null && (
-                                                                <div className="px-5 py-4 flex justify-center border-t border-[rgba(255,255,255,0.06)]">
+                                                                <div className="px-5 py-4 flex justify-center border-t border-border">
                                                                     <button
                                                                         type="button"
                                                                         onClick={loadMoreResults}
                                                                         disabled={searchLoading}
                                                                         className={[
                                                                             "inline-flex items-center gap-2 px-4 py-2 rounded-lg",
-                                                                            "text-[12px] font-medium",
+                                                                            "text-sm font-medium",
                                                                             "bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)]",
-                                                                            "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
-                                                                            "text-[rgba(245,245,245,0.7)] hover:text-[#F5F5F5]",
+                                                                            "border border-input hover:border-border-strong",
+                                                                            "text-muted-foreground hover:text-foreground",
                                                                             "transition-all duration-150",
                                                                             "disabled:opacity-50 disabled:cursor-not-allowed",
                                                                         ].join(" ")}
@@ -1311,7 +1311,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                             ) : (
                                                 <>
                                                     {searchPages.length === 0 ? (
-                                                        <div className="px-5 py-8 text-center text-[12px] text-[rgba(245,245,245,0.4)]">No pages match your search.</div>
+                                                        <div className="px-5 py-8 text-center text-sm text-muted-foreground/55">No pages match your search.</div>
                                                     ) : (
                                                         searchPages.map((page) => (
                                                             <SearchResultItem
@@ -1329,15 +1329,15 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                             </>
                         ) : (
                                     <div className="flex flex-col h-full min-h-0">
-                                        <div className="flex shrink-0 border-b border-[rgba(255,255,255,0.08)]">
+                                        <div className="flex shrink-0 border-b border-border">
                                             <button
                                                 type="button"
                                                 onClick={() => setRootViewTab("documents")}
                                                 className={[
-                                                    "flex-1 px-4 py-3 text-[13px] font-medium transition-colors",
+                                                    "flex-1 px-4 py-3 text-compact font-medium transition-colors",
                                                     rootViewTab === "documents"
                                                         ? "text-[#7AA3C8] border-b-2 border-[#7AA3C8] bg-[rgba(122,163,200,0.06)]"
-                                                        : "text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-[rgba(255,255,255,0.03)]",
+                                                        : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-[rgba(255,255,255,0.03)]",
                                                 ].join(" ")}
                                             >
                                                 Documents ({accordionRootDisplay.length})
@@ -1346,10 +1346,10 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                 type="button"
                                                 onClick={() => setRootViewTab("pages")}
                                                 className={[
-                                                    "flex-1 px-4 py-3 text-[13px] font-medium transition-colors",
+                                                    "flex-1 px-4 py-3 text-compact font-medium transition-colors",
                                                     rootViewTab === "pages"
                                                         ? "text-[#9CA3AF] border-b-2 border-[#9CA3AF] bg-[rgba(156,163,175,0.06)]"
-                                                        : "text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-[rgba(255,255,255,0.03)]",
+                                                        : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-[rgba(255,255,255,0.03)]",
                                                 ].join(" ")}
                                             >
                                                 Pages ({pagesItems.length}{pagesHasMore ? "+" : ""})
@@ -1360,13 +1360,13 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                 <>
                                                     {accordionRootLoading && accordionRootDisplay.length === 0 ? (
                                                         <div className="px-5 py-10 text-center">
-                                                            <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)] mx-auto" />
-                                                            <span className="text-[13px] text-[rgba(245,245,245,0.5)] block mt-3">Loading documents...</span>
+                                                            <Loader2 size={24} className="animate-spin text-muted-foreground/55 mx-auto" />
+                                                            <span className="text-compact text-muted-foreground/75 block mt-3">Loading documents...</span>
                                                         </div>
                                                     ) : accordionRootDisplay.length === 0 ? (
                                                         <div className="px-5 py-10 text-center">
                                                             <Folder size={32} className="text-[rgba(245,245,245,0.2)] mx-auto" />
-                                                            <span className="text-[14px] text-[rgba(245,245,245,0.5)] block mt-3">No documents in root folder</span>
+                                                            <span className="text-base text-muted-foreground/75 block mt-3">No documents in root folder</span>
                                                         </div>
                                                     ) : (
                                                         accordionRootDisplay.map((item) => (
@@ -1386,13 +1386,13 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                 <>
                                                     {pagesLoading && pagesItems.length === 0 ? (
                                                         <div className="px-5 py-10 text-center">
-                                                            <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)] mx-auto" />
-                                                            <span className="text-[13px] text-[rgba(245,245,245,0.5)] block mt-3">Loading pages...</span>
+                                                            <Loader2 size={24} className="animate-spin text-muted-foreground/55 mx-auto" />
+                                                            <span className="text-compact text-muted-foreground/75 block mt-3">Loading pages...</span>
                                                         </div>
                                                     ) : pagesItems.length === 0 ? (
                                                         <div className="px-5 py-10 text-center">
                                                             <FileText size={32} className="text-[rgba(245,245,245,0.2)] mx-auto" />
-                                                            <span className="text-[14px] text-[rgba(245,245,245,0.5)] block mt-3">No pages</span>
+                                                            <span className="text-base text-muted-foreground/75 block mt-3">No pages</span>
                                                         </div>
                                                     ) : (
                                                         <>
@@ -1401,11 +1401,11 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                                     key={page.id}
                                                                     className="flex items-center gap-2 py-2 pr-4 hover:bg-white/2 transition-all duration-150 px-5"
                                                                 >
-                                                                    <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 bg-[rgba(245,245,245,0.06)] text-[rgba(245,245,245,0.5)]">
+                                                                    <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 bg-[rgba(245,245,245,0.06)] text-muted-foreground/75">
                                                                         <FileText size={14} />
                                                                     </div>
                                                                     <div className="flex-1 min-w-0">
-                                                                        <p className="text-[13px] text-[rgba(245,245,245,0.8)] truncate">{page.name}</p>
+                                                                        <p className="text-compact text-muted-foreground truncate">{page.name}</p>
                                                                     </div>
                                                                     <button
                                                                         type="button"
@@ -1416,7 +1416,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                                         }}
                                                                         className={[
                                                                             "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md",
-                                                                            "text-[11px] font-medium",
+                                                                            "text-xs font-medium",
                                                                             "bg-[rgba(122,163,200,0.1)] hover:bg-[rgba(122,163,200,0.18)]",
                                                                             "border border-[rgba(122,163,200,0.2)] hover:border-[rgba(122,163,200,0.35)]",
                                                                             "text-[#7AA3C8] hover:text-[#9BBDD8]",
@@ -1428,12 +1428,12 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                                 </div>
                                                             ))}
                                                             {pagesHasMore && (
-                                                                <div className="px-5 py-4 flex justify-center border-t border-[rgba(255,255,255,0.06)]">
+                                                                <div className="px-5 py-4 flex justify-center border-t border-border">
                                                                     <button
                                                                         type="button"
                                                                         onClick={loadMorePages}
                                                                         disabled={pagesLoading}
-                                                                        className="w-full max-w-xs py-2 rounded-lg text-[12px] text-[rgba(245,245,245,0.5)] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.06)] disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
+                                                                        className="w-full max-w-xs py-2 rounded-lg text-sm text-muted-foreground/75 bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-border disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
                                                                     >
                                                                         {pagesLoading ? <Loader2 size={12} className="animate-spin" /> : null}
                                                                         Load more
@@ -1465,13 +1465,13 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
     // If in documents mode but no root ID set, show folder ID input
     if (navigationMode === "documents" && rootId === undefined) {
         return (
-            <div className="h-full flex items-center justify-center bg-[#0C0C0C] p-6">
-                <div className="w-full max-w-md rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] p-8">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center mb-5 border border-white/10">
-                        <Folder size={22} className="text-[rgba(245,245,245,0.6)]" />
+            <div className="h-full flex items-center justify-center bg-background p-6">
+                <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center mb-5 border border-input">
+                        <Folder size={22} className="text-muted-foreground" />
                     </div>
-                    <h2 className="text-[18px] font-semibold text-[#F5F5F5]">Knowledge Library</h2>
-                    <p className="mt-2 text-[14px] text-[rgba(245,245,245,0.5)] leading-relaxed">
+                    <h2 className="text-lg font-semibold text-foreground">Knowledge Library</h2>
+                    <p className="mt-2 text-base text-muted-foreground/75 leading-relaxed">
                         Enter a folder ID to start browsing your documents.
                     </p>
 
@@ -1480,7 +1480,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                             type="number"
                             placeholder="Folder ID (e.g., 0)"
                             value={draftRootId}
-                            className="flex-1 rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.1)]"
+                            className="flex-1 rounded-xl bg-background border-input"
                             onChange={(e) => setDraftRootId(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && commitRootId()}
                         />
@@ -1498,7 +1498,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                         variant="ghost"
                         size="sm"
                         onClick={handleNavigateToKnowledgeRoot}
-                        className="mt-4 text-[12px] text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5]"
+                        className="mt-4 text-sm text-muted-foreground/75 hover:text-foreground"
                     >
                         ← Back to Knowledge
                     </Button>
@@ -1508,14 +1508,14 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
     }
 
     return (
-        <div className="h-full p-6 flex flex-col min-h-0 bg-[#0C0C0C]">
+        <div className="h-full p-6 flex flex-col min-h-0 bg-background">
             {/* Main Content Card */}
-            <div className="rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#161616] overflow-hidden flex flex-col min-h-0 flex-1">
+            <div className="rounded-2xl border border-border bg-card overflow-hidden flex flex-col min-h-0 flex-1">
                 {/* Header with Breadcrumbs */}
-                <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)] shrink-0">
+                <div className="px-5 py-4 border-b border-border shrink-0">
                     <div className="flex items-center justify-between">
                         <div className="flex-1">
-                            <h1 className="text-sm font-semibold leading-none text-[#F5F5F5]">Knowledge Library</h1>
+                            <h1 className="text-sm font-semibold leading-none text-foreground">Knowledge Library</h1>
                             {/* Breadcrumbs */}
                             <div className="flex items-center gap-2 mt-1">
                                 {breadcrumbs.map((crumb, idx) => (
@@ -1525,10 +1525,10 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                             type="button"
                                             onClick={() => handleBreadcrumbClick(crumb.path)}
                                             className={[
-                                                "text-[12px] transition-colors",
+                                                "text-sm transition-colors",
                                                 idx === breadcrumbs.length - 1
                                                     ? "text-[#7AA3C8] font-medium cursor-default"
-                                                    : "text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5]",
+                                                    : "text-muted-foreground/75 hover:text-foreground",
                                             ].join(" ")}
                                             disabled={idx === breadcrumbs.length - 1}
                                         >
@@ -1537,7 +1537,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                     </div>
                                 ))}
                                 {navigationMode === "documents" && rootId !== undefined && (
-                                    <span className="text-[12px] text-[rgba(245,245,245,0.4)]">
+                                    <span className="text-sm text-muted-foreground/55">
                                         {" "} • Folder {rootId}
                                     </span>
                                 )}
@@ -1545,7 +1545,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                         </div>
                         <div className="flex items-center gap-4">
                             {((navigationMode === "documents" && showRootLoading) || (navigationMode === "pages" && pagesLoading)) && (
-                                <div className="flex items-center gap-2 text-[12px] text-[rgba(245,245,245,0.5)]">
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground/75">
                                     <Loader2 size={14} className="animate-spin" />
                                     <span>Loading...</span>
                                 </div>
@@ -1557,20 +1557,20 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
 
                 {/* Search Input - Only show for documents mode */}
                 {navigationMode === "documents" && (
-                    <div className="px-5 py-3 border-b border-[rgba(255,255,255,0.08)] shrink-0">
+                    <div className="px-5 py-3 border-b border-border shrink-0">
                         <PageSearchField
                             placeholder="Search documents and folders…"
                             aria-label="Search documents and folders"
                             value={searchQuery}
                             onChange={setSearchQuery}
                         />
-                        <p className="text-[11px] text-[rgba(245,245,245,0.4)] mt-2">
+                        <p className="text-xs text-muted-foreground/55 mt-2">
                             {searchQuery.trim().length < 2
                                 ? "Type at least 2 characters to search all documents and folders."
                                 : `Searching documents and pages${searchDocuments.length + searchPages.length > 0 ? ` • ${searchDocuments.length} document(s), ${searchPages.length} page(s)` : searchTotal !== null ? ` • ${searchTotal} document(s)` : ""}`
                             }
                         </p>
-                        <div className="flex items-center gap-2 mt-2 text-[12px]">
+                        <div className="flex items-center gap-2 mt-2 text-sm">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -1578,12 +1578,12 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                     setExpandedIds(new Set());
                                     setSearchQuery("");
                                 }}
-                                className="text-[rgba(245,245,245,0.5)] hover:text-[#F5F5F5] transition-colors"
+                                className="text-muted-foreground/75 hover:text-foreground transition-colors"
                             >
                                 Back to root
                             </button>
                             <span className="text-[rgba(245,245,245,0.3)]">|</span>
-                            <span className="text-[rgba(245,245,245,0.6)] font-medium">
+                            <span className="text-muted-foreground font-medium">
                                 Root ({displayItems.length})
                             </span>
                         </div>
@@ -1596,22 +1596,22 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                         // Pages Mode
                         <>
                             {pagesError ? (
-                                <div className="px-5 py-6 text-[14px] text-[#C87A7A] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
+                                <div className="px-5 py-6 text-base text-[var(--color-error)] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
                                     Failed to load pages: {(pagesError as Error).message}
                                 </div>
                             ) : pagesLoading ? (
                                 <div className="px-5 py-10 text-center">
                                     <div className="flex flex-col items-center gap-3">
-                                        <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)]" />
-                                        <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Loading pages...</span>
+                                        <Loader2 size={24} className="animate-spin text-muted-foreground/55" />
+                                        <span className="text-compact text-muted-foreground/75">Loading pages...</span>
                                     </div>
                                 </div>
                             ) : pagesItems.length === 0 ? (
                                 <div className="px-5 py-10 text-center">
                                     <div className="flex flex-col items-center gap-2">
                                         <FileText size={32} className="text-[rgba(245,245,245,0.2)]" />
-                                        <span className="text-[14px] text-[rgba(245,245,245,0.5)]">No pages available</span>
-                                        <span className="text-[12px] text-[rgba(245,245,245,0.35)]">Pages will appear here when uploaded to S3</span>
+                                        <span className="text-base text-muted-foreground/75">No pages available</span>
+                                        <span className="text-sm text-muted-foreground/55">Pages will appear here when uploaded to S3</span>
                                     </div>
                                 </div>
                             ) : (
@@ -1625,13 +1625,13 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                             ].join(" ")}
                                         >
                                             <div className="w-5 flex items-center justify-center">
-                                                <FileText size={16} className="text-[rgba(245,245,245,0.4)]" />
+                                                <FileText size={16} className="text-muted-foreground/55" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <div className="text-[13px] text-[#F5F5F5] truncate">
+                                                <div className="text-compact text-foreground truncate">
                                                     {page.name}
                                                 </div>
-                                                <div className="text-[11px] text-[rgba(245,245,245,0.4)] mt-0.5">
+                                                <div className="text-xs text-muted-foreground/55 mt-0.5">
                                                     {(page.size / 1024).toFixed(1)} KB • {new Date(page.last_modified).toLocaleDateString()}
                                                 </div>
                                             </div>
@@ -1643,7 +1643,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                 }}
                                                 className={[
                                                     "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md shrink-0",
-                                                    "text-[11px] font-medium",
+                                                    "text-xs font-medium",
                                                     "bg-[rgba(122,163,200,0.1)] hover:bg-[rgba(122,163,200,0.18)]",
                                                     "border border-[rgba(122,163,200,0.2)] hover:border-[rgba(122,163,200,0.35)]",
                                                     "text-[#7AA3C8] hover:text-[#9BBDD8]",
@@ -1660,7 +1660,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                 type="button"
                                                 onClick={loadMorePages}
                                                 disabled={pagesLoading}
-                                                className="w-full py-2 rounded-xl text-[13px] text-[rgba(245,245,245,0.6)] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.08)] transition-all duration-150 disabled:opacity-50 flex items-center justify-center gap-2"
+                                                className="w-full py-2 rounded-xl text-compact text-muted-foreground bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-border transition-all duration-150 disabled:opacity-50 flex items-center justify-center gap-2"
                                             >
                                                 {pagesLoading ? <Loader2 size={14} className="animate-spin" /> : null}
                                                 Load more
@@ -1674,36 +1674,36 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                         // Search Results Mode (Documents)
                         <>
                             {searchError ? (
-                                <div className="px-5 py-6 text-[14px] text-[#C87A7A] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
+                                <div className="px-5 py-6 text-base text-[var(--color-error)] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
                                     {searchError}
                                 </div>
                             ) : showSearchLoader && searchDocuments.length === 0 && searchPages.length === 0 ? (
                                 <div className="px-5 py-10 text-center">
                                     <div className="flex flex-col items-center gap-3">
-                                        <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)]" />
-                                        <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Searching...</span>
+                                        <Loader2 size={24} className="animate-spin text-muted-foreground/55" />
+                                        <span className="text-compact text-muted-foreground/75">Searching...</span>
                                     </div>
                                 </div>
                             ) : searchDocuments.length === 0 && searchPages.length === 0 ? (
                                 <div className="px-5 py-10 text-center">
                                     <div className="flex flex-col items-center gap-2">
                                         <Search size={32} className="text-[rgba(245,245,245,0.2)]" />
-                                        <span className="text-[14px] text-[rgba(245,245,245,0.5)]">No results found</span>
-                                        <span className="text-[12px] text-[rgba(245,245,245,0.35)]">Try a different search term</span>
+                                        <span className="text-base text-muted-foreground/75">No results found</span>
+                                        <span className="text-sm text-muted-foreground/55">Try a different search term</span>
                                     </div>
                                 </div>
                             ) : (
                                 <div className="flex flex-col h-full min-h-0">
                                     {/* Tabs */}
-                                    <div className="flex shrink-0 border-b border-[rgba(255,255,255,0.08)]">
+                                    <div className="flex shrink-0 border-b border-border">
                                         <button
                                             type="button"
                                             onClick={() => setRootViewTab("documents")}
                                             className={[
-                                                "flex-1 px-4 py-3 text-[13px] font-medium transition-colors",
+                                                "flex-1 px-4 py-3 text-compact font-medium transition-colors",
                                                 rootViewTab === "documents"
                                                     ? "text-[#7AA3C8] border-b-2 border-[#7AA3C8] bg-[rgba(122,163,200,0.06)]"
-                                                    : "text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-[rgba(255,255,255,0.03)]",
+                                                    : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-[rgba(255,255,255,0.03)]",
                                             ].join(" ")}
                                         >
                                             Documents ({searchDocuments.length}{searchTotal != null && searchTotal > searchDocuments.length ? ` of ${searchTotal}` : ""})
@@ -1712,10 +1712,10 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                             type="button"
                                             onClick={() => setRootViewTab("pages")}
                                             className={[
-                                                "flex-1 px-4 py-3 text-[13px] font-medium transition-colors",
+                                                "flex-1 px-4 py-3 text-compact font-medium transition-colors",
                                                 rootViewTab === "pages"
                                                     ? "text-[#9CA3AF] border-b-2 border-[#9CA3AF] bg-[rgba(156,163,175,0.06)]"
-                                                    : "text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)] hover:bg-[rgba(255,255,255,0.03)]",
+                                                    : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-[rgba(255,255,255,0.03)]",
                                             ].join(" ")}
                                         >
                                             Pages ({searchPages.length})
@@ -1726,7 +1726,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                         {rootViewTab === "documents" ? (
                                             <>
                                                 {searchDocuments.length === 0 ? (
-                                                    <div className="px-5 py-8 text-center text-[12px] text-[rgba(245,245,245,0.4)]">No documents match your search.</div>
+                                                    <div className="px-5 py-8 text-center text-sm text-muted-foreground/55">No documents match your search.</div>
                                                 ) : (
                                                     <>
                                                         {searchDocuments.map((item) => (
@@ -1737,17 +1737,17 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                             />
                                                         ))}
                                                         {searchNextOffset !== null && (
-                                                            <div className="px-5 py-4 flex justify-center border-t border-[rgba(255,255,255,0.06)]">
+                                                            <div className="px-5 py-4 flex justify-center border-t border-border">
                                                                 <button
                                                                     type="button"
                                                                     onClick={loadMoreResults}
                                                                     disabled={searchLoading}
                                                                     className={[
                                                                         "inline-flex items-center gap-2 px-4 py-2 rounded-lg",
-                                                                        "text-[12px] font-medium",
+                                                                        "text-sm font-medium",
                                                                         "bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)]",
-                                                                        "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
-                                                                        "text-[rgba(245,245,245,0.7)] hover:text-[#F5F5F5]",
+                                                                        "border border-input hover:border-border-strong",
+                                                                        "text-muted-foreground hover:text-foreground",
                                                                         "transition-all duration-150",
                                                                         "disabled:opacity-50 disabled:cursor-not-allowed",
                                                                     ].join(" ")}
@@ -1769,7 +1769,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                         ) : (
                                             <>
                                                 {searchPages.length === 0 ? (
-                                                    <div className="px-5 py-8 text-center text-[12px] text-[rgba(245,245,245,0.4)]">No pages match your search.</div>
+                                                    <div className="px-5 py-8 text-center text-sm text-muted-foreground/55">No pages match your search.</div>
                                                 ) : (
                                                     searchPages.map((page) => (
                                                         <SearchResultItem
@@ -1789,20 +1789,20 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                         // Tree View Mode
                         <>
                             {error ? (
-                                <div className="px-5 py-6 text-[14px] text-[#C87A7A] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
+                                <div className="px-5 py-6 text-base text-[var(--color-error)] bg-[rgba(200,122,122,0.08)] border-b border-[rgba(200,122,122,0.15)]">
                                     {error}
                                 </div>
                             ) : displayItems.length === 0 ? (
                                 <div className="px-5 py-10 text-center">
                                     {showRootLoading ? (
                                         <div className="flex flex-col items-center gap-3">
-                                            <Loader2 size={24} className="animate-spin text-[rgba(245,245,245,0.4)]" />
-                                            <span className="text-[13px] text-[rgba(245,245,245,0.5)]">Loading items...</span>
+                                            <Loader2 size={24} className="animate-spin text-muted-foreground/55" />
+                                            <span className="text-compact text-muted-foreground/75">Loading items...</span>
                                         </div>
                                     ) : (
                                         <div className="flex flex-col items-center gap-2">
                                             <Folder size={32} className="text-[rgba(245,245,245,0.2)]" />
-                                            <span className="text-[14px] text-[rgba(245,245,245,0.5)]">This folder is empty</span>
+                                            <span className="text-base text-muted-foreground/75">This folder is empty</span>
                                         </div>
                                     )}
                                 </div>

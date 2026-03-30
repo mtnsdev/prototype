@@ -58,7 +58,7 @@ function accessScopeLabel(doc: KnowledgeDocument): string {
 }
 
 function SourceIcon({ doc }: { doc: KnowledgeDocument }) {
-  const wrap = "w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-[#F5F5F5] shrink-0";
+  const wrap = "w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-foreground shrink-0";
   if (doc.source_type === DataSourceType.GoogleDriveAdmin || doc.source_type === DataSourceType.GoogleDrivePersonal)
     return (
       <div className={wrap}>
@@ -162,13 +162,13 @@ export default function DocumentDetailPanel({
   return (
     <aside
       className={cn(
-        "flex flex-col overflow-hidden bg-[#161616] border-[rgba(255,255,255,0.08)]",
+        "flex flex-col overflow-hidden bg-card border-border",
         "fixed inset-0 z-50 md:relative md:inset-auto md:w-96 md:shrink-0 md:border-l md:z-auto",
         oversightPrivate && "opacity-60"
       )}
     >
-      <div className="shrink-0 flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.08)]">
-        <h2 className="font-semibold text-[#F5F5F5] truncate">Document details</h2>
+      <div className="shrink-0 flex items-center justify-between p-4 border-b border-border">
+        <h2 className="font-semibold text-foreground truncate">Document details</h2>
         <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onClose} aria-label="Close">
           <X size={18} />
         </Button>
@@ -262,16 +262,16 @@ function DetailBody({
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-6">
       {oversightPrivate && (
-        <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] text-gray-400">
-          <Shield className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+        <div className="flex items-center gap-2 rounded-lg border border-input bg-white/[0.04] px-3 py-2 text-2xs text-muted-foreground/90">
+          <Shield className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
           <span>Other advisor&apos;s private document — oversight view (read-only context).</span>
         </div>
       )}
         <div className="flex items-start gap-3">
           <SourceIcon doc={doc} />
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-[#F5F5F5]">{doc.title}</h3>
-          <p className="text-sm text-[rgba(245,245,245,0.5)] mt-0.5 flex flex-wrap items-center gap-2">
+            <h3 className="font-semibold text-foreground">{doc.title}</h3>
+          <p className="text-sm text-muted-foreground/75 mt-0.5 flex flex-wrap items-center gap-2">
             {doc.file_type.toUpperCase()} · {(doc.file_size_kb / 1024).toFixed(2)} MB
             <IngestionStatusBadge status={doc.ingestion_status} />
           </p>
@@ -279,13 +279,13 @@ function DetailBody({
         </div>
 
         <section>
-          <h4 className="text-xs font-semibold uppercase text-[rgba(245,245,245,0.5)] mb-2">Source</h4>
+          <h4 className="text-xs font-semibold uppercase text-muted-foreground/75 mb-2">Source</h4>
           <div className="min-w-0 space-y-1.5">
-            <p className="text-sm font-medium text-[#F5F5F5]">{doc.source_name}</p>
+            <p className="text-sm font-medium text-foreground">{doc.source_name}</p>
             <p className="text-xs text-[rgba(245,245,245,0.65)] leading-relaxed">{accessScopeLabel(doc)}</p>
             {(doc.source_type === DataSourceType.IntranetDocuments ||
               doc.source_type === DataSourceType.IntranetPages) && (
-              <div className="flex items-start gap-1.5 mt-2 text-[10px] text-gray-500">
+              <div className="flex items-start gap-1.5 mt-2 text-2xs text-muted-foreground">
                 <Info className="w-3 h-3 mt-0.5 shrink-0" />
                 <span>Not edited here — who can open it is determined in your intranet.</span>
               </div>
@@ -295,12 +295,12 @@ function DetailBody({
                 <span className="px-2 py-0.5 rounded-md bg-[var(--muted-info-bg)] text-[var(--muted-info-text)] border border-[var(--muted-info-border)]">
                     Wiki Page
                   </span>
-                  <span className="text-[rgba(245,245,245,0.45)] ml-2">HTML content (not a file upload)</span>
+                  <span className="text-muted-foreground/75 ml-2">HTML content (not a file upload)</span>
                 </p>
               )}
             <div className="flex flex-col items-start gap-1 pt-1">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-quaternary)]">
+                <span className="text-2xs font-medium uppercase tracking-wider text-[var(--text-quaternary)]">
                   Access
                 </span>
                 {showScopeSelect ? (
@@ -311,9 +311,9 @@ function DetailBody({
                       onScopeChange(v);
                       const label =
                         v === "private" ? "Private" : teams.find((t) => t.id === v)?.name ?? "team";
-                      toast(`Access: ${label}`);
+                      toast({ title: `Access: ${label}`, tone: "success" });
                     }}
-                    className="text-[10px] bg-white/[0.03] border border-white/[0.06] rounded-lg px-2 py-1 text-gray-400 cursor-pointer hover:border-white/[0.1] outline-none max-w-[200px]"
+                    className="text-2xs bg-white/[0.03] border border-border rounded-lg px-2 py-1 text-muted-foreground/90 cursor-pointer hover:border-input outline-none max-w-[200px]"
                   >
                     <option value="private">Private</option>
                     {teams.map((t) => (
@@ -324,7 +324,7 @@ function DetailBody({
                   </select>
                 ) : scopeLocked ? (
                   <div className="flex items-center gap-1.5">
-                    <Lock className="w-3 h-3 text-gray-600 shrink-0" aria-hidden />
+                    <Lock className="w-3 h-3 text-muted-foreground/70 shrink-0" aria-hidden />
                     <ScopeBadge scope="mirrors_source" teams={teams} />
                   </div>
                 ) : (
@@ -336,7 +336,7 @@ function DetailBody({
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="text-[10px] text-blue-400/50 hover:text-blue-400/70 mt-0.5 text-left"
+                      className="text-2xs text-blue-400/50 hover:text-blue-400/70 mt-0.5 text-left"
                     >
                       Suggest sharing…
                     </button>
@@ -345,7 +345,7 @@ function DetailBody({
                     {teams.map((team) => (
                       <DropdownMenuItem
                         key={team.id}
-                        className="text-xs text-gray-400 focus:text-white"
+                        className="text-xs text-muted-foreground/90 focus:text-white"
                         onClick={() => onSuggestShareWithTeam?.(team.id, team.name)}
                       >
                         {team.name}
@@ -356,7 +356,7 @@ function DetailBody({
               )}
             </div>
             {doc.requires_access_review && isAdmin && offboardingRulesApplyToDocument(doc) ? (
-              <div className="flex items-start gap-1.5 rounded-lg border border-rose-500/25 bg-rose-500/[0.08] px-3 py-2 text-[10px] text-rose-100/90">
+              <div className="flex items-start gap-1.5 rounded-lg border border-rose-500/25 bg-rose-500/[0.08] px-3 py-2 text-2xs text-rose-100/90">
                 <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-rose-400/90" aria-hidden />
                 <span>
                   Flagged for <span className="font-medium text-rose-50">access review</span> (e.g. widened or leaver-tied
@@ -366,7 +366,7 @@ function DetailBody({
               </div>
             ) : null}
             {ownerDeparted && isPrivateDoc && isAdmin ? (
-              <div className="flex items-start gap-1.5 rounded-lg border border-sky-500/25 bg-sky-500/[0.08] px-3 py-2 text-[10px] text-sky-100/90">
+              <div className="flex items-start gap-1.5 rounded-lg border border-sky-500/25 bg-sky-500/[0.08] px-3 py-2 text-2xs text-sky-100/90">
                 <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5 text-sky-400/90" aria-hidden />
                 <span>
                   Private to <span className="font-medium text-sky-50">{formerContributorLabel}</span>, who no longer has an
@@ -384,16 +384,16 @@ function DetailBody({
             {ownerDeparted && !isPrivateDoc ? (
               <div
                 className={cn(
-                  "flex items-start gap-1.5 rounded-lg border px-3 py-2 text-[10px]",
+                  "flex items-start gap-1.5 rounded-lg border px-3 py-2 text-2xs",
                   isAdmin
                     ? "border-violet-500/25 bg-violet-500/[0.08] text-violet-100/90"
-                    : "border-white/10 bg-white/[0.04] text-gray-400"
+                    : "border-input bg-white/[0.04] text-muted-foreground/90"
                 )}
               >
                 <Info
                   className={cn(
                     "w-3.5 h-3.5 shrink-0 mt-0.5",
-                    isAdmin ? "text-violet-400/90" : "text-gray-500"
+                    isAdmin ? "text-violet-400/90" : "text-muted-foreground"
                   )}
                   aria-hidden
                 />
@@ -407,7 +407,7 @@ function DetailBody({
                   ) : (
                     <>
                       Originally added by{" "}
-                      <span className="font-medium text-gray-300">{formerContributorLabel}</span>, who is no longer with the
+                      <span className="font-medium text-foreground/88">{formerContributorLabel}</span>, who is no longer with the
                       agency. You can still use it under the current access rules.
                     </>
                   )}
@@ -418,8 +418,8 @@ function DetailBody({
               </div>
             ) : null}
             {widenedFromPersonal && isOwner && !oversightPrivate && !ownerDeparted ? (
-              <div className="flex items-start gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/[0.07] px-3 py-2 text-[10px] text-amber-100/90">
-                <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-400/90" aria-hidden />
+              <div className="flex items-start gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/[0.07] px-3 py-2 text-2xs text-amber-100/90">
+                <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[var(--color-warning)]/90" aria-hidden />
                 <span>
                   This was private to you; access is now <span className="font-medium text-amber-50">{widenedAccessLabel}</span>.
                   Others with that access can open it.
@@ -427,35 +427,35 @@ function DetailBody({
               </div>
             ) : null}
             {doc.ingested_at && (
-              <p className="text-xs text-[rgba(245,245,245,0.5)] pt-1">
+              <p className="text-xs text-muted-foreground/75 pt-1">
                 Ingested {new Date(doc.ingested_at).toLocaleDateString()}
               </p>
             )}
-            <p className="text-xs text-[rgba(245,245,245,0.5)]">
+            <p className="text-xs text-muted-foreground/75">
               Updated {new Date(doc.last_updated).toLocaleDateString()}
             </p>
           </div>
         </section>
 
         <section>
-          <h4 className="text-xs font-semibold uppercase text-[rgba(245,245,245,0.5)] mb-2">Tags</h4>
-          <p className="text-[10px] text-gray-600 mb-2 leading-relaxed">
+          <h4 className="text-xs font-semibold uppercase text-muted-foreground/75 mb-2">Tags</h4>
+          <p className="text-2xs text-muted-foreground/70 mb-2 leading-relaxed">
             Auto-tagged from folder paths
             {canEditTags ? (canRenameTags ? " · add, remove, or rename" : " · add or remove") : ""}
           </p>
           {doc.source_type === DataSourceType.Email || doc.source_type === DataSourceType.EmailTemplate ? (
-            <p className="text-[11px] text-[var(--text-quaternary)]">
+            <p className="text-xs text-[var(--text-quaternary)]">
               No tags — email has no folder path to derive from.
             </p>
           ) : documentTags.length === 0 && !canEditTags ? (
-            <p className="text-[11px] text-[var(--text-quaternary)]">No tags</p>
+            <p className="text-xs text-[var(--text-quaternary)]">No tags</p>
           ) : (
             <>
               <div className="flex flex-wrap gap-1">
                 {documentTags.map((tag) => (
                   <span
                     key={tag}
-                    className="text-[10px] text-gray-500 bg-white/[0.04] px-2 py-0.5 rounded inline-flex items-center gap-1"
+                    className="text-2xs text-muted-foreground bg-white/[0.04] px-2 py-0.5 rounded inline-flex items-center gap-1"
                   >
                     {tagBeingRenamed === tag ? (
                       <input
@@ -463,7 +463,7 @@ function DetailBody({
                         value={renameValue}
                         onChange={(e) => setRenameValue(e.target.value)}
                         autoFocus
-                        className="min-w-[4rem] max-w-[140px] text-[10px] bg-white/[0.06] border border-white/[0.12] rounded px-1 py-0.5 text-gray-300 outline-none focus:border-white/20"
+                        className="min-w-[4rem] max-w-[140px] text-2xs bg-white/[0.06] border border-white/[0.12] rounded px-1 py-0.5 text-foreground/88 outline-none focus:border-white/20"
                         onKeyDown={(e) => {
                           if (e.key === "Escape") {
                             setTagBeingRenamed(null);
@@ -473,7 +473,7 @@ function DetailBody({
                             e.preventDefault();
                             const t = renameValue.trim();
                             if (!t) {
-                              toast("Tag name can’t be empty.");
+                              toast({ title: "Tag name can’t be empty.", tone: "destructive" });
                               return;
                             }
                             if (t === tag) {
@@ -482,7 +482,7 @@ function DetailBody({
                             }
                             const taken = documentTags.some((x) => x !== tag && x === t);
                             if (taken) {
-                              toast("A tag with that name already exists.");
+                              toast({ title: "A tag with that name already exists.", tone: "destructive" });
                               return;
                             }
                             onRenameDocumentTag?.(tag, t);
@@ -499,7 +499,7 @@ function DetailBody({
                           }
                           const taken = documentTags.some((x) => x !== tag && x === t);
                           if (taken) {
-                            toast("A tag with that name already exists.");
+                            toast({ title: "A tag with that name already exists.", tone: "destructive" });
                             setRenameValue(tag);
                             setTagBeingRenamed(null);
                             return;
@@ -523,7 +523,7 @@ function DetailBody({
                                   setTagBeingRenamed(tag);
                                   setRenameValue(tag);
                                 }}
-                                className="text-gray-600 hover:text-gray-400"
+                                className="text-muted-foreground/70 hover:text-muted-foreground"
                                 aria-label={`Rename tag ${tag}`}
                               >
                                 <Pencil className="w-2.5 h-2.5" aria-hidden />
@@ -532,7 +532,7 @@ function DetailBody({
                             <button
                               type="button"
                               onClick={() => onRemoveDocumentTag?.(tag)}
-                              className="text-gray-600 hover:text-gray-400 ml-0.5"
+                              className="text-muted-foreground/70 hover:text-muted-foreground ml-0.5"
                               aria-label={`Remove tag ${tag}`}
                             >
                               <X className="w-2.5 h-2.5" aria-hidden />
@@ -547,7 +547,7 @@ function DetailBody({
                   <button
                     type="button"
                     onClick={() => setShowAddTag(true)}
-                    className="text-[10px] text-gray-600 hover:text-gray-400 bg-white/[0.02] border border-dashed border-white/[0.06] px-2 py-0.5 rounded"
+                    className="text-2xs text-muted-foreground/70 hover:text-muted-foreground bg-white/[0.02] border border-dashed border-border px-2 py-0.5 rounded"
                   >
                     + Add tag
                   </button>
@@ -572,7 +572,7 @@ function DetailBody({
                     }}
                     placeholder="Tag name…"
                     autoFocus
-                    className="text-[10px] bg-white/[0.03] border border-white/[0.06] rounded px-2 py-0.5 text-gray-300 outline-none w-28"
+                    className="text-2xs bg-white/[0.03] border border-border rounded px-2 py-0.5 text-foreground/88 outline-none w-28"
                   />
                   <button
                     type="button"
@@ -580,7 +580,7 @@ function DetailBody({
                       setShowAddTag(false);
                       setNewTag("");
                     }}
-                    className="text-[10px] text-gray-600 hover:text-gray-400"
+                    className="text-2xs text-muted-foreground/70 hover:text-muted-foreground"
                   >
                     Cancel
                   </button>
@@ -592,7 +592,7 @@ function DetailBody({
 
         <section className="flex flex-wrap gap-2">
           {doc.url ? (
-            <Button variant="outline" size="sm" className="border-white/10 text-[#F5F5F5]" asChild>
+            <Button variant="outline" size="sm" className="border-input text-foreground" asChild>
               <a href={doc.url} target="_blank" rel="noopener noreferrer">
                 <ExternalLink size={14} className="mr-1" /> View Original
               </a>
@@ -602,8 +602,8 @@ function DetailBody({
           <Button
             variant="outline"
             size="sm"
-            className="border-white/10 text-[#F5F5F5]"
-            onClick={() => toast("Download started (demo)")}
+            className="border-input text-foreground"
+            onClick={() => toast({ title: "Download started (demo)", tone: "success" })}
           >
             <Download size={14} className="mr-1" /> Download
           </Button>

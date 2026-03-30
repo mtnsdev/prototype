@@ -28,7 +28,7 @@ function dotColor(entity_type: string): string {
   if (entity_type === "acuity") return "bg-violet-500";
   if (entity_type === "itinerary") return "bg-emerald-500";
   if (entity_type === "vic" || entity_type === "product") return "bg-cyan-500";
-  return "bg-gray-500";
+  return "bg-muted-foreground/40";
 }
 
 type Props = {
@@ -50,8 +50,8 @@ export default function RecentActivityWidget({ content, staggerIndex = 0, isAdmi
         staggerIndex={staggerIndex}
       >
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <Activity size={28} className="text-gray-600 mb-2" />
-          <p className="text-sm text-gray-500">No recent activity</p>
+          <Activity size={28} className="text-muted-foreground/70 mb-2" />
+          <p className="text-sm text-muted-foreground">No recent activity</p>
         </div>
       </AppleWidgetCard>
     );
@@ -74,7 +74,7 @@ export default function RecentActivityWidget({ content, staggerIndex = 0, isAdmi
       staggerIndex={staggerIndex}
     >
       {isAdmin && (
-        <p className="text-[10px] text-gray-600 -mt-1 mb-2">Agency-wide activity</p>
+        <p className="text-2xs text-muted-foreground/70 -mt-1 mb-2">Agency-wide activity</p>
       )}
       <ul className="space-y-0">
         {items.map((item) => (
@@ -85,7 +85,7 @@ export default function RecentActivityWidget({ content, staggerIndex = 0, isAdmi
             <span className={cn("w-2 h-2 rounded-full shrink-0", dotColor(item.entity_type))} />
             <div className="min-w-0 flex-1">
               <span className="text-sm font-medium text-white">{item.actor_name}</span>
-              <span className="text-sm text-gray-400"> {item.action} </span>
+              <span className="text-sm text-muted-foreground/90"> {item.action} </span>
               <Link
                 href={entityLink(item)}
                 className="text-sm text-white hover:underline truncate inline-block max-w-[200px] align-bottom"
@@ -93,7 +93,7 @@ export default function RecentActivityWidget({ content, staggerIndex = 0, isAdmi
                 {item.entity_name}
               </Link>
             </div>
-            <span className="text-xs text-gray-500 shrink-0">
+            <span className="text-xs text-muted-foreground shrink-0">
               {formatTimestamp(item.timestamp)}
             </span>
           </li>

@@ -35,7 +35,7 @@ function TeamsTab() {
       <button
         type="button"
         onClick={() => toast("Create team (demo)")}
-        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-white/[0.08] text-xs text-gray-500 hover:text-gray-300 hover:border-white/[0.12]"
+        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-border text-xs text-muted-foreground hover:text-foreground hover:border-white/[0.12]"
       >
         <Plus className="w-3 h-3" /> Create Team
       </button>
@@ -45,7 +45,7 @@ function TeamsTab() {
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-sm text-white font-medium truncate">{team.name}</span>
               {team.isDefault && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/[0.04] text-gray-500 uppercase tracking-wider shrink-0">
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground uppercase tracking-wider shrink-0">
                   Default
                 </span>
               )}
@@ -55,7 +55,7 @@ function TeamsTab() {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="text-gray-600 hover:text-gray-400 p-1 rounded"
+                    className="text-muted-foreground/70 hover:text-muted-foreground p-1 rounded"
                     aria-label={`More actions for ${team.name}`}
                   >
                     <MoreHorizontal className="w-3.5 h-3.5" />
@@ -75,27 +75,27 @@ function TeamsTab() {
               </DropdownMenu>
             )}
           </div>
-          <span className="text-[10px] text-gray-500">
+          <span className="text-2xs text-muted-foreground">
             {team.isDefault ? "All advisors (automatic)" : `${team.memberIds.length} members`}
           </span>
           <div className="flex items-center gap-1 mt-2 flex-wrap">
             {team.memberIds.slice(0, 5).map((memberId) => (
               <div
                 key={memberId}
-                className="w-5 h-5 rounded-full bg-white/[0.06] border border-white/[0.08] flex items-center justify-center"
+                className="w-5 h-5 rounded-full bg-white/[0.06] border border-border flex items-center justify-center"
                 title={memberId}
               >
-                <span className="text-[8px] text-gray-400">{getMemberInitials(memberId)}</span>
+                <span className="text-[8px] text-muted-foreground/90">{getMemberInitials(memberId)}</span>
               </div>
             ))}
             {team.memberIds.length > 5 && (
-              <span className="text-[9px] text-gray-500">+{team.memberIds.length - 5}</span>
+              <span className="text-[9px] text-muted-foreground">+{team.memberIds.length - 5}</span>
             )}
           </div>
           <button
             type="button"
             onClick={() => toast(`Manage members — ${team.name} (demo)`)}
-            className="text-[10px] text-blue-400/50 hover:text-blue-400/70 mt-2"
+            className="text-2xs text-blue-400/50 hover:text-blue-400/70 mt-2"
           >
             Manage members
           </button>
@@ -211,7 +211,7 @@ function SourceDefaultsTab({ sources }: { sources: DataSource[] }) {
 
   return (
     <div className="space-y-3">
-      <p className="text-[11px] text-gray-500 mb-4 leading-relaxed">
+      <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
         Set the default visibility for new documents from each source.
       </p>
       {sources.map((source) => {
@@ -226,21 +226,21 @@ function SourceDefaultsTab({ sources }: { sources: DataSource[] }) {
               <SourceRowIcon source={source} />
               <div className="min-w-0">
                 <span className="text-sm text-white block truncate">{source.name}</span>
-                <div className="text-[10px] text-gray-500">{source.document_count} documents</div>
+                <div className="text-2xs text-muted-foreground">{source.document_count} documents</div>
               </div>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] text-gray-500 uppercase tracking-wider shrink-0">Default access</span>
+              <span className="text-2xs text-muted-foreground uppercase tracking-wider shrink-0">Default access</span>
               {locked ? (
                 <div className="flex items-center gap-1.5">
-                  <Lock className="w-3 h-3 text-gray-600 shrink-0" aria-hidden />
-                  <span className="text-xs text-gray-400">Based on access</span>
+                  <Lock className="w-3 h-3 text-muted-foreground/70 shrink-0" aria-hidden />
+                  <span className="text-xs text-muted-foreground/90">Based on access</span>
                 </div>
               ) : (
                 <select
                   value={draft}
                   onChange={(e) => setDraftScopes((prev) => ({ ...prev, [source.id]: e.target.value }))}
-                  className="text-xs bg-white/[0.04] border border-white/[0.06] rounded-lg px-2 py-1 text-gray-300 appearance-none cursor-pointer max-w-[180px]"
+                  className="text-xs bg-white/[0.04] border border-border rounded-lg px-2 py-1 text-foreground/88 appearance-none cursor-pointer max-w-[180px]"
                 >
                   <option value="private">Private</option>
                   {teams.filter((t) => t.id !== TEAM_EVERYONE_ID).map((team) => (
@@ -253,7 +253,7 @@ function SourceDefaultsTab({ sources }: { sources: DataSource[] }) {
               )}
             </div>
             {source.source_type === DataSourceType.IntranetPages && (
-              <p className="text-[9px] text-gray-600 mt-2 italic leading-relaxed">
+              <p className="text-[9px] text-muted-foreground/70 mt-2 italic leading-relaxed">
                 Intranet pages default to Private — admins can share with teams as needed
               </p>
             )}
@@ -266,14 +266,14 @@ function SourceDefaultsTab({ sources }: { sources: DataSource[] }) {
                     onChange={(e) => setRetro(source.id, e.target.checked)}
                     className="checkbox-on-dark checkbox-on-dark-sm"
                   />
-                  <span className="text-[10px] text-gray-400">
+                  <span className="text-2xs text-muted-foreground/90">
                     Apply to existing {source.document_count} documents from this source
                   </span>
                 </label>
                 <Button
                   type="button"
                   size="sm"
-                  className="mt-3 w-full text-xs bg-white/[0.06] border border-white/[0.08] text-gray-200 hover:bg-white/[0.1]"
+                  className="mt-3 w-full text-xs bg-white/[0.06] border border-border text-foreground/90 hover:bg-white/[0.1]"
                   onClick={() => saveSource(source)}
                 >
                   Save default
@@ -290,23 +290,23 @@ function SourceDefaultsTab({ sources }: { sources: DataSource[] }) {
           </div>
           <div>
             <span className="text-sm text-white">Email Forwarding</span>
-            <div className="text-[10px] text-gray-500">Forward emails to ingest into KV</div>
+            <div className="text-2xs text-muted-foreground">Forward emails to ingest into KV</div>
           </div>
         </div>
         <div className="flex items-center gap-2 bg-white/[0.02] rounded-lg px-3 py-2 border border-white/[0.04]">
-          <code className="text-[11px] text-gray-300 flex-1 truncate">{AGENCY_EMAIL_INGEST_ADDRESS}</code>
+          <code className="text-xs text-foreground/88 flex-1 truncate">{AGENCY_EMAIL_INGEST_ADDRESS}</code>
           <button
             type="button"
             onClick={() => {
               void navigator.clipboard?.writeText(AGENCY_EMAIL_INGEST_ADDRESS);
               toast("Copied ingest address");
             }}
-            className="text-[10px] text-blue-400/50 hover:text-blue-400/70 shrink-0"
+            className="text-2xs text-blue-400/50 hover:text-blue-400/70 shrink-0"
           >
             Copy
           </button>
         </div>
-        <p className="text-[9px] text-gray-600 mt-2 leading-relaxed">
+        <p className="text-[9px] text-muted-foreground/70 mt-2 leading-relaxed">
           Forwarded emails land as Private by default. Admins can share them with teams afterward.
         </p>
       </div>
@@ -314,11 +314,11 @@ function SourceDefaultsTab({ sources }: { sources: DataSource[] }) {
       <Dialog open={confirmRetro != null} onOpenChange={(o) => !o && setConfirmRetro(null)}>
         <DialogContent
           showCloseButton
-          className="bg-[#0e0e12] border border-white/[0.06] sm:max-w-md"
+          className="bg-background border border-border sm:max-w-md"
         >
           <DialogHeader>
             <DialogTitle className="text-white">Apply access change to existing documents?</DialogTitle>
-            <DialogDescription className="text-gray-400 text-sm">
+            <DialogDescription className="text-muted-foreground/90 text-sm">
               {confirmRetro && (
                 <>
                   This will change access for {confirmRetro.count} existing documents from &quot;
@@ -332,7 +332,7 @@ function SourceDefaultsTab({ sources }: { sources: DataSource[] }) {
             <Button
               type="button"
               variant="outline"
-              className="border-white/[0.06] bg-white/[0.04] text-sm text-gray-300"
+              className="border-border bg-white/[0.04] text-sm text-foreground/88"
               onClick={() => setConfirmRetro(null)}
             >
               Cancel
@@ -363,16 +363,16 @@ export default function KnowledgeVaultPermissionsPanel({ sources, onClose }: Pro
   return (
     <aside
       className={cn(
-        "flex flex-col overflow-hidden bg-[#0e0e12] border-[rgba(255,255,255,0.06)]",
+        "flex flex-col overflow-hidden bg-muted border-border",
         "fixed inset-0 z-50 md:relative md:inset-auto md:w-[400px] md:max-w-[100vw] md:shrink-0 md:border-l md:z-auto"
       )}
     >
-      <div className="shrink-0 flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.08)]">
+      <div className="shrink-0 flex items-center justify-between p-4 border-b border-border">
         <h2 className="text-lg font-medium text-white">Permissions</h2>
         <button
           type="button"
           onClick={onClose}
-          className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/[0.06]"
+          className="p-2 rounded-lg text-muted-foreground/90 hover:text-white hover:bg-white/[0.06]"
           aria-label="Close permissions"
         >
           <X className="w-4 h-4" />
@@ -384,7 +384,7 @@ export default function KnowledgeVaultPermissionsPanel({ sources, onClose }: Pro
             type="button"
             className={cn(
               "flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
-              activeTab === "teams" ? "bg-white/[0.06] text-white" : "text-gray-500 hover:text-gray-300"
+              activeTab === "teams" ? "bg-white/[0.06] text-white" : "text-muted-foreground hover:text-foreground"
             )}
             onClick={() => setActiveTab("teams")}
           >
@@ -394,7 +394,7 @@ export default function KnowledgeVaultPermissionsPanel({ sources, onClose }: Pro
             type="button"
             className={cn(
               "flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
-              activeTab === "sources" ? "bg-white/[0.06] text-white" : "text-gray-500 hover:text-gray-300"
+              activeTab === "sources" ? "bg-white/[0.06] text-white" : "text-muted-foreground hover:text-foreground"
             )}
             onClick={() => setActiveTab("sources")}
           >

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/contexts/ToastContext";
 
 /**
@@ -17,7 +18,7 @@ export default function ReportIssueLauncher() {
   const submit = () => {
     setOpen(false);
     setDetails("");
-    toast("Issue reported — we'll look into it.");
+    toast({ title: "Issue reported — we'll look into it.", tone: "success" });
   };
 
   return (
@@ -26,67 +27,62 @@ export default function ReportIssueLauncher() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="text-[10px] text-gray-600 hover:text-gray-400 flex items-center gap-1 bg-white/[0.02] border border-white/[0.04] rounded-lg px-2.5 py-1.5 backdrop-blur-sm"
+          className="flex items-center gap-1 rounded-lg border border-border bg-card/40 px-2.5 py-1.5 text-2xs text-muted-foreground backdrop-blur-sm hover:text-muted-foreground/75"
         >
-          <Flag className="w-3 h-3" aria-hidden />
+          <Flag className="h-3 w-3" aria-hidden />
           Report issue
         </button>
       </div>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="report-issue-title"
-          onClick={(e) => e.target === e.currentTarget && setOpen(false)}
-        >
-          <div className="bg-[#0a0a0f] border border-white/[0.06] rounded-xl p-5 w-full max-w-sm shadow-2xl">
-            <h3 id="report-issue-title" className="text-sm text-white font-medium mb-1">
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-sm border-border bg-inset p-5 sm:max-w-sm">
+          <DialogHeader className="space-y-1 text-left">
+            <DialogTitle id="report-issue-title" className="text-sm font-medium text-foreground">
               Report an issue
-            </h3>
-            <p className="text-[10px] text-gray-500 mb-4">Let us know if something isn&apos;t right.</p>
+            </DialogTitle>
+            <p className="text-2xs text-muted-foreground/75">Let us know if something isn&apos;t right.</p>
+          </DialogHeader>
 
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full text-xs bg-white/[0.03] border border-white/[0.04] rounded-lg px-3 py-2 text-gray-400 mb-3 outline-none"
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="mb-3 w-full rounded-lg border border-border bg-popover px-3 py-2 text-xs text-muted-foreground outline-none"
+          >
+            <option value="wrong">Something looks wrong</option>
+            <option value="indexing">Document not indexing</option>
+            <option value="missing">Missing content</option>
+            <option value="other">Other</option>
+          </select>
+
+          <textarea
+            value={details}
+            onChange={(e) => setDetails(e.target.value)}
+            placeholder="Describe what you're seeing..."
+            className="mb-3 h-20 w-full resize-none rounded-lg border border-border bg-popover px-3 py-2 text-xs text-muted-foreground outline-none placeholder:text-muted-foreground"
+          />
+
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 text-2xs text-muted-foreground/75 hover:text-muted-foreground"
+              onClick={() => setOpen(false)}
             >
-              <option value="wrong">Something looks wrong</option>
-              <option value="indexing">Document not indexing</option>
-              <option value="missing">Missing content</option>
-              <option value="other">Other</option>
-            </select>
-
-            <textarea
-              value={details}
-              onChange={(e) => setDetails(e.target.value)}
-              placeholder="Describe what you're seeing..."
-              className="w-full text-xs bg-white/[0.03] border border-white/[0.04] rounded-lg px-3 py-2 text-gray-400 h-20 resize-none mb-3 outline-none placeholder:text-gray-600"
-            />
-
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="text-[10px] h-8 text-gray-500 hover:text-gray-400"
-                onClick={() => setOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                className="text-[10px] h-8 bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 border-0"
-                onClick={submit}
-              >
-                Submit
-              </Button>
-            </div>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 border-[var(--color-info)]/25 bg-[var(--color-info-muted)] text-2xs text-[var(--color-info)] hover:bg-[var(--color-info-muted)]/80"
+              onClick={submit}
+            >
+              Submit
+            </Button>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

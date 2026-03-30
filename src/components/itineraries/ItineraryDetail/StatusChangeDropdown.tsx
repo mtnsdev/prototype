@@ -62,7 +62,7 @@ export default function StatusChangeDropdown({ itinerary, onStatusChange }: Prop
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" disabled={loading} className="border-white/10 text-[#F5F5F5]">
+        <Button variant="outline" size="sm" disabled={loading} className="border-input text-foreground">
           Change status <ChevronDown size={14} className="ml-1" />
         </Button>
       </DropdownMenuTrigger>

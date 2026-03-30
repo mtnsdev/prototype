@@ -41,10 +41,10 @@ export function ChatInput({
   }, [toolsMenuOpen]);
 
   return (
-    <div className="shrink-0 p-4 bg-[#0C0C0C]">
+    <div className="shrink-0 p-4 bg-background">
       <div className="max-w-4xl mx-auto" ref={toolsMenuRef}>
         <div className="flex gap-3 items-center">
-          <div className="chat-input-bar flex-1 flex items-center gap-2 rounded-xl bg-[#161616] border border-[rgba(255,255,255,0.1)] pl-1.5 pr-1 py-1 focus-within:border-[rgba(174,133,80,0.5)] transition-colors relative">
+          <div className="chat-input-bar flex-1 flex items-center gap-2 rounded-xl bg-card border border-input pl-1.5 pr-1 py-1 focus-within:border-[rgba(174,133,80,0.5)] transition-colors relative">
             <button
               type="button"
               aria-label="Add tools"
@@ -53,14 +53,14 @@ export function ChatInput({
               onClick={() => setToolsMenuOpen((v) => !v)}
               className={[
                 "flex items-center justify-center h-8 w-8 rounded-lg shrink-0 transition-colors",
-                toolsMenuOpen ? "bg-[rgba(255,255,255,0.12)] text-[#F5F5F5]" : "text-[rgba(245,245,245,0.6)] hover:bg-[rgba(255,255,255,0.08)] hover:text-[rgba(245,245,245,0.9)]",
+                toolsMenuOpen ? "bg-[rgba(255,255,255,0.12)] text-foreground" : "text-muted-foreground hover:bg-[rgba(255,255,255,0.08)] hover:text-[rgba(245,245,245,0.9)]",
               ].join(" ")}
             >
               <Plus size={18} strokeWidth={2.25} />
             </button>
             {toolsMenuOpen && (
               <div
-                className="absolute left-0 bottom-full mb-2 z-50 min-w-[220px] rounded-xl bg-[#1a1a1a] border border-[rgba(255,255,255,0.12)] shadow-xl py-1.5"
+                className="absolute left-0 bottom-full mb-2 z-50 min-w-[220px] rounded-xl bg-accent border border-input shadow-xl py-1.5"
                 role="menu"
                 aria-label="Tools"
               >
@@ -73,19 +73,19 @@ export function ChatInput({
                     if (!externalSearchMode) setSearchPlacesMode(false);
                     setToolsMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-[13px] text-[rgba(245,245,245,0.9)] hover:bg-[rgba(255,255,255,0.08)] transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-compact text-[rgba(245,245,245,0.9)] hover:bg-[rgba(255,255,255,0.08)] transition-colors"
                 >
                   <div
                     className={[
                       "flex items-center justify-center h-8 w-8 rounded-lg shrink-0",
-                      externalSearchMode ? "bg-[rgba(174,133,80,0.25)] text-[#AE8550]" : "bg-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.6)]",
+                      externalSearchMode ? "bg-[rgba(174,133,80,0.25)] text-[#AE8550]" : "bg-[rgba(255,255,255,0.08)] text-muted-foreground",
                     ].join(" ")}
                   >
                     <Globe size={16} />
                   </div>
                   <div className="min-w-0">
                     <span className="font-medium">Search web</span>
-                    <p className="text-[11px] text-[rgba(245,245,245,0.5)] mt-0.5">Include external web search</p>
+                    <p className="text-xs text-muted-foreground/75 mt-0.5">Include external web search</p>
                   </div>
                   {externalSearchMode && <span className="ml-auto text-[#AE8550]" aria-hidden>✓</span>}
                 </button>
@@ -98,26 +98,26 @@ export function ChatInput({
                     if (!searchPlacesMode) setExternalSearchMode(false);
                     setToolsMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-[13px] text-[rgba(245,245,245,0.9)] hover:bg-[rgba(255,255,255,0.08)] transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-compact text-[rgba(245,245,245,0.9)] hover:bg-[rgba(255,255,255,0.08)] transition-colors"
                 >
                   <div
                     className={[
                       "flex items-center justify-center h-8 w-8 rounded-lg shrink-0",
-                      searchPlacesMode ? "bg-[rgba(174,133,80,0.25)] text-[#AE8550]" : "bg-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.6)]",
+                      searchPlacesMode ? "bg-[rgba(174,133,80,0.25)] text-[#AE8550]" : "bg-[rgba(255,255,255,0.08)] text-muted-foreground",
                     ].join(" ")}
                   >
                     <MapPin size={16} />
                   </div>
                   <div className="min-w-0">
                     <span className="font-medium">Search Google Places</span>
-                    <p className="text-[11px] text-[rgba(245,245,245,0.5)] mt-0.5">Include place recommendations</p>
+                    <p className="text-xs text-muted-foreground/75 mt-0.5">Include place recommendations</p>
                   </div>
                   <span
                     className={cn(
                       "ml-auto flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors",
                       searchPlacesMode
-                        ? "border-[#C9A96E] bg-[#C9A96E] text-[#08080c]"
-                        : "border-[rgba(255,255,255,0.18)] bg-[#0e0e14]"
+                        ? "border-brand-cta bg-brand-cta text-[#08080c]"
+                        : "border-[rgba(255,255,255,0.18)] bg-muted"
                     )}
                     aria-hidden
                   >
@@ -156,7 +156,7 @@ export function ChatInput({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => (e.key === "Enter" && !e.shiftKey ? onSend() : null)}
               placeholder="Ask Enable a question..."
-              className="flex-1 min-w-0 rounded-lg border-0 bg-transparent px-2 py-2.5 text-sm text-[#F5F5F5] placeholder:text-[rgba(245,245,245,0.4)]"
+              className="flex-1 min-w-0 rounded-lg border-0 bg-transparent px-2 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/75"
             />
           </div>
           <Button
@@ -164,7 +164,7 @@ export function ChatInput({
             size="icon"
             onClick={() => onSend()}
             disabled={loading || !input.trim()}
-            className="h-11 w-11 rounded-xl bg-[#AE8550] hover:bg-[#C4975E] text-white border-0 shrink-0"
+            className="h-11 w-11 rounded-xl bg-brand-chat-user hover:bg-[#C4975E] text-white border-0 shrink-0"
           >
             <Send size={18} />
           </Button>

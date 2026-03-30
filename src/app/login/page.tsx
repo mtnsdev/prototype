@@ -263,10 +263,14 @@ function LoginContent() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#0C0C0C] px-4">
+        <div
+            id="main-content"
+            tabIndex={-1}
+            className="flex min-h-screen items-center justify-center bg-background px-4 outline-none"
+        >
             <div className="w-full max-w-md">
                 <div className="text-center mb-10">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 mb-5 shadow-lg">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-input mb-5 shadow-lg">
                         <Image
                             src="/TL_logo.svg"
                             alt="Travel Lustre Logo"
@@ -275,25 +279,25 @@ function LoginContent() {
                             className="opacity-90"
                         />
                     </div>
-                    <h1 className="text-[28px] font-bold text-[#F5F5F5] tracking-tight">TRAVELLUSTRE</h1>
-                    <p className="text-[14px] text-[rgba(245,245,245,0.45)] mt-1">Created by Enable VIC</p>
+                    <h1 className="text-3xl font-bold text-foreground tracking-tight">TRAVELLUSTRE</h1>
+                    <p className="text-base text-muted-foreground/75 mt-1">Created by Enable VIC</p>
                 </div>
 
-                <div className="bg-[#161616] border border-[rgba(255,255,255,0.08)] rounded-2xl p-8 shadow-xl">
-                    <h2 className="text-[18px] font-semibold text-[#F5F5F5] mb-1.5">Welcome back</h2>
-                    <p className="text-[14px] text-[rgba(245,245,245,0.5)] mb-6">
+                <div className="bg-card border border-border rounded-2xl p-8 shadow-xl">
+                    <h2 className="text-lg font-semibold text-foreground mb-1.5">Welcome back</h2>
+                    <p className="text-base text-muted-foreground/75 mb-6">
                         Sign in to your account to continue
                     </p>
 
                     {info && (
                         <div className="mb-5 p-3.5 rounded-xl bg-[rgba(251,191,36,0.1)] border border-[rgba(251,191,36,0.2)]">
-                            <p className="text-[13px] text-amber-400">{info}</p>
+                            <p className="text-compact text-[var(--color-warning)]">{info}</p>
                         </div>
                     )}
 
                     {error && (
                         <div className="mb-5 p-3.5 rounded-xl bg-[rgba(200,122,122,0.1)] border border-[rgba(200,122,122,0.2)]">
-                            <p className="text-[13px] text-[#C87A7A]">{error}</p>
+                            <p className="text-compact text-[var(--color-error)]">{error}</p>
                         </div>
                     )}
 
@@ -301,7 +305,7 @@ function LoginContent() {
                         <div className="space-y-2">
                             <Label
                                 htmlFor="email"
-                                className="text-[13px] text-[rgba(245,245,245,0.7)]"
+                                className="text-compact text-muted-foreground"
                             >
                                 Email
                             </Label>
@@ -313,7 +317,7 @@ function LoginContent() {
                                 placeholder="you@example.com"
                                 required
                                 disabled={isLoading}
-                                className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.1)] py-3"
+                                className="rounded-xl bg-background border-input py-3"
                             />
                         </div>
 
@@ -321,14 +325,14 @@ function LoginContent() {
                             <div className="flex items-center justify-between">
                                 <Label
                                     htmlFor="password"
-                                    className="text-[13px] text-[rgba(245,245,245,0.7)]"
+                                    className="text-compact text-muted-foreground"
                                 >
                                     Password
                                 </Label>
                                 <Button
                                     type="button"
                                     variant="link"
-                                    className="text-[12px] text-[rgba(245,245,245,0.45)] hover:text-[rgba(245,245,245,0.75)] p-0 h-auto font-normal"
+                                    className="text-sm text-muted-foreground/75 hover:text-muted-foreground p-0 h-auto font-normal"
                                     onClick={() => {
                                         setForgotEmail(email);
                                         setForgotSuccess(false);
@@ -347,7 +351,7 @@ function LoginContent() {
                                 placeholder="••••••••"
                                 required
                                 disabled={isLoading}
-                                className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.1)] py-3"
+                                className="rounded-xl bg-background border-input py-3"
                             />
                         </div>
 
@@ -369,10 +373,10 @@ function LoginContent() {
 
                     <div className="relative my-6">
                         <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-[rgba(255,255,255,0.08)]"></div>
+                            <div className="w-full border-t border-border"></div>
                         </div>
-                        <div className="relative flex justify-center text-[12px]">
-                            <span className="px-4 bg-[#161616] text-[rgba(245,245,245,0.4)]">
+                        <div className="relative flex justify-center text-sm">
+                            <span className="px-4 bg-card text-muted-foreground/55">
                                 or continue with
                             </span>
                         </div>
@@ -387,18 +391,18 @@ function LoginContent() {
                             type="button"
                             disabled
                             variant="outline"
-                            className="w-full py-3 bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-[rgba(245,245,245,0.4)] cursor-not-allowed"
+                            className="w-full py-3 bg-[rgba(255,255,255,0.04)] border-border text-muted-foreground/55 cursor-not-allowed"
                         >
                             Google Sign-In not configured
                         </Button>
                     )}
                 </div>
 
-                <p className="text-center text-[rgba(245,245,245,0.4)] text-[13px] mt-6">
+                <p className="text-center text-muted-foreground/55 text-compact mt-6">
                     Don&apos;t have an account?{" "}
                     <a
                         href="#"
-                        className="text-[#F5F5F5] hover:underline transition-colors"
+                        className="text-foreground hover:underline transition-colors"
                     >
                         Contact admin
                     </a>
@@ -406,12 +410,12 @@ function LoginContent() {
             </div>
 
             <Dialog open={showForgotModal} onOpenChange={setShowForgotModal}>
-                <DialogContent className="max-w-md border-[rgba(255,255,255,0.1)] bg-[#161616]">
+                <DialogContent className="max-w-md border-input bg-card">
                     <DialogHeader>
-                        <DialogTitle className="text-[17px] text-[#F5F5F5]">
+                        <DialogTitle className="text-[17px] text-foreground">
                             Reset your password
                         </DialogTitle>
-                        <p className="text-[13px] text-[rgba(245,245,245,0.5)] mt-1">
+                        <p className="text-compact text-muted-foreground/75 mt-1">
                             Enter your email and we&apos;ll send you a temporary password.
                         </p>
                     </DialogHeader>
@@ -419,8 +423,8 @@ function LoginContent() {
                     {forgotSuccess ? (
                         <div className="space-y-4">
                             <div className="p-4 rounded-xl bg-[rgba(134,239,172,0.08)] border border-[rgba(134,239,172,0.2)]">
-                                <p className="text-[14px] text-[#86EFAC] font-medium mb-1">Check your inbox</p>
-                                <p className="text-[13px] text-[rgba(245,245,245,0.6)]">
+                                <p className="text-base text-[#86EFAC] font-medium mb-1">Check your inbox</p>
+                                <p className="text-compact text-muted-foreground">
                                     If an account exists for that email, you&apos;ll receive a temporary password
                                     shortly. Use it to log in, then set a new permanent password.
                                 </p>
@@ -437,12 +441,12 @@ function LoginContent() {
                         <form onSubmit={handleForgotPassword} className="space-y-4">
                             {forgotError && (
                                 <div className="p-3.5 rounded-xl bg-[rgba(200,122,122,0.1)] border border-[rgba(200,122,122,0.2)]">
-                                    <p className="text-[13px] text-[#C87A7A]">{forgotError}</p>
+                                    <p className="text-compact text-[var(--color-error)]">{forgotError}</p>
                                 </div>
                             )}
 
                             <div className="space-y-2">
-                                <Label className="text-[13px] text-[rgba(245,245,245,0.7)]">
+                                <Label className="text-compact text-muted-foreground">
                                     Email address
                                 </Label>
                                 <Input
@@ -452,7 +456,7 @@ function LoginContent() {
                                     placeholder="you@example.com"
                                     required
                                     disabled={forgotLoading}
-                                    className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.1)] py-3"
+                                    className="rounded-xl bg-background border-input py-3"
                                 />
                             </div>
 
@@ -477,12 +481,12 @@ function LoginContent() {
 
             <Dialog open={showForceChangeModal} onOpenChange={() => {}}>
                 <DialogContent
-                    className="max-w-md border-[rgba(255,255,255,0.1)] bg-[#161616]"
+                    className="max-w-md border-input bg-card"
                     showCloseButton={false}
                 >
                     <DialogHeader>
-                        <DialogTitle className="text-[17px] text-[#F5F5F5]">Set a new password</DialogTitle>
-                        <p className="text-[13px] text-[rgba(245,245,245,0.5)] mt-1">
+                        <DialogTitle className="text-[17px] text-foreground">Set a new password</DialogTitle>
+                        <p className="text-compact text-muted-foreground/75 mt-1">
                             Your account was set up with a temporary password. You must choose a new password before
                             continuing.
                         </p>
@@ -491,12 +495,12 @@ function LoginContent() {
                     <form onSubmit={handleForcePasswordChange} className="space-y-4">
                         {forceChangeError && (
                             <div className="p-3.5 rounded-xl bg-[rgba(200,122,122,0.1)] border border-[rgba(200,122,122,0.2)]">
-                                <p className="text-[13px] text-[#C87A7A]">{forceChangeError}</p>
+                                <p className="text-compact text-[var(--color-error)]">{forceChangeError}</p>
                             </div>
                         )}
 
                         <div className="space-y-2">
-                            <Label className="text-[13px] text-[rgba(245,245,245,0.7)]">New Password</Label>
+                            <Label className="text-compact text-muted-foreground">New Password</Label>
                             <Input
                                 type="password"
                                 value={forceNewPassword}
@@ -504,12 +508,12 @@ function LoginContent() {
                                 placeholder="At least 8 characters"
                                 required
                                 disabled={forceChangeLoading}
-                                className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.1)] py-3"
+                                className="rounded-xl bg-background border-input py-3"
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-[13px] text-[rgba(245,245,245,0.7)]">Confirm New Password</Label>
+                            <Label className="text-compact text-muted-foreground">Confirm New Password</Label>
                             <Input
                                 type="password"
                                 value={forceConfirmPassword}
@@ -517,11 +521,11 @@ function LoginContent() {
                                 placeholder="Repeat new password"
                                 required
                                 disabled={forceChangeLoading}
-                                className="rounded-xl bg-[#0C0C0C] border-[rgba(255,255,255,0.1)] py-3"
+                                className="rounded-xl bg-background border-input py-3"
                             />
                         </div>
 
-                        <p className="text-[12px] text-[rgba(245,245,245,0.4)]">
+                        <p className="text-sm text-muted-foreground/55">
                             Must be at least 8 characters with at least one letter and one number.
                         </p>
 
@@ -560,7 +564,7 @@ function LoginContent() {
 export default function LoginPage() {
     return (
         <Suspense
-            fallback={<div className="min-h-screen flex items-center justify-center bg-[#0C0C0C]" />}
+            fallback={<div className="min-h-screen flex items-center justify-center bg-background" />}
         >
             <LoginContent />
         </Suspense>

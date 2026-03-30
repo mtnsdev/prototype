@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
 
 export default function TeamsManagementSection() {
   const toast = useToast();
@@ -60,11 +61,11 @@ export default function TeamsManagementSection() {
   const commitCreate = useCallback(() => {
     if (!newTeamName.trim()) return;
     if (selectedMembers.length < 1) {
-      toast("Select at least one member");
+      toast({ title: "Select at least one member", tone: "destructive" });
       return;
     }
     createTeam(newTeamName, selectedMembers);
-    toast("Team created");
+    toast({ title: "Team created", tone: "success" });
     setShowCreateTeam(false);
     setNewTeamName("");
     setSelectedMembers([]);
@@ -78,14 +79,18 @@ export default function TeamsManagementSection() {
   const commitRename = useCallback(() => {
     if (!editingTeam) return;
     renameTeam(editingTeam.id, renameValue);
-    toast("Team renamed");
+    toast({ title: "Team renamed", tone: "success" });
     setEditingTeam(null);
   }, [editingTeam, renameTeam, renameValue, toast]);
 
   const confirmDelete = useCallback(() => {
     if (!deletingTeam) return;
     deleteTeam(deletingTeam.id);
-    toast("Team deleted — content scoped to this team is now treated as Everyone (demo)");
+    toast({
+      title: "Team deleted",
+      description: "Content scoped to this team is now treated as Everyone (demo).",
+      tone: "success",
+    });
     setDeletingTeam(null);
   }, [deleteTeam, deletingTeam, toast]);
 
@@ -101,7 +106,7 @@ export default function TeamsManagementSection() {
           <Users className="w-5 h-5 text-blue-400 shrink-0" />
           <div>
             <h3 className="text-base font-medium text-white">Teams</h3>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Manage teams to control content visibility across the platform.
             </p>
           </div>
@@ -112,7 +117,7 @@ export default function TeamsManagementSection() {
         <button
           type="button"
           onClick={openCreate}
-          className="w-full flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl border border-dashed border-white/[0.08] text-xs text-gray-500 hover:text-gray-300 hover:border-white/[0.12] transition-colors"
+          className="w-full flex items-center justify-center gap-1.5 px-3 py-3 rounded-xl border border-dashed border-border text-xs text-muted-foreground hover:text-foreground hover:border-white/[0.12] transition-colors"
         >
           <Plus className="w-3.5 h-3.5" /> Create Team
         </button>
@@ -130,24 +135,24 @@ export default function TeamsManagementSection() {
       </div>
 
       <Dialog open={showCreateTeam} onOpenChange={setShowCreateTeam}>
-        <DialogContent className="bg-[#0e0e12] border border-white/[0.06] max-w-md">
+        <DialogContent className="bg-background border border-border max-w-md">
           <DialogHeader>
             <DialogTitle className="text-white">Create Team</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <div>
-              <label className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">
+              <label className="text-2xs text-muted-foreground uppercase tracking-wider block mb-1">
                 Team Name
               </label>
               <input
                 value={newTeamName}
                 onChange={(e) => setNewTeamName(e.target.value)}
                 placeholder="e.g. Europe Specialists"
-                className="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-sm text-gray-300 outline-none focus:border-white/10"
+                className="w-full bg-white/[0.03] border border-border rounded-lg px-3 py-2 text-sm text-foreground/88 outline-none focus:border-input"
               />
             </div>
             <div>
-              <label className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">Members</label>
+              <label className="text-2xs text-muted-foreground uppercase tracking-wider block mb-1">Members</label>
               <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                 {agencyUsers.map((user) => (
                   <label key={user.id} className="flex items-center gap-2 cursor-pointer">
@@ -158,11 +163,11 @@ export default function TeamsManagementSection() {
                       className="checkbox-on-dark checkbox-on-dark-sm"
                     />
                     <div className="w-5 h-5 rounded-full bg-white/[0.06] flex items-center justify-center shrink-0">
-                      <span className="text-[8px] text-gray-400">
+                      <span className="text-[8px] text-muted-foreground/90">
                         {user.initials ?? user.name.slice(0, 2).toUpperCase()}
                       </span>
                     </div>
-                    <span className="text-sm text-gray-300">{user.name}</span>
+                    <span className="text-sm text-foreground/88">{user.name}</span>
                   </label>
                 ))}
               </div>
@@ -172,7 +177,7 @@ export default function TeamsManagementSection() {
             <button
               type="button"
               onClick={() => setShowCreateTeam(false)}
-              className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-sm text-gray-300"
+              className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-border text-sm text-foreground/88"
             >
               Cancel
             </button>
@@ -189,23 +194,23 @@ export default function TeamsManagementSection() {
       </Dialog>
 
       <Dialog open={!!editingTeam} onOpenChange={(o) => !o && setEditingTeam(null)}>
-        <DialogContent className="bg-[#0e0e12] border border-white/[0.06] max-w-md">
+        <DialogContent className="bg-background border border-border max-w-md">
           <DialogHeader>
             <DialogTitle className="text-white">Rename team</DialogTitle>
           </DialogHeader>
           <div className="mt-4">
-            <label className="text-[10px] text-gray-500 uppercase tracking-wider block mb-1">Team Name</label>
+            <label className="text-2xs text-muted-foreground uppercase tracking-wider block mb-1">Team Name</label>
             <input
               value={renameValue}
               onChange={(e) => setRenameValue(e.target.value)}
-              className="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 text-sm text-gray-300 outline-none focus:border-white/10"
+              className="w-full bg-white/[0.03] border border-border rounded-lg px-3 py-2 text-sm text-foreground/88 outline-none focus:border-input"
             />
           </div>
           <DialogFooter className="mt-4 gap-2 sm:gap-0">
             <button
               type="button"
               onClick={() => setEditingTeam(null)}
-              className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-sm text-gray-300"
+              className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-border text-sm text-foreground/88"
             >
               Cancel
             </button>
@@ -221,36 +226,20 @@ export default function TeamsManagementSection() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!deletingTeam} onOpenChange={(o) => !o && setDeletingTeam(null)}>
-        <DialogContent className="bg-[#0e0e12] border border-white/[0.06] max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-white">Delete &quot;{deletingTeam?.name}&quot;?</DialogTitle>
-            <DialogDescription className="text-gray-400 text-sm mt-2">
-              All content currently scoped to this team will be moved to &quot;Everyone&quot; (visible to the whole
-              agency). This cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-4 gap-2 sm:gap-0">
-            <button
-              type="button"
-              onClick={() => setDeletingTeam(null)}
-              className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-sm text-gray-300"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={confirmDelete}
-              className="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400"
-            >
-              Delete team
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DestructiveConfirmDialog
+        open={deletingTeam != null}
+        onOpenChange={(o) => !o && setDeletingTeam(null)}
+        title={deletingTeam ? `Delete "${deletingTeam.name}"?` : "Delete team?"}
+        description='All content currently scoped to this team will be moved to "Everyone" (visible to the whole agency).'
+        consequence="This cannot be undone."
+        confirmLabel="Delete team"
+        onConfirm={async () => {
+          confirmDelete();
+        }}
+      />
 
       <Dialog open={!!managingTeam} onOpenChange={(o) => !o && setManagingTeam(null)}>
-        <DialogContent className="bg-[#0e0e12] border border-white/[0.06] max-w-md">
+        <DialogContent className="bg-background border border-border max-w-md">
           <DialogHeader>
             <DialogTitle className="text-white">Manage Members — {managingTeamLive?.name}</DialogTitle>
           </DialogHeader>
@@ -275,14 +264,14 @@ export default function TeamsManagementSection() {
                     disabled={disabled}
                   />
                   <div className="w-6 h-6 rounded-full bg-white/[0.06] flex items-center justify-center shrink-0">
-                    <span className="text-[9px] text-gray-400">
+                    <span className="text-[9px] text-muted-foreground/90">
                       {user.initials ?? user.name.slice(0, 2).toUpperCase()}
                     </span>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-300">{user.name}</span>
+                    <span className="text-sm text-foreground/88">{user.name}</span>
                     {user.role && (
-                      <span className="text-[10px] text-gray-500 ml-2">{user.role}</span>
+                      <span className="text-2xs text-muted-foreground ml-2">{user.role}</span>
                     )}
                   </div>
                 </label>
@@ -290,7 +279,7 @@ export default function TeamsManagementSection() {
             })}
           </div>
           {managingTeamLive?.isDefault && (
-            <p className="text-[10px] text-gray-600 mt-2 italic">
+            <p className="text-2xs text-muted-foreground/70 mt-2 italic">
               The &quot;Everyone&quot; team automatically includes all users. Membership cannot be changed.
             </p>
           )}
@@ -298,7 +287,7 @@ export default function TeamsManagementSection() {
             <button
               type="button"
               onClick={() => setManagingTeam(null)}
-              className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-sm text-gray-300"
+              className="px-3 py-1.5 rounded-lg bg-white/[0.04] border border-border text-sm text-foreground/88"
             >
               Done
             </button>
@@ -328,7 +317,7 @@ function TeamCard({
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-sm text-white font-medium truncate">{team.name}</span>
           {team.isDefault && (
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/[0.04] text-gray-500 uppercase tracking-wider shrink-0">
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground uppercase tracking-wider shrink-0">
               Default
             </span>
           )}
@@ -338,14 +327,14 @@ function TeamCard({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="p-1 rounded-md hover:bg-white/[0.06] text-gray-600 hover:text-gray-400 shrink-0"
+                className="p-1 rounded-md hover:bg-white/[0.06] text-muted-foreground/70 hover:text-muted-foreground shrink-0"
                 aria-label="Team actions"
               >
                 <MoreHorizontal className="w-3.5 h-3.5" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-[#0e0e12] border border-white/[0.06]">
-              <DropdownMenuItem onClick={onRename} className="text-sm text-gray-300 focus:text-white">
+            <DropdownMenuContent className="bg-popover border border-border">
+              <DropdownMenuItem onClick={onRename} className="text-sm text-foreground/88 focus:text-white">
                 Rename
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -359,26 +348,26 @@ function TeamCard({
         )}
       </div>
 
-      <span className="text-[10px] text-gray-500">{team.memberIds.length} members</span>
+      <span className="text-2xs text-muted-foreground">{team.memberIds.length} members</span>
 
       <div className="flex items-center gap-1 mt-2 flex-wrap">
         {team.memberIds.slice(0, 5).map((memberId) => (
           <div
             key={memberId}
-            className="w-6 h-6 rounded-full bg-white/[0.06] border border-white/[0.08] flex items-center justify-center"
+            className="w-6 h-6 rounded-full bg-white/[0.06] border border-border flex items-center justify-center"
           >
-            <span className="text-[9px] text-gray-400">{getMemberInitials(memberId)}</span>
+            <span className="text-[9px] text-muted-foreground/90">{getMemberInitials(memberId)}</span>
           </div>
         ))}
         {team.memberIds.length > 5 && (
-          <span className="text-[9px] text-gray-500 ml-1">+{team.memberIds.length - 5}</span>
+          <span className="text-[9px] text-muted-foreground ml-1">+{team.memberIds.length - 5}</span>
         )}
       </div>
 
       <button
         type="button"
         onClick={onManageMembers}
-        className="text-[10px] text-blue-400/50 hover:text-blue-400/70 mt-2 block text-left"
+        className="text-2xs text-blue-400/50 hover:text-blue-400/70 mt-2 block text-left"
       >
         Manage members
       </button>

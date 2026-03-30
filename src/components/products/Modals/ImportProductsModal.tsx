@@ -22,6 +22,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import {
+  listSurfaceClass,
+  listScrollClass,
+  listTableClass,
+  listTbodyRowClass,
+  listTdClass,
+} from "@/lib/list-ui";
 
 const STEPS = [
   { id: 1, label: "Upload" },
@@ -109,9 +116,9 @@ export default function ImportProductsModal({ open, onClose, onImported }: Props
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="bg-[#1a1a1a] border-white/10 max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-accent border-input max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-[#F5F5F5]">Import products from CSV</DialogTitle>
+          <DialogTitle className="text-foreground">Import products from CSV</DialogTitle>
         </DialogHeader>
 
         <div className="flex gap-1 mb-4">
@@ -120,7 +127,7 @@ export default function ImportProductsModal({ open, onClose, onImported }: Props
               key={s.id}
               className={cn(
                 "flex-1 py-1.5 rounded text-center text-xs font-medium",
-                step === s.id ? "bg-white/15 text-[#F5F5F5]" : "bg-white/5 text-[rgba(245,245,245,0.5)]"
+                step === s.id ? "bg-white/15 text-foreground" : "bg-white/5 text-muted-foreground/75"
               )}
             >
               {s.id}. {s.label}
@@ -138,8 +145,8 @@ export default function ImportProductsModal({ open, onClose, onImported }: Props
             onDragLeave={() => setDragOver(false)}
             onDrop={(e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; handleFile(f || null); }}
           >
-            <Upload className="mx-auto h-10 w-10 text-[rgba(245,245,245,0.4)] mb-3" />
-            <p className="text-sm text-[rgba(245,245,245,0.8)] mb-2">Drag and drop a .csv file, or click to browse.</p>
+            <Upload className="mx-auto h-10 w-10 text-muted-foreground/55 mb-3" />
+            <p className="text-sm text-muted-foreground mb-2">Drag and drop a .csv file, or click to browse.</p>
             <input
               type="file"
               accept=".csv"
@@ -148,19 +155,19 @@ export default function ImportProductsModal({ open, onClose, onImported }: Props
               onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
             />
             <Label htmlFor="product-csv-upload">
-              <Button type="button" variant="outline" size="sm" className="border-white/20 text-[#F5F5F5]" asChild>
+              <Button type="button" variant="outline" size="sm" className="border-white/20 text-foreground" asChild>
                 <span>Choose file</span>
               </Button>
             </Label>
-            {file && <p className="mt-2 text-xs text-[rgba(245,245,245,0.6)]">{file.name}</p>}
+            {file && <p className="mt-2 text-xs text-muted-foreground">{file.name}</p>}
           </div>
         )}
 
         {step === 2 && (
           <div>
-            <Label className="text-[rgba(245,245,245,0.8)]">Product category for this import</Label>
+            <Label className="text-muted-foreground">Product category for this import</Label>
             <Select value={category ?? ""} onValueChange={(v) => setCategory(v as ProductCategory)}>
-              <SelectTrigger className="mt-2 bg-white/5 border-white/10 text-[#F5F5F5]">
+              <SelectTrigger className="mt-2 bg-white/5 border-input text-foreground">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
@@ -175,20 +182,20 @@ export default function ImportProductsModal({ open, onClose, onImported }: Props
         )}
 
         {step === 3 && (
-          <p className="text-sm text-[rgba(245,245,245,0.7)]">
+          <p className="text-sm text-muted-foreground">
             Column mapping: map your CSV columns to product fields. Auto-map will try to match by header name. You can adjust in a future iteration.
           </p>
         )}
 
         {step === 4 && (
-          <div className="overflow-x-auto">
-            <p className="text-xs text-[rgba(245,245,245,0.5)] mb-2">First 5 rows (validation errors would be highlighted here)</p>
-            <table className="w-full text-xs border border-white/10">
+          <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden")}>
+            <p className="px-3 pt-3 text-xs text-muted-foreground/75 mb-2">First 5 rows (validation errors would be highlighted here)</p>
+            <table className={cn(listTableClass(), "text-xs")}>
               <tbody>
                 {previewRows.slice(0, 5).map((row, i) => (
-                  <tr key={i} className="border-b border-white/10">
+                  <tr key={i} className={listTbodyRowClass}>
                     {row.map((cell, j) => (
-                      <td key={j} className="px-2 py-1.5 text-[rgba(245,245,245,0.9)] max-w-[120px] truncate">
+                      <td key={j} className={cn(listTdClass, "text-xs text-foreground max-w-[120px] truncate")}>
                         {cell}
                       </td>
                     ))}
@@ -200,7 +207,7 @@ export default function ImportProductsModal({ open, onClose, onImported }: Props
         )}
 
         {step === 5 && (
-          <p className="text-sm text-[rgba(245,245,245,0.8)]">
+          <p className="text-sm text-muted-foreground">
             Ready to import. Products will be created with category &quot;{category && CATEGORY_LABELS[category]}&quot; and mapped columns.
           </p>
         )}
@@ -209,11 +216,11 @@ export default function ImportProductsModal({ open, onClose, onImported }: Props
 
         <DialogFooter className="gap-2 flex-wrap">
           {step > 1 ? (
-            <Button variant="outline" onClick={handleBack} className="border-white/10 text-[#F5F5F5]">
+            <Button variant="outline" onClick={handleBack} className="border-input text-foreground">
               <ChevronLeft size={16} className="mr-1" /> Back
             </Button>
           ) : (
-            <Button variant="outline" onClick={onClose} className="border-white/10 text-[#F5F5F5]">
+            <Button variant="outline" onClick={onClose} className="border-input text-foreground">
               Cancel
             </Button>
           )}

@@ -61,22 +61,22 @@ function ResetPasswordContent() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0C0C0C] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
-        <div className="bg-[#161616] border border-[rgba(255,255,255,0.08)] rounded-2xl p-8 shadow-xl">
-          <h1 className="text-[20px] font-semibold text-[#F5F5F5] mb-2">Set a new password</h1>
-          <p className="text-[14px] text-[rgba(245,245,245,0.5)] mb-6">
+        <div className="bg-card border border-border rounded-2xl p-8 shadow-xl">
+          <h1 className="text-xl font-semibold text-foreground mb-2">Set a new password</h1>
+          <p className="text-base text-muted-foreground/75 mb-6">
             Choose a new password for your account.
           </p>
 
           {info && (
             <div className="mb-5 p-3.5 rounded-xl bg-[rgba(251,191,36,0.1)] border border-[rgba(251,191,36,0.2)]">
-              <p className="text-[13px] text-amber-400">{info}</p>
+              <p className="text-compact text-[var(--color-warning)]">{info}</p>
             </div>
           )}
           {error && (
             <div className="mb-5 p-3.5 rounded-xl bg-[rgba(200,122,122,0.1)] border border-[rgba(200,122,122,0.2)]">
-              <p className="text-[13px] text-[#C87A7A]">{error}</p>
+              <p className="text-compact text-[var(--color-error)]">{error}</p>
             </div>
           )}
 
@@ -84,7 +84,7 @@ function ResetPasswordContent() {
             <div>
               <label
                 htmlFor="newPassword"
-                className="block text-[13px] font-medium text-[rgba(245,245,245,0.7)] mb-2"
+                className="block text-compact font-medium text-muted-foreground mb-2"
               >
                 New password
               </label>
@@ -98,9 +98,9 @@ function ResetPasswordContent() {
                 disabled={isLoading}
                 autoComplete="new-password"
                 className={[
-                  "w-full px-4 py-3 rounded-xl text-[14px]",
-                  "bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)]",
-                  "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
+                  "w-full px-4 py-3 rounded-xl text-base",
+                  "bg-background text-foreground placeholder-[rgba(245,245,245,0.3)]",
+                  "border border-input hover:border-border-strong",
                   "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                   "transition-all duration-150",
@@ -111,7 +111,7 @@ function ResetPasswordContent() {
             <div>
               <label
                 htmlFor="confirm"
-                className="block text-[13px] font-medium text-[rgba(245,245,245,0.7)] mb-2"
+                className="block text-compact font-medium text-muted-foreground mb-2"
               >
                 Confirm password
               </label>
@@ -125,9 +125,9 @@ function ResetPasswordContent() {
                 disabled={isLoading}
                 autoComplete="new-password"
                 className={[
-                  "w-full px-4 py-3 rounded-xl text-[14px]",
-                  "bg-[#0C0C0C] text-[#F5F5F5] placeholder-[rgba(245,245,245,0.3)]",
-                  "border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.15)]",
+                  "w-full px-4 py-3 rounded-xl text-base",
+                  "bg-background text-foreground placeholder-[rgba(245,245,245,0.3)]",
+                  "border border-input hover:border-border-strong",
                   "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                   "transition-all duration-150",
@@ -139,7 +139,7 @@ function ResetPasswordContent() {
               type="submit"
               disabled={isLoading || !newPassword || !confirm}
               className={[
-                "w-full py-3 px-4 rounded-xl text-[14px] font-medium",
+                "w-full py-3 px-4 rounded-xl text-base font-medium",
                 "bg-[#F5F5F5] hover:bg-white text-[#0C0C0C]",
                 "disabled:opacity-50 disabled:cursor-not-allowed",
                 "transition-all duration-150",
@@ -152,7 +152,7 @@ function ResetPasswordContent() {
           </form>
 
           <div className="mt-6 text-center">
-            <Link href="/login" className="text-[#F5F5F5] hover:underline transition-colors text-[13px]">
+            <Link href="/login" className="text-foreground hover:underline transition-colors text-compact">
               Back to sign in
             </Link>
           </div>
@@ -164,7 +164,7 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#0C0C0C]" />}>
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
       <ResetPasswordContent />
     </Suspense>
   );

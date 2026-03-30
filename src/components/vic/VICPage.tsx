@@ -20,14 +20,7 @@ import AddEditVICModal from "./Modals/AddEditVICModal";
 import DeleteConfirmModal from "./Modals/DeleteConfirmModal";
 import ImportCSVModal from "./Modals/ImportCSVModal";
 import AcuityProgressModal from "./Modals/AcuityProgressModal";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 import {
   buildVicListSearchParams,
@@ -109,6 +102,7 @@ export default function VICPage() {
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingVic, setDeletingVic] = useState<VIC | null>(null);
   const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
+  const [bulkDeleteBusy, setBulkDeleteBusy] = useState(false);
   const [isBulkAcuityModalOpen, setBulkAcuityModalOpen] = useState(false);
 
   const [acuitySettings, setAcuitySettings] = useState<AcuitySettings | null>(null);
@@ -324,11 +318,11 @@ export default function VICPage() {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#08080c]">
-      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-[rgba(255,255,255,0.08)] pl-6 pr-[4.5rem] py-3">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-inset">
+      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-border pl-6 pr-[4.5rem] py-3">
         <div className="min-w-0">
-          <h1 className="text-sm font-semibold leading-none text-[#F5F5F5]">VICs</h1>
-          <p className="mt-1 text-[11px] leading-snug text-[rgba(245,245,245,0.5)]">
+          <h1 className="text-sm font-semibold leading-none text-foreground">VICs</h1>
+          <p className="mt-1 text-xs leading-snug text-muted-foreground/75">
             {hasActiveFilters ? (
               <>
                 <span>
@@ -491,7 +485,7 @@ export default function VICPage() {
               />
             )}
             {totalCount > PAGE_SIZE && (
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4 text-sm text-[rgba(245,245,245,0.6)]">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4 text-sm text-muted-foreground">
                 <span className="order-2 sm:order-1">
                   Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, totalCount)} of {totalCount}
                 </span>
@@ -526,29 +520,50 @@ export default function VICPage() {
           onSaved={closeAddEdit}
         />
       )}
-      {isDeleteModalOpen && deletingVic && (
-        <DeleteConfirmModal
-          vic={deletingVic}
-          onClose={closeDelete}
-          onConfirm={closeDelete}
-        />
-      )}
-      {bulkDeleteIds && bulkDeleteIds.length > 0 && (
-        <BulkDeleteConfirmModal
-          count={bulkDeleteIds.length}
-          onClose={() => { setBulkDeleteIds(null); clearSelection(); }}
-          onConfirm={async () => {
+      <DeleteConfirmModal
+        open={isDeleteModalOpen && deletingVic != null}
+        vic={deletingVic}
+        onClose={closeDelete}
+        onConfirm={closeDelete}
+      />
+      <DestructiveConfirmDialog
+        open={Boolean(bulkDeleteIds && bulkDeleteIds.length > 0)}
+        onOpenChange={(o) => {
+          if (!o && !bulkDeleteBusy) {
+            setBulkDeleteIds(null);
+            clearSelection();
+          }
+        }}
+        title="Delete VICs"
+        description={
+          <>
+            Delete{" "}
+            <span className="font-medium text-foreground tabular-nums">{bulkDeleteIds?.length ?? 0}</span>{" "}
+            selected VIC{(bulkDeleteIds?.length ?? 0) !== 1 ? "s" : ""}?
+          </>
+        }
+        consequence="This will also remove their Acuity intelligence profiles."
+        confirmLabel="Delete"
+        loading={bulkDeleteBusy}
+        onConfirm={async () => {
+          if (!bulkDeleteIds) return;
+          setBulkDeleteBusy(true);
+          try {
             for (const id of bulkDeleteIds) {
               try {
                 await deleteVIC(id);
-              } catch (_) {}
+              } catch {
+                /* continue */
+              }
             }
             setBulkDeleteIds(null);
             clearSelection();
             loadVics();
-          }}
-        />
-      )}
+          } finally {
+            setBulkDeleteBusy(false);
+          }
+        }}
+      />
       {isImportModalOpen && (
         <ImportCSVModal
           onClose={() => { setImportModalOpen(false); loadVics(); }}
@@ -568,43 +583,5 @@ export default function VICPage() {
         />
       )}
     </div>
-  );
-}
-
-function BulkDeleteConfirmModal({
-  count,
-  onClose,
-  onConfirm,
-}: {
-  count: number;
-  onClose: () => void;
-  onConfirm: () => void | Promise<void>;
-}) {
-  const [deleting, setDeleting] = useState(false);
-  const handleConfirm = async () => {
-    setDeleting(true);
-    try {
-      await onConfirm();
-    } finally {
-      setDeleting(false);
-    }
-  };
-  return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete VICs</DialogTitle>
-        </DialogHeader>
-        <p className="text-sm text-[rgba(245,245,245,0.8)]">
-          Delete {count} selected VICs? This will also remove their Acuity intelligence profiles.
-        </p>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button variant="destructive" onClick={handleConfirm} disabled={deleting}>
-            {deleting ? "Deleting…" : "Delete"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }

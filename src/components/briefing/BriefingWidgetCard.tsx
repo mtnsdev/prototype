@@ -71,21 +71,21 @@ export default function BriefingWidgetCard({
   return (
     <article
       className={cn(
-        "rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] flex flex-col overflow-hidden col-span-1",
-        "backdrop-blur-sm transition-all duration-200 hover:border-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.03)]",
+        "rounded-2xl border border-border bg-[rgba(255,255,255,0.02)] flex flex-col overflow-hidden col-span-1",
+        "backdrop-blur-sm transition-all duration-200 hover:border-input hover:bg-[rgba(255,255,255,0.03)]",
         colSpanClass,
         className
       )}
       data-size={widget.size}
     >
-      <div className="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-[rgba(255,255,255,0.04)]">
+      <div className="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-border">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-xl bg-white/[0.06] flex items-center justify-center shrink-0 text-[rgba(245,245,245,0.85)]">
             <IconComponent size={18} />
           </div>
-          <h3 className="font-medium text-[#F5F5F5] truncate text-sm">
+          <h3 className="font-medium text-foreground truncate text-sm">
             {widget.title}
-            {titleSuffix != null && <span className="text-[rgba(245,245,245,0.5)] font-normal ml-0.5"> {titleSuffix}</span>}
+            {titleSuffix != null && <span className="text-muted-foreground/75 font-normal ml-0.5"> {titleSuffix}</span>}
           </h3>
         </div>
         <div className="flex items-center gap-0.5">
@@ -93,7 +93,7 @@ export default function BriefingWidgetCard({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 shrink-0 text-[rgba(245,245,245,0.4)] hover:text-[rgba(245,245,245,0.8)]"
+              className="h-8 w-8 shrink-0 text-muted-foreground/55 hover:text-muted-foreground"
               onClick={() => onRefresh()}
               disabled={isLoading}
               title="Refresh"
@@ -103,7 +103,7 @@ export default function BriefingWidgetCard({
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-[rgba(245,245,245,0.4)] hover:text-[rgba(245,245,245,0.8)]">
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground/55 hover:text-muted-foreground">
                 <MoreHorizontal size={16} />
               </Button>
             </DropdownMenuTrigger>
@@ -134,10 +134,10 @@ export default function BriefingWidgetCard({
         )}
       </div>
       {viewAllHref && viewAllLabel && (
-        <div className="px-5 py-2.5 border-t border-[rgba(255,255,255,0.04)]">
+        <div className="px-5 py-2.5 border-t border-border">
           <a
             href={viewAllHref}
-            className="text-xs font-medium text-[rgba(245,245,245,0.6)] hover:text-[#F5F5F5] hover:underline transition-colors"
+            className="text-xs font-medium text-muted-foreground hover:text-foreground hover:underline transition-colors"
           >
             {viewAllLabel} →
           </a>

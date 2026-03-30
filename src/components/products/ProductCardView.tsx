@@ -32,7 +32,7 @@ export default function ProductCardView({
     return (
       <div className="p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="rounded-xl border border-white/10 bg-white/5 h-48 animate-pulse" />
+          <div key={i} className="rounded-xl border border-input bg-white/5 h-48 animate-pulse" />
         ))}
       </div>
     );

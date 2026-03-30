@@ -53,7 +53,7 @@ export default function AdminOverviewPage() {
                 {[...Array(4)].map((_, i) => (
                     <div
                         key={i}
-                        className="h-32 rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] animate-pulse"
+                        className="h-32 rounded-2xl bg-card border border-border animate-pulse"
                     />
                 ))}
             </div>
@@ -63,7 +63,7 @@ export default function AdminOverviewPage() {
     if (error) {
         return (
             <div className="rounded-2xl bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)] p-6 text-center">
-                <p className="text-[14px] text-[#C87A7A]">{error}</p>
+                <p className="text-base text-[var(--color-error)]">{error}</p>
             </div>
         );
     }
@@ -91,7 +91,7 @@ export default function AdminOverviewPage() {
             icon: Clock,
             color: "from-amber-500/20 to-amber-600/10",
             borderColor: "border-amber-500/20",
-            iconColor: "text-amber-400",
+            iconColor: "text-[var(--color-warning)]",
         },
         {
             label: "Content Rules",
@@ -112,14 +112,14 @@ export default function AdminOverviewPage() {
                     return (
                         <div
                             key={stat.label}
-                            className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] p-5"
+                            className="rounded-2xl bg-card border border-border p-5"
                         >
                             <div className="flex items-start justify-between">
                                 <div>
-                                    <p className="text-[12px] font-medium text-[rgba(245,245,245,0.45)] uppercase tracking-wider">
+                                    <p className="text-sm font-medium text-muted-foreground/75 uppercase tracking-wider">
                                         {stat.label}
                                     </p>
-                                    <p className="text-[32px] font-bold text-[#F5F5F5] mt-1">
+                                    <p className="text-3xl font-bold text-foreground mt-1">
                                         {stat.value}
                                     </p>
                                 </div>
@@ -136,56 +136,56 @@ export default function AdminOverviewPage() {
 
             {/* Additional Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] p-5">
-                    <h3 className="text-[15px] font-semibold text-[#F5F5F5] mb-4">User Breakdown</h3>
+                <div className="rounded-2xl bg-card border border-border p-5">
+                    <h3 className="text-base font-semibold text-foreground mb-4">User Breakdown</h3>
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <Shield size={14} className="text-amber-400" />
-                                <span className="text-[14px] text-[rgba(245,245,245,0.7)]">Administrators</span>
+                                <Shield size={14} className="text-[var(--color-warning)]" />
+                                <span className="text-base text-muted-foreground">Administrators</span>
                             </div>
-                            <span className="text-[14px] font-medium text-[#F5F5F5]">{stats?.users.admins ?? 0}</span>
+                            <span className="text-base font-medium text-foreground">{stats?.users.admins ?? 0}</span>
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <UserCheck size={14} className="text-green-400" />
-                                <span className="text-[14px] text-[rgba(245,245,245,0.7)]">Active</span>
+                                <span className="text-base text-muted-foreground">Active</span>
                             </div>
-                            <span className="text-[14px] font-medium text-[#F5F5F5]">{stats?.users.active ?? 0}</span>
+                            <span className="text-base font-medium text-foreground">{stats?.users.active ?? 0}</span>
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <Clock size={14} className="text-amber-400" />
-                                <span className="text-[14px] text-[rgba(245,245,245,0.7)]">Invited</span>
+                                <Clock size={14} className="text-[var(--color-warning)]" />
+                                <span className="text-base text-muted-foreground">Invited</span>
                             </div>
-                            <span className="text-[14px] font-medium text-[#F5F5F5]">{stats?.users.invited ?? 0}</span>
+                            <span className="text-base font-medium text-foreground">{stats?.users.invited ?? 0}</span>
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <UserX size={14} className="text-red-400" />
-                                <span className="text-[14px] text-[rgba(245,245,245,0.7)]">Disabled</span>
+                                <span className="text-base text-muted-foreground">Disabled</span>
                             </div>
-                            <span className="text-[14px] font-medium text-[#F5F5F5]">{stats?.users.disabled ?? 0}</span>
+                            <span className="text-base font-medium text-foreground">{stats?.users.disabled ?? 0}</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="rounded-2xl bg-[#161616] border border-[rgba(255,255,255,0.08)] p-5">
-                    <h3 className="text-[15px] font-semibold text-[#F5F5F5] mb-4">Quick Actions</h3>
+                <div className="rounded-2xl bg-card border border-border p-5">
+                    <h3 className="text-base font-semibold text-foreground mb-4">Quick Actions</h3>
                     <div className="space-y-2">
                         <a
                             href="/dashboard/settings/admin/users"
-                            className="flex items-center gap-3 p-3 rounded-xl bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.06)] transition-colors"
+                            className="flex items-center gap-3 p-3 rounded-xl bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] border border-border transition-colors"
                         >
-                            <Users size={18} className="text-[rgba(245,245,245,0.5)]" />
-                            <span className="text-[14px] text-[rgba(245,245,245,0.8)]">Manage Users</span>
+                            <Users size={18} className="text-muted-foreground/75" />
+                            <span className="text-base text-muted-foreground">Manage Users</span>
                         </a>
                         <a
                             href="/dashboard/settings/admin/permissions"
-                            className="flex items-center gap-3 p-3 rounded-xl bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.06)] transition-colors"
+                            className="flex items-center gap-3 p-3 rounded-xl bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] border border-border transition-colors"
                         >
-                            <FolderLock size={18} className="text-[rgba(245,245,245,0.5)]" />
-                            <span className="text-[14px] text-[rgba(245,245,245,0.8)]">Manage Permissions</span>
+                            <FolderLock size={18} className="text-muted-foreground/75" />
+                            <span className="text-base text-muted-foreground">Manage Permissions</span>
                         </a>
                     </div>
                 </div>

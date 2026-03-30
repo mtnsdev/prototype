@@ -212,13 +212,13 @@ function iconColorClass(type: NotificationType): string {
     case "sync_failed":
       return "text-[#A66B6B]";
     case "sync_complete":
-      return "text-[#9B9590]";
+      return "text-muted-foreground";
     case "program_expiring":
-      return "text-[#C9A96E]";
+      return "text-brand-cta";
     case "mention":
-      return "text-[#C9A96E]";
+      return "text-brand-cta";
     default:
-      return "text-[#9B9590]";
+      return "text-muted-foreground";
   }
 }
 
@@ -331,13 +331,13 @@ export function NotificationPanelProvider({ children }: ProviderProps) {
     (n: AppNotification) => {
       if (n.id.startsWith("kv-") && kv) {
         kv.approve(n.id.slice(3));
-        toast("Document sharing approved");
+        toast({ title: "Document sharing approved", tone: "success" });
         return;
       }
       removeById(n.id);
       const kind =
         n.sourceType === "contact" ? "Contact" : n.sourceType === "document" ? "Document" : "Note";
-      toast(`${kind} approved — now visible to agency`);
+      toast({ title: `${kind} approved — now visible to agency`, tone: "success" });
     },
     [kv, removeById, toast]
   );
@@ -346,11 +346,11 @@ export function NotificationPanelProvider({ children }: ProviderProps) {
     (n: AppNotification) => {
       if (n.id.startsWith("kv-") && kv) {
         kv.decline(n.id.slice(3));
-        toast("Suggestion dismissed");
+        toast({ title: "Suggestion dismissed", tone: "success" });
         return;
       }
       removeById(n.id);
-      toast("Submission declined");
+      toast({ title: "Submission declined", tone: "destructive" });
     },
     [kv, removeById, toast]
   );
@@ -410,7 +410,7 @@ function NotificationItemsList({
 }: NotificationListProps) {
   if (items.length === 0) {
     return (
-      <p className="px-2 py-8 text-center text-[12px] text-[#6B6560]">No notifications</p>
+      <p className="px-2 py-8 text-center text-sm text-muted-foreground">No notifications</p>
     );
   }
 
@@ -425,39 +425,39 @@ function NotificationItemsList({
               className={cn(
                 "overflow-hidden rounded-xl px-3 py-3",
                 unread
-                  ? "border border-[rgba(255,255,255,0.06)] border-l-2 border-l-[#C9A96E] bg-[rgba(201,169,110,0.02)]"
-                  : "border border-[rgba(255,255,255,0.06)] bg-transparent"
+                  ? "border border-border border-l-2 border-l-[#C9A96E] bg-[rgba(201,169,110,0.02)]"
+                  : "border border-border bg-transparent"
               )}
             >
               <div className="flex gap-3">
                 <div
                   className={cn(
-                    "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#08080c]",
+                    "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-inset",
                     n.type === "sync_failed" && "bg-[rgba(166,107,107,0.08)]"
                   )}
                 >
                   <Icon className={cn("h-4 w-4", iconColorClass(n.type))} aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-mono text-[9px] tracking-wide text-[#6B6560]">
+                  <p className="font-mono text-[9px] tracking-wide text-muted-foreground">
                     {notificationTypeLabel(n.type)}
                   </p>
                   <p
                     className={cn(
-                      "text-[12px] font-medium leading-snug",
-                      unread ? "text-[#F5F0EB]" : "text-[#9B9590]"
+                      "text-sm font-medium leading-snug",
+                      unread ? "text-foreground" : "text-muted-foreground"
                     )}
                   >
                     {n.title}
                   </p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-[#9B9590]">{n.body}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{n.body}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="text-[10px] text-[#6B6560]">{relativeTime(n.timestamp)}</span>
+                    <span className="text-2xs text-muted-foreground">{relativeTime(n.timestamp)}</span>
                     {unread ? (
                       <button
                         type="button"
                         onClick={() => onMarkRead(n.id)}
-                        className="text-[10px] font-medium text-[#C9A96E] underline-offset-2 hover:underline"
+                        className="text-2xs font-medium text-brand-cta underline-offset-2 hover:underline"
                       >
                         Mark read
                       </button>
@@ -467,14 +467,14 @@ function NotificationItemsList({
                         <button
                           type="button"
                           onClick={() => onApprove(n)}
-                          className="rounded-md border border-[rgba(91,138,110,0.35)] bg-[rgba(91,138,110,0.12)] px-2 py-1 text-[10px] font-medium text-[#5B8A6E] transition-colors hover:bg-[rgba(91,138,110,0.2)]"
+                          className="rounded-md border border-[rgba(91,138,110,0.35)] bg-[rgba(91,138,110,0.12)] px-2 py-1 text-2xs font-medium text-[#5B8A6E] transition-colors hover:bg-[rgba(91,138,110,0.2)]"
                         >
                           Approve
                         </button>
                         <button
                           type="button"
                           onClick={() => onDeny(n)}
-                          className="rounded-md border border-[rgba(166,107,107,0.35)] bg-[rgba(166,107,107,0.1)] px-2 py-1 text-[10px] font-medium text-[#A66B6B] transition-colors hover:bg-[rgba(166,107,107,0.16)]"
+                          className="rounded-md border border-[rgba(166,107,107,0.35)] bg-[rgba(166,107,107,0.1)] px-2 py-1 text-2xs font-medium text-[#A66B6B] transition-colors hover:bg-[rgba(166,107,107,0.16)]"
                         >
                           Deny
                         </button>
@@ -485,10 +485,10 @@ function NotificationItemsList({
                         href={n.actionUrl}
                         onClick={onNavigate}
                         className={cn(
-                          "rounded-md px-2 py-1 text-[10px] text-[#C9A96E] transition-colors",
+                          "rounded-md px-2 py-1 text-2xs text-brand-cta transition-colors",
                           n.type === "onboarding"
                             ? "border border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.08)] hover:bg-[rgba(201,169,110,0.12)]"
-                            : "border border-[rgba(255,255,255,0.08)] hover:bg-white/[0.04]"
+                            : "border border-border hover:bg-white/[0.04]"
                         )}
                       >
                         {n.actionLabel}
@@ -521,7 +521,7 @@ function NotificationFilterRow({
 
   return (
     <div
-      className="flex flex-wrap gap-x-4 gap-y-1 border-b border-[rgba(255,255,255,0.06)] px-3 py-2"
+      className="flex flex-wrap gap-x-4 gap-y-1 border-b border-border px-3 py-2"
       role="tablist"
       aria-label="Notification categories"
     >
@@ -535,19 +535,19 @@ function NotificationFilterRow({
             aria-selected={active}
             onClick={() => setFilterTab(t.id)}
             className={cn(
-              "flex items-center gap-1.5 text-[11px] transition-colors",
-              active ? "text-[#F5F0EB]" : "text-[#6B6560] hover:text-[#9B9590]"
+              "flex items-center gap-1.5 text-xs transition-colors",
+              active ? "text-foreground" : "text-muted-foreground hover:text-muted-foreground"
             )}
           >
             <span
               className={cn(
                 "h-2 w-2 shrink-0 rounded-full border",
-                active ? "border-[#C9A96E] bg-[#C9A96E]" : "border-[#6B6560] bg-transparent"
+                active ? "border-brand-cta bg-brand-cta" : "border-[#6B6560] bg-transparent"
               )}
               aria-hidden
             />
             {t.label}
-            <span className="text-[#6B6560]">({countFor(t.id)})</span>
+            <span className="text-muted-foreground">({countFor(t.id)})</span>
           </button>
         );
       })}
@@ -573,12 +573,12 @@ function NotificationPanelHeader({
   return (
     <div
       className={cn(
-        "flex items-start gap-2 border-b border-[rgba(255,255,255,0.06)] px-3 py-2.5",
+        "flex items-start gap-2 border-b border-border px-3 py-2.5",
         showTitle ? "justify-between" : "justify-end"
       )}
     >
       {showTitle && titleId ? (
-        <h2 id={titleId} className="text-[14px] font-semibold text-[#F5F0EB]">
+        <h2 id={titleId} className="text-base font-semibold text-foreground">
           Notifications
         </h2>
       ) : null}
@@ -588,10 +588,10 @@ function NotificationPanelHeader({
           onClick={markAllRead}
           disabled={unreadTotal === 0}
           className={cn(
-            "text-right text-[10px] font-medium transition-colors",
+            "text-right text-2xs font-medium transition-colors",
             unreadTotal === 0
-              ? "cursor-not-allowed text-[#6B6560]"
-              : "text-[#C9A96E] hover:text-[#D4B383]"
+              ? "cursor-not-allowed text-muted-foreground"
+              : "text-brand-cta hover:text-[#D4B383]"
           )}
         >
           Mark all as read
@@ -601,10 +601,10 @@ function NotificationPanelHeader({
           onClick={clearAll}
           disabled={totalCount === 0}
           className={cn(
-            "text-right text-[10px] font-medium transition-colors",
+            "text-right text-2xs font-medium transition-colors",
             totalCount === 0
-              ? "cursor-not-allowed text-[#6B6560]"
-              : "text-[#9B9590] hover:text-[#F5F0EB]"
+              ? "cursor-not-allowed text-muted-foreground"
+              : "text-muted-foreground hover:text-foreground"
           )}
         >
           Clear all
@@ -641,7 +641,7 @@ function NotificationsShell({
   return (
     <div
       className={cn(
-        "flex flex-col bg-[#08080c]",
+        "flex flex-col bg-inset",
         variant === "dropdown" && "max-h-[min(70vh,560px)] w-[360px] max-w-[calc(100vw-2rem)]"
       )}
     >
@@ -668,11 +668,11 @@ function NotificationsShell({
         />
       </div>
       {variant === "dropdown" ? (
-        <div className="border-t border-[rgba(255,255,255,0.06)] px-3 py-2">
+        <div className="border-t border-border px-3 py-2">
           <Link
             href="/dashboard/notifications"
             onClick={onClose}
-            className="block text-center text-[11px] font-medium text-[#C9A96E] hover:text-[#D4B383]"
+            className="block text-center text-xs font-medium text-brand-cta hover:text-[#D4B383]"
           >
             View all notifications
           </Link>
@@ -710,8 +710,8 @@ export function SidebarNotificationBell({ className, compact }: BellProps) {
           aria-haspopup="dialog"
           aria-expanded={open}
           className={cn(
-            "relative flex shrink-0 items-center justify-center rounded-md text-[#6B6560] transition-colors",
-            "hover:bg-white/[0.06] hover:text-[#9B9590]",
+            "relative flex shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors",
+            "hover:bg-white/[0.06] hover:text-muted-foreground",
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C9A96E]/50",
             className,
             compact ? "h-7 w-7" : "h-9 w-9"
@@ -730,7 +730,7 @@ export function SidebarNotificationBell({ className, compact }: BellProps) {
         side="bottom"
         sideOffset={10}
         collisionPadding={16}
-        className="w-[360px] max-w-[calc(100vw-2rem)] border-[rgba(255,255,255,0.08)] p-0"
+        className="w-[360px] max-w-[calc(100vw-2rem)] border-border p-0"
         aria-labelledby={DROPDOWN_TITLE_ID}
       >
         <NotificationsShell variant="dropdown" onClose={() => setOpen(false)} />
@@ -748,10 +748,10 @@ export function NotificationsCenterPage() {
       className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
       aria-labelledby={PAGE_TITLE_ID}
     >
-      <div className="flex min-h-14 items-center border-b border-[rgba(255,255,255,0.08)] px-3 py-3">
+      <div className="flex min-h-14 items-center border-b border-border px-3 py-3">
         <h1
           id={PAGE_TITLE_ID}
-          className="text-sm font-semibold leading-none text-[#F5F5F5]"
+          className="text-sm font-semibold leading-none text-foreground"
         >
           Notification center
         </h1>

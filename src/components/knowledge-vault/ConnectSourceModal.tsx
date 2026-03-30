@@ -73,11 +73,11 @@ export default function ConnectSourceModal({ open, onClose, sources }: Props) {
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="bg-[#1a1a1a] border-white/10 max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-accent border-input max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-[#F5F5F5]">Connect a source</DialogTitle>
+          <DialogTitle className="text-foreground">Connect a source</DialogTitle>
         </DialogHeader>
-        <p className="text-sm text-[rgba(245,245,245,0.6)]">
+        <p className="text-sm text-muted-foreground">
           Choose a data source to connect to your Knowledge Vault. Documents will be synced and indexed
           for search.
         </p>
@@ -94,21 +94,21 @@ export default function ConnectSourceModal({ open, onClose, sources }: Props) {
             return (
               <div
                 key={String(row.type)}
-                className="flex items-start gap-4 rounded-xl border border-[rgba(255,255,255,0.08)] bg-white/[0.03] p-4"
+                className="flex items-start gap-4 rounded-xl border border-border bg-white/[0.03] p-4"
               >
-                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-[#F5F5F5] shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-foreground shrink-0">
                   <Icon size={20} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-medium text-[#F5F5F5]">{row.name}</h3>
-                  <p className="text-sm text-[rgba(245,245,245,0.6)] mt-0.5">{row.description}</p>
+                  <h3 className="font-medium text-foreground">{row.name}</h3>
+                  <p className="text-sm text-muted-foreground mt-0.5">{row.description}</p>
                 </div>
                 <div className="shrink-0 flex flex-col items-end gap-1">
                   {row.comingSoon && (
                     <span
                       className={cn(
                         "text-xs px-2 py-1 rounded border border-white/15",
-                        "text-[rgba(245,245,245,0.55)]"
+                        "text-muted-foreground/75"
                       )}
                     >
                       Coming soon
@@ -123,7 +123,7 @@ export default function ConnectSourceModal({ open, onClose, sources }: Props) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-white/10 text-[#F5F5F5]"
+                      className="border-input text-foreground"
                       onClick={handleConnect}
                     >
                       Connect

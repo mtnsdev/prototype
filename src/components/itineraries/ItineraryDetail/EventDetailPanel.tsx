@@ -80,15 +80,15 @@ export default function EventDetailPanel({
   const marginPct = clientPrice > 0 ? Math.round((margin / clientPrice) * 100) : 0;
 
   return (
-    <div className="w-full max-w-[400px] h-full flex flex-col bg-[#08080c] border-l border-white/[0.08] shadow-xl animate-in slide-in-from-right duration-200">
-      <header className="shrink-0 flex items-center justify-between gap-2 p-4 border-b border-white/[0.08]">
+    <div className="w-full max-w-[400px] h-full flex flex-col bg-inset border-l border-border shadow-xl animate-in slide-in-from-right duration-200">
+      <header className="shrink-0 flex items-center justify-between gap-2 p-4 border-b border-border">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-[rgba(245,245,245,0.9)] shrink-0">
             <Icon size={18} />
           </div>
-          <h2 className="text-sm font-semibold text-[#F5F5F5] truncate">{event.title}</h2>
+          <h2 className="text-sm font-semibold text-foreground truncate">{event.title}</h2>
         </div>
-        <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 text-[rgba(245,245,245,0.6)]" onClick={onClose}>
+        <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 text-muted-foreground" onClick={onClose}>
           <X size={18} />
         </Button>
       </header>
@@ -107,19 +107,19 @@ export default function EventDetailPanel({
         )}
 
         <section>
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2">Details</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/75 mb-2">Details</h3>
           <div className="text-sm space-y-2">
             <div className="flex justify-between">
-              <span className="text-[rgba(245,245,245,0.5)]">Time</span>
-              <span className="text-[#F5F5F5]">{timeStr}</span>
+              <span className="text-muted-foreground/75">Time</span>
+              <span className="text-foreground">{timeStr}</span>
             </div>
             <div className="flex justify-between items-center gap-2">
-              <span className="text-[rgba(245,245,245,0.5)]">Status</span>
+              <span className="text-muted-foreground/75">Status</span>
               <span
                 className={cn(
                   "text-xs px-1.5 py-0.5 rounded border",
                   event.status === "confirmed" && "border-emerald-500/50 text-emerald-400",
-                  event.status === "tentative" && "border-amber-500/50 text-amber-400",
+                  event.status === "tentative" && "border-amber-500/50 text-[var(--color-warning)]",
                   event.status === "cancelled" && "border-red-500/50 text-red-400"
                 )}
               >
@@ -127,14 +127,14 @@ export default function EventDetailPanel({
               </span>
             </div>
             {event.description && (
-              <p className="text-[rgba(245,245,245,0.7)] pt-1">{event.description}</p>
+              <p className="text-muted-foreground pt-1">{event.description}</p>
             )}
             {event.source_product_name && (
               <div className="flex justify-between items-center gap-2 pt-1">
-                <span className="text-[rgba(245,245,245,0.5)]">Supplier</span>
+                <span className="text-muted-foreground/75">Supplier</span>
                 <Link
                   href={`/dashboard/products/${event.source_product_id}`}
-                  className="text-xs text-[rgba(245,245,245,0.8)] hover:text-white inline-flex items-center gap-1"
+                  className="text-xs text-muted-foreground hover:text-white inline-flex items-center gap-1"
                 >
                   {event.source_product_name}
                   <ExternalLink size={12} />
@@ -142,8 +142,8 @@ export default function EventDetailPanel({
               </div>
             )}
             <div className="flex justify-between">
-              <span className="text-[rgba(245,245,245,0.5)]">Confirmation</span>
-              <span className="text-[#F5F5F5] text-xs">
+              <span className="text-muted-foreground/75">Confirmation</span>
+              <span className="text-foreground text-xs">
                 {event.confirmation_number ?? "Pending"}
               </span>
             </div>
@@ -152,19 +152,19 @@ export default function EventDetailPanel({
 
         {(clientPrice > 0 || supplierCost > 0) && (
           <section>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2">Financial</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/75 mb-2">Financial</h3>
             <div className="text-sm space-y-2">
               <div className="flex justify-between">
-                <span className="text-[rgba(245,245,245,0.5)]">Client price</span>
-                <span className="text-[#F5F5F5]">€{clientPrice.toLocaleString()}</span>
+                <span className="text-muted-foreground/75">Client price</span>
+                <span className="text-foreground">€{clientPrice.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[rgba(245,245,245,0.5)]">Supplier cost</span>
-                <span className="text-[#F5F5F5]">€{supplierCost.toLocaleString()}</span>
+                <span className="text-muted-foreground/75">Supplier cost</span>
+                <span className="text-foreground">€{supplierCost.toLocaleString()}</span>
               </div>
               <div className="flex justify-between pt-1 border-t border-white/5">
-                <span className="text-[rgba(245,245,245,0.5)]">Margin</span>
-                <span className="text-[#F5F5F5]">€{margin.toLocaleString()} ({marginPct}%)</span>
+                <span className="text-muted-foreground/75">Margin</span>
+                <span className="text-foreground">€{margin.toLocaleString()} ({marginPct}%)</span>
               </div>
             </div>
           </section>
@@ -172,10 +172,10 @@ export default function EventDetailPanel({
 
         {event.source_product_id && (
           <section>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2">Linked product</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/75 mb-2">Linked product</h3>
             <Link
               href={`/dashboard/products/${event.source_product_id}`}
-              className="flex items-center gap-3 p-3 rounded-lg border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
+              className="flex items-center gap-3 p-3 rounded-lg border border-border bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
             >
               <span className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-800 shrink-0">
                 <ImageWithFallback
@@ -187,31 +187,31 @@ export default function EventDetailPanel({
                 />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-[#F5F5F5] truncate">{event.source_product_name}</p>
-                <p className="text-xs text-[rgba(245,245,245,0.5)]">{event.source_product_category}</p>
+                <p className="text-sm font-medium text-foreground truncate">{event.source_product_name}</p>
+                <p className="text-xs text-muted-foreground/75">{event.source_product_category}</p>
               </div>
-              <ExternalLink size={14} className="text-[rgba(245,245,245,0.5)] shrink-0" />
+              <ExternalLink size={14} className="text-muted-foreground/75 shrink-0" />
             </Link>
           </section>
         )}
 
         {event.custom_notes && (
           <section>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2">Notes</h3>
-            <p className="text-sm text-[rgba(245,245,245,0.7)] bg-white/[0.03] rounded-lg p-3 border border-white/[0.06]">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/75 mb-2">Notes</h3>
+            <p className="text-sm text-muted-foreground bg-white/[0.03] rounded-lg p-3 border border-border">
               {event.custom_notes}
             </p>
           </section>
         )}
       </div>
 
-      <footer className="shrink-0 p-4 border-t border-white/[0.08] space-y-2">
-        <Button variant="outline" size="sm" className="w-full border-white/10 text-[#F5F5F5]" onClick={onEdit}>
+      <footer className="shrink-0 p-4 border-t border-border space-y-2">
+        <Button variant="outline" size="sm" className="w-full border-input text-foreground" onClick={onEdit}>
           <Pencil size={14} className="mr-2" /> Edit event
         </Button>
         <div className="flex gap-2">
           <select
-            className="flex-1 text-xs bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-[#F5F5F5]"
+            className="flex-1 text-xs bg-white/5 border border-input rounded-lg px-3 py-2 text-foreground"
             defaultValue=""
             onChange={(e) => e.target.value && (window as unknown as { __moveEventDay?: (dayNum: number) => void }).__moveEventDay?.(Number(e.target.value))}
           >
@@ -223,7 +223,7 @@ export default function EventDetailPanel({
             ))}
           </select>
           <select
-            className="flex-1 text-xs bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-[#F5F5F5]"
+            className="flex-1 text-xs bg-white/5 border border-input rounded-lg px-3 py-2 text-foreground"
             defaultValue={event.status}
           >
             <option value="confirmed">Confirmed</option>

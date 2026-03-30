@@ -34,7 +34,7 @@ export default function ProductDetailTabBar({ activeTab, onTabChange, canViewCom
   };
 
   return (
-    <div className="flex border-b border-[rgba(255,255,255,0.08)] bg-[#0C0C0C] overflow-x-auto">
+    <div className="flex border-b border-border bg-background overflow-x-auto">
       {TABS.map((tab) => {
         const hidden = tab.id === "commercial" && !canViewCommercial;
         if (hidden) return null;
@@ -44,10 +44,10 @@ export default function ProductDetailTabBar({ activeTab, onTabChange, canViewCom
             type="button"
             onClick={() => setTab(tab.id)}
             className={cn(
-              "px-4 py-3 text-[13px] font-medium whitespace-nowrap transition-colors border-b-2 -mb-px",
+              "px-4 py-3 text-compact font-medium whitespace-nowrap transition-colors border-b-2 -mb-px",
               activeTab === tab.id
-                ? "text-[#F5F5F5] border-[#F5F5F5]"
-                : "text-[rgba(245,245,245,0.5)] border-transparent hover:text-[rgba(245,245,245,0.8)]"
+                ? "text-foreground border-[#F5F5F5]"
+                : "text-muted-foreground/75 border-transparent hover:text-muted-foreground"
             )}
           >
             {tab.label}

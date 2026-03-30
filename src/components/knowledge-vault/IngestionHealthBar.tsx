@@ -34,9 +34,9 @@ export default function IngestionHealthBar({
   });
 
   return (
-    <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#161616] p-4">
+    <div className="rounded-xl border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <span className="text-sm font-medium text-[#F5F5F5]">Ingestion Health</span>
+        <span className="text-sm font-medium text-foreground">Ingestion Health</span>
         <div className="flex-1 h-3 rounded-full overflow-hidden flex bg-white/5 min-w-[120px]">
           <div
             className="bg-[color-mix(in_srgb,var(--color-success)_52%,transparent)] transition-all"
@@ -63,7 +63,7 @@ export default function IngestionHealthBar({
         </div>
       </div>
       {activeIngestionFilter != null && !documentFiltersUnavailable && (
-        <p className="text-xs text-[rgba(245,245,245,0.55)] mt-2">
+        <p className="text-xs text-muted-foreground/75 mt-2">
           Document list filtered by availability. Clear in{" "}
           <span className="font-medium text-[rgba(245,245,245,0.85)]">Document filters</span> below.
         </p>
@@ -71,23 +71,23 @@ export default function IngestionHealthBar({
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-1 mt-2 text-xs text-[rgba(245,245,245,0.5)] hover:text-[rgba(245,245,245,0.8)]"
+        className="flex items-center gap-1 mt-2 text-xs text-muted-foreground/75 hover:text-muted-foreground"
       >
         {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         {expanded ? "Hide" : "Show"} per-source breakdown
       </button>
       {expanded && (
-        <div className="mt-3 pt-3 border-t border-white/10 space-y-2.5 text-xs">
+        <div className="mt-3 pt-3 border-t border-input space-y-2.5 text-xs">
           {orderedSources.map((s) => (
             <div key={s.id} className="flex items-center gap-3 flex-wrap">
               <span className="text-[rgba(245,245,245,0.85)] w-[200px] shrink-0 truncate" title={s.name}>
                 {s.name}
               </span>
-              <span className="text-[rgba(245,245,245,0.5)] shrink-0 tabular-nums">
+              <span className="text-muted-foreground/75 shrink-0 tabular-nums">
                 {s.indexed_document_count != null ? `${s.indexed_document_count} / ${s.document_count}` : s.document_count}{" "}
                 indexed
               </span>
-              <span className="text-[rgba(245,245,245,0.35)]">|</span>
+              <span className="text-muted-foreground/55">|</span>
               <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden min-w-[60px]">
                 {s.status === "disconnected" ? (
                   <div className="h-full w-0" />
@@ -104,15 +104,15 @@ export default function IngestionHealthBar({
                   />
                 )}
               </div>
-              <span className="w-10 shrink-0 text-right text-[rgba(245,245,245,0.6)] tabular-nums">
+              <span className="w-10 shrink-0 text-right text-muted-foreground tabular-nums">
                 {s.status === "disconnected" ? "—" : `${s.health_score}%`}
               </span>
               {s.status === "disconnected" && (
-                <span className="text-[rgba(245,245,245,0.45)] shrink-0">(disconnected)</span>
+                <span className="text-muted-foreground/75 shrink-0">(disconnected)</span>
               )}
             </div>
           ))}
-          <p className="text-[rgba(245,245,245,0.45)] pt-2 border-t border-white/5">
+          <p className="text-muted-foreground/75 pt-2 border-t border-white/5">
             Last full sync: {new Date(health.last_full_sync).toLocaleString()}
           </p>
         </div>

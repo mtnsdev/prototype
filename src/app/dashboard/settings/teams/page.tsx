@@ -50,7 +50,7 @@ export default function TeamsSettingsPage() {
         createdAt: new Date().toISOString(),
       },
     ]);
-    toast("Team created (demo)");
+    toast({ title: "Team created (demo)", tone: "success" });
   }, [toast, user?.email, user?.id]);
 
   const deleteTeam = useCallback(
@@ -58,7 +58,7 @@ export default function TeamsSettingsPage() {
       if (t.isDefault) return;
       if (!window.confirm(`Delete team "${t.name}"?`)) return;
       setTeams((prev) => prev.filter((x) => x.id !== t.id));
-      toast("Team removed (demo)");
+      toast({ title: "Team removed (demo)", tone: "success" });
     },
     [toast]
   );
@@ -70,9 +70,9 @@ export default function TeamsSettingsPage() {
 
   if (!isAdmin) {
     return (
-      <div className="h-full overflow-y-auto bg-[#06060a] p-6">
-        <p className="text-sm text-gray-400">You need admin access to manage teams.</p>
-        <Button variant="outline" className="mt-4 border-white/10" asChild>
+      <div className="h-full overflow-y-auto bg-background p-6">
+        <p className="text-sm text-muted-foreground/90">You need admin access to manage teams.</p>
+        <Button variant="outline" className="mt-4 border-input" asChild>
           <Link href="/dashboard/settings">Back to settings</Link>
         </Button>
       </div>
@@ -80,11 +80,11 @@ export default function TeamsSettingsPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-[#06060a] text-[#F5F5F5]">
+    <div className="h-full overflow-y-auto bg-background text-foreground">
       <div className="max-w-2xl mx-auto p-6 space-y-6">
         <Link
           href="/dashboard/settings"
-          className="inline-flex items-center gap-1 text-[11px] text-gray-500 hover:text-gray-300 mb-2"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-2"
         >
           <ChevronLeft className="w-3 h-3" />
           Settings
@@ -95,7 +95,7 @@ export default function TeamsSettingsPage() {
           </div>
           <div>
             <h1 className="text-xl font-semibold text-white">Teams</h1>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               Create teams to scope shared content. Everyone is included in the default team automatically.
             </p>
           </div>
@@ -111,10 +111,10 @@ export default function TeamsSettingsPage() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm text-white">{team.name}</span>
                   {team.isDefault && (
-                    <span className="text-[10px] text-gray-500 bg-white/5 px-2 py-0.5 rounded-full">Default</span>
+                    <span className="text-2xs text-muted-foreground bg-white/5 px-2 py-0.5 rounded-full">Default</span>
                   )}
                 </div>
-                <span className="text-[10px] text-gray-500">
+                <span className="text-2xs text-muted-foreground">
                   {team.isDefault ? "All advisors" : `${team.memberIds.length} members`}
                 </span>
               </div>
@@ -122,14 +122,19 @@ export default function TeamsSettingsPage() {
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
-                    className="text-[10px] text-gray-500 hover:text-gray-400"
-                    onClick={() => toast("Team editor — connect API in production")}
+                    className="text-2xs text-muted-foreground hover:text-muted-foreground"
+                    onClick={() =>
+                      toast({
+                        title: "Team editor — connect API in production",
+                        tone: "success",
+                      })
+                    }
                   >
                     Edit
                   </button>
                   <button
                     type="button"
-                    className="text-[10px] text-gray-500 hover:text-red-400"
+                    className="text-2xs text-muted-foreground hover:text-red-400"
                     onClick={() => deleteTeam(team)}
                   >
                     Delete

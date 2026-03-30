@@ -13,6 +13,10 @@
     --surface-elevated: #141414;
     --surface-card: #161616;
     --surface-card-hover: #1a1a1a;
+    /* Nested fields, inputs, map chrome (aligned to former #08080c / #0a0a0f) */
+    --surface-sunken: #08080c;
+    /* Menus, dropdown panels (former #0c0c12) */
+    --surface-overlay: #0c0c12;
     --surface-interactive: rgba(255, 255, 255, 0.06);
     --surface-interactive-hover: rgba(255, 255, 255, 0.10);
     --surface-interactive-active: rgba(255, 255, 255, 0.14);
@@ -20,9 +24,16 @@
     /* Text Colors (Warm Off-White) */
     --text-primary: #F5F5F5;
     --text-secondary: rgba(245, 245, 245, 0.64);
-    --text-tertiary: rgba(245, 245, 245, 0.44);
+    /* Slightly higher contrast for small meta text (WCAG on dark surfaces). */
+    --text-tertiary: rgba(245, 245, 245, 0.52);
     --text-quaternary: rgba(245, 245, 245, 0.28);
     --text-disabled: rgba(245, 245, 245, 0.24);
+    /* Dense UI one step below base (tables, form labels) */
+    --text-compact: 13px;
+    /* Muted chrome (toolbar / meta) */
+    --chrome-label: #9b9590;
+    --chrome-icon: #6b6560;
+    --chrome-icon-muted: #4a4540;
 
     /* Border Colors */
     --border-subtle: rgba(255, 255, 255, 0.08);
@@ -32,6 +43,12 @@
     /* Brand Colors */
     --brand-primary: #A0A0A0;
     --brand-accent: #E8E8E8;
+    /* Primary in-app CTAs (warm gold, aligns with accent usage in nav) */
+    --brand-cta: #c9a96e;
+    --brand-cta-hover: #d4b57e;
+    --brand-cta-foreground: #0c0c0c;
+    /* Chat user bubble accent */
+    --brand-chat-user: #ae8550;
 
     /* Semantic Colors (muted, elegant) */
     --color-success: #7CB889;
@@ -84,7 +101,7 @@
     --text-2xs: 10px;
     --text-xs: 11px;
     --text-sm: 12px;
-    --text-base: 13px;
+    --text-base: 14px;
     --text-md: 14px;
     --text-lg: 16px;
     --text-xl: 20px;
@@ -117,71 +134,53 @@
     --transition-normal: 200ms ease;
     --transition-slow: 300ms ease;
 
-    /* Legacy support */
-
+    /* shadcn semantic tokens → Enable dark UI (single public vocabulary) */
     --radius: 0.625rem;
 
-    --background: oklch(1 0 0);
+    --background: var(--surface-base);
+    --foreground: var(--text-primary);
 
-    --foreground: oklch(0.141 0.005 285.823);
+    --card: var(--surface-card);
+    --card-foreground: var(--text-primary);
 
-    --card: oklch(1 0 0);
+    --popover: var(--surface-overlay);
+    --popover-foreground: var(--text-primary);
 
-    --card-foreground: oklch(0.141 0.005 285.823);
+    --primary: var(--brand-cta);
+    --primary-foreground: var(--brand-cta-foreground);
 
-    --popover: oklch(1 0 0);
+    --secondary: rgba(255, 255, 255, 0.08);
+    --secondary-foreground: var(--text-primary);
 
-    --popover-foreground: oklch(0.141 0.005 285.823);
+    --muted: var(--surface-elevated);
+    --muted-foreground: var(--text-secondary);
 
-    --primary: oklch(0.21 0.006 285.885);
+    --accent: var(--surface-interactive);
+    --accent-foreground: var(--text-primary);
 
-    --primary-foreground: oklch(0.985 0 0);
+    --destructive: var(--color-error);
 
-    --secondary: oklch(0.967 0.001 286.375);
+    --border: var(--border-subtle);
+    --input: var(--border-default);
+    --ring: rgba(201, 169, 110, 0.45);
 
-    --secondary-foreground: oklch(0.21 0.006 285.885);
-
-    --muted: oklch(0.967 0.001 286.375);
-
-    --muted-foreground: oklch(0.552 0.016 285.938);
-
-    --accent: oklch(0.967 0.001 286.375);
-
-    --accent-foreground: oklch(0.21 0.006 285.885);
-
-    --destructive: oklch(0.577 0.245 27.325);
-
-    --border: oklch(0.92 0.004 286.32);
-
-    --input: oklch(0.92 0.004 286.32);
-
-    --ring: oklch(0.705 0.015 286.067);
+    /* Inset fields (inputs on cards) */
+    --inset: var(--surface-sunken);
 
     --chart-1: oklch(0.646 0.222 41.116);
-
     --chart-2: oklch(0.6 0.118 184.704);
-
     --chart-3: oklch(0.398 0.07 227.392);
-
     --chart-4: oklch(0.828 0.189 84.429);
-
     --chart-5: oklch(0.769 0.188 70.08);
 
-    --sidebar: oklch(0.985 0 0);
-
-    --sidebar-foreground: oklch(0.141 0.005 285.823);
-
-    --sidebar-primary: oklch(0.21 0.006 285.885);
-
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-
-    --sidebar-accent: oklch(0.967 0.001 286.375);
-
-    --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-
-    --sidebar-border: oklch(0.92 0.004 286.32);
-
-    --sidebar-ring: oklch(0.705 0.015 286.067);
+    --sidebar: var(--surface-base);
+    --sidebar-foreground: var(--text-primary);
+    --sidebar-primary: var(--brand-cta);
+    --sidebar-primary-foreground: var(--brand-cta-foreground);
+    --sidebar-accent: var(--surface-interactive);
+    --sidebar-accent-foreground: var(--text-primary);
+    --sidebar-border: var(--border-subtle);
+    --sidebar-ring: rgba(201, 169, 110, 0.45);
 }
 
 @theme inline {
@@ -204,6 +203,13 @@
     --color-muted-amber-bg: var(--muted-amber-bg);
     --color-muted-amber-text: var(--muted-amber-text);
     --color-muted-amber-border: var(--muted-amber-border);
+    /* Rare: stronger border than --border */
+    --color-border-strong: var(--border-strong);
+    --color-brand-cta: var(--brand-cta);
+    --color-brand-chat-user: var(--brand-chat-user);
+    --color-brand-cta-hover: var(--brand-cta-hover);
+    --color-brand-cta-foreground: var(--brand-cta-foreground);
+    --color-inset: var(--inset);
     --color-background: var(--background);
     --color-foreground: var(--foreground);
     /* Avoid self-reference var(--font-sans) here — Tailwind v4 can hang resolving it. */
@@ -245,6 +251,17 @@
     --radius-2xl: calc(var(--radius) + 8px);
     --radius-3xl: calc(var(--radius) + 12px);
     --radius-4xl: calc(var(--radius) + 16px);
+
+    /* Typography: Tailwind names (values mirror :root --text-* / --text-compact) */
+    --text-2xs: 10px;
+    --text-xs: 11px;
+    --text-sm: 12px;
+    --text-compact: 13px;
+    --text-base: 14px;
+    --text-lg: 16px;
+    --text-xl: 20px;
+    --text-2xl: 24px;
+    --text-3xl: 32px;
 }
 
 /* ==========================================
@@ -262,11 +279,45 @@ html {
 }
 
 body {
-    background: var(--surface-base);
-    color: var(--text-primary);
-    font-family: var(--font-sans);
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-app-sans), var(--font-sans);
     font-size: var(--text-base);
     line-height: var(--leading-normal);
+}
+
+/* Keyboard: skip to main landmark */
+.skip-to-main {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+.skip-to-main:focus {
+    position: fixed;
+    left: 1rem;
+    top: 1rem;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    z-index: 200;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    background: var(--card);
+    color: var(--foreground);
+    border: 1px solid var(--border);
+    outline: none;
+    box-shadow: var(--shadow-lg);
+}
+.skip-to-main:focus-visible {
+    box-shadow: var(--shadow-lg), 0 0 0 3px rgba(201, 169, 110, 0.35);
 }
 
 /* ==========================================
@@ -302,15 +353,6 @@ body {
    ========================================== */
 
 :focus-visible {
-    outline: 2px solid rgba(255, 255, 255, 0.4);
-    outline-offset: 2px;
-}
-
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
     outline: 2px solid rgba(255, 255, 255, 0.4);
     outline-offset: 2px;
 }
@@ -435,49 +477,16 @@ input.chat-input-no-focus-outline:focus-visible,
     }
 }
 
-.dark {
-    --background: oklch(0.141 0.005 285.823);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.21 0.006 285.885);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.21 0.006 285.885);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.92 0.004 286.32);
-    --primary-foreground: oklch(0.21 0.006 285.885);
-    --secondary: oklch(0.274 0.006 286.033);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.274 0.006 286.033);
-    --muted-foreground: oklch(0.705 0.015 286.067);
-    --accent: oklch(0.274 0.006 286.033);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.552 0.016 285.938);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.21 0.006 285.885);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.274 0.006 286.033);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.552 0.016 285.938);
-}
+/* Theme is single-source: shadcn semantic vars are set on :root above (Enable palette).
+   Do not add a `.dark` class on <html> — a second theme block would override brand/CTA tokens. */
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    @apply border-border outline-ring/50;
-    }
+  }
   body {
     @apply bg-background text-foreground;
-    @apply bg-background text-foreground;
-    }
+  }
 }
 
 /* Dark surfaces: native checkboxes default to a light box — use custom styling */
@@ -489,7 +498,7 @@ input.chat-input-no-focus-outline:focus-visible,
     height: 1rem;
     border-radius: 0.25rem;
     border: 1px solid rgba(255, 255, 255, 0.18);
-    background-color: #0e0e14;
+    background-color: var(--surface-sunken);
     color-scheme: dark;
     appearance: none;
     -webkit-appearance: none;
@@ -506,7 +515,7 @@ input.chat-input-no-focus-outline:focus-visible,
   /* Partial “select all” (header checkbox indeterminate) — avoid browser default light fill */
   .checkbox-on-dark:indeterminate {
     border-color: rgba(201, 169, 110, 0.75);
-    background-color: #0e0e14;
+    background-color: var(--surface-sunken);
     background-image: linear-gradient(#c9a96e, #c9a96e);
     background-size: 8px 2px;
     background-position: center;
@@ -531,4 +540,6 @@ input.chat-input-no-focus-outline:focus-visible,
   .checkbox-on-dark-sm:checked {
     background-size: 9px 9px;
   }
+
+  /* Layout rhythm — prefer these over one-off page wrappers */
 }

@@ -12,6 +12,14 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
+  FilterBar,
+  FilterBarActionsCluster,
+  FilterBarPrimaryStack,
+  FilterBarToolbarRow,
+  FilterChipScrollRow,
+} from "@/components/ui/filter-bar";
+import {
+  directoryFilterInputActiveClass,
   directoryFilterSelectContentClass,
   directoryFilterSelectItemClass,
   directoryFilterSelectTriggerActiveClass,
@@ -36,6 +44,9 @@ const STATUS_OPTIONS: { value: ItineraryStatus; label: string }[] = [
   { value: "cancelled", label: "Cancelled" },
 ];
 
+const DEFAULT_ITINERARY_SORT_BY = "updated_at";
+const DEFAULT_ITINERARY_SORT_ORDER = "desc" as const;
+
 const SORT_OPTIONS: { value: string; label: string; by: string; order: "asc" | "desc" }[] = [
   { value: "date_desc", label: "Date (newest)", by: "trip_start_date", order: "desc" },
   { value: "date_asc", label: "Date (oldest)", by: "trip_start_date", order: "asc" },
@@ -46,7 +57,7 @@ const SORT_OPTIONS: { value: string; label: string; by: string; order: "asc" | "
 ];
 
 const pillBase =
-  "flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] whitespace-nowrap transition-colors";
+  "flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-2xs whitespace-nowrap transition-colors";
 
 type Props = {
   activeTab: "mine" | "agency";
@@ -154,6 +165,9 @@ export default function ItineraryToolbar({
     SORT_OPTIONS.find((o) => o.by === sortBy && o.order === sortOrder) ??
     SORT_OPTIONS.find((o) => o.value === "updated_desc")!;
 
+  const sortIsDefault =
+    sortBy === DEFAULT_ITINERARY_SORT_BY && sortOrder === DEFAULT_ITINERARY_SORT_ORDER;
+
   const applySortOption = (opt: (typeof SORT_OPTIONS)[number]) => {
     onSortChange(opt.by, opt.order);
     setSortOpen(false);
@@ -164,18 +178,20 @@ export default function ItineraryToolbar({
     vicOptions.find((v) => getVICId(v) === vicFilter)?.preferred_name ??
     null;
 
+  const statusLabel = STATUS_OPTIONS.find((o) => o.value === statusFilter)?.label ?? null;
+
   const stages = PIPELINE_STAGES.filter((s) => s.key !== "archived");
 
   return (
-    <div className="mb-4 space-y-2 border-b border-[rgba(255,255,255,0.03)] pb-4">
-      <div className="flex flex-col gap-3">
+    <FilterBar>
+      <FilterBarPrimaryStack>
         <PageSearchField
           placeholder="Search itineraries…"
           aria-label="Search itineraries"
           value={localSearch}
           onChange={setLocalSearch}
         />
-        <div className="-mx-1 flex w-full min-w-0 items-center gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <FilterChipScrollRow>
           <button
             type="button"
             onClick={() => {
@@ -185,8 +201,8 @@ export default function ItineraryToolbar({
             className={cn(
               pillBase,
               !pipelineFilter && !upcomingTrips
-                ? "border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.08)] text-[#C9A96E]"
-                : "border-transparent text-[#6B6560] hover:text-[#9B9590]"
+                ? "border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
+                : "border-transparent text-muted-foreground hover:text-muted-foreground"
             )}
           >
             All
@@ -200,8 +216,8 @@ export default function ItineraryToolbar({
             className={cn(
               pillBase,
               upcomingTrips
-                ? "border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.08)] text-[#C9A96E]"
-                : "border-transparent text-[#6B6560] hover:text-[#9B9590]"
+                ? "border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
+                : "border-transparent text-muted-foreground hover:text-muted-foreground"
             )}
           >
             Upcoming trips
@@ -219,15 +235,15 @@ export default function ItineraryToolbar({
                 className={cn(
                   pillBase,
                   active
-                    ? "border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.08)] text-[#C9A96E]"
-                    : "border-transparent text-[#6B6560] hover:text-[#9B9590]"
+                    ? "border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
+                    : "border-transparent text-muted-foreground hover:text-muted-foreground"
                 )}
               >
                 {stage.label}
                 <span
                   className={cn(
                     "tabular-nums",
-                    active ? "text-[#A08F72]" : "text-[#4A4540]"
+                    active ? "text-[#A08F72]" : "text-muted-foreground/65"
                   )}
                 >
                   {stageCounts[stage.key] ?? 0}
@@ -235,11 +251,56 @@ export default function ItineraryToolbar({
               </button>
             );
           })}
-        </div>
-      </div>
+        </FilterChipScrollRow>
+      </FilterBarPrimaryStack>
 
-      <div className="flex flex-col gap-2 min-[1100px]:flex-row min-[1100px]:items-center min-[1100px]:justify-between">
+      <FilterBarToolbarRow>
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+          <div ref={sortWrapRef} className="relative">
+            <button
+              type="button"
+              aria-label={`Sort itineraries. Current: ${sortOption.label}`}
+              onClick={() => setSortOpen((o) => !o)}
+              className={cn(
+                "flex max-w-[220px] min-w-0 items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-xs transition-colors",
+                sortIsDefault
+                  ? "border-border bg-popover text-muted-foreground hover:border-border"
+                  : "border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
+              )}
+            >
+              <ArrowUpDown className="h-3 w-3 shrink-0 text-muted-foreground/65" aria-hidden />
+              {sortIsDefault ? (
+                <span className="text-xs text-muted-foreground">Sort by</span>
+              ) : (
+                <span className="min-w-0 flex-1 truncate">{sortOption.label}</span>
+              )}
+              <ChevronDown className="ml-auto h-3 w-3 shrink-0 text-muted-foreground/65" aria-hidden />
+            </button>
+            {sortOpen && (
+              <div
+                className="absolute left-0 top-full z-50 mt-1 w-[200px] overflow-hidden rounded-xl border border-border bg-popover py-1 text-popover-foreground shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {SORT_OPTIONS.map((o) => {
+                  const selected = o.by === sortBy && o.order === sortOrder;
+                  return (
+                    <button
+                      key={o.value}
+                      type="button"
+                      onClick={() => applySortOption(o)}
+                      className={cn(
+                        "flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-white/[0.04]",
+                        selected ? "text-brand-cta" : "text-muted-foreground"
+                      )}
+                    >
+                      {o.label}
+                      {selected ? <Check className="h-3 w-3 text-brand-cta" /> : null}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
           <Select value={statusFilter ?? "all"} onValueChange={(v) => onStatusChange(v === "all" ? null : (v as ItineraryStatus))}>
             <SelectTrigger
               className={cn(
@@ -248,7 +309,9 @@ export default function ItineraryToolbar({
                 statusFilter != null && directoryFilterSelectTriggerActiveClass
               )}
             >
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder="Status">
+                {statusFilter != null && statusLabel != null ? statusLabel : "Status"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent className={directoryFilterSelectContentClass}>
               <SelectItem className={directoryFilterSelectItemClass} value="all">
@@ -269,7 +332,9 @@ export default function ItineraryToolbar({
                 vicFilter != null && directoryFilterSelectTriggerActiveClass
               )}
             >
-              <SelectValue placeholder="All clients">{vicFilter ? vicLabel ?? vicFilter : undefined}</SelectValue>
+              <SelectValue placeholder="Client">
+                {vicFilter != null ? vicLabel ?? vicFilter : "Client"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent className={cn(directoryFilterSelectContentClass, "max-h-64")}>
               <SelectItem className={directoryFilterSelectItemClass} value="all">
@@ -292,59 +357,24 @@ export default function ItineraryToolbar({
             className={cn(
               directoryFilterTextInputClass,
               "w-[min(100%,140px)] max-w-[180px]",
-              Boolean(destinationFilter?.trim()) && directoryFilterSelectTriggerActiveClass
+              Boolean(destinationFilter?.trim()) && directoryFilterInputActiveClass
             )}
           />
           <Input
             type="date"
             value={dateFrom}
             onChange={(e) => onDateFromChange(e.target.value)}
-            className={cn(directoryFilterTextInputClass, "w-[140px]", dateFrom !== "" && directoryFilterSelectTriggerActiveClass)}
+            className={cn(directoryFilterTextInputClass, "w-[140px]", dateFrom !== "" && directoryFilterInputActiveClass)}
           />
           <Input
             type="date"
             value={dateTo}
             onChange={(e) => onDateToChange(e.target.value)}
-            className={cn(directoryFilterTextInputClass, "w-[140px]", dateTo !== "" && directoryFilterSelectTriggerActiveClass)}
+            className={cn(directoryFilterTextInputClass, "w-[140px]", dateTo !== "" && directoryFilterInputActiveClass)}
           />
-          <div ref={sortWrapRef} className="relative">
-            <button
-              type="button"
-              onClick={() => setSortOpen((o) => !o)}
-              className="flex min-w-0 items-center gap-1.5 rounded-lg border border-[rgba(255,255,255,0.03)] bg-[#0c0c12] px-2.5 py-1.5 text-[11px] text-[#9B9590] transition-colors hover:border-[rgba(255,255,255,0.06)]"
-            >
-              <ArrowUpDown className="h-3 w-3 shrink-0 text-[#4A4540]" />
-              <span className="min-w-0 truncate !text-[#F5F0EB]">{sortOption.label}</span>
-              <ChevronDown className="h-3 w-3 shrink-0 text-[#4A4540]" />
-            </button>
-            {sortOpen && (
-              <div
-                className="absolute left-0 top-full z-50 mt-1 w-[200px] overflow-hidden rounded-xl border border-white/[0.06] bg-[#0e0e14] py-1 shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {SORT_OPTIONS.map((o) => {
-                  const selected = o.by === sortBy && o.order === sortOrder;
-                  return (
-                    <button
-                      key={o.value}
-                      type="button"
-                      onClick={() => applySortOption(o)}
-                      className={cn(
-                        "flex w-full items-center justify-between px-3 py-2 text-left text-[11px] transition-colors hover:bg-white/[0.04]",
-                        selected ? "text-[#C9A96E]" : "text-[#9B9590]"
-                      )}
-                    >
-                      {o.label}
-                      {selected ? <Check className="h-3 w-3 text-[#C9A96E]" /> : null}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2 border-[rgba(255,255,255,0.03)] min-[1100px]:border-l min-[1100px]:pl-3">
-          <span className="text-[10px] text-[#6B6560]">
+        <FilterBarActionsCluster>
+          <span className="text-2xs text-muted-foreground">
             {resultTotal} {resultTotal === 1 ? "itinerary" : "itineraries"}
           </span>
           <button
@@ -352,7 +382,7 @@ export default function ItineraryToolbar({
             onClick={() => onViewModeChange("list")}
             className={cn(
               "rounded-lg p-1.5 transition-colors",
-              viewMode === "list" ? "bg-[rgba(201,169,110,0.08)] text-[#C9A96E]" : "text-[#4A4540] hover:text-[#9B9590]"
+              viewMode === "list" ? "bg-[rgba(201,169,110,0.08)] text-brand-cta" : "text-muted-foreground/65 hover:text-muted-foreground"
             )}
             title="List view"
           >
@@ -363,7 +393,7 @@ export default function ItineraryToolbar({
             onClick={() => onViewModeChange("cards")}
             className={cn(
               "rounded-lg p-1.5 transition-colors",
-              viewMode === "cards" ? "bg-[rgba(201,169,110,0.08)] text-[#C9A96E]" : "text-[#4A4540] hover:text-[#9B9590]"
+              viewMode === "cards" ? "bg-[rgba(201,169,110,0.08)] text-brand-cta" : "text-muted-foreground/65 hover:text-muted-foreground"
             )}
             title="Card view"
           >
@@ -374,7 +404,7 @@ export default function ItineraryToolbar({
             onClick={() => onViewModeChange("board")}
             className={cn(
               "rounded-lg p-1.5 transition-colors",
-              viewMode === "board" ? "bg-[rgba(201,169,110,0.08)] text-[#C9A96E]" : "text-[#4A4540] hover:text-[#9B9590]"
+              viewMode === "board" ? "bg-[rgba(201,169,110,0.08)] text-brand-cta" : "text-muted-foreground/65 hover:text-muted-foreground"
             )}
             title="Board (Kanban)"
           >
@@ -383,13 +413,13 @@ export default function ItineraryToolbar({
           <button
             type="button"
             onClick={onCreateItinerary}
-            className="flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] px-2.5 py-1.5 text-[11px] text-[#C9A96E] transition-colors hover:border-[rgba(201,169,110,0.28)]"
+            className="flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] px-2.5 py-1.5 text-xs text-brand-cta transition-colors hover:border-[rgba(201,169,110,0.28)]"
           >
             <Plus className="h-3.5 w-3.5" />
             Create Itinerary
           </button>
-        </div>
-      </div>
-    </div>
+        </FilterBarActionsCluster>
+      </FilterBarToolbarRow>
+    </FilterBar>
   );
 }

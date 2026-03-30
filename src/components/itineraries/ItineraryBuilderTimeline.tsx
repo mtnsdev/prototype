@@ -56,7 +56,7 @@ function DayItemCard({
       tabIndex={0}
       onClick={onSelect}
       onKeyDown={(e) => e.key === "Enter" && onSelect()}
-      className="group/item rounded-xl border border-[rgba(255,255,255,0.03)] bg-[#0c0c12] transition-all hover:border-[rgba(255,255,255,0.06)]"
+      className="group/item rounded-xl border border-border bg-popover transition-all hover:border-border"
     >
       <div className="p-4">
         <div className="flex items-start gap-3">
@@ -68,7 +68,7 @@ function DayItemCard({
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[13px] text-[#F5F0EB]">{event.title}</span>
+              <span className="text-compact text-foreground">{event.title}</span>
               {itemSt === "confirmed" && (
                 <span className="rounded border border-[rgba(91,138,110,0.12)] bg-[rgba(91,138,110,0.08)] px-1.5 py-0.5 text-[9px] text-[#5B8A6E]">
                   Confirmed
@@ -80,17 +80,17 @@ function DayItemCard({
                 </span>
               )}
             </div>
-            <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[10px] text-[#6B6560]">
+            <div className="mt-0.5 flex flex-wrap items-center gap-2 text-2xs text-muted-foreground">
               {timeStr && <span>{timeStr}</span>}
               {loc && <span>· {loc}</span>}
             </div>
             {event.description && (
-              <p className="mt-1.5 text-[11px] leading-relaxed text-[#4A4540]">{event.description}</p>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground/65">{event.description}</p>
             )}
             {(event.source_product_name || event.source_product_id) && (
-              <div className="mt-2 flex cursor-pointer items-center gap-2 rounded-lg border border-[rgba(255,255,255,0.03)] bg-[rgba(255,255,255,0.015)] p-2 transition-colors hover:border-[rgba(255,255,255,0.06)]">
-                <Building2 className="h-3 w-3 text-[#6B6560]" />
-                <span className="text-[11px] text-[#9B9590]">{event.source_product_name ?? "Linked product"}</span>
+              <div className="mt-2 flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-[rgba(255,255,255,0.015)] p-2 transition-colors hover:border-border">
+                <Building2 className="h-3 w-3 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">{event.source_product_name ?? "Linked product"}</span>
                 {formatProductCommission(event) && (
                   <span className="ml-auto text-[9px] text-[#B8976E]">{formatProductCommission(event)}</span>
                 )}
@@ -100,18 +100,18 @@ function DayItemCard({
               event.event_type === "stay" &&
               event.source_product_name &&
               !event.custom_notes.includes("FSPP") && (
-                <p className="mt-1.5 text-[11px] italic text-[#6B6560]">&ldquo;{event.custom_notes}&rdquo;</p>
+                <p className="mt-1.5 text-xs italic text-muted-foreground">&ldquo;{event.custom_notes}&rdquo;</p>
               )}
             {event.custom_notes && !event.source_product_name && (
-              <p className="mt-1.5 text-[11px] italic text-[#6B6560]">&ldquo;{event.custom_notes}&rdquo;</p>
+              <p className="mt-1.5 text-xs italic text-muted-foreground">&ldquo;{event.custom_notes}&rdquo;</p>
             )}
           </div>
           <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100">
             <button type="button" className="rounded p-1 hover:bg-[rgba(255,255,255,0.04)]" aria-label="Reorder">
-              <GripVertical className="h-3 w-3 text-[#4A4540]" />
+              <GripVertical className="h-3 w-3 text-muted-foreground/65" />
             </button>
             <button type="button" className="rounded p-1 hover:bg-[rgba(255,255,255,0.04)]" aria-label="More">
-              <MoreHorizontal className="h-3 w-3 text-[#4A4540]" />
+              <MoreHorizontal className="h-3 w-3 text-muted-foreground/65" />
             </button>
           </div>
         </div>
@@ -185,15 +185,15 @@ export default function ItineraryBuilderTimeline({
         const menuOpen = openDayKey === k;
         return (
           <div key={k} className="group">
-            <div className="sticky top-0 z-10 mb-3 flex items-center gap-3 bg-[#08080c] py-2">
+            <div className="sticky top-0 z-10 mb-3 flex items-center gap-3 bg-inset py-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[rgba(201,169,110,0.08)]">
-                <span className="text-[12px] font-light text-[#C9A96E]">{index + 1}</span>
+                <span className="text-sm font-light text-brand-cta">{index + 1}</span>
               </div>
               <div>
-                <span className="text-[13px] text-[#F5F0EB]">Day {index + 1}</span>
-                <span className="ml-2 text-[10px] text-[#4A4540]">{dayLabelDate(day)}</span>
+                <span className="text-compact text-foreground">Day {index + 1}</span>
+                <span className="ml-2 text-2xs text-muted-foreground/65">{dayLabelDate(day)}</span>
               </div>
-              {day.location && <span className="ml-2 text-[10px] text-[#6B6560]">{day.location}</span>}
+              {day.location && <span className="ml-2 text-2xs text-muted-foreground">{day.location}</span>}
               <div className="relative ml-auto" ref={menuOpen ? popRef : null}>
                 <button
                   type="button"
@@ -204,14 +204,14 @@ export default function ItineraryBuilderTimeline({
                     setProductQ("");
                   }}
                   className={cn(
-                    "text-[10px] text-[#C9A96E] transition-opacity hover:text-[#D4B87E]",
+                    "text-2xs text-brand-cta transition-opacity hover:text-[#D4B87E]",
                     menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100",
                   )}
                 >
                   + Add item
                 </button>
                 {menuOpen && phase === "menu" && (
-                  <div className="absolute right-0 top-full z-20 mt-1 w-56 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0c0c12] py-1 shadow-xl">
+                  <div className="absolute right-0 top-full z-20 mt-1 w-56 rounded-xl border border-border bg-popover py-1 shadow-xl">
                     {(
                       [
                         ["accommodation", Building2, "Accommodation"],
@@ -232,7 +232,7 @@ export default function ItineraryBuilderTimeline({
                             setPhase(null);
                           }
                         }}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] text-[#9B9590] hover:bg-[rgba(255,255,255,0.02)]"
+                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-muted-foreground hover:bg-[rgba(255,255,255,0.02)]"
                       >
                         <Ico className="h-3.5 w-3.5" /> {label}
                       </button>
@@ -245,15 +245,15 @@ export default function ItineraryBuilderTimeline({
                         setOpenDayKey(null);
                         setPhase(null);
                       }}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-[11px] text-[#9B9590] hover:bg-[rgba(255,255,255,0.02)]"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-muted-foreground hover:bg-[rgba(255,255,255,0.02)]"
                     >
                       <StickyNote className="h-3.5 w-3.5" /> Note
                     </button>
                   </div>
                 )}
                 {menuOpen && phase === "product" && addKind && (
-                  <div className="absolute right-0 top-full z-20 mt-1 w-72 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0c0c12] p-4 shadow-xl">
-                    <p className="mb-2 text-[9px] font-medium uppercase tracking-[0.08em] text-[#4A4540]">
+                  <div className="absolute right-0 top-full z-20 mt-1 w-72 rounded-xl border border-border bg-popover p-4 shadow-xl">
+                    <p className="mb-2 text-[9px] font-medium uppercase tracking-[0.08em] text-muted-foreground/65">
                       Product directory
                     </p>
                     <input
@@ -261,7 +261,7 @@ export default function ItineraryBuilderTimeline({
                       value={productQ}
                       onChange={(e) => setProductQ(e.target.value)}
                       placeholder="Search products..."
-                      className="w-full border-b border-[rgba(255,255,255,0.06)] bg-transparent pb-2 text-[13px] text-[#F5F0EB] placeholder:text-[#4A4540] outline-none focus:border-[#C9A96E]"
+                      className="w-full border-b border-border bg-transparent pb-2 text-compact text-foreground placeholder:text-muted-foreground/65 outline-none focus:border-brand-cta"
                     />
                     <div className="mt-2 max-h-48 overflow-y-auto">
                       {productResults.map((p) => {
@@ -274,8 +274,8 @@ export default function ItineraryBuilderTimeline({
                             onClick={() => selectProduct(p)}
                             className="flex w-full items-center gap-3 rounded py-2 px-1 text-left transition-colors hover:bg-[rgba(255,255,255,0.02)]"
                           >
-                            <span className="text-[12px] text-[#F5F0EB]">{p.name}</span>
-                            <span className="text-[10px] text-[#4A4540]">{loc}</span>
+                            <span className="text-sm text-foreground">{p.name}</span>
+                            <span className="text-2xs text-muted-foreground/65">{loc}</span>
                             {comm && <span className="ml-auto text-[9px] text-[#B8976E]">{comm}</span>}
                           </button>
                         );
@@ -284,7 +284,7 @@ export default function ItineraryBuilderTimeline({
                     <button
                       type="button"
                       onClick={() => setPhase("menu")}
-                      className="mt-2 text-[10px] text-[#6B6560] hover:text-[#9B9590]"
+                      className="mt-2 text-2xs text-muted-foreground hover:text-muted-foreground"
                     >
                       ← Back
                     </button>
@@ -292,7 +292,7 @@ export default function ItineraryBuilderTimeline({
                 )}
               </div>
             </div>
-            <div className="ml-4 space-y-3 border-l border-[rgba(255,255,255,0.04)] pl-7 pb-6">
+            <div className="ml-4 space-y-3 border-l border-border pl-7 pb-6">
               {(day.events ?? []).map((ev) => (
                 <DayItemCard key={ev.id} event={ev} onSelect={() => onEventSelect(day, ev)} />
               ))}
@@ -303,7 +303,7 @@ export default function ItineraryBuilderTimeline({
       <button
         type="button"
         onClick={() => onToast("Add day — coming soon")}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[rgba(255,255,255,0.06)] py-3 px-4 text-[11px] text-[#6B6560] transition-colors hover:border-[rgba(255,255,255,0.10)] hover:text-[#9B9590]"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 px-4 text-xs text-muted-foreground transition-colors hover:border-[rgba(255,255,255,0.10)] hover:text-muted-foreground"
       >
         <Plus className="h-3.5 w-3.5" />
         Add Day

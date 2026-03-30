@@ -180,7 +180,7 @@ export default function ProductDetailPage({ productId }: Props) {
         return next;
       });
       setPickerOpen(false);
-      toast("Collections updated");
+      toast({ title: "Collections updated", tone: "success" });
     },
     [directoryProduct, patchDirectoryProduct, toast]
   );
@@ -224,7 +224,7 @@ export default function ProductDetailPage({ productId }: Props) {
       }
 
       setDirectoryCollections((prev) => [...prev, newCol]);
-      toast(`Created “${newCol.name}”`);
+      toast({ title: `Created “${newCol.name}”`, tone: "success" });
       return id;
     },
     [directoryProduct, uid, user, toast]
@@ -310,13 +310,13 @@ export default function ProductDetailPage({ productId }: Props) {
 
     if (getDirectoryProductById(productId) && directoryProduct) {
     return (
-      <div className="min-h-screen bg-[#08080c] p-6 md:p-8">
+      <div className="min-h-screen bg-inset p-6 md:p-8">
         {IS_PREVIEW_MODE && <PreviewBanner feature="Product detail" variant="compact" sampleDataOnly />}
         <Button
           variant="ghost"
           size="sm"
           asChild
-          className="mb-6 text-[#9B9590] hover:text-[#F5F0EB]"
+          className="mb-6 text-muted-foreground hover:text-foreground"
         >
           <Link href="/dashboard/products" className="inline-flex items-center gap-2">
             <ArrowLeft size={18} /> Back to Products
@@ -330,7 +330,13 @@ export default function ProductDetailPage({ productId }: Props) {
             teams={MOCK_TEAMS}
             onOpenCollectionPicker={() => setPickerOpen(true)}
             onPatchProduct={patchDirectoryProduct}
-            onAddToItinerary={() => toast("Add to itinerary (connect API when ready)")}
+            onAddToItinerary={() =>
+              toast({
+                title: "Add to itinerary",
+                description: "Connect API when ready.",
+                tone: "success",
+              })
+            }
             canRemoveFromCollection={canRemoveFromCollectionDir}
             availableCollections={availableCollections}
             onQuickAddToCollection={handleQuickAddDirectoryCollection}
@@ -362,7 +368,7 @@ export default function ProductDetailPage({ productId }: Props) {
   const ver = (product?.verification_status ?? "unverified") as keyof typeof VERIFICATION_BADGES;
 
   if (loading) {
-    return <div className="p-6 text-[rgba(245,245,245,0.6)]">Loading product…</div>;
+    return <div className="p-6 text-muted-foreground">Loading product…</div>;
   }
 
   if (error || !product) {
@@ -380,11 +386,11 @@ export default function ProductDetailPage({ productId }: Props) {
   const pendingSuggestions = isAdmin ? getProductLayerMock(getProductId(product)).pendingSuggestions : 0;
 
   const sectionTitle = (t: string) => (
-    <h2 className="mb-3 text-[9px] font-semibold uppercase tracking-[0.08em] text-[rgba(245,245,245,0.45)]">{t}</h2>
+    <h2 className="mb-3 text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/75">{t}</h2>
   );
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-[#0C0C0C]">
+    <div className="flex h-full flex-col overflow-hidden bg-background">
       {IS_PREVIEW_MODE && <PreviewBanner feature="Product detail" variant="compact" sampleDataOnly />}
       <div className="relative h-[240px] w-full shrink-0 overflow-hidden bg-zinc-900">
         <ImageWithFallback
@@ -401,8 +407,10 @@ export default function ProductDetailPage({ productId }: Props) {
             {isAdmin && pendingSuggestions > 0 && (
               <button
                 type="button"
-                onClick={() => toast("Suggestion review — coming in v2")}
-                className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-400 hover:bg-amber-500/20"
+                onClick={() =>
+                  toast({ title: "Suggestion review — coming in v2", tone: "success" })
+                }
+                className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-2xs text-[var(--color-warning)] hover:bg-amber-500/20"
               >
                 {pendingSuggestions} suggestion{pendingSuggestions > 1 ? "s" : ""}
               </button>
@@ -414,18 +422,18 @@ export default function ProductDetailPage({ productId }: Props) {
           </p>
         </div>
       </div>
-      <header className="flex flex-wrap items-center gap-3 border-b border-[rgba(255,255,255,0.08)] p-4">
-        <Button variant="ghost" size="sm" asChild className="text-[rgba(245,245,245,0.7)] hover:text-[#F5F5F5]">
+      <header className="flex flex-wrap items-center gap-3 border-b border-border p-4">
+        <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground">
           <Link href="/dashboard/products" className="inline-flex items-center gap-1">
             <ArrowLeft size={18} /> Back to Products
           </Link>
         </Button>
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1 text-xs text-[rgba(245,245,245,0.6)]">
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
             <Icon size={14} />
             {CATEGORY_LABELS[product.category]}
           </span>
-          <span className="inline-flex items-center gap-1 rounded border bg-white/10 px-1.5 py-0.5 text-xs text-[rgba(245,245,245,0.8)]">
+          <span className="inline-flex items-center gap-1 rounded border bg-white/10 px-1.5 py-0.5 text-xs text-muted-foreground">
             {product.status}
           </span>
           <span
@@ -449,20 +457,20 @@ export default function ProductDetailPage({ productId }: Props) {
                 setEditModalProduct(product);
                 setEditModalOpen(true);
               }}
-              className="border-white/10 text-[#F5F5F5]"
+              className="border-input text-foreground"
             >
               <Pencil size={14} className="mr-1" /> Edit
             </Button>
           )}
           {canDelete && (
-            <Button variant="outline" size="sm" onClick={() => setDeleteModalOpen(true)} className="border-white/10 text-red-400">
+            <Button variant="outline" size="sm" onClick={() => setDeleteModalOpen(true)} className="border-input text-red-400">
               <Trash2 size={14} className="mr-1" /> Delete
             </Button>
           )}
           <Button
             variant="outline"
             size="sm"
-            className="border-white/10 text-[#F5F5F5]"
+            className="border-input text-foreground"
             onClick={() => {
               setEditModalProduct({ ...product, id: "", _id: undefined } as Product);
               setEditModalOpen(true);
@@ -470,7 +478,7 @@ export default function ProductDetailPage({ productId }: Props) {
           >
             <Copy size={14} className="mr-1" /> Duplicate
           </Button>
-          <Button variant="outline" size="sm" className="border-white/10 text-[#F5F5F5]" onClick={() => setItineraryModalOpen(true)}>
+          <Button variant="outline" size="sm" className="border-input text-foreground" onClick={() => setItineraryModalOpen(true)}>
             <Plus size={14} className="mr-1" /> Add to Itinerary
           </Button>
           {isEnable && (
@@ -484,50 +492,50 @@ export default function ProductDetailPage({ productId }: Props) {
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl space-y-8 p-4 md:p-6">
           {sectionTitle("Overview")}
-          <div className="rounded-xl border border-white/[0.06] bg-[#0e0e14] p-3">
-            <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#6B6560]">Key facts</p>
+          <div className="rounded-xl border border-border bg-white/[0.03] p-3">
+            <p className="mb-2 text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Key facts</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-sm sm:grid-cols-3">
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Category</p>
-                <p className="mt-0.5 font-medium text-[#F5F0EB]">{CATEGORY_LABELS[product.category]}</p>
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Category</p>
+                <p className="mt-0.5 font-medium text-foreground">{CATEGORY_LABELS[product.category]}</p>
               </div>
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Price range</p>
-                <p className="mt-0.5 font-medium text-[#F5F0EB]">
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Price range</p>
+                <p className="mt-0.5 font-medium text-foreground">
                   {product.price_range ? PRICE_RANGE_DISPLAY[product.price_range] : "—"}
                 </p>
               </div>
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Tier</p>
-                <p className="mt-0.5 font-medium text-[#F5F0EB]">
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Tier</p>
+                <p className="mt-0.5 font-medium text-foreground">
                   {product.partnership_tier ? PARTNERSHIP_TIER_LABELS[product.partnership_tier] : "—"}
                 </p>
               </div>
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Verification</p>
-                <p className="mt-0.5 font-medium text-[#F5F0EB]">
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Verification</p>
+                <p className="mt-0.5 font-medium text-foreground">
                   {VERIFICATION_BADGES[ver]?.label ?? product.verification_status ?? "—"}
                 </p>
               </div>
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Data layer</p>
-                <p className="mt-0.5 font-medium text-[#F5F0EB]">{product.data_ownership_level ?? "—"}</p>
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Data layer</p>
+                <p className="mt-0.5 font-medium text-foreground">{product.data_ownership_level ?? "—"}</p>
               </div>
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-[#6B6560]">Status</p>
-                <p className="mt-0.5 font-medium capitalize text-[#F5F0EB]">{product.status ?? "—"}</p>
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Status</p>
+                <p className="mt-0.5 font-medium capitalize text-foreground">{product.status ?? "—"}</p>
               </div>
             </div>
           </div>
           {product.description ? (
-            <p className="text-[12px] leading-relaxed text-[rgba(245,240,235,0.75)]">{product.description}</p>
+            <p className="text-sm leading-relaxed text-[rgba(245,240,235,0.75)]">{product.description}</p>
           ) : null}
           {(product.tags?.length ?? 0) > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {product.tags!.map((t) => (
                 <span
                   key={t}
-                  className="rounded-full border border-white/[0.06] bg-white/[0.02] px-2 py-0.5 text-[9px] lowercase text-[#9B9590]"
+                  className="rounded-full border border-border bg-white/[0.02] px-2 py-0.5 text-[9px] lowercase text-muted-foreground"
                 >
                   {t}
                 </span>
@@ -536,10 +544,10 @@ export default function ProductDetailPage({ productId }: Props) {
           )}
 
           {sectionTitle("Location")}
-          <div className="space-y-2 text-sm text-[rgba(245,245,245,0.7)]">
+          <div className="space-y-2 text-sm text-muted-foreground">
             <p>Address: {product.address || "—"}</p>
             {product.latitude != null && product.longitude != null && (
-              <p className="text-[rgba(245,245,245,0.5)]">
+              <p className="text-muted-foreground/75">
                 Coordinates: {product.latitude}, {product.longitude}
               </p>
             )}
@@ -549,18 +557,18 @@ export default function ProductDetailPage({ productId }: Props) {
           {canViewFinancials_ ? (
             <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
               <div>
-                <dt className="text-[rgba(245,245,245,0.5)]">Commission</dt>
-                <dd className="text-[#F5F5F5]">
+                <dt className="text-muted-foreground/75">Commission</dt>
+                <dd className="text-foreground">
                   {product.commission_rate ?? "—"} {product.commission_type ?? ""}
                 </dd>
               </div>
               <div>
-                <dt className="text-[rgba(245,245,245,0.5)]">Partnership tier</dt>
-                <dd className="text-[#F5F5F5]">{product.partnership_tier ?? "—"}</dd>
+                <dt className="text-muted-foreground/75">Partnership tier</dt>
+                <dd className="text-foreground">{product.partnership_tier ?? "—"}</dd>
               </div>
             </dl>
           ) : (
-            <p className="text-sm text-[rgba(245,245,245,0.5)]">You don’t have permission to view commercial details.</p>
+            <p className="text-sm text-muted-foreground/75">You don’t have permission to view commercial details.</p>
           )}
 
           {sectionTitle("Content")}
@@ -568,13 +576,13 @@ export default function ProductDetailPage({ productId }: Props) {
             {product.hero_image_url && (
               <img src={product.hero_image_url} alt="" className="max-h-48 rounded-lg object-cover" />
             )}
-            <Button variant="outline" size="sm" className="border-white/10 text-[#F5F5F5]" onClick={() => setEnrichModalOpen(true)}>
+            <Button variant="outline" size="sm" className="border-input text-foreground" onClick={() => setEnrichModalOpen(true)}>
               Enrich with AI
             </Button>
           </div>
 
           {sectionTitle("Suitability")}
-          <div className="space-y-2 text-sm text-[rgba(245,245,245,0.8)]">
+          <div className="space-y-2 text-sm text-muted-foreground">
             <p>Best for occasions: {product.best_for_occasions?.join(", ") || "—"}</p>
             <p>Ideal group size: {product.ideal_group_size || "—"}</p>
             <p>Languages: {product.languages_supported?.join(", ") || "—"}</p>
@@ -585,104 +593,104 @@ export default function ProductDetailPage({ productId }: Props) {
             {product.category === "accommodation" && (
               <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <div>
-                  <dt className="text-[rgba(245,245,245,0.5)]">Star rating</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { star_rating?: number }).star_rating ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Star rating</dt>
+                  <dd className="text-foreground">{(product as { star_rating?: number }).star_rating ?? "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-[rgba(245,245,245,0.5)]">Room count</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { room_count?: number }).room_count ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Room count</dt>
+                  <dd className="text-foreground">{(product as { room_count?: number }).room_count ?? "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-[rgba(245,245,245,0.5)]">Check-in</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { check_in_time?: string }).check_in_time ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Check-in</dt>
+                  <dd className="text-foreground">{(product as { check_in_time?: string }).check_in_time ?? "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-[rgba(245,245,245,0.5)]">Check-out</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { check_out_time?: string }).check_out_time ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Check-out</dt>
+                  <dd className="text-foreground">{(product as { check_out_time?: string }).check_out_time ?? "—"}</dd>
                 </div>
                 <div className="sm:col-span-2">
-                  <dt className="text-[rgba(245,245,245,0.5)]">Amenities</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { amenities?: string[] }).amenities?.join(", ") ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Amenities</dt>
+                  <dd className="text-foreground">{(product as { amenities?: string[] }).amenities?.join(", ") ?? "—"}</dd>
                 </div>
               </dl>
             )}
             {product.category === "restaurant" && (
               <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <div>
-                  <dt className="text-[rgba(245,245,245,0.5)]">Michelin stars</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { michelin_stars?: number }).michelin_stars ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Michelin stars</dt>
+                  <dd className="text-foreground">{(product as { michelin_stars?: number }).michelin_stars ?? "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-[rgba(245,245,245,0.5)]">Cuisine</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { cuisine_type?: string }).cuisine_type ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Cuisine</dt>
+                  <dd className="text-foreground">{(product as { cuisine_type?: string }).cuisine_type ?? "—"}</dd>
                 </div>
                 <div className="sm:col-span-2">
-                  <dt className="text-[rgba(245,245,245,0.5)]">Dietary options</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { dietary_options?: string[] }).dietary_options?.join(", ") ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Dietary options</dt>
+                  <dd className="text-foreground">{(product as { dietary_options?: string[] }).dietary_options?.join(", ") ?? "—"}</dd>
                 </div>
               </dl>
             )}
             {product.category === "activity" && (
               <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <div>
-                  <dt className="text-[rgba(245,245,245,0.5)]">Duration</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { duration?: string }).duration ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Duration</dt>
+                  <dd className="text-foreground">{(product as { duration?: string }).duration ?? "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-[rgba(245,245,245,0.5)]">Difficulty</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { difficulty_level?: string }).difficulty_level ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Difficulty</dt>
+                  <dd className="text-foreground">{(product as { difficulty_level?: string }).difficulty_level ?? "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-[rgba(245,245,245,0.5)]">Season</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { seasonality_notes?: string }).seasonality_notes ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Season</dt>
+                  <dd className="text-foreground">{(product as { seasonality_notes?: string }).seasonality_notes ?? "—"}</dd>
                 </div>
               </dl>
             )}
             {product.category === "dmc" && (
               <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <dt className="text-[rgba(245,245,245,0.5)]">Destinations</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { destinations_covered?: string[] }).destinations_covered?.join(", ") ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Destinations</dt>
+                  <dd className="text-foreground">{(product as { destinations_covered?: string[] }).destinations_covered?.join(", ") ?? "—"}</dd>
                 </div>
                 <div className="sm:col-span-2">
-                  <dt className="text-[rgba(245,245,245,0.5)]">Services</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { service_types?: string[] }).service_types?.join(", ") ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Services</dt>
+                  <dd className="text-foreground">{(product as { service_types?: string[] }).service_types?.join(", ") ?? "—"}</dd>
                 </div>
               </dl>
             )}
             {product.category === "cruise" && (
               <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <div>
-                  <dt className="text-[rgba(245,245,245,0.5)]">Ship name</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { ship_name?: string }).ship_name ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Ship name</dt>
+                  <dd className="text-foreground">{(product as { ship_name?: string }).ship_name ?? "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-[rgba(245,245,245,0.5)]">Cruise line</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { cruise_line?: string }).cruise_line ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Cruise line</dt>
+                  <dd className="text-foreground">{(product as { cruise_line?: string }).cruise_line ?? "—"}</dd>
                 </div>
                 <div className="sm:col-span-2">
-                  <dt className="text-[rgba(245,245,245,0.5)]">Departure ports</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { departure_ports?: string[] }).departure_ports?.join(", ") ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Departure ports</dt>
+                  <dd className="text-foreground">{(product as { departure_ports?: string[] }).departure_ports?.join(", ") ?? "—"}</dd>
                 </div>
               </dl>
             )}
             {product.category === "service_provider" && (
               <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <dt className="text-[rgba(245,245,245,0.5)]">Service types</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { service_types?: string[] }).service_types?.join(", ") ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Service types</dt>
+                  <dd className="text-foreground">{(product as { service_types?: string[] }).service_types?.join(", ") ?? "—"}</dd>
                 </div>
               </dl>
             )}
             {product.category === "transportation" && (
               <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <dt className="text-[rgba(245,245,245,0.5)]">Vehicle types</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { vehicle_types?: string[] }).vehicle_types?.join(", ") ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Vehicle types</dt>
+                  <dd className="text-foreground">{(product as { vehicle_types?: string[] }).vehicle_types?.join(", ") ?? "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-[rgba(245,245,245,0.5)]">Capacity</dt>
-                  <dd className="text-[#F5F5F5]">{(product as { capacity?: number }).capacity ?? "—"}</dd>
+                  <dt className="text-muted-foreground/75">Capacity</dt>
+                  <dd className="text-foreground">{(product as { capacity?: number }).capacity ?? "—"}</dd>
                 </div>
               </dl>
             )}
@@ -691,29 +699,29 @@ export default function ProductDetailPage({ productId }: Props) {
           {sectionTitle("Governance")}
           <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
             <div>
-              <dt className="text-[rgba(245,245,245,0.5)]">Data ownership</dt>
-              <dd className="text-[#F5F5F5]">{product.data_ownership_level ?? "—"}</dd>
+              <dt className="text-muted-foreground/75">Data ownership</dt>
+              <dd className="text-foreground">{product.data_ownership_level ?? "—"}</dd>
             </div>
             <div>
-              <dt className="text-[rgba(245,245,245,0.5)]">Created by</dt>
-              <dd className="text-[#F5F5F5]">{product.created_by_name ?? product.created_by ?? "—"}</dd>
+              <dt className="text-muted-foreground/75">Created by</dt>
+              <dd className="text-foreground">{product.created_by_name ?? product.created_by ?? "—"}</dd>
             </div>
             <div>
-              <dt className="text-[rgba(245,245,245,0.5)]">Updated by</dt>
-              <dd className="text-[#F5F5F5]">{product.updated_by_name ?? product.updated_by ?? "—"}</dd>
+              <dt className="text-muted-foreground/75">Updated by</dt>
+              <dd className="text-foreground">{product.updated_by_name ?? product.updated_by ?? "—"}</dd>
             </div>
             <div>
-              <dt className="text-[rgba(245,245,245,0.5)]">Last verified</dt>
-              <dd className="text-[#F5F5F5]">{product.last_verified ?? "—"}</dd>
+              <dt className="text-muted-foreground/75">Last verified</dt>
+              <dd className="text-foreground">{product.last_verified ?? "—"}</dd>
             </div>
             {product.quality_score != null && (
               <div className="sm:col-span-2">
-                <dt className="text-[rgba(245,245,245,0.5)]">Quality score</dt>
+                <dt className="text-muted-foreground/75">Quality score</dt>
                 <dd className="mt-1 flex items-center gap-2">
                   <div className="h-2 max-w-[200px] flex-1 overflow-hidden rounded-full bg-white/10">
                     <div className="h-full rounded-full bg-[var(--muted-success-text)]" style={{ width: `${product.quality_score}%` }} />
                   </div>
-                  <span className="text-[#F5F5F5]">{product.quality_score}%</span>
+                  <span className="text-foreground">{product.quality_score}%</span>
                 </dd>
               </div>
             )}

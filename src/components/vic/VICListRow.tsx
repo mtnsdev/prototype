@@ -12,6 +12,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  listTdCheckboxClass,
+  listTdClass,
+  listTbodyRowClass,
+  listPrimaryTextClass,
+  listMutedCellClass,
+} from "@/lib/list-ui";
 import LifecycleIndicators from "./LifecycleIndicators";
 
 type Props = {
@@ -78,8 +85,8 @@ export default function VICListRow({
   const acuityLabel = acuityVal ? (ACUITY_LABELS[acuityVal] ?? acuityVal) : "—";
 
   return (
-    <tr className="border-b border-[rgba(255,255,255,0.06)] hover:bg-white/5">
-      <td className="w-10 py-3 pl-4">
+    <tr className={listTbodyRowClass}>
+      <td className={listTdCheckboxClass}>
         <input
           type="checkbox"
           checked={isSelected}
@@ -87,35 +94,35 @@ export default function VICListRow({
           className="checkbox-on-dark"
         />
       </td>
-      <td className="py-3">
+      <td className={listTdClass}>
         <div className="flex items-center gap-3">
           <ImageWithFallback fallbackType="avatar" alt={vic.full_name ?? "VIC"} name={vic.full_name ?? "?"} className="w-10 h-10 shrink-0" />
           <LifecycleIndicators vic={vic} className="shrink-0 hidden sm:flex" />
-          <Link href={`/dashboard/vics/${vicId}`} className="font-medium text-[#F5F5F5] hover:underline">
+          <Link href={`/dashboard/vics/${vicId}`} className={cn(listPrimaryTextClass, "hover:underline")}>
             {vic.full_name}
             {vic.preferred_name && vic.preferred_name !== vic.full_name && (
-              <span className="text-[rgba(245,245,245,0.6)] font-normal"> ({vic.preferred_name})</span>
+              <span className="font-normal text-muted-foreground"> ({vic.preferred_name})</span>
             )}
           </Link>
         </div>
       </td>
-      <td className="py-3 text-sm text-[rgba(245,245,245,0.7)] hidden md:table-cell">{email}</td>
-      <td className="py-3 text-sm text-[rgba(245,245,245,0.7)] hidden lg:table-cell">{phone}</td>
-      <td className="py-3 text-sm text-[rgba(245,245,245,0.7)]">{isBasic ? "—" : cityCountry}</td>
-      <td className="py-3 text-sm text-[rgba(245,245,245,0.6)]">{isBasic ? "—" : status}</td>
-      <td className="py-3 text-sm">
+      <td className={cn(listTdClass, listMutedCellClass, "hidden md:table-cell")}>{email}</td>
+      <td className={cn(listTdClass, listMutedCellClass, "hidden lg:table-cell")}>{phone}</td>
+      <td className={cn(listTdClass, listMutedCellClass)}>{isBasic ? "—" : cityCountry}</td>
+      <td className={cn(listTdClass, listMutedCellClass)}>{isBasic ? "—" : status}</td>
+      <td className={listTdClass}>
         {isBasic ? "—" : acuityVal ? (
-          <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium capitalize", acuityBadgeClass(acuityVal))}>
+          <span className={cn("rounded-full px-2 py-0.5 text-2xs font-medium capitalize", acuityBadgeClass(acuityVal))}>
             {acuityLabel.replace(/_/g, " ")}
           </span>
         ) : "—"}
       </td>
-      <td className="py-2 pr-4">
+      <td className={cn(listTdClass, "pr-4 text-right")}>
         <div className="flex items-center gap-2 justify-end">
           <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <MoreHorizontal size={16} className="text-[rgba(245,245,245,0.6)]" />
+              <MoreHorizontal size={16} className="text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

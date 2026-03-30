@@ -6,8 +6,8 @@ type Props = { vic: VIC };
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-4">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-2">
+    <div className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/75 mb-2">
         {title}
       </h3>
       <div className="text-sm text-[rgba(245,245,245,0.85)] whitespace-pre-wrap">

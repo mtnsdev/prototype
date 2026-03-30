@@ -109,7 +109,7 @@ export default function DataSourceCards({
             onClick={() => onToggleSource(src.id)}
             className={cn(
               "shrink-0 w-[180px] rounded-xl border p-3 text-left transition-colors",
-              "border-[rgba(255,255,255,0.08)] bg-[#161616] hover:bg-white/[0.04]",
+              "border-border bg-card hover:bg-white/[0.04]",
               isSelected && "ring-2 ring-white/30 border-white/20"
             )}
           >
@@ -117,7 +117,7 @@ export default function DataSourceCards({
               <div className="relative w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-white/10 text-[rgba(245,245,245,0.9)]">
                 <Icon size={18} />
                 {badge && (
-                  <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-md bg-[#0C0C0C] border border-white/15 flex items-center justify-center">
+                  <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-md bg-background border border-white/15 flex items-center justify-center">
                     {badge}
                   </span>
                 )}
@@ -131,7 +131,7 @@ export default function DataSourceCards({
                   src.status === "connected" && "bg-[var(--muted-success-text)]"
                 )}
               />
-              <span className="text-[10px] tabular-nums text-[rgba(245,245,245,0.5)]">
+              <span className="text-2xs tabular-nums text-muted-foreground/75">
                 {src.indexed_document_count != null
                   ? `${src.indexed_document_count}/${src.document_count} indexed`
                   : `${src.document_count} docs`}
@@ -140,7 +140,7 @@ export default function DataSourceCards({
             <div className="mt-1">
               <ScopeBadge scope={defaultScope} teams={MOCK_TEAMS} />
             </div>
-            <p className="text-xs text-[rgba(245,245,245,0.5)] mt-2">
+            <p className="text-xs text-muted-foreground/75 mt-2">
               {src.sync_frequency === "manual" && !src.last_sync
                 ? "On demand"
                 : `Last sync ${timeAgo(src.last_sync)}`}
@@ -172,7 +172,7 @@ export default function DataSourceCards({
         className={cn(
           "shrink-0 w-[180px] rounded-xl border border-dashed p-3 text-left transition-colors",
           "border-[rgba(255,255,255,0.2)] bg-white/[0.02] hover:bg-white/[0.06]",
-          "text-[rgba(245,245,245,0.75)]"
+          "text-muted-foreground"
         )}
       >
         <div className="flex items-center gap-2">

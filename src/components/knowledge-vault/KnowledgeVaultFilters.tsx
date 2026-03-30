@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronDown, Search, Tags, Users, Zap } from "lucide-react";
 import type { IngestionStatus } from "@/types/knowledge-vault";
 import { cn } from "@/lib/utils";
+import { FilterBar, FilterBarPrimaryStack, FilterBarToolbarRow } from "@/components/ui/filter-bar";
+import { PageSearchField } from "@/components/ui/page-search-field";
 import type { Team } from "@/types/teams";
 import { TEAM_EVERYONE_ID } from "@/types/teams";
 
@@ -22,6 +24,11 @@ type Props = {
   searchActive?: boolean;
   tagOptions: string[];
   scopeTeams: Team[];
+  searchQuery: string;
+  onSearchChange: (v: string) => void;
+  searchDisabled?: boolean;
+  /** Scope/tags/indexing row hidden (e.g. email-only vault view — search only). */
+  hideScopeToolbar?: boolean;
 };
 
 const INGESTION_OPTIONS: { value: IngestionStatus; label: string }[] = [
@@ -74,12 +81,12 @@ function useFilterDropdownOpen() {
 }
 
 const triggerBase =
-  "flex max-w-[220px] items-center gap-2 rounded-lg border px-3 py-1.5 text-left transition-colors";
-const triggerIdle = "border-[rgba(255,255,255,0.03)] bg-[#0c0c12] hover:border-[rgba(255,255,255,0.06)]";
-const triggerActive = "border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.06)]";
+  "flex max-w-[220px] min-w-0 items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-xs transition-colors";
+const triggerIdle = "border-border bg-popover text-muted-foreground hover:border-border";
+const triggerActive = "border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] text-brand-cta";
 
 const panelClass =
-  "absolute left-0 top-full z-[60] mt-1 max-h-80 w-64 overflow-y-auto rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0c0c12] shadow-xl";
+  "absolute left-0 top-full z-[60] mt-1 max-h-80 w-64 overflow-y-auto rounded-xl border border-border bg-popover shadow-xl";
 
 function KvScopeDropdown({
   filters,
@@ -116,67 +123,67 @@ function KvScopeDropdown({
       >
         {!has ? (
           <>
-            <Users className="h-3 w-3 shrink-0 text-[#4A4540]" />
-            <span className="text-[11px] text-[#9B9590]">Access</span>
+            <Users className="h-3 w-3 shrink-0 text-muted-foreground/65" />
+            <span className="text-xs text-muted-foreground">Access</span>
           </>
         ) : (
-          <span className="min-w-0 flex-1 truncate text-[11px] text-[#F5F0EB]">{summary}</span>
+          <span className="min-w-0 flex-1 truncate text-foreground">{summary}</span>
         )}
-        <ChevronDown className="h-3 w-3 shrink-0 text-[#4A4540]" />
+        <ChevronDown className="ml-auto h-3 w-3 shrink-0 text-muted-foreground/65" />
       </button>
 
       {open && (
         <div className={panelClass}>
-          <div className="border-b border-[rgba(255,255,255,0.03)] px-2 py-1.5">
-            <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-[#4A4540]">General</span>
+          <div className="border-b border-border px-2 py-1.5">
+            <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-muted-foreground/65">General</span>
           </div>
           <button
             type="button"
-            className="flex w-full items-center justify-between px-3 py-1.5 text-left text-[11px] text-[#9B9590] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+            className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-[rgba(255,255,255,0.04)]"
             onClick={() => setScope(undefined)}
           >
             <span>All visible</span>
-            {filters.scope == null ? <Check className="h-3 w-3 shrink-0 text-[#C9A96E]" /> : <span className="h-3 w-3" />}
+            {filters.scope == null ? <Check className="h-3 w-3 shrink-0 text-brand-cta" /> : <span className="h-3 w-3" />}
           </button>
           <button
             type="button"
-            className="flex w-full items-center justify-between px-3 py-1.5 text-left text-[11px] text-[#9B9590] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+            className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-[rgba(255,255,255,0.04)]"
             onClick={() => setScope("private")}
           >
             <span>Private</span>
-            {filters.scope === "private" ? <Check className="h-3 w-3 shrink-0 text-[#C9A96E]" /> : <span className="h-3 w-3" />}
+            {filters.scope === "private" ? <Check className="h-3 w-3 shrink-0 text-brand-cta" /> : <span className="h-3 w-3" />}
           </button>
-          <div className="border-b border-[rgba(255,255,255,0.03)] bg-[rgba(255,255,255,0.02)] px-2 py-1.5">
-            <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-[#4A4540]">Agency & teams</span>
+          <div className="border-b border-border bg-[rgba(255,255,255,0.02)] px-2 py-1.5">
+            <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-muted-foreground/65">Agency & teams</span>
           </div>
           {everyoneTeam ? (
             <button
               type="button"
-              className="flex w-full items-center justify-between px-3 py-1.5 text-left text-[11px] text-[#9B9590] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+              className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-[rgba(255,255,255,0.04)]"
               onClick={() => setScope(everyoneTeam.id)}
             >
               <span className="truncate pr-2">Agency-wide ({everyoneTeam.name})</span>
-              {filters.scope === everyoneTeam.id ? <Check className="h-3 w-3 shrink-0 text-[#C9A96E]" /> : <span className="h-3 w-3" />}
+              {filters.scope === everyoneTeam.id ? <Check className="h-3 w-3 shrink-0 text-brand-cta" /> : <span className="h-3 w-3" />}
             </button>
           ) : (
             <button
               type="button"
-              className="flex w-full items-center justify-between px-3 py-1.5 text-left text-[11px] text-[#9B9590] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+              className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-[rgba(255,255,255,0.04)]"
               onClick={() => setScope(TEAM_EVERYONE_ID)}
             >
               <span>Agency-wide</span>
-              {filters.scope === TEAM_EVERYONE_ID ? <Check className="h-3 w-3 shrink-0 text-[#C9A96E]" /> : <span className="h-3 w-3" />}
+              {filters.scope === TEAM_EVERYONE_ID ? <Check className="h-3 w-3 shrink-0 text-brand-cta" /> : <span className="h-3 w-3" />}
             </button>
           )}
           {otherTeams.map((team) => (
             <button
               key={team.id}
               type="button"
-              className="flex w-full items-center justify-between px-3 py-1.5 text-left text-[11px] text-[#9B9590] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+              className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-[rgba(255,255,255,0.04)]"
               onClick={() => setScope(team.id)}
             >
               <span className="truncate pr-2">{team.name}</span>
-              {filters.scope === team.id ? <Check className="h-3 w-3 shrink-0 text-[#C9A96E]" /> : <span className="h-3 w-3" />}
+              {filters.scope === team.id ? <Check className="h-3 w-3 shrink-0 text-brand-cta" /> : <span className="h-3 w-3" />}
             </button>
           ))}
         </div>
@@ -229,7 +236,7 @@ function KvTagsDropdown({
   const has = selectedTags.length > 0;
   const summary =
     has ? (
-      <span className="truncate text-[11px] text-[#F5F0EB]">
+      <span className="truncate text-xs text-foreground">
         {selectedTags.slice(0, 2).join(", ")}
         {selectedTags.length > 2 && ` +${selectedTags.length - 2}`}
       </span>
@@ -250,25 +257,25 @@ function KvTagsDropdown({
       >
         {!has ? (
           <>
-            <Tags className="h-3 w-3 shrink-0 text-[#4A4540]" />
-            <span className="text-[11px] text-[#9B9590]">Tags</span>
+            <Tags className="h-3 w-3 shrink-0 text-muted-foreground/65" />
+            <span className="text-xs text-muted-foreground">Tags</span>
           </>
         ) : (
           <span className="min-w-0 flex-1">{summary}</span>
         )}
-        <ChevronDown className="h-3 w-3 shrink-0 text-[#4A4540]" />
+        <ChevronDown className="ml-auto h-3 w-3 shrink-0 text-muted-foreground/65" />
       </button>
 
       {open && tagOptions.length > 0 && (
         <div className={cn(panelClass, "w-72")}>
-          <div className="sticky top-0 z-[1] border-b border-[rgba(255,255,255,0.03)] bg-[#0c0c12] p-2">
+          <div className="sticky top-0 z-[1] border-b border-border bg-popover p-2">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#4A4540]" />
+              <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/65" />
               <input
                 ref={inputRef}
                 type="text"
                 placeholder="Search tags…"
-                className="w-full rounded-lg border-none bg-[rgba(255,255,255,0.03)] py-1.5 pl-8 pr-2 text-[11px] text-[#F5F0EB] placeholder-[#4A4540] focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/40"
+                className="w-full rounded-lg border-none bg-[rgba(255,255,255,0.03)] py-1.5 pl-8 pr-2 text-xs text-foreground placeholder-[#4A4540] focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/40"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -276,7 +283,7 @@ function KvTagsDropdown({
             {selectedTags.length > 0 ? (
               <button
                 type="button"
-                className="mt-1.5 text-[10px] text-[#6B6560] transition-colors hover:text-[#C9A96E]"
+                className="mt-1.5 text-2xs text-muted-foreground transition-colors hover:text-brand-cta"
                 onClick={clearTags}
               >
                 Clear all tags
@@ -284,7 +291,7 @@ function KvTagsDropdown({
             ) : null}
           </div>
           {filtered.length === 0 ? (
-            <p className="px-3 py-4 text-center text-[11px] text-[#6B6560]">No match</p>
+            <p className="px-3 py-4 text-center text-xs text-muted-foreground">No match</p>
           ) : (
             filtered.map((tag) => {
               const on = selectedTags.includes(tag);
@@ -292,11 +299,11 @@ function KvTagsDropdown({
                 <button
                   key={tag}
                   type="button"
-                  className="flex w-full items-center justify-between px-3 py-1.5 text-left text-[11px] text-[#9B9590] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+                  className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-[rgba(255,255,255,0.04)]"
                   onClick={() => toggleTag(tag)}
                 >
                   <span className="truncate pr-2">{tag}</span>
-                  {on ? <Check className="h-3 w-3 shrink-0 text-[#C9A96E]" /> : <span className="h-3 w-3 shrink-0" />}
+                  {on ? <Check className="h-3 w-3 shrink-0 text-brand-cta" /> : <span className="h-3 w-3 shrink-0" />}
                 </button>
               );
             })
@@ -336,34 +343,34 @@ function KvIndexingDropdown({
       >
         {!has ? (
           <>
-            <Zap className="h-3 w-3 shrink-0 text-[#4A4540]" />
-            <span className="text-[11px] text-[#9B9590]">Indexing</span>
+            <Zap className="h-3 w-3 shrink-0 text-muted-foreground/65" />
+            <span className="text-xs text-muted-foreground">Indexing</span>
           </>
         ) : (
-          <span className="min-w-0 flex-1 truncate text-[11px] text-[#F5F0EB]">{summary}</span>
+          <span className="min-w-0 flex-1 truncate text-foreground">{summary}</span>
         )}
-        <ChevronDown className="h-3 w-3 shrink-0 text-[#4A4540]" />
+        <ChevronDown className="ml-auto h-3 w-3 shrink-0 text-muted-foreground/65" />
       </button>
 
       {open && (
         <div className={panelClass}>
           <button
             type="button"
-            className="flex w-full items-center justify-between px-3 py-1.5 text-left text-[11px] text-[#9B9590] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+            className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-[rgba(255,255,255,0.04)]"
             onClick={() => setIngestion(undefined)}
           >
             <span>Any</span>
-            {filters.ingestion_status == null ? <Check className="h-3 w-3 shrink-0 text-[#C9A96E]" /> : <span className="h-3 w-3" />}
+            {filters.ingestion_status == null ? <Check className="h-3 w-3 shrink-0 text-brand-cta" /> : <span className="h-3 w-3" />}
           </button>
           {INGESTION_OPTIONS.map(({ value, label }) => (
             <button
               key={value}
               type="button"
-              className="flex w-full items-center justify-between px-3 py-1.5 text-left text-[11px] text-[#9B9590] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+              className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-[rgba(255,255,255,0.04)]"
               onClick={() => setIngestion(value)}
             >
               <span>{label}</span>
-              {filters.ingestion_status === value ? <Check className="h-3 w-3 shrink-0 text-[#C9A96E]" /> : <span className="h-3 w-3" />}
+              {filters.ingestion_status === value ? <Check className="h-3 w-3 shrink-0 text-brand-cta" /> : <span className="h-3 w-3" />}
             </button>
           ))}
         </div>
@@ -380,6 +387,10 @@ export default function KnowledgeVaultFilters({
   searchActive = false,
   tagOptions,
   scopeTeams,
+  searchQuery,
+  onSearchChange,
+  searchDisabled = false,
+  hideScopeToolbar = false,
 }: Props) {
   const { everyoneTeam, otherTeams } = useMemo(() => {
     const everyone = scopeTeams.find((t) => t.id === TEAM_EVERYONE_ID);
@@ -396,32 +407,43 @@ export default function KnowledgeVaultFilters({
     (searchActive ? 1 : 0);
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-col gap-2 min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between">
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-          <KvScopeDropdown
-            filters={filters}
-            onFiltersChange={onFiltersChange}
-            everyoneTeam={everyoneTeam}
-            otherTeams={otherTeams}
-            scopeTeams={scopeTeams}
-          />
-          <KvTagsDropdown filters={filters} onFiltersChange={onFiltersChange} tagOptions={tagOptions} />
-          <KvIndexingDropdown filters={filters} onFiltersChange={onFiltersChange} />
-        </div>
-        {hasDocumentFilters ? (
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-            <span className="text-[10px] tabular-nums text-[#6B6560]">{activeFilterCount} active</span>
-            <button
-              type="button"
-              onClick={onClearDocumentFilters}
-              className="text-[11px] text-[#C9A96E] transition-colors hover:text-[#D4B383] hover:underline"
-            >
-              Clear all
-            </button>
+    <FilterBar>
+      <FilterBarPrimaryStack>
+        <PageSearchField
+          placeholder="Search documents…"
+          aria-label="Search documents"
+          value={searchQuery}
+          onChange={onSearchChange}
+          disabled={searchDisabled}
+        />
+      </FilterBarPrimaryStack>
+      {hideScopeToolbar ? null : (
+        <FilterBarToolbarRow breakpoint="md">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            <KvScopeDropdown
+              filters={filters}
+              onFiltersChange={onFiltersChange}
+              everyoneTeam={everyoneTeam}
+              otherTeams={otherTeams}
+              scopeTeams={scopeTeams}
+            />
+            <KvTagsDropdown filters={filters} onFiltersChange={onFiltersChange} tagOptions={tagOptions} />
+            <KvIndexingDropdown filters={filters} onFiltersChange={onFiltersChange} />
           </div>
-        ) : null}
-      </div>
-    </div>
+          {hasDocumentFilters ? (
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+              <span className="text-2xs tabular-nums text-muted-foreground">{activeFilterCount} active</span>
+              <button
+                type="button"
+                onClick={onClearDocumentFilters}
+                className="text-xs text-brand-cta transition-colors hover:text-[#D4B383] hover:underline"
+              >
+                Clear all
+              </button>
+            </div>
+          ) : null}
+        </FilterBarToolbarRow>
+      )}
+    </FilterBar>
   );
 }

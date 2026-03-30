@@ -13,6 +13,13 @@ import {
 import type { DirectoryAmenityTag, DirectoryCollectionOption, DirectoryProductCategory } from "@/types/product-directory";
 import type { DirectoryPriceTier, DirectoryTierLevel } from "@/components/products/productDirectoryDetailMeta";
 import { cn } from "@/lib/utils";
+import {
+  FilterBar,
+  FilterBarActionsCluster,
+  FilterBarPrimaryStack,
+  FilterBarToolbarRow,
+  FilterChipScrollRow,
+} from "@/components/ui/filter-bar";
 import { PageSearchField } from "@/components/ui/page-search-field";
 import ProductDirectoryLocationDropdown from "./ProductDirectoryLocationDropdown";
 import ProductDirectoryAmenitiesDropdown from "./ProductDirectoryAmenitiesDropdown";
@@ -22,6 +29,7 @@ import ProductDirectoryCommissionRangeDropdown from "./ProductDirectoryCommissio
 import ProductDirectoryTierDropdown from "./ProductDirectoryTierDropdown";
 import ProductDirectoryPriceFilterDropdown from "./ProductDirectoryPriceFilterDropdown";
 import {
+  DEFAULT_DIRECTORY_PRODUCT_SORT,
   DIRECTORY_PRODUCT_SORT_OPTIONS,
   type DirectoryProductSortOption,
 } from "./productDirectoryFilterConfig";
@@ -123,24 +131,23 @@ export default function ProductDirectoryFilterBar({
   }, [sortOpen]);
 
   return (
-    <div className="mb-4 space-y-2 border-b border-[rgba(255,255,255,0.03)] pb-4">
-      {/* Row 1 — Search full width, type pills below */}
-      <div className="flex flex-col gap-3">
+    <FilterBar>
+      <FilterBarPrimaryStack>
         <PageSearchField
           value={searchQuery}
           onChange={onSearchQueryChange}
           placeholder="Search products…"
           aria-label="Search products"
         />
-        <div className="-mx-1 flex w-full min-w-0 items-center gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <FilterChipScrollRow>
           <button
             type="button"
             onClick={onClearTypeFilters}
             className={cn(
-              "flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] whitespace-nowrap transition-colors",
+              "flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-2xs whitespace-nowrap transition-colors",
               activeTypeFilters.length === 0
-                ? "border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.08)] text-[#C9A96E]"
-                : "border-transparent text-[#6B6560] hover:text-[#9B9590]"
+                ? "border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
+                : "border-transparent text-muted-foreground hover:text-muted-foreground"
             )}
           >
             All
@@ -154,8 +161,8 @@ export default function ProductDirectoryFilterBar({
                 type="button"
                 onClick={() => onToggleTypeFilter(type.id)}
                 className={cn(
-                  "flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] whitespace-nowrap transition-colors",
-                  active ? "border-solid" : "border-transparent text-[#6B6560] hover:text-[#9B9590]"
+                  "flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-2xs whitespace-nowrap transition-colors",
+                  active ? "border-solid" : "border-transparent text-muted-foreground hover:text-muted-foreground"
                 )}
                 style={
                   active
@@ -172,12 +179,58 @@ export default function ProductDirectoryFilterBar({
               </button>
             );
           })}
-        </div>
-      </div>
+        </FilterChipScrollRow>
+      </FilterBarPrimaryStack>
 
-      {/* Row 2 — Dropdowns | count + bulk + views */}
-      <div className="flex flex-col gap-2 min-[1100px]:flex-row min-[1100px]:items-center min-[1100px]:justify-between">
+      <FilterBarToolbarRow>
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+        <div ref={sortWrapRef} className="relative">
+          <button
+            type="button"
+            aria-label={`Sort products. Current: ${DIRECTORY_PRODUCT_SORT_OPTIONS.find((o) => o.id === sortBy)?.label ?? "Name A → Z"}`}
+            onClick={() => setSortOpen((o) => !o)}
+            className={cn(
+              "flex max-w-[220px] min-w-0 items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-xs transition-colors",
+              sortBy !== DEFAULT_DIRECTORY_PRODUCT_SORT
+                ? "border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
+                : "border-border bg-popover text-muted-foreground hover:border-border"
+            )}
+          >
+            <ArrowUpDown className="h-3 w-3 shrink-0 text-muted-foreground/65" aria-hidden />
+            {sortBy !== DEFAULT_DIRECTORY_PRODUCT_SORT ? (
+              <span className="min-w-0 flex-1 truncate">
+                {DIRECTORY_PRODUCT_SORT_OPTIONS.find((o) => o.id === sortBy)?.label ?? "Sort by"}
+              </span>
+            ) : (
+              <span className="text-xs text-muted-foreground">Sort by</span>
+            )}
+            <ChevronDown className="ml-auto h-3 w-3 shrink-0 text-muted-foreground/65" aria-hidden />
+          </button>
+          {sortOpen && (
+            <div
+              className="absolute left-0 top-full z-50 mt-1 w-[200px] overflow-hidden rounded-xl border border-border bg-popover py-1 text-popover-foreground shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {DIRECTORY_PRODUCT_SORT_OPTIONS.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => {
+                    onSortByChange(option.id);
+                    setSortOpen(false);
+                  }}
+                  className={cn(
+                    "flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-white/[0.04]",
+                    sortBy === option.id ? "text-brand-cta" : "text-muted-foreground"
+                  )}
+                >
+                  {option.label}
+                  {sortBy === option.id ? <Check className="h-3 w-3 text-brand-cta" /> : null}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <ProductDirectoryLocationDropdown
           selectedCountries={locationCountries}
           onChange={onLocationCountriesChange}
@@ -208,58 +261,20 @@ export default function ProductDirectoryFilterBar({
           selectedPriceTiers={selectedPriceTiers}
           onChange={onSelectedPriceTiersChange}
         />
-
-        <div ref={sortWrapRef} className="relative">
-          <button
-            type="button"
-            onClick={() => setSortOpen((o) => !o)}
-            className="flex min-w-0 items-center gap-1.5 rounded-lg border border-[rgba(255,255,255,0.03)] bg-[#0c0c12] px-2.5 py-1.5 text-[11px] text-[#9B9590] transition-colors hover:border-[rgba(255,255,255,0.06)]"
-          >
-            <ArrowUpDown className="h-3 w-3 shrink-0 text-[#4A4540]" />
-            <span className="min-w-0 truncate !text-[#F5F0EB]">
-              {DIRECTORY_PRODUCT_SORT_OPTIONS.find((o) => o.id === sortBy)?.label ?? "Sort"}
-            </span>
-            <ChevronDown className="h-3 w-3 shrink-0 text-[#4A4540]" />
-          </button>
-          {sortOpen && (
-            <div
-              className="absolute left-0 top-full z-50 mt-1 w-[200px] overflow-hidden rounded-xl border border-white/[0.06] bg-[#0e0e14] py-1 shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {DIRECTORY_PRODUCT_SORT_OPTIONS.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => {
-                    onSortByChange(option.id);
-                    setSortOpen(false);
-                  }}
-                  className={cn(
-                    "flex w-full items-center justify-between px-3 py-2 text-left text-[11px] transition-colors hover:bg-white/[0.04]",
-                    sortBy === option.id ? "text-[#C9A96E]" : "text-[#9B9590]"
-                  )}
-                >
-                  {option.label}
-                  {sortBy === option.id ? <Check className="h-3 w-3 text-[#C9A96E]" /> : null}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 border-[rgba(255,255,255,0.03)] min-[1100px]:border-l min-[1100px]:pl-3">
-          <span className="text-[10px] text-[#6B6560]">
+        <FilterBarActionsCluster>
+          <span className="text-2xs text-muted-foreground">
             {resultCount} product{resultCount !== 1 ? "s" : ""}
           </span>
           <button
             type="button"
             onClick={onBulkModeToggle}
             className={cn(
-              "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] transition-colors",
+              "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition-colors",
               bulkMode
-                ? "border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] text-[#C9A96E]"
-                : "border-[rgba(255,255,255,0.03)] bg-[#0c0c12] text-[#6B6560] hover:text-[#9B9590]"
+                ? "border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
+                : "border-border bg-popover text-muted-foreground hover:text-muted-foreground"
             )}
           >
             <CheckSquare className="h-3.5 w-3.5" />
@@ -271,8 +286,8 @@ export default function ProductDirectoryFilterBar({
             className={cn(
               "rounded-lg p-1.5 transition-colors",
               viewMode === "grid"
-                ? "bg-[rgba(201,169,110,0.08)] text-[#C9A96E]"
-                : "text-[#4A4540] hover:text-[#9B9590]"
+                ? "bg-[rgba(201,169,110,0.08)] text-brand-cta"
+                : "text-muted-foreground/65 hover:text-muted-foreground"
             )}
             onClick={() => onViewModeChange("grid")}
           >
@@ -284,8 +299,8 @@ export default function ProductDirectoryFilterBar({
             className={cn(
               "rounded-lg p-1.5 transition-colors",
               viewMode === "list"
-                ? "bg-[rgba(201,169,110,0.08)] text-[#C9A96E]"
-                : "text-[#4A4540] hover:text-[#9B9590]"
+                ? "bg-[rgba(201,169,110,0.08)] text-brand-cta"
+                : "text-muted-foreground/65 hover:text-muted-foreground"
             )}
             onClick={() => onViewModeChange("list")}
           >
@@ -297,15 +312,15 @@ export default function ProductDirectoryFilterBar({
             className={cn(
               "rounded-lg p-1.5 transition-colors",
               viewMode === "map"
-                ? "bg-[rgba(201,169,110,0.08)] text-[#C9A96E]"
-                : "text-[#4A4540] hover:text-[#9B9590]"
+                ? "bg-[rgba(201,169,110,0.08)] text-brand-cta"
+                : "text-muted-foreground/65 hover:text-muted-foreground"
             )}
             onClick={() => onViewModeChange("map")}
           >
             <MapIcon className="h-4 w-4" />
           </button>
-        </div>
-      </div>
-    </div>
+        </FilterBarActionsCluster>
+      </FilterBarToolbarRow>
+    </FilterBar>
   );
 }

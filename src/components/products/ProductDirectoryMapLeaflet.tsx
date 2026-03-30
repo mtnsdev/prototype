@@ -69,12 +69,12 @@ function PopupBody({
   const place =
     product.city && product.country ? `${product.city}, ${product.country}` : directoryProductPlaceLabel(product);
   return (
-    <div className="min-w-[200px] text-[#08080c]">
-      <p className="truncate text-[12px] font-medium">{product.name}</p>
-      <p className="text-[10px] text-neutral-600">{place}</p>
+    <div className="min-w-[200px] text-background">
+      <p className="truncate text-sm font-medium">{product.name}</p>
+      <p className="text-2xs text-neutral-600">{place}</p>
       <p className="mt-1 text-[9px] text-neutral-500">{directoryCategoryLabel(product.type)}</p>
       {canViewCommissions && best != null && bestRate != null && (
-        <p className="mt-0.5 text-[10px] text-amber-900/90">
+        <p className="mt-0.5 text-2xs text-amber-900/90">
           {bestRate}% · {programDisplayName(best)}
         </p>
       )}
@@ -178,9 +178,9 @@ export default function ProductDirectoryMapLeaflet({
             }}
           >
             <Popup>
-              <div className="text-[#08080c]">
-                <p className="text-[11px] font-medium">{pin.products.length} products in this area</p>
-                <p className="text-[10px] text-neutral-600">Use the panel below to pick one, or click again.</p>
+              <div className="text-background">
+                <p className="text-xs font-medium">{pin.products.length} products in this area</p>
+                <p className="text-2xs text-neutral-600">Use the panel below to pick one, or click again.</p>
               </div>
             </Popup>
           </CircleMarker>

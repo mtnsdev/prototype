@@ -28,8 +28,8 @@ import { SendFormModal } from "@/components/itineraries/CompetitorFeatureModals"
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-4">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-[rgba(245,245,245,0.5)] mb-3">{title}</h3>
+    <div className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/75 mb-3">{title}</h3>
       <div className="text-sm text-[rgba(245,245,245,0.85)]">{children}</div>
     </div>
   );
@@ -65,8 +65,8 @@ function TravelProfilesInline({
               activeProfileType === type
                 ? "bg-blue-500/15 text-blue-400 border border-blue-500/30"
                 : hasProfile(type)
-                  ? "bg-white/5 text-gray-300 border border-white/10 hover:border-white/20"
-                  : "bg-white/[0.02] text-gray-600 border border-white/5 hover:border-white/10"
+                  ? "bg-white/5 text-foreground/88 border border-input hover:border-white/20"
+                  : "bg-white/[0.02] text-muted-foreground/70 border border-white/5 hover:border-input"
             )}
           >
             {profileTypeIcon(type)} {capitalize(type)}
@@ -76,12 +76,12 @@ function TravelProfilesInline({
       </div>
 
       {activeProfile ? (
-        <div className="bg-white/[0.03] rounded-xl p-4 border border-white/[0.06]">
+        <div className="bg-white/[0.03] rounded-xl p-4 border border-border">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-white">{capitalize(activeProfileType)}</span>
               {activeProfile.is_primary && (
-                <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">PRIMARY</span>
+                <span className="text-2xs text-[var(--color-warning)] bg-amber-500/10 px-1.5 py-0.5 rounded">PRIMARY</span>
               )}
             </div>
             <button type="button" className="text-xs text-blue-400 hover:text-blue-300" onClick={onEditTravelProfile}>
@@ -91,50 +91,50 @@ function TravelProfilesInline({
           <div className="grid grid-cols-2 gap-x-6 gap-y-2">
             {(activeProfile.accommodation_types?.length ?? 0) > 0 && (
               <div>
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Accommodation</p>
-                <p className="text-xs text-gray-300">
+                <p className="text-2xs text-muted-foreground uppercase tracking-wider">Accommodation</p>
+                <p className="text-xs text-foreground/88">
                   {(activeProfile.accommodation_types ?? []).join(", ")}
                 </p>
               </div>
             )}
             {activeProfile.accommodation_preferences && !activeProfile.accommodation_types?.length && (
               <div>
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Accommodation</p>
-                <p className="text-xs text-gray-300">{activeProfile.accommodation_preferences}</p>
+                <p className="text-2xs text-muted-foreground uppercase tracking-wider">Accommodation</p>
+                <p className="text-xs text-foreground/88">{activeProfile.accommodation_preferences}</p>
               </div>
             )}
             {(activeProfile.cuisine_preferences?.length ?? 0) > 0 && (
               <div>
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Cuisine</p>
-                <p className="text-xs text-gray-300">{(activeProfile.cuisine_preferences ?? []).join(", ")}</p>
+                <p className="text-2xs text-muted-foreground uppercase tracking-wider">Cuisine</p>
+                <p className="text-xs text-foreground/88">{(activeProfile.cuisine_preferences ?? []).join(", ")}</p>
               </div>
             )}
             {(activeProfile.cabin_class || activeProfile.travel_pace || activeProfile.pace) && (
               <>
                 {activeProfile.cabin_class && (
                   <div>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Cabin</p>
-                    <p className="text-xs text-gray-300">{activeProfile.cabin_class}</p>
+                    <p className="text-2xs text-muted-foreground uppercase tracking-wider">Cabin</p>
+                    <p className="text-xs text-foreground/88">{activeProfile.cabin_class}</p>
                   </div>
                 )}
                 {(activeProfile.travel_pace ?? activeProfile.pace) && (
                   <div>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Pace</p>
-                    <p className="text-xs text-gray-300">{activeProfile.travel_pace ?? activeProfile.pace}</p>
+                    <p className="text-2xs text-muted-foreground uppercase tracking-wider">Pace</p>
+                    <p className="text-xs text-foreground/88">{activeProfile.travel_pace ?? activeProfile.pace}</p>
                   </div>
                 )}
               </>
             )}
             {(activeProfile.budget_range ?? activeProfile.budget_tier) && (
               <div>
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Budget</p>
-                <p className="text-xs text-gray-300">{activeProfile.budget_range ?? activeProfile.budget_tier}</p>
+                <p className="text-2xs text-muted-foreground uppercase tracking-wider">Budget</p>
+                <p className="text-xs text-foreground/88">{activeProfile.budget_range ?? activeProfile.budget_tier}</p>
               </div>
             )}
             {((activeProfile.destinations_preferred?.length ?? 0) > 0 || (activeProfile.destinations?.length ?? 0) > 0) && (
               <div className="col-span-2">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Preferred Destinations</p>
-                <p className="text-xs text-gray-300">
+                <p className="text-2xs text-muted-foreground uppercase tracking-wider">Preferred Destinations</p>
+                <p className="text-xs text-foreground/88">
                   {(activeProfile.destinations_preferred ?? activeProfile.destinations ?? []).join(", ")}
                 </p>
               </div>
@@ -142,15 +142,15 @@ function TravelProfilesInline({
           </div>
           {activeProfile.source === "acuity" && (
             <div className="mt-3 pt-3 border-t border-white/[0.04]">
-              <p className="text-[10px] text-violet-400 flex items-center gap-1">
+              <p className="text-2xs text-violet-400 flex items-center gap-1">
                 <span>✦</span> Some preferences enriched by Acuity
               </p>
             </div>
           )}
         </div>
       ) : (
-        <div className="bg-white/[0.02] rounded-xl p-4 border border-dashed border-white/10 text-center">
-          <p className="text-xs text-gray-500">No {capitalize(activeProfileType)} profile yet</p>
+        <div className="bg-white/[0.02] rounded-xl p-4 border border-dashed border-input text-center">
+          <p className="text-xs text-muted-foreground">No {capitalize(activeProfileType)} profile yet</p>
           {onAddTravelProfile && (
             <button
               type="button"
@@ -165,7 +165,7 @@ function TravelProfilesInline({
       {list.length < 7 && onAddTravelProfile && (
         <button
           type="button"
-          className="text-xs text-gray-500 hover:text-gray-400 flex items-center gap-1"
+          className="text-xs text-muted-foreground hover:text-muted-foreground flex items-center gap-1"
           onClick={onAddTravelProfile}
         >
           <Plus className="w-3 h-3" /> Add another profile type
@@ -189,13 +189,13 @@ function Row({
   const showEmpty = emptyLabel != null;
   const isEmpty = value == null || value === "";
   if (isEmpty && !showEmpty) return null;
-  const emptyClass = emptyLabel === "Not set" ? "text-gray-600 italic" : "text-[rgba(245,245,245,0.4)]";
+  const emptyClass = emptyLabel === "Not set" ? "text-muted-foreground/70 italic" : "text-muted-foreground/55";
   const display = isEmpty ? (showEmpty ? <span className={emptyClass}>{emptyLabel}</span> : null) : value;
   if (display == null) return null;
   return (
-    <div className="flex gap-2 py-1.5 border-b border-[rgba(255,255,255,0.06)] last:border-0 items-center flex-wrap">
-      <span className="text-[rgba(245,245,245,0.5)] shrink-0 w-36">{label}</span>
-      <span className="text-[#F5F5F5] break-words flex-1 min-w-0">{display}</span>
+    <div className="flex gap-2 py-1.5 border-b border-border last:border-0 items-center flex-wrap">
+      <span className="text-muted-foreground/75 shrink-0 w-36">{label}</span>
+      <span className="text-foreground break-words flex-1 min-w-0">{display}</span>
       {acuityProvenance && acuityProvenance.source === "acuity" && (
         <AcuitySourceBadge provenance={acuityProvenance} />
       )}
@@ -225,13 +225,13 @@ function TravelDiscoveredPreferences({ discovered }: { discovered: import("@/typ
         className="w-full flex items-center justify-between px-4 py-3 text-left"
       >
         <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-accent-text)]">AI-Discovered Preferences</h3>
-        <span className="text-[rgba(245,245,245,0.5)] text-sm">{open ? "▼" : "▶"}</span>
+        <span className="text-muted-foreground/75 text-sm">{open ? "▼" : "▶"}</span>
       </button>
       {open && (
         <div className="px-4 pb-4 space-y-2">
           {list.map((d) => (
             <div key={d.id} className="flex flex-wrap items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
-              <span className="text-sm text-[#F5F5F5]">{d.text}</span>
+              <span className="text-sm text-foreground">{d.text}</span>
               {d.provider && (
                 <AcuitySourceBadge provenance={{ source: "acuity", provider: d.provider, sourced_at: d.sourced_at }} />
               )}
@@ -239,7 +239,7 @@ function TravelDiscoveredPreferences({ discovered }: { discovered: import("@/typ
                 <Button variant="ghost" size="sm" className="h-7 text-xs text-[var(--muted-success-text)]" onClick={() => setHidden((s) => new Set(s).add(d.id))}>
                   Accept
                 </Button>
-                <Button variant="ghost" size="sm" className="h-7 text-xs text-[rgba(245,245,245,0.6)]" onClick={() => setHidden((s) => new Set(s).add(d.id))}>
+                <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={() => setHidden((s) => new Set(s).add(d.id))}>
                   Dismiss
                 </Button>
               </div>
@@ -261,7 +261,7 @@ function RelationshipInsightsWithActions({ insights }: { insights: import("@/typ
       <ul className="space-y-2 text-sm">
         {list.map((insight) => (
           <li key={insight.id} className="flex flex-wrap items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
-            <span className="text-[#F5F5F5] flex-1 min-w-0">• {insight.text}</span>
+            <span className="text-foreground flex-1 min-w-0">• {insight.text}</span>
             {insight.provider && (
               <AcuitySourceBadge
                 provenance={{ source: "acuity", provider: insight.provider, sourced_at: insight.sourced_at }}
@@ -271,7 +271,7 @@ function RelationshipInsightsWithActions({ insights }: { insights: import("@/typ
               <Button variant="ghost" size="sm" className="h-7 text-xs text-[var(--muted-success-text)]" onClick={() => setDismissed((s) => new Set(s).add(insight.id))}>
                 Accept
               </Button>
-              <Button variant="ghost" size="sm" className="h-7 text-xs text-[rgba(245,245,245,0.6)]" onClick={() => setDismissed((s) => new Set(s).add(insight.id))}>
+              <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={() => setDismissed((s) => new Set(s).add(insight.id))}>
                 Dismiss
               </Button>
             </div>
@@ -329,7 +329,7 @@ function SharingTabContent({ vic }: { vic: VIC }) {
   return (
     <div className="space-y-4">
       <Section title="Sharing level">
-        <p className="text-xs text-[rgba(245,245,245,0.5)] mb-3">Choose how much shared advisors can see.</p>
+        <p className="text-xs text-muted-foreground/75 mb-3">Choose how much shared advisors can see.</p>
         <div className="flex flex-wrap gap-2">
           {SHARING_LEVELS.map((opt) => (
             <button
@@ -339,12 +339,12 @@ function SharingTabContent({ vic }: { vic: VIC }) {
               className={cn(
                 "rounded-lg border px-3 py-2 text-left text-sm transition-colors",
                 level === opt.value
-                  ? "border-[#F5F5F5] bg-white/10 text-[#F5F5F5]"
-                  : "border-white/10 bg-white/5 text-[rgba(245,245,245,0.8)] hover:border-white/20"
+                  ? "border-[#F5F5F5] bg-white/10 text-foreground"
+                  : "border-input bg-white/5 text-muted-foreground hover:border-white/20"
               )}
             >
               <span className="font-medium block">{opt.label}</span>
-              <span className="text-xs text-[rgba(245,245,245,0.5)]">{opt.desc}</span>
+              <span className="text-xs text-muted-foreground/75">{opt.desc}</span>
             </button>
           ))}
         </div>
@@ -352,13 +352,13 @@ function SharingTabContent({ vic }: { vic: VIC }) {
       <Section title="Share with advisors">
         <div className="space-y-2">
           {sharedWith.length === 0 ? (
-            <p className="text-sm text-[rgba(245,245,245,0.5)]">No advisors shared yet.</p>
+            <p className="text-sm text-muted-foreground/75">No advisors shared yet.</p>
           ) : (
             sharedWith.map((s) => (
               <div key={s.advisor_id} className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
-                <span className="flex-1 text-sm text-[#F5F5F5]">{s.advisor_name ?? s.advisor_id}</span>
+                <span className="flex-1 text-sm text-foreground">{s.advisor_name ?? s.advisor_id}</span>
                 <Select value={s.access_level} onValueChange={(v) => setAdvisorAccess(s.advisor_id, v as "view" | "edit")}>
-                  <SelectTrigger className="w-28 h-8 bg-white/5 border-white/10 text-[#F5F5F5] text-xs">
+                  <SelectTrigger className="w-28 h-8 bg-white/5 border-input text-foreground text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -366,21 +366,21 @@ function SharingTabContent({ vic }: { vic: VIC }) {
                     <SelectItem value="edit">Edit</SelectItem>
                   </SelectContent>
                 </Select>
-                <span className="text-xs text-[rgba(245,245,245,0.5)]">{s.shared_at ? formatDate(s.shared_at) : ""}</span>
-                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-[rgba(245,245,245,0.5)] hover:text-[var(--muted-error-text)]" onClick={() => removeAdvisor(s.advisor_id)}>
+                <span className="text-xs text-muted-foreground/75">{s.shared_at ? formatDate(s.shared_at) : ""}</span>
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/75 hover:text-[var(--muted-error-text)]" onClick={() => removeAdvisor(s.advisor_id)}>
                   <X size={14} />
                 </Button>
               </div>
             ))
           )}
           {!addAdvisorOpen ? (
-            <Button type="button" variant="outline" size="sm" className="border-white/10 text-[#F5F5F5]" onClick={() => setAddAdvisorOpen(true)}>
+            <Button type="button" variant="outline" size="sm" className="border-input text-foreground" onClick={() => setAddAdvisorOpen(true)}>
               Add Advisor
             </Button>
           ) : (
-            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-white/10 p-3">
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-input p-3">
               <Select value={newAdvisorId || undefined} onValueChange={setNewAdvisorId}>
-                <SelectTrigger className="w-40 bg-white/5 border-white/10 text-[#F5F5F5]">
+                <SelectTrigger className="w-40 bg-white/5 border-input text-foreground">
                   <SelectValue placeholder="Select advisor" />
                 </SelectTrigger>
                 <SelectContent>
@@ -390,7 +390,7 @@ function SharingTabContent({ vic }: { vic: VIC }) {
                 </SelectContent>
               </Select>
               <Select value={newAccessLevel} onValueChange={(v) => setNewAccessLevel(v as "view" | "edit")}>
-                <SelectTrigger className="w-24 bg-white/5 border-white/10 text-[#F5F5F5]">
+                <SelectTrigger className="w-24 bg-white/5 border-input text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -407,8 +407,8 @@ function SharingTabContent({ vic }: { vic: VIC }) {
       <Section title="Agency visibility">
         <div className="flex items-center justify-between">
           <div>
-            <Label className="text-[#F5F5F5]">Publish to Agency Directory</Label>
-            <p className="text-xs text-[rgba(245,245,245,0.5)] mt-0.5">Other agency advisors can discover this VIC (read-only).</p>
+            <Label className="text-foreground">Publish to Agency Directory</Label>
+            <p className="text-xs text-muted-foreground/75 mt-0.5">Other agency advisors can discover this VIC (read-only).</p>
           </div>
           <button
             type="button"
@@ -443,7 +443,7 @@ function capitalize(s: string): string {
 }
 
 function profileTypeIcon(_type: TravelProfileType) {
-  return <Plane className="w-3.5 h-3.5 text-[rgba(245,245,245,0.5)]" />;
+  return <Plane className="w-3.5 h-3.5 text-muted-foreground/75" />;
 }
 
 type Props = {
@@ -529,7 +529,7 @@ export default function DetailTabContent({
                 <div className="flex-1 h-2 rounded-full border border-violet-500/20 bg-white/10 overflow-hidden max-w-[160px]">
                   <div className="h-full rounded-full bg-violet-500" style={{ width: completeness + "%" }} />
                 </div>
-                <span className="text-xs text-[rgba(245,245,245,0.75)]">Coverage ~{completeness}% of enrichable field set</span>
+                <span className="text-xs text-muted-foreground">Coverage ~{completeness}% of enrichable field set</span>
               </div>
               {acuityDaysAgo != null && acuityDaysAgo > 30 && (
                 <Button variant="outline" size="sm" className="border-violet-500/30 text-violet-300 mt-2" onClick={onUpdate}>
@@ -538,7 +538,7 @@ export default function DetailTabContent({
               )}
             </div>
           ) : (
-            <p className="text-sm text-[rgba(245,245,245,0.7)] mb-2">Acuity has not been run yet. Run Acuity from the header to enrich this profile.</p>
+            <p className="text-sm text-muted-foreground mb-2">Acuity has not been run yet. Run Acuity from the header to enrich this profile.</p>
           )}
         </div>
         <Section title="At a Glance">
@@ -557,7 +557,7 @@ export default function DetailTabContent({
           <Section title="Tags">
             <div className="flex flex-wrap gap-2">
               {tags.map((t) => (
-                <span key={t} className="text-xs lowercase border border-gray-600 text-gray-400 rounded-full px-2 py-0.5">
+                <span key={t} className="text-xs lowercase border border-border text-muted-foreground/90 rounded-full px-2 py-0.5">
                   {t}
                 </span>
               ))}
@@ -571,21 +571,21 @@ export default function DetailTabContent({
         )}
 
         {/* Travel Profiles — collapsible section at bottom of Overview */}
-        <div ref={travelSectionRef} className="border-t border-white/[0.06] pt-5 mt-5">
+        <div ref={travelSectionRef} className="border-t border-border pt-5 mt-5">
           <button
             type="button"
             onClick={() => onShowTravelProfilesChange?.(!showTravelProfiles)}
             className="flex items-center justify-between w-full group"
           >
             <div className="flex items-center gap-2">
-              <Plane className="w-4 h-4 text-gray-400" />
+              <Plane className="w-4 h-4 text-muted-foreground/90" />
               <span className="text-sm font-medium text-white">Travel Profiles</span>
-              <span className="text-xs text-gray-500 bg-white/5 px-2 py-0.5 rounded-full">
+              <span className="text-xs text-muted-foreground bg-white/5 px-2 py-0.5 rounded-full">
                 {(travelProfilesProp ?? vic.travel_profiles ?? []).length} of 7
               </span>
             </div>
             <ChevronDown
-              className={cn("w-4 h-4 text-gray-500 transition-transform", showTravelProfiles && "rotate-180")}
+              className={cn("w-4 h-4 text-muted-foreground transition-transform", showTravelProfiles && "rotate-180")}
             />
           </button>
 
@@ -609,12 +609,12 @@ export default function DetailTabContent({
       ? undefined
       : canViewSensitive
         ? (formatDate(vic.date_of_birth) ?? vic.date_of_birth)
-        : <span className="inline-flex items-center gap-1.5"><Lock size={12} className="text-[rgba(245,245,245,0.5)]" />••/••/••••</span>;
+        : <span className="inline-flex items-center gap-1.5"><Lock size={12} className="text-muted-foreground/75" />••/••/••••</span>;
     const addressValue: React.ReactNode = !vic.home_address
       ? undefined
       : canViewSensitive
         ? vic.home_address
-        : <span className="inline-flex items-center gap-1.5"><Lock size={12} className="text-[rgba(245,245,245,0.5)]" />••••••••••••</span>;
+        : <span className="inline-flex items-center gap-1.5"><Lock size={12} className="text-muted-foreground/75" />••••••••••••</span>;
     return (
       <div className="space-y-4">
         <Section title="Contact">
@@ -660,11 +660,11 @@ export default function DetailTabContent({
         className={[
           "inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize",
           vic.relationship_status === "active" && "bg-[var(--muted-success-bg)] text-[var(--muted-success-text)] border border-[var(--muted-success-border)]",
-          vic.relationship_status === "inactive" && "bg-[rgba(245,245,245,0.15)] text-[rgba(245,245,245,0.7)]",
+          vic.relationship_status === "inactive" && "bg-[rgba(245,245,245,0.15)] text-muted-foreground",
           vic.relationship_status === "prospect" && "bg-[var(--muted-info-bg)] text-[var(--muted-info-text)] border border-[var(--muted-info-border)]",
           vic.relationship_status === "past" && "bg-[var(--muted-amber-bg)] text-[var(--muted-amber-text)] border border-[var(--muted-amber-border)]",
           vic.relationship_status === "do_not_contact" && "bg-[var(--muted-error-bg)] text-[var(--muted-error-text)] border border-[var(--muted-error-border)]",
-        ].filter(Boolean).join(" ") || "bg-white/10 text-[rgba(245,245,245,0.8)]"}
+        ].filter(Boolean).join(" ") || "bg-white/10 text-muted-foreground"}
       >
         {vic.relationship_status.replace(/_/g, " ")}
       </span>
@@ -684,13 +684,13 @@ export default function DetailTabContent({
             <Row label="Client since" value={vic.client_since ? formatDate(vic.client_since) ?? vic.client_since : undefined} emptyLabel="Not set" />
             <Row label="Referral source" value={vic.referral_source} emptyLabel="Not set" />
             <Row label="Referred by VIC" value={referredByLink} emptyLabel="Not set" />
-            <div className="flex gap-2 py-1.5 border-b border-[rgba(255,255,255,0.06)] items-center">
-              <span className="text-[rgba(245,245,245,0.5)] shrink-0 w-36">Relationship status</span>
-              {statusBadge ?? <span className="text-gray-600 italic">Not set</span>}
+            <div className="flex gap-2 py-1.5 border-b border-border items-center">
+              <span className="text-muted-foreground/75 shrink-0 w-36">Relationship status</span>
+              {statusBadge ?? <span className="text-muted-foreground/70 italic">Not set</span>}
             </div>
-            <div className="py-1.5 border-b border-[rgba(255,255,255,0.06)] last:border-0">
-              <span className="text-[rgba(245,245,245,0.5)] block w-36 mb-1">VIP notes</span>
-              <p className="whitespace-pre-wrap text-[#F5F5F5]">{vic.vip_notes || <span className="text-gray-600 italic">Not set</span>}</p>
+            <div className="py-1.5 border-b border-border last:border-0">
+              <span className="text-muted-foreground/75 block w-36 mb-1">VIP notes</span>
+              <p className="whitespace-pre-wrap text-foreground">{vic.vip_notes || <span className="text-muted-foreground/70 italic">Not set</span>}</p>
             </div>
           </div>
         </Section>
@@ -725,14 +725,14 @@ export default function DetailTabContent({
         <Section title="Preferences & tags">
           <div className="space-y-0">
             {(vic.tags ?? leg.customTags ?? []).length > 0 && (
-              <div className="py-1.5 border-b border-[rgba(255,255,255,0.06)]">
+              <div className="py-1.5 border-b border-border">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <span className="text-[rgba(245,245,245,0.5)] w-36 shrink-0">Tags</span>
+                  <span className="text-muted-foreground/75 w-36 shrink-0">Tags</span>
                   {provPref.customTags?.source === "acuity" && <AcuitySourceBadge provenance={provPref.customTags} fieldLabel="Tags" />}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {(vic.tags ?? leg.customTags ?? []).map((t: string) => (
-                    <span key={t} className="text-xs lowercase border border-gray-600 text-gray-400 rounded-full px-2 py-0.5">{t}</span>
+                    <span key={t} className="text-xs lowercase border border-border text-muted-foreground/90 rounded-full px-2 py-0.5">{t}</span>
                   ))}
                 </div>
               </div>
@@ -750,7 +750,7 @@ export default function DetailTabContent({
         )}
         {leisureKeys.length > 0 && (
           <Section title="Travel preferences (Acuity · leisure)">
-            <p className="text-xs text-[rgba(245,245,245,0.45)] mb-3">
+            <p className="text-xs text-muted-foreground/75 mb-3">
               Fields discovered from public sources. Review excerpts via each badge.
             </p>
             <div className="space-y-0">
@@ -814,68 +814,68 @@ export default function DetailTabContent({
               </div>
               {vic.loyalty_programs && vic.loyalty_programs.length > 0 && (
                 <div className="py-1.5">
-                  <span className="text-[rgba(245,245,245,0.5)] block w-36 mb-1">Loyalty programs</span>
+                  <span className="text-muted-foreground/75 block w-36 mb-1">Loyalty programs</span>
                   <ul className="space-y-2">
                     {vic.loyalty_programs.map((lp) => (
                       <li key={lp.id} className="flex items-center justify-between rounded bg-white/5 px-2 py-1.5 text-sm">
-                        <span className="text-[#F5F5F5]">{lp.program_name}</span>
-                        <span className="text-[rgba(245,245,245,0.6)]">{lp.membership_id ?? "***----"}</span>
-                        {lp.tier && <span className="text-xs text-[rgba(245,245,245,0.5)]">{lp.tier}</span>}
+                        <span className="text-foreground">{lp.program_name}</span>
+                        <span className="text-muted-foreground">{lp.membership_id ?? "***----"}</span>
+                        {lp.tier && <span className="text-xs text-muted-foreground/75">{lp.tier}</span>}
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
               <div className="flex flex-wrap gap-2 pt-2">
-                <Button type="button" variant="outline" size="sm" className="border-white/10 text-[#F5F5F5]">
+                <Button type="button" variant="outline" size="sm" className="border-input text-foreground">
                   Add Document
                 </Button>
-                <Button type="button" variant="outline" size="sm" className="border-white/10 text-[#F5F5F5]">
+                <Button type="button" variant="outline" size="sm" className="border-input text-foreground">
                   Add Loyalty Program
                 </Button>
               </div>
             </div>
           ) : (
-            <p className="text-[rgba(245,245,245,0.5)]">Document details are restricted. You need full access to view.</p>
+            <p className="text-muted-foreground/75">Document details are restricted. You need full access to view.</p>
           )}
         </Section>
 
         <Section title="Client forms">
           {vicId === "vic-001" ? (
             <div className="space-y-3">
-              <div className="rounded-lg border border-white/[0.08] p-3">
+              <div className="rounded-lg border border-border p-3">
                 <div className="flex justify-between items-start gap-2">
-                  <span className="text-sm font-medium text-[#F5F5F5]">📋 Travel Preferences Form</span>
-                  <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-500/30 text-emerald-400">Completed</span>
+                  <span className="text-sm font-medium text-foreground">📋 Travel Preferences Form</span>
+                  <span className="text-2xs uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-500/30 text-emerald-400">Completed</span>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Submitted 12 Mar 2026</p>
-                <Button type="button" variant="outline" size="sm" className="mt-2 border-white/10 text-xs h-8">
+                <p className="text-xs text-muted-foreground mt-1">Submitted 12 Mar 2026</p>
+                <Button type="button" variant="outline" size="sm" className="mt-2 border-input text-xs h-8">
                   View Responses
                 </Button>
               </div>
-              <div className="rounded-lg border border-white/[0.08] p-3">
+              <div className="rounded-lg border border-border p-3">
                 <div className="flex justify-between items-start gap-2">
-                  <span className="text-sm font-medium text-[#F5F5F5]">📋 Passport & Documents</span>
-                  <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-amber-500/30 text-amber-400">Pending</span>
+                  <span className="text-sm font-medium text-foreground">📋 Passport & Documents</span>
+                  <span className="text-2xs uppercase tracking-wider px-2 py-0.5 rounded-full border border-amber-500/30 text-[var(--color-warning)]">Pending</span>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Sent 10 Mar 2026 · Not yet submitted</p>
+                <p className="text-xs text-muted-foreground mt-1">Sent 10 Mar 2026 · Not yet submitted</p>
                 <div className="flex gap-2 mt-2">
-                  <Button type="button" variant="outline" size="sm" className="border-white/10 text-xs h-8">
+                  <Button type="button" variant="outline" size="sm" className="border-input text-xs h-8">
                     Resend
                   </Button>
-                  <Button type="button" variant="outline" size="sm" className="border-white/10 text-xs h-8">
+                  <Button type="button" variant="outline" size="sm" className="border-input text-xs h-8">
                     View Form
                   </Button>
                 </div>
               </div>
-              <Button type="button" variant="outline" size="sm" className="border-white/10" onClick={() => setSendFormOpen(true)}>
+              <Button type="button" variant="outline" size="sm" className="border-input" onClick={() => setSendFormOpen(true)}>
                 + Send New Form
               </Button>
             </div>
           ) : (
             <div className="text-center py-6">
-              <p className="text-sm text-gray-500 mb-3">No forms sent yet</p>
-              <Button type="button" variant="outline" size="sm" className="border-white/10" onClick={() => setSendFormOpen(true)}>
+              <p className="text-sm text-muted-foreground mb-3">No forms sent yet</p>
+              <Button type="button" variant="outline" size="sm" className="border-input" onClick={() => setSendFormOpen(true)}>
                 Send a form
               </Button>
             </div>
@@ -910,7 +910,7 @@ export default function DetailTabContent({
         <Section title="Linked Products">
           {resolvedProducts.length === 0 ? (
             <>
-              <p className="text-[rgba(245,245,245,0.6)] text-sm">No products linked yet. Link products to track this VIC&apos;s preferred properties.</p>
+              <p className="text-muted-foreground text-sm">No products linked yet. Link products to track this VIC&apos;s preferred properties.</p>
               <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => {}}>Link Product</Button>
             </>
           ) : (
@@ -922,12 +922,12 @@ export default function DetailTabContent({
                   <Link
                     key={p.id}
                     href={`/dashboard/products/${p.id}`}
-                    className="flex items-center gap-3 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-3 text-sm hover:bg-white/[0.04]"
+                    className="flex items-center gap-3 rounded-lg border border-border bg-[rgba(255,255,255,0.03)] p-3 text-sm hover:bg-white/[0.04]"
                   >
-                    <Icon size={18} className="text-[rgba(245,245,245,0.6)] shrink-0" />
+                    <Icon size={18} className="text-muted-foreground shrink-0" />
                     <div className="min-w-0">
-                      <p className="font-medium text-[#F5F5F5]">{p.name}</p>
-                      <p className="text-[rgba(245,245,245,0.6)] text-xs">{location}</p>
+                      <p className="font-medium text-foreground">{p.name}</p>
+                      <p className="text-muted-foreground text-xs">{location}</p>
                     </div>
                   </Link>
                 );
@@ -939,7 +939,7 @@ export default function DetailTabContent({
         <Section title="Linked Itineraries">
           {linkedItineraries.length === 0 ? (
             <>
-              <p className="text-[rgba(245,245,245,0.6)] text-sm">No itineraries linked yet.</p>
+              <p className="text-muted-foreground text-sm">No itineraries linked yet.</p>
               <div className="flex flex-wrap gap-2 mt-2">
                 <Button type="button" variant="outline" size="sm" asChild>
                   <Link href={`/dashboard/itineraries?create=1&vic_id=${vicId}`}>Create New Itinerary</Link>
@@ -955,11 +955,11 @@ export default function DetailTabContent({
                 const eventCount = it.days?.reduce((acc, d) => acc + (d.events?.length ?? 0), 0) ?? 0;
                 const dateRange = it.trip_start_date && it.trip_end_date ? `${it.trip_start_date} – ${it.trip_end_date}` : it.trip_start_date ?? "—";
                 return (
-                  <Link key={it.id} href={`/dashboard/itineraries/${it.id}`} className="block rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-3 text-sm hover:bg-white/[0.04]">
-                    <p className="font-medium text-[#F5F5F5]">{it.trip_name ?? it.id}</p>
-                    <p className="text-[rgba(245,245,245,0.6)] text-xs mt-0.5">{dateRange}</p>
-                    <p className="text-[rgba(245,245,245,0.5)] text-xs">{(it.destinations ?? []).join(", ") || "—"} · {eventCount} events</p>
-                    {it.status && <span className="inline-block mt-1 text-xs px-1.5 py-0.5 rounded bg-white/10 text-[rgba(245,245,245,0.7)]">{it.status}</span>}
+                  <Link key={it.id} href={`/dashboard/itineraries/${it.id}`} className="block rounded-lg border border-border bg-[rgba(255,255,255,0.03)] p-3 text-sm hover:bg-white/[0.04]">
+                    <p className="font-medium text-foreground">{it.trip_name ?? it.id}</p>
+                    <p className="text-muted-foreground text-xs mt-0.5">{dateRange}</p>
+                    <p className="text-muted-foreground/75 text-xs">{(it.destinations ?? []).join(", ") || "—"} · {eventCount} events</p>
+                    {it.status && <span className="inline-block mt-1 text-xs px-1.5 py-0.5 rounded bg-white/10 text-muted-foreground">{it.status}</span>}
                   </Link>
                 );
               })}
@@ -1013,13 +1013,13 @@ export default function DetailTabContent({
         )}
         <Section title="Edit history">
           {editHistory.length === 0 ? (
-            <p className="text-[rgba(245,245,245,0.5)] text-sm">No edit history available.</p>
+            <p className="text-muted-foreground/75 text-sm">No edit history available.</p>
           ) : (
             <ul className="space-y-2 text-sm">
               {editHistory.slice(0, 10).map((e, i) => (
-                <li key={i} className="border-b border-[rgba(255,255,255,0.06)] pb-2 last:border-0">
-                  <span className="text-[#F5F5F5]">{e.change ?? "Updated"}</span>
-                  <span className="text-[rgba(245,245,245,0.5)] ml-2">— {e.by} · {e.at ? formatDate(e.at) ?? e.at : ""}</span>
+                <li key={i} className="border-b border-border pb-2 last:border-0">
+                  <span className="text-foreground">{e.change ?? "Updated"}</span>
+                  <span className="text-muted-foreground/75 ml-2">— {e.by} · {e.at ? formatDate(e.at) ?? e.at : ""}</span>
                 </li>
               ))}
             </ul>
