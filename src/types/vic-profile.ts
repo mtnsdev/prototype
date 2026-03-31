@@ -281,7 +281,12 @@ export interface AdvisoryNote {
   resolvedBy?: string;
   linkedProductId?: string;
   linkedProgramId?: string;
-  expiresAt?: string;
+  /**
+   * March 31 decision: no auto-expire. Advisories are manually closed only.
+   * Stale review nudge deferred to Layer 4.
+   */
+  dismissedAt?: string;
+  dismissedBy?: string;
   isAdvisorOnly: boolean;
 }
 
@@ -296,11 +301,24 @@ export interface SourceConflict {
   resolvedAt?: string;
 }
 
+/**
+ * March 31 decision: show all conflicting values, advisor resolves manually.
+ * Enhanced to surface provenance (source type, provider, confidence) so the
+ * advisor can make an informed choice.
+ */
 export interface ConflictValue {
   value: string;
   source: string;
+  /** Where the value came from: manual entry, Axus import, Acuity AI, email extraction, etc. */
+  source_type: "manual" | "axus" | "virtuoso" | "acuity" | "email" | "tripsuite" | "import";
+  /** AI provider if source_type is "acuity" */
+  provider?: "gemini" | "perplexity" | "claude";
+  /** Confidence score (0-1) if AI-sourced */
+  confidence?: number;
   date: string;
   context?: string;
+  /** Raw excerpt from the original source for traceability */
+  raw_excerpt?: string;
 }
 
 export interface AdvisorNote {

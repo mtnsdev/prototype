@@ -1,3 +1,17 @@
+/**
+ * Product Edit Route
+ *
+ * This route is a transitional redirect. Currently:
+ * - Loads the product by ID
+ * - Redirects back to /dashboard/products/[id] (the canonical detail page)
+ *
+ * The detail page contains the Edit button, which opens AddProductModal.
+ * To edit: Go to /dashboard/products/[id], click "Edit" button
+ *
+ * Future: Could open edit modal directly in this route, but currently
+ * relies on the detail page's Edit action.
+ */
+
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
@@ -14,7 +28,7 @@ export default function ProductEditRoute() {
     if (!id) return;
     fetchProduct(id)
       .then((product) => {
-        // Redirect to detail with edit mode or open modal in context; for now we redirect to list and rely on list "Edit" opening modal.
+        // Redirect to detail page; edit is triggered from there via button
         router.replace(`/dashboard/products/${id}`);
       })
       .catch(() => router.replace("/dashboard/products"));

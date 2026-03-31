@@ -12,6 +12,8 @@ import {
   Activity,
   Box,
   RefreshCw,
+  Heart,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +32,8 @@ const WIDGET_ICONS: Record<WidgetType, React.ComponentType<{ size?: number; clas
   [WidgetType.ActionItems]: CheckSquare,
   [WidgetType.UpcomingTrips]: Plane,
   [WidgetType.Calendar]: CalendarIcon,
+  [WidgetType.ClientIntelligence]: Heart,
+  [WidgetType.CommissionAlerts]: TrendingUp,
   [WidgetType.QuickStart]: Zap,
   [WidgetType.FreeText]: FileText,
   [WidgetType.RecentActivity]: Activity,

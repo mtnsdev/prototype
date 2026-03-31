@@ -30,7 +30,7 @@ const baseVic = (): VIC =>
   ({
     id: "v1",
     full_name: "Test",
-    sharing_level: "basic",
+    sharing_level: "full",
     created_by: "99",
     shared_with: [],
     shared_with_teams: [
@@ -68,8 +68,8 @@ test("canEditVIC is false when team share is view only", () => {
   assert.equal(canEditVIC(u, vic, { teams: TEAMS }), false);
 });
 
-test("getVICViewLevel returns basic for team view share when sharing_level is basic", () => {
+test("getVICViewLevel returns full for team view share when sharing_level is full", () => {
   const vic = baseVic();
   const u = { id: "5", role: "advisor", agency_id: "a1" };
-  assert.equal(getVICViewLevel(u, vic, { teams: TEAMS }), "basic");
+  assert.equal(getVICViewLevel(u, vic, { teams: TEAMS }), "full");
 });

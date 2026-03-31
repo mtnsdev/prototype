@@ -286,7 +286,6 @@ function RelationshipInsightsWithActions({ insights }: { insights: import("@/typ
 
 const SHARING_LEVELS: { value: VIC["sharing_level"]; label: string; desc: string }[] = [
   { value: "none", label: "None", desc: "Only you can see this VIC." },
-  { value: "basic", label: "Basic", desc: "Shared advisors see name and contact only." },
   { value: "full", label: "Full", desc: "Shared advisors see all details (subject to access level)." },
 ];
 
@@ -743,7 +742,7 @@ export default function DetailTabContent({
               activeProfileType={activeProfileType}
               onActiveProfileTypeChange={setActiveProfileType}
               onAddTravelProfile={onAddTravelProfile}
-              onEditTravelProfile={() => showToast("Edit travel profile — coming in v2")}
+              onEditTravelProfile={() => showToast("Travel profile editor — available in the next release")}
             />
           )}
         </div>

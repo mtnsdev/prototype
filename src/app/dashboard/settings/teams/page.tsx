@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, Plus, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { useUser } from "@/contexts/UserContext";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/contexts/ToastContext";
@@ -82,6 +83,14 @@ export default function TeamsSettingsPage() {
   return (
     <div className="h-full overflow-y-auto bg-background text-foreground">
       <div className="max-w-2xl mx-auto p-6 space-y-6">
+        <Breadcrumbs
+          items={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Settings", href: "/dashboard/settings" },
+            { label: "Teams" },
+          ]}
+          className="mb-3"
+        />
         <Link
           href="/dashboard/settings"
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-2"

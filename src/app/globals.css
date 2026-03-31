@@ -543,3 +543,62 @@ input.chat-input-no-focus-outline:focus-visible,
 
   /* Layout rhythm — prefer these over one-off page wrappers */
 }
+
+/* ==========================================
+   View & Tab Transitions
+   ========================================== */
+
+/* View transition: card ↔ list toggle */
+.view-transition-enter {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.view-transition-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 200ms ease-out;
+}
+
+/* Tab content fade-in transition */
+@keyframes tabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tab-content {
+  animation: tabFadeIn 200ms ease-out;
+}
+
+/* Skeleton shimmer animation */
+@keyframes skeletonShimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton-shimmer {
+  animation: skeletonShimmer 2s infinite;
+}
+
+/* Smooth state transitions for loading overlays */
+.transition-opacity {
+  transition: opacity 200ms ease-out;
+}
+
+.transition-transform {
+  transition: transform 200ms ease-out;
+}
+
+.transition-all {
+  transition: all 200ms ease-out;
+}

@@ -124,10 +124,10 @@ export function CompareOptionsModal({
           </div>
         </div>
         <div className="flex flex-wrap gap-2 mt-6 justify-end">
-          <Button variant="outline" className="border-border" onClick={() => onToast("Send Both to VIC — coming in v2")}>
+          <Button variant="outline" className="border-border" onClick={() => onToast("Send Both to VIC — available in the next release")}>
             Send Both to VIC
           </Button>
-          <Button className="bg-brand-cta text-brand-cta-foreground hover:bg-brand-cta-hover" onClick={() => onToast("Select as Final — coming in v2")}>
+          <Button className="bg-brand-cta text-brand-cta-foreground hover:bg-brand-cta-hover" onClick={() => onToast("Select as Final Option — available in the next release")}>
             Select as Final
           </Button>
         </div>
@@ -147,6 +147,7 @@ export function GuestPortalPreviewModal({
   itinerary: Itinerary;
   isMonaco: boolean;
 }) {
+  const showToast = useToast();
   if (!open) return null;
   if (!isMonaco) {
     return (
@@ -216,8 +217,8 @@ export function GuestPortalPreviewModal({
           <h3 className="text-sm font-semibold uppercase tracking-wide text-neutral-500 mb-2">Message your advisor</h3>
           <p className="text-sm text-neutral-800">Marie Limousis · TravelLustre</p>
           <p className="text-sm text-neutral-500">marie@travellustre.com</p>
-          <Button variant="outline" className="mt-2" onClick={() => {}}>
-            Send Message — coming soon
+          <Button variant="outline" className="mt-2" onClick={() => showToast("Send Message to advisor — available in the next release")}>
+            Send Message
           </Button>
         </section>
       </div>
@@ -236,6 +237,7 @@ export function InvoiceModal({
   itinerary: Itinerary;
   onGenerate: () => void;
 }) {
+  const showToast = useToast();
   if (!open) return null;
   const lines: { title: string; qty: number; amt: number }[] = [];
   (itinerary.days ?? []).forEach((d) => {
@@ -294,11 +296,14 @@ export function InvoiceModal({
         </div>
         <p className="text-xs text-muted-foreground mt-4">50% deposit upon confirmation · Balance 30 days before departure</p>
         <div className="flex flex-wrap gap-2 mt-4">
-          <Button variant="outline" size="sm" className="border-border" onClick={() => {}}>
-            Download PDF — coming soon
+          <Button variant="outline" size="sm" className="border-border" onClick={() => {
+            showToast("Invoice PDF — opening print dialog");
+            window.print();
+          }}>
+            Download PDF
           </Button>
-          <Button variant="outline" size="sm" className="border-border" onClick={() => {}}>
-            Email to VIC — coming soon
+          <Button variant="outline" size="sm" className="border-border" onClick={() => showToast("Email invoice to VIC — available in the next release")}>
+            Email to VIC
           </Button>
         </div>
         <div className="flex justify-end gap-2 mt-6">
@@ -515,6 +520,7 @@ export function SendFormModal({
   vicName: string;
   onSend: () => void;
 }) {
+  const showToast = useToast();
   const templates = [
     { t: "Travel Preferences", d: "Dietary, seating, airline, hotel preferences" },
     { t: "Passport & Emergency Contact", d: "Passport details, emergency contacts, insurance" },
@@ -544,8 +550,8 @@ export function SendFormModal({
             </button>
           ))}
         </div>
-        <Button variant="link" className="text-blue-400 p-0 h-auto mt-2" onClick={() => {}}>
-          Create Custom Form — coming soon
+        <Button variant="link" className="text-blue-400 p-0 h-auto mt-2" onClick={() => showToast("Custom forms coming in v2 — use templates for now")}>
+          Create Custom Form
         </Button>
         <div className="flex justify-end gap-2 mt-6">
           <Button variant="outline" className="border-border" onClick={onClose}>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { useVICProfileData } from "./hooks/useVICProfileData";
 import { VICProfileHeader } from "./VICProfileHeader";
 import { OverviewTab } from "./tabs/OverviewTab";
@@ -120,6 +121,16 @@ export function VICProfilePage({ routeVicId }: Props) {
   return (
     <div className="h-full overflow-y-auto bg-inset">
       <div className="mx-auto max-w-5xl space-y-6 p-6">
+        <Breadcrumbs
+          items={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "VICs", href: "/dashboard/vics" },
+            { label: bundle.profile.firstName + " " + bundle.profile.lastName, href: `/dashboard/vics/${routeVicId}` },
+            { label: "Advisor Profile" },
+          ]}
+          className="mb-2"
+        />
+
         <Link
           href={`/dashboard/vics/${routeVicId}`}
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"

@@ -35,6 +35,7 @@ import { KvTagsDiscreteTitleSubline } from "./KvTagsDisplay";
 import { useToast } from "@/contexts/ToastContext";
 import type { KvSortColumn, KvSortOption } from "@/lib/knowledgeVaultSort";
 import { kvSortActiveColumn, kvSortIsAsc } from "@/lib/knowledgeVaultSort";
+import { EmptyKnowledgeVault, EmptySearchResults } from "@/components/ui/empty-states";
 import {
   listMutedCellClass,
   listPrimaryTextClass,
@@ -274,49 +275,42 @@ export default function DocumentGrid({
   }
 
   if (!loading && documents.length === 0 && listEmpty) {
-    const empty =
-      listEmpty.variant === "vic_visibility"
-        ? {
-            icon: Shield,
-            title: "No documents match the current visibility",
-            description:
-              "Everything from your search is hidden by access rules or permissions. Try widening filters, or use Show all if you are an admin.",
-          }
-        : listEmpty.variant === "filtered_empty"
-          ? {
-              icon: Search,
-              title: "No documents match your search or filters",
-              description: "Clear filters or try different keywords.",
-            }
-          : {
-              icon: FolderOpen,
-              title: "Your vault is empty",
-              description: "Connect a source or upload files so documents appear here.",
-              action: listEmpty.onConnectSource
-                ? { label: "Connect a source", onClick: listEmpty.onConnectSource }
-                : undefined,
-            };
-    const EmptyIcon = empty.icon;
+    // Special case: visibility restrictions
+    if (listEmpty.variant === "vic_visibility") {
+      return (
+        <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden")}>
+          <EmptyState
+            icon={Shield}
+            title="No documents match the current visibility"
+            description="Everything from your search is hidden by access rules or permissions. Try widening filters, or use Show all if you are an admin."
+          />
+        </div>
+      );
+    }
+
+    // api_empty: vault is completely empty — offer connection action
+    if (listEmpty.variant === "api_empty") {
+      return (
+        <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden flex items-center justify-center")}>
+          <EmptyKnowledgeVault
+            action={listEmpty.onConnectSource ? { label: "Connect Source", onClick: listEmpty.onConnectSource } : undefined}
+          />
+        </div>
+      );
+    }
+
+    // filtered_empty: documents exist but don't match filters
     return (
-      <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden")}>
-        <EmptyState
-          icon={EmptyIcon}
-          title={empty.title}
-          description={empty.description}
-          action={empty.action}
-        />
+      <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden flex items-center justify-center")}>
+        <EmptySearchResults />
       </div>
     );
   }
 
   if (!loading && documents.length === 0) {
     return (
-      <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden")}>
-        <EmptyState
-          icon={Search}
-          title="No documents found"
-          description="Try adjusting your filters or search query."
-        />
+      <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden flex items-center justify-center")}>
+        <EmptySearchResults />
       </div>
     );
   }

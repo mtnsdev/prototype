@@ -4,6 +4,7 @@ export type IntegrationKey =
     | "google-drive-agency"
     | "virtuoso"
     | "axus"
+    | "tripsuite"
     | "partner-portals";
 
 export type IntegrationStatus = "active" | "not_connected" | "coming_soon" | "admin_only";
@@ -38,6 +39,7 @@ export const INTEGRATION_DEFINITIONS: IntegrationDefinition[] = [
     },
     { key: "virtuoso", label: "Virtuoso", visibleTo: "all" },
     { key: "axus", label: "Axus", visibleTo: "all" },
+    { key: "tripsuite", label: "TripSuite", visibleTo: "admin" },
     { key: "partner-portals", label: "Partner Portals", visibleTo: "all" },
 ];
 

@@ -1,8 +1,25 @@
+/**
+ * ProductDirectoryDetailPanel — Summary view shown as sidebar in product directory
+ *
+ * This is a PREVIEW/SUMMARY view of a DirectoryProduct, shown as a right sidebar.
+ * It is intentionally simpler than the full detail page.
+ *
+ * For the full detail view, users should:
+ * - Click the "View full detail →" link at the bottom of this panel
+ * - Which navigates to /dashboard/products/[id]
+ *
+ * Architecture pattern:
+ * - This sidebar = preview of product
+ * - ProductDetailPage (at /dashboard/products/[id]) = full canonical view
+ * - The sidebar footer includes explicit navigation to the full view
+ */
+
 "use client";
 
 import type { DirectoryCollectionOption, DirectoryProduct } from "@/types/product-directory";
 import type { RepFirm } from "@/types/rep-firm";
 import type { Team } from "@/types/teams";
+import Link from "next/link";
 import { ProductDirectoryDetailBody } from "./ProductDirectoryDetailBody";
 
 type Props = {
@@ -67,6 +84,17 @@ export default function ProductDirectoryDetailPanel({
             partnerProgramCustomKeys={partnerProgramCustomKeys}
             repFirmsRegistry={repFirmsRegistry}
           />
+        </div>
+        {/* Footer: Link to full detail view */}
+        <div className="border-t border-border bg-background/50 p-3">
+          <Link
+            href={`/dashboard/products/${product.id}`}
+            onClick={onClose}
+            className="inline-flex w-full items-center justify-center gap-1.5 rounded px-3 py-2 text-sm font-medium text-foreground/80 hover:bg-white/10 hover:text-foreground transition-colors"
+          >
+            View full detail
+            <span aria-hidden="true">→</span>
+          </Link>
         </div>
       </aside>
     </>

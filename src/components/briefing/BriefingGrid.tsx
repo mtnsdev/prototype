@@ -7,6 +7,8 @@ import UpcomingTripsWidget from "./widgets/UpcomingTripsWidget";
 import CalendarWidget from "./widgets/CalendarWidget";
 import RecentActivityWidget from "./widgets/RecentActivityWidget";
 import AnnouncementsWidget from "./widgets/AnnouncementsWidget";
+import ClientIntelligenceWidget from "./widgets/ClientIntelligenceWidget";
+import CommissionAlertsWidget from "./widgets/CommissionAlertsWidget";
 
 type Props = {
   widgets: BriefingWidget[];
@@ -17,6 +19,8 @@ export default function BriefingGrid({ widgets, isAdmin }: Props) {
   const byId = new Map(widgets.map((w) => [w.id, w]));
 
   const news = byId.get("w-news");
+  const clientIntel = byId.get("w-client-intel");
+  const commission = byId.get("w-commission");
   const actions = byId.get("w-actions");
   const trips = byId.get("w-trips");
   const calendar = byId.get("w-calendar");
@@ -33,35 +37,47 @@ export default function BriefingGrid({ widgets, isAdmin }: Props) {
             />
           </div>
         )}
-        <AnnouncementsWidget isAdmin={isAdmin} staggerIndex={1} />
+        {clientIntel && (
+          <ClientIntelligenceWidget
+            content={clientIntel.content as import("@/types/briefing").ClientIntelligenceContent}
+            staggerIndex={1}
+          />
+        )}
+        <AnnouncementsWidget isAdmin={isAdmin} staggerIndex={2} />
         {actions && (
           <ActionItemsWidget
             content={actions.content as import("@/types/briefing").ActionItemsContent}
-            staggerIndex={2}
+            staggerIndex={3}
             isAdmin={isAdmin}
           />
         )}
         {activity && (
           <RecentActivityWidget
             content={activity.content as import("@/types/briefing").RecentActivityContent}
-            staggerIndex={3}
+            staggerIndex={4}
             isAdmin={isAdmin}
           />
         )}
       </div>
 
       <div className="flex flex-col gap-5">
+        {commission && (
+          <CommissionAlertsWidget
+            content={commission.content as import("@/types/briefing").CommissionAlertContent}
+            staggerIndex={5}
+          />
+        )}
         {trips && (
           <UpcomingTripsWidget
             content={trips.content as import("@/types/briefing").UpcomingTripsContent}
-            staggerIndex={4}
+            staggerIndex={6}
             isAdmin={isAdmin}
           />
         )}
         {calendar && (
           <CalendarWidget
             content={calendar.content as import("@/types/briefing").CalendarContent}
-            staggerIndex={5}
+            staggerIndex={7}
           />
         )}
       </div>

@@ -1,3 +1,25 @@
+/**
+ * ProductDetailPage — Canonical full-detail product view
+ *
+ * This component renders TWO different detail views depending on the product type:
+ *
+ * 1. DirectoryProduct (directory view) — sidebar preview in product directory
+ *    Routed via: /dashboard/products/[id] when viewing a DirectoryProduct
+ *    Features: Focused summary, collection management, quick actions
+ *    Related: ProductDirectoryDetailPanel is a simpler sidebar variant of this view
+ *
+ * 2. Product (standard product) — full comprehensive view with all metadata
+ *    Routed via: /dashboard/products/[id] when viewing a standard Product
+ *    Features: Hero image, full details, edit/delete/copy actions, layers, verification
+ *    Note: This is the richer, full-featured view
+ *
+ * Architecture pattern:
+ * - This page is the CANONICAL detail view (not a modal, not sidebar)
+ * - ProductDirectoryDetailPanel is intentionally SIMPLER — use it as a preview/summary
+ * - To view from sidebar: ProductDirectoryDetailPanel has a "View full detail →" link
+ * - To edit: Click Edit button on this page, which opens AddProductModal
+ */
+
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -42,6 +64,7 @@ import {
   VERIFICATION_BADGES,
 } from "@/config/productCategoryConfig";
 import { Button } from "@/components/ui/button";
+import Breadcrumbs from "@/components/ui/breadcrumbs";
 import DeleteProductModal from "../Modals/DeleteProductModal";
 import AddProductModal from "../Modals/AddProductModal";
 import CopyToAgencyModal from "../Modals/CopyToAgencyModal";
@@ -445,6 +468,15 @@ export default function ProductDetailPage({ productId }: Props) {
       </div>
       <header className="flex flex-col gap-3 border-b border-border p-4 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <div className="flex min-w-0 flex-wrap items-center gap-2 lg:flex-1 lg:gap-3">
+          <div className="w-full mb-1">
+            <Breadcrumbs
+              items={[
+                { label: "Dashboard", href: "/dashboard" },
+                { label: "Products", href: "/dashboard/products" },
+                { label: product.name },
+              ]}
+            />
+          </div>
           <Button variant="ghost" size="sm" asChild className="shrink-0 text-muted-foreground hover:text-foreground">
             <Link href="/dashboard/products" className="inline-flex items-center gap-1.5">
               <ArrowLeft className="size-3.5" aria-hidden />

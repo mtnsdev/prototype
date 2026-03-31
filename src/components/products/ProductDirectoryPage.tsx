@@ -30,6 +30,7 @@ import {
 import ProductDirectoryFilterBar from "./ProductDirectoryFilterBar";
 import AddProductModal from "./Modals/AddProductModal";
 import DirectoryProductCard from "./DirectoryProductCard";
+import { ProductCardSkeleton } from "@/components/ui/skeletons";
 import DirectoryProductListView from "./DirectoryProductListView";
 import ProductDirectoryDetailPanel from "./ProductDirectoryDetailPanel";
 import ProductDirectoryCollectionPicker from "./ProductDirectoryCollectionPicker";
@@ -1941,11 +1942,15 @@ export default function ProductDirectoryPage() {
           {viewMode === "grid" && (
             <div
               className={cn(
-                "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3",
+                "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 view-transition-active",
                 !detailProduct && "xl:grid-cols-4"
               )}
             >
-              {sortedProducts.map((product) => (
+              {userLoading || (sortedProducts.length === 0 && products.length > 0)
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <ProductCardSkeleton key={i} />
+                  ))
+                : sortedProducts.map((product) => (
                 <DirectoryProductCard
                   key={product.id}
                   product={product}

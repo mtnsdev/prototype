@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import GoogleDriveFolderPicker from "@/components/GoogleDriveFolderPicker";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/contexts/ToastContext";
+import Breadcrumbs from "@/components/ui/breadcrumbs";
 import type { DriveStatus } from "@/types/google-drive";
 
 const OAUTH_POPUP_WIDTH = 600;
@@ -612,6 +613,14 @@ export default function IntegrationsPage() {
         <div className="h-full overflow-y-auto bg-background">
             <div className="max-w-2xl mx-auto p-6 space-y-6">
                 <div className="mb-8">
+                    <Breadcrumbs
+                        items={[
+                            { label: "Dashboard", href: "/dashboard" },
+                            { label: "Settings", href: "/dashboard/settings" },
+                            { label: "Integrations" },
+                        ]}
+                        className="mb-3"
+                    />
                     <Link
                         href="/dashboard/settings"
                         className="text-compact text-muted-foreground/75 hover:text-foreground mb-2 inline-block"

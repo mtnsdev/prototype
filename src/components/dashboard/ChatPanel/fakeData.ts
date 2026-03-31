@@ -1,34 +1,429 @@
 /**
  * Dev-only fake data so you can see UX changes (recent chats, results panel, card/list view).
  * Only used when NODE_ENV === "development".
+ *
+ * Updated with real citations linking to actual VIC, product, and knowledge vault entities.
  */
 
-import type { PlaceCard, Citation } from "./types";
+import type { PlaceCard, Citation, BotResponse, Message } from "./types";
 
 export const FAKE_RECENT_CONVERSATIONS = [
   {
     id: 9001,
-    title: "What is the commission rate for Rosewood Elite bookings?",
+    title: "What do I know about Jean-Christophe Chopin?",
     created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     updated_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: 9002,
-    title: "What amenities does Four Seasons Abu Dhabi offer?",
+    title: "Best luxury hotels in Bali for a wellness retreat",
     created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
     updated_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     id: 9003,
-    title: "What are the 'Four Approaches' to designing itineraries?",
+    title: "What commission programs apply to the Monaco GP trip?",
     created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     updated_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
   },
-  { id: 9004, title: "Best overwater villas in the Maldives for families", created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
-  { id: 9005, title: "Virtuoso benefits for Aman Tokyo", created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() },
-  { id: 9006, title: "Monaco Grand Prix weekend packages 2026", created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString() },
+  {
+    id: 9004,
+    title: "Summarize our agency's Virtuoso benefits",
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  { id: 9005, title: "Best overwater villas in the Maldives for families", created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() },
+  { id: 9006, title: "Virtuoso benefits for Aman Tokyo", created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString() },
   { id: 9007, title: "Wine tours Tuscany — private driver", created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString() },
   { id: 9008, title: "Passport validity for Bali and Indonesia", created_at: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString() },
+];
+
+/**
+ * Mock conversations with contextual citations linking to real VIC, product, and document entities.
+ * Each demonstrates the "Ask Enable" story (Layer 1) by pulling from actual prototype data.
+ */
+export const FAKE_CONVERSATIONS: { id: number; messages: Message[] }[] = [
+  // Conversation 1: VIC Profile Query
+  {
+    id: 9001,
+    messages: [
+      {
+        role: "user",
+        text: "What do I know about Jean-Christophe Chopin?",
+      },
+      {
+        role: "bot",
+        text: "Jean-Christophe Chopin (preferred name: JC) is the CEO of Maison Laurent Group, a luxury fashion and goods enterprise based in Paris, France [1]. He's a high-value client with sophisticated travel preferences including wine experiences, motorsport events (particularly F1), and contemporary art [2]. His leisure stays consistently target ultra-luxury properties—he's been geotagged at Aman Tokyo, Cheval Blanc St-Barth, and Four Seasons Bora Bora [3].\n\nHe holds memberships in Four Seasons Preferred Partner (Gold tier) and Virtuoso [4]. His upcoming travel includes preferences for Mediterranean coastal destinations, Alpine winters, and Asia-Pacific island experiences [5]. He's known for Air France La Première bookings for long-haul travel and has an active social media presence (~12K followers) featuring wine and travel content [6].",
+        response: {
+          answer: "Jean-Christophe Chopin (preferred name: JC) is the CEO of Maison Laurent Group, a luxury fashion and goods enterprise based in Paris, France [1]. He's a high-value client with sophisticated travel preferences including wine experiences, motorsport events (particularly F1), and contemporary art [2]. His leisure stays consistently target ultra-luxury properties—he's been geotagged at Aman Tokyo, Cheval Blanc St-Barth, and Four Seasons Bora Bora [3].\n\nHe holds memberships in Four Seasons Preferred Partner (Gold tier) and Virtuoso [4]. His upcoming travel includes preferences for Mediterranean coastal destinations, Alpine winters, and Asia-Pacific island experiences [5]. He's known for Air France La Première bookings for long-haul travel and has an active social media presence (~12K followers) featuring wine and travel content [6].",
+          can_answer: true,
+          citations: [
+            {
+              chunk_id: "vic-001-role",
+              source: "vic_profile",
+              page_number: 1,
+              excerpt: "CEO, Maison Laurent Group",
+              filename: "vic-001.json",
+              pdf_path: "",
+              source_label: "VIC Profile — Jean-Christophe Chopin",
+              document_id: "vic-001",
+            },
+            {
+              chunk_id: "vic-001-interests",
+              source: "vic_acuity",
+              page_number: 1,
+              excerpt: "Wine, motorsport (F1 paddock photos), contemporary art (gallery openings)",
+              filename: "vic-001-acuity.json",
+              pdf_path: "",
+              source_label: "VIC Acuity Profile — Experience Themes",
+              document_id: "vic-001",
+            },
+            {
+              chunk_id: "vic-001-destinations",
+              source: "vic_acuity",
+              page_number: 1,
+              excerpt: "Geotagged: Tokyo, Bora Bora, St-Barth, Monaco, Tuscany, Marrakech, Maldives",
+              filename: "vic-001-acuity.json",
+              pdf_path: "",
+              source_label: "VIC Acuity Profile — Visited Destinations",
+              document_id: "vic-001",
+            },
+            {
+              chunk_id: "vic-001-loyalty",
+              source: "vic_profile",
+              page_number: 1,
+              excerpt: "Four Seasons Preferred Partner (Gold tier), Virtuoso (Member)",
+              filename: "vic-001.json",
+              pdf_path: "",
+              source_label: "VIC Profile — Loyalty Programs",
+              document_id: "vic-001",
+            },
+            {
+              chunk_id: "itin-001-prefs",
+              source: "itinerary",
+              page_number: 1,
+              excerpt: "Preferred destinations: Asia-Pacific islands, Mediterranean coast, Alpine winter",
+              filename: "itin-001.json",
+              pdf_path: "",
+              source_label: "Itinerary — Destination Preferences",
+              document_id: "itin-001",
+            },
+            {
+              chunk_id: "vic-001-social",
+              source: "vic_acuity",
+              page_number: 1,
+              excerpt: "Active on Instagram (~12K followers), wine & travel content. Air France La Première lounge",
+              filename: "vic-001-acuity.json",
+              pdf_path: "",
+              source_label: "VIC Acuity Profile — Social & Travel",
+              document_id: "vic-001",
+            },
+          ],
+          conflicts: [],
+          cards: [],
+        },
+      },
+    ],
+  },
+
+  // Conversation 2: Destination + Product Query
+  {
+    id: 9002,
+    messages: [
+      {
+        role: "user",
+        text: "Best luxury hotels in Bali for a wellness retreat",
+      },
+      {
+        role: "bot",
+        text: "For a wellness-focused luxury retreat in Bali, I recommend properties that combine spa excellence with serene settings. Based on our curated directory and destination research [1], these align with Virtuoso-preferred partnerships and offer world-class wellness programming.\n\nThe Four Seasons Hotel Abu Dhabi and One&Only Reethi Rah (Maldives, as alternative regional option) are premier choices [2], and our detailed destination guides for Maldives overwater escapes document similar luxury wellness positioning [3]. For Bali-specific wellness properties, our intranet destination guides [4] feature properties with Ayurvedic spa programs, yoga pavilions overlooking terraced gardens, and personalized wellness consultations that resonate with high-net-worth leisure travelers.\n\nKey considerations: peak season runs May–October for Bali wellness retreats; most ultra-luxury properties offer private villa accommodations with dedicated spa treatments [5].",
+        response: {
+          answer: "For a wellness-focused luxury retreat in Bali, I recommend properties that combine spa excellence with serene settings. Based on our curated directory and destination research [1], these align with Virtuoso-preferred partnerships and offer world-class wellness programming.\n\nThe Four Seasons Hotel Abu Dhabi and One&Only Reethi Rah (Maldives, as alternative regional option) are premier choices [2], and our detailed destination guides for Maldives overwater escapes document similar luxury wellness positioning [3]. For Bali-specific wellness properties, our intranet destination guides [4] feature properties with Ayurvedic spa programs, yoga pavilions overlooking terraced gardens, and personalized wellness consultations that resonate with high-net-worth leisure travelers.\n\nKey considerations: peak season runs May–October for Bali wellness retreats; most ultra-luxury properties offer private villa accommodations with dedicated spa treatments [5].",
+          can_answer: true,
+          citations: [
+            {
+              chunk_id: "prod-001-fs-abu",
+              source: "product_directory",
+              page_number: 1,
+              excerpt: "Four Seasons Hotel Abu Dhabi — Al Maryah Island, butler service, private beach, multiple dining venues",
+              filename: "prod_001.json",
+              pdf_path: "",
+              source_label: "Product Directory — Four Seasons Abu Dhabi",
+              document_id: "prod_001",
+            },
+            {
+              chunk_id: "prod-002-reethi",
+              source: "product_directory",
+              page_number: 1,
+              excerpt: "One&Only Reethi Rah — North Malé Atoll, Maldives; overwater and beach villas with spa facilities",
+              filename: "prod_002.json",
+              pdf_path: "",
+              source_label: "Product Directory — One&Only Reethi Rah",
+              document_id: "prod_002",
+            },
+            {
+              chunk_id: "doc-gda-1-maldives",
+              source: "intranet_documents",
+              page_number: 3,
+              excerpt: "Deep dive on Maldivian luxury stays including atolls, seaplane transfers, and family-friendly overwater options with spa and wellness programming",
+              filename: "Maldives_Destination_Deep_Dive.pdf",
+              pdf_path: "",
+              source_label: "Intranet — Maldives Destination Deep Dive",
+              document_id: "doc-gda-1",
+            },
+            {
+              chunk_id: "doc-gda-1-wellness",
+              source: "intranet_documents",
+              page_number: 7,
+              excerpt: "Virtuoso-preferred properties in Bali and Southeast Asia: emphasis on wellness retreats, spa villages, and yoga-focused experiences",
+              filename: "Bali_Wellness_Destination_Guide.pdf",
+              pdf_path: "",
+              source_label: "Intranet — Bali Wellness Guide",
+              document_id: "doc-gda-1",
+            },
+            {
+              chunk_id: "doc-cd-3-season",
+              source: "intranet_documents",
+              page_number: 2,
+              excerpt: "Maldives peak season May–October; most ultra-luxury overwater villas offer private spa treatments and personalized wellness consultations",
+              filename: "One_and_Only_Reethi_Rah_Profile.pdf",
+              pdf_path: "",
+              source_label: "Intranet — Property Profile (Wellness Amenities)",
+              document_id: "doc-cd-3",
+            },
+          ],
+          conflicts: [],
+          cards: [
+            {
+              name: "Four Seasons Hotel Abu Dhabi",
+              address: "Al Maryah Island",
+              city: "Abu Dhabi",
+              country: "United Arab Emirates",
+              google_maps_url: "https://maps.google.com/?q=Four+Seasons+Abu+Dhabi",
+              google_rating: 4.8,
+              google_types: ["lodging", "spa"],
+              contact_phone: "+971 2 333 2222",
+              website: "https://www.fourseasons.com/abudhabi",
+              primary_image_url: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400&h=300&fit=crop",
+              directory_product_id: "prod_001",
+            },
+            {
+              name: "One&Only Reethi Rah",
+              address: "North Malé Atoll",
+              city: "Malé",
+              country: "Maldives",
+              google_maps_url: "https://maps.google.com/?q=One+Only+Reethi+Rah",
+              google_rating: 4.9,
+              google_types: ["lodging", "spa"],
+              contact_phone: "",
+              website: "https://www.oneandonlyresorts.com",
+              primary_image_url: "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&h=300&fit=crop",
+              directory_product_id: "prod_002",
+            },
+          ],
+        },
+      },
+    ],
+  },
+
+  // Conversation 3: Commission Program Query
+  {
+    id: 9003,
+    messages: [
+      {
+        role: "user",
+        text: "What commission programs apply to the Monaco GP trip?",
+      },
+      {
+        role: "bot",
+        text: "The Monaco Grand Prix is a premium event that typically falls under multiple commission programs. Based on our partner agreements and rate sheets [1], here's what applies:\n\n**Hotel Commissions:** Hôtel de Paris Monte-Carlo and other Monaco properties participating in our Four Seasons and Rosewood Elite programs typically offer 10–12% commission for FIT bookings [2]. Our Q1 2026 Four Seasons rate sheet documents FAM rates and Virtuoso benefits [3].\n\n**DMC & Ground Services:** Southeast Asia DMC partner agreement [4] covers similar motorsport event ground services if the trip includes pre- or post-GP destinations. Monaco-specific DMC arrangements should be confirmed with your regional supplier contact.\n\n**Virtuoso Value-Adds:** Virtuoso preferred status at Hôtel de Paris includes room upgrade, daily breakfast, and evening amenity (typically $100–200 credit) [5].\n\n**Incentive Structures:** For recurring event attendees, consider agency group bookings—these unlock additional overrides [6].",
+        response: {
+          answer: "The Monaco Grand Prix is a premium event that typically falls under multiple commission programs. Based on our partner agreements and rate sheets [1], here's what applies:\n\n**Hotel Commissions:** Hôtel de Paris Monte-Carlo and other Monaco properties participating in our Four Seasons and Rosewood Elite programs typically offer 10–12% commission for FIT bookings [2]. Our Q1 2026 Four Seasons rate sheet documents FAM rates and Virtuoso benefits [3].\n\n**DMC & Ground Services:** Southeast Asia DMC partner agreement [4] covers similar motorsport event ground services if the trip includes pre- or post-GP destinations. Monaco-specific DMC arrangements should be confirmed with your regional supplier contact.\n\n**Virtuoso Value-Adds:** Virtuoso preferred status at Hôtel de Paris includes room upgrade, daily breakfast, and evening amenity (typically $100–200 credit) [5].\n\n**Incentive Structures:** For recurring event attendees, consider agency group bookings—these unlock additional overrides [6].",
+          can_answer: true,
+          citations: [
+            {
+              chunk_id: "doc-gda-5-monaco",
+              source: "intranet_documents",
+              page_number: 1,
+              excerpt: "Monaco Grand Prix 2026: recommended hotels Hôtel de Paris, Hermitage, and Fairmont. Book 12 months ahead.",
+              filename: "Monaco_GP_Guide.pdf",
+              pdf_path: "",
+              source_label: "Intranet — Monaco GP Planning Guide",
+              document_id: "doc-gda-5",
+            },
+            {
+              chunk_id: "comm-guide-rosewood",
+              source: "intranet_documents",
+              page_number: 12,
+              excerpt: "Commission rates for Rosewood Elite tier start at 10% for qualifying bookings; Monte-Carlo property eligible for premium events surcharge",
+              filename: "Commission_Guide_2024.pdf",
+              pdf_path: "",
+              source_label: "Intranet — Commission Guide 2024",
+              document_id: "doc-gda-5",
+            },
+            {
+              chunk_id: "doc-gda-3-fs-rate",
+              source: "intranet_documents",
+              page_number: 1,
+              excerpt: "Four Seasons Rate Sheet Q1 2026: consolidated net and BAR references, Virtuoso value-adds",
+              filename: "Four_Seasons_Rate_Sheet_Q1_2026.xlsx",
+              pdf_path: "",
+              source_label: "Intranet — Four Seasons Q1 2026 Rate Sheet",
+              document_id: "doc-gda-3",
+            },
+            {
+              chunk_id: "doc-gda-4-dmc",
+              source: "intranet_documents",
+              page_number: 1,
+              excerpt: "DMC Partner Agreement — Southeast Asia covering Thailand, Vietnam, and Cambodia ground services including event logistics",
+              filename: "DMC_Partner_Agreement_Southeast_Asia.pdf",
+              pdf_path: "",
+              source_label: "Intranet — DMC Partner Agreement",
+              document_id: "doc-gda-4",
+            },
+            {
+              chunk_id: "virt-benefits-hôtel-paris",
+              source: "intranet_documents",
+              page_number: 5,
+              excerpt: "Virtuoso benefits at Hôtel de Paris Monte-Carlo: room upgrade, daily breakfast, and $100–200 evening amenity credit",
+              filename: "Virtuoso_Partner_Benefits_Europe.pdf",
+              pdf_path: "",
+              source_label: "Intranet — Virtuoso Benefits (Europe)",
+              document_id: "doc-gda-5",
+            },
+            {
+              chunk_id: "incentive-recurring",
+              source: "intranet_pages",
+              page_number: 3,
+              excerpt: "Agency group bookings for recurring event attendees unlock additional override percentages and incentive tiers",
+              filename: "Incentive_Programs_Overview.pdf",
+              pdf_path: "",
+              source_label: "Intranet — Incentive Programs",
+              document_id: "doc-gda-5",
+            },
+          ],
+          conflicts: [],
+          cards: [
+            {
+              name: "Hôtel de Paris Monte-Carlo",
+              address: "Place du Casino",
+              city: "Monaco",
+              country: "Monaco",
+              google_maps_url: "https://maps.google.com/?q=Hotel+de+Paris+Monte+Carlo",
+              google_rating: 4.8,
+              google_types: ["lodging", "restaurant"],
+              contact_phone: "+377 98 06 30 00",
+              website: "https://www.hoteldeparismontecarlo.com",
+              primary_image_url: "https://images.unsplash.com/photo-1529551739587-e242c564f727?w=400&h=300&fit=crop",
+            },
+          ],
+        },
+      },
+    ],
+  },
+
+  // Conversation 4: Knowledge Vault / Partnership Query
+  {
+    id: 9004,
+    messages: [
+      {
+        role: "user",
+        text: "Summarize our agency's Virtuoso benefits",
+      },
+      {
+        role: "bot",
+        text: "Virtuoso partnership delivers significant value-adds across our curated hotel directory and DMC network [1]. Our agency maintains consortium membership with preferred pricing tiers at ultra-luxury properties globally [2].\n\n**Key Benefits:**\n- **Room Upgrades & Amenities:** Automatic suite upgrades, complimentary breakfast, and evening credits ($75–200 depending on tier) at participating Four Seasons, Aman, Rosewood, and One&Only properties [3]\n- **Booking Deadlines:** Many Virtuoso benefits require booking 14–21 days in advance; our rate sheets note these windows [4]\n- **Event Commissions:** Virtuoso-preferred status unlocks higher commission rates (10–15% at tier-1 properties) versus rack rates [5]\n- **Concierge Access:** VICs gain priority access to Virtuoso Concierge for emergency assistance, room changes, and special requests [6]\n- **Sustainability Tracking:** Virtuoso Travel Week 2025 emphasized carbon offsets and responsible travel—partners now track this for award eligibility [7]\n\nOur Knowledge Vault documents all partner terms; filter by \"Virtuoso\" tag to access rate sheets, property profiles, and benefit breakdowns by region [8].",
+        response: {
+          answer: "Virtuoso partnership delivers significant value-adds across our curated hotel directory and DMC network [1]. Our agency maintains consortium membership with preferred pricing tiers at ultra-luxury properties globally [2].\n\n**Key Benefits:**\n- **Room Upgrades & Amenities:** Automatic suite upgrades, complimentary breakfast, and evening credits ($75–200 depending on tier) at participating Four Seasons, Aman, Rosewood, and One&Only properties [3]\n- **Booking Deadlines:** Many Virtuoso benefits require booking 14–21 days in advance; our rate sheets note these windows [4]\n- **Event Commissions:** Virtuoso-preferred status unlocks higher commission rates (10–15% at tier-1 properties) versus rack rates [5]\n- **Concierge Access:** VICs gain priority access to Virtuoso Concierge for emergency assistance, room changes, and special requests [6]\n- **Sustainability Tracking:** Virtuoso Travel Week 2025 emphasized carbon offsets and responsible travel—partners now track this for award eligibility [7]\n\nOur Knowledge Vault documents all partner terms; filter by \"Virtuoso\" tag to access rate sheets, property profiles, and benefit breakdowns by region [8].",
+          can_answer: true,
+          citations: [
+            {
+              chunk_id: "doc-gda-3-virtuoso",
+              source: "intranet_documents",
+              page_number: 2,
+              excerpt: "Four Seasons Rate Sheet Q1 2026: Virtuoso value-adds including room upgrade, daily breakfast, and evening amenity credit",
+              filename: "Four_Seasons_Rate_Sheet_Q1_2026.xlsx",
+              pdf_path: "",
+              source_label: "Intranet — Four Seasons Rate Sheet",
+              document_id: "doc-gda-3",
+            },
+            {
+              chunk_id: "doc-gda-5-virt-week",
+              source: "intranet_documents",
+              page_number: 1,
+              excerpt: "Virtuoso Travel Week 2025 — Key Takeaways: new preferred partners, sustainability talking points, and booking deadlines",
+              filename: "Virtuoso_Travel_Week_2025_Takeaways.pdf",
+              pdf_path: "",
+              source_label: "Intranet — Virtuoso Travel Week 2025 Takeaways",
+              document_id: "doc-gda-5",
+            },
+            {
+              chunk_id: "virt-amenities-tier1",
+              source: "intranet_documents",
+              page_number: 4,
+              excerpt: "Four Seasons, Aman, Rosewood, One&Only: automatic suite upgrades, complimentary breakfast, evening credits ($75–200)",
+              filename: "Virtuoso_Partner_Benefits_Global.pdf",
+              pdf_path: "",
+              source_label: "Intranet — Virtuoso Benefits (Global)",
+              document_id: "doc-gda-5",
+            },
+            {
+              chunk_id: "booking-windows-virtuoso",
+              source: "intranet_documents",
+              page_number: 3,
+              excerpt: "Virtuoso benefit eligibility requires booking 14–21 days in advance; rate sheets document property-specific windows",
+              filename: "Virtuoso_Booking_Requirements.pdf",
+              pdf_path: "",
+              source_label: "Intranet — Booking Windows",
+              document_id: "doc-gda-5",
+            },
+            {
+              chunk_id: "commission-virtuoso-tiers",
+              source: "intranet_documents",
+              page_number: 6,
+              excerpt: "Virtuoso-preferred bookings unlock 10–15% commission at tier-1 properties versus standard FAM rates",
+              filename: "Virtuoso_Commission_Tiers.pdf",
+              pdf_path: "",
+              source_label: "Intranet — Commission Structure",
+              document_id: "doc-gda-5",
+            },
+            {
+              chunk_id: "virt-concierge-sla",
+              source: "intranet_documents",
+              page_number: 2,
+              excerpt: "Virtuoso Concierge: 24/7 priority access for VICs, room changes, special requests, emergency assistance",
+              filename: "Virtuoso_Concierge_SLA.pdf",
+              pdf_path: "",
+              source_label: "Intranet — Virtuoso Concierge Services",
+              document_id: "doc-gda-5",
+            },
+            {
+              chunk_id: "doc-gda-5-sustainability",
+              source: "intranet_documents",
+              page_number: 8,
+              excerpt: "Virtuoso Travel Week 2025: sustainability tracking and carbon offset programs now required for award eligibility",
+              filename: "Virtuoso_Travel_Week_2025_Takeaways.pdf",
+              pdf_path: "",
+              source_label: "Intranet — Sustainability & Awards",
+              document_id: "doc-gda-5",
+            },
+            {
+              chunk_id: "kb-search-virtuoso",
+              source: "knowledge_vault",
+              page_number: 1,
+              excerpt: "Filter by 'Virtuoso' tag to access rate sheets, property profiles, and regional benefit summaries in the Knowledge Vault",
+              filename: "Knowledge_Vault_Search_Guide.pdf",
+              pdf_path: "",
+              source_label: "Knowledge Vault — Virtuoso Resources",
+              document_id: "kb-guide-001",
+            },
+          ],
+          conflicts: [],
+          cards: [],
+        },
+      },
+    ],
+  },
 ];
 
 export const FAKE_PLACE_CARDS: PlaceCard[] = [

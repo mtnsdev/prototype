@@ -90,47 +90,21 @@ export function canShareVIC(user: CurrentUser | null, vic: VIC | null): boolean 
 
 /**
  * Can the user see unmasked PII (passport, KTN, full membership_id)?
- * - Owner, or shared_with with sharing_level "full", or admin.
+ *
+ * March 31 decision: sharing is all-or-nothing. If user can view the VIC,
+ * they see everything including sensitive fields. No basic/full split.
  */
 export function canViewSensitiveFields(user: CurrentUser | null, vic: VIC | null, ctx?: VicPermissionContext): boolean {
-  if (!user || !vic) return false;
-  const uid = String(user.id);
-  if (user.role === "admin") return true;
-  const oid = ownerId(vic);
-  if (oid === uid) return true;
-  const aid = vic.assigned_advisor_id != null ? String(vic.assigned_advisor_id) : undefined;
-  if (aid === uid) return true;
-  const shared = vic.shared_with?.find((s: SharedAccess) => String(s.advisor_id) === uid);
-  if (shared?.access_level === "edit" && vic.sharing_level === "full") return true;
-  const teamShared = teamShareForUser(vic, uid, ctx?.teams);
-  return teamShared?.access_level === "edit" && vic.sharing_level === "full";
+  return canViewVIC(user, vic, ctx);
 }
 
 /**
- * Effective view level for this user on this VIC: "full" | "basic" | "none".
- * - "full": owner or shared with full/edit, or admin.
- * - "basic": shared with basic (name + contact only).
- * - "none": no access.
+ * Effective view level for this user on this VIC: "full" | "none".
+ *
+ * March 31 decision: no "basic" tier. If shared, recipient sees everything.
+ * The "basic" level is removed — canViewVIC() returning true always means full access.
  */
 export function getVICViewLevel(user: CurrentUser | null, vic: VIC | null, ctx?: VicPermissionContext): "full" | "basic" | "none" {
-  if (!user || !vic) return "none";
-  const uid = String(user.id);
-  if (user.role === "admin") return "full";
-  if (
-    (vic.assigned_advisor_id != null && String(vic.assigned_advisor_id) === uid) ||
-    ownerId(vic) === uid
-  )
-    return "full";
-  if (vic.is_shared_to_agency && user.agency_id) return "basic"; // agency directory read-only
-  const shared = vic.shared_with?.find((s: SharedAccess) => String(s.advisor_id) === uid);
-  if (shared) {
-    if (vic.sharing_level === "full" || shared.access_level === "edit") return "full";
-    if (vic.sharing_level === "basic") return "basic";
-    return "none";
-  }
-  const teamShared = teamShareForUser(vic, uid, ctx?.teams);
-  if (!teamShared) return "none";
-  if (vic.sharing_level === "full" || teamShared.access_level === "edit") return "full";
-  if (vic.sharing_level === "basic") return "basic";
+  if (canViewVIC(user, vic, ctx)) return "full";
   return "none";
 }

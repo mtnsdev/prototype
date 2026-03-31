@@ -3,6 +3,7 @@
 import type { VIC } from "@/types/vic";
 import { getVICId } from "@/lib/vic-api";
 import VICCard from "./VICCard";
+import { VICCardSkeleton } from "@/components/ui/skeletons";
 
 type Props = {
   vics: VIC[];
@@ -33,16 +34,16 @@ export default function VICCardView({
 }: Props) {
   if (isLoading && vics.length === 0) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] h-48 animate-pulse" />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 view-transition-enter view-transition-active">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <VICCardSkeleton key={i} />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 view-transition-active">
       {vics.map((vic) => (
         <VICCard
           key={getVICId(vic)}

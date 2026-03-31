@@ -9,6 +9,7 @@ import type { VICTab } from "./TabBar";
 import { fetchVICList, fetchAcuitySettings, triggerAcuitySingle, triggerAcuityBulk, deleteVIC, getVICId } from "@/lib/vic-api";
 import { useUser } from "@/contexts/UserContext";
 import { useTeams } from "@/contexts/TeamsContext";
+import { useToast } from "@/contexts/ToastContext";
 import { canEditVIC, canDeleteVIC, canShareVIC, getVICViewLevel } from "@/utils/vicPermissions";
 import { FAKE_VICS, filterAndPaginateFakeVics } from "./fakeData";
 import TabBar from "./TabBar";
@@ -46,6 +47,7 @@ export default function VICPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const showToast = useToast();
   const rawTab = searchParams.get("tab");
   const activeTab: VICTab = rawTab === "shared" ? "shared" : "mine";
 
@@ -400,7 +402,7 @@ export default function VICPage() {
             clearSelection();
           }}
           onBulkTag={() => {
-            // TODO: open BulkTagModal or inline tag picker
+            showToast(`Tagging ${selectedVicIds.size} VIC${selectedVicIds.size !== 1 ? "s" : ""} — tag editor coming in v2`);
           }}
           onDelete={() => {
             const ids = Array.from(selectedVicIds);

@@ -23,7 +23,12 @@ export type TravelProfileType =
   | "cultural"
   | "celebration";
 
-export type SharingLevel = "none" | "basic" | "full";
+/**
+ * March 31 decision: VIC sharing is all-or-nothing.
+ * Advisor shares full VIC or doesn't share. No tiered basic/sensitive fields.
+ * @deprecated SharingLevel kept for migration compat — always treat as "full" when shared.
+ */
+export type SharingLevel = "none" | "full";
 
 export type AccessLevel = "view" | "edit";
 
@@ -175,8 +180,8 @@ export interface VIC {
   relationship_insights?: RelationshipInsight[];
   travel_discovered_preferences?: TravelDiscoveredPreference[];
 
-  // Sharing
-  sharing_level?: SharingLevel;
+  // Sharing (all-or-nothing: if shared, recipient sees everything)
+  sharing_level?: SharingLevel; // "none" | "full" — no "basic" tier
   shared_with?: SharedAccess[];
   /** All members of each team receive access (view or edit). */
   shared_with_teams?: TeamSharedAccess[];

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type CSSProperties } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Building2, FileText, Search } from "lucide-react";
+import { Building2, FileText, Search, Map } from "lucide-react";
 import { useGlobalSearch } from "@/contexts/GlobalSearchContext";
 import { useTeams } from "@/contexts/TeamsContext";
 import { ScopeBadge } from "@/components/ui/ScopeBadge";
@@ -10,6 +10,7 @@ import {
   buildCmdKIndex,
   filterCmdKIndex,
   sortCmdKByPathScope,
+  globalSearch,
   type CmdKResult,
 } from "@/lib/globalSearchIndex";
 import { getCmdKRecents, pushCmdKRecent, type CmdKRecent } from "@/lib/cmdkRecents";
@@ -49,8 +50,15 @@ export default function GlobalCommandPalette() {
   }, [open]);
 
   const filtered = useMemo(() => {
-    const base = filterCmdKIndex(index, query);
-    return sortCmdKByPathScope(pathname, base);
+    const q = query.trim();
+    if (q) {
+      // Use globalSearch for actual search queries
+      return globalSearch(q);
+    } else {
+      // Use default index for empty query (recents shown separately)
+      const base = filterCmdKIndex(index, "");
+      return sortCmdKByPathScope(pathname, base);
+    }
   }, [index, query, pathname]);
 
   const rows = useMemo((): Row[] => {
@@ -67,6 +75,7 @@ export default function GlobalCommandPalette() {
     const docs = filtered.filter((x): x is Extract<CmdKResult, { kind: "doc" }> => x.kind === "doc");
     const products = filtered.filter((x): x is Extract<CmdKResult, { kind: "product" }> => x.kind === "product");
     const vics = filtered.filter((x): x is Extract<CmdKResult, { kind: "vic" }> => x.kind === "vic");
+    const itineraries = filtered.filter((x): x is Extract<CmdKResult, { kind: "itinerary" }> => x.kind === "itinerary");
 
     if (docs.length > 0) {
       out.push({ rowKind: "section", id: "sec-docs", label: "Documents" });
@@ -79,6 +88,10 @@ export default function GlobalCommandPalette() {
     if (vics.length > 0) {
       out.push({ rowKind: "section", id: "sec-vics", label: "VICs" });
       vics.forEach((v, i) => out.push({ rowKind: "hit", id: `vic-${v.id}-${i}`, hit: v }));
+    }
+    if (itineraries.length > 0) {
+      out.push({ rowKind: "section", id: "sec-itineraries", label: "Itineraries" });
+      itineraries.forEach((itin, i) => out.push({ rowKind: "hit", id: `itin-${itin.id}-${i}`, hit: itin }));
     }
 
     return out;
@@ -116,6 +129,7 @@ export default function GlobalCommandPalette() {
     const h = sel.hit;
     if (h.kind === "doc") go(h.href, h.title, "doc");
     else if (h.kind === "product") go(h.href, h.title, "product");
+    else if (h.kind === "itinerary") go(h.href, h.title, "doc"); // treat itinerary as doc for recent
     else go(h.href, h.title, "vic");
   }, [selectable, activeFlat, go]);
 
@@ -308,6 +322,31 @@ export default function GlobalCommandPalette() {
                     >
                       {data.typeLabel}
                     </span>
+                  </button>
+                );
+              }
+
+              if (data.kind === "itinerary") {
+                return (
+                  <button
+                    key={row.id}
+                    id={optId}
+                    type="button"
+                    role="option"
+                    aria-selected={isActive}
+                    data-cmdk-active={isActive ? "true" : undefined}
+                    onClick={() => go(data.href, data.title, "doc")}
+                    onMouseEnter={() => setActiveFlat(flat)}
+                    className={cn(
+                      "flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors",
+                      isActive ? "bg-muted/80" : "hover:bg-muted/50"
+                    )}
+                  >
+                    <Map className="h-4 w-4 shrink-0 text-muted-foreground/65" aria-hidden />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-compact block truncate text-foreground">{data.title}</span>
+                      <span className="text-2xs text-muted-foreground/65">{data.subtitle}</span>
+                    </div>
                   </button>
                 );
               }

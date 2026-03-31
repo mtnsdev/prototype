@@ -5,6 +5,7 @@ import { User } from "lucide-react";
 import type { Itinerary } from "@/types/itinerary";
 import { getItineraryId } from "@/lib/itineraries-api";
 import { ITINERARY_STATUS_BADGES, formatDateRange } from "./statusConfig";
+import { ItineraryCardSkeleton } from "@/components/ui/skeletons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,16 +42,16 @@ export default function ItineraryCardView({
 }: Props) {
   if (isLoading && itineraries.length === 0) {
     return (
-      <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 view-transition-enter view-transition-active">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="h-48 rounded-xl bg-muted-foreground/10 animate-pulse" />
+          <ItineraryCardSkeleton key={i} />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 view-transition-active">
       {itineraries.map((it) => {
         const id = getItineraryId(it);
         const statusBadge = ITINERARY_STATUS_BADGES[it.status];

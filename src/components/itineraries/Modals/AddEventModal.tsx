@@ -24,6 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ProductSearchPanel } from "@/components/itineraries/ProductSearchPanel";
+import { EntityChip } from "@/components/ui/entity-link";
 import { Bed, UtensilsCrossed, Car, Star, Plane, Clock, Compass, StickyNote } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -83,6 +85,7 @@ export default function AddEventModal({ open, onClose, itineraryId, dayNumber, o
   const [linkedProduct, setLinkedProduct] = useState<Product | null>(null);
   const [productSearch, setProductSearch] = useState("");
   const [productResults, setProductResults] = useState<Product[]>([]);
+  const [showProductSearch, setShowProductSearch] = useState(false);
   const [checkInTime, setCheckInTime] = useState("");
   const [checkOutTime, setCheckOutTime] = useState("");
   const [roomType, setRoomType] = useState("");
@@ -147,6 +150,7 @@ export default function AddEventModal({ open, onClose, itineraryId, dayNumber, o
     }
     setProductSearch("");
     setProductResults([]);
+    setShowProductSearch(false);
     setError(null);
   }, [open, existingEvent]);
 
@@ -166,6 +170,16 @@ export default function AddEventModal({ open, onClose, itineraryId, dayNumber, o
       });
     return () => { cancelled = true; };
   }, [productSearch, eventType]);
+
+  const handleProductSelected = (product: Product) => {
+    setLinkedProduct(product);
+    setTitle(product.name);
+    setProductSearch("");
+    setProductResults([]);
+    if (product.commission_rate != null) {
+      setCommissionRate(String(product.commission_rate));
+    }
+  };
 
   const handleSave = async () => {
     if (!title.trim()) return;
@@ -378,43 +392,49 @@ export default function AddEventModal({ open, onClose, itineraryId, dayNumber, o
           )}
           {eventTypeToProductCategory(eventType) && (
             <div>
-              <Label className="text-muted-foreground">Link product</Label>
-              <Input
-                value={linkedProduct ? linkedProduct.name : productSearch}
-                onChange={(e) => {
-                  setProductSearch(e.target.value);
-                  if (linkedProduct) setLinkedProduct(null);
-                }}
-                onFocus={() => productSearch.length >= 2 && setProductResults(productResults)}
-                placeholder="Search products by category…"
-                className="mt-1 bg-white/5 border-input text-foreground"
-              />
-              {linkedProduct ? (
-                <div className="mt-2 flex items-center justify-between rounded-lg border border-input bg-white/5 p-2">
-                  <span className="text-sm text-foreground">{linkedProduct.name}</span>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => { setLinkedProduct(null); setProductSearch(""); }} className="text-muted-foreground">
-                    Clear
+              <div className="flex items-center justify-between">
+                <Label className="text-muted-foreground">Linked product</Label>
+                {!showProductSearch && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowProductSearch(true)}
+                    className="text-xs text-blue-400 hover:text-blue-300 hover:bg-transparent"
+                  >
+                    {linkedProduct ? "Change" : "Browse products"}
+                  </Button>
+                )}
+              </div>
+              {linkedProduct && (
+                <div className="mt-2">
+                  <EntityChip
+                    type="product"
+                    id={linkedProduct.id}
+                    name={linkedProduct.name}
+                    meta={linkedProduct.city || undefined}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setLinkedProduct(null);
+                      setProductSearch("");
+                    }}
+                    className="mt-2 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Clear product
                   </Button>
                 </div>
-              ) : productResults.length > 0 && (
-                <ul className="mt-1 max-h-32 overflow-y-auto rounded-lg border border-input bg-inset">
-                  {productResults.map((p) => (
-                    <li key={p.id}>
-                      <button
-                        type="button"
-                        className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-white/10"
-                        onClick={() => {
-                          setLinkedProduct(p);
-                          setTitle(p.name);
-                          setProductSearch("");
-                          setProductResults([]);
-                        }}
-                      >
-                        {p.name} {p.category && `(${p.category})`}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+              )}
+              {showProductSearch && (
+                <ProductSearchPanel
+                  isOpen={showProductSearch}
+                  onClose={() => setShowProductSearch(false)}
+                  eventCategory={eventTypeToProductCategory(eventType)}
+                  onProductSelected={handleProductSelected}
+                />
               )}
             </div>
           )}

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { X, Users } from "lucide-react";
+import { X, Users, Info } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { useTeams } from "@/contexts/TeamsContext";
 
@@ -22,22 +22,22 @@ const MOCK_ADVISORS = [
   { id: "3", name: "Jordan Lee" },
 ];
 
-const LEVEL_DESCRIPTIONS: Record<string, string> = {
-  none: "Private — only you and assigned advisors",
-  basic: "Basic — name and contact only to shared users",
-  full: "Full — all fields visible to shared users",
-};
-
 type Props = {
   vic: VIC;
   onClose: () => void;
   onSaved: () => void;
 };
 
+/**
+ * ShareVICModal — all-or-nothing sharing (March 31 decision).
+ *
+ * When an advisor shares a VIC, the recipient sees EVERYTHING — no basic/full
+ * split. Access level (view/edit) still controls whether the recipient can
+ * modify the VIC, but there's no field masking.
+ */
 export default function ShareVICModal({ vic, onClose, onSaved }: Props) {
   const { user } = useUser();
   const { teams } = useTeams();
-  const [level, setLevel] = useState<VIC["sharing_level"]>(vic.sharing_level ?? "none");
   const [sharedToAgency, setSharedToAgency] = useState(vic.is_shared_to_agency ?? false);
   const [sharedWith, setSharedWith] = useState<SharedAccess[]>(vic.shared_with ?? []);
   const [sharedWithTeams, setSharedWithTeams] = useState<TeamSharedAccess[]>(vic.shared_with_teams ?? []);
@@ -91,8 +91,6 @@ export default function ShareVICModal({ vic, onClose, onSaved }: Props) {
     setSharedWithTeams((prev) => prev.filter((s) => s.team_id !== teamId));
   };
 
-  const sharingLevelForApi = level ?? "none";
-
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -104,6 +102,9 @@ export default function ShareVICModal({ vic, onClose, onSaved }: Props) {
 
       const removedAdvisors = [...prevAdvisorIds].filter((id) => !nextAdvisorIds.has(id));
       const removedTeams = [...prevTeamIds].filter((id) => !nextTeamIds.has(id));
+
+      // All-or-nothing: sharing_level is always "full" when shared
+      const sharingLevelForApi = (sharedWith.length > 0 || sharedWithTeams.length > 0 || sharedToAgency) ? "full" : "none";
 
       const ops: Promise<unknown>[] = [
         ...removedAdvisors.map((advisorId) => unshareVIC(vicId, advisorId).catch(() => {})),
@@ -147,23 +148,14 @@ export default function ShareVICModal({ vic, onClose, onSaved }: Props) {
           <DialogTitle>Share VIC</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 text-sm">
-          <div>
-            <Label className="text-muted-foreground">Sharing level</Label>
-            <div className="mt-1.5 space-y-2">
-              {(["none", "basic", "full"] as const).map((l) => (
-                <label key={l} className="flex items-start gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="level"
-                    checked={level === l}
-                    onChange={() => setLevel(l)}
-                    className="mt-1 rounded border-white/20 bg-white/5"
-                  />
-                  <span className="text-foreground capitalize">{l === "none" ? "Private" : l}</span>
-                  <span className="text-muted-foreground/75 text-xs">— {LEVEL_DESCRIPTIONS[l]}</span>
-                </label>
-              ))}
-            </div>
+          {/* All-or-nothing notice */}
+          <div className="flex items-start gap-2 rounded-md bg-[rgba(201,169,110,0.08)] border border-[rgba(201,169,110,0.2)] px-3 py-2.5">
+            <Info className="h-4 w-4 text-[#C9A96E] mt-0.5 shrink-0" />
+            <p className="text-xs text-muted-foreground">
+              Sharing is all-or-nothing. Recipients see the full VIC profile including
+              travel preferences, documents, and financials. Choose <strong>View</strong> for
+              read-only access or <strong>Edit</strong> to allow changes.
+            </p>
           </div>
 
           <div>
@@ -224,7 +216,7 @@ export default function ShareVICModal({ vic, onClose, onSaved }: Props) {
               Share with team
             </Label>
             <p className="text-xs text-muted-foreground/75 mt-1 mb-1.5">
-              Everyone on the team gets access. New members join automatically.
+              Everyone on the team gets full access. New members join automatically.
             </p>
             <div className="mt-1.5 flex gap-2 flex-wrap">
               <select

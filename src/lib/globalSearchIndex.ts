@@ -2,6 +2,8 @@ import { getMockDocuments } from "@/components/knowledge-vault/knowledgeVaultMoc
 import { knowledgeDocumentUiScope } from "@/lib/knowledgeDocumentScope";
 import type { KnowledgeDocument } from "@/types/knowledge-vault";
 import { FAKE_VICS } from "@/components/vic/fakeData";
+import { FAKE_PRODUCTS } from "@/components/products/fakeData";
+import { FAKE_ITINERARIES } from "@/components/itineraries/fakeData";
 
 export type CmdKResult =
   | {
@@ -27,28 +29,165 @@ export type CmdKResult =
       subtitle: string;
       initials: string;
       href: string;
+    }
+  | {
+      kind: "itinerary";
+      id: string;
+      title: string;
+      subtitle: string;
+      initials: string;
+      href: string;
     };
 
 const TYPE_LABEL: Record<string, string> = {
   hotel: "Hotel / Resort",
+  accommodation: "Accommodation",
   dmc: "DMC",
   experience: "Experience / Tour",
+  activity: "Activity",
   cruise: "Cruise",
+  restaurant: "Restaurant",
+  transportation: "Transportation",
+  service_provider: "Service Provider",
 };
-
-const PRODUCT_SEED: { id: string; name: string; city: string; country: string; type: string }[] = [
-  { id: "prod-001", name: "Aman Tokyo", city: "Tokyo", country: "Japan", type: TYPE_LABEL.hotel! },
-  { id: "prod-002", name: "Four Seasons Kyoto", city: "Kyoto", country: "Japan", type: TYPE_LABEL.hotel! },
-  { id: "prod-003", name: "One&Only Reethi Rah", city: "North Malé Atoll", country: "Maldives", type: TYPE_LABEL.hotel! },
-  { id: "prod-004", name: "Cheval Blanc St-Barth", city: "St. Barthélemy", country: "France", type: TYPE_LABEL.hotel! },
-  { id: "prod-005", name: "Belmond Hotel Caruso", city: "Ravello", country: "Italy", type: TYPE_LABEL.hotel! },
-  { id: "prod-dmc-001", name: "Bali Luxury Concierge — Dima", city: "Ubud", country: "Indonesia", type: TYPE_LABEL.dmc! },
-  { id: "prod-exp-001", name: "Private Tea Ceremony — Kyoto", city: "Kyoto", country: "Japan", type: TYPE_LABEL.experience! },
-  { id: "prod-cruise-001", name: "Silversea — Mediterranean Grand Voyage", city: "Monte Carlo", country: "Monaco", type: TYPE_LABEL.cruise! },
-];
 
 function docScope(doc: KnowledgeDocument): string {
   return knowledgeDocumentUiScope(doc);
+}
+
+/**
+ * Fuzzy search helper: case-insensitive substring matching.
+ * Returns a score based on match quality (higher is better).
+ */
+function fuzzySearch(haystack: string, needle: string): number {
+  const h = haystack.toLowerCase();
+  const n = needle.toLowerCase();
+  if (!n) return 0;
+  if (h === n) return 100;
+  if (h.startsWith(n)) return 50;
+  if (h.includes(n)) return 25;
+  return 0;
+}
+
+/**
+ * Search all mock data and return results grouped by type.
+ */
+export function globalSearch(query: string): CmdKResult[] {
+  const q = query.trim();
+  if (!q) return [];
+
+  const results: CmdKResult[] = [];
+
+  // Search VICs by name, email, tags, home_city
+  const vicResults = FAKE_VICS.map((vic) => {
+    const nameScore = fuzzySearch(vic.full_name, q);
+    const emailScore = fuzzySearch(vic.email || "", q);
+    const homeScore = fuzzySearch(vic.home_city || "", q);
+    const tagsScore = (vic.tags || []).some((t) => fuzzySearch(t, q) > 0) ? 15 : 0;
+    const score = nameScore + emailScore + homeScore + tagsScore;
+
+    return { vic, score };
+  })
+    .filter((r) => r.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10)
+    .map((r) => {
+      const v = r.vic;
+      const parts = v.full_name.split(/\s+/).filter(Boolean);
+      const initials =
+        parts.length >= 2
+          ? `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase()
+          : (v.full_name.slice(0, 2).toUpperCase() || "??");
+      return {
+        kind: "vic" as const,
+        id: v.id,
+        title: v.full_name,
+        subtitle: [v.home_city, v.home_country].filter(Boolean).join(", ") || "—",
+        initials,
+        href: `/dashboard/vics/${v.id}`,
+      };
+    });
+
+  // Search Products by name, city, country, category, tags
+  const productResults = FAKE_PRODUCTS.map((prod) => {
+    const nameScore = fuzzySearch(prod.name, q);
+    const cityScore = fuzzySearch(prod.city || "", q);
+    const countryScore = fuzzySearch(prod.country || "", q);
+    const catScore = fuzzySearch(prod.category || "", q);
+    const tagsScore = (prod.tags || []).some((t) => fuzzySearch(t, q) > 0) ? 10 : 0;
+    const score = nameScore + cityScore + countryScore + catScore + tagsScore;
+
+    return { prod, score };
+  })
+    .filter((r) => r.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10)
+    .map((r) => {
+      const p = r.prod;
+      const typeLabel = TYPE_LABEL[p.category] || p.category || "Product";
+      return {
+        kind: "product" as const,
+        id: p.id,
+        title: p.name,
+        subtitle: [p.city, p.country].filter(Boolean).join(", ") || "—",
+        typeLabel,
+        href: `/dashboard/products/${p.id}`,
+      };
+    });
+
+  // Search Itineraries by trip_name, destinations, vic_name
+  const itineraryResults = FAKE_ITINERARIES.map((itin) => {
+    const nameScore = fuzzySearch(itin.trip_name || "", q);
+    const destScore = (itin.destinations || []).some((d) => fuzzySearch(d, q) > 0) ? 15 : 0;
+    const vicScore = fuzzySearch(itin.primary_vic_name || "", q);
+    const score = nameScore + destScore + vicScore;
+
+    return { itin, score };
+  })
+    .filter((r) => r.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10)
+    .map((r) => {
+      const i = r.itin;
+      const parts = (i.primary_vic_name || "?").split(/\s+/).filter(Boolean);
+      const initials =
+        parts.length >= 2
+          ? `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase()
+          : ((i.primary_vic_name || "??").slice(0, 2).toUpperCase() || "??");
+      return {
+        kind: "itinerary" as const,
+        id: i.id,
+        title: i.trip_name || "Untitled Trip",
+        subtitle: (i.destinations || []).join(", ") || "—",
+        initials,
+        href: `/dashboard/itineraries/${i.id}`,
+      };
+    });
+
+  // Search Knowledge Vault documents by title and tags
+  const docResults = getMockDocuments()
+    .map((doc) => {
+      const titleScore = fuzzySearch(doc.title, q);
+      const tagsScore = (doc.tags || []).some((t) => fuzzySearch(t, q) > 0) ? 10 : 0;
+      const score = titleScore + tagsScore;
+
+      return { doc, score };
+    })
+    .filter((r) => r.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10)
+    .map((r) => ({
+      kind: "doc" as const,
+      id: r.doc.id,
+      title: r.doc.title,
+      subtitle: `${r.doc.source_name} · ${new Date(r.doc.last_updated).toLocaleDateString()}`,
+      scope: docScope(r.doc),
+      href: `/dashboard/knowledge-vault?doc=${encodeURIComponent(r.doc.id)}`,
+    }));
+
+  // Return results organized by type
+  results.push(...docResults, ...productResults, ...vicResults, ...itineraryResults);
+  return results;
 }
 
 export function buildCmdKIndex(): CmdKResult[] {
@@ -63,12 +202,12 @@ export function buildCmdKIndex(): CmdKResult[] {
       href: `/dashboard/knowledge-vault?doc=${encodeURIComponent(d.id)}`,
     }));
 
-  const products: CmdKResult[] = PRODUCT_SEED.map((p) => ({
-    kind: "product",
+  const products: CmdKResult[] = FAKE_PRODUCTS.slice(0, 8).map((p) => ({
+    kind: "product" as const,
     id: p.id,
     title: p.name,
-    subtitle: `${p.city}, ${p.country}`,
-    typeLabel: p.type,
+    subtitle: [p.city, p.country].filter(Boolean).join(", ") || "—",
+    typeLabel: TYPE_LABEL[p.category] || p.category || "Product",
     href: `/dashboard/products/${p.id}`,
   }));
 
@@ -82,7 +221,7 @@ export function buildCmdKIndex(): CmdKResult[] {
       kind: "vic" as const,
       id: v.id,
       title: v.full_name,
-      subtitle: [v.city, v.country].filter(Boolean).join(", ") || "—",
+      subtitle: [v.home_city, v.home_country].filter(Boolean).join(", ") || "—",
       initials,
       href: `/dashboard/vics/${v.id}`,
     };
@@ -115,6 +254,7 @@ export function cmdKScopeScore(pathname: string, it: CmdKResult): number {
   if (pathname.startsWith("/dashboard/products") && it.kind === "product") score += 4;
   else if (pathname.startsWith("/dashboard/knowledge") && it.kind === "doc") score += 4;
   else if (pathname.startsWith("/dashboard/vics") && it.kind === "vic") score += 4;
+  else if (pathname.startsWith("/dashboard/itineraries") && it.kind === "itinerary") score += 4;
   else if (pathname.startsWith("/dashboard/chat") && it.kind === "doc") score += 1;
   return score;
 }

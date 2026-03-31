@@ -15,6 +15,7 @@ import ItineraryCardView from "./ItineraryCardView";
 import ItineraryKanbanView from "./ItineraryKanbanView";
 import ItinerariesEmptyState from "./ItinerariesEmptyState";
 import CreateItineraryModal from "./Modals/CreateItineraryModal";
+import { ItineraryCardSkeleton } from "@/components/ui/skeletons";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 import DeleteItineraryModal from "./Modals/DeleteItineraryModal";
 import {

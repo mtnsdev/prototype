@@ -12,6 +12,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useTeams } from "@/contexts/TeamsContext";
 import { canViewVIC, canEditVIC, canDeleteVIC, canShareVIC, canViewSensitiveFields } from "@/utils/vicPermissions";
 import { Button } from "@/components/ui/button";
+import Breadcrumbs from "@/components/ui/breadcrumbs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +26,7 @@ import DeleteConfirmModal from "../Modals/DeleteConfirmModal";
 import AddEditVICModal from "../Modals/AddEditVICModal";
 import ShareVICModal from "../Modals/ShareVICModal";
 import TravelProfileModal from "../Modals/TravelProfileModal";
+import AcuitySimulation from "../AcuitySimulation";
 import type { TravelProfile } from "@/types/vic";
 import ImageWithFallback from "@/components/ui/ImageWithFallback";
 
@@ -49,6 +51,7 @@ export default function VICDetailPage({ vicId }: Props) {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [acuityRunning, setAcuityRunning] = useState(false);
+  const [acuitySimulationOpen, setAcuitySimulationOpen] = useState(false);
   const [travelModalOpen, setTravelModalOpen] = useState(false);
   const [travelProfilesOverride, setTravelProfilesOverride] = useState<TravelProfile[] | null>(null);
   const [showTravelProfiles, setShowTravelProfiles] = useState(false);
@@ -105,15 +108,13 @@ export default function VICDetailPage({ vicId }: Props) {
 
   const handleRunAcuity = async (_mode?: "full" | "quick" | "selective") => {
     if (!vic) return;
-    setAcuityRunning(true);
-    try {
-      await triggerAcuitySingle(getVICId(vic));
-      load();
-    } catch {
-      // Mock or API error — ignore for now
-    } finally {
-      setAcuityRunning(false);
-    }
+    setAcuitySimulationOpen(true);
+  };
+
+  const handleAcuitySimulationComplete = (updatedVic: VIC) => {
+    setVic(updatedVic);
+    setAcuitySimulationOpen(false);
+    load();
   };
 
   const acuityLastRun = vic?.acuity_last_run ?? (vic as unknown as { acuityLastRun?: string })?.acuityLastRun;
@@ -215,6 +216,15 @@ export default function VICDetailPage({ vicId }: Props) {
   return (
     <div className="h-full overflow-y-auto bg-inset">
       <div className="max-w-6xl mx-auto p-6 space-y-6">
+        <Breadcrumbs
+          items={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "VICs", href: "/dashboard/vics" },
+            { label: vic.full_name || "VIC" },
+          ]}
+          className="mb-2"
+        />
+
         <Link
           href="/dashboard/vics"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
@@ -353,6 +363,14 @@ export default function VICDetailPage({ vicId }: Props) {
             setTravelProfilesOverride((prev) => [...(prev ?? vic.travel_profiles ?? []), profile]);
             setTravelModalOpen(false);
           }}
+        />
+      )}
+      {vic && (
+        <AcuitySimulation
+          vic={vic}
+          isOpen={acuitySimulationOpen}
+          onClose={() => setAcuitySimulationOpen(false)}
+          onComplete={handleAcuitySimulationComplete}
         />
       )}
     </div>

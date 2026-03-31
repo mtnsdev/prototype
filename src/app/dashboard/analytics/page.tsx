@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Download } from "lucide-react";
+import { Download, TrendingUp, TrendingDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -39,70 +39,184 @@ import {
   DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK,
 } from "@/lib/dashboardChrome";
 
-function acuityBadgeClass(acuity: string): string {
-  switch (acuity) {
-    case "complete":
-      return "bg-[var(--muted-success-bg)] text-[var(--muted-success-text)] border border-[var(--muted-success-border)]";
-    case "running":
-      return "bg-[var(--muted-amber-bg)] text-[var(--muted-amber-text)] border border-[var(--muted-amber-border)]";
-    case "not_run":
-    case "failed":
-    default:
-      return "bg-[var(--muted-error-bg)] text-[var(--muted-error-text)] border border-[var(--muted-error-border)]";
-  }
-}
-
-const ACUITY_LABELS: Record<string, string> = {
-  not_run: "Not run",
-  running: "Running",
-  complete: "Complete",
-  failed: "Failed",
-};
-
-const REVENUE = [
-  { m: "Oct", v: 12 },
-  { m: "Nov", v: 18 },
-  { m: "Dec", v: 8 },
-  { m: "Jan", v: 22 },
-  { m: "Feb", v: 15 },
-  { m: "Mar", v: 23.5 },
+// Mock data with realistic seasonal patterns
+const MONTHLY_REVENUE_12M = [
+  { month: "Apr 2025", value: 98500 },
+  { month: "May 2025", value: 142300 },
+  { month: "Jun 2025", value: 185600 }, // summer peak
+  { month: "Jul 2025", value: 201450 }, // summer peak
+  { month: "Aug 2025", value: 176200 },
+  { month: "Sep 2025", value: 128900 },
+  { month: "Oct 2025", value: 118700 },
+  { month: "Nov 2025", value: 95400 },
+  { month: "Dec 2025", value: 165200 }, // holiday peak
+  { month: "Jan 2026", value: 87300 },  // post-holiday dip
+  { month: "Feb 2026", value: 92150 },
+  { month: "Mar 2026", value: 155800 }, // spring recovery
 ];
-const maxRev = Math.max(...REVENUE.map((r) => r.v));
 
-const STATUS_DONUT = [
-  { label: "Confirmed", n: 3, color: "var(--color-success)" },
-  { label: "Draft", n: 2, color: "var(--chrome-label)" },
-  { label: "Proposed", n: 1, color: "var(--color-info)" },
-  { label: "Completed", n: 0, color: "var(--muted-success-text)" },
-  { label: "Cancelled", n: 0, color: "var(--color-error)" },
+const COMMISSION_BY_PARTNER = [
+  { name: "Four Seasons", percentage: 28, value: 41720 },
+  { name: "Aman", percentage: 22, value: 32756 },
+  { name: "Belmond", percentage: 15, value: 22335 },
+  { name: "Virtuoso", percentage: 12, value: 17868 },
+  { name: "Other", percentage: 23, value: 34221 },
 ];
-const totalTrips = STATUS_DONUT.reduce((s, x) => s + x.n, 0);
-let acc = 0;
-const donutStops = STATUS_DONUT.filter((x) => x.n > 0).map((x) => {
-  const start = (acc / totalTrips) * 100;
-  acc += x.n;
-  const end = (acc / totalTrips) * 100;
-  return `${x.color} ${start}% ${end}%`;
-});
-const donutBg =
-  totalTrips > 0
-    ? `conic-gradient(${donutStops.join(", ")})`
-    : `conic-gradient(var(--border-default) 0% 100%)`;
 
-const TOP_VICS = [
-  { id: "vic-001", name: "Jean-Christophe Chopin", trips: 2, rev: "€28,500", last: "Monaco GP", acuity_status: "complete" as const },
-  { id: "vic-014", name: "Valérie Rousseau", trips: 1, rev: "€3,970", last: "Paris Weekend", acuity_status: "complete" as const },
-  { id: "vic-004", name: "Eric Tournier", trips: 1, rev: "—", last: "Tuscany (draft)", acuity_status: "complete" as const },
-  { id: "vic-003", name: "Camille Signoles", trips: 1, rev: "€42,000", last: "Maldives", acuity_status: "complete" as const },
-  { id: "vic-011", name: "Thomas Bresson", trips: 1, rev: "—", last: "Lyon (draft)", acuity_status: "not_run" as const },
+const TOP_VICS_DATA = [
+  { id: "vic-001", name: "Jean-Christophe Chopin", spend: 148500, commission: 22275, trips: 12, lastTrip: "2026-03-28" },
+  { id: "vic-003", name: "Camille Signoles", spend: 127300, commission: 19095, trips: 9, lastTrip: "2026-03-25" },
+  { id: "vic-002", name: "Eric Tournier", spend: 98200, commission: 14730, trips: 7, lastTrip: "2026-03-22" },
+  { id: "vic-004", name: "Valérie Rousseau", spend: 85600, commission: 12840, trips: 6, lastTrip: "2026-03-20" },
+  { id: "vic-005", name: "Sophie Mercier", spend: 76400, commission: 11460, trips: 5, lastTrip: "2026-03-18" },
+  { id: "vic-006", name: "Laurent Dupont", spend: 65900, commission: 9885, trips: 5, lastTrip: "2026-03-15" },
+  { id: "vic-007", name: "Anne-Marie Lefevre", spend: 58300, commission: 8745, trips: 4, lastTrip: "2026-03-12" },
+  { id: "vic-008", name: "Michel Renard", spend: 51200, commission: 7680, trips: 3, lastTrip: "2026-03-10" },
+  { id: "vic-009", name: "Claire Berger", spend: 47800, commission: 7170, trips: 3, lastTrip: "2026-03-08" },
+  { id: "vic-010", name: "Pierre Fontaine", spend: 42900, commission: 6435, trips: 2, lastTrip: "2026-03-05" },
+];
+
+const PIPELINE_DATA = [
+  { stage: "Lead", count: 12, color: "rgba(201, 169, 110, 0.3)" },
+  { stage: "Discovery", count: 8, color: "rgba(201, 169, 110, 0.5)" },
+  { stage: "Proposal", count: 5, color: "rgba(201, 169, 110, 0.7)" },
+  { stage: "Negotiation", count: 3, color: "rgba(201, 169, 110, 0.85)" },
+  { stage: "Won", count: 2, color: "rgba(201, 169, 110, 1)" },
 ];
 
 const cardClass = "rounded-xl border border-border bg-white/[0.02] p-5 md:p-6";
 
+function getDataForRange(range: string) {
+  const ytdData = MONTHLY_REVENUE_12M.slice(-12); // Last 12 months
+  const last90 = MONTHLY_REVENUE_12M.slice(-3);
+  const last30 = [MONTHLY_REVENUE_12M[MONTHLY_REVENUE_12M.length - 1]];
+
+  switch (range) {
+    case "30days":
+      return {
+        monthlyData: last30,
+        totalRevenue: 155800,
+        lastYearRevenue: 138800,
+        activeVics: 18,
+        quarterVics: 3,
+        commission: 23370,
+        lastYearCommission: 20820,
+        tripCompletion: 92,
+      };
+    case "90days":
+      return {
+        monthlyData: last90,
+        totalRevenue: 325200,
+        lastYearRevenue: 289400,
+        activeVics: 21,
+        quarterVics: 3,
+        commission: 48780,
+        lastYearCommission: 43470,
+        tripCompletion: 93,
+      };
+    case "ytd":
+      return {
+        monthlyData: ytdData,
+        totalRevenue: 1247500,
+        lastYearRevenue: 1112400,
+        activeVics: 24,
+        quarterVics: 3,
+        commission: 148900,
+        lastYearCommission: 126100,
+        tripCompletion: 94,
+      };
+    case "12months":
+      return {
+        monthlyData: MONTHLY_REVENUE_12M,
+        totalRevenue: 1548550,
+        lastYearRevenue: 1389200,
+        activeVics: 28,
+        quarterVics: 4,
+        commission: 193284,
+        lastYearCommission: 173460,
+        tripCompletion: 94,
+      };
+    case "alltime":
+      return {
+        monthlyData: MONTHLY_REVENUE_12M,
+        totalRevenue: 2847300,
+        lastYearRevenue: 2156700,
+        activeVics: 32,
+        quarterVics: 5,
+        commission: 356545,
+        lastYearCommission: 324300,
+        tripCompletion: 95,
+      };
+    default:
+      return {
+        monthlyData: ytdData,
+        totalRevenue: 1247500,
+        lastYearRevenue: 1112400,
+        activeVics: 24,
+        quarterVics: 3,
+        commission: 148900,
+        lastYearCommission: 126100,
+        tripCompletion: 94,
+      };
+  }
+}
+
 export default function AnalyticsPage() {
   const showToast = useToast();
-  const [range, setRange] = useState("quarter");
-  const [askFocus, setAskFocus] = useState(false);
+  const [range, setRange] = useState("ytd");
+
+  const data = useMemo(() => getDataForRange(range), [range]);
+
+  const maxRevenue = Math.max(...data.monthlyData.map((m) => m.value));
+  const revenueChange =
+    ((data.totalRevenue - data.lastYearRevenue) / data.lastYearRevenue) * 100;
+  const commissionChange =
+    ((data.commission - data.lastYearCommission) / data.lastYearCommission) * 100;
+
+  // Commission donut stops
+  const totalCommission = COMMISSION_BY_PARTNER.reduce((s, p) => s + p.value, 0);
+  let commissionAcc = 0;
+  const commissionStops = COMMISSION_BY_PARTNER.map((p) => {
+    const start = (commissionAcc / totalCommission) * 100;
+    commissionAcc += p.value;
+    const end = (commissionAcc / totalCommission) * 100;
+    return { color: p.name === "Four Seasons" ? "rgba(201, 169, 110, 1)" : p.name === "Aman" ? "rgba(201, 169, 110, 0.85)" : p.name === "Belmond" ? "rgba(201, 169, 110, 0.7)" : p.name === "Virtuoso" ? "rgba(201, 169, 110, 0.55)" : "rgba(201, 169, 110, 0.35)", start, end };
+  });
+
+  const donutBg = `conic-gradient(${commissionStops
+    .map((s) => `${s.color} ${s.start}% ${s.end}%`)
+    .join(", ")})`;
+
+  // Pipeline total
+  const pipelineTotal = PIPELINE_DATA.reduce((s, p) => s + p.count, 0);
+
+  const handleExport = () => {
+    const csv = [
+      ["Analytics Export", new Date().toISOString()],
+      [],
+      ["KPI Summary"],
+      ["Total Revenue", data.totalRevenue],
+      ["Commission Earned", data.commission],
+      ["Active VICs", data.activeVics],
+      ["Trip Completion Rate", `${data.tripCompletion}%`],
+      [],
+      ["Monthly Revenue"],
+      ...data.monthlyData.map((m) => [m.month, m.value]),
+      [],
+      ["Top VICs by Spend"],
+      ["VIC Name", "Total Spend", "Commission", "Trips", "Last Trip"],
+      ...TOP_VICS_DATA.map((v) => [v.name, v.spend, v.commission, v.trips, v.lastTrip]),
+    ]
+      .map((row) => row.join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `analytics-${range}-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+  };
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-inset text-foreground">
@@ -110,25 +224,33 @@ export default function AnalyticsPage() {
         <div className={DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK}>
           <h1 className={DASHBOARD_LIST_PAGE_HEADER_TITLE}>Analytics</h1>
           <p className={DASHBOARD_LIST_PAGE_HEADER_SUBTITLE}>
-            VIC, trip, and revenue signals — sample data in preview
+            Key metrics, revenue trends, and VIC performance
           </p>
         </div>
         <div className={DASHBOARD_LIST_PAGE_HEADER_ACTIONS}>
           <Select value={range} onValueChange={setRange}>
-            <SelectTrigger className={cn(directoryFilterSelectTriggerClass, "h-8 w-[min(100%,168px)] text-xs")}>
+            <SelectTrigger
+              className={cn(
+                directoryFilterSelectTriggerClass,
+                "h-8 w-[min(100%,180px)] text-xs"
+              )}
+            >
               <SelectValue placeholder="Period" />
             </SelectTrigger>
             <SelectContent className={directoryFilterSelectContentClass}>
-              <SelectItem className={directoryFilterSelectItemClass} value="month">
-                This month
+              <SelectItem className={directoryFilterSelectItemClass} value="30days">
+                Last 30 days
               </SelectItem>
-              <SelectItem className={directoryFilterSelectItemClass} value="quarter">
-                This quarter
+              <SelectItem className={directoryFilterSelectItemClass} value="90days">
+                Last 90 days
               </SelectItem>
-              <SelectItem className={directoryFilterSelectItemClass} value="year">
-                This year
+              <SelectItem className={directoryFilterSelectItemClass} value="ytd">
+                Year to date
               </SelectItem>
-              <SelectItem className={directoryFilterSelectItemClass} value="all">
+              <SelectItem className={directoryFilterSelectItemClass} value="12months">
+                Last 12 months
+              </SelectItem>
+              <SelectItem className={directoryFilterSelectItemClass} value="alltime">
                 All time
               </SelectItem>
             </SelectContent>
@@ -137,7 +259,7 @@ export default function AnalyticsPage() {
             variant="outline"
             size="sm"
             className="h-8 border-input px-2.5 text-xs text-foreground"
-            onClick={() => showToast("Export — coming soon")}
+            onClick={handleExport}
           >
             <Download size={13} className="mr-1 shrink-0" />
             Export
@@ -147,171 +269,286 @@ export default function AnalyticsPage() {
 
       <div className="min-h-0 flex-1 overflow-auto">
         <div className="px-6 pb-8 pt-6 space-y-6 max-w-[1600px]">
+          {/* KPI Row */}
           <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
-            {[
-              { label: "Active VICs", val: "15", sub: "+3 vs Q3", up: true },
-              { label: "Total Trips", val: "8", sub: "+2 vs Q3", up: true },
-              { label: "Revenue", val: "€98,500", sub: "+32% vs Q3", up: true },
-              { label: "Margin", val: "25.0%", sub: "Gross", up: true },
-            ].map((k) => (
-              <div key={k.label} className={cardClass}>
-                <ListLabel className="block">{k.label}</ListLabel>
-                <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground md:text-3xl">{k.val}</p>
-                <p
-                  className={cn(
-                    "mt-1 text-sm",
-                    k.up ? "text-[var(--color-success)]" : "text-[var(--color-error)]"
-                  )}
-                >
-                  {k.sub}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
             <div className={cardClass}>
-              <ListLabel className="mb-4 block">Revenue by month</ListLabel>
-              <div className="flex h-48 items-end justify-between gap-2 pt-2">
-                {REVENUE.map((r) => (
-                  <div key={r.m} className="flex flex-1 flex-col items-center gap-2">
-                    <div
-                      className="mx-auto w-full max-w-[48px] rounded-t-md bg-gradient-to-t from-[rgba(201,169,110,0.5)] to-[rgba(201,169,110,0.12)] transition-all min-h-[8px]"
-                      style={{ height: `${(r.v / maxRev) * 100}%` }}
-                    />
-                    <span className="text-2xs text-muted-foreground">{r.m}</span>
-                    <span className="text-xs text-muted-foreground/90">€{r.v}K</span>
-                  </div>
-                ))}
+              <ListLabel className="block text-xs text-muted-foreground">
+                Total Revenue (YTD)
+              </ListLabel>
+              <div className="mt-3">
+                <p className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+                  ${(data.totalRevenue / 1000000).toFixed(2)}M
+                </p>
+                <div className="mt-1.5 flex items-center gap-1">
+                  <TrendingUp size={14} className="text-[var(--color-success)]" />
+                  <span className="text-sm font-medium text-[var(--color-success)]">
+                    +{revenueChange.toFixed(1)}%
+                  </span>
+                  <span className="text-xs text-muted-foreground/70">vs last year</span>
+                </div>
               </div>
             </div>
+
             <div className={cardClass}>
-              <ListLabel className="mb-4 block">Trips by status</ListLabel>
-              <div className="flex flex-col items-center justify-center gap-6 py-2 sm:flex-row sm:gap-8">
+              <ListLabel className="block text-xs text-muted-foreground">
+                Active VICs
+              </ListLabel>
+              <div className="mt-3">
+                <p className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+                  {data.activeVics}
+                </p>
+                <div className="mt-1.5 flex items-center gap-1">
+                  <TrendingUp size={14} className="text-[var(--color-success)]" />
+                  <span className="text-sm font-medium text-[var(--color-success)]">
+                    +{data.quarterVics}
+                  </span>
+                  <span className="text-xs text-muted-foreground/70">this quarter</span>
+                </div>
+              </div>
+            </div>
+
+            <div className={cardClass}>
+              <ListLabel className="block text-xs text-muted-foreground">
+                Commission Earned (YTD)
+              </ListLabel>
+              <div className="mt-3">
+                <p className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+                  ${(data.commission / 1000).toFixed(1)}K
+                </p>
+                <div className="mt-1.5 flex items-center gap-1">
+                  <TrendingUp size={14} className="text-[var(--color-success)]" />
+                  <span className="text-sm font-medium text-[var(--color-success)]">
+                    +{commissionChange.toFixed(1)}%
+                  </span>
+                  <span className="text-xs text-muted-foreground/70">vs last year</span>
+                </div>
+              </div>
+            </div>
+
+            <div className={cardClass}>
+              <ListLabel className="block text-xs text-muted-foreground">
+                Trip Completion Rate
+              </ListLabel>
+              <div className="mt-3">
+                <p className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+                  {data.tripCompletion}%
+                </p>
+                <div className="mt-1.5 flex items-center gap-1">
+                  <TrendingUp size={14} className="text-[var(--color-success)]" />
+                  <span className="text-sm font-medium text-[var(--color-success)]">
+                    Healthy
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Charts Row */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Revenue Chart */}
+            <div className={cardClass}>
+              <ListLabel className="mb-4 block">Monthly Revenue</ListLabel>
+              <div className="flex h-56 items-end justify-between gap-1.5 pt-2">
+                {data.monthlyData.map((item, idx) => {
+                  const shortMonth = item.month.split(" ")[0];
+                  const shortYear = item.month.split(" ")[1]?.slice(-2);
+                  return (
+                    <div
+                      key={`${item.month}-${idx}`}
+                      className="flex flex-1 flex-col items-center gap-1"
+                    >
+                      <div className="group relative w-full">
+                        <div
+                          className="mx-auto w-full max-w-[40px] rounded-t-md bg-gradient-to-t from-[rgba(201,169,110,0.6)] to-[rgba(201,169,110,0.2)] transition-all duration-200 min-h-[6px] hover:from-[rgba(201,169,110,0.8)] hover:to-[rgba(201,169,110,0.3)] cursor-pointer"
+                          style={{
+                            height: `${(item.value / maxRevenue) * 100}%`,
+                          }}
+                          title={`${item.month}: $${(item.value / 1000).toFixed(1)}K`}
+                        />
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-background/95 border border-border rounded px-2 py-1 text-2xs whitespace-nowrap text-muted-foreground pointer-events-none z-10">
+                          ${(item.value / 1000).toFixed(1)}K
+                        </div>
+                      </div>
+                      <span className="text-2xs text-muted-foreground/70 text-center leading-tight">
+                        {shortMonth} {shortYear}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-4">
+                <span className="text-xs text-muted-foreground">Total</span>
+                <span className="text-sm font-semibold text-foreground">
+                  ${(
+                    data.monthlyData.reduce((sum, m) => sum + m.value, 0) / 1000
+                  ).toFixed(0)}K
+                </span>
+              </div>
+            </div>
+
+            {/* Commission by Partner */}
+            <div className={cardClass}>
+              <ListLabel className="mb-4 block">Commission by Partner</ListLabel>
+              <div className="flex flex-col items-center justify-center gap-6 py-4">
                 <div
-                  className="h-36 w-36 shrink-0 rounded-full"
+                  className="h-48 w-48 shrink-0 rounded-full"
                   style={{
                     background: donutBg,
-                    mask: "radial-gradient(transparent 55%, black 56%)",
-                    WebkitMask: "radial-gradient(transparent 55%, black 56%)",
+                    mask: "radial-gradient(transparent 60%, black 62%)",
+                    WebkitMask: "radial-gradient(transparent 60%, black 62%)",
                   }}
                 />
-                <ul className="space-y-1.5 text-sm text-muted-foreground/90">
-                  {STATUS_DONUT.map((s) => (
-                    <li key={s.label} className="flex items-center gap-2">
-                      <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: s.color }} />
-                      {s.label}: {s.n}
-                    </li>
+                <div className="w-full space-y-2">
+                  {COMMISSION_BY_PARTNER.map((partner) => (
+                    <div
+                      key={partner.name}
+                      className="flex items-center justify-between text-xs"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{
+                            backgroundColor:
+                              partner.name === "Four Seasons"
+                                ? "rgba(201, 169, 110, 1)"
+                                : partner.name === "Aman"
+                                  ? "rgba(201, 169, 110, 0.85)"
+                                  : partner.name === "Belmond"
+                                    ? "rgba(201, 169, 110, 0.7)"
+                                    : partner.name === "Virtuoso"
+                                      ? "rgba(201, 169, 110, 0.55)"
+                                      : "rgba(201, 169, 110, 0.35)",
+                          }}
+                        />
+                        <span className="text-muted-foreground truncate">
+                          {partner.name}
+                        </span>
+                      </div>
+                      <span className="ml-2 shrink-0 text-foreground font-medium">
+                        {partner.percentage}%
+                      </span>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             </div>
           </div>
 
+          {/* Pipeline */}
+          <div className={cardClass}>
+            <ListLabel className="mb-4 block">Pipeline by Stage</ListLabel>
+            <div className="space-y-3">
+              {PIPELINE_DATA.map((stage) => {
+                const percentage = (stage.count / pipelineTotal) * 100;
+                return (
+                  <div key={stage.stage}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm text-muted-foreground">
+                        {stage.stage}
+                      </span>
+                      <span className="text-sm font-semibold text-foreground">
+                        {stage.count} ({percentage.toFixed(0)}%)
+                      </span>
+                    </div>
+                    <div className="h-6 bg-background/40 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500 hover:opacity-80"
+                        style={{
+                          width: `${percentage}%`,
+                          backgroundColor: stage.color,
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Top VICs Table */}
           <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden")}>
             <div className="border-b border-border px-3 py-3">
-              <ListLabel>Top VICs</ListLabel>
+              <ListLabel>Top 10 VICs by Revenue</ListLabel>
             </div>
-            <table className={listTableClass("min-w-[640px]")}>
+            <table className={listTableClass("min-w-[800px]")}>
               <thead>
                 <tr className={listTheadRowClass}>
                   <th className={listThClass} scope="col">
-                    Name
+                    VIC Name
                   </th>
-                  <th className={listThClass} scope="col">
+                  <th className={cn(listThClass, "text-right")} scope="col">
+                    Total Spend
+                  </th>
+                  <th className={cn(listThClass, "text-right")} scope="col">
+                    Commission
+                  </th>
+                  <th className={cn(listThClass, "text-right")} scope="col">
                     Trips
                   </th>
-                  <th className={listThClass} scope="col">
-                    Revenue
-                  </th>
-                  <th className={listThClass} scope="col">
-                    Last trip
-                  </th>
-                  <th className={listThClass} scope="col">
-                    Acuity
+                  <th className={cn(listThClass, "text-right")} scope="col">
+                    Last Trip
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {TOP_VICS.map((row) => {
-                  const acuityLabel = ACUITY_LABELS[row.acuity_status] ?? row.acuity_status;
+                {TOP_VICS_DATA.map((vic) => {
+                  const lastDate = new Date(vic.lastTrip);
+                  const daysSince = Math.floor(
+                    (new Date().getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)
+                  );
+                  const lastTripLabel =
+                    daysSince === 0
+                      ? "Today"
+                      : daysSince === 1
+                        ? "Yesterday"
+                        : `${daysSince} days ago`;
+
                   return (
-                    <tr key={row.id} className={listTbodyRowClass}>
+                    <tr key={vic.id} className={listTbodyRowClass}>
                       <td className={listTdClass}>
                         <div className="flex items-center gap-3">
                           <ImageWithFallback
                             fallbackType="avatar"
-                            alt={row.name}
-                            name={row.name}
+                            alt={vic.name}
+                            name={vic.name}
                             className="h-10 w-10 shrink-0"
                           />
-                          <Link href={`/dashboard/vics/${row.id}`} className={cn(listPrimaryTextClass, "hover:underline")}>
-                            {row.name}
+                          <Link
+                            href={`/dashboard/vics/${vic.id}`}
+                            className={cn(
+                              listPrimaryTextClass,
+                              "hover:underline font-medium"
+                            )}
+                          >
+                            {vic.name}
                           </Link>
                         </div>
                       </td>
-                      <td className={cn(listTdClass, listMutedCellClass)}>{row.trips}</td>
-                      <td className={cn(listTdClass, listMutedCellClass)}>{row.rev}</td>
-                      <td className={cn(listTdClass, listMutedCellClass)}>{row.last}</td>
-                      <td className={listTdClass}>
-                        <span
-                          className={cn(
-                            "rounded-full px-2 py-0.5 text-2xs font-medium capitalize",
-                            acuityBadgeClass(row.acuity_status)
-                          )}
-                        >
-                          {acuityLabel.replace(/_/g, " ")}
-                        </span>
+                      <td
+                        className={cn(listTdClass, listMutedCellClass, "text-right")}
+                      >
+                        ${(vic.spend / 1000).toFixed(1)}K
+                      </td>
+                      <td
+                        className={cn(listTdClass, listMutedCellClass, "text-right")}
+                      >
+                        ${(vic.commission / 1000).toFixed(1)}K
+                      </td>
+                      <td
+                        className={cn(listTdClass, listMutedCellClass, "text-right")}
+                      >
+                        {vic.trips}
+                      </td>
+                      <td
+                        className={cn(listTdClass, listMutedCellClass, "text-right")}
+                      >
+                        {lastTripLabel}
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
-          </div>
-
-          <div
-            className={cn(
-              "rounded-xl border border-border bg-white/[0.02] p-4 transition-colors",
-              askFocus && "border-[rgba(201,169,110,0.28)]"
-            )}
-          >
-            <div className="flex items-center gap-2 rounded-lg border border-input bg-inset px-3 py-2.5 md:px-4 md:py-3">
-              <span className="text-brand-cta" aria-hidden>
-                ✦
-              </span>
-              <input
-                className="min-w-0 flex-1 border-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/70"
-                placeholder="Ask a question about your data…"
-                onFocus={() => setAskFocus(true)}
-                onBlur={() => setAskFocus(false)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") showToast("AI Analytics — coming in v2");
-                }}
-              />
-              <Button
-                size="sm"
-                variant="toolbarAccent"
-                className="h-8 shrink-0 px-3 text-xs"
-                onClick={() => showToast("AI Analytics — coming in v2")}
-              >
-                Ask
-              </Button>
-            </div>
-            {askFocus && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {["Top revenue VICs this quarter", "Trips with unconfirmed events", "Commission forecast next 3 months"].map((q) => (
-                  <button
-                    key={q}
-                    type="button"
-                    className="rounded-full border border-border bg-background/30 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-input hover:bg-muted/35 hover:text-foreground"
-                    onClick={() => showToast("AI Analytics — coming in v2")}
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </div>

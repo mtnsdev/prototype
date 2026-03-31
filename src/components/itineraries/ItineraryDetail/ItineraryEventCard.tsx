@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/contexts/ToastContext";
 import { cn } from "@/lib/utils";
 
 const EVENT_ICONS: Record<ItineraryEvent["event_type"], React.ComponentType<{ size?: number; className?: string }>> = {
@@ -53,6 +54,7 @@ export default function ItineraryEventCard({
   onEventClick,
 }: Props) {
   const router = useRouter();
+  const showToast = useToast();
   const Icon = EVENT_ICONS[event.event_type] ?? StickyNote;
   const timeRange =
     event.start_time && event.end_time
@@ -152,8 +154,8 @@ export default function ItineraryEventCard({
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onEdit?.()}>Edit</DropdownMenuItem>
               <DropdownMenuItem onClick={() => onUpdate()} className="text-[var(--muted-error-text)]">Remove</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => {}}>Move to another day</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => {}}>Change status</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => showToast("Move to another day — available in the next release")}>Move to another day</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => showToast("Change status — available in the next release")}>Change status</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}

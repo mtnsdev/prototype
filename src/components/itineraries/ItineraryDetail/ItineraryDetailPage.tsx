@@ -34,6 +34,7 @@ import { useToast } from "@/contexts/ToastContext";
 import { canEditItinerary, canDeleteItinerary, canViewFinancials } from "@/utils/itineraryPermissions";
 import { ITINERARY_STATUS_BADGES, formatDateRange } from "../statusConfig";
 import { Button } from "@/components/ui/button";
+import Breadcrumbs from "@/components/ui/breadcrumbs";
 import ItineraryDetailSidebar from "./ItineraryDetailSidebar";
 import ItineraryTimeline from "./ItineraryTimeline";
 import DeleteItineraryModal from "../Modals/DeleteItineraryModal";
@@ -293,6 +294,14 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
     <div className="h-full flex flex-col bg-inset overflow-hidden">
       <div className="shrink-0 flex flex-col">
         <div className="px-4 pt-3">
+          <Breadcrumbs
+            items={[
+              { label: "Dashboard", href: "/dashboard" },
+              { label: "Itineraries", href: "/dashboard/itineraries" },
+              { label: itinerary.trip_name || "Itinerary" },
+            ]}
+            className="mb-3"
+          />
           <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground">
             <Link href="/dashboard/itineraries" className="inline-flex items-center gap-1">
               <ArrowLeft size={18} /> Back to Itineraries
@@ -616,8 +625,9 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
         onClose={() => setInvoiceOpen(false)}
         itinerary={itinerary}
         onGenerate={() => {
-          showToast("Invoice generated (mock) — PDF export coming in v2.");
+          showToast("Invoice generated — opening print dialog");
           setInvoiceOpen(false);
+          setTimeout(() => window.print(), 500);
         }}
       />
 

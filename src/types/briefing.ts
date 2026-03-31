@@ -11,6 +11,8 @@ export enum WidgetType {
   ActionItems = "action_items",
   UpcomingTrips = "upcoming_trips",
   Calendar = "calendar",
+  ClientIntelligence = "client_intelligence",
+  CommissionAlerts = "commission_alerts",
   QuickStart = "quick_start",
   FreeText = "free_text",
   RecentActivity = "recent_activity",
@@ -146,12 +148,50 @@ export interface RecentActivityContent {
   items: RecentActivityItem[];
 }
 
+export interface ClientIntelligenceItem {
+  id: string;
+  vic_id: string;
+  vic_name: string;
+  alert_type: "birthday_upcoming" | "passport_expiring" | "anniversary" | "trip_departure" | "no_contact_90d" | "loyalty_expiring";
+  title: string;
+  detail: string;
+  date: string; // the relevant date
+  days_away: number; // days until the event
+  urgency: "urgent" | "soon" | "upcoming"; // <7d, <30d, <90d
+  suggested_action?: string;
+}
+
+export interface ClientIntelligenceContent {
+  type: "client_intelligence";
+  items: ClientIntelligenceItem[];
+}
+
+export interface CommissionAlertItem {
+  id: string;
+  title: string;
+  partner_name: string;
+  incentive_type: string;
+  bonus_display: string; // e.g. "+5% bonus" or "$200 spiff"
+  valid_until: string;
+  days_remaining: number;
+  urgency: "urgent" | "soon" | "info";
+  affected_vics?: { id: string; name: string }[]; // VICs with upcoming trips that could benefit
+  product_ids?: string[];
+}
+
+export interface CommissionAlertContent {
+  type: "commission_alerts";
+  items: CommissionAlertItem[];
+}
+
 export type WidgetContent =
   | NewsAlertContent
   | PartnerUpdateContent
   | ActionItemsContent
   | UpcomingTripsContent
   | CalendarContent
+  | ClientIntelligenceContent
+  | CommissionAlertContent
   | QuickStartContent
   | FreeTextContent
   | RecentActivityContent;

@@ -8,10 +8,11 @@ import { useUserOptional } from "@/contexts/UserContext";
 import { useGoogleDriveStatus } from "@/hooks/useGoogleDriveStatus";
 import { useClaromentisStatus } from "@/hooks/useClaromentisStatus";
 import { INTEGRATION_DEFINITIONS } from "@/lib/integrations/registry";
+import { DataIngestionDemo } from "./DataIngestionDemo";
 
 const ONBOARDING_KEY = "travellustre_onboarding_complete";
 
-type WizardScreen = "overview" | "connect" | "confirmation";
+type WizardScreen = "overview" | "connect" | "ingestion-demo" | "confirmation";
 
 type SourceSlot = {
   key: string;
@@ -78,7 +79,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
 
   const handleContinue = useCallback(() => {
     if (notYetConnected.length === 0) {
-      setScreen("confirmation");
+      setScreen("ingestion-demo");
       return;
     }
     setScreen("connect");
@@ -93,7 +94,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const handleSkipSource = useCallback(() => {
     if (currentSource) setSkippedKeys((prev) => new Set(prev).add(currentSource.key));
     if (currentSourceIndex >= notYetConnected.length - 1) {
-      setScreen("confirmation");
+      setScreen("ingestion-demo");
     } else {
       setCurrentSourceIndex((i) => i + 1);
     }
@@ -212,7 +213,17 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     );
   }
 
-  // Screen 3 — Confirmation
+  // Screen 3 — Data Ingestion Demo
+  if (screen === "ingestion-demo") {
+    return (
+      <DataIngestionDemo
+        onComplete={() => setScreen("confirmation")}
+        onSkip={() => setScreen("confirmation")}
+      />
+    );
+  }
+
+  // Screen 4 — Confirmation
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-sm p-4">
       <div className="max-w-md w-full">
