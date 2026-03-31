@@ -1,5 +1,5 @@
 /**
- * Itineraries API client. Calls endpoints as specified; backend built separately.
+ * Itineraries HTTP API. Calls endpoints as specified; backend built separately.
  */
 
 import type {
@@ -28,7 +28,9 @@ function buildQuery(params: ItineraryListParams): string {
   if (params.search != null && params.search !== "") sp.set("search", params.search);
   if (params.status != null) sp.set("status", params.status);
   if (params.vic_id != null && params.vic_id !== "") sp.set("vic_id", params.vic_id);
-  if (params.destination != null && params.destination !== "") sp.set("destination", params.destination);
+  if (params.destination_countries != null && params.destination_countries.length > 0) {
+    sp.set("destinations", params.destination_countries.join(","));
+  }
   if (params.date_from != null) sp.set("date_from", params.date_from);
   if (params.date_to != null) sp.set("date_to", params.date_to);
   if (params.pipeline_stage != null) sp.set("pipeline_stage", params.pipeline_stage);

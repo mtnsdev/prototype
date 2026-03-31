@@ -38,9 +38,9 @@ export default function ProductsEmptyState({
         {tab === "mine" && (
           <div className="flex flex-wrap gap-3 justify-center">
             {onAddProduct && (
-              <Button onClick={onAddProduct} className="gap-2">
+              <Button variant="toolbarAccent" size="sm" onClick={onAddProduct}>
                 <Package size={16} />
-                Add Product
+                Add product
               </Button>
             )}
             {onImportCSV && (

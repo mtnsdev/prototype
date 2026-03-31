@@ -11,9 +11,13 @@
   },
   "include": [
     "tests/productDirectoryLogic.test.ts",
+    "tests/vicPermissions.test.ts",
     "src/components/products/productDirectoryLogic.ts",
     "src/components/products/productDirectoryCommission.ts",
     "src/types/product-directory.ts",
-    "src/components/products/productDirectoryDetailMeta.ts"
+    "src/components/products/productDirectoryDetailMeta.ts",
+    "src/utils/vicPermissions.ts",
+    "src/types/vic.ts",
+    "src/types/teams.ts"
   ]
 }

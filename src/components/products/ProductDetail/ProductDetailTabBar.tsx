@@ -8,7 +8,7 @@ const TABS = [
   { id: "location" as const, label: "Location & Access" },
   { id: "commercial" as const, label: "Commercial" },
   { id: "content" as const, label: "Content & Media" },
-  { id: "suitability" as const, label: "Client Suitability" },
+  { id: "suitability" as const, label: "VIC suitability" },
   { id: "category" as const, label: "Category Details" },
   { id: "governance" as const, label: "Governance" },
 ];

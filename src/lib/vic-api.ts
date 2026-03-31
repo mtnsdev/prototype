@@ -1,5 +1,5 @@
 /**
- * VIC API client. All requests use Authorization: Bearer token from localStorage.
+ * VIC HTTP API. All requests use Authorization: Bearer token from localStorage.
  * Backend is assumed to expose these endpoints.
  */
 
@@ -11,9 +11,20 @@ export function getVICId(vic: VIC): string {
 }
 
 function getAuthHeaders(): HeadersInit {
-  const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
   const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (token) (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("auth_token");
+    if (token) (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+    try {
+      const raw = localStorage.getItem("user_data");
+      if (raw) {
+        const u = JSON.parse(raw) as { id?: number | string };
+        if (u?.id != null) (headers as Record<string, string>)["x-mock-advisor-id"] = String(u.id);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
   return headers;
 }
 
@@ -122,7 +133,9 @@ export async function fetchAcuityStatus(vicId: string): Promise<{ status: string
 
 export async function shareVIC(
   vicId: string,
-  body: { advisor_id: string; access_level: "view" | "edit"; sharing_level?: "none" | "basic" | "full" }
+  body:
+    | { advisor_id: string; access_level: "view" | "edit"; sharing_level?: "none" | "basic" | "full" }
+    | { team_id: string; access_level: "view" | "edit"; sharing_level?: "none" | "basic" | "full" }
 ): Promise<void> {
   const res = await fetch(`/api/vics/${vicId}/share`, {
     method: "POST",
@@ -134,6 +147,14 @@ export async function shareVIC(
 
 export async function unshareVIC(vicId: string, advisorId: string): Promise<void> {
   const res = await fetch(`/api/vics/${vicId}/share/${advisorId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
+}
+
+export async function unshareVICTeam(vicId: string, teamId: string): Promise<void> {
+  const res = await fetch(`/api/vics/${vicId}/share/team/${teamId}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
   });

@@ -7,14 +7,17 @@ import {
   Bookmark,
   Building2,
   Check,
+  ChevronDown,
   Clock,
   Contact,
   ExternalLink,
+  Flame,
   Lock,
   Pencil,
   Plus,
   Search,
   Share2,
+  Star,
   StickyNote,
   Trash2,
   UserPlus,
@@ -28,6 +31,8 @@ import type {
   DirectoryPartnerProgram,
   DirectoryProduct,
 } from "@/types/product-directory";
+import type { RepFirm, RepFirmProductLink } from "@/types/rep-firm";
+import { Button } from "@/components/ui/button";
 import { ScopeBadge } from "@/components/ui/ScopeBadge";
 import type { Team } from "@/types/teams";
 import { useToast } from "@/contexts/ToastContext";
@@ -37,6 +42,7 @@ import { AMENITY_LABELS } from "./productDirectoryFilterConfig";
 import { directoryTierLabel, directoryTierStars } from "./productDirectoryDetailMeta";
 import { relativeTime } from "./productDirectoryRelativeTime";
 import { DIRECTORY_PRODUCT_TYPE_CONFIG } from "./productDirectoryProductTypes";
+import { getRepFirmByIdWithOverlay } from "./productDirectoryRepFirmMock";
 import {
   directoryCategoryColors,
   directoryProductGalleryImages,
@@ -44,11 +50,15 @@ import {
 } from "./productDirectoryVisual";
 import {
   directoryProductPartnerProgramsSyncPatch,
+  getTopBookableProgramByCommission,
   programFilterId,
   programDisplayCommissionRate,
   programDisplayName,
 } from "./productDirectoryCommission";
 import { getProductLayerMock } from "./ProductDetail/productLayerMock";
+import { FAKE_VICS } from "@/components/vic/fakeData";
+import { FAKE_ITINERARIES } from "@/components/itineraries/fakeData";
+import { getItinerariesForProduct, getVicsForProduct } from "@/lib/entityCrossLinks";
 
 function clonePartnerProgramsForEdit(list: DirectoryPartnerProgram[]): DirectoryPartnerProgram[] {
   return list.map((p) => ({
@@ -68,6 +78,45 @@ function agencyMocksToDirectoryNotes(
     createdAt: new Date().toISOString(),
     pinned: n.pinned,
   }));
+}
+
+const stableDateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+function formatIsoDateStable(value: string): string {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return stableDateFormatter.format(parsed);
+}
+
+function formatAdvisoryIncentiveLabel(
+  incentiveType: "bonus_percentage" | "bonus_flat" | "override" | "tier_upgrade",
+  incentiveValue?: number
+): string {
+  if (incentiveType === "tier_upgrade") return "Tier upgrade";
+  if (incentiveType === "bonus_flat") return `+$${incentiveValue ?? 0} flat`;
+  if (incentiveType === "override") return `${incentiveValue ?? 0}% override`;
+  return `+${incentiveValue ?? 0}%`;
+}
+
+function advisoryProjectionText(
+  incentiveType: "bonus_percentage" | "bonus_flat" | "override" | "tier_upgrade",
+  incentiveValue: number | undefined,
+  baseRate: number | null
+): string {
+  if (incentiveType === "tier_upgrade") return "Tier upgrade — enhanced amenities & priority";
+  if (incentiveType === "override") return `Commission overridden to ${incentiveValue ?? 0}%`;
+  if (incentiveType === "bonus_flat") {
+    return baseRate != null
+      ? `Base ${baseRate}% + $${incentiveValue ?? 0} flat bonus per booking`
+      : `+$${incentiveValue ?? 0} flat bonus per booking`;
+  }
+  if (baseRate == null) return `+${incentiveValue ?? 0}% bonus commission`;
+  return `Base ${baseRate}% + Bonus ${incentiveValue ?? 0}% = ${(baseRate ?? 0) + (incentiveValue ?? 0)}% effective`;
 }
 
 type PersonalNoteRow = { id: string; text: string; createdAt: string };
@@ -90,6 +139,8 @@ type Props = {
   onRequestCreateCollection?: () => void;
   /** Program keys where this product has product-specific terms (commission/amenities). */
   partnerProgramCustomKeys?: string[];
+  /** Live rep firm registry (enables regions/footer lookup beyond seed mock). */
+  repFirmsRegistry?: RepFirm[] | null;
 };
 
 export function ProductDirectoryDetailBody({
@@ -107,6 +158,7 @@ export function ProductDirectoryDetailBody({
   onQuickAddToCollection,
   onRequestCreateCollection,
   partnerProgramCustomKeys = [],
+  repFirmsRegistry = null,
 }: Props) {
   const canRemoveFromCollection = canRemoveFromCollectionProp ?? (() => true);
   const inlinePickerEnabled = Boolean(
@@ -160,11 +212,27 @@ export function ProductDirectoryDetailBody({
   const [localPartnerPrograms, setLocalPartnerPrograms] = useState<DirectoryPartnerProgram[]>(() =>
     clonePartnerProgramsForEdit(product.partnerPrograms)
   );
+  const [showRepFirmEditor, setShowRepFirmEditor] = useState(false);
+  const [localRepFirmLinks, setLocalRepFirmLinks] = useState<RepFirmProductLink[]>([]);
+  const [incentivesExpanded, setIncentivesExpanded] = useState(false);
+  const [vicIntelOpen, setVicIntelOpen] = useState(false);
+
+  const canViewVICData = isAdmin;
+  const vicLinks = useMemo(
+    () => getVicsForProduct(product.id, FAKE_VICS ?? [], FAKE_ITINERARIES ?? []),
+    [product.id]
+  );
+  const itineraryLinks = useMemo(
+    () => getItinerariesForProduct(product.id, FAKE_ITINERARIES ?? []),
+    [product.id]
+  );
 
   useEffect(() => {
     setPanelCollectionOpen(false);
     setPanelCollectionSearch("");
     setPartnerProgramsEditMode(false);
+    setShowRepFirmEditor(false);
+    setLocalRepFirmLinks([]);
     setEditingAgencyNoteId(null);
     setEditingPersonalNoteId(null);
     setEditingAgencyContactId(null);
@@ -180,6 +248,32 @@ export function ProductDirectoryDetailBody({
   useEffect(() => {
     setLocalPartnerPrograms(clonePartnerProgramsForEdit(product.partnerPrograms));
   }, [product.id]);
+
+  useEffect(() => {
+    setLocalRepFirmLinks((product.repFirmLinks ?? []).map((l) => ({ ...l })));
+  }, [product.id, product.repFirmLinks]);
+
+  const vicIntelDate = (isoDate?: string) => {
+    if (!isoDate) return "n/a";
+    const parsed = new Date(isoDate);
+    if (Number.isNaN(parsed.getTime())) return "n/a";
+    return parsed.toLocaleDateString("en-US", { month: "short", year: "2-digit", timeZone: "UTC" });
+  };
+
+  const hashColor = (input: string): string => {
+    let hash = 0;
+    for (let i = 0; i < input.length; i += 1) hash = (hash << 5) - hash + input.charCodeAt(i);
+    const colors = ["#B8976E", "#5B8A6E", "#7A6B9C", "#8B6F5A", "#5C5852"];
+    return colors[Math.abs(hash) % colors.length];
+  };
+
+  const displayVicName = (name: string) => {
+    if (isAdmin) return name;
+    const parts = name.trim().split(/\s+/);
+    if (parts.length <= 1) return name;
+    const last = parts[parts.length - 1];
+    return `${parts.slice(0, -1).join(" ")} ${last.charAt(0)}.`;
+  };
 
   useEffect(() => {
     const notes = detailMock.advisorDefaults.notes?.trim();
@@ -233,19 +327,23 @@ export function ProductDirectoryDetailBody({
   const postAgencyNote = () => {
     const t = newAgencyNote.trim();
     if (!t) return;
-    const author = user?.username ?? user?.email ?? "You";
+    const displayName = user?.username ?? user?.email ?? "You";
+    const requiresApproval = !isAdmin;
     setAgencyNotes((prev) => [
       {
         id: `n_${Date.now()}`,
-        authorName: author,
+        authorName: displayName,
         authorId: currentUserId,
         text: t,
         createdAt: new Date().toISOString(),
+        pendingUpgrade: requiresApproval,
+        upgradedById: requiresApproval ? currentUserId : undefined,
+        upgradedByName: requiresApproval ? displayName : undefined,
       },
       ...prev,
     ]);
     setNewAgencyNote("");
-    toast("Note posted");
+    toast(requiresApproval ? "Note submitted for review" : "Note posted");
   };
 
   const deleteAgencyNote = (id: string) => {
@@ -486,6 +584,9 @@ export function ProductDirectoryDetailBody({
     if (!name || !role) return;
     const editId = editingAgencyContactId;
     const prev = editId ? agencyContacts.find((c) => c.id === editId) : undefined;
+    const displayName = user?.username ?? user?.email ?? "You";
+    const requiresApproval = !isAdmin;
+    const pendingUpgrade = requiresApproval ? true : (prev?.pendingUpgrade ?? false);
     const row: DirectoryAgencyContact = {
       id: editId ?? `c_${Date.now()}`,
       name,
@@ -493,11 +594,11 @@ export function ProductDirectoryDetailBody({
       email: newAgencyContactEmail.trim() || "—",
       phone: newAgencyContactPhone.trim() || "—",
       note: newAgencyContactNote.trim() || undefined,
-      addedBy: prev?.addedBy ?? (user?.username ?? user?.email ?? "You"),
+      addedBy: prev?.addedBy ?? displayName,
       addedById: prev?.addedById ?? currentUserId,
-      pendingUpgrade: prev?.pendingUpgrade,
-      upgradedById: prev?.upgradedById,
-      upgradedByName: prev?.upgradedByName,
+      pendingUpgrade,
+      upgradedById: pendingUpgrade ? currentUserId : prev?.upgradedById,
+      upgradedByName: pendingUpgrade ? displayName : prev?.upgradedByName,
     };
     const next = editId ? agencyContacts.map((c) => (c.id === editId ? row : c)) : [...agencyContacts, row];
     setAgencyContacts(next);
@@ -509,6 +610,10 @@ export function ProductDirectoryDetailBody({
     setNewAgencyContactNote("");
     setEditingAgencyContactId(null);
     setAgencyContactFormOpen(false);
+    if (requiresApproval) {
+      toast(editId ? "Contact update submitted for review" : "Contact submitted for review");
+      return;
+    }
     toast(editId ? "Contact updated" : "Contact saved");
   };
 
@@ -521,6 +626,27 @@ export function ProductDirectoryDetailBody({
       setAgencyContactFormOpen(false);
     }
     toast("Contact removed");
+  };
+
+  const dismissAdvisory = (advisoryId: string) => {
+    if (!isAdmin) return;
+    const now = new Date().toISOString();
+    const next = (product.commissionAdvisories ?? []).map((advisory) =>
+      advisory.id === advisoryId
+        ? {
+            ...advisory,
+            status: "dismissed" as const,
+            dismissedAt: now,
+            dismissedBy: user?.username ?? user?.email ?? "Admin",
+            updatedAt: now,
+          }
+        : advisory
+    );
+    onPatchProduct(product.id, {
+      commissionAdvisories: next,
+      activeAdvisoryCount: next.filter((a) => a.status === "active").length,
+    });
+    toast("Incentive dismissed");
   };
 
   const cat = directoryCategoryColors(product.type);
@@ -537,6 +663,19 @@ export function ProductDirectoryDetailBody({
   );
 
   const showPartnerProgramEditor = isAdmin && partnerProgramsEditMode;
+  const repFirmLinks = showRepFirmEditor ? localRepFirmLinks : (product.repFirmLinks ?? []);
+  const topCommissionProgram = getTopBookableProgramByCommission(product);
+  const baseCommissionForAdvisories = topCommissionProgram ? programDisplayCommissionRate(topCommissionProgram) : null;
+  const advisoryGroups = useMemo(() => {
+    const list = product.commissionAdvisories ?? [];
+    return {
+      active: list.filter((a) => a.status === "active"),
+      upcoming: list.filter((a) => a.status === "upcoming"),
+      expired: list.filter((a) => a.status === "expired"),
+    };
+  }, [product.commissionAdvisories]);
+  const totalVisibleAdvisories =
+    advisoryGroups.active.length + advisoryGroups.upcoming.length + advisoryGroups.expired.length;
 
   const beginPartnerProgramsEdit = () => {
     setLocalPartnerPrograms(clonePartnerProgramsForEdit(product.partnerPrograms));
@@ -612,6 +751,46 @@ export function ProductDirectoryDetailBody({
     toast("Program linked — edit fields and save");
   };
 
+  const beginRepFirmsEdit = () => {
+    setLocalRepFirmLinks((product.repFirmLinks ?? []).map((l) => ({ ...l })));
+    setShowRepFirmEditor(true);
+  };
+
+  const cancelRepFirmsEdit = () => {
+    setShowRepFirmEditor(false);
+    setLocalRepFirmLinks([]);
+  };
+
+  const updateRepFirmLinkAt = (index: number, patch: Partial<RepFirmProductLink>) => {
+    setLocalRepFirmLinks((prev) => prev.map((l, i) => (i === index ? { ...l, ...patch } : l)));
+  };
+
+  const removeRepFirmLinkAt = (index: number) => {
+    setLocalRepFirmLinks((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const addRepFirmLink = () => {
+    setLocalRepFirmLinks((prev) => [
+      ...prev,
+      {
+        id: `rfl-new-${Date.now()}`,
+        repFirmId: "",
+        repFirmName: "",
+        scope: "enable",
+        status: "active",
+      },
+    ]);
+  };
+
+  const saveRepFirmLinksFromState = () => {
+    onPatchProduct(product.id, {
+      repFirmLinks: localRepFirmLinks,
+      repFirmCount: localRepFirmLinks.length,
+    });
+    toast("Rep firms saved");
+    setShowRepFirmEditor(false);
+  };
+
   return (
     <div className="flex min-h-0 flex-col pb-0">
       {/* Block 1 — Hero + Identity */}
@@ -629,14 +808,16 @@ export function ProductDirectoryDetailBody({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/40 to-transparent" />
         {showClose && onClose && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-sm"
             onClick={onClose}
-            className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white/70 backdrop-blur-sm transition-all hover:bg-black/60 hover:text-white"
+            className="absolute right-3 top-3 size-7 min-h-7 min-w-7 rounded-full border-0 bg-black/40 text-white/70 backdrop-blur-sm hover:bg-black/60 hover:text-white"
             aria-label="Close panel"
           >
-            <X className="h-3.5 w-3.5" />
-          </button>
+            <X className="size-3.5" aria-hidden />
+          </Button>
         )}
         <div className="absolute bottom-0 left-0 right-0 p-4">
           <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -859,22 +1040,26 @@ export function ProductDirectoryDetailBody({
           </div>
           {isAdmin ? (
             showPartnerProgramEditor ? (
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={cancelPartnerProgramsEdit}
-                className="shrink-0 rounded-lg border border-border bg-white/[0.04] px-2.5 py-1 text-2xs text-muted-foreground transition-colors hover:bg-white/[0.08] hover:text-foreground"
+                className="h-8 shrink-0 rounded-lg text-xs"
               >
                 Cancel editing
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={beginPartnerProgramsEdit}
-                className="flex shrink-0 items-center gap-1 rounded-lg border border-brand-cta/35 bg-[rgba(201,169,110,0.08)] px-2.5 py-1 text-2xs text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.14)]"
+                className="h-8 shrink-0 rounded-lg border border-brand-cta/35 bg-[rgba(201,169,110,0.08)] text-xs text-brand-cta hover:bg-[rgba(201,169,110,0.14)]"
               >
-                <Pencil className="h-3 w-3" aria-hidden />
+                <Pencil className="size-3.5" aria-hidden />
                 Edit programs
-              </button>
+              </Button>
             )
           ) : null}
         </div>
@@ -901,14 +1086,16 @@ export function ProductDirectoryDetailBody({
                         <span className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
                           Program {index + 1}
                         </span>
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="xs"
                           onClick={() => removeProgramAt(index)}
-                          className="flex items-center gap-1 text-[9px] text-[#A66B6B]/80 transition-colors hover:text-[#A66B6B]"
+                          className="h-7 gap-1 text-[9px] text-[#A66B6B]/80 hover:text-[#A66B6B]"
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Trash2 className="size-3" aria-hidden />
                           Remove
-                        </button>
+                        </Button>
                       </div>
                       <div className="grid gap-2 sm:grid-cols-2">
                         <label className="block sm:col-span-2">
@@ -963,7 +1150,24 @@ export function ProductDirectoryDetailBody({
                           </select>
                         </label>
                         <label className="block">
-                          <span className="mb-0.5 block text-[9px] text-muted-foreground">Commission %</span>
+                          <span className="mb-0.5 block text-[9px] text-muted-foreground">Commission type</span>
+                          <select
+                            value={program.commissionType ?? "percentage"}
+                            onChange={(e) =>
+                              updateProgramAt(index, {
+                                commissionType: e.target.value as "percentage" | "flat",
+                              })
+                            }
+                            className="w-full rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
+                          >
+                            <option value="percentage">Percentage (%)</option>
+                            <option value="flat">Flat fee ($)</option>
+                          </select>
+                        </label>
+                        <label className="block">
+                          <span className="mb-0.5 block text-[9px] text-muted-foreground">
+                            {(program.commissionType ?? "percentage") === "flat" ? "Commission $" : "Commission %"}
+                          </span>
                           <input
                             type="number"
                             step="0.1"
@@ -1046,21 +1250,26 @@ export function ProductDirectoryDetailBody({
               </div>
             )}
             <div className="mt-2 flex flex-col gap-2">
-              <button
+              <Button
                 type="button"
-                className="w-full rounded-lg border border-brand-cta bg-[rgba(201,169,110,0.1)] px-3 py-2 text-xs font-medium text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.15)]"
+                variant="secondary"
+                size="sm"
+                className="h-8 w-full rounded-lg border border-brand-cta/30 bg-[rgba(201,169,110,0.1)] text-xs font-medium text-brand-cta hover:bg-[rgba(201,169,110,0.15)]"
                 onClick={addPartnerProgram}
               >
-                + Link program
-              </button>
+                <Plus className="size-3.5" aria-hidden />
+                Link program
+              </Button>
               {localPartnerPrograms.length > 0 ? (
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={savePartnerProgramsFromState}
-                  className="w-full rounded-lg border border-border bg-white/[0.06] px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-white/[0.09]"
+                  className="h-8 w-full rounded-lg text-xs font-medium"
                 >
                   Save all program changes
-                </button>
+                </Button>
               ) : null}
             </div>
           </>
@@ -1125,7 +1334,9 @@ export function ProductDirectoryDetailBody({
                         {program.activePromotions.map((pr) => (
                           <li key={pr.id} className="space-y-0.5">
                             <div>
-                              <span className="font-semibold text-brand-cta">{pr.effectiveRate}%</span> · book{" "}
+                              <span className="font-semibold text-brand-cta">
+                                {program.commissionType === "flat" ? `$${pr.effectiveRate}` : `${pr.effectiveRate}%`}
+                              </span> · book{" "}
                               {pr.bookingStart.slice(0, 10)}–{pr.bookingEnd.slice(0, 10)}
                             </div>
                             {pr.title?.trim() ? (
@@ -1159,19 +1370,15 @@ export function ProductDirectoryDetailBody({
                   {(program.lastEditedAt || program.lastEditedByName) ? (
                     <p className="px-3 pb-2 text-[9px] text-muted-foreground">
                       Last edited {program.lastEditedByName ? `by ${program.lastEditedByName}` : ""}
-                      {program.lastEditedAt
-                        ? ` · ${new Date(program.lastEditedAt).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}`
-                        : ""}
+                      {program.lastEditedAt ? ` · ${formatIsoDateStable(program.lastEditedAt)}` : ""}
                     </p>
                   ) : null}
                   {showFooter ? (
                     <div className="flex items-center gap-3 border-t border-white/[0.04] bg-white/[0.015] px-3 py-2">
                       {canViewCommissions && displayRate != null ? (
-                        <span className="text-xs font-semibold text-[#B8976E]">{displayRate}%</span>
+                        <span className="text-xs font-semibold text-[#B8976E]">
+                          {program.commissionType === "flat" ? `$${displayRate}` : `${displayRate}%`}
+                        </span>
                       ) : null}
                       {program.expiryDate != null && program.expiryDate !== "" ? (
                         <span
@@ -1181,11 +1388,7 @@ export function ProductDirectoryDetailBody({
                           )}
                         >
                           {isExpiring ? "Expires " : "Until "}
-                          {new Date(program.expiryDate).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
+                          {formatIsoDateStable(program.expiryDate)}
                         </span>
                       ) : null}
                     </div>
@@ -1196,6 +1399,450 @@ export function ProductDirectoryDetailBody({
           </div>
         )}
       </div>
+
+      {/* Block 5 — Rep Firms */}
+      <div className="border-t border-border pt-4">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Users className="h-3.5 w-3.5 shrink-0" style={{ color: "#B07A5B" }} />
+            <span className="text-[11px] font-medium text-[#F5F0EB]">Rep Firms</span>
+            <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-[#6B6560]">
+              {repFirmLinks.length}
+            </span>
+          </div>
+          {isAdmin ? (
+            showRepFirmEditor ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={cancelRepFirmsEdit}
+                className="h-8 shrink-0 rounded-lg text-xs"
+              >
+                Cancel editing
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={beginRepFirmsEdit}
+                className="h-8 shrink-0 rounded-lg border border-[rgba(176,122,91,0.35)] bg-[rgba(176,122,91,0.08)] text-xs text-[#B07A5B] hover:bg-[rgba(176,122,91,0.14)]"
+              >
+                <Pencil className="size-3.5" aria-hidden />
+                Edit rep firms
+              </Button>
+            )
+          ) : null}
+        </div>
+
+        {showRepFirmEditor ? (
+          <p className="mb-2 text-[9px] text-[#6B6560]">Edit below, then use Save all rep firm changes.</p>
+        ) : null}
+
+        {showRepFirmEditor ? (
+          <>
+            {localRepFirmLinks.length === 0 ? (
+              <div className="rounded-xl border border-white/[0.03] bg-white/[0.015] py-6 text-center">
+                <p className="text-[10px] text-[#6B6560]">No rep firms linked</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {localRepFirmLinks.map((link, index) => {
+                  const scopeVal = link.scope === "enable" ? "enable" : (link.scope ?? "");
+                  return (
+                    <div
+                      key={link.id}
+                      className="space-y-2 rounded-xl border border-[rgba(176,122,91,0.15)] bg-[rgba(176,122,91,0.04)] p-3"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-[9px] font-medium uppercase tracking-wider text-[#6B6560]">
+                          Rep firm {index + 1}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="xs"
+                          onClick={() => removeRepFirmLinkAt(index)}
+                          className="h-7 gap-1 text-[9px] text-[#A66B6B]/80 hover:text-[#A66B6B]"
+                        >
+                          <Trash2 className="size-3" aria-hidden />
+                          Remove
+                        </Button>
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <label className="block sm:col-span-2">
+                          <span className="mb-0.5 block text-[9px] text-[#6B6560]">Display name</span>
+                          <input
+                            value={link.repFirmName}
+                            onChange={(e) => updateRepFirmLinkAt(index, { repFirmName: e.target.value })}
+                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="mb-0.5 block text-[9px] text-[#6B6560]">Rep Firm id</span>
+                          <input
+                            value={link.repFirmId}
+                            onChange={(e) => updateRepFirmLinkAt(index, { repFirmId: e.target.value })}
+                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="mb-0.5 block text-[9px] text-[#6B6560]">Scope</span>
+                          <select
+                            value={scopeVal}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              updateRepFirmLinkAt(index, { scope: v === "enable" ? "enable" : v });
+                            }}
+                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                          >
+                            <option value="enable">Enable</option>
+                            {teams.map((t) => (
+                              <option key={t.id} value={t.id}>
+                                {t.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="block">
+                          <span className="mb-0.5 block text-[9px] text-[#6B6560]">Status</span>
+                          <select
+                            value={link.status ?? "active"}
+                            onChange={(e) =>
+                              updateRepFirmLinkAt(index, {
+                                status: e.target.value as "active" | "inactive",
+                              })
+                            }
+                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                          >
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                          </select>
+                        </label>
+                        <label className="block">
+                          <span className="mb-0.5 block text-[9px] text-[#6B6560]">Contact name</span>
+                          <input
+                            value={link.contactName ?? ""}
+                            onChange={(e) => updateRepFirmLinkAt(index, { contactName: e.target.value })}
+                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="mb-0.5 block text-[9px] text-[#6B6560]">Contact email</span>
+                          <input
+                            value={link.contactEmail ?? ""}
+                            onChange={(e) => updateRepFirmLinkAt(index, { contactEmail: e.target.value })}
+                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="mb-0.5 block text-[9px] text-[#6B6560]">Contact phone</span>
+                          <input
+                            value={link.contactPhone ?? ""}
+                            onChange={(e) => updateRepFirmLinkAt(index, { contactPhone: e.target.value })}
+                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                          />
+                        </label>
+                        <label className="block sm:col-span-2">
+                          <span className="mb-0.5 block text-[9px] text-[#6B6560]">Notes</span>
+                          <textarea
+                            value={link.notes ?? ""}
+                            onChange={(e) => updateRepFirmLinkAt(index, { notes: e.target.value })}
+                            rows={2}
+                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <div className="mt-2 flex flex-col gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="h-8 w-full rounded-lg border border-[rgba(176,122,91,0.30)] bg-[rgba(176,122,91,0.1)] text-xs font-medium text-[#B07A5B] hover:bg-[rgba(176,122,91,0.15)]"
+                onClick={addRepFirmLink}
+              >
+                <Plus className="size-3.5" aria-hidden />
+                Link rep firm
+              </Button>
+              {localRepFirmLinks.length > 0 ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={saveRepFirmLinksFromState}
+                  className="h-8 w-full rounded-lg text-xs font-medium"
+                >
+                  Save all rep firm changes
+                </Button>
+              ) : null}
+            </div>
+          </>
+        ) : repFirmLinks.length === 0 ? (
+          <div className="rounded-xl border border-white/[0.03] bg-white/[0.015] py-6 text-center">
+            <p className="text-[10px] text-[#6B6560]">No rep firms linked</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {repFirmLinks.map((link) => {
+              const active = (link.status ?? "active") === "active";
+              const firmRow = getRepFirmByIdWithOverlay(link.repFirmId, repFirmsRegistry);
+              const regionsLabel = firmRow?.regions?.length ? firmRow.regions.join(", ") : "—";
+              return (
+                <div
+                  key={link.id}
+                  className={cn(
+                    "overflow-hidden rounded-xl border border-white/[0.05] bg-white/[0.02]",
+                    !active && "opacity-75"
+                  )}
+                >
+                  <div className="flex items-center justify-between px-3 pb-1.5 pt-2.5">
+                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                      <span className="text-[11px] font-medium text-[#F5F0EB]">{link.repFirmName}</span>
+                      {link.scope === "enable" ? (
+                        <span className="shrink-0 rounded bg-[rgba(91,138,110,0.12)] px-1.5 py-0.5 text-[8px] text-[#5B8A6E]">
+                          Enable
+                        </span>
+                      ) : link.scope ? (
+                        <ScopeBadge scope={link.scope} teams={teams} className="shrink-0" />
+                      ) : null}
+                      {!active ? <span className="text-[8px] uppercase text-[#6B6560]">Inactive</span> : null}
+                    </div>
+                  </div>
+                  {link.contactName || link.contactEmail || link.contactPhone ? (
+                    <p className="px-3 pb-2 text-[10px] text-[#9B9590]">
+                      Contact: {link.contactName ?? "—"}
+                      {link.contactEmail ? (
+                        <>
+                          {" "}
+                          ·{" "}
+                          <a
+                            href={`mailto:${link.contactEmail}`}
+                            className="text-[#B07A5B]/70 hover:text-[#B07A5B]"
+                          >
+                            {link.contactEmail}
+                          </a>
+                        </>
+                      ) : null}
+                      {link.contactPhone ? <> · {link.contactPhone}</> : null}
+                    </p>
+                  ) : null}
+                  {link.notes ? (
+                    <p className="px-3 pb-2 text-[9px] leading-relaxed text-[#9B9590]">{link.notes}</p>
+                  ) : null}
+                  {link.lastEditedByName ? (
+                    <p className="px-3 pb-2 text-[9px] text-[#6B6560]">
+                      Last edited by {link.lastEditedByName}
+                      {link.lastEditedAt
+                        ? ` · ${new Date(link.lastEditedAt).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}`
+                        : ""}
+                    </p>
+                  ) : null}
+                  <div className="flex items-center gap-3 border-t border-white/[0.04] bg-white/[0.015] px-3 py-2">
+                    <span
+                      className={cn(
+                        "shrink-0 text-[9px] font-medium",
+                        active ? "text-[#5B8A6E]" : "text-[#6B6560]"
+                      )}
+                    >
+                      {active ? "Active" : "Inactive"}
+                    </span>
+                    <span className="min-w-0 flex-1 text-right text-[9px] text-[#6B6560]">
+                      Regions: {regionsLabel}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Block 6 — VIC intelligence */}
+      {canViewVICData ? (
+        <div className="border-t border-border pt-4">
+          <button
+            type="button"
+            onClick={() => setVicIntelOpen((open) => !open)}
+            className="mb-3 flex w-full items-center justify-between gap-2 text-left"
+          >
+            <div className="flex items-center gap-2">
+              <Users className="h-3.5 w-3.5 shrink-0 text-[#B8976E]" />
+              <span className="text-xs font-medium text-foreground">VIC intelligence</span>
+              <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-muted-foreground">
+                {vicLinks.length}
+              </span>
+            </div>
+            <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform", vicIntelOpen && "rotate-180")} />
+          </button>
+          {vicIntelOpen ? (
+            <div className="space-y-3">
+              <p className="text-[10px] text-muted-foreground">
+                {vicLinks.length} VIC{vicLinks.length !== 1 ? "s" : ""} linked via itinerary activity or manual signals.
+              </p>
+              {vicLinks.length > 0 ? (
+                <div className="space-y-2">
+                  {vicLinks.map((link) => (
+                    <div key={`${link.vicId}-${link.productId}`} className="flex items-center justify-between gap-2 rounded-lg border border-white/[0.04] bg-white/[0.015] px-2.5 py-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span
+                          className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-medium text-[#0E0E0E]"
+                          style={{ backgroundColor: hashColor(link.vicName) }}
+                        >
+                          {link.vicName.charAt(0).toUpperCase()}
+                        </span>
+                        <span className="truncate text-xs text-foreground">{displayVicName(link.vicName)}</span>
+                      </div>
+                      <span className="shrink-0 text-[10px] text-muted-foreground">
+                        {link.visitCount} visit{link.visitCount !== 1 ? "s" : ""} · {vicIntelDate(link.lastVisitDate)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-lg border border-white/[0.03] bg-white/[0.015] px-3 py-2 text-[10px] text-muted-foreground">
+                  No linked VICs yet.
+                </p>
+              )}
+              <div className="border-t border-border/70 pt-2">
+                <p className="text-xs text-foreground">
+                  Also in {itineraryLinks.length} itinerar{itineraryLinks.length === 1 ? "y" : "ies"}
+                </p>
+                {itineraryLinks.length > 0 ? (
+                  <div className="mt-2 space-y-1.5">
+                    {itineraryLinks.map((row) => (
+                      <div key={row.itineraryId} className="flex items-center justify-between gap-2 text-[10px]">
+                        <span className="truncate text-foreground">{row.itineraryName}</span>
+                        {canViewCommissions ? (
+                          <span className="shrink-0 text-[#B8976E]">
+                            {new Intl.NumberFormat("en-US", {
+                              style: "currency",
+                              currency: "EUR",
+                              maximumFractionDigits: 0,
+                            }).format(row.totalSpend)}
+                          </span>
+                        ) : (
+                          <span className="shrink-0 text-muted-foreground">{row.eventCount} event{row.eventCount !== 1 ? "s" : ""}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {canViewCommissions ? (
+        <div className="border-t border-border pt-4">
+          <button
+            type="button"
+            onClick={() => setIncentivesExpanded((prev) => !prev)}
+            className="mb-3 flex w-full items-center justify-between gap-2 text-left"
+          >
+            <div className="flex items-center gap-2">
+              <Flame className="h-3.5 w-3.5 text-amber-400" aria-hidden />
+              <span className="text-xs font-medium text-foreground">Commission Incentives</span>
+            </div>
+            <span className="text-2xs text-amber-300">
+              {incentivesExpanded ? "▲" : "▼"} {advisoryGroups.active.length} active
+            </span>
+          </button>
+          {incentivesExpanded ? (
+            totalVisibleAdvisories === 0 ? (
+              <div className="rounded-xl border border-white/[0.03] bg-white/[0.015] py-6 text-center">
+                <p className="text-2xs text-muted-foreground">No advisory incentives on this product yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {(
+                  [
+                    ["ACTIVE", advisoryGroups.active, "active"],
+                    ["UPCOMING", advisoryGroups.upcoming, "upcoming"],
+                    ["EXPIRED", advisoryGroups.expired, "expired"],
+                  ] as const
+                ).map(([label, items, kind]) => {
+                  if (items.length === 0) return null;
+                  return (
+                    <div key={label}>
+                      <p className="mb-2 text-[10px] tracking-wide text-muted-foreground">{label}</p>
+                      <div className="space-y-2">
+                        {items.map((advisory) => {
+                          const SourceIcon =
+                            {
+                              rep_firm: Users,
+                              partner_program: Award,
+                              internal: Building2,
+                              virtuoso: Star,
+                            }[advisory.source] ?? Building2;
+                          return (
+                            <div
+                              key={advisory.id}
+                              className={cn(
+                                "rounded-xl border border-white/[0.05] bg-white/[0.02] p-3",
+                                kind === "active" && "border-l-2 border-l-amber-400",
+                                kind === "upcoming" && "border-l-2 border-l-amber-500 border-dashed opacity-80",
+                                kind === "expired" && "opacity-50"
+                              )}
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <p className="text-xs font-medium text-foreground">{advisory.title}</p>
+                                <span className="text-[10px] text-amber-300">
+                                  {formatAdvisoryIncentiveLabel(advisory.incentiveType, advisory.incentiveValue)}
+                                </span>
+                              </div>
+                              <p className={cn("mt-1 text-[10px] text-muted-foreground", kind === "expired" && "line-through")}>
+                                {kind === "upcoming"
+                                  ? `Starts ${formatIsoDateStable(advisory.validFrom)}`
+                                  : kind === "expired"
+                                    ? `Ended ${formatIsoDateStable(advisory.validUntil)}`
+                                    : `${formatIsoDateStable(advisory.validFrom)} – ${formatIsoDateStable(advisory.validUntil)}`}
+                              </p>
+                              <p className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+                                <SourceIcon className="h-3 w-3" aria-hidden />
+                                via {advisory.sourceName}
+                              </p>
+                              {advisory.details?.trim() ? (
+                                <p className="mt-1 text-2xs leading-relaxed text-muted-foreground">{advisory.details.trim()}</p>
+                              ) : null}
+                              <p className="mt-2 text-2xs text-amber-200/90">
+                                {advisoryProjectionText(
+                                  advisory.incentiveType,
+                                  advisory.incentiveValue,
+                                  baseCommissionForAdvisories
+                                )}
+                              </p>
+                              {kind === "active" && isAdmin ? (
+                                <button
+                                  type="button"
+                                  onClick={() => dismissAdvisory(advisory.id)}
+                                  className="mt-2 rounded-md border border-amber-500/20 bg-amber-500/5 px-2 py-1 text-[10px] text-amber-300 transition-colors hover:bg-amber-500/10"
+                                >
+                                  Dismiss
+                                </button>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )
+          ) : null}
+        </div>
+      ) : null}
 
       {/* Contacts — personal (private) then agency (shared) */}
       <div className="border-t border-border pt-4">
@@ -1217,13 +1864,16 @@ export function ProductDirectoryDetailBody({
                 </span>
               ) : null}
             </div>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="xs"
               onClick={openPersonalContactFormForAdd}
-              className="flex items-center gap-1 text-[9px] text-[rgba(160,140,180,0.55)] transition-colors hover:text-[rgba(160,140,180,0.85)]"
+              className="h-7 text-[rgba(160,140,180,0.65)] hover:text-[rgba(160,140,180,0.9)]"
             >
-              <Plus className="h-3 w-3" /> Add
-            </button>
+              <Plus className="size-3" aria-hidden />
+              Add
+            </Button>
           </div>
           {personalContacts.length === 0 ? (
             <p className="py-2 text-center text-2xs text-muted-foreground/65">None yet</p>
@@ -1253,30 +1903,37 @@ export function ProductDirectoryDetailBody({
                       ) : null}
                     </div>
                     {c.note ? <p className="mt-0.5 text-[9px] text-muted-foreground">{c.note}</p> : null}
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="xs"
                       onClick={() => requestContactUpgrade(c)}
-                      className="mt-1.5 flex items-center gap-1 text-[9px] text-muted-foreground transition-colors hover:text-brand-cta"
+                      className="mt-1.5 h-7 pl-0 text-[9px] text-muted-foreground hover:text-brand-cta"
                     >
-                      <Share2 className="h-3 w-3 shrink-0" />
+                      <Share2 className="size-3" aria-hidden />
                       Suggest to agency…
-                    </button>
+                    </Button>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="xs"
                       onClick={() => openPersonalContactFormForEdit(c)}
-                      className="flex items-center gap-0.5 text-[9px] text-muted-foreground/65 transition-colors hover:text-brand-cta"
+                      className="h-6 text-[9px] text-muted-foreground/65 hover:text-brand-cta"
                     >
-                      <Pencil className="h-2.5 w-2.5" /> Edit
-                    </button>
-                    <button
+                      <Pencil className="size-3" aria-hidden />
+                      Edit
+                    </Button>
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="xs"
                       onClick={() => removePersonalContact(c.id)}
-                      className="text-[9px] text-[#A66B6B]/60 transition-colors hover:text-[#A66B6B]"
+                      className="h-6 text-[9px] text-[#A66B6B]/60 hover:text-[#A66B6B]"
                     >
                       Remove
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -1318,16 +1975,20 @@ export function ProductDirectoryDetailBody({
                 className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
               />
               <div className="flex items-center gap-2">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="xs"
                   disabled={!pcName.trim() || !pcRole.trim()}
                   onClick={savePersonalContact}
-                  className="text-2xs text-[rgba(160,140,180,0.75)] transition-colors hover:text-[rgba(160,140,180,1)] disabled:opacity-30"
+                  className="h-7 text-[rgba(160,140,180,0.9)]"
                 >
                   Save
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="xs"
                   onClick={() => {
                     setPersonalContactFormOpen(false);
                     setEditingPersonalContactId(null);
@@ -1337,10 +1998,10 @@ export function ProductDirectoryDetailBody({
                     setPcPhone("");
                     setPcNote("");
                   }}
-                  className="text-2xs text-muted-foreground transition-colors hover:text-muted-foreground"
+                  className="h-7 text-muted-foreground"
                 >
                   Cancel
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -1362,25 +2023,30 @@ export function ProductDirectoryDetailBody({
                 </span>
               ) : null}
             </div>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="xs"
               onClick={openAgencyContactFormForAdd}
-              className="flex items-center gap-1 text-[9px] text-[rgba(140,160,180,0.5)] transition-colors hover:text-[rgba(140,160,180,0.8)]"
+              className="h-7 text-[rgba(140,160,180,0.65)] hover:text-[rgba(140,160,180,0.9)]"
             >
-              <Plus className="h-3 w-3" /> Add
-            </button>
+              <Plus className="size-3" aria-hidden />
+              Add
+            </Button>
           </div>
           {agencyContacts.length === 0 ? (
             <div className="rounded-xl border border-white/[0.03] bg-white/[0.015] py-5 text-center">
               <UserPlus className="mx-auto mb-1.5 h-4 w-4 text-muted-foreground/65" />
               <p className="text-2xs text-muted-foreground">None yet</p>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="xs"
                 onClick={openAgencyContactFormForAdd}
-                className="mt-1.5 text-[9px] text-[rgba(140,160,180,0.5)] transition-colors hover:text-[rgba(140,160,180,0.8)]"
+                className="mt-1.5 h-7 text-[rgba(140,160,180,0.65)] hover:text-[rgba(140,160,180,0.9)]"
               >
                 Add contact
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="space-y-1.5">
@@ -1413,23 +2079,58 @@ export function ProductDirectoryDetailBody({
                       {c.addedBy ? (
                         <span className="mt-0.5 block text-[8px] text-muted-foreground/65">Added by {c.addedBy}</span>
                       ) : null}
+                      {c.pendingUpgrade ? (
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[9px] text-brand-cta">
+                          <Clock className="h-3 w-3 shrink-0" />
+                          <span>
+                            Pending approval — suggested by {c.upgradedByName || c.addedBy || "advisor"}
+                          </span>
+                          {isAdmin ? (
+                            <div className="ml-auto flex gap-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="xs"
+                                className="h-6 text-[#5B8A6E] hover:text-[#6DA07E]"
+                                onClick={() => approveContactUpgrade(c.id)}
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="xs"
+                                className="h-6 text-[#A66B6B] hover:text-[#BA7E7E]"
+                                onClick={() => rejectContactUpgrade(c.id)}
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
                     {canEdit ? (
                       <div className="flex shrink-0 flex-col items-end gap-1">
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="xs"
                           onClick={() => openAgencyContactFormForEdit(c)}
-                          className="flex items-center gap-0.5 text-[9px] text-muted-foreground/65 transition-colors hover:text-brand-cta"
+                          className="h-6 text-[9px] text-muted-foreground/65 hover:text-brand-cta"
                         >
-                          <Pencil className="h-2.5 w-2.5" /> Edit
-                        </button>
-                        <button
+                          <Pencil className="size-3" aria-hidden />
+                          Edit
+                        </Button>
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="xs"
                           onClick={() => removeAgencyContact(c.id)}
-                          className="text-[9px] text-[#A66B6B]/60 transition-colors hover:text-[#A66B6B]"
+                          className="h-6 text-[9px] text-[#A66B6B]/60 hover:text-[#A66B6B]"
                         >
                           Remove
-                        </button>
+                        </Button>
                       </div>
                     ) : null}
                   </div>
@@ -1473,16 +2174,20 @@ export function ProductDirectoryDetailBody({
                 className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
               />
               <div className="flex items-center gap-2">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="xs"
                   disabled={!newAgencyContactName.trim() || !newAgencyContactRole.trim()}
                   onClick={saveAgencyContact}
-                  className="text-2xs text-[rgba(140,160,180,0.7)] transition-colors hover:text-[rgba(140,160,180,1)] disabled:opacity-30"
+                  className="h-7 text-[rgba(140,160,180,0.9)]"
                 >
-                  Save contact
-                </button>
-                <button
+                  {isAdmin ? "Save contact" : "Submit for review"}
+                </Button>
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="xs"
                   onClick={() => {
                     setAgencyContactFormOpen(false);
                     setEditingAgencyContactId(null);
@@ -1492,10 +2197,10 @@ export function ProductDirectoryDetailBody({
                     setNewAgencyContactPhone("");
                     setNewAgencyContactNote("");
                   }}
-                  className="text-2xs text-muted-foreground transition-colors hover:text-muted-foreground"
+                  className="h-7 text-muted-foreground"
                 >
                   Cancel
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -1535,23 +2240,21 @@ export function ProductDirectoryDetailBody({
                         className="w-full resize-none rounded-lg border border-border bg-white/[0.03] px-2 py-1.5 text-xs text-[#C8C0B8] outline-none"
                       />
                       <div className="mt-1.5 flex gap-2">
-                        <button
-                          type="button"
-                          onClick={savePersonalNoteEdit}
-                          className="text-[9px] text-[#5B8A6E] hover:text-[#6DA07E]"
-                        >
+                        <Button type="button" variant="secondary" size="xs" onClick={savePersonalNoteEdit} className="h-7 text-[#5B8A6E]">
                           Save
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="xs"
                           onClick={() => {
                             setEditingPersonalNoteId(null);
                             setEditPersonalNoteDraft("");
                           }}
-                          className="text-[9px] text-muted-foreground"
+                          className="h-7 text-muted-foreground"
                         >
                           Cancel
-                        </button>
+                        </Button>
                       </div>
                     </>
                   ) : (
@@ -1559,31 +2262,38 @@ export function ProductDirectoryDetailBody({
                       <p className="text-xs leading-relaxed text-[#C8C0B8]">{note.text}</p>
                       <div className="mt-1.5 flex flex-wrap items-center gap-2">
                         <span className="text-[9px] text-muted-foreground/65">{relativeTime(note.createdAt)}</span>
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="xs"
                           onClick={() => {
                             setEditingPersonalNoteId(note.id);
                             setEditPersonalNoteDraft(note.text);
                           }}
-                          className="flex items-center gap-0.5 text-[9px] text-muted-foreground/65 hover:text-brand-cta"
+                          className="h-6 text-[9px] text-muted-foreground/65 hover:text-brand-cta"
                         >
-                          <Pencil className="h-2.5 w-2.5" /> Edit
-                        </button>
-                        <button
+                          <Pencil className="size-3" aria-hidden />
+                          Edit
+                        </Button>
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="xs"
                           onClick={() => removePersonalNote(note.id)}
-                          className="text-[9px] text-[#A66B6B]/60 hover:text-[#A66B6B]"
+                          className="h-6 text-[9px] text-[#A66B6B]/60 hover:text-[#A66B6B]"
                         >
                           Delete
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="xs"
                           onClick={() => requestUpgradeToAgency(note.text)}
-                          className="ml-auto flex items-center gap-1 text-[9px] text-muted-foreground transition-colors hover:text-brand-cta"
+                          className="ml-auto h-6 text-[9px] text-muted-foreground hover:text-brand-cta"
                         >
-                          <Share2 className="h-3 w-3 shrink-0" />
+                          <Share2 className="size-3" aria-hidden />
                           Suggest to agency
-                        </button>
+                        </Button>
                       </div>
                     </>
                   )}
@@ -1600,13 +2310,15 @@ export function ProductDirectoryDetailBody({
               rows={2}
               className="min-h-0 flex-1 resize-none rounded-lg border border-border bg-white/[0.03] px-2 py-1.5 text-xs text-[#C8C0B8] outline-none placeholder:text-muted-foreground/65"
             />
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="xs"
               onClick={addPersonalNote}
-              className="self-end px-2 text-2xs text-[rgba(160,140,180,0.65)] transition-colors hover:text-[rgba(160,140,180,0.9)]"
+              className="self-end h-7 text-[rgba(160,140,180,0.75)] hover:text-[rgba(160,140,180,0.95)]"
             >
               Add
-            </button>
+            </Button>
           </div>
 
           <div className="mt-3 border-t border-white/[0.05] pt-3">
@@ -1663,20 +2375,24 @@ export function ProductDirectoryDetailBody({
                       </span>
                       {isAdmin && (
                         <div className="ml-auto flex gap-2">
-                          <button
+                          <Button
                             type="button"
-                            className="text-[#5B8A6E] hover:text-[#6DA07E]"
+                            variant="ghost"
+                            size="xs"
+                            className="h-6 text-[#5B8A6E] hover:text-[#6DA07E]"
                             onClick={() => approveUpgrade(note.id)}
                           >
                             Approve
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
-                            className="text-[#A66B6B] hover:text-[#BA7E7E]"
+                            variant="ghost"
+                            size="xs"
+                            className="h-6 text-[#A66B6B] hover:text-[#BA7E7E]"
                             onClick={() => rejectUpgrade(note.id)}
                           >
                             Reject
-                          </button>
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -1690,23 +2406,21 @@ export function ProductDirectoryDetailBody({
                         className="w-full resize-none rounded-lg border border-border bg-white/[0.03] px-2 py-1.5 text-xs text-[#C8C0B8] outline-none"
                       />
                       <div className="mt-2 flex gap-2">
-                        <button
-                          type="button"
-                          onClick={saveAgencyNoteEdit}
-                          className="text-[9px] text-[#5B8A6E] hover:text-[#6DA07E]"
-                        >
+                        <Button type="button" variant="secondary" size="xs" onClick={saveAgencyNoteEdit} className="h-7 text-[#5B8A6E]">
                           Save
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="xs"
                           onClick={() => {
                             setEditingAgencyNoteId(null);
                             setEditAgencyNoteDraft("");
                           }}
-                          className="text-[9px] text-muted-foreground"
+                          className="h-7 text-muted-foreground"
                         >
                           Cancel
-                        </button>
+                        </Button>
                       </div>
                     </>
                   ) : (
@@ -1722,23 +2436,28 @@ export function ProductDirectoryDetailBody({
                       </div>
                       {canEditAgencyNote(note) && !note.pendingUpgrade ? (
                         <div className="mt-2 flex gap-2">
-                          <button
+                          <Button
                             type="button"
-                            className="flex items-center gap-0.5 text-muted-foreground/65 transition-colors hover:text-brand-cta"
+                            variant="ghost"
+                            size="xs"
+                            className="h-6 text-[9px] text-muted-foreground/65 hover:text-brand-cta"
                             onClick={() => {
                               setEditingAgencyNoteId(note.id);
                               setEditAgencyNoteDraft(note.text);
                             }}
                           >
-                            <Pencil className="h-3 w-3" /> Edit
-                          </button>
-                          <button
+                            <Pencil className="size-3" aria-hidden />
+                            Edit
+                          </Button>
+                          <Button
                             type="button"
-                            className="text-muted-foreground/65 transition-colors hover:text-brand-cta"
+                            variant="ghost"
+                            size="xs"
+                            className="h-6 text-[9px] text-muted-foreground/65 hover:text-brand-cta"
                             onClick={() => deleteAgencyNote(note.id)}
                           >
                             Delete
-                          </button>
+                          </Button>
                         </div>
                       ) : null}
                     </>
@@ -1759,14 +2478,15 @@ export function ProductDirectoryDetailBody({
               placeholder="Post to agency…"
               className="flex-1 rounded-lg border border-border bg-white/[0.03] px-3 py-2 text-xs text-[#C8C0B8] outline-none placeholder:text-muted-foreground/65"
             />
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="xs"
               onClick={postAgencyNote}
-              className="self-center px-3 text-xs transition-colors"
-              style={{ color: "rgba(140,160,180,0.60)" }}
+              className="self-center h-7 text-[rgba(140,160,180,0.75)] hover:text-[rgba(140,160,180,0.95)]"
             >
-              Post
-            </button>
+              {isAdmin ? "Post" : "Submit"}
+            </Button>
           </div>
         </div>
       </div>
@@ -1793,13 +2513,15 @@ export function ProductDirectoryDetailBody({
                 </div>
               </div>
               {canRemoveFromCollection(collection.id) && (
-                <button
+                <Button
                   type="button"
-                  className="text-muted-foreground/65 transition-colors hover:text-brand-cta"
+                  variant="ghost"
+                  size="xs"
+                  className="h-7 text-[9px] text-muted-foreground/65 hover:text-brand-cta"
                   onClick={() => removeFromCollection(collection.id)}
                 >
                   Remove
-                </button>
+                </Button>
               )}
             </div>
           ))}
@@ -1813,23 +2535,25 @@ export function ProductDirectoryDetailBody({
           <div className="max-h-[220px] overflow-y-auto border-b border-white/[0.04] px-4 py-3">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-2xs font-medium text-foreground">Add to collection</span>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="xs"
                 onClick={() => {
                   setPanelCollectionOpen(false);
                   setPanelCollectionSearch("");
                 }}
-                className="text-[9px] text-muted-foreground transition-colors hover:text-muted-foreground"
+                className="h-6 text-[9px] text-muted-foreground"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
             <div className="mb-2 flex items-center gap-1.5 rounded-lg border border-white/[0.05] bg-white/[0.03] px-2 py-1.5">
               <Search className="h-3 w-3 shrink-0 text-muted-foreground/65" />
               <input
                 value={panelCollectionSearch}
                 onChange={(e) => setPanelCollectionSearch(e.target.value)}
-                placeholder="Search collections..."
+                placeholder="Search collections…"
                 autoFocus
                 className="flex-1 bg-transparent text-2xs text-foreground outline-none placeholder:text-muted-foreground/65"
               />
@@ -1873,31 +2597,38 @@ export function ProductDirectoryDetailBody({
                   );
                 })}
             </div>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 setPanelCollectionOpen(false);
                 setPanelCollectionSearch("");
                 if (onRequestCreateCollection) onRequestCreateCollection();
                 else onOpenCollectionPicker();
               }}
-              className="mt-1.5 flex w-full items-center gap-1.5 rounded-lg px-2.5 py-2 text-left text-2xs text-brand-cta/60 transition-colors hover:bg-[rgba(201,169,110,0.04)] hover:text-brand-cta"
+              className="mt-1.5 h-8 w-full justify-start rounded-lg text-xs text-brand-cta/70 hover:bg-[rgba(201,169,110,0.04)] hover:text-brand-cta"
             >
-              <Plus className="h-3 w-3 shrink-0" />
+              <Plus className="size-3.5" aria-hidden />
               New collection
-            </button>
+            </Button>
           </div>
         )}
-        <div className="flex items-center gap-2 px-4 py-3">
-          <button
+        <div className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-stretch">
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
             onClick={onAddToItinerary}
-            className="flex-1 rounded-lg border border-brand-cta/20 bg-brand-cta/10 py-2 text-center text-2xs font-medium text-foreground transition-colors hover:bg-brand-cta/15"
+            className="h-8 flex-1 rounded-lg border border-brand-cta/20 bg-brand-cta/10 text-xs font-medium text-foreground hover:bg-brand-cta/15"
           >
+            <Plus className="size-3.5" aria-hidden />
             Add to Itinerary
-          </button>
-        <button
-          type="button"
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
             onClick={() => {
               if (inlinePickerEnabled) {
                 setPanelCollectionOpen((o) => {
@@ -1910,20 +2641,21 @@ export function ProductDirectoryDetailBody({
               }
             }}
             className={cn(
-              "flex-1 rounded-lg border py-2 text-center text-2xs font-medium transition-colors",
+              "h-8 flex-1 rounded-lg text-xs font-medium",
               inlinePickerEnabled && panelCollectionOpen
                 ? "border-brand-cta/20 bg-brand-cta/10 text-brand-cta"
-                : "border-border bg-white/[0.03] text-foreground hover:bg-white/[0.06]"
+                : "border-border bg-white/[0.03] hover:bg-white/[0.06]"
             )}
           >
+            <Bookmark className="size-3.5" aria-hidden />
             Add to Collection
-        </button>
-          <Link
-            href={`/dashboard/products/${product.id}`}
-            className="flex-1 rounded-lg border border-white/[0.04] bg-white/[0.02] py-2 text-center text-2xs font-medium text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground"
-          >
-            Full Page →
-          </Link>
+          </Button>
+          <Button variant="outline" size="sm" className="h-8 flex-1 rounded-lg text-xs font-medium" asChild>
+            <Link href={`/dashboard/products/${product.id}`}>
+              <ExternalLink className="size-3.5" aria-hidden />
+              Full page
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -1938,20 +2670,12 @@ export function ProductDirectoryDetailBody({
               Needs admin approval. Your private note is unchanged.
             </p>
             <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                className="px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-                onClick={() => setUpgradeConfirmOpen(false)}
-              >
+              <Button type="button" variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setUpgradeConfirmOpen(false)}>
                 Cancel
-              </button>
-              <button
-                type="button"
-                className="rounded-lg bg-brand-cta px-3 py-1.5 text-xs font-medium text-[#08080c] transition-colors hover:bg-brand-cta-hover"
-                onClick={confirmUpgrade}
-              >
+              </Button>
+              <Button type="button" variant="cta" size="sm" className="h-8 text-xs text-[#08080c]" onClick={confirmUpgrade}>
                 Submit
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -1975,24 +2699,21 @@ export function ProductDirectoryDetailBody({
               Your private contact will remain intact.
             </p>
             <div className="flex justify-end gap-2">
-              <button
+              <Button
                 type="button"
-                className="px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs"
                 onClick={() => {
                   setContactUpgradeOpen(false);
                   setContactUpgradeTarget(null);
                 }}
               >
                 Cancel
-              </button>
-              <button
-                type="button"
-                className="rounded-lg px-3 py-1.5 text-xs font-medium text-[#08080c] transition-colors hover:opacity-90"
-                style={{ background: "#C9A96E" }}
-                onClick={confirmContactUpgrade}
-              >
+              </Button>
+              <Button type="button" variant="cta" size="sm" className="h-8 text-xs text-[#08080c]" onClick={confirmContactUpgrade}>
                 Submit for Review
-              </button>
+              </Button>
             </div>
           </div>
         </div>

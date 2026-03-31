@@ -71,10 +71,10 @@ export default function ProductDirectoryLocationDropdown({ selectedCountries, on
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          "flex max-w-[220px] items-center gap-2 rounded-lg border px-3 py-1.5 text-left transition-colors",
+          "flex max-w-[220px] min-w-0 items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-xs transition-colors",
           selectedCountries.length > 0
-            ? "border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.06)]"
-            : "border-border bg-popover hover:border-border"
+            ? "border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
+            : "border-border bg-popover text-muted-foreground hover:border-border"
         )}
       >
         {selectedCountries.length === 0 ? (
@@ -83,9 +83,9 @@ export default function ProductDirectoryLocationDropdown({ selectedCountries, on
             <span className="text-xs text-muted-foreground">Location</span>
           </>
         ) : (
-          <span className="min-w-0 flex-1 text-xs">{summary}</span>
+          <span className="min-w-0 flex-1 truncate text-foreground">{summary}</span>
         )}
-        <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground/65" />
+        <ChevronDown className="ml-auto h-3 w-3 shrink-0 text-muted-foreground/65" />
       </button>
 
       {open && (
@@ -94,7 +94,7 @@ export default function ProductDirectoryLocationDropdown({ selectedCountries, on
             <input
               ref={inputRef}
               type="text"
-              placeholder="Search countries..."
+              placeholder="Search countries…"
               className="w-full rounded-lg border-none bg-[rgba(255,255,255,0.03)] px-2 py-1.5 text-xs text-foreground placeholder-[#4A4540] focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/40"
               value={search}
               onChange={(e) => setSearch(e.target.value)}

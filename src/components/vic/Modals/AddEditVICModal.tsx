@@ -78,7 +78,7 @@ type FormState = {
   languages_spoken: string[];
   assigned_advisor_id: string;
   secondary_advisor_id: string;
-  client_since: string;
+  vic_since: string;
   referral_source: string;
   referred_by_vic_id: string;
   relationship_status: RelationshipStatus | "";
@@ -116,7 +116,7 @@ function toFormState(v: VIC | null): FormState {
     languages_spoken: v?.languages_spoken ?? [],
     assigned_advisor_id: v?.assigned_advisor_id ?? "",
     secondary_advisor_id: v?.secondary_advisor_id ?? "",
-    client_since: v?.client_since ? v.client_since.slice(0, 10) : "",
+    vic_since: v?.vic_since ? v.vic_since.slice(0, 10) : "",
     referral_source: v?.referral_source ?? "",
     referred_by_vic_id: (v as { referred_by_vic_id?: string })?.referred_by_vic_id ?? "",
     relationship_status: (v?.relationship_status as RelationshipStatus) ?? "active",
@@ -189,7 +189,7 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
       languages_spoken: form.languages_spoken.length ? form.languages_spoken : undefined,
       assigned_advisor_id: form.assigned_advisor_id.trim() || undefined,
       secondary_advisor_id: form.secondary_advisor_id.trim() || undefined,
-      client_since: form.client_since.trim() || undefined,
+      vic_since: form.vic_since.trim() || undefined,
       referral_source: form.referral_source.trim() || undefined,
       referred_by_vic_id: form.referred_by_vic_id.trim() || undefined,
       relationship_status: form.relationship_status || undefined,
@@ -390,8 +390,8 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
                 </select>
               </div>
               <div>
-                <Label htmlFor="client_since">Client since</Label>
-                <Input id="client_since" type="date" value={form.client_since} onChange={(e) => update({ client_since: e.target.value })} className="mt-1" />
+                <Label htmlFor="vic_since">VIC since</Label>
+                <Input id="vic_since" type="date" value={form.vic_since} onChange={(e) => update({ vic_since: e.target.value })} className="mt-1" />
               </div>
               <div>
                 <Label htmlFor="referral_source">Referral source</Label>
@@ -428,7 +428,7 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
                   maxLength={MAX.vip_notes}
                   rows={3}
                   className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
-                  placeholder="Internal notes about this client"
+                  placeholder="Internal notes about this VIC"
                 />
                 <p className="text-xs text-muted-foreground/75">{form.vip_notes.length}/{MAX.vip_notes}</p>
               </div>

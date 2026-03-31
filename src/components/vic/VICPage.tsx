@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback, useLayoutEffect, useRef } from "react";
+import { useState, useEffect, useCallback, useLayoutEffect, useMemo, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { AcuityStatus, RelationshipStatus, VIC } from "@/types/vic";
 import type { AcuitySettings } from "@/types/vic";
 import type { VICListParams } from "@/types/vic";
 import type { VICTab } from "./TabBar";
-import { fetchVICList, fetchAcuitySettings, exportVICs, triggerAcuitySingle, triggerAcuityBulk, deleteVIC, getVICId } from "@/lib/vic-api";
+import { fetchVICList, fetchAcuitySettings, triggerAcuitySingle, triggerAcuityBulk, deleteVIC, getVICId } from "@/lib/vic-api";
 import { useUser } from "@/contexts/UserContext";
+import { useTeams } from "@/contexts/TeamsContext";
 import { canEditVIC, canDeleteVIC, canShareVIC, getVICViewLevel } from "@/utils/vicPermissions";
 import { FAKE_VICS, filterAndPaginateFakeVics } from "./fakeData";
 import TabBar from "./TabBar";
@@ -27,6 +28,12 @@ import {
   mergeVicListIntoUrl,
   parseVicListSearchParams,
 } from "@/lib/vicListUrl";
+import {
+  DASHBOARD_LIST_PAGE_HEADER,
+  DASHBOARD_LIST_PAGE_HEADER_SUBTITLE,
+  DASHBOARD_LIST_PAGE_HEADER_TITLE,
+  DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK,
+} from "@/lib/dashboardChrome";
 
 const VIC_VIEW_KEY = "vic_view";
 const VIC_SORT_KEY = "vic_sortBy";
@@ -35,11 +42,12 @@ const PAGE_SIZE = 20;
 
 export default function VICPage() {
   const { user } = useUser();
+  const { teams } = useTeams();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const tabFromUrl = (searchParams.get("tab") as VICTab) || "mine";
-  const activeTab: VICTab = tabFromUrl === "shared" || tabFromUrl === "agency" ? tabFromUrl : "mine";
+  const rawTab = searchParams.get("tab");
+  const activeTab: VICTab = rawTab === "shared" ? "shared" : "mine";
 
   const [vics, setVics] = useState<VIC[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -131,6 +139,7 @@ export default function VICPage() {
         const fake = filterAndPaginateFakeVics(FAKE_VICS, {
           tab: activeTab,
           userId: user?.id != null ? String(user.id) : undefined,
+          teams,
           search: params.search,
           country: params.country ?? undefined,
           status: relationshipStatus || undefined,
@@ -150,6 +159,7 @@ export default function VICPage() {
       const fake = filterAndPaginateFakeVics(FAKE_VICS, {
         tab: activeTab,
         userId: user?.id != null ? String(user.id) : undefined,
+        teams,
         search: searchQuery || undefined,
         country: selectedCountry ?? undefined,
         status: relationshipStatus || undefined,
@@ -165,7 +175,7 @@ export default function VICPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab, user?.id, searchQuery, selectedCountry, relationshipStatus, acuityStatusFilter, sortBy, sortOrder, page]);
+  }, [activeTab, user?.id, teams, searchQuery, selectedCountry, relationshipStatus, acuityStatusFilter, sortBy, sortOrder, page]);
 
   useEffect(() => {
     loadVics();
@@ -262,10 +272,11 @@ export default function VICPage() {
   const noResults = !isLoading && vics.length === 0 && hasActiveFilters;
 
   const currentUser = user ? { id: user.id, role: user.role, agency_id: user.agency_id } : null;
-  const canEdit = (vic: VIC) => activeTab !== "agency" && canEditVIC(currentUser, vic);
-  const canDelete = (vic: VIC) => activeTab !== "agency" && canDeleteVIC(currentUser, vic);
+  const permCtx = useMemo(() => ({ teams }), [teams]);
+  const canEdit = (vic: VIC) => canEditVIC(currentUser, vic, permCtx);
+  const canDelete = (vic: VIC) => canDeleteVIC(currentUser, vic);
   const canShare = (vic: VIC) => canShareVIC(currentUser, vic);
-  const viewLevel = (vic: VIC) => getVICViewLevel(currentUser, vic);
+  const viewLevel = (vic: VIC) => getVICViewLevel(currentUser, vic, permCtx);
 
   const toggleSelect = (id: string) => {
     setSelectedVicIds((prev) => {
@@ -319,10 +330,10 @@ export default function VICPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-inset">
-      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-border pl-6 pr-[4.5rem] py-3">
-        <div className="min-w-0">
-          <h1 className="text-sm font-semibold leading-none text-foreground">VICs</h1>
-          <p className="mt-1 text-xs leading-snug text-muted-foreground/75">
+      <header className={DASHBOARD_LIST_PAGE_HEADER}>
+        <div className={DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK}>
+          <h1 className={DASHBOARD_LIST_PAGE_HEADER_TITLE}>VICs</h1>
+          <p className={DASHBOARD_LIST_PAGE_HEADER_SUBTITLE}>
             {hasActiveFilters ? (
               <>
                 <span>
@@ -362,19 +373,7 @@ export default function VICPage() {
         page={page}
         pageSize={PAGE_SIZE}
         onAddVIC={activeTab === "mine" ? openAdd : undefined}
-        onImportCSV={() => setImportModalOpen(true)}
         onClearFilters={clearFilters}
-        onExportCSV={async () => {
-          try {
-            const blob = await exportVICs({ tab: activeTab, search: searchQuery, country: selectedCountry || undefined, sortBy, sortOrder, limit: 10000 });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "vics-export.csv";
-            a.click();
-            URL.revokeObjectURL(url);
-          } catch (_) {}
-        }}
         bulkSelectedCount={selectedVicIds.size}
         onBulkRunAcuity={selectedVicIds.size > 0 ? () => setBulkAcuityModalOpen(true) : undefined}
         onBulkDelete={selectedVicIds.size > 0 ? () => {
@@ -434,7 +433,7 @@ export default function VICPage() {
         />
       )}
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-auto p-4 md:p-6">
+      <div className="flex min-h-0 flex-1 flex-col overflow-auto px-4 pb-4 pt-0 md:px-6 md:pb-6">
         {error && (
           <div className="rounded-lg bg-[var(--muted-error-bg)] border border-[var(--muted-error-border)] text-[var(--muted-error-text)] px-4 py-2 text-sm mb-4">
             {error}
@@ -466,8 +465,6 @@ export default function VICPage() {
                 canEdit={canEdit}
                 canDelete={canDelete}
                 viewLevel={viewLevel}
-                showRequestFullAccess={activeTab === "agency"}
-                onRequestFullAccess={() => {}}
               />
             ) : (
               <VICCardView
@@ -480,8 +477,6 @@ export default function VICPage() {
                 canDelete={canDelete}
                 canShare={canShare}
                 viewLevel={viewLevel}
-                showRequestFullAccess={activeTab === "agency"}
-                onRequestFullAccess={() => {}}
               />
             )}
             {totalCount > PAGE_SIZE && (

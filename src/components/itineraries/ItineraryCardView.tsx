@@ -43,7 +43,7 @@ export default function ItineraryCardView({
     return (
       <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="h-48 rounded-xl bg-white/5 animate-pulse" />
+          <div key={i} className="h-48 rounded-xl bg-muted-foreground/10 animate-pulse" />
         ))}
       </div>
     );
@@ -59,7 +59,7 @@ export default function ItineraryCardView({
         return (
           <div
             key={id}
-            className="relative rounded-xl border border-border bg-[rgba(255,255,255,0.03)] overflow-hidden flex flex-col min-h-[220px] hover:border-input transition-colors"
+            className="relative rounded-xl border border-border bg-card/30 overflow-hidden flex flex-col min-h-[220px] hover:border-input hover:bg-card/40 transition-colors"
           >
             <DemoBadge />
             <div className="p-4 flex-1 flex flex-col gap-3">
@@ -99,7 +99,7 @@ export default function ItineraryCardView({
                       <Copy size={14} className="mr-2" /> Duplicate
                     </DropdownMenuItem>
                     {canDelete(it) && (
-                      <DropdownMenuItem onClick={() => onDelete(it)} className="text-red-400">
+                      <DropdownMenuItem onClick={() => onDelete(it)} className="text-[var(--muted-error-text)]">
                         <Trash2 size={14} className="mr-2" /> Delete
                       </DropdownMenuItem>
                     )}
@@ -118,7 +118,7 @@ export default function ItineraryCardView({
                 {(it.destinations ?? []).slice(0, 3).map((d) => (
                   <span
                     key={d}
-                    className="text-xs px-2 py-0.5 rounded bg-white/10 text-muted-foreground"
+                    className="text-xs px-2 py-0.5 rounded-md border border-border/60 bg-muted-foreground/5 text-muted-foreground"
                   >
                     {d}
                   </span>
@@ -137,13 +137,16 @@ export default function ItineraryCardView({
                   {statusBadge?.label ?? it.status}
                 </span>
                 {(it.tags ?? []).slice(0, 2).map((t) => (
-                  <span key={t} className="text-xs px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground">
+                  <span
+                    key={t}
+                    className="text-xs px-1.5 py-0.5 rounded-md border border-border/40 bg-muted/25 text-muted-foreground"
+                  >
                     {t}
                   </span>
                 ))}
-                {canViewFinancials && it.total_client_price != null && (
+                {canViewFinancials && it.total_vic_price != null && (
                   <span className="text-xs text-muted-foreground ml-auto">
-                    {it.currency === "EUR" ? "€" : it.currency} {it.total_client_price.toLocaleString()}
+                    {it.currency === "EUR" ? "€" : it.currency} {it.total_vic_price.toLocaleString()}
                   </span>
                 )}
               </div>

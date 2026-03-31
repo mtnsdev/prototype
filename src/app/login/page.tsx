@@ -363,7 +363,7 @@ function LoginContent() {
                             {isLoading ? (
                                 <>
                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                    Signing in...
+                                    Signing in…
                                 </>
                             ) : (
                                 "Sign In"
@@ -468,7 +468,7 @@ function LoginContent() {
                                 {forgotLoading ? (
                                     <>
                                         <Loader2 className="w-4 h-4 animate-spin" />
-                                        Sending...
+                                        Sending…
                                     </>
                                 ) : (
                                     "Send email"
@@ -547,7 +547,7 @@ function LoginContent() {
                                 {forceChangeLoading ? (
                                     <>
                                         <Loader2 className="w-4 h-4 animate-spin" />
-                                        Updating...
+                                        Updating…
                                     </>
                                 ) : (
                                     "Set New Password"

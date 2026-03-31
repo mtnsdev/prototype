@@ -10,10 +10,7 @@ import { KnowledgeVaultEmailProvider } from "@/contexts/KnowledgeVaultEmailConte
 import { TeamsProvider } from "@/contexts/TeamsContext";
 import { KvShareSuggestionsProvider } from "@/contexts/KvShareSuggestionsContext";
 import ReportIssueLauncher from "@/components/ui/ReportIssueLauncher";
-import {
-  NotificationPanelProvider,
-  SidebarNotificationBell,
-} from "@/components/dashboard/DashboardNotifications";
+import { NotificationPanelProvider } from "@/components/dashboard/DashboardNotifications";
 import { ProductDirectoryCatalogProvider } from "@/components/products/ProductDirectoryCatalogContext";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -92,12 +89,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">{children}</div>
         </main>
 
-        <div className="pointer-events-none fixed inset-x-0 top-0 z-[55] flex justify-end px-4 py-3">
-          <div className="pointer-events-auto">
-            <SidebarNotificationBell className="h-9 w-9 text-muted-foreground hover:text-muted-foreground" />
-          </div>
+        <div className="md:hidden">
+          <ReportIssueLauncher />
         </div>
-        <ReportIssueLauncher />
       </div>
     </div>
   );

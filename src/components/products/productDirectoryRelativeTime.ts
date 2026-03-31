@@ -1,4 +1,4 @@
-/** Human-readable recency for directory cards and detail (client-side). */
+/** Human-readable recency for directory cards and detail (in-browser). */
 export function relativeTime(iso?: string): string {
   if (!iso) return "";
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());

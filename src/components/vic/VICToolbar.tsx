@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { ArrowUpDown, Check, List, LayoutGrid, Plus, Upload, Download, ChevronDown } from "lucide-react";
+import { ArrowUpDown, Check, List, LayoutGrid, Plus, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -47,9 +47,6 @@ const ACUITY_OPTIONS = [
 const chipBtn =
   "flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-muted-foreground transition-colors hover:bg-white/[0.06]";
 
-const outlineToolbarBtnClass =
-  "h-8 gap-1.5 border-input px-2.5 text-xs text-foreground hover:bg-white/[0.04]";
-
 type Props = {
   searchQuery: string;
   onSearchChange: (v: string) => void;
@@ -65,8 +62,6 @@ type Props = {
   sortOrder: "asc" | "desc";
   onSortChange: (by: string, order: "asc" | "desc") => void;
   onAddVIC?: () => void;
-  onImportCSV: () => void;
-  onExportCSV: () => void;
   onClearFilters: () => void;
   bulkSelectedCount?: number;
   onBulkRunAcuity?: () => void;
@@ -100,8 +95,6 @@ export default function VICToolbar({
   sortOrder,
   onSortChange,
   onAddVIC,
-  onImportCSV,
-  onExportCSV,
   onClearFilters,
   bulkSelectedCount = 0,
   onBulkRunAcuity,
@@ -182,12 +175,27 @@ export default function VICToolbar({
   return (
     <FilterBar>
       <FilterBarPrimaryStack>
-        <PageSearchField
-          placeholder="Search by name, company, role, city, country…"
-          aria-label="Search VIC contacts"
-          value={localSearch}
-          onChange={setLocalSearch}
-        />
+        <div className="flex w-full min-w-0 items-center gap-2 md:gap-3">
+          <PageSearchField
+            className="min-w-0 w-auto flex-1"
+            placeholder="Search by name, company, role, city, country…"
+            aria-label="Search VIC contacts"
+            value={localSearch}
+            onChange={setLocalSearch}
+          />
+          <Button
+            type="button"
+            variant="toolbarAccent"
+            size="sm"
+            onClick={() => onAddVIC?.()}
+            disabled={onAddVIC == null}
+            className="shrink-0"
+            title={onAddVIC == null ? "Only available in My VICs" : undefined}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add VIC
+          </Button>
+        </div>
 
         {hasActiveFilters ? (
           <div className="-mx-1 flex flex-wrap items-center gap-1.5 px-1">
@@ -426,20 +434,6 @@ export default function VICToolbar({
               ) : null}
             </div>
           ) : null}
-          {onAddVIC != null ? (
-            <Button onClick={onAddVIC} size="sm" className="h-8 gap-1.5 text-xs">
-              <Plus className="h-3.5 w-3.5" />
-              Add VIC
-            </Button>
-          ) : null}
-          <Button variant="outline" size="sm" onClick={onImportCSV} className={outlineToolbarBtnClass}>
-            <Upload className="h-3.5 w-3.5" />
-            Import
-          </Button>
-          <Button variant="outline" size="sm" onClick={onExportCSV} className={outlineToolbarBtnClass}>
-            <Download className="h-3.5 w-3.5" />
-            Export
-          </Button>
         </FilterBarActionsCluster>
       </FilterBarToolbarRow>
     </FilterBar>

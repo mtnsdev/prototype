@@ -1,15 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { Lock, X, Plane, Plus, ChevronDown } from "lucide-react";
-import type { VIC, SharedAccess, TravelProfileType } from "@/types/vic";
-import { getVICId } from "@/lib/vic-api";
+import { Lock, X, Plane, Plus, ChevronDown, Building2 } from "lucide-react";
+import type { VIC, SharedAccess, TeamSharedAccess, TravelProfileType } from "@/types/vic";
+import { getVICId, updateVIC } from "@/lib/vic-api";
 import { FAKE_ITINERARIES } from "@/components/itineraries/fakeData";
-import { FAKE_PRODUCTS } from "@/components/products/fakeData";
-import type { Product } from "@/types/product";
 import type { Itinerary } from "@/types/itinerary";
-import { CATEGORY_ICONS } from "@/config/productCategoryConfig";
+import { MOCK_DIRECTORY_PRODUCTS } from "@/components/products/productDirectoryMock";
 import type { DetailTabId } from "./DetailTabBar";
 import type { FieldProvenance } from "@/types/vic";
 import AcuitySourceBadge from "./AcuitySourceBadge";
@@ -25,6 +23,10 @@ import {
 import { cn } from "@/lib/utils";
 import { useToast } from "@/contexts/ToastContext";
 import { SendFormModal } from "@/components/itineraries/CompetitorFeatureModals";
+import { useUser } from "@/contexts/UserContext";
+import { useTeams } from "@/contexts/TeamsContext";
+import { getItinerariesForVic, getProductsForVic } from "@/lib/entityCrossLinks";
+import { canViewFinancials } from "@/utils/itineraryPermissions";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -294,19 +296,33 @@ const MOCK_ADVISORS = [
   { id: "4", name: "Claire Martin" },
 ];
 
-function SharingTabContent({ vic }: { vic: VIC }) {
+function SharingTabContent({ vic, onSaved }: { vic: VIC; onSaved: () => void }) {
+  const { user } = useUser();
+  const { teams } = useTeams();
+  const toast = useToast();
   const [level, setLevel] = useState<VIC["sharing_level"]>(vic.sharing_level ?? "none");
   const [publishToAgency, setPublishToAgency] = useState(!!vic.is_shared_to_agency);
   const [sharedWith, setSharedWith] = useState<SharedAccess[]>(vic.shared_with ?? []);
+  const [sharedWithTeams, setSharedWithTeams] = useState<TeamSharedAccess[]>(vic.shared_with_teams ?? []);
   const [addAdvisorOpen, setAddAdvisorOpen] = useState(false);
   const [newAdvisorId, setNewAdvisorId] = useState("");
   const [newAccessLevel, setNewAccessLevel] = useState<"view" | "edit">("view");
+  const [addTeamOpen, setAddTeamOpen] = useState(false);
+  const [newTeamId, setNewTeamId] = useState("");
+  const [newTeamAccessLevel, setNewTeamAccessLevel] = useState<"view" | "edit">("view");
+  const [savingShare, setSavingShare] = useState(false);
+
+  const teamOptions = useMemo(() => {
+    const uid = user?.id != null ? String(user.id) : "";
+    return teams.filter((t) => t.isDefault || (uid && t.memberIds.some((m) => String(m) === uid)));
+  }, [teams, user?.id]);
 
   useEffect(() => {
     setLevel(vic.sharing_level ?? "none");
     setPublishToAgency(!!vic.is_shared_to_agency);
     setSharedWith(vic.shared_with ?? []);
-  }, [vic.id, vic.sharing_level, vic.is_shared_to_agency, vic.shared_with]);
+    setSharedWithTeams(vic.shared_with_teams ?? []);
+  }, [vic.id, vic.sharing_level, vic.is_shared_to_agency, vic.shared_with, vic.shared_with_teams]);
 
   const addAdvisor = () => {
     if (!newAdvisorId) return;
@@ -324,6 +340,54 @@ function SharingTabContent({ vic }: { vic: VIC }) {
 
   const setAdvisorAccess = (advisorId: string, access_level: "view" | "edit") => {
     setSharedWith(sharedWith.map((s) => (String(s.advisor_id) === advisorId ? { ...s, access_level } : s)));
+  };
+
+  const addTeam = () => {
+    if (!newTeamId) return;
+    const team = teamOptions.find((t) => t.id === newTeamId);
+    if (team && !sharedWithTeams.some((s) => s.team_id === team.id)) {
+      setSharedWithTeams([
+        ...sharedWithTeams,
+        {
+          team_id: team.id,
+          team_name: team.name,
+          access_level: newTeamAccessLevel,
+          shared_at: new Date().toISOString(),
+        },
+      ]);
+      setNewTeamId("");
+      setAddTeamOpen(false);
+    }
+  };
+
+  const removeTeam = (teamId: string) => {
+    setSharedWithTeams(sharedWithTeams.filter((s) => s.team_id !== teamId));
+  };
+
+  const setTeamAccess = (teamId: string, access_level: "view" | "edit") => {
+    setSharedWithTeams(sharedWithTeams.map((s) => (s.team_id === teamId ? { ...s, access_level } : s)));
+  };
+
+  const handleSaveSharing = async () => {
+    setSavingShare(true);
+    try {
+      await updateVIC(getVICId(vic), {
+        sharing_level: level ?? "none",
+        shared_with: sharedWith,
+        shared_with_teams: sharedWithTeams,
+        is_shared_to_agency: publishToAgency,
+      });
+      toast({ title: "Sharing saved", tone: "success" });
+      onSaved();
+    } catch (e) {
+      toast({
+        title: "Could not save sharing",
+        description: e instanceof Error ? e.message : undefined,
+        tone: "destructive",
+      });
+    } finally {
+      setSavingShare(false);
+    }
   };
 
   return (
@@ -404,6 +468,78 @@ function SharingTabContent({ vic }: { vic: VIC }) {
           )}
         </div>
       </Section>
+      <Section title="Share with teams">
+        <p className="text-xs text-muted-foreground/75 mb-3">
+          All current and future members of a team receive access at the level you choose.
+        </p>
+        <div className="space-y-2">
+          {sharedWithTeams.length === 0 ? (
+            <p className="text-sm text-muted-foreground/75">No teams shared yet.</p>
+          ) : (
+            sharedWithTeams.map((s) => (
+              <div key={s.team_id} className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
+                <span className="flex-1 text-sm text-foreground">{s.team_name ?? s.team_id}</span>
+                <Select value={s.access_level} onValueChange={(v) => setTeamAccess(s.team_id, v as "view" | "edit")}>
+                  <SelectTrigger className="w-28 h-8 bg-white/5 border-input text-foreground text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="view">View</SelectItem>
+                    <SelectItem value="edit">Edit</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-xs text-muted-foreground/75">{s.shared_at ? formatDate(s.shared_at) : ""}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground/75 hover:text-[var(--muted-error-text)]"
+                  onClick={() => removeTeam(s.team_id)}
+                >
+                  <X size={14} />
+                </Button>
+              </div>
+            ))
+          )}
+          {!addTeamOpen ? (
+            <Button type="button" variant="outline" size="sm" className="border-input text-foreground" onClick={() => setAddTeamOpen(true)}>
+              Add team
+            </Button>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-input p-3">
+              <Select value={newTeamId || undefined} onValueChange={setNewTeamId}>
+                <SelectTrigger className="w-48 bg-white/5 border-input text-foreground">
+                  <SelectValue placeholder="Select team" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teamOptions
+                    .filter((t) => !sharedWithTeams.some((s) => s.team_id === t.id))
+                    .map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <Select value={newTeamAccessLevel} onValueChange={(v) => setNewTeamAccessLevel(v as "view" | "edit")}>
+                <SelectTrigger className="w-24 bg-white/5 border-input text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="view">View</SelectItem>
+                  <SelectItem value="edit">Edit</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button size="sm" onClick={addTeam}>
+                Add
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setAddTeamOpen(false)}>
+                Cancel
+              </Button>
+            </div>
+          )}
+        </div>
+      </Section>
       <Section title="Agency visibility">
         <div className="flex items-center justify-between">
           <div>
@@ -424,6 +560,11 @@ function SharingTabContent({ vic }: { vic: VIC }) {
           </button>
         </div>
       </Section>
+      <div className="flex justify-end pt-2">
+        <Button type="button" size="sm" variant="toolbarAccent" disabled={savingShare} onClick={handleSaveSharing}>
+          {savingShare ? "Saving…" : "Save sharing"}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -470,7 +611,14 @@ export default function DetailTabContent({
   travelSectionRef,
 }: Props) {
   const showToast = useToast();
+  const { user } = useUser();
+  const isAdmin = user?.role === "admin" || user?.role === "agency_admin";
+  const canViewItineraryFinancials = canViewFinancials(
+    user ? { id: user.id, role: user.role, agency_id: user.agency_id } : null
+  );
   const [sendFormOpen, setSendFormOpen] = useState(false);
+  const [preferredProductsOpen, setPreferredProductsOpen] = useState(false);
+  const [travelHistoryOpen, setTravelHistoryOpen] = useState(false);
   const [activeProfileType, setActiveProfileType] = useState<TravelProfileType>("business");
   const leg = vic as unknown as { city?: string; country?: string; company?: string; role?: string; phone?: string; customTags?: string[]; notes?: string; familyContext?: string; preferences?: string; loyaltyPrograms?: string; additionalContext?: string };
   const vicId = getVICId(vic);
@@ -548,7 +696,7 @@ export default function DetailTabContent({
             <Row label="Location" value={location || undefined} acuityProvenance={provenance.home_city || provenance.home_country} />
             <Row label="Company" value={vic.company ?? leg.company} emptyLabel="Not set" />
             <Row label="Title / role" value={vic.title ?? leg.role} emptyLabel="Not set" acuityProvenance={provenance.title} />
-            <Row label="Client since" value={vic.client_since ? formatDate(vic.client_since) ?? vic.client_since : undefined} />
+            <Row label="VIC since" value={vic.vic_since ? formatDate(vic.vic_since) ?? vic.vic_since : undefined} />
             <Row label="Relationship status" value={vic.relationship_status?.replace(/_/g, " ") ?? undefined} />
             <Row label="Last Acuity run" value={acuityLastRun ? (formatDate(acuityLastRun) ?? acuityLastRun) : undefined} />
           </div>
@@ -681,7 +829,7 @@ export default function DetailTabContent({
           <div className="space-y-0">
             <Row label="Assigned advisor" value={vic.assigned_advisor_name ?? vic.assigned_advisor_id} emptyLabel="Not set" />
             <Row label="Secondary advisor" value={vic.secondary_advisor_name ?? vic.secondary_advisor_id} emptyLabel="Not set" />
-            <Row label="Client since" value={vic.client_since ? formatDate(vic.client_since) ?? vic.client_since : undefined} emptyLabel="Not set" />
+            <Row label="VIC since" value={vic.vic_since ? formatDate(vic.vic_since) ?? vic.vic_since : undefined} emptyLabel="Not set" />
             <Row label="Referral source" value={vic.referral_source} emptyLabel="Not set" />
             <Row label="Referred by VIC" value={referredByLink} emptyLabel="Not set" />
             <div className="flex gap-2 py-1.5 border-b border-border items-center">
@@ -807,7 +955,7 @@ export default function DetailTabContent({
                 {provPref.loyalty_programs?.source === "acuity" && (
                   <Row
                     label="Loyalty signals (Acuity)"
-                    value="Cross-check listed programs with client — inferred from public mentions"
+                    value="Cross-check listed programs with the VIC — inferred from public mentions"
                     acuityProvenance={provPref.loyalty_programs}
                   />
                 )}
@@ -840,7 +988,7 @@ export default function DetailTabContent({
           )}
         </Section>
 
-        <Section title="Client forms">
+        <Section title="VIC forms">
           {vicId === "vic-001" ? (
             <div className="space-y-3">
               <div className="rounded-lg border border-border p-3">
@@ -896,90 +1044,107 @@ export default function DetailTabContent({
   }
 
   if (activeTab === "linked_entities") {
-    const legVic = vic as { assigned_product_ids?: string[]; itinerary_ids?: string[] };
-    const productIds = vic.linked_product_ids ?? legVic.assigned_product_ids ?? [];
-    const resolvedProducts: Product[] = productIds.length
-      ? productIds
-          .map((id) => FAKE_PRODUCTS.find((p) => p.id === id))
-          .filter((p): p is Product => p != null)
-      : [];
     const vicId = getVICId(vic);
-    const linkedItineraries = FAKE_ITINERARIES.filter((it: Itinerary) => it.primary_vic_id === vicId);
+    const preferredProducts = getProductsForVic(
+      vicId,
+      FAKE_ITINERARIES ?? [],
+      MOCK_DIRECTORY_PRODUCTS ?? [],
+      [vic]
+    );
+    const linkedItineraries = getItinerariesForVic(vicId, FAKE_ITINERARIES ?? []);
+    const priceFmt = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "EUR",
+      maximumFractionDigits: 0,
+    });
     return (
       <div className="space-y-4">
-        <Section title="Linked Products">
-          {resolvedProducts.length === 0 ? (
-            <>
-              <p className="text-muted-foreground text-sm">No products linked yet. Link products to track this VIC&apos;s preferred properties.</p>
-              <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => {}}>Link Product</Button>
-            </>
+        <Section title="">
+          <button type="button" onClick={() => setPreferredProductsOpen((v) => !v)} className="mb-2 flex w-full items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/75">
+              Preferred Products
+            </span>
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              {preferredProducts.length}
+              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", preferredProductsOpen && "rotate-180")} />
+            </span>
+          </button>
+          {preferredProductsOpen ? preferredProducts.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No preferred products linked yet.</p>
           ) : (
             <div className="space-y-2">
-              {resolvedProducts.map((p) => {
-                const Icon = CATEGORY_ICONS[p.category] ?? CATEGORY_ICONS.accommodation;
-                const location = [p.city, p.country].filter(Boolean).join(", ") || "—";
+              {preferredProducts.map((link) => {
+                const product = MOCK_DIRECTORY_PRODUCTS.find((p) => p.id === link.productId);
+                const stars = Math.max(0, Math.min(5, product?.starRating ?? 0));
                 return (
-                  <Link
-                    key={p.id}
-                    href={`/dashboard/products/${p.id}`}
-                    className="flex items-center gap-3 rounded-lg border border-border bg-[rgba(255,255,255,0.03)] p-3 text-sm hover:bg-white/[0.04]"
-                  >
-                    <Icon size={18} className="text-muted-foreground shrink-0" />
-                    <div className="min-w-0">
-                      <p className="font-medium text-foreground">{p.name}</p>
-                      <p className="text-muted-foreground text-xs">{location}</p>
+                  <Link key={link.productId} href={`/dashboard/products?selected=${link.productId}`} className="flex items-center gap-2 rounded-lg border border-border bg-[rgba(255,255,255,0.03)] p-2 text-sm hover:bg-white/[0.04]">
+                    {product?.imageUrl ? (
+                      <img src={product.imageUrl} alt={product.name} className="h-6 w-6 shrink-0 rounded object-cover" />
+                    ) : (
+                      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded bg-white/[0.05]">
+                        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                      </span>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium text-foreground">{link.productName}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {"★".repeat(stars)}
+                        {stars > 0 ? " · " : ""}
+                        {link.visitCount} {link.visitCount === 1 ? "stay" : "stays"}
+                      </p>
                     </div>
                   </Link>
                 );
               })}
-              <Button type="button" variant="outline" size="sm" onClick={() => {}}>Link Product</Button>
             </div>
-          )}
+          ) : null}
         </Section>
-        <Section title="Linked Itineraries">
-          {linkedItineraries.length === 0 ? (
-            <>
-              <p className="text-muted-foreground text-sm">No itineraries linked yet.</p>
-              <div className="flex flex-wrap gap-2 mt-2">
-                <Button type="button" variant="outline" size="sm" asChild>
-                  <Link href={`/dashboard/itineraries?create=1&vic_id=${vicId}`}>Create New Itinerary</Link>
-                </Button>
-                <Button type="button" variant="outline" size="sm" asChild>
-                  <Link href="/dashboard/itineraries">Link Itinerary</Link>
-                </Button>
-              </div>
-            </>
+        <Section title="">
+          <button type="button" onClick={() => setTravelHistoryOpen((v) => !v)} className="mb-2 flex w-full items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/75">
+              Travel History
+            </span>
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              {linkedItineraries.length}
+              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", travelHistoryOpen && "rotate-180")} />
+            </span>
+          </button>
+          {travelHistoryOpen ? linkedItineraries.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No travel history linked yet.</p>
           ) : (
             <div className="space-y-2">
               {linkedItineraries.map((it) => {
                 const eventCount = it.days?.reduce((acc, d) => acc + (d.events?.length ?? 0), 0) ?? 0;
-                const dateRange = it.trip_start_date && it.trip_end_date ? `${it.trip_start_date} – ${it.trip_end_date}` : it.trip_start_date ?? "—";
+                const prettyDate = (() => {
+                  if (!it.trip_start_date || !it.trip_end_date) return it.trip_start_date ?? "—";
+                  const s = new Date(it.trip_start_date);
+                  const e = new Date(it.trip_end_date);
+                  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return `${it.trip_start_date} – ${it.trip_end_date}`;
+                  const month = s.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" });
+                  const year = e.toLocaleDateString("en-US", { year: "numeric", timeZone: "UTC" });
+                  return `${month} ${s.getUTCDate()}–${e.getUTCDate()}, ${year}`;
+                })();
                 return (
-                  <Link key={it.id} href={`/dashboard/itineraries/${it.id}`} className="block rounded-lg border border-border bg-[rgba(255,255,255,0.03)] p-3 text-sm hover:bg-white/[0.04]">
+                  <Link key={it.id} href={`/dashboard/itineraries?selected=${it.id}`} className="block rounded-lg border border-border bg-[rgba(255,255,255,0.03)] p-3 text-sm hover:bg-white/[0.04]">
                     <p className="font-medium text-foreground">{it.trip_name ?? it.id}</p>
-                    <p className="text-muted-foreground text-xs mt-0.5">{dateRange}</p>
-                    <p className="text-muted-foreground/75 text-xs">{(it.destinations ?? []).join(", ") || "—"} · {eventCount} events</p>
-                    {it.status && <span className="inline-block mt-1 text-xs px-1.5 py-0.5 rounded bg-white/10 text-muted-foreground">{it.status}</span>}
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {prettyDate} · {eventCount} events
+                      {canViewItineraryFinancials && it.total_vic_price != null
+                        ? ` · ${priceFmt.format(it.total_vic_price)}`
+                        : ""}
+                    </p>
                   </Link>
                 );
               })}
-              <div className="flex flex-wrap gap-2 pt-2">
-                <Button type="button" variant="outline" size="sm" asChild>
-                  <Link href={`/dashboard/itineraries?create=1&vic_id=${vicId}`}>Create New Itinerary</Link>
-                </Button>
-                <Button type="button" variant="outline" size="sm" asChild>
-                  <Link href="/dashboard/itineraries">Link Itinerary</Link>
-                </Button>
-              </div>
             </div>
-          )}
+          ) : null}
         </Section>
       </div>
     );
   }
 
   if (activeTab === "sharing") {
-    return <SharingTabContent vic={vic} />;
+    return <SharingTabContent vic={vic} onSaved={onUpdate} />;
   }
 
   if (activeTab === "governance") {

@@ -39,11 +39,9 @@ import ItineraryTimeline from "./ItineraryTimeline";
 import DeleteItineraryModal from "../Modals/DeleteItineraryModal";
 import StatusChangeDropdown from "./StatusChangeDropdown";
 import { cn } from "@/lib/utils";
-import PreviewBanner from "@/components/ui/PreviewBanner";
 import { IS_PREVIEW_MODE } from "@/config/preview";
-import ImageWithFallback from "@/components/ui/ImageWithFallback";
 import EventDetailPanel from "./EventDetailPanel";
-import ClientProposalModal from "./ClientProposalModal";
+import VICProposalModal from "./VICProposalModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -191,7 +189,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
     return {
       ...itinerary,
       days: opt.days,
-      total_client_price: opt.total_client_price ?? itinerary.total_client_price,
+      total_vic_price: opt.total_vic_price ?? itinerary.total_vic_price,
     };
   }, [itinerary, hasMultiOption, optionIndex, tripOpts]);
 
@@ -211,12 +209,12 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
       at: new Date().toISOString(),
     });
     setPublishModalOpen(false);
-    showToast(`Published v${v} — Client view updated`);
+    showToast(`Published v${v} — VIC view updated`);
   };
 
   const openPublishFlow = () => {
     if (effPublish.state === "published_clean" && !publishLocal && itinerary?.publish_state === "published_clean") {
-      showToast("Client view is up to date");
+      showToast("VIC view is up to date");
       return;
     }
     setPublishModalOpen(true);
@@ -224,10 +222,10 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
 
   const publishBtnClass =
     effPublish.state === "unpublished_changes" || itinerary?.publish_state === "unpublished_changes"
-      ? "bg-amber-500 text-white hover:bg-amber-600"
+      ? "border border-[var(--muted-amber-border)] bg-[var(--muted-amber-bg)] text-[var(--muted-amber-text)] hover:bg-[var(--muted-amber-bg)]/80"
       : effPublish.state === "never" || (!effPublish.version && itinerary?.publish_state === "never")
-        ? "bg-emerald-600 text-white hover:bg-emerald-700"
-        : "bg-foreground/25 text-muted-foreground/90 hover:bg-foreground/35";
+        ? "bg-brand-cta text-brand-cta-foreground hover:bg-brand-cta-hover"
+        : "bg-muted-foreground/15 text-muted-foreground hover:bg-muted-foreground/20";
 
   const isMonaco = itinerary?.id === "itin-001";
 
@@ -283,7 +281,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
   if (error || !itinerary || !displayItinerary) {
     return (
       <div className="p-6">
-        <p className="text-red-400">{error ?? "Itinerary not found"}</p>
+        <p className="text-[var(--muted-error-text)]">{error ?? "Itinerary not found"}</p>
         <Button variant="outline" onClick={() => router.push("/dashboard/itineraries")} className="mt-4">
           Back to itineraries
         </Button>
@@ -293,7 +291,6 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
 
   return (
     <div className="h-full flex flex-col bg-inset overflow-hidden">
-      {IS_PREVIEW_MODE && <PreviewBanner feature="Itinerary" variant="compact" sampleDataOnly />}
       <div className="shrink-0 flex flex-col">
         <div className="px-4 pt-3">
           <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground">
@@ -302,44 +299,35 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
             </Link>
           </Button>
         </div>
-        <div className="relative h-[200px] w-full overflow-hidden bg-zinc-900">
-          <ImageWithFallback
-            fallbackType="trip"
-            src={itinerary.hero_image_url}
-            alt={itinerary.trip_name}
-            className="w-full h-full object-cover opacity-95"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0C0C0C] via-transparent to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h1 className="text-xl font-semibold text-white drop-shadow-sm">{itinerary.trip_name}</h1>
-            <div className="flex flex-wrap items-center gap-2 mt-1">
-              <span className={cn("text-xs px-1.5 py-0.5 rounded border", statusBadge?.className ?? "bg-white/10 border-white/20")}>
-                {statusBadge?.label ?? itinerary.status}
+        <div className="w-full border-b border-border bg-card/50 px-4 py-5">
+          <h1 className="text-xl font-semibold text-foreground tracking-tight">{itinerary.trip_name}</h1>
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            <span className={cn("text-xs px-1.5 py-0.5 rounded-md border", statusBadge?.className ?? "bg-muted-foreground/10 border-border text-muted-foreground")}>
+              {statusBadge?.label ?? itinerary.status}
+            </span>
+            {effPublish.state === "published_clean" && effPublish.version > 0 && (
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--muted-success-text)]" />
+                Published · v{effPublish.version} · {daysAgoShort(effPublish.at)}
               </span>
-              {effPublish.state === "published_clean" && effPublish.version > 0 && (
-                <span className="flex items-center gap-1.5 text-xs text-white/70">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Published · v{effPublish.version} · {daysAgoShort(effPublish.at)}
-                </span>
-              )}
-              {effPublish.state === "unpublished_changes" && (
-                <span className="flex items-center gap-1.5 text-xs text-[var(--color-warning)]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                  Unpublished changes
-                </span>
-              )}
-              {(effPublish.state === "never" || effPublish.version === 0) && itinerary.publish_state !== "published_clean" && publishLocal?.state !== "published_clean" && (
-                <span className="flex items-center gap-1.5 text-xs text-white/60">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white/45" />
-                  Not yet published
-                </span>
-              )}
-              <span className="text-sm text-white/90">{formatDateRange(itinerary.trip_start_date, itinerary.trip_end_date)}</span>
-              <span className="text-sm text-white/80">·</span>
-              <Link href={`/dashboard/vics/${itinerary.primary_vic_id}`} className="text-sm text-white/90 hover:text-white hover:underline">
-                {itinerary.primary_vic_name ?? itinerary.primary_vic_id}
-              </Link>
-            </div>
+            )}
+            {effPublish.state === "unpublished_changes" && (
+              <span className="flex items-center gap-1.5 text-xs text-[var(--muted-amber-text)]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--muted-amber-text)]" />
+                Unpublished changes
+              </span>
+            )}
+            {(effPublish.state === "never" || effPublish.version === 0) && itinerary.publish_state !== "published_clean" && publishLocal?.state !== "published_clean" && (
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground/80">
+                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
+                Not yet published
+              </span>
+            )}
+            <span className="text-sm text-muted-foreground">{formatDateRange(itinerary.trip_start_date, itinerary.trip_end_date)}</span>
+            <span className="text-sm text-muted-foreground/50">·</span>
+            <Link href={`/dashboard/vics/${itinerary.primary_vic_id}`} className="text-sm text-muted-foreground hover:text-foreground hover:underline">
+              {itinerary.primary_vic_name ?? itinerary.primary_vic_id}
+            </Link>
           </div>
         </div>
       </div>
@@ -354,10 +342,10 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
           )}
           <Button
             size="sm"
-            className="bg-white text-neutral-900 hover:bg-neutral-100 rounded-lg px-4 py-2 font-medium"
+            className="bg-brand-cta text-brand-cta-foreground hover:bg-brand-cta-hover font-medium"
             onClick={() => setShareModalOpen(true)}
           >
-            <Share2 size={14} className="mr-1" /> Share with Client
+            <Share2 size={14} className="mr-1" /> Share with VIC
           </Button>
           <Button size="sm" variant="outline" className="border-input text-foreground" onClick={() => setGuestPortalOpen(true)}>
             <Globe size={14} className="mr-1" /> Guest Portal
@@ -400,7 +388,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
             </DropdownMenuContent>
           </DropdownMenu>
           {canDelete && (
-            <Button variant="outline" size="sm" onClick={() => setDeleteModalOpen(true)} className="border-input text-red-400">
+            <Button variant="outline" size="sm" onClick={() => setDeleteModalOpen(true)} className="border-input text-[var(--muted-error-text)]">
               <Trash2 size={14} className="mr-1" /> Delete
             </Button>
           )}
@@ -419,7 +407,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
                 <Fragment key={stage.key}>
                   {i > 0 && (
                     <div
-                      className={cn("h-[1px] w-6 mx-1 shrink-0", isPast ? "bg-emerald-500/40" : "bg-white/[0.06]")}
+                      className={cn("h-px w-6 mx-1 shrink-0", isPast ? "bg-border" : "bg-border/40")}
                     />
                   )}
                   <button
@@ -433,10 +421,10 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
                     className={cn(
                       "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap shrink-0",
                       isCurrent
-                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.1)]"
+                        ? "bg-muted-foreground/15 text-foreground border border-border"
                         : isPast
-                          ? "bg-white/5 text-muted-foreground/90 border border-input"
-                          : "bg-white/[0.02] text-muted-foreground/70 border border-white/5 hover:border-input"
+                          ? "bg-muted-foreground/6 text-muted-foreground border border-border/50"
+                          : "bg-transparent text-muted-foreground/70 border border-border/40 hover:border-border"
                     )}
                   >
                     <Icon className="w-3 h-3 shrink-0" />
@@ -454,7 +442,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
           >
             <p className="text-xs text-muted-foreground/90 mb-2">
               Move to{" "}
-              <span className="text-white font-medium">
+              <span className="text-foreground font-medium">
                 {PIPELINE_STAGES.find((s) => s.key === pipelineTarget)?.label}
               </span>
               ?
@@ -462,7 +450,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
             <textarea
               value={pipelineNote}
               onChange={(e) => setPipelineNote(e.target.value)}
-              placeholder="Add a note (optional)..."
+              placeholder="Add a note (optional)…"
               rows={3}
               className="w-full bg-white/5 border border-input rounded-lg p-2 text-xs text-foreground/88 placeholder:text-muted-foreground/55 resize-none mb-2"
             />
@@ -591,7 +579,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
         onDeleted={() => router.push("/dashboard/itineraries")}
       />
 
-      <ClientProposalModal open={shareModalOpen} onClose={() => setShareModalOpen(false)} itinerary={itinerary} />
+      <VICProposalModal open={shareModalOpen} onClose={() => setShareModalOpen(false)} itinerary={itinerary} />
 
       <PublishItineraryModal
         open={publishModalOpen}
@@ -654,7 +642,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
       <ActivitySuggestModal
         open={suggestOpen}
         onClose={() => setSuggestOpen(false)}
-        vicName={itinerary.primary_vic_name ?? "Client"}
+        vicName={itinerary.primary_vic_name ?? "VIC"}
         onAdd={() => showToast("Activity added (mock)")}
       />
     </div>

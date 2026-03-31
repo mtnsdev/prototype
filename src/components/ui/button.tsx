@@ -22,6 +22,9 @@ const buttonVariants = cva(
         ghost:
           "text-muted-foreground hover:bg-[rgba(255,255,255,0.06)] hover:text-foreground",
         link: "text-foreground underline-offset-4 hover:underline hover:text-white",
+        /** Primary row actions next to search (Add…, New collection, etc.) */
+        toolbarAccent:
+          "gap-1.5 border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] px-2.5 text-xs text-brand-cta hover:border-[rgba(201,169,110,0.28)] hover:bg-[rgba(201,169,110,0.12)] has-[>svg]:px-2.5",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
@@ -38,6 +41,12 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
     },
+    compoundVariants: [
+      {
+        variant: "toolbarAccent",
+        class: "rounded-lg",
+      },
+    ],
   }
 )
 

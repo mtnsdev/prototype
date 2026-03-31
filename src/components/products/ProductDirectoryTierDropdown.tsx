@@ -73,7 +73,7 @@ export default function ProductDirectoryTierDropdown({ selectedTiers, onChange }
             <input
               ref={inputRef}
               type="text"
-              placeholder="Search tiers..."
+              placeholder="Search tiers…"
               className="w-full rounded-lg border-none bg-[rgba(255,255,255,0.03)] px-2 py-1.5 text-xs text-foreground placeholder-[#4A4540] focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/40"
               value={search}
               onChange={(e) => setSearch(e.target.value)}

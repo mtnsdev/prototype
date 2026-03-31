@@ -78,7 +78,7 @@ type Props = {
 };
 
 export default function AcuityReportTab({ vic, status, isRunning, onRun, onRefresh }: Props) {
-  const name = vic.full_name ?? "This client";
+  const name = vic.full_name ?? "This VIC";
   const lastRun =
     vic.acuity_last_run ?? (vic as { acuityLastRun?: string }).acuityLastRun ?? null;
   const lastUpdatedStr = useMemo(() => {
@@ -148,7 +148,7 @@ export default function AcuityReportTab({ vic, status, isRunning, onRun, onRefre
         <div className="mb-4 flex h-12 w-12 animate-pulse items-center justify-center rounded-xl bg-[rgba(201,169,110,0.06)]">
           <Sparkles className="h-5 w-5 text-brand-cta" />
         </div>
-        <h3 className="text-base font-light text-foreground">Analyzing {name}...</h3>
+        <h3 className="text-base font-light text-foreground">Analyzing {name}…</h3>
         <p className="mt-1 text-sm text-muted-foreground">Processing booking history, communications, and travel patterns</p>
         <div className="mt-4 h-[2px] w-48 overflow-hidden rounded-full bg-[rgba(255,255,255,0.03)]">
           <div className="h-full rounded-full bg-brand-cta animate-acuity-progress" />

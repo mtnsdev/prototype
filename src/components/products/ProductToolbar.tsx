@@ -545,14 +545,10 @@ export default function ProductToolbar({
           )}
 
           {!isEnableTab && onAddProduct != null ? (
-            <button
-              type="button"
-              onClick={onAddProduct}
-              className="flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] px-2.5 py-1.5 text-xs text-brand-cta transition-colors hover:border-[rgba(201,169,110,0.28)]"
-            >
+            <Button type="button" variant="toolbarAccent" size="sm" onClick={onAddProduct}>
               <Plus className="h-3.5 w-3.5" />
-              Add Product
-            </button>
+              Add product
+            </Button>
           ) : null}
           {!isEnableTab ? (
             <Button variant="outline" size="sm" onClick={onImportCSV} className={outlineToolbarBtnClass}>

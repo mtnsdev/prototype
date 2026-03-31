@@ -95,7 +95,7 @@ export default function AcuitySourceBadge({ provenance, fieldLabel, onMarkVerifi
             </blockquote>
           )}
           <p className="text-xs text-[rgba(245,245,245,0.65)]">
-            {fieldLabel ? `${fieldLabel}: ` : ""}Sourced by Acuity via {provider}. Verify before sharing with client.
+            {fieldLabel ? `${fieldLabel}: ` : ""}Sourced by Acuity via {provider}. Verify before sharing with the VIC.
           </p>
           {unverified && (
             <div className="flex flex-wrap gap-1.5 pt-1">

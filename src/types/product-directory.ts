@@ -1,9 +1,15 @@
 /**
- * Product Directory (unified /dashboard/products) — 8-type advisor catalog.
+ * Product Directory (unified /dashboard/products) — 9-type advisor catalog.
  * Distinct from master registry `Product` in product.ts (ProductsPage legacy).
+ *
+ * Added `rep_firm` (March 2026) — hotel representation firms and marketing
+ * companies are a first-class entity because advisors discover and book
+ * independent luxury properties primarily through rep firm relationships.
+ * Source: TravelLustre Systems & Data Inventory (Kristin, March 2026).
  */
 
 import type { DirectoryPriceTier, DirectoryTierLevel } from "@/components/products/productDirectoryDetailMeta";
+import type { RepFirmProductLink } from "@/types/rep-firm";
 
 export type DirectoryProductCategory =
   | "hotel"
@@ -13,7 +19,8 @@ export type DirectoryProductCategory =
   | "experience"
   | "cruise"
   | "wellness"
-  | "transport";
+  | "transport"
+  | "rep_firm";
 
 /** `private` = advisor-only; `agency` = agency catalog; else team id (KV-aligned). */
 export type DirectoryProductScope = "private" | "agency" | string;
@@ -29,6 +36,50 @@ export interface DirectoryProductPromotion {
   title?: string;
   /** Advisor-facing terms, stacking rules, or internal notes for the incentive. */
   details?: string;
+}
+
+/**
+ * A temporary commission incentive advisory linked to a product and/or program.
+ * Modeled as an advisory (not a promotion) — advisors see it as proactive intelligence,
+ * not a discount. Source can be a rep firm, partner program, or internal.
+ */
+export interface CommissionAdvisory {
+  id: string;
+  /** Which product this advisory applies to (required). */
+  productId: string;
+  /** Optionally scoped to a specific partner program on this product. */
+  programId?: string;
+  /** Human-readable title (e.g. "Summer Bonus — Virtuoso"). */
+  title: string;
+  /** Longer advisor-facing description with terms, stacking rules, booking codes. */
+  details?: string;
+  /**
+   * What kind of incentive this is.
+   */
+  incentiveType: "bonus_percentage" | "bonus_flat" | "override" | "tier_upgrade";
+  /**
+   * Numeric value of the incentive:
+   * - bonus_percentage: e.g. 2 means +2% on top of base
+   * - bonus_flat: e.g. 150 means +$150 per booking
+   * - override: e.g. 18 means commission overridden to 18%
+   * - tier_upgrade: null (tier upgrade has no numeric value, just qualitative)
+   */
+  incentiveValue?: number;
+  /** Date range the incentive is valid for (ISO strings). */
+  validFrom: string;
+  validUntil: string;
+  /** Where this incentive comes from. */
+  source: "rep_firm" | "partner_program" | "internal" | "virtuoso";
+  /** Display name of the source (e.g. "Dominique Debay", "Virtuoso Wanderlist"). */
+  sourceName: string;
+  /** Advisory lifecycle. Manual close only — no auto-expire. */
+  status: "active" | "upcoming" | "expired" | "dismissed";
+  /** Who dismissed it and when (null if still active/upcoming). */
+  dismissedAt?: string;
+  dismissedBy?: string;
+  /** Audit trail. */
+  createdAt: string;
+  updatedAt?: string;
 }
 
 /** Structured amenity tags for program/amenity filters and card highlights. */
@@ -150,12 +201,18 @@ export interface DirectoryProduct {
   baseCommissionRate: number | null;
   effectiveCommissionRate: number | null;
   activePromotion: DirectoryProductPromotion | null;
+  /** Temporary commission incentive advisories linked to this product. */
+  commissionAdvisories?: CommissionAdvisory[];
+  /** Count of currently active advisories (for card badge rendering). */
+  activeAdvisoryCount?: number;
   /** Aggregate rate for list cards / “Has rate” filter (null = unrated). */
   commissionRate: number | null;
   partnerProgramCount: number;
   collectionCount: number;
   collectionIds: string[];
   partnerPrograms: DirectoryPartnerProgram[];
+  repFirmLinks: RepFirmProductLink[];
+  repFirmCount: number;
   agencyContacts: DirectoryAgencyContact[];
   collections: DirectoryProductCollectionRef[];
   /** Team-scoped enrichment (programs, team notes, contacts). */

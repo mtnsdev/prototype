@@ -1,9 +1,8 @@
 "use client";
 
 import { X, Copy, FileDown } from "lucide-react";
-import type { Itinerary, ItineraryDay } from "@/types/itinerary";
+import type { Itinerary } from "@/types/itinerary";
 import { Button } from "@/components/ui/button";
-import ImageWithFallback from "@/components/ui/ImageWithFallback";
 import { useToast } from "@/contexts/ToastContext";
 
 function formatDayDate(dateStr?: string): string {
@@ -24,19 +23,19 @@ type Props = {
   onDownloadPdf?: () => void;
 };
 
-export default function ClientProposalModal({ open, onClose, itinerary, onCopyLink, onDownloadPdf }: Props) {
+export default function VICProposalModal({ open, onClose, itinerary, onCopyLink, onDownloadPdf }: Props) {
   const showToast = useToast();
   if (!open) return null;
 
   const days = itinerary.days ?? [];
-  const totalClient = itinerary.total_client_price ?? days.reduce((sum, d) => sum + (d.events ?? []).reduce((s, e) => s + (e.client_price ?? 0), 0), 0);
+  const totalVic = itinerary.total_vic_price ?? days.reduce((sum, d) => sum + (d.events ?? []).reduce((s, e) => s + (e.vic_price ?? 0), 0), 0);
   const travelerCount = itinerary.traveler_count ?? 1;
-  const perPerson = travelerCount > 0 ? Math.round(totalClient / travelerCount) : totalClient;
+  const perPerson = travelerCount > 0 ? Math.round(totalVic / travelerCount) : totalVic;
 
   return (
     <div className="fixed inset-0 z-50 bg-white overflow-auto">
       <header className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-4 bg-white border-b border-neutral-200">
-        <h2 className="text-lg font-semibold text-neutral-900">Client Preview</h2>
+        <h2 className="text-lg font-semibold text-neutral-900">VIC preview</h2>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -67,12 +66,6 @@ export default function ClientProposalModal({ open, onClose, itinerary, onCopyLi
       </header>
 
       <div className="max-w-[720px] mx-auto py-16 px-8">
-        {itinerary.hero_image_url && (
-          <div className="rounded-xl overflow-hidden h-[300px] -mt-4 mb-10 bg-neutral-100">
-            <ImageWithFallback fallbackType="trip" src={itinerary.hero_image_url} alt={itinerary.trip_name} className="w-full h-full object-cover" />
-          </div>
-        )}
-
         <p className="text-sm font-medium text-neutral-500 uppercase tracking-wider">TRAVELLUSTRE</p>
         <p className="text-neutral-600 mt-1">Prepared by {itinerary.primary_advisor_name ?? "Your advisor"}</p>
 
@@ -101,16 +94,11 @@ export default function ClientProposalModal({ open, onClose, itinerary, onCopyLi
                     <span className="text-neutral-400 text-sm font-mono">{ev.start_time ?? "—"}</span>
                     <span className="mx-2 text-neutral-300">·</span>
                     <span className="text-neutral-900">{ev.title}</span>
-                    {ev.thumbnail_url && (
-                      <div className="mt-2 rounded-lg overflow-hidden h-[120px] w-full max-w-sm bg-neutral-100">
-                        <ImageWithFallback fallbackType="event" src={ev.thumbnail_url} alt={ev.title} eventType={ev.event_type} className="w-full h-full object-cover" />
-                      </div>
-                    )}
                   </div>
                   <div className="shrink-0 text-right">
-                    {ev.client_price != null && ev.client_price > 0 ? (
-                      <span className="text-neutral-900 font-medium">€{ev.client_price.toLocaleString()}</span>
-                    ) : ev.client_price === 0 ? (
+                    {ev.vic_price != null && ev.vic_price > 0 ? (
+                      <span className="text-neutral-900 font-medium">€{ev.vic_price.toLocaleString()}</span>
+                    ) : ev.vic_price === 0 ? (
                       <span className="text-neutral-400 text-sm">included</span>
                     ) : null}
                   </div>
@@ -126,7 +114,7 @@ export default function ClientProposalModal({ open, onClose, itinerary, onCopyLi
           <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 border-b border-neutral-200 pb-2 mb-4">Trip Summary</h2>
           <div className="flex justify-between text-neutral-900 font-medium">
             <span>Total</span>
-            <span>€{totalClient.toLocaleString()}</span>
+            <span>€{totalVic.toLocaleString()}</span>
           </div>
           {travelerCount > 1 && (
             <div className="flex justify-between text-neutral-600 text-sm mt-1">

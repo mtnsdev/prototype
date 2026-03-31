@@ -1,6 +1,6 @@
 import type { AcuityStatus, RelationshipStatus } from "@/types/vic";
 
-export type VicListTab = "mine" | "shared" | "agency";
+export type VicListTab = "mine" | "shared";
 
 const REL_SET = new Set<string>([
   "active",
@@ -24,7 +24,7 @@ export type ParsedVicListUrl = {
 };
 
 function parseTab(raw: string | null): VicListTab {
-  if (raw === "shared" || raw === "agency") return raw;
+  if (raw === "shared") return "shared";
   return "mine";
 }
 

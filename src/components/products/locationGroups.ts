@@ -129,4 +129,16 @@ export function filterLocationGroupsBySearch(
     .filter((g) => g.countries.length > 0);
 }
 
+/** OR match: itinerary is included if any destination line mentions any selected country (substring, case-insensitive). */
+export function itineraryMatchesDestinationCountries(
+  itineraryDestinations: string[] | undefined,
+  selectedCountries: string[]
+): boolean {
+  if (selectedCountries.length === 0) return true;
+  const lines = (itineraryDestinations ?? []).map((d) => d.toLowerCase());
+  return selectedCountries.some((country) =>
+    lines.some((line) => line.includes(country.toLowerCase()))
+  );
+}
+
 export { ALL_COUNTRIES };

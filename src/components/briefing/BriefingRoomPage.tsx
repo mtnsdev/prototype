@@ -20,7 +20,6 @@ import {
   getMockUpcomingTripsContentAgency,
   getMockRecentActivityContentAgency,
 } from "./briefingMockData";
-import PreviewBanner from "@/components/ui/PreviewBanner";
 import { IS_PREVIEW_MODE, BRIEFING_PREVIEW_DEFAULT_ADMIN } from "@/config/preview";
 import { cn } from "@/lib/utils";
 
@@ -116,7 +115,6 @@ export default function BriefingRoomPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-background">
-      {IS_PREVIEW_MODE && <PreviewBanner feature="Briefing Room" variant="full" dismissible sampleDataOnly />}
       {/* Elegant header with subtle gradient */}
       <header className="shrink-0 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[rgba(255,255,255,0.02)] to-transparent pointer-events-none" />

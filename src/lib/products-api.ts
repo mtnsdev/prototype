@@ -1,5 +1,5 @@
 /**
- * Products API client. Calls endpoints as specified; backend built separately.
+ * Products HTTP API. Calls endpoints as specified; backend built separately.
  * Uses mock/placeholder data when backend is not ready.
  */
 

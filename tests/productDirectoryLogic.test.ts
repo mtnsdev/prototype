@@ -39,6 +39,8 @@ function makeProduct(id: string, programs: DirectoryPartnerProgram[]): Directory
     activePromotion: null,
     commissionRate: null,
     partnerProgramCount: programs.length,
+    repFirmLinks: [],
+    repFirmCount: 0,
     collectionCount: 0,
     collectionIds: [],
     partnerPrograms: programs,

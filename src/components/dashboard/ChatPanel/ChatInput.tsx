@@ -155,7 +155,7 @@ export function ChatInput({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => (e.key === "Enter" && !e.shiftKey ? onSend() : null)}
-              placeholder="Ask Enable a question..."
+              placeholder="Ask Enable a question…"
               className="flex-1 min-w-0 rounded-lg border-0 bg-transparent px-2 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/75"
             />
           </div>

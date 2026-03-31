@@ -227,7 +227,7 @@ function TreeNode({
   };
 
   const getIconClasses = () => {
-    if (node.is_shared_drive) return "bg-purple-500/10 text-purple-400";
+    if (node.is_shared_drive) return "bg-[rgba(201,169,110,0.12)] text-brand-cta";
     if (node.node_type === "folder") return "bg-amber-500/10 text-[var(--color-warning)]";
     return "bg-blue-500/10 text-blue-400";
   };

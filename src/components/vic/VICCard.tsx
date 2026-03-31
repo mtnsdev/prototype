@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import LifecycleIndicators from "./LifecycleIndicators";
 import { DemoBadge } from "@/components/ui/DemoBadge";
 
 type Props = {
@@ -27,13 +26,6 @@ type Props = {
   showRequestFullAccess?: boolean;
   onRequestFullAccess?: () => void;
 };
-
-function initial(name: string): string {
-  if (!name || typeof name !== "string") return "?";
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  return (parts[0]?.[0] ?? "?").toUpperCase();
-}
 
 function acuityBadgeClass(acuity: string): string {
   switch (acuity) {
@@ -68,16 +60,10 @@ export default function VICCard({ vic, onEdit, onDelete, onShare, canEdit, canDe
     <div className="relative rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-4 flex flex-col gap-3 hover:border-input transition-colors min-h-[140px]">
       <DemoBadge />
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-medium text-foreground">
-          {initial(fullName)}
-        </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <Link href={`/dashboard/vics/${vicId}`} className="font-semibold text-foreground hover:underline block truncate">
-              {fullName}
-            </Link>
-            {!isBasic && <LifecycleIndicators vic={vic} className="shrink-0" />}
-          </div>
+          <Link href={`/dashboard/vics/${vicId}`} className="font-semibold text-foreground hover:underline block truncate">
+            {fullName}
+          </Link>
           {preferredName && (
             <p className="text-xs text-muted-foreground/75 truncate">{preferredName}</p>
           )}

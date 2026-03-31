@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ArrowUpDown, Check, ChevronDown, List, LayoutGrid, Plus, Columns3 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -18,15 +17,16 @@ import {
   FilterBarToolbarRow,
   FilterChipScrollRow,
 } from "@/components/ui/filter-bar";
+import { Button } from "@/components/ui/button";
 import {
-  directoryFilterInputActiveClass,
   directoryFilterSelectContentClass,
   directoryFilterSelectItemClass,
   directoryFilterSelectTriggerActiveClass,
   directoryFilterSelectTriggerClass,
-  directoryFilterTextInputClass,
   PageSearchField,
 } from "@/components/ui/page-search-field";
+import ProductDirectoryLocationDropdown from "@/components/products/ProductDirectoryLocationDropdown";
+import ItineraryDateRangeDropdown from "./ItineraryDateRangeDropdown";
 import type { ItineraryStatus } from "@/types/itinerary";
 import type { PipelineStage } from "@/types/itinerary";
 import { PIPELINE_STAGES } from "@/config/pipelineStages";
@@ -59,14 +59,19 @@ const SORT_OPTIONS: { value: string; label: string; by: string; order: "asc" | "
 const pillBase =
   "flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-2xs whitespace-nowrap transition-colors";
 
+const filterChipActive =
+  "border-brand-cta/25 bg-brand-cta/10 text-brand-cta";
+const filterChipInactive =
+  "border-transparent text-muted-foreground hover:bg-muted/40 hover:text-foreground";
+
 type Props = {
   activeTab: "mine" | "agency";
   searchQuery: string;
   onSearchChange: (v: string) => void;
   statusFilter: ItineraryStatus | null;
   onStatusChange: (v: ItineraryStatus | null) => void;
-  destinationFilter: string | null;
-  onDestinationChange: (v: string | null) => void;
+  destinationCountries: string[];
+  onDestinationCountriesChange: (v: string[]) => void;
   vicFilter: string | null;
   onVicChange: (v: string | null) => void;
   dateFrom: string;
@@ -93,8 +98,8 @@ export default function ItineraryToolbar({
   onSearchChange,
   statusFilter,
   onStatusChange,
-  destinationFilter,
-  onDestinationChange,
+  destinationCountries,
+  onDestinationCountriesChange,
   vicFilter,
   onVicChange,
   dateFrom,
@@ -130,9 +135,20 @@ export default function ItineraryToolbar({
 
   const loadVics = useCallback(async () => {
     try {
-      const tab = activeTab === "agency" ? "agency" : "mine";
-      const res = await fetchVICList({ tab, limit: 400, page: 1 });
-      setVicOptions(res.vics ?? []);
+      if (activeTab === "agency") {
+        const [mineRes, sharedRes] = await Promise.all([
+          fetchVICList({ tab: "mine", limit: 400, page: 1 }),
+          fetchVICList({ tab: "shared", limit: 400, page: 1 }),
+        ]);
+        const byId = new Map<string, VIC>();
+        for (const v of [...(mineRes.vics ?? []), ...(sharedRes.vics ?? [])]) {
+          byId.set(getVICId(v), v);
+        }
+        setVicOptions([...byId.values()]);
+      } else {
+        const res = await fetchVICList({ tab: "mine", limit: 400, page: 1 });
+        setVicOptions(res.vics ?? []);
+      }
     } catch {
       setVicOptions([]);
     }
@@ -185,12 +201,19 @@ export default function ItineraryToolbar({
   return (
     <FilterBar>
       <FilterBarPrimaryStack>
-        <PageSearchField
-          placeholder="Search itineraries…"
-          aria-label="Search itineraries"
-          value={localSearch}
-          onChange={setLocalSearch}
-        />
+        <div className="flex w-full min-w-0 items-center gap-2 md:gap-3">
+          <PageSearchField
+            className="min-w-0 w-auto flex-1"
+            placeholder="Search itineraries…"
+            aria-label="Search itineraries"
+            value={localSearch}
+            onChange={setLocalSearch}
+          />
+          <Button type="button" variant="toolbarAccent" size="sm" className="shrink-0" onClick={onCreateItinerary}>
+            <Plus className="h-3.5 w-3.5" />
+            Create Itinerary
+          </Button>
+        </div>
         <FilterChipScrollRow>
           <button
             type="button"
@@ -200,9 +223,7 @@ export default function ItineraryToolbar({
             }}
             className={cn(
               pillBase,
-              !pipelineFilter && !upcomingTrips
-                ? "border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
-                : "border-transparent text-muted-foreground hover:text-muted-foreground"
+              !pipelineFilter && !upcomingTrips ? filterChipActive : filterChipInactive
             )}
           >
             All
@@ -213,12 +234,7 @@ export default function ItineraryToolbar({
               onPipelineFilterChange(null);
               onUpcomingTripsChange(true);
             }}
-            className={cn(
-              pillBase,
-              upcomingTrips
-                ? "border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
-                : "border-transparent text-muted-foreground hover:text-muted-foreground"
-            )}
+            className={cn(pillBase, upcomingTrips ? filterChipActive : filterChipInactive)}
           >
             Upcoming trips
           </button>
@@ -232,18 +248,13 @@ export default function ItineraryToolbar({
                   onUpcomingTripsChange(false);
                   onPipelineFilterChange(stage.key);
                 }}
-                className={cn(
-                  pillBase,
-                  active
-                    ? "border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
-                    : "border-transparent text-muted-foreground hover:text-muted-foreground"
-                )}
+                className={cn(pillBase, active ? filterChipActive : filterChipInactive)}
               >
                 {stage.label}
                 <span
                   className={cn(
                     "tabular-nums",
-                    active ? "text-[#A08F72]" : "text-muted-foreground/65"
+                    active ? "text-brand-cta/75" : "text-muted-foreground/65"
                   )}
                 >
                   {stageCounts[stage.key] ?? 0}
@@ -265,7 +276,7 @@ export default function ItineraryToolbar({
                 "flex max-w-[220px] min-w-0 items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-xs transition-colors",
                 sortIsDefault
                   ? "border-border bg-popover text-muted-foreground hover:border-border"
-                  : "border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
+                  : "border-brand-cta/20 bg-brand-cta/10 text-brand-cta"
               )}
             >
               <ArrowUpDown className="h-3 w-3 shrink-0 text-muted-foreground/65" aria-hidden />
@@ -289,7 +300,7 @@ export default function ItineraryToolbar({
                       type="button"
                       onClick={() => applySortOption(o)}
                       className={cn(
-                        "flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-white/[0.04]",
+                        "flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-muted/40",
                         selected ? "text-brand-cta" : "text-muted-foreground"
                       )}
                     >
@@ -332,13 +343,13 @@ export default function ItineraryToolbar({
                 vicFilter != null && directoryFilterSelectTriggerActiveClass
               )}
             >
-              <SelectValue placeholder="Client">
-                {vicFilter != null ? vicLabel ?? vicFilter : "Client"}
+              <SelectValue placeholder="VIC">
+                {vicFilter != null ? vicLabel ?? vicFilter : "VIC"}
               </SelectValue>
             </SelectTrigger>
             <SelectContent className={cn(directoryFilterSelectContentClass, "max-h-64")}>
               <SelectItem className={directoryFilterSelectItemClass} value="all">
-                All clients
+                All VICs
               </SelectItem>
               {vicOptions.map((v) => {
                 const id = getVICId(v);
@@ -350,27 +361,15 @@ export default function ItineraryToolbar({
               })}
             </SelectContent>
           </Select>
-          <Input
-            value={destinationFilter ?? ""}
-            onChange={(e) => onDestinationChange(e.target.value || null)}
-            placeholder="Destination"
-            className={cn(
-              directoryFilterTextInputClass,
-              "w-[min(100%,140px)] max-w-[180px]",
-              Boolean(destinationFilter?.trim()) && directoryFilterInputActiveClass
-            )}
+          <ProductDirectoryLocationDropdown
+            selectedCountries={destinationCountries}
+            onChange={onDestinationCountriesChange}
           />
-          <Input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => onDateFromChange(e.target.value)}
-            className={cn(directoryFilterTextInputClass, "w-[140px]", dateFrom !== "" && directoryFilterInputActiveClass)}
-          />
-          <Input
-            type="date"
-            value={dateTo}
-            onChange={(e) => onDateToChange(e.target.value)}
-            className={cn(directoryFilterTextInputClass, "w-[140px]", dateTo !== "" && directoryFilterInputActiveClass)}
+          <ItineraryDateRangeDropdown
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+            onDateFromChange={onDateFromChange}
+            onDateToChange={onDateToChange}
           />
         </div>
         <FilterBarActionsCluster>
@@ -382,7 +381,7 @@ export default function ItineraryToolbar({
             onClick={() => onViewModeChange("list")}
             className={cn(
               "rounded-lg p-1.5 transition-colors",
-              viewMode === "list" ? "bg-[rgba(201,169,110,0.08)] text-brand-cta" : "text-muted-foreground/65 hover:text-muted-foreground"
+              viewMode === "list" ? "bg-brand-cta/10 text-brand-cta" : "text-muted-foreground/65 hover:text-muted-foreground hover:bg-muted/30"
             )}
             title="List view"
           >
@@ -393,7 +392,7 @@ export default function ItineraryToolbar({
             onClick={() => onViewModeChange("cards")}
             className={cn(
               "rounded-lg p-1.5 transition-colors",
-              viewMode === "cards" ? "bg-[rgba(201,169,110,0.08)] text-brand-cta" : "text-muted-foreground/65 hover:text-muted-foreground"
+              viewMode === "cards" ? "bg-brand-cta/10 text-brand-cta" : "text-muted-foreground/65 hover:text-muted-foreground hover:bg-muted/30"
             )}
             title="Card view"
           >
@@ -404,19 +403,11 @@ export default function ItineraryToolbar({
             onClick={() => onViewModeChange("board")}
             className={cn(
               "rounded-lg p-1.5 transition-colors",
-              viewMode === "board" ? "bg-[rgba(201,169,110,0.08)] text-brand-cta" : "text-muted-foreground/65 hover:text-muted-foreground"
+              viewMode === "board" ? "bg-brand-cta/10 text-brand-cta" : "text-muted-foreground/65 hover:text-muted-foreground hover:bg-muted/30"
             )}
             title="Board (Kanban)"
           >
             <Columns3 className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={onCreateItinerary}
-            className="flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] px-2.5 py-1.5 text-xs text-brand-cta transition-colors hover:border-[rgba(201,169,110,0.28)]"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Create Itinerary
           </button>
         </FilterBarActionsCluster>
       </FilterBarToolbarRow>

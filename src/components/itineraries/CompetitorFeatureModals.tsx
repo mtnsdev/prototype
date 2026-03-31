@@ -4,7 +4,14 @@ import { useState } from "react";
 import { X, Sparkles, Upload } from "lucide-react";
 import type { Itinerary, ItineraryTripOption } from "@/types/itinerary";
 import { Button } from "@/components/ui/button";
-import ImageWithFallback from "@/components/ui/ImageWithFallback";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/contexts/ToastContext";
 import { formatDateRange } from "./statusConfig";
 
@@ -39,7 +46,7 @@ export function PublishItineraryModal({
       <div className="w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-xl">
         <h2 className="text-lg font-semibold text-foreground">Publish Itinerary</h2>
         <p className="text-sm text-muted-foreground mt-2">
-          This will update the client-facing view to reflect your latest changes.
+          This will update the VIC-facing view to reflect your latest changes.
         </p>
         <div className="mt-4 text-sm space-y-1 text-muted-foreground">
           <p>
@@ -62,7 +69,7 @@ export function PublishItineraryModal({
           <Button variant="outline" className="border-border" onClick={onClose}>
             Cancel
           </Button>
-          <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={onPublish}>
+          <Button className="bg-brand-cta text-brand-cta-foreground hover:bg-brand-cta-hover" onClick={onPublish}>
             Publish Now
           </Button>
         </div>
@@ -106,21 +113,21 @@ export function CompareOptionsModal({
             <p className="text-sm text-muted-foreground">Car transfers</p>
             <p className="text-sm text-muted-foreground">Restaurant dining</p>
           </div>
-          <div className="rounded-lg border border-blue-500/20 p-4 space-y-2">
+          <div className="rounded-lg border border-border p-4 space-y-2 bg-muted-foreground/5">
             <h3 className="font-semibold text-foreground">{luxuryOption.name}</h3>
             <p className="text-sm text-muted-foreground/90">6 days</p>
             <p className="text-sm text-muted-foreground/90">{evLux} events</p>
-            <p className="text-sm text-emerald-400">€{(luxuryOption.total_client_price ?? 35000).toLocaleString()}</p>
+            <p className="text-sm text-foreground font-medium">€{(luxuryOption.total_vic_price ?? 35000).toLocaleString()}</p>
             <p className="text-sm text-muted-foreground pt-2">Rosewood Castiglion del Bosco</p>
             <p className="text-sm text-muted-foreground">Helicopter transfers</p>
             <p className="text-sm text-muted-foreground">Private chef experiences</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2 mt-6 justify-end">
-          <Button variant="outline" className="border-border" onClick={() => onToast("Send Both to Client — coming in v2")}>
-            Send Both to Client
+          <Button variant="outline" className="border-border" onClick={() => onToast("Send Both to VIC — coming in v2")}>
+            Send Both to VIC
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-500" onClick={() => onToast("Select as Final — coming in v2")}>
+          <Button className="bg-brand-cta text-brand-cta-foreground hover:bg-brand-cta-hover" onClick={() => onToast("Select as Final — coming in v2")}>
             Select as Final
           </Button>
         </div>
@@ -170,15 +177,10 @@ export function GuestPortalPreviewModal({
         </Button>
       </div>
       <div className="max-w-2xl mx-auto px-6 py-8 text-neutral-900">
-        <div className="rounded-xl overflow-hidden mb-8">
-          <div className="h-48 relative bg-neutral-100">
-            <ImageWithFallback fallbackType="trip" src={itinerary.hero_image_url} alt="" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
-              <h1 className="text-xl font-serif font-semibold text-white">{itinerary.trip_name}</h1>
-              <p className="text-white/90 text-sm">{formatDateRange(itinerary.trip_start_date, itinerary.trip_end_date)}</p>
-              <p className="text-amber-200 text-sm mt-1">⏱ {daysUntil} days until departure</p>
-            </div>
-          </div>
+        <div className="rounded-xl border border-neutral-200 bg-neutral-50 mb-8 p-5">
+          <h1 className="text-xl font-semibold text-neutral-900">{itinerary.trip_name}</h1>
+          <p className="text-neutral-600 text-sm mt-1">{formatDateRange(itinerary.trip_start_date, itinerary.trip_end_date)}</p>
+          <p className="text-neutral-500 text-sm mt-2">{daysUntil} days until departure</p>
         </div>
         <div className="flex flex-wrap gap-2 mb-8">
           {["Itin.", "Pack", "Docs", "Info", "Chat"].map((t) => (
@@ -238,8 +240,8 @@ export function InvoiceModal({
   const lines: { title: string; qty: number; amt: number }[] = [];
   (itinerary.days ?? []).forEach((d) => {
     (d.events ?? []).forEach((e) => {
-      if (e.client_price != null && e.client_price > 0 && e.status !== "cancelled") {
-        lines.push({ title: e.title, qty: 1, amt: e.client_price });
+      if (e.vic_price != null && e.vic_price > 0 && e.status !== "cancelled") {
+        lines.push({ title: e.title, qty: 1, amt: e.vic_price });
       }
     });
   });
@@ -287,7 +289,7 @@ export function InvoiceModal({
           </div>
           <div className="flex justify-between font-semibold text-foreground pt-1">
             <span>Total due</span>
-            <span>€{(itinerary.total_client_price ?? subtotal).toLocaleString()}</span>
+            <span>€{(itinerary.total_vic_price ?? subtotal).toLocaleString()}</span>
           </div>
         </div>
         <p className="text-xs text-muted-foreground mt-4">50% deposit upon confirmation · Balance 30 days before departure</p>
@@ -296,7 +298,7 @@ export function InvoiceModal({
             Download PDF — coming soon
           </Button>
           <Button variant="outline" size="sm" className="border-border" onClick={() => {}}>
-            Email to Client — coming soon
+            Email to VIC — coming soon
           </Button>
         </div>
         <div className="flex justify-end gap-2 mt-6">
@@ -460,19 +462,15 @@ export function ActivitySuggestModal({
 }
 
 export function AutomationBuilderModal({ open, onClose, onSaveDraft }: { open: boolean; onClose: () => void; onSaveDraft: () => void }) {
-  if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70">
-      <div className="w-full max-w-md rounded-xl border border-border bg-background p-6 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Create Automation</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X size={18} />
-          </Button>
-        </div>
-        <input placeholder="Name" className="w-full mt-4 rounded-lg bg-white/5 border border-border px-3 py-2 text-sm" />
-        <p className="text-xs text-muted-foreground mt-4 uppercase">When (Trigger)</p>
-        <select className="w-full mt-1 rounded-lg bg-white/5 border border-border px-3 py-2 text-sm text-foreground">
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md" showCloseButton>
+        <DialogHeader className="text-left">
+          <DialogTitle>Create automation</DialogTitle>
+        </DialogHeader>
+        <Input placeholder="Name" className="mt-1" />
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">When (trigger)</p>
+        <select className="mt-1 h-9 w-full rounded-md border border-input bg-inset px-3 text-sm text-foreground outline-none">
           <option>Select trigger…</option>
           <option>VIC birthday</option>
           <option>Passport expiry in X days</option>
@@ -481,8 +479,8 @@ export function AutomationBuilderModal({ open, onClose, onSaveDraft }: { open: b
           <option>New VIC created</option>
           <option>VIC Acuity profile completed</option>
         </select>
-        <p className="text-xs text-muted-foreground mt-4 uppercase">Then (Action)</p>
-        <select className="w-full mt-1 rounded-lg bg-white/5 border border-border px-3 py-2 text-sm text-foreground">
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Then (action)</p>
+        <select className="mt-1 h-9 w-full rounded-md border border-input bg-inset px-3 text-sm text-foreground outline-none">
           <option>Select action…</option>
           <option>Send email</option>
           <option>Create action item</option>
@@ -490,17 +488,19 @@ export function AutomationBuilderModal({ open, onClose, onSaveDraft }: { open: b
           <option>Update VIC field</option>
           <option>Run Acuity on VIC</option>
         </select>
-        <p className="text-xs text-muted-foreground mt-4">Automation builder in development. These templates show planned capabilities.</p>
-        <div className="flex justify-end gap-2 mt-6">
-          <Button variant="outline" className="border-border" onClick={onClose}>
+        <p className="text-xs text-muted-foreground">
+          Automation builder in development. These templates show planned capabilities.
+        </p>
+        <DialogFooter className="gap-2 sm:justify-end">
+          <Button variant="outline" className="border-input" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="outline" onClick={onSaveDraft}>
-            Save Draft
+          <Button variant="toolbarAccent" size="sm" onClick={onSaveDraft}>
+            Save draft
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

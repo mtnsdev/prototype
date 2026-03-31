@@ -77,7 +77,7 @@ export default function AddEventModal({ open, onClose, itineraryId, dayNumber, o
   const [endTime, setEndTime] = useState("");
   const [status, setStatus] = useState<ItineraryEvent["status"]>("confirmed");
   const [customNotes, setCustomNotes] = useState("");
-  const [clientPrice, setClientPrice] = useState("");
+  const [vicPrice, setVicPrice] = useState("");
   const [netCost, setNetCost] = useState("");
   const [commissionRate, setCommissionRate] = useState("");
   const [linkedProduct, setLinkedProduct] = useState<Product | null>(null);
@@ -106,7 +106,7 @@ export default function AddEventModal({ open, onClose, itineraryId, dayNumber, o
       setEndTime(existingEvent.end_time ?? "");
       setStatus(existingEvent.status);
       setCustomNotes(existingEvent.custom_notes ?? "");
-      setClientPrice(existingEvent.client_price != null ? String(existingEvent.client_price) : "");
+      setVicPrice(existingEvent.vic_price != null ? String(existingEvent.vic_price) : "");
       setNetCost(existingEvent.net_cost != null ? String(existingEvent.net_cost) : "");
       setCommissionRate(existingEvent.commission_rate != null ? String(existingEvent.commission_rate) : "");
       setRoomType(existingEvent.room_type ?? "");
@@ -128,7 +128,7 @@ export default function AddEventModal({ open, onClose, itineraryId, dayNumber, o
       setEndTime("");
       setStatus("confirmed");
       setCustomNotes("");
-      setClientPrice("");
+      setVicPrice("");
       setNetCost("");
       setCommissionRate("");
       setCheckInTime("");
@@ -179,7 +179,7 @@ export default function AddEventModal({ open, onClose, itineraryId, dayNumber, o
       end_time: endTime || undefined,
       status,
       custom_notes: customNotes.trim() || undefined,
-      client_price: clientPrice ? Number(clientPrice) : undefined,
+      vic_price: vicPrice ? Number(vicPrice) : undefined,
       net_cost: netCost ? Number(netCost) : undefined,
       commission_rate: commissionRate ? Number(commissionRate) : undefined,
       confirmation_number: confirmationNumber.trim() || undefined,
@@ -420,8 +420,8 @@ export default function AddEventModal({ open, onClose, itineraryId, dayNumber, o
           )}
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label className="text-muted-foreground">Client price</Label>
-              <Input type="number" min={0} step={0.01} value={clientPrice} onChange={(e) => setClientPrice(e.target.value)} className="mt-1 bg-white/5 border-input text-foreground" />
+              <Label className="text-muted-foreground">VIC price</Label>
+              <Input type="number" min={0} step={0.01} value={vicPrice} onChange={(e) => setVicPrice(e.target.value)} className="mt-1 bg-white/5 border-input text-foreground" />
             </div>
             <div>
               <Label className="text-muted-foreground">Net cost</Label>

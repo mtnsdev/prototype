@@ -131,7 +131,7 @@ function getMockNewsAlertContent(): NewsAlertContent {
       {
         id: "news-001",
         headline: "Air France Strike Action — June 12-15",
-        summary: "Significant cancellations expected. Rebook or advise clients with France travel.",
+        summary: "Significant cancellations expected. Rebook or advise VICs with France travel.",
         source: "ASTA",
         category: "safety",
         severity: "urgent",
@@ -154,7 +154,7 @@ function getMockNewsAlertContent(): NewsAlertContent {
       {
         id: "news-003",
         headline: "Bali Visa Policy Change Effective May 2026",
-        summary: "Extended visa-on-arrival and new e-VOA. Ensure clients are informed.",
+        summary: "Extended visa-on-arrival and new e-VOA. Ensure VICs are informed.",
         source: "ASTA",
         category: "regulatory",
         severity: "warning",
@@ -480,7 +480,7 @@ function getMockQuickStartContent(): QuickStartContent {
       { label: "Create Itinerary", icon: "Route", route: "/dashboard/itineraries?create=1", description: "Start a new trip" },
       { label: "Browse Products", icon: "Package", route: "/dashboard/products", description: "Search the product registry" },
       { label: "Search Knowledge", icon: "Search", route: "/dashboard/search", description: "Search across knowledge bases" },
-      { label: "Acuity Lookup", icon: "Sparkles", route: "/dashboard/vics", description: "Open VIC list to run Acuity on a specific client" },
+      { label: "Acuity Lookup", icon: "Sparkles", route: "/dashboard/vics", description: "Open VIC list to run Acuity on a specific VIC" },
       { label: "Import CSV", icon: "FileDown", route: "/dashboard/vics", description: "Bulk import VICs" },
     ],
   };

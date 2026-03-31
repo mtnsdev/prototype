@@ -5,6 +5,7 @@ import {
   Building2,
   Car,
   Compass,
+  Flame,
   GripVertical,
   MoreHorizontal,
   Plus,
@@ -21,24 +22,24 @@ import {
   eventToBuilderKind,
   formatProductCommission,
 } from "./itineraryBuilderUi";
+import { getAdvisoriesForProduct } from "@/components/products/productDirectoryAdvisoryMock";
 
-const TYPE_CONFIG: Record<
-  ReturnType<typeof eventToBuilderKind>,
-  { icon: typeof Building2; color: string; label: string }
-> = {
-  accommodation: { icon: Building2, color: "#B8A082", label: "Accommodation" },
-  experience: { icon: Compass, color: "#A08CAA", label: "Experience" },
-  transfer: { icon: Car, color: "#8296B4", label: "Transfer" },
-  dining: { icon: UtensilsCrossed, color: "#82A0A0", label: "Dining" },
-  note: { icon: StickyNote, color: "#6B6560", label: "Note" },
+const TYPE_CONFIG: Record<ReturnType<typeof eventToBuilderKind>, { icon: typeof Building2 }> = {
+  accommodation: { icon: Building2 },
+  experience: { icon: Compass },
+  transfer: { icon: Car },
+  dining: { icon: UtensilsCrossed },
+  note: { icon: StickyNote },
 };
 
 function DayItemCard({
   event,
   onSelect,
+  canViewCommissions,
 }: {
   event: ItineraryEvent;
   onSelect: () => void;
+  canViewCommissions: boolean;
 }) {
   const kind = eventToBuilderKind(event);
   const config = TYPE_CONFIG[kind];
@@ -49,6 +50,33 @@ function DayItemCard({
       ? `${event.start_time} – ${event.end_time}`
       : event.start_time ?? undefined;
   const loc = event.pickup_location ?? event.dropoff_location;
+  const activeAdvisories = event.source_product_id
+    ? getAdvisoriesForProduct(event.source_product_id).filter((a) => a.status === "active")
+    : [];
+  const leadAdvisory = activeAdvisories[0];
+  const isExpiringSoon = (() => {
+    if (!leadAdvisory?.validUntil) return false;
+    const end = new Date(leadAdvisory.validUntil).getTime();
+    if (Number.isNaN(end)) return false;
+    const remainingMs = end - Date.now();
+    return remainingMs >= 0 && remainingMs <= 14 * 24 * 60 * 60 * 1000;
+  })();
+  const advisoryValueLabel =
+    leadAdvisory == null
+      ? ""
+      : leadAdvisory.incentiveType === "bonus_flat"
+        ? `+$${leadAdvisory.incentiveValue ?? 0}`
+        : leadAdvisory.incentiveType === "tier_upgrade"
+          ? "Tier upgrade"
+          : `+${leadAdvisory.incentiveValue ?? 0}%`;
+  const advisoryExpiry =
+    leadAdvisory?.validUntil != null
+      ? new Date(leadAdvisory.validUntil).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      : null;
 
   return (
     <div
@@ -60,22 +88,19 @@ function DayItemCard({
     >
       <div className="p-4">
         <div className="flex items-start gap-3">
-          <div
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
-            style={{ backgroundColor: `${config.color}18` }}
-          >
-            <Icon className="h-3.5 w-3.5" style={{ color: config.color }} />
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted-foreground/12 ring-1 ring-border/50">
+            <Icon className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-compact text-foreground">{event.title}</span>
               {itemSt === "confirmed" && (
-                <span className="rounded border border-[rgba(91,138,110,0.12)] bg-[rgba(91,138,110,0.08)] px-1.5 py-0.5 text-[9px] text-[#5B8A6E]">
+                <span className="rounded border border-[var(--muted-success-border)] bg-[var(--muted-success-bg)] px-1.5 py-0.5 text-[9px] text-[var(--muted-success-text)]">
                   Confirmed
                 </span>
               )}
               {itemSt === "proposed" && (
-                <span className="rounded border border-[rgba(184,151,110,0.12)] bg-[rgba(184,151,110,0.08)] px-1.5 py-0.5 text-[9px] text-[#B8976E]">
+                <span className="rounded border border-[var(--muted-amber-border)] bg-[var(--muted-amber-bg)] px-1.5 py-0.5 text-[9px] text-[var(--muted-amber-text)]">
                   Proposed
                 </span>
               )}
@@ -92,10 +117,20 @@ function DayItemCard({
                 <Building2 className="h-3 w-3 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">{event.source_product_name ?? "Linked product"}</span>
                 {formatProductCommission(event) && (
-                  <span className="ml-auto text-[9px] text-[#B8976E]">{formatProductCommission(event)}</span>
+                  <span className="ml-auto text-[9px] text-brand-cta">{formatProductCommission(event)}</span>
                 )}
               </div>
             )}
+            {leadAdvisory && canViewCommissions ? (
+              <div className="mt-1 flex items-center gap-1.5 rounded-md border border-[var(--muted-amber-border)] bg-[var(--muted-amber-bg)] px-2 py-1 text-[10px] text-[var(--muted-amber-text)]">
+                <Flame className="h-3 w-3 shrink-0 opacity-90" aria-hidden />
+                <span>
+                  {leadAdvisory.title}: {advisoryValueLabel}
+                  {advisoryExpiry ? <> · expires {advisoryExpiry}</> : null}
+                </span>
+                {isExpiringSoon ? <span className="ml-1 opacity-90">· expiring soon</span> : null}
+              </div>
+            ) : null}
             {event.custom_notes &&
               event.event_type === "stay" &&
               event.source_product_name &&
@@ -127,10 +162,12 @@ export default function ItineraryBuilderTimeline({
   days,
   onEventSelect,
   onToast,
+  canViewCommissions,
 }: {
   days: ItineraryDay[];
   onEventSelect: (day: ItineraryDay, event: ItineraryEvent) => void;
   onToast: (msg: string) => void;
+  canViewCommissions: boolean;
 }) {
   const [openDayKey, setOpenDayKey] = useState<string | null>(null);
   const [phase, setPhase] = useState<AddPhase>(null);
@@ -260,7 +297,7 @@ export default function ItineraryBuilderTimeline({
                       autoFocus
                       value={productQ}
                       onChange={(e) => setProductQ(e.target.value)}
-                      placeholder="Search products..."
+                      placeholder="Search products…"
                       className="w-full border-b border-border bg-transparent pb-2 text-compact text-foreground placeholder:text-muted-foreground/65 outline-none focus:border-brand-cta"
                     />
                     <div className="mt-2 max-h-48 overflow-y-auto">
@@ -294,7 +331,12 @@ export default function ItineraryBuilderTimeline({
             </div>
             <div className="ml-4 space-y-3 border-l border-border pl-7 pb-6">
               {(day.events ?? []).map((ev) => (
-                <DayItemCard key={ev.id} event={ev} onSelect={() => onEventSelect(day, ev)} />
+                <DayItemCard
+                  key={ev.id}
+                  event={ev}
+                  onSelect={() => onEventSelect(day, ev)}
+                  canViewCommissions={canViewCommissions}
+                />
               ))}
             </div>
           </div>

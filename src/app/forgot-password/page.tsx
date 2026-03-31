@@ -95,7 +95,7 @@ export default function ForgotPasswordPage() {
                 "flex items-center justify-center gap-2",
               ].join(" ")}
             >
-              {isLoading ? "Sending..." : "Send reset link"}
+              {isLoading ? "Sending…" : "Send reset link"}
             </button>
           </form>
 

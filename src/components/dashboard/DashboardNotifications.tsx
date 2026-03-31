@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -24,7 +25,6 @@ import { useKvShareSuggestionsOptional } from "@/contexts/KvShareSuggestionsCont
 import { useToast } from "@/contexts/ToastContext";
 import { relativeTime } from "@/components/products/productDirectoryRelativeTime";
 import { cn } from "@/lib/utils";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export type NotificationType =
   | "approval_request"
@@ -95,7 +95,7 @@ export const MOCK_NOTIFICATIONS: AppNotification[] = [
     id: "notif-1",
     type: "approval_request",
     title: "Note submitted for agency review",
-    body: '"Very responsive. Always gives us priority..." — submitted by Sarah Chen for Aman Tokyo',
+    body: '"Very responsive. Always gives us priority…" — submitted by Sarah Chen for Aman Tokyo',
     timestamp: "2026-03-25T11:45:00.000Z",
     read: false,
     approvable: true,
@@ -229,18 +229,69 @@ const FILTER_TABS: { id: NotificationFilterTab; label: string }[] = [
   { id: "digest", label: "Digest" },
 ];
 
+const NOTIFICATION_STORAGE_KEY = "dashboard.notificationPanel.v1";
+const DISMISS_UNDO_STORAGE_KEY = "dashboard.notificationDismissUndo.v1";
+/** Undo remains available after refresh until this TTL from dismiss time. */
+const DISMISS_UNDO_TTL_MS = 3 * 60 * 1000;
+const RESUME_TOAST_MS = 45_000;
+
+type PendingDismissUndo =
+  | { kind: "standard"; notification: AppNotification; expiresAt: number }
+  | { kind: "kv"; sid: string; expiresAt: number };
+
+function readPendingDismissUndo(): PendingDismissUndo | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(DISMISS_UNDO_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PendingDismissUndo;
+    if (typeof parsed.expiresAt !== "number" || Date.now() > parsed.expiresAt) {
+      window.localStorage.removeItem(DISMISS_UNDO_STORAGE_KEY);
+      return null;
+    }
+    if (parsed.kind === "standard" && parsed.notification?.id) return parsed;
+    if (parsed.kind === "kv" && typeof parsed.sid === "string") return parsed;
+    window.localStorage.removeItem(DISMISS_UNDO_STORAGE_KEY);
+    return null;
+  } catch {
+    try {
+      window.localStorage.removeItem(DISMISS_UNDO_STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+    return null;
+  }
+}
+
+function writePendingDismissUndo(data: PendingDismissUndo) {
+  try {
+    window.localStorage.setItem(DISMISS_UNDO_STORAGE_KEY, JSON.stringify(data));
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+function clearPendingDismissUndo() {
+  try {
+    window.localStorage.removeItem(DISMISS_UNDO_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 type NotificationPanelContextValue = {
-  open: boolean;
-  setOpen: (v: boolean) => void;
-  toggle: () => void;
   unreadCount: number;
+  recentCount: number;
   filterTab: NotificationFilterTab;
   setFilterTab: (t: NotificationFilterTab) => void;
+  unreadOnly: boolean;
+  setUnreadOnly: (v: boolean) => void;
   tabFilteredNotifications: AppNotification[];
   merged: AppNotification[];
   markAllRead: () => void;
   clearAll: () => void;
   markOneRead: (id: string) => void;
+  dismissOne: (n: AppNotification) => void;
   onApprove: (n: AppNotification) => void;
   onDeny: (n: AppNotification) => void;
 };
@@ -264,13 +315,55 @@ type ProviderProps = { children: ReactNode };
 export function NotificationPanelProvider({ children }: ProviderProps) {
   const toast = useToast();
   const kv = useKvShareSuggestionsOptional();
-  const [open, setOpen] = useState(false);
+  const resumeUndoToastFiredRef = useRef(false);
   const [filterTab, setFilterTab] = useState<NotificationFilterTab>("all");
+  const [unreadOnly, setUnreadOnly] = useState(false);
   const [kvFeedSuppressed, setKvFeedSuppressed] = useState(false);
   const [dismissedKvIds, setDismissedKvIds] = useState<string[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>(() =>
     MOCK_NOTIFICATIONS.map((n) => ({ ...n }))
   );
+  const [restored, setRestored] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(NOTIFICATION_STORAGE_KEY);
+      if (!raw) {
+        setRestored(true);
+        return;
+      }
+      const parsed = JSON.parse(raw) as {
+        notifications?: AppNotification[];
+        filterTab?: NotificationFilterTab;
+        unreadOnly?: boolean;
+        kvFeedSuppressed?: boolean;
+        dismissedKvIds?: string[];
+      };
+      if (Array.isArray(parsed.notifications)) setNotifications(parsed.notifications);
+      if (parsed.filterTab) setFilterTab(parsed.filterTab);
+      if (typeof parsed.unreadOnly === "boolean") setUnreadOnly(parsed.unreadOnly);
+      if (typeof parsed.kvFeedSuppressed === "boolean") setKvFeedSuppressed(parsed.kvFeedSuppressed);
+      if (Array.isArray(parsed.dismissedKvIds)) setDismissedKvIds(parsed.dismissedKvIds);
+    } catch {
+      // Keep defaults when persistence is unavailable or corrupted.
+    } finally {
+      setRestored(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!restored) return;
+    window.localStorage.setItem(
+      NOTIFICATION_STORAGE_KEY,
+      JSON.stringify({
+        notifications,
+        filterTab,
+        unreadOnly,
+        kvFeedSuppressed,
+        dismissedKvIds,
+      })
+    );
+  }, [dismissedKvIds, filterTab, kvFeedSuppressed, notifications, restored, unreadOnly]);
 
   const kvAsNotifications = useMemo((): AppNotification[] => {
     if (!kv || kvFeedSuppressed) return [];
@@ -293,23 +386,29 @@ export function NotificationPanelProvider({ children }: ProviderProps) {
   const merged = useMemo(() => [...kvAsNotifications, ...notifications], [kvAsNotifications, notifications]);
 
   const unreadCount = useMemo(() => merged.filter((n) => !n.read).length, [merged]);
+  const recentCount = useMemo(() => {
+    const now = Date.now();
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    return merged.filter((n) => now - new Date(n.timestamp).getTime() <= DAY_MS).length;
+  }, [merged]);
 
   const tabFilteredNotifications = useMemo(() => {
     const sorted = [...merged].sort(
       (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
-    if (filterTab === "all") return sorted;
-    return sorted.filter((n) => notificationCategory(n.type) === filterTab);
-  }, [merged, filterTab]);
-
-  const toggle = useCallback(() => setOpen((o) => !o), []);
+    const byTab =
+      filterTab === "all" ? sorted : sorted.filter((n) => notificationCategory(n.type) === filterTab);
+    return unreadOnly ? byTab.filter((n) => !n.read) : byTab;
+  }, [merged, filterTab, unreadOnly]);
 
   const markAllRead = useCallback(() => {
+    clearPendingDismissUndo();
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setKvFeedSuppressed(true);
   }, []);
 
   const clearAll = useCallback(() => {
+    clearPendingDismissUndo();
     setNotifications([]);
     setKvFeedSuppressed(true);
   }, []);
@@ -323,14 +422,102 @@ export function NotificationPanelProvider({ children }: ProviderProps) {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   }, []);
 
+  const restoreStandardAfterDismiss = useCallback((snapshot: AppNotification) => {
+    setNotifications((prev) => {
+      if (prev.some((item) => item.id === snapshot.id)) return prev;
+      const next = [...prev, { ...snapshot }];
+      return next.sort(
+        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+    });
+    clearPendingDismissUndo();
+  }, []);
+
+  const restoreKvAfterDismiss = useCallback((sid: string) => {
+    setDismissedKvIds((prev) => prev.filter((id) => id !== sid));
+    clearPendingDismissUndo();
+  }, []);
+
+  useEffect(() => {
+    if (!restored) return;
+    if (resumeUndoToastFiredRef.current) return;
+    const pending = readPendingDismissUndo();
+    if (!pending) return;
+    resumeUndoToastFiredRef.current = true;
+    if (pending.kind === "kv") {
+      toast({
+        title: "Suggestion hidden",
+        description: "Undo is still available after refresh.",
+        tone: "default",
+        duration: RESUME_TOAST_MS,
+        action: { label: "Undo", onClick: () => restoreKvAfterDismiss(pending.sid) },
+      });
+    } else {
+      toast({
+        title: "Notification dismissed",
+        description: "Undo is still available after refresh.",
+        tone: "default",
+        duration: RESUME_TOAST_MS,
+        action: {
+          label: "Undo",
+          onClick: () => restoreStandardAfterDismiss(pending.notification),
+        },
+      });
+    }
+  }, [restored, toast, restoreKvAfterDismiss, restoreStandardAfterDismiss]);
+
+  const dismissOne = useCallback(
+    (n: AppNotification) => {
+      const expiresAt = Date.now() + DISMISS_UNDO_TTL_MS;
+      if (n.id.startsWith("kv-")) {
+        const sid = n.id.slice(3);
+        setDismissedKvIds((prev) => (prev.includes(sid) ? prev : [...prev, sid]));
+        writePendingDismissUndo({ kind: "kv", sid, expiresAt });
+        toast({
+          title: "Suggestion hidden",
+          description: "Undo to show it in notifications again.",
+          tone: "default",
+          action: {
+            label: "Undo",
+            onClick: () => restoreKvAfterDismiss(sid),
+          },
+        });
+        return;
+      }
+      const snapshot = { ...n };
+      setNotifications((prev) => prev.filter((item) => item.id !== n.id));
+      writePendingDismissUndo({ kind: "standard", notification: snapshot, expiresAt });
+      toast({
+        title: "Notification dismissed",
+        description: "Undo to restore it to your list.",
+        tone: "default",
+        action: {
+          label: "Undo",
+          onClick: () => restoreStandardAfterDismiss(snapshot),
+        },
+      });
+    },
+    [toast, restoreKvAfterDismiss, restoreStandardAfterDismiss]
+  );
+
   const removeById = useCallback((id: string) => {
+    const pending = readPendingDismissUndo();
+    if (pending?.kind === "standard" && pending.notification.id === id) {
+      clearPendingDismissUndo();
+    }
+    if (pending?.kind === "kv" && id.startsWith("kv-") && pending.sid === id.slice(3)) {
+      clearPendingDismissUndo();
+    }
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   }, []);
 
   const handleApprove = useCallback(
     (n: AppNotification) => {
       if (n.id.startsWith("kv-") && kv) {
-        kv.approve(n.id.slice(3));
+        const sid = n.id.slice(3);
+        const pending = readPendingDismissUndo();
+        if (pending?.kind === "kv" && pending.sid === sid) clearPendingDismissUndo();
+        kv.approve(sid);
         toast({ title: "Document sharing approved", tone: "success" });
         return;
       }
@@ -345,7 +532,10 @@ export function NotificationPanelProvider({ children }: ProviderProps) {
   const handleDeny = useCallback(
     (n: AppNotification) => {
       if (n.id.startsWith("kv-") && kv) {
-        kv.decline(n.id.slice(3));
+        const sid = n.id.slice(3);
+        const pending = readPendingDismissUndo();
+        if (pending?.kind === "kv" && pending.sid === sid) clearPendingDismissUndo();
+        kv.decline(sid);
         toast({ title: "Suggestion dismissed", tone: "success" });
         return;
       }
@@ -357,30 +547,32 @@ export function NotificationPanelProvider({ children }: ProviderProps) {
 
   const ctxValue = useMemo(
     () => ({
-      open,
-      setOpen,
-      toggle,
       unreadCount,
+      recentCount,
       filterTab,
       setFilterTab,
+      unreadOnly,
+      setUnreadOnly,
       tabFilteredNotifications,
       merged,
       markAllRead,
       clearAll,
       markOneRead,
+      dismissOne,
       onApprove: handleApprove,
       onDeny: handleDeny,
     }),
     [
-      open,
-      toggle,
       unreadCount,
+      recentCount,
       filterTab,
+      unreadOnly,
       tabFilteredNotifications,
       merged,
       markAllRead,
       clearAll,
       markOneRead,
+      dismissOne,
       handleApprove,
       handleDeny,
     ]
@@ -393,7 +585,10 @@ export function NotificationPanelProvider({ children }: ProviderProps) {
 
 type NotificationListProps = {
   items: AppNotification[];
+  filterTab: NotificationFilterTab;
+  unreadOnly: boolean;
   onMarkRead: (id: string) => void;
+  onDismiss: (n: AppNotification) => void;
   onApprove: (n: AppNotification) => void;
   onDeny: (n: AppNotification) => void;
   onNavigate?: () => void;
@@ -402,155 +597,232 @@ type NotificationListProps = {
 
 function NotificationItemsList({
   items,
+  filterTab,
+  unreadOnly,
   onMarkRead,
+  onDismiss,
   onApprove,
   onDeny,
   onNavigate,
   listClassName,
 }: NotificationListProps) {
+  const grouped = useMemo(() => {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const startOfYesterday = startOfToday - 24 * 60 * 60 * 1000;
+    const sections: Array<{ key: "today" | "yesterday" | "earlier"; label: string; items: AppNotification[] }> = [
+      { key: "today", label: "Today", items: [] },
+      { key: "yesterday", label: "Yesterday", items: [] },
+      { key: "earlier", label: "Earlier", items: [] },
+    ];
+    for (const n of items) {
+      const time = new Date(n.timestamp).getTime();
+      if (time >= startOfToday) {
+        sections[0].items.push(n);
+      } else if (time >= startOfYesterday) {
+        sections[1].items.push(n);
+      } else {
+        sections[2].items.push(n);
+      }
+    }
+    return sections.filter((s) => s.items.length > 0);
+  }, [items]);
+
   if (items.length === 0) {
     return (
-      <p className="px-2 py-8 text-center text-sm text-muted-foreground">No notifications</p>
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border px-3 py-10 text-center">
+        <Bell className="h-5 w-5 text-muted-foreground" aria-hidden />
+        <p className="mt-3 text-sm font-medium text-foreground">All caught up</p>
+        <p className="mt-1 max-w-[28ch] text-xs leading-relaxed text-muted-foreground">
+          {unreadOnly
+            ? "No unread notifications match your current filters."
+            : filterTab === "all"
+              ? "New updates, mentions, and approvals will appear here."
+              : `No ${filterTab} notifications right now.`}
+        </p>
+      </div>
     );
   }
 
   return (
-    <ul className={cn("flex flex-col gap-2.5", listClassName)}>
-      {items.map((n) => {
-        const Icon = typeIcon(n.type);
-        const unread = !n.read;
-        return (
-          <li key={n.id}>
-            <div
-              className={cn(
-                "overflow-hidden rounded-xl px-3 py-3",
-                unread
-                  ? "border border-border border-l-2 border-l-[#C9A96E] bg-[rgba(201,169,110,0.02)]"
-                  : "border border-border bg-transparent"
-              )}
-            >
-              <div className="flex gap-3">
-                <div
-                  className={cn(
-                    "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-inset",
-                    n.type === "sync_failed" && "bg-[rgba(166,107,107,0.08)]"
-                  )}
-                >
-                  <Icon className={cn("h-4 w-4", iconColorClass(n.type))} aria-hidden />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-mono text-[9px] tracking-wide text-muted-foreground">
-                    {notificationTypeLabel(n.type)}
-                  </p>
-                  <p
+    <div className={cn("flex flex-col gap-4", listClassName)}>
+      {grouped.map((section) => (
+        <section key={section.key} aria-label={`${section.label} notifications`}>
+          <h3 className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            {section.label}
+          </h3>
+          <ul className="flex flex-col gap-2.5">
+            {section.items.map((n) => {
+              const Icon = typeIcon(n.type);
+              const unread = !n.read;
+              return (
+                <li key={n.id}>
+                  <div
                     className={cn(
-                      "text-sm font-medium leading-snug",
-                      unread ? "text-foreground" : "text-muted-foreground"
+                      "overflow-hidden rounded-xl px-3 py-3",
+                      unread
+                        ? "border border-border border-l-2 border-l-[#C9A96E] bg-[rgba(201,169,110,0.02)]"
+                        : "border border-border bg-transparent"
                     )}
                   >
-                    {n.title}
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{n.body}</p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="text-2xs text-muted-foreground">{relativeTime(n.timestamp)}</span>
-                    {unread ? (
-                      <button
-                        type="button"
-                        onClick={() => onMarkRead(n.id)}
-                        className="text-2xs font-medium text-brand-cta underline-offset-2 hover:underline"
-                      >
-                        Mark read
-                      </button>
-                    ) : null}
-                    {n.type === "approval_request" && n.approvable ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => onApprove(n)}
-                          className="rounded-md border border-[rgba(91,138,110,0.35)] bg-[rgba(91,138,110,0.12)] px-2 py-1 text-2xs font-medium text-[#5B8A6E] transition-colors hover:bg-[rgba(91,138,110,0.2)]"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => onDeny(n)}
-                          className="rounded-md border border-[rgba(166,107,107,0.35)] bg-[rgba(166,107,107,0.1)] px-2 py-1 text-2xs font-medium text-[#A66B6B] transition-colors hover:bg-[rgba(166,107,107,0.16)]"
-                        >
-                          Deny
-                        </button>
-                      </>
-                    ) : null}
-                    {n.actionUrl && n.actionLabel && n.type !== "approval_request" ? (
-                      <Link
-                        href={n.actionUrl}
-                        onClick={onNavigate}
+                    <div className="flex gap-3">
+                      <div
                         className={cn(
-                          "rounded-md px-2 py-1 text-2xs text-brand-cta transition-colors",
-                          n.type === "onboarding"
-                            ? "border border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.08)] hover:bg-[rgba(201,169,110,0.12)]"
-                            : "border border-border hover:bg-white/[0.04]"
+                          "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-inset",
+                          n.type === "sync_failed" && "bg-[rgba(166,107,107,0.08)]"
                         )}
                       >
-                        {n.actionLabel}
-                      </Link>
-                    ) : null}
+                        <Icon className={cn("h-4 w-4", iconColorClass(n.type))} aria-hidden />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-mono text-[9px] tracking-wide text-muted-foreground">
+                            {notificationTypeLabel(n.type)}
+                          </p>
+                          {unread ? (
+                            <span className="mt-0.5 inline-flex h-2 w-2 shrink-0 rounded-full bg-brand-cta" />
+                          ) : null}
+                        </div>
+                        <p
+                          className={cn(
+                            "text-sm font-medium leading-snug",
+                            unread ? "text-foreground" : "text-muted-foreground"
+                          )}
+                        >
+                          {n.title}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{n.body}</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span className="text-2xs text-muted-foreground">{relativeTime(n.timestamp)}</span>
+                          {unread ? (
+                            <button
+                              type="button"
+                              onClick={() => onMarkRead(n.id)}
+                              aria-label={`Mark notification "${n.title}" as read`}
+                              className="text-2xs font-medium text-brand-cta underline-offset-2 hover:underline"
+                            >
+                              Mark read
+                            </button>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => onDismiss(n)}
+                            aria-label={`Dismiss notification "${n.title}"`}
+                            className="text-2xs font-medium text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
+                          >
+                            Dismiss
+                          </button>
+                          {n.type === "approval_request" && n.approvable ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => onApprove(n)}
+                                aria-label={`Approve request "${n.title}"`}
+                                className="rounded-md border border-[rgba(91,138,110,0.35)] bg-[rgba(91,138,110,0.12)] px-2 py-1 text-2xs font-medium text-[#5B8A6E] transition-colors hover:bg-[rgba(91,138,110,0.2)]"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onDeny(n)}
+                                aria-label={`Deny request "${n.title}"`}
+                                className="rounded-md border border-[rgba(166,107,107,0.35)] bg-[rgba(166,107,107,0.1)] px-2 py-1 text-2xs font-medium text-[#A66B6B] transition-colors hover:bg-[rgba(166,107,107,0.16)]"
+                              >
+                                Deny
+                              </button>
+                            </>
+                          ) : null}
+                          {n.actionUrl && n.actionLabel && n.type !== "approval_request" ? (
+                            <Link
+                              href={n.actionUrl}
+                              onClick={onNavigate}
+                              className={cn(
+                                "rounded-md px-2 py-1 text-2xs text-brand-cta transition-colors",
+                                n.type === "onboarding"
+                                  ? "border border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.08)] hover:bg-[rgba(201,169,110,0.12)]"
+                                  : "border border-border hover:bg-white/[0.04]"
+                              )}
+                            >
+                              {n.actionLabel}
+                            </Link>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ))}
+    </div>
   );
 }
 
 function NotificationFilterRow({
   filterTab,
   setFilterTab,
+  unreadOnly,
+  setUnreadOnly,
   merged,
 }: {
   filterTab: NotificationFilterTab;
   setFilterTab: (t: NotificationFilterTab) => void;
+  unreadOnly: boolean;
+  setUnreadOnly: (v: boolean) => void;
   merged: AppNotification[];
 }) {
   const countFor = (tab: NotificationFilterTab) => {
-    if (tab === "all") return merged.length;
-    return merged.filter((n) => notificationCategory(n.type) === tab).length;
+    const inTab = tab === "all" ? merged : merged.filter((n) => notificationCategory(n.type) === tab);
+    return unreadOnly ? inTab.filter((n) => !n.read).length : inTab.length;
   };
 
   return (
-    <div
-      className="flex flex-wrap gap-x-4 gap-y-1 border-b border-border px-3 py-2"
-      role="tablist"
-      aria-label="Notification categories"
-    >
-      {FILTER_TABS.map((t) => {
-        const active = filterTab === t.id;
-        return (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            onClick={() => setFilterTab(t.id)}
-            className={cn(
-              "flex items-center gap-1.5 text-xs transition-colors",
-              active ? "text-foreground" : "text-muted-foreground hover:text-muted-foreground"
-            )}
-          >
-            <span
+    <div className="border-b border-border px-3 py-2">
+      <div className="flex flex-wrap gap-x-4 gap-y-1" role="tablist" aria-label="Notification categories">
+        {FILTER_TABS.map((t) => {
+          const active = filterTab === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setFilterTab(t.id)}
               className={cn(
-                "h-2 w-2 shrink-0 rounded-full border",
-                active ? "border-brand-cta bg-brand-cta" : "border-[#6B6560] bg-transparent"
+                "flex items-center gap-1.5 text-xs transition-colors",
+                active ? "text-foreground" : "text-muted-foreground hover:text-muted-foreground"
               )}
-              aria-hidden
-            />
-            {t.label}
-            <span className="text-muted-foreground">({countFor(t.id)})</span>
-          </button>
-        );
-      })}
+            >
+              <span
+                className={cn(
+                  "h-2 w-2 shrink-0 rounded-full border",
+                  active ? "border-brand-cta bg-brand-cta" : "border-[#6B6560] bg-transparent"
+                )}
+                aria-hidden
+              />
+              {t.label}
+              <span className="text-muted-foreground">({countFor(t.id)})</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-2">
+        <button
+          type="button"
+          onClick={() => setUnreadOnly(!unreadOnly)}
+          aria-pressed={unreadOnly}
+          className={cn(
+            "rounded-md border px-2 py-1 text-2xs font-medium transition-colors",
+            unreadOnly
+              ? "border-brand-cta bg-[rgba(201,169,110,0.12)] text-brand-cta"
+              : "border-border text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Unread only
+        </button>
+      </div>
     </div>
   );
 }
@@ -558,6 +830,7 @@ function NotificationFilterRow({
 function NotificationPanelHeader({
   unreadTotal,
   totalCount,
+  recentCount,
   markAllRead,
   clearAll,
   titleId,
@@ -565,6 +838,7 @@ function NotificationPanelHeader({
 }: {
   unreadTotal: number;
   totalCount: number;
+  recentCount: number;
   markAllRead: () => void;
   clearAll: () => void;
   titleId?: string;
@@ -578,9 +852,14 @@ function NotificationPanelHeader({
       )}
     >
       {showTitle && titleId ? (
-        <h2 id={titleId} className="text-base font-semibold text-foreground">
-          Notifications
-        </h2>
+        <div>
+          <h2 id={titleId} className="text-base font-semibold text-foreground">
+            Notifications
+          </h2>
+          <p className="mt-0.5 text-2xs text-muted-foreground">
+            {unreadTotal} unread · {recentCount} in the last 24h
+          </p>
+        </div>
       ) : null}
       <div className="flex shrink-0 flex-col items-end gap-1">
         <button
@@ -614,128 +893,67 @@ function NotificationPanelHeader({
   );
 }
 
-const DROPDOWN_TITLE_ID = "dashboard-notifications-dropdown-title";
-
-function NotificationsShell({
-  variant,
-  onClose,
-}: {
-  variant: "dropdown" | "page";
-  onClose?: () => void;
-}) {
+function NotificationsShell() {
   const {
     filterTab,
     setFilterTab,
+    unreadOnly,
+    setUnreadOnly,
     tabFilteredNotifications,
     merged,
     markAllRead,
     clearAll,
     markOneRead,
+    dismissOne,
     onApprove,
     onDeny,
     unreadCount,
+    recentCount,
   } = useNotificationPanel();
+  const prevUnreadRef = useRef(unreadCount);
+  const [announcement, setAnnouncement] = useState<string>("");
 
-  const showHeaderTitle = variant === "dropdown";
+  useEffect(() => {
+    if (prevUnreadRef.current !== unreadCount) {
+      const delta = unreadCount - prevUnreadRef.current;
+      const action = delta < 0 ? "decreased" : "increased";
+      setAnnouncement(`Unread notifications ${action} to ${unreadCount}.`);
+      prevUnreadRef.current = unreadCount;
+    }
+  }, [unreadCount]);
 
   return (
-    <div
-      className={cn(
-        "flex flex-col bg-inset",
-        variant === "dropdown" && "max-h-[min(70vh,560px)] w-[360px] max-w-[calc(100vw-2rem)]"
-      )}
-    >
+    <div className="flex flex-col bg-inset">
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {announcement}
+      </p>
       <NotificationPanelHeader
-        titleId={showHeaderTitle ? DROPDOWN_TITLE_ID : undefined}
-        showTitle={showHeaderTitle}
+        showTitle={false}
         unreadTotal={unreadCount}
         totalCount={merged.length}
+        recentCount={recentCount}
         markAllRead={markAllRead}
         clearAll={clearAll}
       />
       <NotificationFilterRow
         filterTab={filterTab}
         setFilterTab={setFilterTab}
+        unreadOnly={unreadOnly}
+        setUnreadOnly={setUnreadOnly}
         merged={merged}
       />
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
         <NotificationItemsList
           items={tabFilteredNotifications}
+          filterTab={filterTab}
+          unreadOnly={unreadOnly}
           onMarkRead={markOneRead}
+          onDismiss={dismissOne}
           onApprove={onApprove}
           onDeny={onDeny}
-          onNavigate={onClose}
         />
       </div>
-      {variant === "dropdown" ? (
-        <div className="border-t border-border px-3 py-2">
-          <Link
-            href="/dashboard/notifications"
-            onClick={onClose}
-            className="block text-center text-xs font-medium text-brand-cta hover:text-[#D4B383]"
-          >
-            View all notifications
-          </Link>
-        </div>
-      ) : null}
     </div>
-  );
-}
-
-type BellProps = {
-  className?: string;
-  /** Smaller hit target and icon for dense toolbars. */
-  compact?: boolean;
-};
-
-/** Bell + notification dropdown (top bar). */
-export function SidebarNotificationBell({ className, compact }: BellProps) {
-  const ctx = useNotificationPanelOptional();
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => setHydrated(true), []);
-
-  if (!ctx) return null;
-  const { open, setOpen, unreadCount } = ctx;
-  const label =
-    hydrated && unreadCount > 0
-      ? `Notifications, ${unreadCount} unread`
-      : "Open notifications";
-
-  return (
-    <Popover open={open} onOpenChange={setOpen} modal>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label={label}
-          aria-haspopup="dialog"
-          aria-expanded={open}
-          className={cn(
-            "relative flex shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors",
-            "hover:bg-white/[0.06] hover:text-muted-foreground",
-            "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C9A96E]/50",
-            className,
-            compact ? "h-7 w-7" : "h-9 w-9"
-          )}
-        >
-          <Bell className={cn(compact ? "h-3.5 w-3.5" : "h-4 w-4")} aria-hidden />
-          {hydrated && unreadCount > 0 ? (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#DC2626] px-1 text-[8px] font-semibold text-white shadow-sm">
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </span>
-          ) : null}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        side="bottom"
-        sideOffset={10}
-        collisionPadding={16}
-        className="w-[360px] max-w-[calc(100vw-2rem)] border-border p-0"
-        aria-labelledby={DROPDOWN_TITLE_ID}
-      >
-        <NotificationsShell variant="dropdown" onClose={() => setOpen(false)} />
-      </PopoverContent>
-    </Popover>
   );
 }
 
@@ -758,7 +976,7 @@ export function NotificationsCenterPage() {
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
         <div className="mx-auto max-w-2xl">
-          <NotificationsShell variant="page" />
+          <NotificationsShell />
         </div>
       </div>
     </div>

@@ -5,7 +5,11 @@ import type {
 } from "@/types/product-directory";
 import type { DirectoryPriceTier, DirectoryTierLevel } from "@/components/products/productDirectoryDetailMeta";
 import { getDirectoryProductRegistryCommission } from "@/components/products/productDirectoryCommission";
-import { productMatchesAmenityFilter, productMatchesProgramFilter } from "@/components/products/productDirectoryFilterConfig";
+import {
+  productMatchesAmenityFilter,
+  productMatchesProgramFilter,
+  productMatchesRepFirmFilter,
+} from "@/components/products/productDirectoryFilterConfig";
 import { productMatchesLocationCountries } from "@/components/products/locationGroups";
 
 export type DirectoryFilterSkip =
@@ -16,6 +20,8 @@ export type DirectoryFilterSkip =
   | "program"
   | "amenities"
   | "commissionRange"
+  | "repFirm"
+  | "activeIncentive"
   | "tier"
   | "price";
 
@@ -28,6 +34,9 @@ export type DirectoryPageFilterInput = {
   selectedAmenities: DirectoryAmenityTag[];
   commissionFilterActive: boolean;
   commissionRange: [number, number];
+  /** Registry rep firm ids — product must have a repFirmLink to one of these. */
+  selectedRepFirmIds: string[];
+  hasActiveIncentive?: boolean;
   selectedTiers: DirectoryTierLevel[];
   selectedPriceTiers: DirectoryPriceTier[];
 };
@@ -81,6 +90,16 @@ export function applyDirectoryProductFilters(
       const rate = getDirectoryProductRegistryCommission(p);
       return rate != null && rate >= lo && rate <= hi;
     });
+  }
+
+  if (skip !== "repFirm") {
+    if (f.selectedRepFirmIds.length > 0) {
+      result = result.filter((p) => productMatchesRepFirmFilter(p, f.selectedRepFirmIds));
+    }
+  }
+
+  if (skip !== "activeIncentive" && f.hasActiveIncentive) {
+    result = result.filter((p) => (p.activeAdvisoryCount ?? 0) > 0);
   }
 
   if (skip !== "tier" && f.selectedTiers.length > 0) {

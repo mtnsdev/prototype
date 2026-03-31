@@ -60,7 +60,7 @@ type ListSelection = {
   onSelectAllPageToggle: () => void;
 };
 
-export type KnowledgeVaultListEmptyVariant = "api_empty" | "filtered_empty" | "client_visibility";
+export type KnowledgeVaultListEmptyVariant = "api_empty" | "filtered_empty" | "vic_visibility";
 
 type Props = {
   documents: KnowledgeDocument[];
@@ -275,7 +275,7 @@ export default function DocumentGrid({
 
   if (!loading && documents.length === 0 && listEmpty) {
     const empty =
-      listEmpty.variant === "client_visibility"
+      listEmpty.variant === "vic_visibility"
         ? {
             icon: Shield,
             title: "No documents match the current visibility",

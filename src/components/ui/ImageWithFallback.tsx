@@ -29,6 +29,7 @@ const PRODUCT_GRADIENT: Record<ProductCategory, string> = {
   activity: "from-orange-900 to-orange-700",
   restaurant: "from-rose-900 to-rose-700",
   transportation: "from-purple-900 to-purple-700",
+  rep_firm: "from-amber-800 to-amber-600",
 };
 
 const EVENT_ICONS: Record<EventType, React.ComponentType<{ size?: number; className?: string }>> = {

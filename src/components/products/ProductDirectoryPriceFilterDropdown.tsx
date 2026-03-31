@@ -77,7 +77,7 @@ export default function ProductDirectoryPriceFilterDropdown({ selectedPriceTiers
             <input
               ref={inputRef}
               type="text"
-              placeholder="Search price tiers..."
+              placeholder="Search price tiers…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-lg border-none bg-[rgba(255,255,255,0.03)] px-2 py-1.5 text-xs text-foreground placeholder-[#4A4540] outline-none"

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import type { VIC } from "@/types/vic";
-import ImageWithFallback from "@/components/ui/ImageWithFallback";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +18,6 @@ import {
   listPrimaryTextClass,
   listMutedCellClass,
 } from "@/lib/list-ui";
-import LifecycleIndicators from "./LifecycleIndicators";
 
 type Props = {
   vic: VIC;
@@ -95,16 +93,12 @@ export default function VICListRow({
         />
       </td>
       <td className={listTdClass}>
-        <div className="flex items-center gap-3">
-          <ImageWithFallback fallbackType="avatar" alt={vic.full_name ?? "VIC"} name={vic.full_name ?? "?"} className="w-10 h-10 shrink-0" />
-          <LifecycleIndicators vic={vic} className="shrink-0 hidden sm:flex" />
-          <Link href={`/dashboard/vics/${vicId}`} className={cn(listPrimaryTextClass, "hover:underline")}>
-            {vic.full_name}
-            {vic.preferred_name && vic.preferred_name !== vic.full_name && (
-              <span className="font-normal text-muted-foreground"> ({vic.preferred_name})</span>
-            )}
-          </Link>
-        </div>
+        <Link href={`/dashboard/vics/${vicId}`} className={cn(listPrimaryTextClass, "hover:underline")}>
+          {vic.full_name}
+          {vic.preferred_name && vic.preferred_name !== vic.full_name && (
+            <span className="font-normal text-muted-foreground"> ({vic.preferred_name})</span>
+          )}
+        </Link>
       </td>
       <td className={cn(listTdClass, listMutedCellClass, "hidden md:table-cell")}>{email}</td>
       <td className={cn(listTdClass, listMutedCellClass, "hidden lg:table-cell")}>{phone}</td>

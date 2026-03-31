@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 export default function GoogleDriveOAuthCallbackPage() {
     const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
-    const [message, setMessage] = useState<string>("Connecting...");
+    const [message, setMessage] = useState<string>("Connecting…");
 
     useEffect(() => {
         const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
@@ -79,7 +79,7 @@ export default function GoogleDriveOAuthCallbackPage() {
                     return;
                 }
                 setStatus("success");
-                setMessage("Connected. Closing...");
+                setMessage("Connected. Closing…");
                 if (window.opener) {
                     window.opener.postMessage(
                         { type: "google_drive_oauth_done", connection_type: connectionType },

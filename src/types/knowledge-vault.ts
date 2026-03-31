@@ -59,7 +59,7 @@ export enum DocumentType {
   Contract = "contract",
   TrainingMaterial = "training_material",
   Newsletter = "newsletter",
-  ClientReport = "client_report",
+  VICReport = "vic_report",
   MarketingCollateral = "marketing_collateral",
   InternalMemo = "internal_memo",
   PartnerDirectory = "partner_directory",

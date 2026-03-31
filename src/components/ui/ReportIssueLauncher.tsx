@@ -5,11 +5,22 @@ import { Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/contexts/ToastContext";
+import { cn } from "@/lib/utils";
 
 /**
  * Global “Report issue” entry (dashboard shell). Submit is demo-only.
  */
-export default function ReportIssueLauncher() {
+interface ReportIssueLauncherProps {
+  floating?: boolean;
+  compact?: boolean;
+  className?: string;
+}
+
+export default function ReportIssueLauncher({
+  floating = true,
+  compact = false,
+  className,
+}: ReportIssueLauncherProps) {
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState("wrong");
   const [details, setDetails] = useState("");
@@ -23,14 +34,19 @@ export default function ReportIssueLauncher() {
 
   return (
     <>
-      <div className="fixed bottom-4 right-4 z-40">
+      <div className={cn(floating ? "fixed bottom-4 right-4 z-40" : "", className)}>
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex items-center gap-1 rounded-lg border border-border bg-card/40 px-2.5 py-1.5 text-2xs text-muted-foreground backdrop-blur-sm hover:text-muted-foreground/75"
+          className={cn(
+            "flex items-center gap-1 rounded-lg border border-border bg-card/40 py-1.5 text-2xs text-muted-foreground backdrop-blur-sm hover:text-muted-foreground/75",
+            compact ? "justify-center px-2" : "px-2.5"
+          )}
+          aria-label="Report issue"
+          title="Report issue"
         >
           <Flag className="h-3 w-3" aria-hidden />
-          Report issue
+          {!compact && "Report issue"}
         </button>
       </div>
 
@@ -57,7 +73,7 @@ export default function ReportIssueLauncher() {
           <textarea
             value={details}
             onChange={(e) => setDetails(e.target.value)}
-            placeholder="Describe what you're seeing..."
+            placeholder="Describe what you're seeing…"
             className="mb-3 h-20 w-full resize-none rounded-lg border border-border bg-popover px-3 py-2 text-xs text-muted-foreground outline-none placeholder:text-muted-foreground"
           />
 

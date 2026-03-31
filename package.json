@@ -14,7 +14,7 @@
     "build": "next build",
     "start": "next start -p 4002",
     "lint": "eslint",
-    "test:logic": "tsc -p tsconfig.tests.json && node --test .test-build/tests/productDirectoryLogic.test.js"
+    "test:logic": "tsc -p tsconfig.tests.json && node --test .test-build/tests/productDirectoryLogic.test.js .test-build/tests/vicPermissions.test.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.972.0",

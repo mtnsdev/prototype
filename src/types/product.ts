@@ -12,7 +12,8 @@ export type ProductCategory =
   | "service_provider"
   | "activity"
   | "restaurant"
-  | "transportation";
+  | "transportation"
+  | "rep_firm";
 
 export type ProductStatus =
   | "draft"
@@ -89,7 +90,7 @@ export interface Product {
   tags?: string[];
   best_for_occasions?: string[];
 
-  // Client suitability
+  // VIC suitability
   ideal_group_size?: string;
   accessibility_features?: string[];
   languages_supported?: string[];

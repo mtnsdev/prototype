@@ -6,6 +6,7 @@ export type DirectoryProductSortOption =
   | "name-asc"
   | "name-desc"
   | "commission-desc"
+  | "highest-incentive"
   | "tier-desc"
   | "recently-added"
   | "enrichment-desc";
@@ -17,6 +18,7 @@ export const DIRECTORY_PRODUCT_SORT_OPTIONS: { id: DirectoryProductSortOption; l
   { id: "name-asc", label: "Name A → Z" },
   { id: "name-desc", label: "Name Z → A" },
   { id: "commission-desc", label: "Commission (high → low)" },
+  { id: "highest-incentive", label: "Highest incentive" },
   { id: "tier-desc", label: "Tier (ultra-luxury first)" },
   { id: "recently-added", label: "Recently added" },
   { id: "enrichment-desc", label: "Enrichment score" },
@@ -101,6 +103,12 @@ export const COMMISSION_BRACKETS: { id: CommissionBracketId; label: string; min:
 export function productMatchesProgramFilter(product: DirectoryProduct, selectedProgramIds: string[]): boolean {
   if (selectedProgramIds.length === 0) return true;
   return product.partnerPrograms.some((pp) => isProgramBookable(pp) && selectedProgramIds.includes(programFilterId(pp)));
+}
+
+/** Product is linked to at least one of the selected rep firm registry ids. */
+export function productMatchesRepFirmFilter(product: DirectoryProduct, selectedRepFirmIds: string[]): boolean {
+  if (selectedRepFirmIds.length === 0) return true;
+  return product.repFirmLinks.some((l) => selectedRepFirmIds.includes(l.repFirmId));
 }
 
 /** Amenities filter — product must have ONE active program with ALL selected amenities (tags). */

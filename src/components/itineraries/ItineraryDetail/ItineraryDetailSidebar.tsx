@@ -9,27 +9,27 @@ import { formatDateRange } from "../statusConfig";
 const DEFAULT_COMMISSION_RATE = 12;
 
 function computedTotals(itinerary: Itinerary) {
-  let client = 0;
+  let vicSellTotal = 0;
   let net = 0;
   let commission = 0;
   (itinerary.days ?? []).forEach((d) => {
     (d.events ?? []).forEach((e) => {
-      const cp = e.client_price ?? 0;
-      client += cp;
+      const cp = e.vic_price ?? 0;
+      vicSellTotal += cp;
       const cost = e.net_cost ?? (cp > 0 ? Math.round(cp * 0.75) : 0);
       net += cost;
       commission += e.commission_amount ?? (cp > 0 ? Math.round(cp * (DEFAULT_COMMISSION_RATE / 100)) : 0);
     });
   });
-  const margin = client - net;
+  const margin = vicSellTotal - net;
   const commissionAmount = itinerary.total_commission ?? commission;
   const netToAgency = margin - commissionAmount;
   return {
-    total_client_price: client,
+    total_vic_price: vicSellTotal,
     total_net_cost: net,
     total_commission: commissionAmount,
     total_margin: margin,
-    margin_pct: client > 0 ? (margin / client) * 100 : 0,
+    margin_pct: vicSellTotal > 0 ? (margin / vicSellTotal) * 100 : 0,
     net_to_agency: netToAgency,
   };
 }
@@ -55,14 +55,14 @@ export default function ItineraryDetailSidebar({
   const [aiOpen, setAiOpen] = useState(true);
   const fin = financialItinerary ?? itinerary;
   const computed = computedTotals(fin);
-  const totalClient = fin.total_client_price ?? computed.total_client_price;
+  const totalVic = fin.total_vic_price ?? computed.total_vic_price;
   const totalNet = fin.total_net_cost ?? computed.total_net_cost;
   const totalMargin = fin.total_margin ?? computed.total_margin;
   const totalCommission = fin.total_commission ?? computed.total_commission;
   const marginPct = computed.margin_pct;
   const netToAgency = computed.net_to_agency;
   const currency = itinerary.currency === "EUR" ? "€" : itinerary.currency;
-  const showFinancials = canViewFinancials || totalClient > 0 || totalNet > 0;
+  const showFinancials = canViewFinancials || totalVic > 0 || totalNet > 0;
 
   return (
     <aside className="w-72 shrink-0 border-l border-border bg-inset p-4 overflow-y-auto max-md:w-full max-md:border-l-0 max-md:border-t max-md:order-last">
@@ -110,8 +110,8 @@ export default function ItineraryDetailSidebar({
           </h3>
           <div className="text-sm space-y-2">
             <div className="flex justify-between">
-              <span className="text-muted-foreground/75">Client price</span>
-              <span className="text-foreground">{currency}{totalClient.toLocaleString()}</span>
+              <span className="text-muted-foreground/75">VIC price</span>
+              <span className="text-foreground">{currency}{totalVic.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground/75">Supplier cost</span>

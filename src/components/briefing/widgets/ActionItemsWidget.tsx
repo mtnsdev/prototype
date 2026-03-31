@@ -181,7 +181,7 @@ export default function ActionItemsWidget({ content, staggerIndex = 0, isAdmin =
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addItem()}
-          placeholder="Add item..."
+          placeholder="Add item…"
           className="flex-1 min-w-0 rounded-md border border-border bg-white/5 px-3 py-2 text-sm text-white placeholder:text-muted-foreground focus:border-input focus:outline-none"
         />
         <button

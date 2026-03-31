@@ -22,6 +22,12 @@ import {
   mergeItinerariesListIntoUrl,
   parseItinerariesSearchParams,
 } from "@/lib/itinerariesUrl";
+import {
+  DASHBOARD_LIST_PAGE_HEADER,
+  DASHBOARD_LIST_PAGE_HEADER_SUBTITLE,
+  DASHBOARD_LIST_PAGE_HEADER_TITLE,
+  DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK,
+} from "@/lib/dashboardChrome";
 import { PIPELINE_STAGE_LABEL_MAP, PIPELINE_STAGES } from "@/config/pipelineStages";
 import { ITINERARY_STATUS_BADGES } from "./statusConfig";
 
@@ -47,6 +53,7 @@ export default function ItinerariesPage() {
   const activeTab = tabFromUrl === "agency" ? "agency" : "mine";
   const createVicId = searchParams.get("vic_id") ?? undefined;
   const openCreateFromUrl = searchParams.get("create") === "1";
+  const selectedItineraryId = searchParams.get("selected");
 
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -55,7 +62,7 @@ export default function ItinerariesPage() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ItineraryStatus | null>(null);
-  const [destinationFilter, setDestinationFilter] = useState<string | null>(null);
+  const [destinationCountries, setDestinationCountries] = useState<string[]>([]);
   const [vicFilter, setVicFilter] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -75,6 +82,11 @@ export default function ItinerariesPage() {
     if (openCreateFromUrl) setCreateModalOpen(true);
   }, [openCreateFromUrl]);
 
+  useEffect(() => {
+    if (!selectedItineraryId) return;
+    router.replace(`/dashboard/itineraries/${selectedItineraryId}`);
+  }, [router, selectedItineraryId]);
+
   const isDev = typeof process !== "undefined" && process.env.NODE_ENV === "development";
   const currentUser = user ? { id: user.id, role: user.role, agency_id: user.agency_id } : null;
 
@@ -86,7 +98,7 @@ export default function ItinerariesPage() {
     const p = parseItinerariesSearchParams(sp);
     setSearchQuery(p.q);
     setStatusFilter(p.status);
-    setDestinationFilter(p.destination);
+    setDestinationCountries(p.destinationCountries);
     setVicFilter(p.vic);
     setDateFrom(p.dateFrom);
     setDateTo(p.dateTo);
@@ -121,7 +133,7 @@ export default function ItinerariesPage() {
       tab: activeTab,
       q: searchQuery,
       status: statusFilter,
-      destination: destinationFilter,
+      destinationCountries,
       vic: vicFilter,
       dateFrom,
       dateTo,
@@ -140,7 +152,7 @@ export default function ItinerariesPage() {
     activeTab,
     searchQuery,
     statusFilter,
-    destinationFilter,
+    destinationCountries,
     vicFilter,
     dateFrom,
     dateTo,
@@ -163,7 +175,7 @@ export default function ItinerariesPage() {
       search: searchQuery || undefined,
       status: statusFilter ?? undefined,
       vic_id: vicFilter ?? undefined,
-      destination: destinationFilter ?? undefined,
+      destination_countries: destinationCountries.length > 0 ? destinationCountries : undefined,
       date_from: dateFrom || undefined,
       date_to: dateTo || undefined,
       pipeline_stage: upcomingTrips ? undefined : (pipelineFilter ?? undefined),
@@ -183,7 +195,7 @@ export default function ItinerariesPage() {
           search: params.search,
           status: params.status ?? undefined,
           vic_id: params.vic_id ?? undefined,
-          destination: params.destination ?? undefined,
+          destination_countries: params.destination_countries,
           date_from: params.date_from ?? undefined,
           date_to: params.date_to ?? undefined,
           pipeline_stages_in: upcomingTrips ? UPCOMING_PIPELINE_STAGES : undefined,
@@ -206,16 +218,16 @@ export default function ItinerariesPage() {
         agencyId: user?.agency_id != null ? String(user.agency_id) : undefined,
         search: params.search,
         status: params.status ?? undefined,
-        vic_id: params.vic_id ?? undefined,
-        destination: params.destination ?? undefined,
-        date_from: params.date_from ?? undefined,
-        date_to: params.date_to ?? undefined,
-        pipeline_stages_in: upcomingTrips ? UPCOMING_PIPELINE_STAGES : undefined,
-        pipeline_stage: upcomingTrips ? undefined : (pipelineFilter ?? undefined),
-        sortBy,
-        sortOrder,
-        page: 1,
-        limit: PAGE_SIZE,
+          vic_id: params.vic_id ?? undefined,
+          destination_countries: params.destination_countries,
+          date_from: params.date_from ?? undefined,
+          date_to: params.date_to ?? undefined,
+          pipeline_stages_in: upcomingTrips ? UPCOMING_PIPELINE_STAGES : undefined,
+          pipeline_stage: upcomingTrips ? undefined : (pipelineFilter ?? undefined),
+          sortBy,
+          sortOrder,
+          page: 1,
+          limit: PAGE_SIZE,
       });
       setItineraries(fake.itineraries);
       setTotalCount(fake.total);
@@ -229,7 +241,7 @@ export default function ItinerariesPage() {
     user?.agency_id,
     searchQuery,
     statusFilter,
-    destinationFilter,
+    destinationCountries,
     vicFilter,
     dateFrom,
     dateTo,
@@ -255,7 +267,7 @@ export default function ItinerariesPage() {
   const hasActiveFilters =
     searchQuery !== "" ||
     statusFilter != null ||
-    destinationFilter != null ||
+    destinationCountries.length > 0 ||
     vicFilter != null ||
     dateFrom !== "" ||
     dateTo !== "" ||
@@ -265,7 +277,7 @@ export default function ItinerariesPage() {
   const clearFilters = () => {
     setSearchQuery("");
     setStatusFilter(null);
-    setDestinationFilter(null);
+    setDestinationCountries([]);
     setVicFilter(null);
     setDateFrom("");
     setDateTo("");
@@ -296,7 +308,7 @@ export default function ItinerariesPage() {
   }, [itinerariesForStageCounts]);
 
   const chipBtn =
-    "flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-muted-foreground transition-colors hover:bg-white/[0.06]";
+    "flex items-center gap-1 rounded-full border border-border/50 bg-muted/30 px-2 py-0.5 text-[9px] text-muted-foreground transition-colors hover:bg-muted/45";
 
   const isEmpty = !isLoading && itineraries.length === 0 && !hasActiveFilters;
   const noResults = !isLoading && itineraries.length === 0 && hasActiveFilters;
@@ -305,10 +317,10 @@ export default function ItinerariesPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-inset text-foreground">
-      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-border pl-6 pr-[4.5rem] py-3">
-        <div className="min-w-0">
-          <h1 className="text-sm font-semibold leading-none text-foreground">Itineraries</h1>
-          <p className="mt-1 text-xs leading-snug text-muted-foreground/75">
+      <header className={DASHBOARD_LIST_PAGE_HEADER}>
+        <div className={DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK}>
+          <h1 className={DASHBOARD_LIST_PAGE_HEADER_TITLE}>Itineraries</h1>
+          <p className={DASHBOARD_LIST_PAGE_HEADER_SUBTITLE}>
             {hasActiveFilters ? (
               <>
                 <span>
@@ -333,8 +345,8 @@ export default function ItinerariesPage() {
         onSearchChange={setSearchQuery}
         statusFilter={statusFilter}
         onStatusChange={setStatusFilter}
-        destinationFilter={destinationFilter}
-        onDestinationChange={setDestinationFilter}
+        destinationCountries={destinationCountries}
+        onDestinationCountriesChange={setDestinationCountries}
         vicFilter={vicFilter}
         onVicChange={setVicFilter}
         dateFrom={dateFrom}
@@ -361,7 +373,7 @@ export default function ItinerariesPage() {
 
       {(searchQuery.trim() ||
         statusFilter != null ||
-        destinationFilter != null ||
+        destinationCountries.length > 0 ||
         vicFilter != null ||
         dateFrom !== "" ||
         dateTo !== "" ||
@@ -382,27 +394,36 @@ export default function ItinerariesPage() {
             </button>
           ) : null}
           {vicFilter ? (
-            <button type="button" className={chipBtn} onClick={() => setVicFilter(null)} aria-label="Clear client filter">
-              Client
+            <button type="button" className={chipBtn} onClick={() => setVicFilter(null)} aria-label="Clear VIC filter">
+              VIC
               <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
-          {destinationFilter ? (
-            <button type="button" className={chipBtn} onClick={() => setDestinationFilter(null)} aria-label="Clear destination">
-              {destinationFilter.slice(0, 28)}
-              {destinationFilter.length > 28 ? "…" : ""}
+          {destinationCountries.length > 0 ? (
+            <button
+              type="button"
+              className={chipBtn}
+              onClick={() => setDestinationCountries([])}
+              aria-label="Clear location filter"
+            >
+              Location: {destinationCountries.slice(0, 2).join(", ")}
+              {destinationCountries.length > 2 ? ` +${destinationCountries.length - 2}` : ""}
               <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
-          {dateFrom ? (
-            <button type="button" className={chipBtn} onClick={() => setDateFrom("")} aria-label="Clear start date">
-              From {dateFrom}
-              <span className="text-muted-foreground">✕</span>
-            </button>
-          ) : null}
-          {dateTo ? (
-            <button type="button" className={chipBtn} onClick={() => setDateTo("")} aria-label="Clear end date">
-              To {dateTo}
+          {dateFrom !== "" || dateTo !== "" ? (
+            <button
+              type="button"
+              className={chipBtn}
+              onClick={() => {
+                setDateFrom("");
+                setDateTo("");
+              }}
+              aria-label="Clear trip date filter"
+            >
+              Dates
+              {dateFrom ? ` · from ${dateFrom}` : ""}
+              {dateTo ? ` · to ${dateTo}` : ""}
               <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
@@ -438,7 +459,7 @@ export default function ItinerariesPage() {
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {(isEmpty || noResults) && (
-          <div className="flex min-h-0 flex-1 flex-col overflow-auto">
+          <div className="flex min-h-0 flex-1 flex-col overflow-auto px-4 pb-4 pt-0 md:px-6 md:pb-6">
             <ItinerariesEmptyState
               hasNoItineraries={isEmpty}
               tab={activeTab}
@@ -451,12 +472,12 @@ export default function ItinerariesPage() {
         {!isEmpty && !noResults && (
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             {viewMode === "board" && (
-              <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-4 pt-0 md:px-6 md:pb-6">
                 <ItineraryKanbanView itineraries={itineraries} />
               </div>
             )}
             {viewMode === "list" && (
-            <div className="flex min-h-0 flex-1 overflow-auto">
+            <div className="flex min-h-0 flex-1 overflow-auto px-4 pb-4 pt-0 md:px-6 md:pb-6">
               <ItineraryListView
                 itineraries={itineraries}
                 isLoading={isLoading}
@@ -487,7 +508,7 @@ export default function ItinerariesPage() {
             </div>
             )}
             {viewMode === "cards" && (
-            <div className="flex min-h-0 flex-1 overflow-auto">
+            <div className="flex min-h-0 flex-1 overflow-auto px-4 pb-4 pt-0 md:px-6 md:pb-6">
               <ItineraryCardView
                 itineraries={itineraries}
                 isLoading={isLoading}

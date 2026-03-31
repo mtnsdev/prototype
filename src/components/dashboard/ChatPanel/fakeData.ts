@@ -81,7 +81,7 @@ export const FAKE_KB_CITATIONS: Citation[] = [
     chunk_id: "kb-001",
     source: "intranet_documents",
     page_number: 12,
-    excerpt: "Commission rates for Rosewood Elite tier start at 10% for qualifying bookings...",
+    excerpt: "Commission rates for Rosewood Elite tier start at 10% for qualifying bookings…",
     filename: "Commission_Guide_2024.pdf",
     pdf_path: "",
     source_label: "Intranet — Documents",

@@ -163,7 +163,7 @@ export default function SettingsPage() {
             <div className="h-full flex items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-3">
                     <Loader2 className="w-8 h-8 animate-spin text-muted-foreground/55" />
-                    <span className="text-compact text-muted-foreground/75">Loading settings...</span>
+                    <span className="text-compact text-muted-foreground/75">Loading settings…</span>
                 </div>
             </div>
         );
@@ -278,7 +278,7 @@ export default function SettingsPage() {
                         )}
                         
                         {passwordSuccess && (
-                            <p className="text-compact text-green-400">Password changed successfully. Redirecting to login...</p>
+                            <p className="text-compact text-green-400">Password changed successfully. Redirecting to login…</p>
                         )}
                         
                         <p className="text-sm text-muted-foreground/55">
@@ -397,6 +397,21 @@ export default function SettingsPage() {
                                 >
                                     <Users size={16} className="text-violet-400" />
                                     Teams
+                                    <ChevronRight size={16} className="ml-auto opacity-60" />
+                                </Link>
+                                <Link
+                                    href="/dashboard/settings/rep-firms"
+                                    className={[
+                                        "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
+                                        "text-[14px] font-medium",
+                                        "bg-white/[0.06] hover:bg-white/[0.1]",
+                                        "border border-white/[0.08]",
+                                        "text-[#F5F5F5]",
+                                        "transition-all duration-150",
+                                    ].join(" ")}
+                                >
+                                    <Users size={16} className="text-[#B07A5B]" />
+                                    Rep Firms
                                     <ChevronRight size={16} className="ml-auto opacity-60" />
                                 </Link>
                                 <Link

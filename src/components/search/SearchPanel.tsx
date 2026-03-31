@@ -16,6 +16,7 @@ import {
     directoryFilterSelectItemClass,
     directoryFilterSelectTriggerClass,
     directoryFilterTextInputClass,
+    PageSearchField,
 } from "@/components/ui/page-search-field";
 
 type TLItem =
@@ -168,12 +169,12 @@ export default function IntranetSearchPanel() {
             <div className="shrink-0 rounded-xl border border-border bg-popover p-4">
                 <div className="flex flex-col gap-3">
                     <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center">
-                        <Input
+                        <PageSearchField
                             value={form.q}
-                            onChange={(e) => setForm((p) => ({ ...p, q: e.target.value }))}
+                            onChange={(value) => setForm((p) => ({ ...p, q: value }))}
                             placeholder="Search…"
                             aria-label="Search query"
-                            className={cn(directoryFilterTextInputClass, "min-w-0 flex-1 md:min-w-[200px]")}
+                            className="min-w-0 flex-1 md:min-w-[200px]"
                         />
 
                         <Select

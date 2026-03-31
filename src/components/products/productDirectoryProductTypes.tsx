@@ -8,6 +8,7 @@ import {
   Home,
   Plane,
   Ship,
+  Users,
   UtensilsCrossed,
   type LucideIcon,
 } from "lucide-react";
@@ -22,7 +23,7 @@ export type DirectoryProductTypeEntry = {
   border: string;
 };
 
-/** 8-type advisor catalog — colors used for badges, map pins, and filter pills. */
+/** 9-type advisor catalog — colors used for badges, map pins, and filter pills. */
 export const DIRECTORY_PRODUCT_TYPE_CONFIG: DirectoryProductTypeEntry[] = [
   {
     id: "hotel",
@@ -88,6 +89,14 @@ export const DIRECTORY_PRODUCT_TYPE_CONFIG: DirectoryProductTypeEntry[] = [
     bg: "rgba(155,149,144,0.15)",
     border: "rgba(155,149,144,0.25)",
   },
+  {
+    id: "rep_firm",
+    label: "Rep Firm",
+    icon: Users,
+    color: "#B07A5B",
+    bg: "rgba(176,122,91,0.15)",
+    border: "rgba(176,122,91,0.25)",
+  },
 ];
 
 export function directoryCategoryColors(type: DirectoryProductCategory | string) {
@@ -119,6 +128,7 @@ export function inferDirectoryCategoryFromTypeLabel(typeLabel: string): Director
   if (s.includes("restaurant")) return "restaurant";
   if (s.includes("wellness") || s.includes("spa")) return "wellness";
   if (s.includes("transport")) return "transport";
+  if (s.includes("rep") && s.includes("firm")) return "rep_firm";
   if (s.includes("hotel") || s.includes("resort")) return "hotel";
   return "hotel";
 }

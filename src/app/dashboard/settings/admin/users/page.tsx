@@ -382,7 +382,7 @@ export default function UsersPage() {
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/55" />
                         <Input
                             type="text"
-                            placeholder="Search users..."
+                            placeholder="Search users…"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full pl-9 rounded-xl bg-card border-border text-base text-foreground"
@@ -742,7 +742,7 @@ function InviteUserModal({
                             Cancel
                         </Button>
                         <Button type="submit" className="flex-1" disabled={isSubmitting || !email.trim()}>
-                            {isSubmitting ? "Inviting..." : "Send Invite"}
+                            {isSubmitting ? "Inviting…" : "Send Invite"}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -864,7 +864,7 @@ function EditUserModal({
                             Cancel
                         </Button>
                         <Button type="submit" className="flex-1" disabled={isSubmitting}>
-                            {isSubmitting ? "Saving..." : "Save Changes"}
+                            {isSubmitting ? "Saving…" : "Save Changes"}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -927,7 +927,7 @@ function EditUserModal({
                                 disabled={isChangingPassword || !newPassword || !confirmPassword}
                                 className="w-full bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/30 text-[var(--color-warning)]"
                             >
-                                {isChangingPassword ? "Changing Password..." : "Change Password"}
+                                {isChangingPassword ? "Changing Password…" : "Change Password"}
                             </Button>
                         </div>
                     )}

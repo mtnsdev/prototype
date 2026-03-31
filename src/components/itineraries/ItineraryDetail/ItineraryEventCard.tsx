@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { Bed, UtensilsCrossed, Car, Star, Plane, Clock, Compass, StickyNote, MoreHorizontal } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Bed, UtensilsCrossed, Car, Star, Plane, Clock, Compass, StickyNote, MoreHorizontal, Building2 } from "lucide-react";
 import type { ItineraryEvent, ItineraryDay } from "@/types/itinerary";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +10,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import ImageWithFallback from "@/components/ui/ImageWithFallback";
 import { cn } from "@/lib/utils";
 
 const EVENT_ICONS: Record<ItineraryEvent["event_type"], React.ComponentType<{ size?: number; className?: string }>> = {
@@ -25,9 +24,9 @@ const EVENT_ICONS: Record<ItineraryEvent["event_type"], React.ComponentType<{ si
 };
 
 function marginColor(marginPct: number): string {
-  if (marginPct >= 20) return "text-emerald-500";
-  if (marginPct >= 10) return "text-amber-500";
-  return "text-red-500";
+  if (marginPct >= 20) return "text-[var(--muted-success-text)]";
+  if (marginPct >= 10) return "text-[var(--muted-amber-text)]";
+  return "text-[var(--muted-error-text)]";
 }
 
 type Props = {
@@ -53,6 +52,7 @@ export default function ItineraryEventCard({
   onEdit,
   onEventClick,
 }: Props) {
+  const router = useRouter();
   const Icon = EVENT_ICONS[event.event_type] ?? StickyNote;
   const timeRange =
     event.start_time && event.end_time
@@ -69,9 +69,23 @@ export default function ItineraryEventCard({
         : "border-l-4 border-l-[var(--muted-success-text)]";
 
   const currency = "€";
-  const clientPrice = event.client_price ?? 0;
-  const supplierCost = event.net_cost ?? (clientPrice > 0 ? Math.round(clientPrice * 0.75) : 0);
-  const marginPct = clientPrice > 0 ? Math.round(((clientPrice - supplierCost) / clientPrice) * 100) : 0;
+  const vicPrice = event.vic_price ?? 0;
+  const supplierCost = event.net_cost ?? (vicPrice > 0 ? Math.round(vicPrice * 0.75) : 0);
+  const marginPct = vicPrice > 0 ? Math.round(((vicPrice - supplierCost) / vicPrice) * 100) : 0;
+
+  const SourceIcon =
+    (event.source_product_category ?? "").toLowerCase() === "hotel" ||
+    (event.source_product_category ?? "").toLowerCase() === "villa"
+      ? Bed
+      : (event.source_product_category ?? "").toLowerCase() === "restaurant" ||
+          (event.source_product_category ?? "").toLowerCase() === "meal"
+        ? UtensilsCrossed
+        : (event.source_product_category ?? "").toLowerCase() === "transport"
+          ? Car
+          : (event.source_product_category ?? "").toLowerCase() === "experience" ||
+              (event.source_product_category ?? "").toLowerCase() === "activity"
+            ? Compass
+            : Building2;
 
   return (
     <div
@@ -86,14 +100,8 @@ export default function ItineraryEventCard({
         onEventClick && "cursor-pointer hover:bg-white/[0.04] transition-colors"
       )}
     >
-      <div className="shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-zinc-800 ring-1 ring-white/5">
-        <ImageWithFallback
-          fallbackType="event"
-          src={event.thumbnail_url}
-          alt={event.title}
-          eventType={event.event_type}
-          className="w-full h-full object-cover"
-        />
+      <div className="shrink-0 w-12 h-12 rounded-lg flex items-center justify-center bg-muted-foreground/10 ring-1 ring-border/60 text-muted-foreground">
+        <Icon size={20} className="shrink-0" aria-hidden />
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-medium text-foreground">{event.title}</p>
@@ -109,24 +117,29 @@ export default function ItineraryEventCard({
           </span>
         )}
         {event.source_product_id && (
-          <Link
-            href={`/dashboard/products/${event.source_product_id}`}
-            className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-white/10 text-muted-foreground hover:bg-white/15 mt-1.5"
-            onClick={(e) => e.stopPropagation()}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(`/dashboard/products?selected=${event.source_product_id}`);
+            }}
+            className="mt-1 flex items-center gap-2 rounded-md border border-border/50 bg-white/[0.02] px-2 py-1 text-left text-[10px] hover:bg-white/[0.04]"
           >
-            {event.source_product_name ?? event.source_product_category ?? "Product"} →
-          </Link>
+            <SourceIcon className="h-3 w-3 text-brand-cta" aria-hidden />
+            <span className="text-foreground">{event.source_product_name ?? "Product"}</span>
+            <span className="text-muted-foreground">View in directory →</span>
+          </button>
         )}
       </div>
       <div className="shrink-0 flex flex-col items-end gap-0.5 text-right" onClick={(e) => e.stopPropagation()}>
-        {event.client_price != null && event.client_price > 0 ? (
+        {event.vic_price != null && event.vic_price > 0 ? (
           <>
-            <span className="font-medium text-foreground">{currency}{event.client_price.toLocaleString()}</span>
+            <span className="font-medium text-foreground">{currency}{event.vic_price.toLocaleString()}</span>
             {canViewFinancials && marginPct > 0 && (
               <span className={cn("text-2xs", marginColor(marginPct))}>{marginPct}% margin</span>
             )}
           </>
-        ) : event.client_price === 0 ? (
+        ) : event.vic_price === 0 ? (
           <span className="text-xs text-muted-foreground/75">included</span>
         ) : null}
         {canEdit && (
@@ -138,7 +151,7 @@ export default function ItineraryEventCard({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onEdit?.()}>Edit</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onUpdate()} className="text-red-400">Remove</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onUpdate()} className="text-[var(--muted-error-text)]">Remove</DropdownMenuItem>
               <DropdownMenuItem onClick={() => {}}>Move to another day</DropdownMenuItem>
               <DropdownMenuItem onClick={() => {}}>Change status</DropdownMenuItem>
             </DropdownMenuContent>

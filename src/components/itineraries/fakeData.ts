@@ -3,6 +3,7 @@
  * Monaco Grand Prix (JC), Tuscany Wine & Culture (Eric), Maldives Family Retreat (Camille).
  */
 
+import { itineraryMatchesDestinationCountries } from "@/components/products/locationGroups";
 import type {
   Itinerary,
   ItineraryDay,
@@ -15,16 +16,16 @@ import type {
 const LUXURY_TUSCANY_OPTION: ItineraryTripOption = {
   id: "luxury",
   name: "Luxury Tuscany",
-  total_client_price: 35000,
+  total_vic_price: 35000,
   days: [
     {
       day_number: 1,
       title: "Florence",
       location: "Florence",
       events: [
-        ev({ id: "lx1-1", event_type: "transfer", title: "Helicopter Florence Airport → Rosewood Castiglion", client_price: 2800, status: "tentative" }),
-        ev({ id: "lx1-2", event_type: "stay", title: "Rosewood Castiglion del Bosco — Estate Villa (6 nights)", client_price: 18500, status: "tentative" }),
-        ev({ id: "lx1-3", event_type: "meal", title: "Private chef welcome dinner — villa", client_price: 2200, status: "tentative" }),
+        ev({ id: "lx1-1", event_type: "transfer", title: "Helicopter Florence Airport → Rosewood Castiglion", vic_price: 2800, status: "tentative" }),
+        ev({ id: "lx1-2", event_type: "stay", title: "Rosewood Castiglion del Bosco — Estate Villa (6 nights)", vic_price: 18500, status: "tentative" }),
+        ev({ id: "lx1-3", event_type: "meal", title: "Private chef welcome dinner — villa", vic_price: 2200, status: "tentative" }),
       ],
     },
     {
@@ -32,10 +33,10 @@ const LUXURY_TUSCANY_OPTION: ItineraryTripOption = {
       title: "Florence",
       location: "Florence",
       events: [
-        ev({ id: "lx2-1", event_type: "activity", title: "Private Uffizi before-hours tour", client_price: 1200, status: "tentative" }),
-        ev({ id: "lx2-2", event_type: "transfer", title: "Helicopter Florence → Chianti estates", client_price: 3200, status: "tentative" }),
-        ev({ id: "lx2-3", event_type: "meal", title: "Private chef lunch — vineyard pavilion", client_price: 1800, status: "tentative" }),
-        ev({ id: "lx2-4", event_type: "meal", title: "Michelin private dining — closed restaurant buyout", client_price: 4500, status: "tentative" }),
+        ev({ id: "lx2-1", event_type: "activity", title: "Private Uffizi before-hours tour", vic_price: 1200, status: "tentative" }),
+        ev({ id: "lx2-2", event_type: "transfer", title: "Helicopter Florence → Chianti estates", vic_price: 3200, status: "tentative" }),
+        ev({ id: "lx2-3", event_type: "meal", title: "Private chef lunch — vineyard pavilion", vic_price: 1800, status: "tentative" }),
+        ev({ id: "lx2-4", event_type: "meal", title: "Michelin private dining — closed restaurant buyout", vic_price: 4500, status: "tentative" }),
       ],
     },
     {
@@ -43,8 +44,8 @@ const LUXURY_TUSCANY_OPTION: ItineraryTripOption = {
       title: "Chianti",
       location: "Chianti",
       events: [
-        ev({ id: "lx3-1", event_type: "experience", title: "Helicopter Antinori + exclusive cellar + vertical tasting", client_price: 5500, status: "tentative" }),
-        ev({ id: "lx3-2", event_type: "meal", title: "Private chef farm lunch — organic estate", client_price: 1600, status: "tentative" }),
+        ev({ id: "lx3-1", event_type: "experience", title: "Helicopter Antinori + exclusive cellar + vertical tasting", vic_price: 5500, status: "tentative" }),
+        ev({ id: "lx3-2", event_type: "meal", title: "Private chef farm lunch — organic estate", vic_price: 1600, status: "tentative" }),
       ],
     },
     {
@@ -52,9 +53,9 @@ const LUXURY_TUSCANY_OPTION: ItineraryTripOption = {
       title: "Siena",
       location: "Siena",
       events: [
-        ev({ id: "lx4-1", event_type: "transfer", title: "Helicopter Chianti → Siena", client_price: 2400, status: "tentative" }),
-        ev({ id: "lx4-2", event_type: "activity", title: "Private Palazzo + Duomo rooftop experience", client_price: 900, status: "tentative" }),
-        ev({ id: "lx4-3", event_type: "meal", title: "Private chef dinner — Rosewood terrace", client_price: 2100, status: "tentative" }),
+        ev({ id: "lx4-1", event_type: "transfer", title: "Helicopter Chianti → Siena", vic_price: 2400, status: "tentative" }),
+        ev({ id: "lx4-2", event_type: "activity", title: "Private Palazzo + Duomo rooftop experience", vic_price: 900, status: "tentative" }),
+        ev({ id: "lx4-3", event_type: "meal", title: "Private chef dinner — Rosewood terrace", vic_price: 2100, status: "tentative" }),
       ],
     },
     {
@@ -62,8 +63,8 @@ const LUXURY_TUSCANY_OPTION: ItineraryTripOption = {
       title: "Val d'Orcia",
       location: "Val d'Orcia",
       events: [
-        ev({ id: "lx5-1", event_type: "activity", title: "Hot air balloon + helicopter Brunello circuit", client_price: 4800, status: "tentative" }),
-        ev({ id: "lx5-2", event_type: "meal", title: "Truffle hunt + private chef lunch", client_price: 2200, status: "tentative" }),
+        ev({ id: "lx5-1", event_type: "activity", title: "Hot air balloon + helicopter Brunello circuit", vic_price: 4800, status: "tentative" }),
+        ev({ id: "lx5-2", event_type: "meal", title: "Truffle hunt + private chef lunch", vic_price: 2200, status: "tentative" }),
       ],
     },
     {
@@ -72,7 +73,7 @@ const LUXURY_TUSCANY_OPTION: ItineraryTripOption = {
       location: "Florence",
       events: [
         ev({ id: "lx6-1", event_type: "free_time", title: "Spa morning — Rosewood" }),
-        ev({ id: "lx6-2", event_type: "transfer", title: "Helicopter Rosewood → Florence Airport", client_price: 2200, status: "tentative" }),
+        ev({ id: "lx6-2", event_type: "transfer", title: "Helicopter Rosewood → Florence Airport", vic_price: 2200, status: "tentative" }),
       ],
     },
   ],
@@ -143,7 +144,7 @@ export const FAKE_ITINERARIES: Itinerary[] = [
             title: "Private helicopter transfer Nice → Monaco",
             start_time: "15:30",
             status: "confirmed",
-            client_price: 2200,
+            vic_price: 2200,
             thumbnail_url: THUMB.helicopter,
             description: "7-minute scenic flight along the Côte d'Azur coastline. VIP arrival at Monaco helipad with private car transfer to hotel.",
             source_product_id: "prod-advisor-002",
@@ -157,10 +158,13 @@ export const FAKE_ITINERARIES: Itinerary[] = [
             title: "Check-in Hôtel de Paris Monte-Carlo",
             start_time: "17:00",
             status: "confirmed",
-            client_price: 4800,
+            vic_price: 4800,
             thumbnail_url: THUMB.hotel,
             description: "Junior Suite with Casino Square view. Welcome amenities arranged. Late checkout confirmed for Day 4.",
             custom_notes: "Confirmed with helipad team. VIP arrival protocol.",
+            source_product_id: "prod_001",
+            source_product_name: "Aman Tokyo",
+            source_product_category: "hotel",
           }),
           ev({
             id: "e1-4",
@@ -168,7 +172,7 @@ export const FAKE_ITINERARIES: Itinerary[] = [
             title: "Dinner at Le Louis XV - Alain Ducasse",
             start_time: "20:00",
             status: "confirmed",
-            client_price: 850,
+            vic_price: 850,
             thumbnail_url: THUMB.dining,
             description: "Alain Ducasse's three Michelin star restaurant. Chef's tasting menu reserved. Window table confirmed.",
           }),
@@ -186,7 +190,7 @@ export const FAKE_ITINERARIES: Itinerary[] = [
             title: "Monaco Historic Grand Prix Paddock Tour",
             start_time: "10:00",
             status: "confirmed",
-            client_price: 500,
+            vic_price: 500,
           }),
           ev({
             id: "e2-2",
@@ -194,7 +198,7 @@ export const FAKE_ITINERARIES: Itinerary[] = [
             title: "Lunch at Café de Paris",
             start_time: "13:00",
             status: "tentative",
-            client_price: 280,
+            vic_price: 280,
           }),
           ev({
             id: "e2-3",
@@ -202,7 +206,7 @@ export const FAKE_ITINERARIES: Itinerary[] = [
             title: "Formula 1 Qualifying — Grandstand K",
             start_time: "15:00",
             status: "confirmed",
-            client_price: 3500,
+            vic_price: 3500,
           }),
           ev({
             id: "e2-4",
@@ -210,7 +214,7 @@ export const FAKE_ITINERARIES: Itinerary[] = [
             title: "Dinner at Nobu Matsuhisa Monte-Carlo",
             start_time: "20:30",
             status: "confirmed",
-            client_price: 650,
+            vic_price: 650,
             thumbnail_url: THUMB.nobu,
             source_product_id: "prod-agency-004",
             source_product_name: "Nobu Matsuhisa Monaco",
@@ -231,7 +235,7 @@ export const FAKE_ITINERARIES: Itinerary[] = [
             title: "Formula 1 Grand Prix Race Day — VIP Suite",
             start_time: "14:00",
             status: "confirmed",
-            client_price: 8500,
+            vic_price: 8500,
             thumbnail_url: THUMB.f1,
             description: "Paddock Club Suite with open bar, gourmet lunch, and pit lane access. Seats 71-72, Turn 1 view.",
           }),
@@ -241,7 +245,10 @@ export const FAKE_ITINERARIES: Itinerary[] = [
             title: "Victory Celebration Yacht Party",
             start_time: "19:00",
             status: "confirmed",
-            client_price: 3200,
+            vic_price: 3200,
+            source_product_id: "prod_006",
+            source_product_name: "Rosewood Mayakoba",
+            source_product_category: "hotel",
           }),
           ev({
             id: "e3-4",
@@ -249,7 +256,7 @@ export const FAKE_ITINERARIES: Itinerary[] = [
             title: "Casino de Monte-Carlo — Private Salon",
             start_time: "22:00",
             status: "tentative",
-            client_price: 1000,
+            vic_price: 1000,
           }),
         ],
       },
@@ -267,7 +274,7 @@ export const FAKE_ITINERARIES: Itinerary[] = [
             title: "Private transfer Monaco → Nice Airport",
             start_time: "13:00",
             status: "confirmed",
-            client_price: 350,
+            vic_price: 350,
           }),
           ev({ id: "e4-4", event_type: "flight", title: "Departure Nice Côte d'Azur", start_time: "15:30", status: "confirmed" }),
         ],
@@ -275,7 +282,7 @@ export const FAKE_ITINERARIES: Itinerary[] = [
     ],
     tags: ["vip", "motorsport", "luxury"],
     currency: "EUR",
-    total_client_price: 28500,
+    total_vic_price: 28500,
     total_net_cost: 22000,
     total_margin: 6500,
     total_commission: 3200,
@@ -302,8 +309,8 @@ export const FAKE_ITINERARIES: Itinerary[] = [
     trip_name: "Tuscany Wine & Culture",
     description: "Six days in Florence, Siena, and Montepulciano.",
     hero_image_url: HERO.tuscany,
-    primary_vic_id: "vic-004",
-    primary_vic_name: "Eric Tournier",
+    primary_vic_id: "vic-002",
+    primary_vic_name: "Dominique Sarraute",
     primary_advisor_id: "1",
     primary_advisor_name: "Marco Pellegrini",
     status: "draft",
@@ -315,8 +322,26 @@ export const FAKE_ITINERARIES: Itinerary[] = [
         title: "Florence",
         location: "Florence",
         events: [
-          ev({ id: "t1-1", event_type: "stay", title: "Check-in Villa San Michele (Belmond)", status: "tentative", client_price: 3200 }),
-          ev({ id: "t1-2", event_type: "meal", title: "Welcome dinner at Enoteca Pinchiorri", status: "tentative", client_price: 1400 }),
+          ev({
+            id: "t1-1",
+            event_type: "stay",
+            title: "Check-in Villa San Michele (Belmond)",
+            status: "tentative",
+            vic_price: 3200,
+            source_product_id: "prod-villa-001",
+            source_product_name: "Villa Treville — Positano",
+            source_product_category: "villa",
+          }),
+          ev({
+            id: "t1-2",
+            event_type: "meal",
+            title: "Welcome dinner at Enoteca Pinchiorri",
+            status: "tentative",
+            vic_price: 1400,
+            source_product_id: "prod-rest-001",
+            source_product_name: "Mirazur — Menton",
+            source_product_category: "restaurant",
+          }),
         ],
       },
       {
@@ -324,10 +349,10 @@ export const FAKE_ITINERARIES: Itinerary[] = [
         title: "Florence",
         location: "Florence",
         events: [
-          ev({ id: "t2-1", event_type: "activity", title: "Private Uffizi Gallery Tour", status: "tentative", client_price: 600 }),
-          ev({ id: "t2-2", event_type: "meal", title: "Lunch at Trattoria Mario", status: "tentative", client_price: 180 }),
-          ev({ id: "t2-3", event_type: "experience", title: "Leather artisan workshop, Oltrarno", status: "tentative", client_price: 350 }),
-          ev({ id: "t2-4", event_type: "meal", title: "Dinner at La Bottega del Buon Caffè", status: "tentative", client_price: 680 }),
+          ev({ id: "t2-1", event_type: "activity", title: "Private Uffizi Gallery Tour", status: "tentative", vic_price: 600 }),
+          ev({ id: "t2-2", event_type: "meal", title: "Lunch at Trattoria Mario", status: "tentative", vic_price: 180 }),
+          ev({ id: "t2-3", event_type: "experience", title: "Leather artisan workshop, Oltrarno", status: "tentative", vic_price: 350 }),
+          ev({ id: "t2-4", event_type: "meal", title: "Dinner at La Bottega del Buon Caffè", status: "tentative", vic_price: 680 }),
         ],
       },
       {
@@ -335,10 +360,10 @@ export const FAKE_ITINERARIES: Itinerary[] = [
         title: "Chianti region",
         location: "Chianti",
         events: [
-          ev({ id: "t3-1", event_type: "transfer", title: "Private car Florence → Chianti", status: "tentative", client_price: 280 }),
-          ev({ id: "t3-2", event_type: "experience", title: "Antinori Chianti Classico winery tour + tasting", status: "tentative", client_price: 450 }),
-          ev({ id: "t3-3", event_type: "meal", title: "Farm-to-table lunch at Castello di Ama", status: "tentative", client_price: 320 }),
-          ev({ id: "t3-4", event_type: "experience", title: "Olive oil tasting at Laudemio estate", status: "tentative", client_price: 200 }),
+          ev({ id: "t3-1", event_type: "transfer", title: "Private car Florence → Chianti", status: "tentative", vic_price: 280 }),
+          ev({ id: "t3-2", event_type: "experience", title: "Antinori Chianti Classico winery tour + tasting", status: "tentative", vic_price: 450 }),
+          ev({ id: "t3-3", event_type: "meal", title: "Farm-to-table lunch at Castello di Ama", status: "tentative", vic_price: 320 }),
+          ev({ id: "t3-4", event_type: "experience", title: "Olive oil tasting at Laudemio estate", status: "tentative", vic_price: 200 }),
         ],
       },
       {
@@ -346,10 +371,10 @@ export const FAKE_ITINERARIES: Itinerary[] = [
         title: "Siena",
         location: "Siena",
         events: [
-          ev({ id: "t4-1", event_type: "transfer", title: "Private car Chianti → Siena", status: "tentative", client_price: 180 }),
-          ev({ id: "t4-2", event_type: "activity", title: "Guided Siena walking tour — Piazza del Campo & Duomo", status: "tentative", client_price: 250 }),
-          ev({ id: "t4-3", event_type: "stay", title: "Check-in Rosewood Castiglion del Bosco", status: "tentative", client_price: 2800 }),
-          ev({ id: "t4-4", event_type: "meal", title: "Dinner at Campo del Drago (1 Michelin star)", status: "tentative", client_price: 520 }),
+          ev({ id: "t4-1", event_type: "transfer", title: "Private car Chianti → Siena", status: "tentative", vic_price: 180 }),
+          ev({ id: "t4-2", event_type: "activity", title: "Guided Siena walking tour — Piazza del Campo & Duomo", status: "tentative", vic_price: 250 }),
+          ev({ id: "t4-3", event_type: "stay", title: "Check-in Rosewood Castiglion del Bosco", status: "tentative", vic_price: 2800 }),
+          ev({ id: "t4-4", event_type: "meal", title: "Dinner at Campo del Drago (1 Michelin star)", status: "tentative", vic_price: 520 }),
         ],
       },
       {
@@ -357,9 +382,9 @@ export const FAKE_ITINERARIES: Itinerary[] = [
         title: "Montepulciano / Val d'Orcia",
         location: "Val d'Orcia",
         events: [
-          ev({ id: "t5-1", event_type: "experience", title: "Brunello di Montalcino private cellar tour", status: "tentative", client_price: 380 }),
-          ev({ id: "t5-2", event_type: "activity", title: "Hot air balloon ride over Val d'Orcia", status: "tentative", client_price: 900, source_product_id: "prod-agency-005", source_product_name: "Wine Tour Tuscany", source_product_category: "Activity" }),
-          ev({ id: "t5-3", event_type: "meal", title: "Truffle hunting lunch experience", status: "tentative", client_price: 450 }),
+          ev({ id: "t5-1", event_type: "experience", title: "Brunello di Montalcino private cellar tour", status: "tentative", vic_price: 380 }),
+          ev({ id: "t5-2", event_type: "activity", title: "Hot air balloon ride over Val d'Orcia", status: "tentative", vic_price: 900, source_product_id: "prod-agency-005", source_product_name: "Wine Tour Tuscany", source_product_category: "Activity" }),
+          ev({ id: "t5-3", event_type: "meal", title: "Truffle hunting lunch experience", status: "tentative", vic_price: 450 }),
         ],
       },
       {
@@ -369,7 +394,7 @@ export const FAKE_ITINERARIES: Itinerary[] = [
         events: [
           ev({ id: "t6-1", event_type: "free_time", title: "Morning at leisure — spa at Rosewood" }),
           ev({ id: "t6-2", event_type: "note", title: "Check-out Rosewood" }),
-          ev({ id: "t6-3", event_type: "transfer", title: "Private transfer to Florence Airport", status: "tentative", client_price: 320 }),
+          ev({ id: "t6-3", event_type: "transfer", title: "Private transfer to Florence Airport", status: "tentative", vic_price: 320 }),
         ],
       },
     ],
@@ -394,7 +419,7 @@ export const FAKE_ITINERARIES: Itinerary[] = [
         to_stage: "post_travel",
         changed_at: "2025-11-15T18:00:00Z",
         changed_by: "Manon L.",
-        note: "Welcome home email sent — clients loved it",
+        note: "Welcome home email sent — VICs loved it",
       },
     ] satisfies PipelineEvent[],
   } as Itinerary,
@@ -424,17 +449,17 @@ export const FAKE_ITINERARIES: Itinerary[] = [
         location: "North Malé Atoll",
         events: [
           ev({ id: "m1-1", event_type: "flight", title: "Arrival Malé International", status: "confirmed" }),
-          ev({ id: "m1-2", event_type: "transfer", title: "Speedboat transfer to One&Only Reethi Rah", status: "confirmed", client_price: 800 }),
+          ev({ id: "m1-2", event_type: "transfer", title: "Speedboat transfer to One&Only Reethi Rah", status: "confirmed", vic_price: 800 }),
           ev({
             id: "m1-3",
             event_type: "stay",
             title: "Check-in Grand Beach Villa with Pool",
             status: "confirmed",
-            client_price: 28000,
+            vic_price: 28000,
             description: "7 nights",
-            source_product_id: "prod-enable-003",
-            source_product_name: "One&Only Reethi Rah",
-            source_product_category: "Accommodation",
+            source_product_id: "prod_002",
+            source_product_name: "Four Seasons Bora Bora",
+            source_product_category: "hotel",
           }),
         ],
       },
@@ -444,9 +469,9 @@ export const FAKE_ITINERARIES: Itinerary[] = [
         title: "Day 2",
         location: "North Malé Atoll",
         events: [
-          ev({ id: "m2-1", event_type: "activity", title: "Family snorkeling — House Reef", status: "tentative", client_price: 0 }),
-          ev({ id: "m2-2", event_type: "experience", title: "Kids Club — Marine Biology Workshop", status: "tentative", client_price: 150 }),
-          ev({ id: "m2-3", event_type: "meal", title: "Dinner at Tapasake (overwater Japanese)", status: "tentative", client_price: 650 }),
+          ev({ id: "m2-1", event_type: "activity", title: "Family snorkeling — House Reef", status: "tentative", vic_price: 0 }),
+          ev({ id: "m2-2", event_type: "experience", title: "Kids Club — Marine Biology Workshop", status: "tentative", vic_price: 150 }),
+          ev({ id: "m2-3", event_type: "meal", title: "Dinner at Tapasake (overwater Japanese)", status: "tentative", vic_price: 650 }),
         ],
       },
       {
@@ -455,8 +480,8 @@ export const FAKE_ITINERARIES: Itinerary[] = [
         title: "Day 3",
         location: "North Malé Atoll",
         events: [
-          ev({ id: "m3-1", event_type: "activity", title: "Private dolphin sunset cruise", status: "tentative", client_price: 1200 }),
-          ev({ id: "m3-2", event_type: "experience", title: "Couples spa — Overwater treatment suite", status: "tentative", client_price: 800 }),
+          ev({ id: "m3-1", event_type: "activity", title: "Private dolphin sunset cruise", status: "tentative", vic_price: 1200 }),
+          ev({ id: "m3-2", event_type: "experience", title: "Couples spa — Overwater treatment suite", status: "tentative", vic_price: 800 }),
           ev({ id: "m3-3", event_type: "free_time", title: "Afternoon at leisure — pool & beach" }),
         ],
       },
@@ -466,8 +491,8 @@ export const FAKE_ITINERARIES: Itinerary[] = [
         title: "Day 4",
         location: "North Malé Atoll",
         events: [
-          ev({ id: "m4-1", event_type: "activity", title: "Family diving lesson (PADI Discover)", status: "tentative", client_price: 900 }),
-          ev({ id: "m4-2", event_type: "meal", title: "Beach BBQ dinner — private sandbank", status: "confirmed", client_price: 1800 }),
+          ev({ id: "m4-1", event_type: "activity", title: "Family diving lesson (PADI Discover)", status: "tentative", vic_price: 900 }),
+          ev({ id: "m4-2", event_type: "meal", title: "Beach BBQ dinner — private sandbank", status: "confirmed", vic_price: 1800 }),
         ],
       },
       {
@@ -477,7 +502,7 @@ export const FAKE_ITINERARIES: Itinerary[] = [
         location: "North Malé Atoll",
         events: [
           ev({ id: "m5-1", event_type: "free_time", title: "Full day at leisure" }),
-          ev({ id: "m5-2", event_type: "experience", title: "Sunset fishing trip", status: "tentative", client_price: 400 }),
+          ev({ id: "m5-2", event_type: "experience", title: "Sunset fishing trip", status: "tentative", vic_price: 400 }),
         ],
       },
       {
@@ -486,9 +511,9 @@ export const FAKE_ITINERARIES: Itinerary[] = [
         title: "Day 6",
         location: "North Malé Atoll",
         events: [
-          ev({ id: "m6-1", event_type: "activity", title: "Jet ski tour of the atoll", status: "tentative", client_price: 600 }),
-          ev({ id: "m6-2", event_type: "experience", title: "Maldivian cooking class", status: "tentative", client_price: 350 }),
-          ev({ id: "m6-3", event_type: "meal", title: "Farewell dinner at Botanica", status: "tentative", client_price: 750 }),
+          ev({ id: "m6-1", event_type: "activity", title: "Jet ski tour of the atoll", status: "tentative", vic_price: 600 }),
+          ev({ id: "m6-2", event_type: "experience", title: "Maldivian cooking class", status: "tentative", vic_price: 350 }),
+          ev({ id: "m6-3", event_type: "meal", title: "Farewell dinner at Botanica", status: "tentative", vic_price: 750 }),
         ],
       },
       {
@@ -498,7 +523,7 @@ export const FAKE_ITINERARIES: Itinerary[] = [
         location: "North Malé Atoll",
         events: [
           ev({ id: "m7-1", event_type: "free_time", title: "Morning at leisure" }),
-          ev({ id: "m7-2", event_type: "experience", title: "Professional family photo session", status: "tentative", client_price: 500 }),
+          ev({ id: "m7-2", event_type: "experience", title: "Professional family photo session", status: "tentative", vic_price: 500 }),
         ],
       },
       {
@@ -508,14 +533,14 @@ export const FAKE_ITINERARIES: Itinerary[] = [
         location: "Malé",
         events: [
           ev({ id: "m8-1", event_type: "note", title: "Check-out" }),
-          ev({ id: "m8-2", event_type: "transfer", title: "Speedboat transfer to Malé", status: "confirmed", client_price: 800 }),
+          ev({ id: "m8-2", event_type: "transfer", title: "Speedboat transfer to Malé", status: "confirmed", vic_price: 800 }),
           ev({ id: "m8-3", event_type: "flight", title: "Departure Malé International", status: "confirmed" }),
         ],
       },
     ],
     tags: ["family", "beach", "wellness"],
     currency: "EUR",
-    total_client_price: 42000,
+    total_vic_price: 42000,
     data_ownership_level: "Advisor",
     created_by: "1",
     created_at: iso(now),
@@ -529,7 +554,7 @@ export const FAKE_ITINERARIES: Itinerary[] = [
         to_stage: "revision",
         changed_at: "2025-12-18T10:00:00Z",
         changed_by: "Manon L.",
-        note: "Client wants water villa instead of beach villa",
+        note: "VIC wants water villa instead of beach villa",
       },
       {
         from_stage: "revision",
@@ -563,8 +588,8 @@ export const FAKE_ITINERARIES: Itinerary[] = [
     destinations: ["Paris"],
     traveler_count: 2,
     days: [
-      { day_number: 1, date: "2026-04-10", title: "Arrival", location: "Paris", events: [ev({ id: "p1-1", event_type: "flight", title: "Arrival Paris CDG", start_time: "14:00", status: "confirmed" }), ev({ id: "p1-2", event_type: "stay", title: "Check-in Four Seasons George V", start_time: "16:00", status: "confirmed", client_price: 2400 }), ev({ id: "p1-3", event_type: "meal", title: "Dinner Alain Ducasse au Plaza Athénée", start_time: "20:00", status: "confirmed", client_price: 720 })] },
-      { day_number: 2, date: "2026-04-11", title: "Art & Culture", location: "Paris", events: [ev({ id: "p2-1", event_type: "experience", title: "Private viewing — Musée d'Orsay", start_time: "10:00", status: "confirmed", client_price: 400 }), ev({ id: "p2-2", event_type: "meal", title: "Lunch Le Cinq", start_time: "13:00", status: "confirmed", client_price: 450 }), ev({ id: "p2-3", event_type: "free_time", title: "Afternoon at leisure", start_time: "15:00" })] },
+      { day_number: 1, date: "2026-04-10", title: "Arrival", location: "Paris", events: [ev({ id: "p1-1", event_type: "flight", title: "Arrival Paris CDG", start_time: "14:00", status: "confirmed" }), ev({ id: "p1-2", event_type: "stay", title: "Check-in Four Seasons George V", start_time: "16:00", status: "confirmed", vic_price: 2400, source_product_id: "prod-waldorf-london", source_product_name: "Waldorf Astoria London", source_product_category: "hotel" }), ev({ id: "p1-3", event_type: "meal", title: "Dinner Alain Ducasse au Plaza Athénée", start_time: "20:00", status: "confirmed", vic_price: 720 })] },
+      { day_number: 2, date: "2026-04-11", title: "Art & Culture", location: "Paris", events: [ev({ id: "p2-1", event_type: "experience", title: "Private viewing — Musée d'Orsay", start_time: "10:00", status: "confirmed", vic_price: 400 }), ev({ id: "p2-2", event_type: "meal", title: "Lunch Le Cinq", start_time: "13:00", status: "confirmed", vic_price: 450 }), ev({ id: "p2-3", event_type: "free_time", title: "Afternoon at leisure", start_time: "15:00" })] },
       { day_number: 3, date: "2026-04-12", title: "Departure", location: "Paris", events: [ev({ id: "p3-1", event_type: "note", title: "Check-out", start_time: "11:00" }), ev({ id: "p3-2", event_type: "flight", title: "Departure Paris CDG", start_time: "14:00", status: "confirmed" })] },
     ],
     currency: "EUR",
@@ -603,11 +628,11 @@ export const FAKE_ITINERARIES: Itinerary[] = [
     destinations: ["Rome", "Amalfi Coast"],
     traveler_count: 2,
     days: [
-      { day_number: 1, date: "2026-06-01", title: "Rome", location: "Rome", events: [ev({ id: "r1-1", event_type: "flight", title: "Arrival Rome FCO", status: "confirmed" }), ev({ id: "r1-2", event_type: "stay", title: "Hotel Hassler Roma", status: "confirmed", client_price: 1800 }), ev({ id: "r1-3", event_type: "meal", title: "Dinner La Pergola", status: "tentative", client_price: 650 })] },
-      { day_number: 2, date: "2026-06-02", title: "Rome", location: "Rome", events: [ev({ id: "r2-1", event_type: "experience", title: "Vatican private tour", status: "confirmed", client_price: 550 }), ev({ id: "r2-2", event_type: "transfer", title: "Private car Rome → Amalfi", status: "confirmed", client_price: 800 })] },
-      { day_number: 3, date: "2026-06-03", title: "Amalfi", location: "Amalfi", events: [ev({ id: "r3-1", event_type: "stay", title: "Belmond Hotel Caruso", status: "confirmed", client_price: 2200, description: "2 nights" }), ev({ id: "r3-2", event_type: "meal", title: "Dinner at hotel", status: "tentative", client_price: 380 })] },
-      { day_number: 4, date: "2026-06-04", title: "Amalfi", location: "Ravello", events: [ev({ id: "r4-1", event_type: "activity", title: "Boat trip Positano & Capri", status: "tentative", client_price: 1200 })] },
-      { day_number: 5, date: "2026-06-05", title: "Departure", location: "Naples", events: [ev({ id: "r5-1", event_type: "transfer", title: "Car to Naples airport", status: "confirmed", client_price: 350 }), ev({ id: "r5-2", event_type: "flight", title: "Departure Naples", status: "confirmed" })] },
+      { day_number: 1, date: "2026-06-01", title: "Rome", location: "Rome", events: [ev({ id: "r1-1", event_type: "flight", title: "Arrival Rome FCO", status: "confirmed" }), ev({ id: "r1-2", event_type: "stay", title: "Hotel Hassler Roma", status: "confirmed", vic_price: 1800 }), ev({ id: "r1-3", event_type: "meal", title: "Dinner La Pergola", status: "tentative", vic_price: 650 })] },
+      { day_number: 2, date: "2026-06-02", title: "Rome", location: "Rome", events: [ev({ id: "r2-1", event_type: "experience", title: "Vatican private tour", status: "confirmed", vic_price: 550 }), ev({ id: "r2-2", event_type: "transfer", title: "Private car Rome → Amalfi", status: "confirmed", vic_price: 800 })] },
+      { day_number: 3, date: "2026-06-03", title: "Amalfi", location: "Amalfi", events: [ev({ id: "r3-1", event_type: "stay", title: "Belmond Hotel Caruso", status: "confirmed", vic_price: 2200, description: "2 nights", source_product_id: "prod-villa-001", source_product_name: "Villa Treville — Positano", source_product_category: "villa" }), ev({ id: "r3-2", event_type: "meal", title: "Dinner at hotel", status: "tentative", vic_price: 380 })] },
+      { day_number: 4, date: "2026-06-04", title: "Amalfi", location: "Ravello", events: [ev({ id: "r4-1", event_type: "activity", title: "Boat trip Positano & Capri", status: "tentative", vic_price: 1200 })] },
+      { day_number: 5, date: "2026-06-05", title: "Departure", location: "Naples", events: [ev({ id: "r5-1", event_type: "transfer", title: "Car to Naples airport", status: "confirmed", vic_price: 350 }), ev({ id: "r5-2", event_type: "flight", title: "Departure Naples", status: "confirmed" })] },
     ],
     currency: "EUR",
     data_ownership_level: "Advisor",
@@ -629,7 +654,7 @@ export const FAKE_ITINERARIES: Itinerary[] = [
         to_stage: "committed",
         changed_at: "2026-01-22T11:00:00Z",
         changed_by: "Manon L.",
-        note: "Client approved Option B — $2,500 deposit received",
+        note: "VIC approved Option B — $2,500 deposit received",
       },
     ] satisfies PipelineEvent[],
   } as Itinerary,
@@ -649,8 +674,8 @@ export const FAKE_ITINERARIES: Itinerary[] = [
     destinations: ["Lyon", "Beaujolais"],
     traveler_count: 2,
     days: [
-      { day_number: 1, date: "2026-09-15", title: "Lyon", location: "Lyon", events: [ev({ id: "l1-1", event_type: "flight", title: "Arrival Lyon", start_time: "12:00", status: "confirmed" }), ev({ id: "l1-2", event_type: "stay", title: "Villa Florentine", start_time: "15:00", status: "tentative", client_price: 950 }), ev({ id: "l1-3", event_type: "meal", title: "Dinner Paul Bocuse (L'Auberge)", start_time: "20:00", status: "tentative", client_price: 420 })] },
-      { day_number: 2, date: "2026-09-16", title: "Beaujolais", location: "Beaujolais", events: [ev({ id: "l2-1", event_type: "activity", title: "Wine tour — Côte du Py", start_time: "09:30", status: "tentative", client_price: 350 }), ev({ id: "l2-2", event_type: "meal", title: "Lunch at domaine", start_time: "13:00", status: "tentative", client_price: 180 })] },
+      { day_number: 1, date: "2026-09-15", title: "Lyon", location: "Lyon", events: [ev({ id: "l1-1", event_type: "flight", title: "Arrival Lyon", start_time: "12:00", status: "confirmed" }), ev({ id: "l1-2", event_type: "stay", title: "Villa Florentine", start_time: "15:00", status: "tentative", vic_price: 950 }), ev({ id: "l1-3", event_type: "meal", title: "Dinner Paul Bocuse (L'Auberge)", start_time: "20:00", status: "tentative", vic_price: 420, source_product_id: "prod-rest-001", source_product_name: "Mirazur — Menton", source_product_category: "restaurant" })] },
+      { day_number: 2, date: "2026-09-16", title: "Beaujolais", location: "Beaujolais", events: [ev({ id: "l2-1", event_type: "activity", title: "Wine tour — Côte du Py", start_time: "09:30", status: "tentative", vic_price: 350 }), ev({ id: "l2-2", event_type: "meal", title: "Lunch at domaine", start_time: "13:00", status: "tentative", vic_price: 180 })] },
       { day_number: 3, date: "2026-09-17", title: "Departure", location: "Lyon", events: [ev({ id: "l3-1", event_type: "flight", title: "Departure Lyon", start_time: "10:00", status: "confirmed" })] },
     ],
     currency: "EUR",
@@ -675,7 +700,7 @@ export type ItineraryFilters = {
   /** When set, keep itineraries whose pipeline_stage is in this list (e.g. upcoming trips) */
   pipeline_stages_in?: PipelineStage[];
   vic_id?: string;
-  destination?: string;
+  destination_countries?: string[];
   date_from?: string;
   date_to?: string;
   sortBy?: string;
@@ -716,9 +741,10 @@ export function filterAndPaginateFakeItineraries(
     list = list.filter((it) => (it.pipeline_stage ?? "lead") === filters.pipeline_stage);
   }
   if (filters.vic_id) list = list.filter((it) => it.primary_vic_id === filters.vic_id);
-  if (filters.destination) {
-    const q = (filters.destination ?? "").toLowerCase();
-    list = list.filter((it) => (it.destinations ?? []).some((d) => d.toLowerCase().includes(q)));
+  if (filters.destination_countries?.length) {
+    list = list.filter((it) =>
+      itineraryMatchesDestinationCountries(it.destinations, filters.destination_countries!)
+    );
   }
   if (filters.date_from) list = list.filter((it) => (it.trip_end_date ?? "") >= (filters.date_from ?? ""));
   if (filters.date_to) list = list.filter((it) => (it.trip_start_date ?? "") <= (filters.date_to ?? ""));

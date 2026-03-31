@@ -1,5 +1,5 @@
 /**
- * VIC (Very Important Client) — full frontend spec types.
+ * VIC — full frontend spec types.
  * Section 3: interfaces, enums, and page state.
  */
 
@@ -32,6 +32,14 @@ export type AccessLevel = "view" | "edit";
 export interface SharedAccess {
   advisor_id: string;
   advisor_name?: string;
+  access_level: AccessLevel;
+  shared_at: string; // ISO
+}
+
+/** VIC shared with all current members of a workspace team. */
+export interface TeamSharedAccess {
+  team_id: string;
+  team_name?: string;
   access_level: AccessLevel;
   shared_at: string; // ISO
 }
@@ -131,7 +139,7 @@ export interface VIC {
   assigned_advisor_name?: string;
   secondary_advisor_id?: string;
   secondary_advisor_name?: string;
-  client_since?: string; // ISO date
+  vic_since?: string; // ISO date
   referral_source?: string;
   referred_by_vic_id?: string;
   referred_by_vic_name?: string;
@@ -170,6 +178,8 @@ export interface VIC {
   // Sharing
   sharing_level?: SharingLevel;
   shared_with?: SharedAccess[];
+  /** All members of each team receive access (view or edit). */
+  shared_with_teams?: TeamSharedAccess[];
   is_shared_to_agency?: boolean;
 
   // Governance
@@ -221,7 +231,7 @@ export interface VIC {
 export interface VICListParams {
   agency_id?: string;
   search?: string;
-  tab?: "mine" | "shared" | "agency";
+  tab?: "mine" | "shared";
   status?: RelationshipStatus;
   tags?: string; // comma-separated
   country?: string; // home_country ISO
@@ -258,7 +268,7 @@ export interface AcuitySettings {
 
 export interface VICsPageState {
   // Tab
-  activeTab: "mine" | "shared" | "agency";
+  activeTab: "mine" | "shared";
 
   // View
   viewMode: "list" | "cards";

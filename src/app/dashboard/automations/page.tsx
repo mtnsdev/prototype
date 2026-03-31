@@ -1,13 +1,37 @@
 "use client";
 
 import { useState } from "react";
-import { X, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import PreviewBanner from "@/components/ui/PreviewBanner";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 import { useToast } from "@/contexts/ToastContext";
 import { AutomationBuilderModal } from "@/components/itineraries/CompetitorFeatureModals";
 import { cn } from "@/lib/utils";
+import { listCardRowBaseClass } from "@/lib/list-ui";
+import {
+  DASHBOARD_LIST_PAGE_HEADER,
+  DASHBOARD_LIST_PAGE_HEADER_ACTIONS,
+  DASHBOARD_LIST_PAGE_HEADER_SUBTITLE,
+  DASHBOARD_LIST_PAGE_HEADER_TITLE,
+  DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK,
+} from "@/lib/dashboardChrome";
 
 type AutomationRecord = {
   id: string;
@@ -74,6 +98,24 @@ const INITIAL_MOCK: AutomationRecord[] = [
   },
 ];
 
+const TRIGGER_OPTIONS: { value: string; label: string }[] = [
+  { value: "birthday_approaching", label: "VIC birthday in X days" },
+  { value: "passport_expiring", label: "Passport expiring in X days" },
+  { value: "trip_departure", label: "Trip departure in X days" },
+  { value: "acuity_complete", label: "VIC Acuity profile completed" },
+  { value: "new_vic_created", label: "New VIC created" },
+  { value: "itinerary_stage_change", label: "Itinerary pipeline stage changes" },
+  { value: "manual", label: "Manual trigger" },
+];
+
+const ACTION_OPTIONS: { value: string; label: string }[] = [
+  { value: "send_email", label: "Send personalized email" },
+  { value: "create_action_item", label: "Create action item" },
+  { value: "send_notification", label: "Send notification" },
+  { value: "run_acuity", label: "Run Acuity on VIC" },
+  { value: "add_tag", label: "Add tag to VIC" },
+];
+
 function triggerSummary(trigger: string, triggerValue: number): string {
   switch (trigger) {
     case "birthday_approaching":
@@ -125,53 +167,73 @@ export default function AutomationsPage() {
   };
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-auto bg-background">
-      {IS_PREVIEW_MODE && <PreviewBanner feature="Automations" variant="full" dismissible sampleDataOnly />}
-      <div className="max-w-3xl mx-auto p-6 space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
-            <Zap size={28} className="text-violet-400" /> Automations
-          </h1>
-          <Button className="bg-violet-600 hover:bg-violet-700" onClick={() => setBuilderOpen(true)}>
-            + Create Automation
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-inset text-foreground">
+      <header className={DASHBOARD_LIST_PAGE_HEADER}>
+        <div className={DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK}>
+          <h1 className={DASHBOARD_LIST_PAGE_HEADER_TITLE}>Automations</h1>
+          <p className={DASHBOARD_LIST_PAGE_HEADER_SUBTITLE}>
+            {automations.length} workflow{automations.length !== 1 ? "s" : ""} · triggers and actions (preview)
+          </p>
+        </div>
+        <div className={DASHBOARD_LIST_PAGE_HEADER_ACTIONS}>
+          <Button
+            variant="toolbarAccent"
+            size="sm"
+            className="h-8 text-xs"
+            onClick={() => setBuilderOpen(true)}
+          >
+            <Zap size={14} className="shrink-0" />
+            Create automation
           </Button>
         </div>
+      </header>
 
-        <div className="space-y-4">
+      {IS_PREVIEW_MODE && (
+        <div className="shrink-0">
+          <PreviewBanner feature="Automations" variant="full" dismissible sampleDataOnly />
+        </div>
+      )}
+
+      <div className="min-h-0 flex-1 overflow-auto">
+        <div className="max-w-[920px] space-y-3 px-6 pb-8 pt-6">
           {automations.map((a) => (
             <button
               key={a.id}
               type="button"
               onClick={() => setEditingAutomation({ ...a })}
-              className="w-full text-left rounded-xl border border-border bg-white/[0.03] p-4 hover:border-input hover:bg-white/[0.05] transition-colors cursor-pointer"
+              className={cn(listCardRowBaseClass, "w-full flex-col items-stretch gap-0 rounded-xl py-4")}
             >
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-violet-500/15 flex items-center justify-center text-violet-400 shrink-0">
-                  <Zap size={20} />
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[rgba(201,169,110,0.22)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
+                  aria-hidden
+                >
+                  <Zap size={18} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-foreground">{a.name}</span>
+                <div className="min-w-0 flex-1 text-left">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium text-foreground">{a.name}</span>
                     <span
-                      className={
+                      className={cn(
+                        "rounded-full border px-2 py-0.5 text-2xs font-medium uppercase tracking-wider",
                         a.enabled
-                          ? "text-2xs uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-400/30 text-emerald-400"
-                          : "text-2xs uppercase tracking-wider px-2 py-0.5 rounded-full border border-muted-foreground/30 text-muted-foreground"
-                      }
+                          ? "border-[var(--muted-success-border)] text-[var(--muted-success-text)]"
+                          : "border-border text-muted-foreground"
+                      )}
                     >
                       {a.enabled ? "Active" : "Paused"}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground/90 mt-1">
+                  <p className="mt-1 text-sm text-muted-foreground/90">
                     <span className="text-muted-foreground">Trigger:</span>{" "}
                     {triggerSummary(a.trigger, a.triggerValue)}
                   </p>
                   <p className="text-sm text-muted-foreground/90">
                     <span className="text-muted-foreground">Action:</span> {actionSummary(a.action)}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Applied to: {a.applied} · Last triggered:{" "}
-                    {a.lastRun ?? "—"} · {a.runCount} run{a.runCount !== 1 ? "s" : ""}
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Applied to: {a.applied} · Last triggered: {a.lastRun ?? "—"} · {a.runCount} run
+                    {a.runCount !== 1 ? "s" : ""}
                   </p>
                 </div>
               </div>
@@ -189,161 +251,152 @@ export default function AutomationsPage() {
         }}
       />
 
-      {editingAutomation && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={() => setEditingAutomation(null)}
-          role="presentation"
+      <Dialog
+        open={editingAutomation != null}
+        onOpenChange={(open) => {
+          if (!open) setEditingAutomation(null);
+        }}
+      >
+        <DialogContent
+          className="max-h-[85vh] overflow-y-auto sm:max-w-lg"
+          showCloseButton
+          onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          <div
-            className="bg-card border border-input rounded-2xl p-6 w-full max-w-[520px] shadow-2xl max-h-[80vh] overflow-y-auto"
-            role="dialog"
-            aria-labelledby="edit-automation-title"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-5">
-              <h3 id="edit-automation-title" className="text-sm font-medium text-white">
-                Edit Automation
-              </h3>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xs text-muted-foreground">
-                    {editingAutomation.enabled ? "Active" : "Paused"}
-                  </span>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={editingAutomation.enabled}
-                    onClick={() => updateField("enabled", !editingAutomation.enabled)}
-                    className={cn(
-                      "w-8 h-4 rounded-full transition-colors relative shrink-0",
-                      editingAutomation.enabled ? "bg-emerald-500/30" : "bg-white/10"
-                    )}
-                  >
-                    <span
+          {editingAutomation ? (
+            <>
+              <DialogHeader className="space-y-1 pr-8 sm:text-left">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <DialogTitle>Edit automation</DialogTitle>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xs text-muted-foreground">
+                      {editingAutomation.enabled ? "Active" : "Paused"}
+                    </span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={editingAutomation.enabled}
+                      onClick={() => updateField("enabled", !editingAutomation.enabled)}
                       className={cn(
-                        "w-3 h-3 rounded-full transition-all absolute top-0.5",
-                        editingAutomation.enabled
-                          ? "left-[18px] bg-emerald-400"
-                          : "left-0.5 bg-muted-foreground/40"
+                        "relative h-4 w-8 shrink-0 rounded-full transition-colors",
+                        editingAutomation.enabled ? "bg-[var(--muted-success-bg)]" : "bg-white/[0.08]"
                       )}
-                    />
-                  </button>
+                    >
+                      <span
+                        className={cn(
+                          "absolute top-0.5 h-3 w-3 rounded-full transition-all",
+                          editingAutomation.enabled
+                            ? "left-[18px] bg-[var(--color-success)]"
+                            : "left-0.5 bg-muted-foreground/45"
+                        )}
+                      />
+                    </button>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setEditingAutomation(null)}
-                  className="text-muted-foreground hover:text-muted-foreground p-1"
-                  aria-label="Close"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="auto-name" className="text-2xs uppercase tracking-wider text-muted-foreground">
+                    Name
+                  </Label>
+                  <Input
+                    id="auto-name"
+                    value={editingAutomation.name}
+                    onChange={(e) => updateField("name", e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="auto-trigger" className="text-2xs uppercase tracking-wider text-muted-foreground">
+                    When this happens
+                  </Label>
+                  <Select value={editingAutomation.trigger} onValueChange={(v) => updateField("trigger", v)}>
+                    <SelectTrigger id="auto-trigger" className="h-9 w-full border-input bg-inset text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TRIGGER_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">Conditions</span>
+                  <div className="rounded-lg border border-border bg-inset px-3 py-2.5">
+                    <p className="text-xs text-muted-foreground/90">
+                      {editingAutomation.conditionDescription || "No conditions — applies to all"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="auto-action" className="text-2xs uppercase tracking-wider text-muted-foreground">
+                    Then do this
+                  </Label>
+                  <Select value={editingAutomation.action} onValueChange={(v) => updateField("action", v)}>
+                    <SelectTrigger id="auto-action" className="h-9 w-full border-input bg-inset text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ACTION_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {editingAutomation.lastRun != null && (
+                  <div className="rounded-lg border border-border bg-inset px-3 py-2.5">
+                    <p className="text-2xs text-muted-foreground">
+                      Last triggered: {editingAutomation.lastRun} · {editingAutomation.runCount} total runs
+                    </p>
+                  </div>
+                )}
               </div>
-            </div>
 
-            <div className="mb-4">
-              <p className="text-2xs text-muted-foreground uppercase tracking-wider mb-1">Name</p>
-              <input
-                type="text"
-                value={editingAutomation.name}
-                onChange={(e) => updateField("name", e.target.value)}
-                className="w-full text-sm bg-white/[0.03] border border-border rounded-lg px-3 py-2 text-white outline-none"
-              />
-            </div>
-
-            <div className="mb-4">
-              <p className="text-2xs text-muted-foreground uppercase tracking-wider mb-1">
-                When this happens
-              </p>
-              <select
-                value={editingAutomation.trigger}
-                onChange={(e) => updateField("trigger", e.target.value)}
-                className="w-full text-xs bg-white/[0.03] border border-border rounded-lg px-3 py-2 text-foreground/88 outline-none"
-              >
-                <option value="birthday_approaching">VIC birthday in X days</option>
-                <option value="passport_expiring">Passport expiring in X days</option>
-                <option value="trip_departure">Trip departure in X days</option>
-                <option value="acuity_complete">VIC Acuity profile completed</option>
-                <option value="new_vic_created">New VIC created</option>
-                <option value="itinerary_stage_change">Itinerary pipeline stage changes</option>
-                <option value="manual">Manual trigger</option>
-              </select>
-            </div>
-
-            <div className="mb-4">
-              <p className="text-2xs text-muted-foreground uppercase tracking-wider mb-1">Conditions</p>
-              <div className="bg-white/[0.02] border border-white/[0.04] rounded-lg p-3">
-                <p className="text-xs text-muted-foreground/90">
-                  {editingAutomation.conditionDescription || "No conditions — applies to all"}
-                </p>
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <p className="text-2xs text-muted-foreground uppercase tracking-wider mb-1">Then do this</p>
-              <select
-                value={editingAutomation.action}
-                onChange={(e) => updateField("action", e.target.value)}
-                className="w-full text-xs bg-white/[0.03] border border-border rounded-lg px-3 py-2 text-foreground/88 outline-none"
-              >
-                <option value="send_email">Send personalized email</option>
-                <option value="create_action_item">Create action item</option>
-                <option value="send_notification">Send notification</option>
-                <option value="run_acuity">Run Acuity on VIC</option>
-                <option value="add_tag">Add tag to VIC</option>
-              </select>
-            </div>
-
-            {editingAutomation.lastRun != null && (
-              <div className="bg-white/[0.02] rounded-lg p-3 mb-4">
-                <p className="text-2xs text-muted-foreground">
-                  Last triggered: {editingAutomation.lastRun} · {editingAutomation.runCount} total
-                  runs
-                </p>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between pt-3 border-t border-border">
-              <button
-                type="button"
-                onClick={() => {
-                  if (!confirm("Delete this automation?")) return;
-                  const id = editingAutomation.id;
-                  setAutomations((list) => list.filter((x) => x.id !== id));
-                  showToast("Automation deleted");
-                  setEditingAutomation(null);
-                }}
-                className="text-2xs text-red-400/70 hover:text-red-400"
-              >
-                Delete Automation
-              </button>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setEditingAutomation(null)}
-                  className="text-xs text-muted-foreground hover:text-muted-foreground px-3 py-1.5"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
+              <DialogFooter className="gap-2 border-t border-border pt-4 sm:justify-between">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                   onClick={() => {
-                    const next = editingAutomation;
-                    setAutomations((list) =>
-                      list.map((x) => (x.id === next.id ? { ...next } : x))
-                    );
-                    showToast("Automation updated");
+                    if (!confirm("Delete this automation?")) return;
+                    const id = editingAutomation.id;
+                    setAutomations((list) => list.filter((x) => x.id !== id));
+                    showToast("Automation deleted");
                     setEditingAutomation(null);
                   }}
-                  className="text-xs text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 px-3 py-1.5 rounded-lg font-medium"
                 >
-                  Save Changes
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+                  Delete
+                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="border-input" onClick={() => setEditingAutomation(null)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="toolbarAccent"
+                    size="sm"
+                    onClick={() => {
+                      const next = editingAutomation;
+                      setAutomations((list) => list.map((x) => (x.id === next.id ? { ...next } : x)));
+                      showToast("Automation updated");
+                      setEditingAutomation(null);
+                    }}
+                  >
+                    Save changes
+                  </Button>
+                </div>
+              </DialogFooter>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

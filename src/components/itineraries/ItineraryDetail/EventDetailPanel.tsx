@@ -13,11 +13,10 @@ import {
   X,
   Pencil,
   ExternalLink,
+  Building2,
 } from "lucide-react";
 import type { ItineraryEvent, ItineraryDay } from "@/types/itinerary";
-import type { ProductCategory } from "@/types/product";
 import { Button } from "@/components/ui/button";
-import ImageWithFallback from "@/components/ui/ImageWithFallback";
 import { cn } from "@/lib/utils";
 
 const EVENT_ICONS: Record<ItineraryEvent["event_type"], React.ComponentType<{ size?: number; className?: string }>> = {
@@ -36,19 +35,6 @@ const STATUS_LABELS: Record<string, string> = {
   tentative: "Tentative",
   cancelled: "Cancelled",
 };
-
-function toProductCategory(s?: string): ProductCategory {
-  const m: Record<string, ProductCategory> = {
-    accommodation: "accommodation",
-    restaurant: "restaurant",
-    transportation: "transportation",
-    activity: "activity",
-    dmc: "dmc",
-    cruise: "cruise",
-    service_provider: "service_provider",
-  };
-  return m[(s ?? "").toLowerCase()] ?? "activity";
-}
 
 type Props = {
   event: ItineraryEvent;
@@ -74,10 +60,10 @@ export default function EventDetailPanel({
     event.start_time && event.end_time
       ? `${event.start_time} – ${event.end_time}`
       : event.start_time ?? "—";
-  const clientPrice = event.client_price ?? 0;
-  const supplierCost = event.net_cost ?? Math.round(clientPrice * 0.75);
-  const margin = clientPrice - supplierCost;
-  const marginPct = clientPrice > 0 ? Math.round((margin / clientPrice) * 100) : 0;
+  const vicPrice = event.vic_price ?? 0;
+  const supplierCost = event.net_cost ?? Math.round(vicPrice * 0.75);
+  const margin = vicPrice - supplierCost;
+  const marginPct = vicPrice > 0 ? Math.round((margin / vicPrice) * 100) : 0;
 
   return (
     <div className="w-full max-w-[400px] h-full flex flex-col bg-inset border-l border-border shadow-xl animate-in slide-in-from-right duration-200">
@@ -94,18 +80,6 @@ export default function EventDetailPanel({
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {event.thumbnail_url && (
-          <div className="rounded-lg overflow-hidden h-40 bg-zinc-900">
-            <ImageWithFallback
-              fallbackType="event"
-              src={event.thumbnail_url}
-              alt={event.title}
-              eventType={event.event_type}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
-
         <section>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/75 mb-2">Details</h3>
           <div className="text-sm space-y-2">
@@ -118,9 +92,9 @@ export default function EventDetailPanel({
               <span
                 className={cn(
                   "text-xs px-1.5 py-0.5 rounded border",
-                  event.status === "confirmed" && "border-emerald-500/50 text-emerald-400",
-                  event.status === "tentative" && "border-amber-500/50 text-[var(--color-warning)]",
-                  event.status === "cancelled" && "border-red-500/50 text-red-400"
+                  event.status === "confirmed" && "border-[var(--muted-success-border)] text-[var(--muted-success-text)]",
+                  event.status === "tentative" && "border-[var(--muted-amber-border)] text-[var(--muted-amber-text)]",
+                  event.status === "cancelled" && "border-[var(--muted-error-border)] text-[var(--muted-error-text)]"
                 )}
               >
                 {STATUS_LABELS[event.status] ?? event.status}
@@ -150,13 +124,13 @@ export default function EventDetailPanel({
           </div>
         </section>
 
-        {(clientPrice > 0 || supplierCost > 0) && (
+        {(vicPrice > 0 || supplierCost > 0) && (
           <section>
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/75 mb-2">Financial</h3>
             <div className="text-sm space-y-2">
               <div className="flex justify-between">
-                <span className="text-muted-foreground/75">Client price</span>
-                <span className="text-foreground">€{clientPrice.toLocaleString()}</span>
+                <span className="text-muted-foreground/75">VIC price</span>
+                <span className="text-foreground">€{vicPrice.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground/75">Supplier cost</span>
@@ -177,14 +151,8 @@ export default function EventDetailPanel({
               href={`/dashboard/products/${event.source_product_id}`}
               className="flex items-center gap-3 p-3 rounded-lg border border-border bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
             >
-              <span className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-800 shrink-0">
-                <ImageWithFallback
-                  fallbackType="product"
-                  src={undefined}
-                  alt={event.source_product_name ?? "Product"}
-                  productCategory={toProductCategory(event.source_product_category)}
-                  className="w-full h-full object-cover"
-                />
+              <span className="w-10 h-10 rounded-lg shrink-0 flex items-center justify-center bg-muted-foreground/10 ring-1 ring-border/60 text-muted-foreground">
+                <Building2 size={18} aria-hidden />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-foreground truncate">{event.source_product_name}</p>

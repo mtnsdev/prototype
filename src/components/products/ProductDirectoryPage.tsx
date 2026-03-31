@@ -2,8 +2,14 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Bookmark, LayoutGrid, Search, Trash2 } from "lucide-react";
+import { Bookmark, Building2, LayoutGrid, Search, Trash2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DASHBOARD_LIST_PAGE_HEADER,
+  DASHBOARD_LIST_PAGE_HEADER_SUBTITLE,
+  DASHBOARD_LIST_PAGE_HEADER_TITLE,
+  DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK,
+} from "@/lib/dashboardChrome";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/contexts/ToastContext";
 import { MOCK_TEAMS, resolveUserPolicies } from "@/lib/teamsMock";
@@ -22,6 +28,7 @@ import {
   externalSearchSavedTooltip,
 } from "./productDirectoryMock";
 import ProductDirectoryFilterBar from "./ProductDirectoryFilterBar";
+import AddProductModal from "./Modals/AddProductModal";
 import DirectoryProductCard from "./DirectoryProductCard";
 import DirectoryProductListView from "./DirectoryProductListView";
 import ProductDirectoryDetailPanel from "./ProductDirectoryDetailPanel";
@@ -31,6 +38,7 @@ import {
   buildPartnerPortalRows,
   ProductDirectoryCollectionsTab,
   ProductDirectoryPartnerPortalTab,
+  ProductDirectoryRepFirmsTab,
 } from "./ProductDirectoryTabsViews";
 import type { Team } from "@/types/teams";
 import type { DirectoryPriceTier, DirectoryTierLevel } from "@/components/products/productDirectoryDetailMeta";
@@ -61,7 +69,16 @@ import {
   type PartnerPortalAdminSavePayload,
   validatePartnerPortalAdminPayload,
 } from "./productDirectoryLogic";
-import { cloneDirectoryCollectionsForState, cloneDirectoryProductsForState, persistDirectorySnapshot } from "./productDirectoryPersistence";
+import {
+  cloneDirectoryCollectionsForState,
+  cloneDirectoryProductsForState,
+  cloneRepFirmsForState,
+  loadRepFirmsFromStorage,
+  persistDirectorySnapshot,
+  persistRepFirmsSnapshot,
+  repFirmsEqual,
+  subscribeRepFirmsRegistry,
+} from "./productDirectoryPersistence";
 import { resolveAdvisorCatalogFromStorage } from "./productDirectoryCatalogResolve";
 import { useProductDirectoryCatalog } from "./ProductDirectoryCatalogContext";
 import { directoryCategoryColors, directoryCategoryLabel } from "./productDirectoryVisual";
@@ -76,8 +93,20 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { TEAM_EVERYONE_ID } from "@/types/teams";
+import { MOCK_REP_FIRMS } from "./productDirectoryRepFirmMock";
+import type { RepFirm, RepFirmProductLink } from "@/types/rep-firm";
+import { getProductId } from "@/lib/products-api";
 
-type ProductDirectoryMainTab = "browse" | "collections" | "partner-portal";
+type ProductDirectoryMainTab = "browse" | "collections" | "partner-portal" | "rep-firms";
+
+function maxActiveIncentiveValue(product: DirectoryProduct): number {
+  const active = (product.commissionAdvisories ?? []).filter((a) => a.status === "active");
+  if (active.length === 0) return -1;
+  return active.reduce((best, advisory) => {
+    const raw = advisory.incentiveValue ?? 0;
+    return raw > best ? raw : best;
+  }, -1);
+}
 
 function bookableProgramsForCompare(p: DirectoryProduct) {
   return p.partnerPrograms.filter(isProgramBookable);
@@ -116,6 +145,16 @@ function diffWrapClass(differs: boolean) {
 function termsSignatureForProgram(program: (DirectoryProduct["partnerPrograms"][number] | undefined)): string {
   if (!program) return "::";
   return `${program.commissionRate ?? ""}::${(program.amenities ?? "").trim()}`;
+}
+
+function clonePartnerProgramTemplate(
+  program: DirectoryProduct["partnerPrograms"][number]
+): DirectoryProduct["partnerPrograms"][number] {
+  return {
+    ...program,
+    activePromotions: (program.activePromotions ?? []).map((promo) => ({ ...promo })),
+    amenityTags: program.amenityTags ? [...program.amenityTags] : undefined,
+  };
 }
 
 function customProgramKeysForProduct(target: DirectoryProduct, allProducts: DirectoryProduct[]): string[] {
@@ -235,7 +274,7 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
                 </div>
 
                 <div className={diffWrapClass(amenityDiffers)}>
-                  <p className="mb-1 text-[9px] uppercase tracking-wider text-muted-foreground/65">Client amenities</p>
+                  <p className="mb-1 text-[9px] uppercase tracking-wider text-muted-foreground/65">VIC amenities</p>
                   {topProgram && (topProgram.amenityTags?.length ?? 0) > 0 ? (
                     <div className="flex flex-wrap gap-1">
                       {(topProgram.amenityTags ?? []).map((tag) => (
@@ -337,6 +376,7 @@ export default function ProductDirectoryPage() {
   const router = useRouter();
   const pathname = usePathname();
   const uid = user ? String(user.id) : "1";
+  const editorDisplayName = user?.username ?? user?.email?.split("@")[0] ?? "Admin";
 
   const policies = useMemo(
     () => resolveUserPolicies(user ? { id: String(user.id), role: user.role } : null, MOCK_TEAMS),
@@ -385,6 +425,8 @@ export default function ProductDirectoryPage() {
   const [selectedAmenities, setSelectedAmenities] = useState<DirectoryAmenityTag[]>([]);
   const [commissionRange, setCommissionRange] = useState<[number, number]>([0, 25]);
   const [commissionFilterActive, setCommissionFilterActive] = useState(false);
+  const [selectedRepFirmIds, setSelectedRepFirmIds] = useState<string[]>([]);
+  const [hasActiveIncentive, setHasActiveIncentive] = useState(false);
   const [sortByCommission, setSortByCommission] = useState(false);
   const [selectedTiers, setSelectedTiers] = useState<DirectoryTierLevel[]>([]);
   const [selectedPriceTiers, setSelectedPriceTiers] = useState<DirectoryPriceTier[]>([]);
@@ -404,21 +446,40 @@ export default function ProductDirectoryPage() {
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(() => new Set());
   const [bulkCollectionOpen, setBulkCollectionOpen] = useState(false);
+  const [bulkProgramOpen, setBulkProgramOpen] = useState(false);
+  const [bulkRepFirmOpen, setBulkRepFirmOpen] = useState(false);
+  const [bulkCollectionSearch, setBulkCollectionSearch] = useState("");
+  const [bulkProgramSearch, setBulkProgramSearch] = useState("");
+  const [bulkRepFirmSearch, setBulkRepFirmSearch] = useState("");
+  const [bulkCollectionTargetIds, setBulkCollectionTargetIds] = useState<string[]>([]);
+  const [bulkProgramTargetIds, setBulkProgramTargetIds] = useState<string[]>([]);
+  const [bulkRepFirmTargetIds, setBulkRepFirmTargetIds] = useState<string[]>([]);
+  const [bulkSuggestionOpen, setBulkSuggestionOpen] = useState(false);
+  const [bulkSuggestionAction, setBulkSuggestionAction] = useState<"partner-program" | "rep-firm" | null>(null);
+  const [bulkSuggestionNote, setBulkSuggestionNote] = useState("");
   const [compareMode, setCompareMode] = useState(false);
   const browseScrollRef = useRef<HTMLDivElement>(null);
 
   const [mainTab, setMainTab] = useState<ProductDirectoryMainTab>("browse");
   const [partnerPortalDirty, setPartnerPortalDirty] = useState(false);
   const [partnerPortalMountKey, setPartnerPortalMountKey] = useState(0);
+  const [repFirmsMountKey, setRepFirmsMountKey] = useState(0);
+  const [repFirmsDirty, setRepFirmsDirty] = useState(false);
   const [tabLeaveDialogOpen, setTabLeaveDialogOpen] = useState(false);
   const [pendingMainTab, setPendingMainTab] = useState<ProductDirectoryMainTab | null>(null);
 
   const [createCollectionOpen, setCreateCollectionOpen] = useState(false);
+  const [addProductModalOpen, setAddProductModalOpen] = useState(false);
   const [createCollectionFromBulk, setCreateCollectionFromBulk] = useState(false);
   const [createCollectionName, setCreateCollectionName] = useState("");
   const [createCollectionDescription, setCreateCollectionDescription] = useState("");
   const [createCollectionScope, setCreateCollectionScope] = useState<"private" | "team">("private");
   const [createCollectionTeamId, setCreateCollectionTeamId] = useState("");
+  const [repFirms, setRepFirms] = useState<RepFirm[]>(() => {
+    const loaded = loadRepFirmsFromStorage();
+    if (loaded && loaded.length > 0) return cloneRepFirmsForState(loaded);
+    return cloneRepFirmsForState(MOCK_REP_FIRMS);
+  });
 
   const portalRowCount = useMemo(() => buildPartnerPortalRows(products).length, [products]);
 
@@ -434,11 +495,22 @@ export default function ProductDirectoryPage() {
     const next: ProductDirectoryMainTab =
       tab === "collections"
         ? "collections"
+        : tab === "rep-firms" || tab === "rep_firms"
+          ? "rep-firms"
         : tab === "partner" || tab === "partner-portal"
           ? "partner-portal"
           : "browse";
     setMainTab((prev) => (prev === next ? prev : next));
   }, [searchParams]);
+
+  useEffect(() => {
+    const selectedProductId = searchParams.get("selected");
+    if (!selectedProductId) return;
+    const exists = products.some((product) => product.id === selectedProductId);
+    if (!exists) return;
+    setMainTab("browse");
+    setDetailProductId(selectedProductId);
+  }, [products, searchParams]);
 
   const applyUrlForTab = useCallback(
     (t: ProductDirectoryMainTab) => {
@@ -448,6 +520,9 @@ export default function ProductDirectoryPage() {
         p.delete("program");
       } else if (t === "collections") {
         p.set("tab", "collections");
+        p.delete("program");
+      } else if (t === "rep-firms") {
+        p.set("tab", "rep-firms");
         p.delete("program");
       } else {
         p.set("tab", "partner");
@@ -484,7 +559,10 @@ export default function ProductDirectoryPage() {
   const trySetMainTab = useCallback(
     (t: ProductDirectoryMainTab) => {
       if (t === mainTab) return;
-      if (mainTab === "partner-portal" && t !== "partner-portal" && partnerPortalDirty) {
+      const partnerBlocked =
+        mainTab === "partner-portal" && t !== "partner-portal" && partnerPortalDirty;
+      const repFirmBlocked = mainTab === "rep-firms" && t !== "rep-firms" && repFirmsDirty;
+      if (partnerBlocked || repFirmBlocked) {
         setPendingMainTab(t);
         setTabLeaveDialogOpen(true);
         return;
@@ -492,20 +570,28 @@ export default function ProductDirectoryPage() {
       setMainTab(t);
       applyUrlForTab(t);
     },
-    [applyUrlForTab, mainTab, partnerPortalDirty]
+    [applyUrlForTab, mainTab, partnerPortalDirty, repFirmsDirty]
   );
 
   const confirmLeavePartnerTab = useCallback(() => {
     const t = pendingMainTab;
+    const leavingPartner = mainTab === "partner-portal";
+    const leavingRepFirms = mainTab === "rep-firms";
     setTabLeaveDialogOpen(false);
     setPendingMainTab(null);
-    setPartnerPortalMountKey((k) => k + 1);
-    setPartnerPortalDirty(false);
+    if (leavingPartner) {
+      setPartnerPortalMountKey((k) => k + 1);
+      setPartnerPortalDirty(false);
+    }
+    if (leavingRepFirms) {
+      setRepFirmsMountKey((k) => k + 1);
+      setRepFirmsDirty(false);
+    }
     if (t) {
       setMainTab(t);
       applyUrlForTab(t);
     }
-  }, [applyUrlForTab, pendingMainTab]);
+  }, [applyUrlForTab, pendingMainTab, mainTab]);
 
   const cancelLeavePartnerTab = useCallback(() => {
     setTabLeaveDialogOpen(false);
@@ -524,6 +610,8 @@ export default function ProductDirectoryPage() {
     setSelectedProductIds(new Set());
     setBulkMode(false);
     setBulkCollectionOpen(false);
+    setBulkProgramOpen(false);
+    setBulkRepFirmOpen(false);
     setCompareMode(false);
   }, []);
 
@@ -564,6 +652,11 @@ export default function ProductDirectoryPage() {
     [uid]
   );
 
+  const repFirmFilterOptions = useMemo(
+    () => repFirms.map((f) => ({ id: f.id, name: f.name })),
+    [repFirms]
+  );
+
   const activeCollectionMeta = useMemo(() => {
     if (collectionFilter.length !== 1) return null;
     return availableCollections.find((c) => c.id === collectionFilter[0]) ?? null;
@@ -597,6 +690,8 @@ export default function ProductDirectoryPage() {
       selectedAmenities,
       commissionFilterActive,
       commissionRange,
+      selectedRepFirmIds,
+      hasActiveIncentive,
       selectedTiers,
       selectedPriceTiers,
     }),
@@ -609,6 +704,8 @@ export default function ProductDirectoryPage() {
       selectedAmenities,
       commissionFilterActive,
       commissionRange,
+      selectedRepFirmIds,
+      hasActiveIncentive,
       selectedTiers,
       selectedPriceTiers,
     ]
@@ -647,6 +744,12 @@ export default function ProductDirectoryPage() {
         setCommissionRange([0, 25]);
       });
     }
+    if (f.selectedRepFirmIds.length > 0) {
+      push("repFirm", "rep firm filters", () => {
+        setSelectedRepFirmIds([]);
+      });
+    }
+    if (f.hasActiveIncentive) push("activeIncentive", "active incentives", () => setHasActiveIncentive(false));
     if (f.activeTypeFilters.length > 0) push("type", "type", () => setActiveTypeFilters([]));
     if (f.selectedTiers.length > 0) push("tier", "tier", () => setSelectedTiers([]));
     if (f.selectedPriceTiers.length > 0) push("price", "price", () => setSelectedPriceTiers([]));
@@ -664,6 +767,8 @@ export default function ProductDirectoryPage() {
     setSelectedAmenities([]);
     setCommissionFilterActive(false);
     setCommissionRange([0, 25]);
+    setSelectedRepFirmIds([]);
+    setHasActiveIncentive(false);
     setSelectedTiers([]);
     setSelectedPriceTiers([]);
     setSortByCommission(false);
@@ -715,6 +820,18 @@ export default function ProductDirectoryPage() {
           )
         );
         return list;
+      case "highest-incentive":
+        if (!canViewCommissions) {
+          list.sort((a, b) => a.name.localeCompare(b.name));
+          return list;
+        }
+        list.sort((a, b) => {
+          const ai = maxActiveIncentiveValue(a);
+          const bi = maxActiveIncentiveValue(b);
+          if (bi !== ai) return bi - ai;
+          return a.name.localeCompare(b.name);
+        });
+        return list;
       case "recently-added":
         list.sort((a, b) => withCommissionTieBreak(a, b, addedOrUpdatedTs(b) - addedOrUpdatedTs(a)));
         return list;
@@ -727,6 +844,171 @@ export default function ProductDirectoryPage() {
         return list;
     }
   }, [filteredProducts, sortBy, sortByCommission, canViewCommissions]);
+
+  const filteredProductIds = useMemo(() => sortedProducts.map((p) => p.id), [sortedProducts]);
+  const areAllFilteredSelected =
+    filteredProductIds.length > 0 && filteredProductIds.every((productId) => selectedProductIds.has(productId));
+  const selectedProgramTemplateById = useMemo(() => {
+    const templates = new Map<string, DirectoryProduct["partnerPrograms"][number]>();
+    for (const product of products) {
+      for (const program of product.partnerPrograms) {
+        const key = programFilterId(program);
+        if (!templates.has(key)) templates.set(key, clonePartnerProgramTemplate(program));
+      }
+    }
+    return templates;
+  }, [products]);
+  const partnerProgramTargets = useMemo(
+    () =>
+      AGENCY_PROGRAM_OPTIONS.map((option) => ({
+        id: option.id,
+        name: option.name,
+        disabled: !selectedProgramTemplateById.has(option.id),
+      })),
+    [selectedProgramTemplateById]
+  );
+  const filteredCollectionTargets = useMemo(() => {
+    const q = bulkCollectionSearch.trim().toLowerCase();
+    const list = [...availableCollections].sort((a, b) => Number(!!b.isSystem) - Number(!!a.isSystem));
+    if (!q) return list;
+    return list.filter((col) =>
+      `${col.name} ${col.teamName ?? ""}`.toLowerCase().includes(q)
+    );
+  }, [availableCollections, bulkCollectionSearch]);
+  const filteredProgramTargets = useMemo(() => {
+    const q = bulkProgramSearch.trim().toLowerCase();
+    if (!q) return partnerProgramTargets;
+    return partnerProgramTargets.filter((program) => program.name.toLowerCase().includes(q));
+  }, [partnerProgramTargets, bulkProgramSearch]);
+  const filteredRepFirmTargets = useMemo(() => {
+    const q = bulkRepFirmSearch.trim().toLowerCase();
+    if (!q) return repFirms;
+    return repFirms.filter((firm) => firm.name.toLowerCase().includes(q));
+  }, [repFirms, bulkRepFirmSearch]);
+  const hiddenSelectedCount = selectedProductIds.size - filteredProductIds.filter((id) => selectedProductIds.has(id)).length;
+
+  const openBulkSuggestion = useCallback(
+    (action: "partner-program" | "rep-firm") => {
+      setBulkProgramOpen(false);
+      setBulkRepFirmOpen(false);
+      setBulkSuggestionAction(action);
+      setBulkSuggestionNote("");
+      setBulkSuggestionOpen(true);
+    },
+    []
+  );
+
+  const applyBulkPartnerPrograms = useCallback(() => {
+    const targetKeys = new Set(bulkProgramTargetIds);
+    if (targetKeys.size === 0) {
+      toast({ title: "Select at least one partner program", tone: "destructive" });
+      return;
+    }
+    const selectedIds = Array.from(selectedProductIds);
+    if (selectedIds.length === 0) return;
+    if (!isAdmin) {
+      openBulkSuggestion("partner-program");
+      return;
+    }
+
+    let changedProducts = 0;
+    setProducts((prev) =>
+      prev.map((product) => {
+        if (!selectedProductIds.has(product.id)) return product;
+        const currentByKey = new Map(product.partnerPrograms.map((program) => [programFilterId(program), program]));
+        const nextPrograms: DirectoryProduct["partnerPrograms"] = product.partnerPrograms.map((program) =>
+          clonePartnerProgramTemplate(program)
+        );
+        for (const key of targetKeys) {
+          if (currentByKey.has(key)) continue;
+          const template = selectedProgramTemplateById.get(key);
+          if (template) nextPrograms.push(clonePartnerProgramTemplate(template));
+        }
+        const prevKeys = product.partnerPrograms.map((program) => programFilterId(program)).sort().join("|");
+        const nextKeys = nextPrograms.map((program) => programFilterId(program)).sort().join("|");
+        if (prevKeys === nextKeys) return product;
+        changedProducts += 1;
+        return {
+          ...product,
+          partnerPrograms: nextPrograms,
+          partnerProgramCount: nextPrograms.length,
+        };
+      })
+    );
+
+    toast({
+      title:
+        changedProducts === 0
+          ? "No partner program changes needed"
+          : `Updated partner programs on ${changedProducts} product${changedProducts === 1 ? "" : "s"}`,
+      tone: "success",
+    });
+    setBulkProgramOpen(false);
+    clearSelection();
+  }, [bulkProgramTargetIds, selectedProductIds, isAdmin, openBulkSuggestion, selectedProgramTemplateById, toast, clearSelection]);
+
+  const applyBulkRepFirms = useCallback(() => {
+    const targetIds = new Set(bulkRepFirmTargetIds);
+    if (targetIds.size === 0) {
+      toast({ title: "Select at least one rep firm", tone: "destructive" });
+      return;
+    }
+    if (selectedProductIds.size === 0) return;
+    if (!isAdmin) {
+      openBulkSuggestion("rep-firm");
+      return;
+    }
+
+    const repFirmById = new Map(repFirms.map((firm) => [firm.id, firm]));
+    const now = new Date().toISOString();
+    let changedProducts = 0;
+    setProducts((prev) =>
+      prev.map((product) => {
+        if (!selectedProductIds.has(product.id)) return product;
+        const existingByFirmId = new Map((product.repFirmLinks ?? []).map((link) => [link.repFirmId, link]));
+        const nextLinks: RepFirmProductLink[] = [...(product.repFirmLinks ?? [])];
+        for (const repFirmId of targetIds) {
+          const existing = existingByFirmId.get(repFirmId);
+          if (existing) {
+            continue;
+          }
+          const firm = repFirmById.get(repFirmId);
+          if (!firm) continue;
+          nextLinks.push({
+            id: `rfl-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+            repFirmId,
+            repFirmName: firm.name,
+            scope: firm.scope,
+            status: firm.status,
+            contactName: firm.contactName,
+            contactEmail: firm.contactEmail,
+            contactPhone: firm.contactPhone,
+            lastEditedAt: now,
+            lastEditedByName: editorDisplayName,
+          });
+        }
+        const prevKeys = (product.repFirmLinks ?? []).map((link) => link.repFirmId).sort().join("|");
+        const nextKeys = nextLinks.map((link) => link.repFirmId).sort().join("|");
+        if (prevKeys === nextKeys) return product;
+        changedProducts += 1;
+        return {
+          ...product,
+          repFirmLinks: nextLinks,
+          repFirmCount: nextLinks.length,
+        };
+      })
+    );
+
+    toast({
+      title:
+        changedProducts === 0
+          ? "No rep firm changes needed"
+          : `Updated rep firms on ${changedProducts} product${changedProducts === 1 ? "" : "s"}`,
+      tone: "success",
+    });
+    setBulkRepFirmOpen(false);
+    clearSelection();
+  }, [bulkRepFirmTargetIds, selectedProductIds, isAdmin, repFirms, editorDisplayName, toast, clearSelection, openBulkSuggestion]);
 
   useEffect(() => {
     if (mainTab !== "browse" || !detailProductId) return;
@@ -781,6 +1063,103 @@ export default function ProductDirectoryPage() {
   const patchProduct = useCallback((productId: string, patch: Partial<DirectoryProduct>) => {
     setProducts((prev) => prev.map((p) => (p.id === productId ? { ...p, ...patch } : p)));
   }, []);
+
+  const syncRepFirmProductLinks = useCallback(
+    (args: {
+      repFirmId: string;
+      attachedProductIds: string[];
+      firmName: string;
+      firmScope: string;
+      firmStatus: "active" | "inactive";
+      usePerProductContacts: boolean;
+      perProductContacts: Record<
+        string,
+        { contactName: string; contactEmail: string; contactPhone: string; notes: string }
+      >;
+      firmContact: { contactName?: string; contactEmail?: string; contactPhone?: string };
+    }) => {
+      const editorName = editorDisplayName;
+      const attachedSet = new Set(args.attachedProductIds);
+      const now = new Date().toISOString();
+      const scopeVal = args.firmScope === "enable" ? "enable" : args.firmScope;
+
+      setProducts((prev) =>
+        prev.map((p) => {
+          const links = [...(p.repFirmLinks ?? [])];
+          const idx = links.findIndex((l) => l.repFirmId === args.repFirmId);
+          if (p.type === "rep_firm") {
+            if (idx < 0) return p;
+            const nextLinks = links.filter((l) => l.repFirmId !== args.repFirmId);
+            return { ...p, repFirmLinks: nextLinks, repFirmCount: nextLinks.length };
+          }
+          const shouldAttach = attachedSet.has(p.id);
+
+          if (!shouldAttach) {
+            if (idx < 0) return p;
+            const nextLinks = links.filter((l) => l.repFirmId !== args.repFirmId);
+            return { ...p, repFirmLinks: nextLinks, repFirmCount: nextLinks.length };
+          }
+
+          if (idx < 0) {
+            const row = args.usePerProductContacts ? args.perProductContacts[p.id] : undefined;
+            const newLink: RepFirmProductLink = {
+              id: `rfl-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+              repFirmId: args.repFirmId,
+              repFirmName: args.firmName,
+              scope: scopeVal,
+              status: args.firmStatus,
+              ...(args.usePerProductContacts && row
+                ? {
+                    contactName: row.contactName.trim() || undefined,
+                    contactEmail: row.contactEmail.trim() || undefined,
+                    contactPhone: row.contactPhone.trim() || undefined,
+                    notes: row.notes.trim() || undefined,
+                  }
+                : {
+                    contactName: args.firmContact.contactName,
+                    contactEmail: args.firmContact.contactEmail,
+                    contactPhone: args.firmContact.contactPhone,
+                  }),
+              lastEditedAt: now,
+              lastEditedByName: editorName,
+            };
+            const nextLinks = [...links, newLink];
+            return { ...p, repFirmLinks: nextLinks, repFirmCount: nextLinks.length };
+          }
+
+          const existing = links[idx];
+          const row = args.usePerProductContacts ? args.perProductContacts[p.id] : undefined;
+          const contactPatch =
+            args.usePerProductContacts && row
+              ? {
+                  contactName: row.contactName.trim() || undefined,
+                  contactEmail: row.contactEmail.trim() || undefined,
+                  contactPhone: row.contactPhone.trim() || undefined,
+                  notes: row.notes.trim() || undefined,
+                }
+              : {
+                  contactName: args.firmContact.contactName,
+                  contactEmail: args.firmContact.contactEmail,
+                  contactPhone: args.firmContact.contactPhone,
+                  notes: existing.notes,
+                };
+
+          const merged: RepFirmProductLink = {
+            ...existing,
+            repFirmName: args.firmName,
+            scope: scopeVal,
+            status: args.firmStatus,
+            ...contactPatch,
+            lastEditedAt: now,
+            lastEditedByName: editorName,
+          };
+          const nextLinks = links.map((l, i) => (i === idx ? merged : l));
+          return { ...p, repFirmLinks: nextLinks, repFirmCount: nextLinks.length };
+        })
+      );
+    },
+    [editorDisplayName]
+  );
 
   const isBookmarked = useCallback((p: DirectoryProduct) => p.collectionIds.length > 0, []);
 
@@ -1026,33 +1405,50 @@ export default function ProductDirectoryPage() {
   const showRemoveOnCards = collectionFilter.length === 1 && canManageProductsInActiveCollection;
 
   const addBulkToCollection = useCallback(
-    (colId: string) => {
-      const col = directoryCollections.find((c) => c.id === colId);
-      if (!col) return;
+    (colIds: string[]) => {
+      const targetIds = new Set(colIds);
+      if (targetIds.size === 0) {
+        toast({ title: "Select at least one collection", tone: "destructive" });
+        return;
+      }
+      const targetNames = directoryCollections
+        .filter((collection) => targetIds.has(collection.id))
+        .map((collection) => collection.name);
       const ids = Array.from(selectedProductIds);
-      let added = 0;
+      let changedProducts = 0;
       setDirectoryCollections((prev) => {
         let catalog = prev;
         for (const pid of ids) {
           const p = products.find((x) => x.id === pid);
-          if (!p || p.collectionIds.includes(colId)) continue;
-          const nextIds = [...p.collectionIds, colId];
-          catalog = catalog.map((c) =>
-            c.id === colId && !(c.productIds ?? []).includes(pid)
-              ? { ...c, productIds: [...(c.productIds ?? []), pid] }
-              : c
-          );
+          if (!p) continue;
+          let productChanged = false;
+          const nextIds = [...p.collectionIds];
+          for (const colId of targetIds) {
+            if (nextIds.includes(colId)) continue;
+            nextIds.push(colId);
+            productChanged = true;
+            catalog = catalog.map((c) =>
+              c.id === colId && !(c.productIds ?? []).includes(pid)
+                ? { ...c, productIds: [...(c.productIds ?? []), pid] }
+                : c
+            );
+          }
+          if (!productChanged) continue;
           const refs = buildDirectoryCollectionRefs(nextIds, catalog);
           patchProduct(pid, { collectionIds: nextIds, collections: refs, collectionCount: nextIds.length });
-          added += 1;
+          changedProducts += 1;
         }
         return catalog;
       });
       toast({
-        title: `Added ${added} product${added !== 1 ? "s" : ""} to ${col.name}`,
+        title:
+          changedProducts === 0
+            ? "No collection changes needed"
+            : `Added ${changedProducts} product${changedProducts !== 1 ? "s" : ""} to ${targetNames.length === 1 ? targetNames[0] : `${targetNames.length} collections`}`,
         tone: "success",
       });
       setBulkCollectionOpen(false);
+      setBulkCollectionTargetIds([]);
       clearSelection();
     },
     [directoryCollections, selectedProductIds, products, patchProduct, toast, clearSelection]
@@ -1097,14 +1493,16 @@ export default function ProductDirectoryPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-inset text-foreground">
-      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-border pl-6 pr-[4.5rem] py-3">
-        <div className="min-w-0">
-          <h1 className="text-sm font-semibold leading-none text-foreground">Product Directory</h1>
-          <p className="mt-1 text-xs leading-snug text-muted-foreground/75">
+      <header className={DASHBOARD_LIST_PAGE_HEADER}>
+        <div className={DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK}>
+          <h1 className={DASHBOARD_LIST_PAGE_HEADER_TITLE}>Product Directory</h1>
+          <p className={DASHBOARD_LIST_PAGE_HEADER_SUBTITLE}>
             {mainTab === "browse"
               ? `${sortedProducts.length} product${sortedProducts.length !== 1 ? "s" : ""}`
               : mainTab === "collections"
                 ? `${availableCollections.length} collection${availableCollections.length !== 1 ? "s" : ""}`
+                : mainTab === "rep-firms"
+                  ? `${repFirms.length} rep firm${repFirms.length !== 1 ? "s" : ""}`
                 : `${portalRowCount} program${portalRowCount !== 1 ? "s" : ""} · rates, linked properties & incentives`}
           </p>
         </div>
@@ -1115,6 +1513,7 @@ export default function ProductDirectoryPage() {
           [
             { id: "browse" as const, label: "Products" },
             { id: "collections" as const, label: "Collections" },
+            { id: "rep-firms" as const, label: "Rep Firms" },
             { id: "partner-portal" as const, label: "Partner portal" },
           ] as const
         ).map((t) => (
@@ -1147,16 +1546,21 @@ export default function ProductDirectoryPage() {
         onLocationCountriesChange={setLocationCountries}
         collectionFilter={collectionFilter}
         onCollectionFilterChange={setCollectionFilter}
-        onRequestNewCollection={() => openCreateCollectionModal("general")}
+        onAddProduct={() => setAddProductModalOpen(true)}
         collections={availableCollections}
         selectedProgramIds={selectedProgramIds}
         onSelectedProgramIdsChange={setSelectedProgramIds}
+        repFirmFilterOptions={repFirmFilterOptions}
+        selectedRepFirmIds={selectedRepFirmIds}
+        onSelectedRepFirmIdsChange={setSelectedRepFirmIds}
         selectedAmenities={selectedAmenities}
         onSelectedAmenitiesChange={setSelectedAmenities}
         commissionRange={commissionRange}
         onCommissionRangeChange={setCommissionRange}
         commissionFilterActive={commissionFilterActive}
         onCommissionFilterActiveChange={setCommissionFilterActive}
+        hasActiveIncentive={hasActiveIncentive}
+        onHasActiveIncentiveChange={setHasActiveIncentive}
         sortByCommission={sortByCommission}
         onSortByCommissionChange={setSortByCommission}
         selectedTiers={selectedTiers}
@@ -1176,8 +1580,10 @@ export default function ProductDirectoryPage() {
 
       {(locationCountries.length > 0 ||
         selectedProgramIds.length > 0 ||
+        selectedRepFirmIds.length > 0 ||
         selectedAmenities.length > 0 ||
         (canViewCommissions && commissionFilterActive) ||
+        hasActiveIncentive ||
         selectedTiers.length > 0 ||
         selectedPriceTiers.length > 0 ||
         activeTypeFilters.length > 0 ||
@@ -1261,6 +1667,32 @@ export default function ProductDirectoryPage() {
             >
               {commissionRange[0]}%–{commissionRange[1]}%
               <span className="text-muted-foreground">✕</span>
+            </button>
+          ) : null}
+          {hasActiveIncentive ? (
+            <button
+              type="button"
+              onClick={() => setHasActiveIncentive(false)}
+              className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[9px] text-amber-400 transition-colors hover:bg-amber-500/20"
+            >
+              Active incentives
+              <span className="text-muted-foreground">✕</span>
+            </button>
+          ) : null}
+          {selectedRepFirmIds.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setSelectedRepFirmIds([])}
+              className="flex max-w-[min(100%,280px)] items-center gap-1 truncate rounded-full bg-[rgba(176,122,91,0.12)] px-2 py-0.5 text-[9px] text-[#B07A5B] transition-colors hover:bg-[rgba(176,122,91,0.18)]"
+            >
+              <span className="min-w-0 truncate">
+                {selectedRepFirmIds
+                  .map((id) => repFirms.find((f) => f.id === id)?.name ?? id)
+                  .slice(0, 3)
+                  .join(", ")}
+                {selectedRepFirmIds.length > 3 ? ` +${selectedRepFirmIds.length - 3}` : ""}
+              </span>
+              <span className="shrink-0 text-muted-foreground">✕</span>
             </button>
           ) : null}
           {selectedTiers.length > 0 ? (
@@ -1419,6 +1851,54 @@ export default function ProductDirectoryPage() {
               setCollectionFilter([id]);
               trySetMainTab("browse");
             }}
+            onNewCollection={() => openCreateCollectionModal("general")}
+          />
+        </div>
+        <div
+          className={cn(
+            "min-h-0",
+            mainTab !== "rep-firms" && "pointer-events-none hidden"
+          )}
+          aria-hidden={mainTab !== "rep-firms"}
+        >
+          <ProductDirectoryRepFirmsTab
+            key={repFirmsMountKey}
+            repFirms={repFirms}
+            products={products}
+            teams={MOCK_TEAMS}
+            isAdmin={isAdmin}
+            editorDisplayName={editorDisplayName}
+            canViewCommissions={canViewCommissions}
+            externalSearchCollectionId={DIRECTORY_EXTERNAL_COLLECTION_ID}
+            getExternalSearchTooltip={externalSearchTooltipForProduct}
+            onSaveRepFirm={(id, patch) =>
+              setRepFirms((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)))
+            }
+            onAddRepFirm={(firm) => setRepFirms((prev) => [firm, ...prev])}
+            onRemoveRepFirm={(id) => {
+              setRepFirms((prev) => prev.filter((f) => f.id !== id));
+              setProducts((prev) =>
+                prev.map((p) => {
+                  const nextLinks = (p.repFirmLinks ?? []).filter((l) => l.repFirmId !== id);
+                  if (nextLinks.length === (p.repFirmLinks ?? []).length) return p;
+                  return { ...p, repFirmLinks: nextLinks, repFirmCount: nextLinks.length };
+                })
+              );
+            }}
+            onSelectProduct={(id) => {
+              trySetMainTab("browse");
+              setDetailProductId(id);
+            }}
+            onOpenCollectionPicker={(id) => {
+              trySetMainTab("browse");
+              setPickerProductId(id);
+            }}
+            onBrowseByRepFirm={(repFirmId) => {
+              setSelectedRepFirmIds([repFirmId]);
+              trySetMainTab("browse");
+            }}
+            onSyncRepFirmProductLinks={syncRepFirmProductLinks}
+            onDirtyChange={setRepFirmsDirty}
           />
         </div>
         <div
@@ -1589,6 +2069,7 @@ export default function ProductDirectoryPage() {
           onQuickAddToCollection={handleQuickAddToCollection}
           onRequestCreateCollection={() => setPickerProductId(detailProduct.id)}
           partnerProgramCustomKeys={detailProductCustomProgramKeys}
+          repFirmsRegistry={repFirms}
         />
       )}
 
@@ -1609,7 +2090,26 @@ export default function ProductDirectoryPage() {
           type="button"
           className="fixed inset-0 z-[45] cursor-default bg-black/20"
           aria-label="Close menu"
-          onClick={() => setBulkCollectionOpen(false)}
+          onClick={() => {
+            setBulkCollectionOpen(false);
+            setBulkCollectionTargetIds([]);
+          }}
+        />
+      )}
+      {bulkProgramOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-[45] cursor-default bg-black/20"
+          aria-label="Close menu"
+          onClick={() => setBulkProgramOpen(false)}
+        />
+      )}
+      {bulkRepFirmOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-[45] cursor-default bg-black/20"
+          aria-label="Close menu"
+          onClick={() => setBulkRepFirmOpen(false)}
         />
       )}
 
@@ -1618,23 +2118,61 @@ export default function ProductDirectoryPage() {
           <p className="px-3 py-2 text-[9px] uppercase tracking-wider text-muted-foreground/65">
             Add {selectedProductIds.size} products to…
           </p>
-          {[...availableCollections]
-            .sort((a, b) => Number(!!b.isSystem) - Number(!!a.isSystem))
-            .map((col) => (
-              <button
+          <div className="px-3 pb-2">
+            <input
+              value={bulkCollectionSearch}
+              onChange={(e) => setBulkCollectionSearch(e.target.value)}
+              placeholder="Search collections…"
+              className="w-full rounded-md border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
+            />
+          </div>
+          {filteredCollectionTargets.map((col) => (
+              <label
                 key={col.id}
-                type="button"
-                onClick={() => addBulkToCollection(col.id)}
-                className="w-full px-3 py-2 text-left text-xs text-[#C8C0B8] transition-colors hover:bg-white/[0.04]"
+                className="flex cursor-pointer items-center gap-2 px-3 py-2 text-left text-xs text-[#C8C0B8] transition-colors hover:bg-white/[0.04]"
               >
+                <input
+                  type="checkbox"
+                  checked={bulkCollectionTargetIds.includes(col.id)}
+                  onChange={() =>
+                    setBulkCollectionTargetIds((prev) =>
+                      prev.includes(col.id) ? prev.filter((id) => id !== col.id) : [...prev, col.id]
+                    )
+                  }
+                  className="checkbox-on-dark"
+                />
                 {col.teamName ? `[${col.teamName}] ${col.name}` : col.name}
-              </button>
+              </label>
             ))}
+          {filteredCollectionTargets.length === 0 ? (
+            <p className="px-3 py-2 text-xs text-muted-foreground">No collections found.</p>
+          ) : null}
           <div className="mt-1 border-t border-white/[0.04] pt-1">
+            <div className="flex justify-end gap-2 px-3 pb-1">
+              <button
+                type="button"
+                className="px-2 py-1 text-xs text-muted-foreground"
+                onClick={() => {
+                  setBulkCollectionOpen(false);
+                  setBulkCollectionTargetIds([]);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={bulkCollectionTargetIds.length === 0}
+                className="rounded-lg border border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] px-2.5 py-1 text-xs text-brand-cta disabled:opacity-50"
+                onClick={() => addBulkToCollection(bulkCollectionTargetIds)}
+              >
+                Apply
+              </button>
+            </div>
             <button
               type="button"
               onClick={() => {
                 setBulkCollectionOpen(false);
+                setBulkCollectionTargetIds([]);
                 openCreateCollectionModal("bulk");
               }}
               className="flex w-full items-center gap-1 px-3 py-2 text-left text-xs text-brand-cta transition-colors hover:bg-white/[0.04]"
@@ -1645,9 +2183,111 @@ export default function ProductDirectoryPage() {
         </div>
       )}
 
+      {bulkProgramOpen && (
+        <div className="fixed bottom-20 left-1/2 z-[50] w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl border border-border bg-popover p-3 shadow-2xl">
+          <p className="text-[9px] uppercase tracking-wider text-muted-foreground/65">Add to partner programs…</p>
+          <input
+            value={bulkProgramSearch}
+            onChange={(e) => setBulkProgramSearch(e.target.value)}
+            placeholder="Search partner programs"
+            className="mt-2 w-full rounded-md border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
+          />
+          <div className="mt-2 max-h-56 space-y-1 overflow-auto">
+            {filteredProgramTargets.map((program) => (
+              <label
+                key={program.id}
+                className={cn(
+                  "flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs",
+                  program.disabled ? "opacity-50" : "cursor-pointer hover:bg-white/[0.04]"
+                )}
+              >
+                <input
+                  type="checkbox"
+                  disabled={program.disabled}
+                  checked={bulkProgramTargetIds.includes(program.id)}
+                  onChange={() =>
+                    setBulkProgramTargetIds((prev) =>
+                      prev.includes(program.id) ? prev.filter((id) => id !== program.id) : [...prev, program.id]
+                    )
+                  }
+                  className="checkbox-on-dark"
+                />
+                <span>{program.name}</span>
+              </label>
+            ))}
+            {filteredProgramTargets.length === 0 ? (
+              <p className="px-2 py-1.5 text-xs text-muted-foreground">No partner programs found.</p>
+            ) : null}
+          </div>
+          <div className="mt-3 flex justify-end gap-2">
+            <button type="button" className="px-2 py-1 text-xs text-muted-foreground" onClick={() => setBulkProgramOpen(false)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={bulkProgramTargetIds.length === 0}
+              className="rounded-lg border border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] px-2.5 py-1 text-xs text-brand-cta"
+              onClick={applyBulkPartnerPrograms}
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+      )}
+
+      {bulkRepFirmOpen && (
+        <div className="fixed bottom-20 left-1/2 z-[50] w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl border border-border bg-popover p-3 shadow-2xl">
+          <p className="text-[9px] uppercase tracking-wider text-muted-foreground/65">Add to rep firms…</p>
+          <input
+            value={bulkRepFirmSearch}
+            onChange={(e) => setBulkRepFirmSearch(e.target.value)}
+            placeholder="Search rep firms"
+            className="mt-2 w-full rounded-md border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
+          />
+          <div className="mt-2 max-h-56 space-y-1 overflow-auto">
+            {filteredRepFirmTargets.map((firm) => (
+              <label key={firm.id} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-xs hover:bg-white/[0.04]">
+                <input
+                  type="checkbox"
+                  checked={bulkRepFirmTargetIds.includes(firm.id)}
+                  onChange={() =>
+                    setBulkRepFirmTargetIds((prev) =>
+                      prev.includes(firm.id) ? prev.filter((id) => id !== firm.id) : [...prev, firm.id]
+                    )
+                  }
+                  className="checkbox-on-dark"
+                />
+                <span>{firm.name}</span>
+              </label>
+            ))}
+            {filteredRepFirmTargets.length === 0 ? (
+              <p className="px-2 py-1.5 text-xs text-muted-foreground">No rep firms found.</p>
+            ) : null}
+          </div>
+          <div className="mt-3 flex justify-end gap-2">
+            <button type="button" className="px-2 py-1 text-xs text-muted-foreground" onClick={() => setBulkRepFirmOpen(false)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={bulkRepFirmTargetIds.length === 0}
+              className="rounded-lg border border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] px-2.5 py-1 text-xs text-brand-cta"
+              onClick={applyBulkRepFirms}
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+      )}
+
       {selectedProductIds.size > 0 && !compareMode && mainTab === "browse" && (
         <div className="fixed bottom-6 left-1/2 z-50 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-wrap items-center gap-3 rounded-2xl border border-border bg-popover/95 px-5 py-3 shadow-2xl backdrop-blur-xl">
           <span className="text-sm font-medium text-foreground">{selectedProductIds.size} selected</span>
+          {hiddenSelectedCount > 0 ? (
+            <span className="text-2xs text-muted-foreground">
+              {hiddenSelectedCount} selected outside current filters
+            </span>
+          ) : null}
           <div className="h-5 w-px bg-white/[0.06]" />
           <button
             type="button"
@@ -1656,6 +2296,47 @@ export default function ProductDirectoryPage() {
           >
             <Bookmark className="h-3.5 w-3.5" />
             Add to Collection
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setBulkCollectionOpen(false);
+              setBulkRepFirmOpen(false);
+              setBulkCollectionTargetIds([]);
+              setBulkProgramTargetIds([]);
+              setBulkProgramOpen(true);
+            }}
+            className="flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.08)] px-3 py-1.5 text-xs text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.12)]"
+          >
+            <Building2 className="h-3.5 w-3.5" />
+            Add Partner Program
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setBulkCollectionOpen(false);
+              setBulkProgramOpen(false);
+              setBulkCollectionTargetIds([]);
+              setBulkRepFirmTargetIds([]);
+              setBulkRepFirmOpen(true);
+            }}
+            className="flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.08)] px-3 py-1.5 text-xs text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.12)]"
+          >
+            <Users className="h-3.5 w-3.5" />
+            Add Rep Firm
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (areAllFilteredSelected) {
+                setSelectedProductIds(new Set());
+                return;
+              }
+              setSelectedProductIds(new Set(filteredProductIds));
+            }}
+            className="rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
+          >
+            {areAllFilteredSelected ? "Clear filtered" : `Select all filtered (${filteredProductIds.length})`}
           </button>
           {activeCollectionMeta && canManageProductsInActiveCollection && collectionFilter.length === 1 && (
             <button
@@ -1776,6 +2457,68 @@ export default function ProductDirectoryPage() {
         </div>
       )}
 
+      <AddProductModal
+        open={addProductModalOpen}
+        onClose={() => setAddProductModalOpen(false)}
+        product={null}
+        onSaved={() => setAddProductModalOpen(false)}
+        onCreated={(p) => {
+          const id = String(getProductId(p) ?? "").trim();
+          if (id) router.push(`/dashboard/products/${id}`);
+        }}
+      />
+
+      <Dialog
+        open={bulkSuggestionOpen}
+        onOpenChange={(open) => {
+          setBulkSuggestionOpen(open);
+          if (!open) setBulkSuggestionNote("");
+        }}
+      >
+        <DialogContent className="border-border bg-popover text-foreground sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Suggest bulk update</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              You do not have direct edit access. Submit this request for admin review.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              Action: {bulkSuggestionAction === "rep-firm" ? "Add to rep firms" : "Add to partner programs"} on {selectedProductIds.size} selected products.
+            </p>
+            <textarea
+              value={bulkSuggestionNote}
+              onChange={(e) => setBulkSuggestionNote(e.target.value)}
+              rows={3}
+              placeholder="Add context for admin review"
+              className="w-full resize-none rounded-lg border border-border bg-inset px-3 py-2 text-xs text-foreground outline-none"
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setBulkSuggestionOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                if (!bulkSuggestionNote.trim()) {
+                  toast({ title: "Add a short note for admins", tone: "destructive" });
+                  return;
+                }
+                toast({
+                  title: "Suggestion submitted for admin review",
+                  tone: "success",
+                });
+                setBulkSuggestionOpen(false);
+                clearSelection();
+              }}
+            >
+              Submit suggestion
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog
         open={tabLeaveDialogOpen}
         onOpenChange={(open) => {
@@ -1784,9 +2527,9 @@ export default function ProductDirectoryPage() {
       >
         <DialogContent className="border-border bg-popover text-foreground sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Leave Partner portal?</DialogTitle>
+            <DialogTitle>Discard unsaved changes?</DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              You have unsaved edits. Switching tabs will discard your draft for this session.
+              You have unsaved edits on this tab. Switching away will discard your draft for this session.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">

@@ -78,7 +78,7 @@ export default function HistoryDrawer({
             }
 
             // Using /api/chat/sessions endpoint (Swagger-compliant)
-            // Note: Backend doesn't support search param, so we filter client-side
+            // Note: Backend doesn't support search param, so we filter in-browser
             const response = await fetch(`/api/chat/sessions`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -95,7 +95,7 @@ export default function HistoryDrawer({
                     updated_at: session.updated_at,
                 }));
 
-                // Client-side search filtering
+                // In-browser search filtering
                 if (search) {
                     const searchLower = search.toLowerCase();
                     conversations = conversations.filter((conv: Conversation) =>
@@ -188,7 +188,7 @@ export default function HistoryDrawer({
                         />
                         <Input
                             type="text"
-                            placeholder="Search conversations..."
+                            placeholder="Search conversations…"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full pl-10 rounded-xl bg-card border-border text-foreground placeholder-[rgba(245,245,245,0.35)]"
@@ -216,7 +216,7 @@ export default function HistoryDrawer({
                     ) : showLoader ? (
                         <div className="flex flex-col items-center justify-center py-12">
                             <Loader2 size={24} className="animate-spin text-muted-foreground/55" />
-                            <span className="text-compact text-muted-foreground/75 mt-3">Loading history...</span>
+                            <span className="text-compact text-muted-foreground/75 mt-3">Loading history…</span>
                         </div>
                     ) : conversations.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-center">

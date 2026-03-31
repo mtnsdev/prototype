@@ -77,7 +77,7 @@ export default function GlobalCommandPalette() {
       products.forEach((p, i) => out.push({ rowKind: "hit", id: `prod-${p.id}-${i}`, hit: p }));
     }
     if (vics.length > 0) {
-      out.push({ rowKind: "section", id: "sec-vics", label: "Clients" });
+      out.push({ rowKind: "section", id: "sec-vics", label: "VICs" });
       vics.forEach((v, i) => out.push({ rowKind: "hit", id: `vic-${v.id}-${i}`, hit: v }));
     }
 

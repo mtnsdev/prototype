@@ -97,9 +97,9 @@ export default function AdminOverviewPage() {
             label: "Content Rules",
             value: stats?.rules.total ?? 0,
             icon: FolderLock,
-            color: "from-purple-500/20 to-purple-600/10",
-            borderColor: "border-purple-500/20",
-            iconColor: "text-purple-400",
+            color: "from-[rgba(201,169,110,0.18)] to-[rgba(201,169,110,0.06)]",
+            borderColor: "border-[rgba(201,169,110,0.22)]",
+            iconColor: "text-brand-cta",
         },
     ];
 

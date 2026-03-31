@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
+    Bell,
     MessageSquare,
     PanelLeftClose,
     PanelLeftOpen,
@@ -24,8 +25,11 @@ import {
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import ReportIssueLauncher from "@/components/ui/ReportIssueLauncher";
 import { useUserOptional } from "@/contexts/UserContext";
 import { IS_PREVIEW_MODE } from "@/config/preview";
+import { useNotificationPanelOptional } from "@/components/dashboard/DashboardNotifications";
+import { DASHBOARD_CHROME_HEADER_ROW } from "@/lib/dashboardChrome";
 import { cn } from "@/lib/utils";
 export type Conversation = {
     id: number;
@@ -61,6 +65,11 @@ export default function Sidebar({
     const router = useRouter();
     const userContext = useUserOptional();
     const [recentConversations, setRecentConversations] = useState<Conversation[]>([]);
+    const notificationPanel = useNotificationPanelOptional();
+    const [notificationCountHydrated, setNotificationCountHydrated] = useState(false);
+    useEffect(() => setNotificationCountHydrated(true), []);
+    const unreadNotifications =
+        notificationCountHydrated && notificationPanel ? notificationPanel.unreadCount : 0;
     const isOnChatPage = pathname.startsWith("/dashboard/chat");
     const isDrawer = layout === "drawer";
     const showLabels = !collapsed || isDrawer;
@@ -126,8 +135,9 @@ export default function Sidebar({
                 {/* Header */}
                 <div
                     className={cn(
-                        "flex min-h-14 border-b border-border",
-                        !showLabels ? "flex-col items-center gap-2 px-2 py-3" : "items-center justify-between px-3 py-3"
+                        "flex items-center border-b border-border",
+                        DASHBOARD_CHROME_HEADER_ROW,
+                        !showLabels ? "flex-col justify-center gap-2 px-2" : "justify-between px-3"
                     )}
                 >
                     {isDrawer ? (
@@ -141,9 +151,11 @@ export default function Sidebar({
                                     className="opacity-90"
                                 />
                             </div>
-                            <div className="truncate min-w-0">
-                                <p className="text-sm font-semibold leading-none text-foreground">TRAVELLUSTRE</p>
-                                <p className="text-xs text-muted-foreground/75 mt-1">Created by Enable VIC</p>
+                            <div className="flex min-w-0 min-h-0 flex-col justify-center gap-1">
+                                <p className="truncate text-sm font-semibold leading-none text-foreground">TRAVELLUSTRE</p>
+                                <p className="line-clamp-1 text-xs leading-snug text-muted-foreground/75">
+                                    Created by Enable VIC
+                                </p>
                             </div>
                         </div>
                     ) : !showLabels ? (
@@ -180,9 +192,11 @@ export default function Sidebar({
                                         className="opacity-90"
                                     />
                                 </div>
-                                <div className="truncate min-w-0">
-                                    <p className="text-sm font-semibold leading-none text-foreground">TRAVELLUSTRE</p>
-                                    <p className="text-xs text-muted-foreground/75 mt-1">Created by Enable VIC</p>
+                                <div className="flex min-w-0 min-h-0 flex-col justify-center gap-1">
+                                    <p className="truncate text-sm font-semibold leading-none text-foreground">TRAVELLUSTRE</p>
+                                    <p className="line-clamp-1 text-xs leading-snug text-muted-foreground/75">
+                                        Created by Enable VIC
+                                    </p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
@@ -254,6 +268,14 @@ export default function Sidebar({
                 {/* Nav */}
                 <nav className="p-2.5 space-y-1 flex-1 overflow-y-auto" aria-label="Main">
                     <NavLink
+                        href="/dashboard/chat"
+                        collapsed={!showLabels}
+                        onNavigate={navClose}
+                        icon={<MessageSquare size={18} />}
+                        label="Chat"
+                        active={pathname.startsWith("/dashboard/chat")}
+                    />
+                    <NavLink
                         href="/dashboard"
                         collapsed={!showLabels}
                         onNavigate={navClose}
@@ -262,35 +284,6 @@ export default function Sidebar({
                         active={pathname === "/dashboard"}
                         navTag={IS_PREVIEW_MODE ? "sample" : undefined}
                     />
-                    <NavLink
-                        href="/dashboard/chat"
-                        collapsed={!showLabels}
-                        onNavigate={navClose}
-                        icon={<MessageSquare size={18} />}
-                        label="Chat"
-                        active={pathname.startsWith("/dashboard/chat")}
-                    />
-
-                    <NavLink
-                        href="/dashboard/vics"
-                        collapsed={!showLabels}
-                        onNavigate={navClose}
-                        icon={<Users size={18} />}
-                        label="VICs"
-                        active={pathname.startsWith("/dashboard/vics")}
-                        navTag={IS_PREVIEW_MODE ? "sample" : undefined}
-                    />
-
-                    <NavLink
-                        href="/dashboard/itineraries"
-                        collapsed={!showLabels}
-                        onNavigate={navClose}
-                        icon={<Route size={18} />}
-                        label="Itineraries"
-                        active={pathname.startsWith("/dashboard/itineraries")}
-                        navTag={IS_PREVIEW_MODE ? "sample" : undefined}
-                    />
-
                     <NavLink
                         href="/dashboard/knowledge-vault"
                         collapsed={!showLabels}
@@ -303,7 +296,6 @@ export default function Sidebar({
                         }
                         navTag={IS_PREVIEW_MODE ? "sample" : undefined}
                     />
-
                     <NavLink
                         href="/dashboard/products"
                         collapsed={!showLabels}
@@ -311,6 +303,24 @@ export default function Sidebar({
                         icon={<Building2 size={18} />}
                         label="Products"
                         active={pathname.startsWith("/dashboard/products")}
+                        navTag={IS_PREVIEW_MODE ? "sample" : undefined}
+                    />
+                    <NavLink
+                        href="/dashboard/vics"
+                        collapsed={!showLabels}
+                        onNavigate={navClose}
+                        icon={<Users size={18} />}
+                        label="VICs"
+                        active={pathname.startsWith("/dashboard/vics")}
+                        navTag={IS_PREVIEW_MODE ? "sample" : undefined}
+                    />
+                    <NavLink
+                        href="/dashboard/itineraries"
+                        collapsed={!showLabels}
+                        onNavigate={navClose}
+                        icon={<Route size={18} />}
+                        label="Itineraries"
+                        active={pathname.startsWith("/dashboard/itineraries")}
                         navTag={IS_PREVIEW_MODE ? "sample" : undefined}
                     />
 
@@ -343,7 +353,27 @@ export default function Sidebar({
                     /> */}
                 </nav>
 
-                <div className="mt-auto border-t border-border p-2.5">
+                <div className="shrink-0 border-t border-border p-2.5 pt-2 space-y-1">
+                    <NavLink
+                        href="/dashboard/notifications"
+                        collapsed={!showLabels}
+                        onNavigate={navClose}
+                        icon={<Bell size={18} />}
+                        label="Notifications"
+                        active={pathname.startsWith("/dashboard/notifications")}
+                        unreadAlertCount={unreadNotifications}
+                    />
+                </div>
+
+                <div className="px-2.5 pb-2 pt-1 shrink-0">
+                    <ReportIssueLauncher
+                        floating={false}
+                        compact={!showLabels}
+                        className="flex justify-end"
+                    />
+                </div>
+
+                <div className="border-t border-border p-2.5">
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button
@@ -524,6 +554,7 @@ function NavLink({
     badge,
     navTag,
     notificationPill,
+    unreadAlertCount,
 }: {
     href: string;
     collapsed: boolean;
@@ -536,11 +567,18 @@ function NavLink({
     navTag?: "sample" | "construction" | "coming_soon";
     /** Unprocessed email ingestion count (Knowledge Vault) */
     notificationPill?: number;
+    /** Dashboard notification center unread count */
+    unreadAlertCount?: number;
 }) {
+    const showUnread = unreadAlertCount != null && unreadAlertCount > 0;
+    const linkAriaLabel =
+        collapsed && showUnread ? `${label}, ${unreadAlertCount} unread` : collapsed ? label : undefined;
+
     return (
         <Link
             href={href}
             onClick={() => onNavigate?.()}
+            aria-label={linkAriaLabel}
             className={[
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-compact",
                 "transition-all duration-150 ease-out",
@@ -556,10 +594,26 @@ function NavLink({
                 )}
             >
                 {icon}
+                {collapsed && showUnread ? (
+                    <span
+                        className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full border border-[var(--muted-error-border)] bg-[var(--muted-error-bg)] px-1 text-[8px] font-semibold text-[var(--muted-error-text)] tabular-nums"
+                        aria-hidden
+                    >
+                        {unreadAlertCount > 9 ? "9+" : unreadAlertCount}
+                    </span>
+                ) : null}
             </span>
             {!collapsed && (
                 <>
                     <span className="truncate flex-1 min-w-0">{label}</span>
+                    {showUnread ? (
+                        <span
+                            className="shrink-0 ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border border-[var(--muted-error-border)] bg-[var(--muted-error-bg)] px-1.5 text-2xs font-semibold text-[var(--muted-error-text)] tabular-nums"
+                            title={`${unreadAlertCount} unread`}
+                        >
+                            {unreadAlertCount > 9 ? "9+" : unreadAlertCount}
+                        </span>
+                    ) : null}
                     {notificationPill != null && notificationPill > 0 && (
                         <span
                             className="shrink-0 ml-auto min-w-[1.25rem] h-5 px-1 rounded-full bg-sky-500/15 text-sky-400 text-2xs font-semibold flex items-center justify-center"

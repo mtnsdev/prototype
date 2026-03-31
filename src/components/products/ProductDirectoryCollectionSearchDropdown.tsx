@@ -9,7 +9,6 @@ type Props = {
   collections: DirectoryCollectionOption[];
   selectedIds: string[];
   onChange: (ids: string[]) => void;
-  onRequestNewCollection: () => void;
 };
 
 function collectionMatchesQuery(c: DirectoryCollectionOption, q: string) {
@@ -29,7 +28,6 @@ export default function ProductDirectoryCollectionSearchDropdown({
   collections,
   selectedIds,
   onChange,
-  onRequestNewCollection,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -154,18 +152,6 @@ export default function ProductDirectoryCollectionSearchDropdown({
             {filtered.length === 0 ? (
               <p className="px-3 py-4 text-center text-xs text-muted-foreground">No collections match.</p>
             ) : null}
-          </div>
-          <div className="border-t border-border p-1">
-            <button
-              type="button"
-              className="w-full px-3 py-2 text-left text-xs text-brand-cta transition-colors hover:bg-[rgba(255,255,255,0.04)]"
-              onClick={() => {
-                setOpen(false);
-                onRequestNewCollection();
-              }}
-            >
-              New collection
-            </button>
           </div>
         </div>
       )}

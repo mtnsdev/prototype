@@ -2,7 +2,7 @@
 export interface TeamPolicies {
   canViewCommissions: boolean;
   canExportDocuments: boolean;
-  canSendToClient: boolean;
+  canSendToVic: boolean;
   canRunAcuity: boolean;
   /** KV source policy keys this team may access, or all sources */
   sourceAccess: string[] | "all";

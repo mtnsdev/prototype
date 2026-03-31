@@ -10,6 +10,7 @@ import {
   getBuilderDisplayStatus,
   nightsForItinerary,
 } from "./itineraryBuilderUi";
+import { getAdvisoriesForProduct } from "@/components/products/productDirectoryAdvisoryMock";
 
 function SummaryRow({ label, value, link }: { label: string; value: string; link?: boolean }) {
   return (
@@ -51,10 +52,22 @@ export default function ItineraryBuilderSidebar({
       : "—";
 
   const commissionRows: { product: string; program: string; amount: string }[] = [];
+  let advisoryFlatBonusTotal = 0;
   for (const d of itinerary.days ?? []) {
     for (const e of d.events ?? []) {
       if (!e.source_product_name) continue;
-      const amt = formatProductCommission(e);
+      const activeAdvisories = e.source_product_id
+        ? getAdvisoriesForProduct(e.source_product_id).filter((a) => a.status === "active")
+        : [];
+      const lead = activeAdvisories[0];
+      let adjustedRate = e.commission_rate ?? null;
+      if (lead?.incentiveType === "bonus_percentage") adjustedRate = (adjustedRate ?? 0) + (lead.incentiveValue ?? 0);
+      if (lead?.incentiveType === "override") adjustedRate = lead.incentiveValue ?? adjustedRate;
+      if (lead?.incentiveType === "bonus_flat") advisoryFlatBonusTotal += lead.incentiveValue ?? 0;
+      const amt =
+        adjustedRate != null && adjustedRate > 0
+          ? `${adjustedRate}% rack${lead ? " (incl. incentive)" : ""}`
+          : formatProductCommission(e);
       if (!amt && !canViewFinancials) continue;
       commissionRows.push({
         product: e.source_product_name,
@@ -74,7 +87,7 @@ export default function ItineraryBuilderSidebar({
         <span className="mb-3 block text-[9px] font-medium uppercase tracking-[0.08em] text-muted-foreground/65">Trip Summary</span>
         <div className="space-y-2.5">
           <SummaryRow
-            label="Client"
+            label="VIC"
             value={itinerary.primary_vic_name ?? itinerary.primary_vic_id}
             link
           />
@@ -119,6 +132,12 @@ export default function ItineraryBuilderSidebar({
             ))
           )}
           <div className="my-2 h-px bg-[rgba(255,255,255,0.04)]" />
+          {advisoryFlatBonusTotal > 0 ? (
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-amber-300">Advisory flat bonuses</span>
+              <span className="text-xs text-amber-300">+€{advisoryFlatBonusTotal.toLocaleString()}</span>
+            </div>
+          ) : null}
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">Total commission</span>
             <span className="text-sm text-[#B8976E]">{totalComm ?? "—"}</span>
@@ -127,7 +146,7 @@ export default function ItineraryBuilderSidebar({
       </div>
 
       <div className="border-b border-border px-5 py-4">
-        <span className="mb-3 block text-[9px] font-medium uppercase tracking-[0.08em] text-muted-foreground/65">Client Intelligence</span>
+        <span className="mb-3 block text-[9px] font-medium uppercase tracking-[0.08em] text-muted-foreground/65">VIC intelligence</span>
         <Link
           href={acuityHref}
           className="block rounded-lg border border-[rgba(201,169,110,0.08)] bg-[rgba(201,169,110,0.03)] p-3 transition-colors hover:border-[rgba(201,169,110,0.12)]"
@@ -149,7 +168,7 @@ export default function ItineraryBuilderSidebar({
         <textarea
           value={internalNotes}
           onChange={(e) => onNotesChange(e.target.value)}
-          placeholder="Add notes about this trip..."
+          placeholder="Add notes about this trip…"
           rows={4}
           className="min-h-[80px] w-full resize-none rounded-lg border border-border bg-[rgba(255,255,255,0.02)] px-3 py-2 text-sm text-muted-foreground placeholder:text-muted-foreground/65 outline-none focus:border-[rgba(201,169,110,0.15)]"
         />

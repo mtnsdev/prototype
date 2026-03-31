@@ -76,7 +76,7 @@ type InlineCitationMarkerEllipsisProps = {
   onCitationClick: (filename: string, pageNumber: number | string, pdfPath?: string) => void;
 };
 
-/** Ellipsis for 3+ citations: shows "..." until clicked, then expands to show all citation circles */
+/** Ellipsis for 3+ citations: shows "…" until clicked, then expands to show all citation circles */
 export function InlineCitationMarkerEllipsis({
   chunkIds,
   citationByChunkId,

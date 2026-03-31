@@ -10,6 +10,7 @@ import type {
   DirectoryProduct,
   NewDirectoryCollectionInput,
 } from "@/types/product-directory";
+import type { RepFirm } from "@/types/rep-firm";
 import { fetchProduct, getProductId } from "@/lib/products-api";
 import { FAKE_PRODUCTS } from "../fakeData";
 import {
@@ -21,6 +22,13 @@ import {
   getDirectoryProductById,
   MOCK_DIRECTORY_PRODUCTS,
 } from "../productDirectoryMock";
+import { MOCK_REP_FIRMS } from "../productDirectoryRepFirmMock";
+import {
+  cloneRepFirmsForState,
+  loadRepFirmsFromStorage,
+  repFirmsEqual,
+  subscribeRepFirmsRegistry,
+} from "../productDirectoryPersistence";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/contexts/ToastContext";
 import { canEditProduct, canDeleteProduct, canViewFinancials } from "@/utils/productPermissions";
@@ -40,8 +48,6 @@ import CopyToAgencyModal from "../Modals/CopyToAgencyModal";
 import EnrichProductModal from "../Modals/EnrichProductModal";
 import AddToItineraryModal from "../Modals/AddToItineraryModal";
 import { cn } from "@/lib/utils";
-import PreviewBanner from "@/components/ui/PreviewBanner";
-import { IS_PREVIEW_MODE } from "@/config/preview";
 import ImageWithFallback from "@/components/ui/ImageWithFallback";
 import type { ProductCategory } from "@/types/product";
 import { ProductDetailLayers } from "./ProductDetailLayers";
@@ -125,6 +131,17 @@ export default function ProductDetailPage({ productId }: Props) {
     setDirectoryProduct(p);
   }, [productId, userLoading, user?.id]);
 
+  useEffect(() => {
+    return subscribeRepFirmsRegistry(() => {
+      setRepFirmsRegistry((prev) => {
+        const next = loadRepFirmsFromStorage();
+        if (!next || next.length === 0) return prev;
+        const cloned = cloneRepFirmsForState(next);
+        return repFirmsEqual(prev, cloned) ? prev : cloned;
+      });
+    });
+  }, []);
+
   const uid = user ? String(user.id) : "1";
   const policies = useMemo(
     () => resolveUserPolicies(user ? { id: String(user.id), role: user.role } : null, MOCK_TEAMS),
@@ -135,6 +152,11 @@ export default function ProductDetailPage({ productId }: Props) {
     directoryViewAsAdmin || user?.role === "admin" || user?.role === "agency_admin";
 
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [repFirmsRegistry, setRepFirmsRegistry] = useState<RepFirm[]>(() => {
+    const loaded = loadRepFirmsFromStorage();
+    if (loaded && loaded.length > 0) return cloneRepFirmsForState(loaded);
+    return cloneRepFirmsForState(MOCK_REP_FIRMS);
+  });
   const detailCatalogSeedRef = useRef<string | null>(null);
   const [directoryCollections, setDirectoryCollections] = useState<DirectoryCollectionOption[]>(() =>
     cloneMockDirectoryCatalogForAdvisor("1", DIRECTORY_DETAIL_SEED_NAME).collections
@@ -311,7 +333,6 @@ export default function ProductDetailPage({ productId }: Props) {
     if (getDirectoryProductById(productId) && directoryProduct) {
     return (
       <div className="min-h-screen bg-inset p-6 md:p-8">
-        {IS_PREVIEW_MODE && <PreviewBanner feature="Product detail" variant="compact" sampleDataOnly />}
         <Button
           variant="ghost"
           size="sm"
@@ -342,6 +363,7 @@ export default function ProductDetailPage({ productId }: Props) {
             onQuickAddToCollection={handleQuickAddDirectoryCollection}
             onRequestCreateCollection={() => setPickerOpen(true)}
             partnerProgramCustomKeys={customProgramKeys}
+            repFirmsRegistry={repFirmsRegistry}
           />
         </div>
         {pickerOpen && (
@@ -391,7 +413,6 @@ export default function ProductDetailPage({ productId }: Props) {
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background">
-      {IS_PREVIEW_MODE && <PreviewBanner feature="Product detail" variant="compact" sampleDataOnly />}
       <div className="relative h-[240px] w-full shrink-0 overflow-hidden bg-zinc-900">
         <ImageWithFallback
           fallbackType="product"
@@ -422,33 +443,36 @@ export default function ProductDetailPage({ productId }: Props) {
           </p>
         </div>
       </div>
-      <header className="flex flex-wrap items-center gap-3 border-b border-border p-4">
-        <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground">
-          <Link href="/dashboard/products" className="inline-flex items-center gap-1">
-            <ArrowLeft size={18} /> Back to Products
-          </Link>
-        </Button>
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-            <Icon size={14} />
-            {CATEGORY_LABELS[product.category]}
-          </span>
-          <span className="inline-flex items-center gap-1 rounded border bg-white/10 px-1.5 py-0.5 text-xs text-muted-foreground">
-            {product.status}
-          </span>
-          <span
-            className={cn(
-              "inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs",
-              VERIFICATION_BADGES[ver]?.variant === "default" && "bg-green-500/20 text-green-400"
-            )}
-          >
-            {VERIFICATION_BADGES[ver]?.label ?? ver}
-          </span>
-          <span className={cn("inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs", DATA_LAYER_BADGES[layer]?.className)}>
-            {DATA_LAYER_BADGES[layer]?.label}
-          </span>
+      <header className="flex flex-col gap-3 border-b border-border p-4 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 lg:flex-1 lg:gap-3">
+          <Button variant="ghost" size="sm" asChild className="shrink-0 text-muted-foreground hover:text-foreground">
+            <Link href="/dashboard/products" className="inline-flex items-center gap-1.5">
+              <ArrowLeft className="size-3.5" aria-hidden />
+              Back to Products
+            </Link>
+          </Button>
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <Icon className="size-3.5" aria-hidden />
+              {CATEGORY_LABELS[product.category]}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded border border-border bg-white/10 px-1.5 py-0.5 text-xs text-muted-foreground">
+              {product.status}
+            </span>
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs",
+                VERIFICATION_BADGES[ver]?.variant === "default" && "bg-green-500/20 text-green-400"
+              )}
+            >
+              {VERIFICATION_BADGES[ver]?.label ?? ver}
+            </span>
+            <span className={cn("inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs", DATA_LAYER_BADGES[layer]?.className)}>
+              {DATA_LAYER_BADGES[layer]?.label}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 lg:shrink-0">
           {canEdit && (
             <Button
               variant="outline"
@@ -459,12 +483,14 @@ export default function ProductDetailPage({ productId }: Props) {
               }}
               className="border-input text-foreground"
             >
-              <Pencil size={14} className="mr-1" /> Edit
+              <Pencil className="size-3.5" aria-hidden />
+              Edit
             </Button>
           )}
           {canDelete && (
             <Button variant="outline" size="sm" onClick={() => setDeleteModalOpen(true)} className="border-input text-red-400">
-              <Trash2 size={14} className="mr-1" /> Delete
+              <Trash2 className="size-3.5" aria-hidden />
+              Delete
             </Button>
           )}
           <Button
@@ -476,14 +502,17 @@ export default function ProductDetailPage({ productId }: Props) {
               setEditModalOpen(true);
             }}
           >
-            <Copy size={14} className="mr-1" /> Duplicate
+            <Copy className="size-3.5" aria-hidden />
+            Duplicate
           </Button>
           <Button variant="outline" size="sm" className="border-input text-foreground" onClick={() => setItineraryModalOpen(true)}>
-            <Plus size={14} className="mr-1" /> Add to Itinerary
+            <Plus className="size-3.5" aria-hidden />
+            Add to Itinerary
           </Button>
           {isEnable && (
-            <Button size="sm" onClick={() => setCopyModalOpen(true)}>
-              <Copy size={14} className="mr-1" /> Copy to Agency
+            <Button variant="cta" size="sm" onClick={() => setCopyModalOpen(true)}>
+              <Copy className="size-3.5" aria-hidden />
+              Copy to Agency
             </Button>
           )}
         </div>

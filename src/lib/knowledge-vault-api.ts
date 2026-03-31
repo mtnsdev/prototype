@@ -1,5 +1,5 @@
 /**
- * Knowledge Vault API client. Uses mock data when backend is unavailable.
+ * Knowledge Vault HTTP API. Uses mock data when backend is unavailable.
  * When the API returns 200 with empty lists (common on PR previews: proxy hits a
  * backend with no knowledge data), we fall back to mocks in preview mode so the
  * vault is still demonstrable.

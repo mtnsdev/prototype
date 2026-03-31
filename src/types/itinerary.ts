@@ -35,7 +35,7 @@ export interface ItineraryEvent {
   source_product_id?: string;
   source_product_name?: string;
   source_product_category?: string;
-  client_price?: number;
+  vic_price?: number;
   net_cost?: number;
   commission_rate?: number;
   commission_amount?: number;
@@ -69,7 +69,7 @@ export interface ItineraryTripOption {
   id: string;
   name: string;
   days: ItineraryDay[];
-  total_client_price?: number;
+  total_vic_price?: number;
 }
 
 export type ItineraryPublishState = "never" | "published_clean" | "unpublished_changes";
@@ -116,7 +116,7 @@ export interface Itinerary {
   trip_options?: ItineraryTripOption[];
   tags: string[];
   notes?: string;
-  total_client_price?: number;
+  total_vic_price?: number;
   total_net_cost?: number;
   total_margin?: number;
   total_commission?: number;
@@ -128,7 +128,7 @@ export interface Itinerary {
   updated_at: string;
   last_edited_by?: string;
   last_edited_by_name?: string;
-  /** Client-facing publish — mock */
+  /** VIC-facing publish — mock */
   publish_state?: ItineraryPublishState;
   published_version?: number;
   last_published_at?: string;
@@ -142,7 +142,8 @@ export interface ItineraryListParams {
   search?: string;
   status?: ItineraryStatus;
   vic_id?: string;
-  destination?: string;
+  /** Country names from the location catalog; OR-matched against itinerary destination strings. */
+  destination_countries?: string[];
   date_from?: string;
   date_to?: string;
   /** Sales pipeline stage (when backend supports it) */

@@ -25,13 +25,13 @@ export default function ItinerariesEmptyState({
 
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4 text-center min-h-[280px]">
-        <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+        <div className="w-16 h-16 rounded-full bg-muted/40 flex items-center justify-center mb-4">
           <Route className="w-8 h-8 text-muted-foreground/75" />
         </div>
         <h2 className="text-lg font-semibold text-foreground mb-2">{copy.title}</h2>
         <p className="text-sm text-muted-foreground max-w-sm mb-6">{copy.body}</p>
         {tab === "mine" && onCreateItinerary && (
-          <Button onClick={onCreateItinerary} className="gap-2">
+          <Button variant="toolbarAccent" size="sm" onClick={onCreateItinerary}>
             <Route size={16} />
             Create Itinerary
           </Button>

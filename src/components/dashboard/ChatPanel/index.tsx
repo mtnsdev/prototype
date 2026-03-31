@@ -265,7 +265,7 @@ export default function ChatPanel({
       if (data) {
         if (data.session_id && !currentSessionId) {
           setCurrentSessionId(data.session_id);
-          setSessionTitle(text.slice(0, 50) + (text.length > 50 ? "..." : ""));
+          setSessionTitle(text.slice(0, 50) + (text.length > 50 ? "…" : ""));
           onConversationCreated?.(data.session_id);
         }
         const botMessage: Message = {
@@ -390,7 +390,7 @@ export default function ChatPanel({
 
   const firstMessagePreview =
     messages.length > 0 && messages[0].role === "user"
-      ? messages[0].text.slice(0, 60) + (messages[0].text.length > 60 ? "..." : "")
+      ? messages[0].text.slice(0, 60) + (messages[0].text.length > 60 ? "…" : "")
       : null;
 
   return (
@@ -418,7 +418,7 @@ export default function ChatPanel({
               <div className="flex items-center justify-center h-full">
                 <div className="flex flex-col items-center gap-3">
                   <Loader2 className="w-8 h-8 animate-spin text-muted-foreground/55" />
-                  <span className="text-compact text-muted-foreground/75">Loading conversation...</span>
+                  <span className="text-compact text-muted-foreground/75">Loading conversation…</span>
                 </div>
               </div>
             )}
@@ -505,7 +505,7 @@ export default function ChatPanel({
                   {thinkingSteps.length === 0 ? (
                     <div className="flex items-center gap-3">
                       <Loader2 className="w-4 h-4 animate-spin text-muted-foreground/75 shrink-0" />
-                      <span className="text-base text-muted-foreground">Thinking...</span>
+                      <span className="text-base text-muted-foreground">Thinking…</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-3 text-base text-[rgba(245,245,245,0.9)]">

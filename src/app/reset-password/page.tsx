@@ -51,7 +51,7 @@ function ResetPasswordContent() {
         throw new Error(msg);
       }
 
-      setInfo("Password reset successfully. Redirecting to sign in...");
+      setInfo("Password reset successfully. Redirecting to sign in…");
       setTimeout(() => router.push("/login"), 800);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Reset failed");
@@ -147,7 +147,7 @@ function ResetPasswordContent() {
                 "flex items-center justify-center gap-2",
               ].join(" ")}
             >
-              {isLoading ? "Updating..." : "Update password"}
+              {isLoading ? "Updating…" : "Update password"}
             </button>
           </form>
 

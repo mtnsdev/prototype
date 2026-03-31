@@ -1,6 +1,7 @@
 "use client";
 
 import type { DirectoryCollectionOption, DirectoryProduct } from "@/types/product-directory";
+import type { RepFirm } from "@/types/rep-firm";
 import type { Team } from "@/types/teams";
 import { ProductDirectoryDetailBody } from "./ProductDirectoryDetailBody";
 
@@ -18,6 +19,7 @@ type Props = {
   onQuickAddToCollection?: (collectionId: string) => void;
   onRequestCreateCollection?: () => void;
   partnerProgramCustomKeys?: string[];
+  repFirmsRegistry?: RepFirm[] | null;
 };
 
 export default function ProductDirectoryDetailPanel({
@@ -34,6 +36,7 @@ export default function ProductDirectoryDetailPanel({
   onQuickAddToCollection,
   onRequestCreateCollection,
   partnerProgramCustomKeys,
+  repFirmsRegistry,
 }: Props) {
   return (
     <>
@@ -62,6 +65,7 @@ export default function ProductDirectoryDetailPanel({
             onQuickAddToCollection={onQuickAddToCollection}
             onRequestCreateCollection={onRequestCreateCollection}
             partnerProgramCustomKeys={partnerProgramCustomKeys}
+            repFirmsRegistry={repFirmsRegistry}
           />
         </div>
       </aside>

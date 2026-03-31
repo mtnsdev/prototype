@@ -2,7 +2,7 @@
 
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useCallback, useLayoutEffect, useRef } from "react";
-import { Check, Plus, Search, Sparkles } from "lucide-react";
+import { Check, Plus, Search, Sparkles, Users } from "lucide-react";
 import type { DirectoryProduct } from "@/types/product-directory";
 import { cn } from "@/lib/utils";
 import { ProductDirectoryCategoryBadge } from "./ProductDirectoryCategoryBadge";
@@ -283,6 +283,12 @@ export default function DirectoryProductListView({
                   <span className="text-[8px] text-muted-foreground">
                     {product.partnerProgramCount} prog · {product.collectionCount} lists
                   </span>
+                  {product.type !== "rep_firm" && product.repFirmCount > 0 ? (
+                    <span className="inline-flex items-center gap-0.5 text-[8px] text-[#B07A5B]/70">
+                      <Users className="h-2 w-2 shrink-0" aria-hidden />
+                      {product.repFirmCount} rep firm{product.repFirmCount !== 1 ? "s" : ""}
+                    </span>
+                  ) : null}
                   {externalSearchCollectionId &&
                   product.collectionIds.includes(externalSearchCollectionId) ? (
                     <span

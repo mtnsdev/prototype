@@ -12,6 +12,7 @@ import {
   Compass,
   UtensilsCrossed,
   Car,
+  Users,
 } from "lucide-react";
 
 // ─── CATEGORY_METRICS (Section 7) — key metric per category for cards ─────
@@ -34,6 +35,7 @@ export const CATEGORY_METRICS: Record<ProductCategory, { key: CategoryMetricKey;
   activity: { key: "duration", label: "Duration" },
   restaurant: { key: "michelin_stars", label: "Michelin" },
   transportation: { key: "vehicle_types", label: "Vehicles" },
+  rep_firm: { key: "destinations_covered", label: "Regions" },
 };
 
 // ─── CATEGORY_ICONS (Section 7) ────────────────────────────────────────────
@@ -46,6 +48,7 @@ export const CATEGORY_ICONS: Record<ProductCategory, LucideIcon> = {
   activity: Compass,
   restaurant: UtensilsCrossed,
   transportation: Car,
+  rep_firm: Users,
 };
 
 export const CATEGORY_LABELS: Record<ProductCategory, string> = {
@@ -56,6 +59,7 @@ export const CATEGORY_LABELS: Record<ProductCategory, string> = {
   activity: "Activity",
   restaurant: "Restaurant",
   transportation: "Transportation",
+  rep_firm: "Rep Firm",
 };
 
 // ─── SUBCATEGORY_OPTIONS (Section 12) ─────────────────────────────────────
@@ -113,6 +117,13 @@ export const SUBCATEGORY_OPTIONS: Record<ProductCategory, string[]> = {
     "Private transfer",
     "Chauffeur",
     "Helicopter",
+    "Other",
+  ],
+  rep_firm: [
+    "Hotel Rep",
+    "DMC Rep",
+    "Cruise Rep",
+    "Multi-category",
     "Other",
   ],
 };
@@ -182,4 +193,5 @@ export const CATEGORY_ACCENT_COLORS: Record<ProductCategory, string> = {
   activity: "border-t border-t-zinc-600/45",
   restaurant: "border-t border-t-stone-600/40",
   transportation: "border-t border-t-neutral-600/40",
+  rep_firm: "border-t border-t-amber-700/40",
 };

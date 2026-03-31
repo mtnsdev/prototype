@@ -103,13 +103,13 @@ export default function AnnouncementsWidget({ isAdmin, staggerIndex = 0 }: Props
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Title..."
+            placeholder="Title…"
             className="w-full bg-transparent text-sm text-white placeholder:text-muted-foreground/55 font-medium mb-2 outline-none"
           />
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="Write your announcement..."
+            placeholder="Write your announcement…"
             className="w-full bg-transparent text-xs text-foreground/88 placeholder:text-muted-foreground/55 resize-none h-20 outline-none leading-relaxed"
           />
           <div className="flex items-center justify-between mt-2">

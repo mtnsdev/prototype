@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { FileText, Loader2, Search } from "lucide-react";
+import { FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PageSearchField } from "@/components/ui/page-search-field";
 
 type ClaromentisPage = {
     id: number;
@@ -67,14 +67,12 @@ export default function ClaromentisPageSelector({
     return (
         <div className="rounded-xl border border-border bg-background overflow-hidden">
             {/* Search */}
-            <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-                <Search size={14} className="text-muted-foreground/55 shrink-0" />
-                <Input
-                    type="text"
+            <div className="px-3 py-2 border-b border-border">
+                <PageSearchField
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search pages..."
-                    className="flex-1 h-auto py-1.5 border-0 bg-transparent text-compact shadow-none focus-visible:ring-0"
+                    onChange={setSearch}
+                    placeholder="Search pages…"
+                    aria-label="Search pages"
                 />
             </div>
 
@@ -100,7 +98,7 @@ export default function ClaromentisPageSelector({
                                     type="button"
                                     variant="ghost"
                                     onClick={() => togglePage(page.id)}
-                                    className={`w-full justify-start gap-2.5 px-3 py-2 font-normal h-auto ${selected ? "bg-[rgba(168,85,247,0.08)]" : ""}`}
+                                    className={`w-full justify-start gap-2.5 px-3 py-2 font-normal h-auto ${selected ? "bg-[rgba(201,169,110,0.08)]" : ""}`}
                                 >
                                     <input
                                         type="checkbox"
@@ -108,8 +106,8 @@ export default function ClaromentisPageSelector({
                                         checked={selected}
                                         className="checkbox-on-dark checkbox-on-dark-sm shrink-0 pointer-events-none"
                                     />
-                                    <FileText size={14} className="text-purple-400 shrink-0" />
-                                    <span className="text-compact text-foreground truncate">{page.title}</span>
+                                    <FileText size={14} className="text-brand-cta shrink-0" />
+                                    <span className="text-sm text-foreground truncate">{page.title}</span>
                                     {page.is_admin_only && (
                                         <span className="ml-auto text-2xs px-1.5 py-0.5 rounded bg-amber-500/15 text-[var(--color-warning)] shrink-0">
                                             Admin only

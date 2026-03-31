@@ -16,7 +16,6 @@ import {
     BookOpen,
     CheckSquare,
     Square,
-    Search,
 } from "lucide-react";
 import { FolderTreeSelector, SelectedTarget } from "@/components/admin/FolderTreeSelector";
 import {
@@ -45,6 +44,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
+import { PageSearchField } from "@/components/ui/page-search-field";
 
 type ContentRule = {
     id: number;
@@ -284,7 +284,7 @@ export default function PermissionsPage() {
         if (rule.target_type === "folder" || rule.target_type === "drive_folder")
             return <Folder size={16} className="text-[var(--color-warning)]" />;
         if (rule.target_type === "page" || rule.target_type === "script_page")
-            return <FileText size={16} className="text-purple-400" />;
+            return <FileText size={16} className="text-brand-cta" />;
         return <FileText size={16} className="text-blue-400" />;
     };
 
@@ -345,7 +345,7 @@ export default function PermissionsPage() {
                 <CardContent className="p-0">
                 <div className="flex items-start gap-3">
                     <FolderLock size={20} className="text-blue-400 shrink-0 mt-0.5" />
-                    <div className="text-compact text-muted-foreground space-y-1">
+                    <div className="text-sm text-muted-foreground space-y-1">
                         <p><strong>How permission rules work:</strong></p>
                         <ul className="list-disc ml-4 space-y-1">
                             <li>Rules are scoped to a specific data source ({SOURCE_TABS.find(t => t.key === activeSource)?.label})</li>
@@ -390,7 +390,7 @@ export default function PermissionsPage() {
                             <p className="text-base text-muted-foreground/75">
                                 No {SOURCE_TABS.find(t => t.key === activeSource)?.label} permission rules
                             </p>
-                            <p className="text-compact text-muted-foreground/55 mt-1">Add rules to control content access for this source</p>
+                            <p className="text-sm text-muted-foreground/55 mt-1">Add rules to control content access for this source</p>
                         </div>
                     ) : (
                         <Table>
@@ -444,7 +444,7 @@ export default function PermissionsPage() {
                                                 {rule.effect.charAt(0).toUpperCase() + rule.effect.slice(1)}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="px-5 py-4 text-compact text-muted-foreground/75">
+                                        <TableCell className="px-5 py-4 text-sm text-muted-foreground/75">
                                             {activeSource === "pages" ? "This item only" : (rule.applies_to_descendants ? "Including children" : "This item only")}
                                         </TableCell>
                                         <TableCell className="px-2 py-4">
@@ -535,7 +535,7 @@ function ConflictConfirmModal({
                 </DialogHeader>
 
                 <div className="overflow-y-auto space-y-3">
-                    <p className="text-compact text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                         The following targets already have rules. Choose how to handle them:
                     </p>
 
@@ -543,7 +543,7 @@ function ConflictConfirmModal({
                         {conflicts.map((c) => (
                             <Card key={c.existing_rule_id} className="rounded-xl bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.07)] p-4">
                                 <CardContent className="p-0">
-                                    <p className="text-compact text-foreground font-medium mb-1">
+                                    <p className="text-sm text-foreground font-medium mb-1">
                                         {c.target_title || `${c.target_type} #${c.target_id}`}
                                     </p>
                                     {c.conflict_type === "exact_duplicate" ? (
@@ -573,7 +573,7 @@ function ConflictConfirmModal({
                         disabled={isUpdating || conflicts.every(c => c.conflict_type === "exact_duplicate")}
                         className="flex-1 sm:flex-initial bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-[var(--color-warning)]"
                     >
-                        {isUpdating ? "Updating..." : "Update conflicting rules"}
+                        {isUpdating ? "Updating…" : "Update conflicting rules"}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -763,14 +763,12 @@ function CreateRuleModal({
                                     Select one or more pages to apply the rule to.
                                 </p>
                                 <div className="flex items-center gap-2">
-                                    <div className="flex-1 flex items-center gap-2">
-                                        <Search size={16} className="text-muted-foreground/55 shrink-0" />
-                                        <Input
-                                            type="text"
+                                    <div className="flex-1">
+                                        <PageSearchField
                                             value={pageSearchQuery}
-                                            onChange={(e) => setPageSearchQuery(e.target.value)}
-                                            placeholder="Search pages..."
-                                            className="bg-background border-border text-foreground placeholder:text-muted-foreground/75"
+                                            onChange={setPageSearchQuery}
+                                            placeholder="Search pages…"
+                                            aria-label="Search pages"
                                         />
                                     </div>
                                     <Button
@@ -803,13 +801,13 @@ function CreateRuleModal({
                                 </div>
                                 <div className="rounded-xl border border-border bg-background max-h-[240px] overflow-y-auto p-1">
                                     {scriptPagesLoading ? (
-                                        <div className="flex items-center justify-center gap-2 px-3 py-4 text-compact text-muted-foreground/75">
+                                        <div className="flex items-center justify-center gap-2 px-3 py-4 text-sm text-muted-foreground/75">
                                             <Loader2 size={16} className="animate-spin" /> Loading pages…
                                         </div>
                                     ) : allScriptPages.length === 0 ? (
-                                        <p className="text-compact text-muted-foreground/55 px-3 py-4 text-center">No script pages found</p>
+                                        <p className="text-sm text-muted-foreground/55 px-3 py-4 text-center">No script pages found</p>
                                     ) : filteredScriptPages.length === 0 ? (
-                                        <p className="text-compact text-muted-foreground/55 px-3 py-4 text-center">No pages match your search</p>
+                                        <p className="text-sm text-muted-foreground/55 px-3 py-4 text-center">No pages match your search</p>
                                     ) : (
                                         filteredScriptPages.map((p) => {
                                             const checked = selectedScriptPageIds.includes(p.id);
@@ -831,14 +829,14 @@ function CreateRuleModal({
                                                     <span
                                                         className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
                                                             checked
-                                                                ? "bg-purple-500 border-purple-500 text-white"
+                                                                ? "border-[rgba(201,169,110,0.45)] bg-brand-cta text-[#08080c]"
                                                                 : "border-[rgba(255,255,255,0.2)] bg-transparent"
                                                         }`}
                                                     >
                                                         {checked ? <Check size={12} /> : null}
                                                     </span>
-                                                    <FileText size={14} className="text-purple-400 shrink-0" />
-                                                    <span className="text-compact text-foreground truncate">{name}</span>
+                                                    <FileText size={14} className="text-brand-cta shrink-0" />
+                                                    <span className="text-sm text-foreground truncate">{name}</span>
                                                 </Button>
                                             );
                                         })
@@ -884,7 +882,7 @@ function CreateRuleModal({
                                     rootFolderId={rootFolderId}
                                 />
                             ) : (
-                                <p className="text-compact text-muted-foreground/75">Sign in to load tree</p>
+                                <p className="text-sm text-muted-foreground/75">Sign in to load tree</p>
                             )}
                             {selectedTargets.length > 0 && (
                                 <div className="mt-2 flex flex-wrap gap-1.5">
@@ -958,7 +956,7 @@ function CreateRuleModal({
                             className="flex-1 bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.15)] border-border-strong text-foreground"
                             disabled={isSubmitting || !hasSelection || !token}
                         >
-                            {isSubmitting ? "Creating..." : "Create Rule"}
+                            {isSubmitting ? "Creating…" : "Create Rule"}
                         </Button>
                     </DialogFooter>
                 </form>

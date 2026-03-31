@@ -17,18 +17,7 @@ export const PIPELINE_STAGE_LABEL_MAP: Record<PipelineStage, string> = Object.fr
   PIPELINE_STAGES.map((s) => [s.key, s.label])
 ) as Record<PipelineStage, string>;
 
-export function pipelineStageBadgeClass(stage: PipelineStage): string {
-  const map: Record<PipelineStage, string> = {
-    lead: "bg-muted-foreground/10 text-muted-foreground/90",
-    discovery: "bg-blue-500/10 text-blue-400",
-    proposal: "bg-indigo-500/10 text-indigo-400",
-    revision: "bg-amber-500/10 text-[var(--color-warning)]",
-    committed: "bg-emerald-500/10 text-emerald-400",
-    preparing: "bg-teal-500/10 text-teal-400",
-    final_review: "bg-cyan-500/10 text-cyan-400",
-    traveling: "bg-violet-500/10 text-violet-400",
-    post_travel: "bg-pink-500/10 text-pink-400",
-    archived: "bg-muted-foreground/10 text-muted-foreground",
-  };
-  return map[stage] ?? map.lead;
+/** Unified pipeline pills — contrast via typography, not rainbow fills */
+export function pipelineStageBadgeClass(_stage: PipelineStage): string {
+  return "bg-muted-foreground/8 text-muted-foreground border border-border/60";
 }

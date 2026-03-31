@@ -3,9 +3,65 @@ import type {
   DirectoryExternalSearchMeta,
   DirectoryProduct,
 } from "@/types/product-directory";
+import type { RepFirm } from "@/types/rep-firm";
 
 const STORAGE_KEY = "enable-product-directory-v1";
 const SCHEMA_VERSION = 2;
+
+const REP_FIRMS_KEY = "enable-rep-firms-registry-v1";
+const REP_FIRMS_SCHEMA = 1;
+/** Same-tab sync when registry is saved from Settings or Products. */
+export const REP_FIRMS_REGISTRY_UPDATED = "enable-rep-firms-registry-updated";
+
+export type PersistedRepFirmsPayload = { v: number; repFirms: RepFirm[] };
+
+export function cloneRepFirmsForState(repFirms: RepFirm[]): RepFirm[] {
+  return repFirms.map((f) => ({
+    ...f,
+    regions: [...f.regions],
+    productTypes: [...f.productTypes],
+  }));
+}
+
+function normalizeRepFirmsJson(repFirms: RepFirm[]): string {
+  const sorted = [...repFirms].sort((a, b) => a.id.localeCompare(b.id));
+  return JSON.stringify(sorted);
+}
+
+export function repFirmsEqual(a: RepFirm[], b: RepFirm[]): boolean {
+  return normalizeRepFirmsJson(a) === normalizeRepFirmsJson(b);
+}
+
+export function loadRepFirmsFromStorage(): RepFirm[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(REP_FIRMS_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw) as Partial<PersistedRepFirmsPayload>;
+    if (data.v !== REP_FIRMS_SCHEMA || !Array.isArray(data.repFirms)) return null;
+    return data.repFirms as RepFirm[];
+  } catch {
+    return null;
+  }
+}
+
+export function persistRepFirmsSnapshot(repFirms: RepFirm[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    const payload: PersistedRepFirmsPayload = { v: REP_FIRMS_SCHEMA, repFirms };
+    localStorage.setItem(REP_FIRMS_KEY, JSON.stringify(payload));
+    window.dispatchEvent(new Event(REP_FIRMS_REGISTRY_UPDATED));
+  } catch {
+    /* quota */
+  }
+}
+
+export function subscribeRepFirmsRegistry(onUpdate: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  const handler = () => onUpdate();
+  window.addEventListener(REP_FIRMS_REGISTRY_UPDATED, handler);
+  return () => window.removeEventListener(REP_FIRMS_REGISTRY_UPDATED, handler);
+}
 
 export type PersistedDirectoryPayload = {
   v: number;
@@ -85,6 +141,8 @@ export function cloneDirectoryProductsForState(products: DirectoryProduct[]): Di
       activePromotions: (pp.activePromotions ?? []).map((x) => ({ ...x })),
       amenityTags: pp.amenityTags ? [...pp.amenityTags] : [],
     })),
+    repFirmLinks: (p.repFirmLinks ?? []).map((l) => ({ ...l })),
+    commissionAdvisories: p.commissionAdvisories?.map((a) => ({ ...a })),
   }));
 }
 

@@ -22,6 +22,7 @@ export const DIRECTORY_CATEGORY_LABELS: Record<DirectoryProductCategory, string>
   cruise: "Cruise",
   wellness: "Wellness / Spa",
   transport: "Transport",
+  rep_firm: "Rep Firm",
 };
 
 /** Pin / map dot color (hex). */

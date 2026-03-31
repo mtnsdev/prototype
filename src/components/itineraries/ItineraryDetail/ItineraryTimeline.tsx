@@ -30,12 +30,12 @@ type Props = {
 };
 
 function dayClientTotal(day: ItineraryDay): number {
-  return (day.events ?? []).reduce((sum, e) => sum + (e.client_price ?? 0), 0);
+  return (day.events ?? []).reduce((sum, e) => sum + (e.vic_price ?? 0), 0);
 }
 
 function dayMarginTotal(day: ItineraryDay): number {
   return (day.events ?? []).reduce((sum, e) => {
-    const cp = e.client_price ?? 0;
+    const cp = e.vic_price ?? 0;
     const net = e.net_cost ?? (cp > 0 ? Math.round(cp * 0.75) : 0);
     return sum + (cp - net);
   }, 0);
@@ -183,7 +183,7 @@ export default function ItineraryTimeline({ itinerary, canEdit, canViewFinancial
                     <p className="text-xs text-muted-foreground/75 pt-1 border-t border-border mt-2">
                       {(day.events ?? []).length} event{(day.events ?? []).length !== 1 ? "s" : ""}
                       {dayClientTotal(day) > 0 && (
-                        <> · {itinerary.currency === "EUR" ? "€" : itinerary.currency} {dayClientTotal(day).toLocaleString()} client</>
+                        <> · {itinerary.currency === "EUR" ? "€" : itinerary.currency} {dayClientTotal(day).toLocaleString()} VIC price</>
                       )}
                       {canViewFinancials && dayMarginTotal(day) > 0 && (
                         <> · <span className={marginColor(dayClientTotal(day) > 0 ? Math.round((dayMarginTotal(day) / dayClientTotal(day)) * 100) : 0)}>€{dayMarginTotal(day).toLocaleString()} margin</span></>

@@ -1,9 +1,9 @@
 "use client";
 
-import { UserPlus, Upload, Users, FolderOpen } from "lucide-react";
+import { UserPlus, Upload, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export type EmptyStateTab = "mine" | "shared" | "agency";
+export type EmptyStateTab = "mine" | "shared";
 
 type Props = {
   isNoVICs: boolean;
@@ -19,10 +19,8 @@ export default function EmptyState({ isNoVICs, tab = "mine", onAddVIC, onImportC
     const copy =
       tab === "shared"
         ? { title: "No VICs shared with you", body: "No VICs have been shared with you yet. Ask a colleague to share a VIC with you." }
-        : tab === "agency"
-          ? { title: "No VICs in agency directory", body: "No VICs are published to the agency directory yet." }
-          : { title: "No VICs yet", body: "Add your first VIC to get started." };
-    const Icon = tab === "shared" ? Users : tab === "agency" ? FolderOpen : UserPlus;
+        : { title: "No VICs yet", body: "Add your first VIC to get started." };
+    const Icon = tab === "shared" ? Users : UserPlus;
 
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4 text-center min-h-[280px]">
@@ -34,7 +32,7 @@ export default function EmptyState({ isNoVICs, tab = "mine", onAddVIC, onImportC
         {isMine && (
           <div className="flex flex-wrap gap-3 justify-center">
             {onAddVIC && (
-              <Button onClick={onAddVIC} className="gap-2">
+              <Button variant="toolbarAccent" size="sm" onClick={onAddVIC}>
                 <UserPlus size={16} />
                 Add VIC
               </Button>

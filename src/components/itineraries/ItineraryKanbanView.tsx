@@ -5,15 +5,13 @@ import { GripVertical } from "lucide-react";
 import type { Itinerary, ItineraryStatus } from "@/types/itinerary";
 import { getItineraryId } from "@/lib/itineraries-api";
 import { formatDateRange } from "./statusConfig";
-import ImageWithFallback from "@/components/ui/ImageWithFallback";
-import { cn } from "@/lib/utils";
 
-const COLUMNS: { status: ItineraryStatus; label: string; headerClass: string }[] = [
-  { status: "draft", label: "Draft", headerClass: "text-muted-foreground/90 border-border/40" },
-  { status: "proposed", label: "Proposed", headerClass: "text-blue-400 border-blue-500/30" },
-  { status: "confirmed", label: "Confirmed", headerClass: "text-emerald-400 border-emerald-500/30" },
-  { status: "in_progress", label: "In progress", headerClass: "text-[var(--color-warning)] border-amber-500/30" },
-  { status: "completed", label: "Completed", headerClass: "text-teal-400 border-teal-500/30" },
+const COLUMNS: { status: ItineraryStatus; label: string }[] = [
+  { status: "draft", label: "Draft" },
+  { status: "proposed", label: "Proposed" },
+  { status: "confirmed", label: "Confirmed" },
+  { status: "in_progress", label: "In progress" },
+  { status: "completed", label: "Completed" },
 ];
 
 function vicShort(name?: string): string {
@@ -36,14 +34,9 @@ export default function ItineraryKanbanView({ itineraries }: Props) {
           return (
             <div
               key={col.status}
-              className="flex h-full min-h-0 w-[260px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-white/[0.02]"
+              className="flex h-full min-h-0 w-[260px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card/40"
             >
-              <div
-                className={cn(
-                  "shrink-0 border-b px-3 py-2.5 text-xs font-semibold uppercase tracking-wider border-border",
-                  col.headerClass
-                )}
-              >
+              <div className="shrink-0 border-b border-border px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {col.label} ({colItems.length})
               </div>
               <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2">
@@ -61,24 +54,19 @@ export default function ItineraryKanbanView({ itineraries }: Props) {
                         type="button"
                         title="Drag to move — coming soon"
                         onClick={() => router.push(`/dashboard/itineraries/${id}`)}
-                        className="text-left rounded-lg border border-border bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/[0.12] transition-all group overflow-hidden w-full"
+                        className="text-left rounded-lg border border-border bg-card/30 hover:bg-card/50 hover:border-input transition-all group w-full"
                       >
-                        <div className="relative h-20 w-full bg-popover">
-                          <ImageWithFallback
-                            fallbackType="trip"
-                            src={it.hero_image_url}
-                            alt={it.trip_name}
-                            className="w-full h-full object-cover rounded-t-lg"
-                          />
+                        <div className="flex items-center justify-between gap-2 px-2.5 pt-2.5 pb-0">
+                          <span className="text-2xs font-medium uppercase tracking-wide text-muted-foreground/80">Trip</span>
                           <span
-                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded bg-black/50 text-white/70 cursor-help"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded-md text-muted-foreground cursor-help"
                             title="Drag to move — coming soon"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <GripVertical size={14} />
                           </span>
                         </div>
-                        <div className="p-2.5 pt-2">
+                        <div className="p-2.5 pt-1">
                           <p className="text-sm font-semibold text-foreground line-clamp-2 leading-snug">{it.trip_name}</p>
                           <p className="text-xs text-muted-foreground/75 mt-1">{vicShort(it.primary_vic_name)}</p>
                           <p className="text-xs text-muted-foreground/55 mt-0.5">
@@ -88,7 +76,7 @@ export default function ItineraryKanbanView({ itineraries }: Props) {
                             {(it.destinations ?? []).slice(0, 2).map((d) => (
                               <span
                                 key={d}
-                                className="text-2xs px-1.5 py-0.5 rounded-full bg-white/[0.06] text-muted-foreground/75 truncate max-w-full"
+                                className="text-2xs px-1.5 py-0.5 rounded-md border border-border/60 bg-muted-foreground/5 text-muted-foreground truncate max-w-full"
                               >
                                 {d.split(",")[0]}
                               </span>

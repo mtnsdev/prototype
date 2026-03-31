@@ -1,4 +1,5 @@
 import { PIPELINE_STAGES } from "@/config/pipelineStages";
+import { ALL_COUNTRIES } from "@/components/products/locationGroups";
 import type { ItineraryStatus, PipelineStage } from "@/types/itinerary";
 
 export type ItineraryListTab = "mine" | "agency";
@@ -14,11 +15,27 @@ const STATUS_SET = new Set<string>([
 
 const PIPELINE_KEYS = new Set<PipelineStage>(PIPELINE_STAGES.map((s) => s.key));
 
+function parseDestinationCountries(sp: URLSearchParams): string[] {
+  const raw = sp.get("destinations")?.trim();
+  if (raw) {
+    return raw.split(",").map((s) => s.trim()).filter(Boolean);
+  }
+  const legacy = sp.get("destination")?.trim();
+  if (!legacy) return [];
+  const parts = legacy.split(",").map((s) => s.trim()).filter(Boolean);
+  if (parts.length > 1) return parts;
+  const single = parts[0];
+  if (!single) return [];
+  const exact = ALL_COUNTRIES.find((c) => c.toLowerCase() === single.toLowerCase());
+  return exact ? [exact] : [];
+}
+
 export type ParsedItinerariesUrl = {
   tab: ItineraryListTab;
   q: string;
   status: ItineraryStatus | null;
-  destination: string | null;
+  /** Country names from the shared location catalog (OR match on itinerary destination strings). */
+  destinationCountries: string[];
   /** List filter — maps to API `vic_id` */
   vic: string | null;
   dateFrom: string;
@@ -47,7 +64,7 @@ export function parseItinerariesSearchParams(sp: URLSearchParams): ParsedItinera
   const statusRaw = sp.get("status");
   const status =
     statusRaw && STATUS_SET.has(statusRaw) ? (statusRaw as ItineraryStatus) : null;
-  const destination = sp.get("destination")?.trim() || null;
+  const destinationCountries = parseDestinationCountries(sp);
   const vic = sp.get("vic")?.trim() || null;
   const dateFrom = sp.get("date_from")?.trim() ?? "";
   const dateTo = sp.get("date_to")?.trim() ?? "";
@@ -68,7 +85,7 @@ export function parseItinerariesSearchParams(sp: URLSearchParams): ParsedItinera
     tab,
     q,
     status,
-    destination,
+    destinationCountries,
     vic,
     dateFrom,
     dateTo,
@@ -84,7 +101,7 @@ export function buildItinerariesSearchParams(args: {
   tab: ItineraryListTab;
   q: string;
   status: ItineraryStatus | null;
-  destination: string | null;
+  destinationCountries: string[];
   vic: string | null;
   dateFrom: string;
   dateTo: string;
@@ -100,7 +117,7 @@ export function buildItinerariesSearchParams(args: {
   const q = args.q.trim();
   if (q) p.set("q", q);
   if (args.status) p.set("status", args.status);
-  if (args.destination) p.set("destination", args.destination);
+  if (args.destinationCountries.length > 0) p.set("destinations", args.destinationCountries.join(","));
   if (args.vic) p.set("vic", args.vic);
   if (args.dateFrom) p.set("date_from", args.dateFrom);
   if (args.dateTo) p.set("date_to", args.dateTo);
@@ -117,6 +134,7 @@ const LIST_KEYS = [
   "q",
   "status",
   "destination",
+  "destinations",
   "vic",
   "date_from",
   "date_to",

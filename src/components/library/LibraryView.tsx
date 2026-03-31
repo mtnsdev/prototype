@@ -283,7 +283,7 @@ function DriveTreeNodeItem({
                 {/* Sync status indicator */}
                 {node.file && !isFolder && node.file.index_status === "pending" && (
                     <span className="text-2xs px-1.5 py-0.5 rounded bg-amber-500/15 text-[var(--color-warning)] border border-amber-500/25">
-                        Indexing...
+                        Indexing…
                     </span>
                 )}
 
@@ -398,7 +398,7 @@ function DriveLibraryContent({
     // Build virtual tree from flat files
     const tree = useMemo(() => buildDriveTree(files), [files]);
 
-    // Client-side search filtering
+    // In-browser search filtering
     const filteredFiles = useMemo(() => {
         const q = searchQuery.trim().toLowerCase();
         if (!q) return files;
@@ -496,7 +496,7 @@ function DriveLibraryContent({
                         <div className="px-5 py-10 text-center">
                             <div className="flex flex-col items-center gap-3">
                                 <Loader2 size={24} className="animate-spin text-muted-foreground/55" />
-                                <span className="text-compact text-muted-foreground/75">Loading files...</span>
+                                <span className="text-compact text-muted-foreground/75">Loading files…</span>
                             </div>
                         </div>
                     ) : files.length === 0 ? (
@@ -647,14 +647,14 @@ function TreeNode({
     depth,
     expandedIds,
     onToggleExpand,
-    clientCache,
+    folderTreeCache,
     onOpenPreview,
 }: {
     item: TLItem;
     depth: number;
     expandedIds: Set<number>;
     onToggleExpand: (id: number) => void;
-    clientCache: React.MutableRefObject<Map<number, TLItem[]>>;
+    folderTreeCache: React.MutableRefObject<Map<number, TLItem[]>>;
     onOpenPreview: (filename: string, proxyUrl: string) => void;
 }) {
     const isFolder = item.kind === "folder";
@@ -664,9 +664,9 @@ function TreeNode({
     // Memoize the onSuccess callback to prevent re-renders
     const handleSuccess = useCallback((next: TLItem[]) => {
         if (folderId !== null) {
-            clientCache.current.set(folderId, next);
+            folderTreeCache.current.set(folderId, next);
         }
-    }, [folderId, clientCache]);
+    }, [folderId, folderTreeCache]);
 
     // Create stable options object
     const hookOptions = useMemo(() => ({
@@ -681,7 +681,7 @@ function TreeNode({
         hookOptions
     );
 
-    const cachedChildren = folderId !== null ? clientCache.current.get(folderId) : undefined;
+    const cachedChildren = folderId !== null ? folderTreeCache.current.get(folderId) : undefined;
     const displayChildren = cachedChildren ?? children;
 
     const paddingLeft = 20 + depth * 24; // Base padding + indent per level
@@ -755,7 +755,7 @@ function TreeNode({
                             depth={depth + 1}
                             expandedIds={expandedIds}
                             onToggleExpand={onToggleExpand}
-                            clientCache={clientCache}
+                            folderTreeCache={folderTreeCache}
                             onOpenPreview={onOpenPreview}
                         />
                     ))}
@@ -966,7 +966,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
     // Delayed loading to prevent flickering
     const showSearchLoader = useDelayedLoading(searchLoading);
 
-    const clientCache = useRef<Map<number, TLItem[]>>(new Map());
+    const folderTreeCache = useRef<Map<number, TLItem[]>>(new Map());
 
     const isSearchMode = searchQuery.trim().length >= 2;
 
@@ -1097,7 +1097,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
     // Memoize the onSuccess callback to prevent re-renders
     const handleRootSuccess = useCallback((next: TLItem[]) => {
         if (rootId !== undefined) {
-            clientCache.current.set(rootId, next);
+            folderTreeCache.current.set(rootId, next);
         }
     }, [rootId]);
 
@@ -1109,7 +1109,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
 
     const { items, showLoading, error } = useFolderChildren(rootId, undefined, rootHookOptions);
 
-    const cachedItems = rootId !== undefined ? clientCache.current.get(rootId) : undefined;
+    const cachedItems = rootId !== undefined ? folderTreeCache.current.get(rootId) : undefined;
     const rawDisplayItems = cachedItems ?? items;
     const showRootLoading = showLoading && !cachedItems;
 
@@ -1223,7 +1223,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                     <div className="px-5 py-10 text-center">
                                         <div className="flex flex-col items-center gap-3">
                                             <Loader2 size={24} className="animate-spin text-muted-foreground/55" />
-                                            <span className="text-compact text-muted-foreground/75">Searching...</span>
+                                            <span className="text-compact text-muted-foreground/75">Searching…</span>
                                         </div>
                                     </div>
                                 ) : searchDocuments.length === 0 && searchPages.length === 0 ? (
@@ -1297,7 +1297,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                                         {searchLoading ? (
                                                                             <>
                                                                                 <Loader2 size={14} className="animate-spin" />
-                                                                                Loading...
+                                                                                Loading…
                                                                             </>
                                                                         ) : (
                                                                             "Load more documents"
@@ -1361,7 +1361,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                     {accordionRootLoading && accordionRootDisplay.length === 0 ? (
                                                         <div className="px-5 py-10 text-center">
                                                             <Loader2 size={24} className="animate-spin text-muted-foreground/55 mx-auto" />
-                                                            <span className="text-compact text-muted-foreground/75 block mt-3">Loading documents...</span>
+                                                            <span className="text-compact text-muted-foreground/75 block mt-3">Loading documents…</span>
                                                         </div>
                                                     ) : accordionRootDisplay.length === 0 ? (
                                                         <div className="px-5 py-10 text-center">
@@ -1376,7 +1376,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                 depth={1}
                                 expandedIds={rootAccordionExpandedIds}
                                 onToggleExpand={handleRootAccordionToggle}
-                                clientCache={rootAccordionCache}
+                                folderTreeCache={rootAccordionCache}
                                 onOpenPreview={openPreview}
                             />
                                                         ))
@@ -1387,7 +1387,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                     {pagesLoading && pagesItems.length === 0 ? (
                                                         <div className="px-5 py-10 text-center">
                                                             <Loader2 size={24} className="animate-spin text-muted-foreground/55 mx-auto" />
-                                                            <span className="text-compact text-muted-foreground/75 block mt-3">Loading pages...</span>
+                                                            <span className="text-compact text-muted-foreground/75 block mt-3">Loading pages…</span>
                                                         </div>
                                                     ) : pagesItems.length === 0 ? (
                                                         <div className="px-5 py-10 text-center">
@@ -1547,7 +1547,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                             {((navigationMode === "documents" && showRootLoading) || (navigationMode === "pages" && pagesLoading)) && (
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground/75">
                                     <Loader2 size={14} className="animate-spin" />
-                                    <span>Loading...</span>
+                                    <span>Loading…</span>
                                 </div>
                             )}
                             <SyncStatusButton />
@@ -1603,7 +1603,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                 <div className="px-5 py-10 text-center">
                                     <div className="flex flex-col items-center gap-3">
                                         <Loader2 size={24} className="animate-spin text-muted-foreground/55" />
-                                        <span className="text-compact text-muted-foreground/75">Loading pages...</span>
+                                        <span className="text-compact text-muted-foreground/75">Loading pages…</span>
                                     </div>
                                 </div>
                             ) : pagesItems.length === 0 ? (
@@ -1681,7 +1681,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                 <div className="px-5 py-10 text-center">
                                     <div className="flex flex-col items-center gap-3">
                                         <Loader2 size={24} className="animate-spin text-muted-foreground/55" />
-                                        <span className="text-compact text-muted-foreground/75">Searching...</span>
+                                        <span className="text-compact text-muted-foreground/75">Searching…</span>
                                     </div>
                                 </div>
                             ) : searchDocuments.length === 0 && searchPages.length === 0 ? (
@@ -1755,7 +1755,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                                     {showSearchLoader ? (
                                                                         <>
                                                                             <Loader2 size={14} className="animate-spin" />
-                                                                            Loading...
+                                                                            Loading…
                                                                         </>
                                                                     ) : (
                                                                         "Load more documents"
@@ -1797,7 +1797,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                     {showRootLoading ? (
                                         <div className="flex flex-col items-center gap-3">
                                             <Loader2 size={24} className="animate-spin text-muted-foreground/55" />
-                                            <span className="text-compact text-muted-foreground/75">Loading items...</span>
+                                            <span className="text-compact text-muted-foreground/75">Loading items…</span>
                                         </div>
                                     ) : (
                                         <div className="flex flex-col items-center gap-2">
@@ -1815,7 +1815,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                             depth={0}
                                             expandedIds={expandedIds}
                                             onToggleExpand={handleToggleExpand}
-                                            clientCache={clientCache}
+                                            folderTreeCache={folderTreeCache}
                                             onOpenPreview={openPreview}
                                         />
                                     ))}

@@ -1,5 +1,5 @@
 /**
- * Briefing Room API client. Calls endpoints as specified; uses mock when backend unavailable.
+ * Briefing Room HTTP API. Calls endpoints as specified; uses mock when backend unavailable.
  */
 
 import { IS_PREVIEW_MODE } from "@/config/preview";

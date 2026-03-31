@@ -239,7 +239,7 @@ function DriveConnectionCard({
                             {driveStatus.sync_status === "running" ? (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-sm font-medium bg-amber-500/15 text-[var(--color-warning)] border border-amber-500/25">
                                     <Loader2 size={12} className="animate-spin" />
-                                    Syncing...
+                                    Syncing…
                                 </span>
                             ) : driveStatus.sync_status === "failed" || driveStatus.status === "token_expired" ? (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-sm font-medium bg-red-500/15 text-red-400 border border-red-500/25">

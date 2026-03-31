@@ -45,9 +45,11 @@ type Props = {
   onClose: () => void;
   product: Product | null;
   onSaved: () => void;
+  /** Called after a successful create (not on edit) with the API response. */
+  onCreated?: (product: Product) => void;
 };
 
-export default function AddProductModal({ open, onClose, product, onSaved }: Props) {
+export default function AddProductModal({ open, onClose, product, onSaved, onCreated }: Props) {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -109,7 +111,8 @@ export default function AddProductModal({ open, onClose, product, onSaved }: Pro
       if (isEdit) {
         await updateProduct(getProductId(product!), body);
       } else {
-        await createProduct(body);
+        const created = await createProduct(body);
+        onCreated?.(created);
       }
       onSaved();
     } catch (e) {

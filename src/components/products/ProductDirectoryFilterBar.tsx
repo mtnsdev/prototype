@@ -9,6 +9,7 @@ import {
   LayoutGrid,
   List,
   Map as MapIcon,
+  Plus,
 } from "lucide-react";
 import type { DirectoryAmenityTag, DirectoryCollectionOption, DirectoryProductCategory } from "@/types/product-directory";
 import type { DirectoryPriceTier, DirectoryTierLevel } from "@/components/products/productDirectoryDetailMeta";
@@ -24,10 +25,14 @@ import { PageSearchField } from "@/components/ui/page-search-field";
 import ProductDirectoryLocationDropdown from "./ProductDirectoryLocationDropdown";
 import ProductDirectoryAmenitiesDropdown from "./ProductDirectoryAmenitiesDropdown";
 import ProductDirectoryProgramSearchDropdown from "./ProductDirectoryProgramSearchDropdown";
+import ProductDirectoryRepFirmFilterDropdown from "./ProductDirectoryRepFirmFilterDropdown";
+import type { RepFirmFilterOption } from "./ProductDirectoryRepFirmFilterDropdown";
 import ProductDirectoryCollectionSearchDropdown from "./ProductDirectoryCollectionSearchDropdown";
 import ProductDirectoryCommissionRangeDropdown from "./ProductDirectoryCommissionRangeDropdown";
 import ProductDirectoryTierDropdown from "./ProductDirectoryTierDropdown";
 import ProductDirectoryPriceFilterDropdown from "./ProductDirectoryPriceFilterDropdown";
+import { ProductDirectoryFilterSwitch } from "./ProductDirectoryFilterSwitch";
+import { Button } from "@/components/ui/button";
 import {
   DEFAULT_DIRECTORY_PRODUCT_SORT,
   DIRECTORY_PRODUCT_SORT_OPTIONS,
@@ -45,16 +50,21 @@ type Props = {
   onLocationCountriesChange: (v: string[]) => void;
   collectionFilter: string[];
   onCollectionFilterChange: (v: string[]) => void;
-  onRequestNewCollection: () => void;
+  onAddProduct: () => void;
   collections: DirectoryCollectionOption[];
   selectedProgramIds: string[];
   onSelectedProgramIdsChange: (v: string[]) => void;
+  repFirmFilterOptions: RepFirmFilterOption[];
+  selectedRepFirmIds: string[];
+  onSelectedRepFirmIdsChange: (v: string[]) => void;
   selectedAmenities: DirectoryAmenityTag[];
   onSelectedAmenitiesChange: (v: DirectoryAmenityTag[]) => void;
   commissionRange: [number, number];
   onCommissionRangeChange: (r: [number, number]) => void;
   commissionFilterActive: boolean;
   onCommissionFilterActiveChange: (v: boolean) => void;
+  hasActiveIncentive: boolean;
+  onHasActiveIncentiveChange: (v: boolean) => void;
   sortByCommission: boolean;
   onSortByCommissionChange: (v: boolean) => void;
   selectedTiers: DirectoryTierLevel[];
@@ -82,16 +92,21 @@ export default function ProductDirectoryFilterBar({
   onLocationCountriesChange,
   collectionFilter,
   onCollectionFilterChange,
-  onRequestNewCollection,
+  onAddProduct,
   collections,
   selectedProgramIds,
   onSelectedProgramIdsChange,
+  repFirmFilterOptions,
+  selectedRepFirmIds,
+  onSelectedRepFirmIdsChange,
   selectedAmenities,
   onSelectedAmenitiesChange,
   commissionRange,
   onCommissionRangeChange,
   commissionFilterActive,
   onCommissionFilterActiveChange,
+  hasActiveIncentive,
+  onHasActiveIncentiveChange,
   sortByCommission,
   onSortByCommissionChange,
   selectedTiers,
@@ -133,12 +148,19 @@ export default function ProductDirectoryFilterBar({
   return (
     <FilterBar>
       <FilterBarPrimaryStack>
-        <PageSearchField
-          value={searchQuery}
-          onChange={onSearchQueryChange}
-          placeholder="Search products…"
-          aria-label="Search products"
-        />
+        <div className="flex w-full min-w-0 items-center gap-2 md:gap-3">
+          <PageSearchField
+            className="min-w-0 w-auto flex-1"
+            value={searchQuery}
+            onChange={onSearchQueryChange}
+            placeholder="Search products…"
+            aria-label="Search products"
+          />
+          <Button type="button" variant="toolbarAccent" size="sm" className="shrink-0" onClick={onAddProduct}>
+            <Plus className="h-3.5 w-3.5" />
+            Add product
+          </Button>
+        </div>
         <FilterChipScrollRow>
           <button
             type="button"
@@ -239,13 +261,26 @@ export default function ProductDirectoryFilterBar({
           collections={collections}
           selectedIds={collectionFilter}
           onChange={onCollectionFilterChange}
-          onRequestNewCollection={onRequestNewCollection}
         />
         <ProductDirectoryProgramSearchDropdown
           selectedProgramIds={selectedProgramIds}
           onChange={onSelectedProgramIdsChange}
         />
+        <ProductDirectoryRepFirmFilterDropdown
+          repFirms={repFirmFilterOptions}
+          selectedRepFirmIds={selectedRepFirmIds}
+          onChange={onSelectedRepFirmIdsChange}
+        />
         <ProductDirectoryAmenitiesDropdown selected={selectedAmenities} onChange={onSelectedAmenitiesChange} />
+        {canViewCommissions ? (
+          <div className="flex items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 py-1.5">
+            <span className="text-xs text-muted-foreground">Active incentives</span>
+            <ProductDirectoryFilterSwitch
+              checked={hasActiveIncentive}
+              onCheckedChange={onHasActiveIncentiveChange}
+            />
+          </div>
+        ) : null}
         {canViewCommissions && (
           <ProductDirectoryCommissionRangeDropdown
             commissionRange={commissionRange}

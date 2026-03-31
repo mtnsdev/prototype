@@ -3,12 +3,11 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-export type VICTab = "mine" | "shared" | "agency";
+export type VICTab = "mine" | "shared";
 
 const TABS: { value: VICTab; label: string }[] = [
   { value: "mine", label: "My VICs" },
   { value: "shared", label: "Shared with Me" },
-  { value: "agency", label: "Agency Directory" },
 ];
 
 type Props = {

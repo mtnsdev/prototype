@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useRef } from "react";
-import { Check, Clock, Plus, Search, Sparkles } from "lucide-react";
+import { useCallback, useMemo, useRef } from "react";
+import { Check, Clock, Flame, Plus, Search, Sparkles, Users } from "lucide-react";
 import type { DirectoryProduct } from "@/types/product-directory";
 import { cn } from "@/lib/utils";
 import { directoryCategoryColors, directoryCategoryLabel } from "./productDirectoryVisual";
@@ -15,6 +15,9 @@ import {
 import { DIRECTORY_TIER_FILTER_UI } from "./productDirectoryFilterConfig";
 import { relativeTime } from "./productDirectoryRelativeTime";
 import { productListingMetaLineClass, productListingTitleClass } from "@/lib/productListingPrimitives";
+import { FAKE_ITINERARIES } from "@/components/itineraries/fakeData";
+import { FAKE_VICS } from "@/components/vic/fakeData";
+import { getVicsForProduct } from "@/lib/entityCrossLinks";
 
 type Props = {
   product: DirectoryProduct;
@@ -32,6 +35,9 @@ type Props = {
   showSavedFromSearch?: boolean;
   /** Native tooltip for “Saved from search” (e.g. saved-by + query). */
   savedFromSearchTitle?: string;
+  vicProductCounts?: Map<string, number>;
+  /** Smaller image + padding for dense lists (e.g. rep firm linked properties). */
+  compact?: boolean;
 };
 
 export default function DirectoryProductCard({
@@ -48,6 +54,8 @@ export default function DirectoryProductCard({
   onEnterBulkMode,
   showSavedFromSearch = false,
   savedFromSearchTitle,
+  vicProductCounts,
+  compact = false,
 }: Props) {
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ignoreNextClickRef = useRef(false);
@@ -61,6 +69,12 @@ export default function DirectoryProductCard({
   const tierStarCount = tierUi?.stars ?? 0;
   const tierStarColor = tierUi?.color ?? "#4A4540";
   const showVariedTerms = productHasDistinctPartnerTerms(product);
+  const vicCount = useMemo(() => {
+    const cached = vicProductCounts?.get(product.id);
+    if (cached != null) return cached;
+    if (product.type === "rep_firm") return 0;
+    return getVicsForProduct(product.id, FAKE_VICS ?? [], FAKE_ITINERARIES ?? []).length;
+  }, [product.id, product.type, vicProductCounts]);
 
   const clearLongPress = useCallback(() => {
     if (longPressTimer.current) {
@@ -97,6 +111,7 @@ export default function DirectoryProductCard({
       }}
       className={cn(
         "group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border transition-all",
+        compact && "rounded-lg",
         bulkSelected
           ? "border-[rgba(201,169,110,0.30)] ring-1 ring-[rgba(201,169,110,0.15)] bg-white/[0.02]"
           : "border-white/[0.04] bg-white/[0.02] hover:border-border hover:bg-white/[0.04]"
@@ -113,7 +128,12 @@ export default function DirectoryProductCard({
       onPointerLeave={clearLongPress}
       onPointerCancel={clearLongPress}
     >
-      <div className="relative h-[140px] w-full shrink-0 overflow-hidden">
+      <div
+        className={cn(
+          "relative w-full shrink-0 overflow-hidden",
+          compact ? "h-[88px]" : "h-[140px]"
+        )}
+      >
         <img
           src={product.imageUrl}
           alt={product.name}
@@ -142,7 +162,10 @@ export default function DirectoryProductCard({
         )}
 
         <span
-          className="absolute bottom-2 left-2 rounded-full border px-2 py-0.5 text-[9px] backdrop-blur-sm"
+          className={cn(
+            "absolute left-2 rounded-full border backdrop-blur-sm",
+            compact ? "bottom-1.5 px-1.5 py-px text-[8px]" : "bottom-2 px-2 py-0.5 text-[9px]"
+          )}
           style={{
             background: cat.bg,
             color: cat.color,
@@ -152,7 +175,7 @@ export default function DirectoryProductCard({
           {directoryCategoryLabel(product.type)}
         </span>
 
-        <div className="absolute right-2 top-2 flex items-center gap-1">
+        <div className={cn("absolute right-2 flex items-center gap-1", compact ? "top-1" : "top-2")}>
           {product.hasTeamData && (
             <span
               className="h-1.5 w-1.5 shrink-0 rounded-full"
@@ -167,6 +190,18 @@ export default function DirectoryProductCard({
               title="You have personal notes"
             />
           )}
+          {product.type !== "rep_firm" &&
+          product.activeAdvisoryCount != null &&
+          product.activeAdvisoryCount > 0 &&
+          canViewCommissions ? (
+            <div
+              className="flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-medium text-amber-400"
+              title={`${product.activeAdvisoryCount} active incentive${product.activeAdvisoryCount !== 1 ? "s" : ""}`}
+            >
+              <Flame className="h-2.5 w-2.5" aria-hidden />
+              {product.activeAdvisoryCount > 1 ? product.activeAdvisoryCount : null}
+            </div>
+          ) : null}
         </div>
 
         <button
@@ -177,20 +212,28 @@ export default function DirectoryProductCard({
             onAddToCollectionClick(e);
           }}
           className={cn(
-            "absolute bottom-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/40 text-white/50 backdrop-blur-sm transition-all hover:bg-black/60 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A96E]/40",
+            "absolute flex items-center justify-center rounded-full bg-black/40 text-white/50 backdrop-blur-sm transition-all hover:bg-black/60 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A96E]/40",
+            compact ? "bottom-1 right-1 h-5 w-5" : "bottom-2 right-2 h-6 w-6",
             bookmarked ? "text-brand-cta opacity-100" : "opacity-0 group-hover:opacity-100"
           )}
         >
-          <Plus className="h-3 w-3" strokeWidth={2.5} />
+          <Plus className={cn(compact ? "h-2.5 w-2.5" : "h-3 w-3")} strokeWidth={2.5} />
         </button>
       </div>
 
-      <div className="flex flex-1 flex-col p-3">
+      <div className={cn("flex flex-1 flex-col", compact ? "p-2" : "p-3")}>
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-1.5">
-              <h3 className={productListingTitleClass}>{product.name}</h3>
-              {tierStarCount > 0 ? (
+              <h3
+                className={cn(
+                  productListingTitleClass,
+                  compact && "text-xs leading-tight"
+                )}
+              >
+                {product.name}
+              </h3>
+              {product.type !== "rep_firm" && tierStarCount > 0 ? (
                 <div className="flex shrink-0 gap-0.5">
                   {Array.from({ length: tierStarCount }, (_, i) => (
                     <span key={i} className="text-[7px]" style={{ color: tierStarColor }}>
@@ -202,7 +245,7 @@ export default function DirectoryProductCard({
             </div>
             <p className={productListingMetaLineClass}>
               {placeLine}
-              {product.priceTier ? (
+              {product.type !== "rep_firm" && product.priceTier ? (
                 <span className="ml-1.5 text-2xs text-muted-foreground">{product.priceTier}</span>
               ) : null}
             </p>
@@ -221,7 +264,7 @@ export default function DirectoryProductCard({
           )}
         </div>
 
-        {activePrograms.length > 0 && (
+        {activePrograms.length > 0 && !compact && (
           <div className="mt-1.5 flex flex-wrap items-center gap-1">
             {activePrograms.slice(0, 3).map((pp) => (
               <span
@@ -245,25 +288,40 @@ export default function DirectoryProductCard({
           </div>
         )}
 
-        {product.updatedAt ? (
+        {product.type !== "rep_firm" && product.repFirmCount > 0 ? (
+          <div className={cn("flex items-center gap-1", compact ? "mt-0.5" : "mt-1")}>
+            <Users
+              className={cn("shrink-0 text-[#B07A5B]/60", compact ? "h-2 w-2" : "h-2.5 w-2.5")}
+              aria-hidden
+            />
+            <span className={cn("text-[#B07A5B]/60", compact ? "text-[7px]" : "text-[8px]")}>
+              {product.repFirmCount} rep firm{product.repFirmCount !== 1 ? "s" : ""}
+            </span>
+          </div>
+        ) : null}
+
+        {product.updatedAt && !compact ? (
           <div className="mt-1 flex items-center justify-end gap-1">
             <Clock className="h-2.5 w-2.5 text-muted-foreground/65" aria-hidden />
             <span className="text-[8px] text-muted-foreground/65">Updated {relativeTime(product.updatedAt)}</span>
           </div>
         ) : null}
 
-        {product.activePromotion && (
+        {product.activePromotion && !compact && (
           <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.10)] bg-[rgba(201,169,110,0.06)] px-2 py-1.5">
             <Sparkles className="h-3 w-3 shrink-0 text-brand-cta" aria-hidden />
             {canViewCommissions ? (
               <span className="text-2xs text-brand-cta">
-                {product.baseCommissionRate != null ? (
-                  <>
-                    <del className="opacity-50">{product.baseCommissionRate}%</del> {product.effectiveCommissionRate}%
-                  </>
-                ) : (
-                  <>{product.effectiveCommissionRate}%</>
-                )}
+                {(() => {
+                  const fmt = topForCommission?.commissionType === "flat" ? (v: number) => `$${v}` : (v: number) => `${v}%`;
+                  return product.baseCommissionRate != null ? (
+                    <>
+                      <del className="opacity-50">{fmt(product.baseCommissionRate)}</del> {fmt(product.effectiveCommissionRate!)}
+                    </>
+                  ) : (
+                    <>{fmt(product.effectiveCommissionRate!)}</>
+                  );
+                })()}
               </span>
             ) : (
               <span className="text-2xs text-brand-cta">Active promotion</span>
@@ -274,18 +332,39 @@ export default function DirectoryProductCard({
           </div>
         )}
 
-        <div className="mt-auto min-h-[24px] border-t border-white/[0.04] pt-2 text-xs text-brand-cta/80">
-          {canViewCommissions && topForCommission != null && topRate != null ? (
-            <span className="flex flex-wrap items-center gap-1">
-              <span className="text-2xs text-[#B8976E]">{topRate}%</span>
-              <span className="text-[9px] text-muted-foreground">via {programDisplayName(topForCommission)}</span>
+        <div
+          className={cn(
+            "mt-auto overflow-hidden border-t border-white/[0.04] text-brand-cta/80",
+            compact
+              ? "max-h-[2.25rem] border-white/[0.03] pt-1.5 text-[10px]"
+              : "h-6 pt-2 text-xs"
+          )}
+        >
+          <div className="flex items-center gap-2 whitespace-nowrap">
+          {product.type === "rep_firm" ? (
+            <span className="flex min-w-0 items-center gap-1 text-[9px] text-[#B07A5B]/70">
+              <Users className="h-2.5 w-2.5" aria-hidden />
+              <span className="truncate">{product.specialty ?? "Luxury representation"}</span>
+            </span>
+          ) : canViewCommissions && topForCommission != null && topRate != null ? (
+            <span className="flex min-w-0 items-center gap-1">
+              <span className="text-2xs text-[#B8976E]">
+                {topForCommission.commissionType === "flat" ? `$${topRate}` : `${topRate}%`}
+              </span>
+              <span className="truncate text-[9px] text-muted-foreground">via {programDisplayName(topForCommission)}</span>
             </span>
           ) : !canViewCommissions && topForCommission != null && topRate != null ? (
-            <span className="text-[9px] text-muted-foreground">Partner rate on file</span>
+            <span className="min-w-0 truncate text-[9px] text-muted-foreground">Partner rate on file</span>
+          ) : null}
+          {product.type !== "rep_firm" && vicCount > 0 ? (
+            <span className="ml-auto flex shrink-0 items-center gap-1 text-[9px] text-[#5C5852]/70">
+              <Users className="h-2.5 w-2.5" aria-hidden />
+              {vicCount} VIC{vicCount !== 1 ? "s" : ""}
+            </span>
           ) : null}
           {showSavedFromSearch ? (
-            <div
-              className="group relative mt-1.5 flex items-center gap-1 text-[9px] text-muted-foreground"
+            <span
+              className="group relative ml-auto flex shrink-0 items-center gap-1 text-[9px] text-muted-foreground"
               title={
                 savedFromSearchTitle ??
                 "Saved from chat or external search to your External Search collection."
@@ -293,8 +372,9 @@ export default function DirectoryProductCard({
             >
               <Search className="h-2.5 w-2.5 shrink-0" aria-hidden />
               <span>Saved from search</span>
-            </div>
+            </span>
           ) : null}
+          </div>
         </div>
       </div>
     </div>

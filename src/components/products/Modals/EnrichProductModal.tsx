@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 const ENRICH_FIELDS = [
   { id: "description", label: "Description" },
   { id: "tags", label: "Tags" },
-  { id: "client_suitability", label: "Client suitability" },
+  { id: "vic_suitability", label: "VIC suitability" },
   { id: "best_for_occasions", label: "Best for occasions" },
 ] as const;
 

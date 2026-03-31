@@ -3,19 +3,19 @@
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/** Wrapper: matches product directory primary search */
+/** Wrapper: primary row search — height matches `Button` `size="sm"` (`h-8`) in filter toolbars */
 export const catalogSearchFieldWrapperClass =
-  "flex min-w-0 w-full items-center gap-2 rounded-xl border border-border bg-white/[0.03] px-3 py-2";
+  "flex h-8 min-h-8 w-full min-w-0 items-center gap-2 rounded-xl border border-border bg-white/[0.03] px-3";
 
 const catalogSearchInputClass =
-  "min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder-[#4A4540] outline-none";
+  "min-w-0 flex-1 h-full bg-transparent text-sm leading-tight text-foreground placeholder-[#4A4540] outline-none";
 
-/** Inline / panel search (e.g. attach picker) */
+/** Inline / panel search (e.g. attach picker) — one step denser than primary */
 const compactSearchWrapperClass =
-  "flex min-w-0 w-full items-center gap-1.5 rounded-lg border border-border bg-white/[0.03] px-2.5 py-1.5";
+  "flex h-7 min-h-7 w-full min-w-0 items-center gap-1.5 rounded-lg border border-border bg-white/[0.03] px-2.5";
 
 const compactSearchInputClass =
-  "min-w-0 flex-1 bg-transparent text-xs text-foreground placeholder-[#4A4540] outline-none";
+  "min-w-0 flex-1 h-full bg-transparent text-xs leading-tight text-foreground placeholder-[#4A4540] outline-none";
 
 /** Shadcn SelectTrigger — use with cn(catalogSelectTriggerClass, "w-[…]") */
 export const catalogSelectTriggerClass =
@@ -83,10 +83,7 @@ export function PageSearchField({
   const isCompact = variant === "compact";
   return (
     <div className={cn(isCompact ? compactSearchWrapperClass : catalogSearchFieldWrapperClass, className)}>
-      <Search
-        className={cn("shrink-0 text-muted-foreground/65", isCompact ? "h-3.5 w-3.5" : "h-4 w-4")}
-        aria-hidden
-      />
+      <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground/65" aria-hidden />
       <input
         type="search"
         value={value}

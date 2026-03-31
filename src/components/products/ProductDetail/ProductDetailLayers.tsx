@@ -103,7 +103,7 @@ export function ProductDetailLayers({ product }: Props) {
                     My Notes
                   </p>
                   <textarea
-                    placeholder="Your personal notes about this property..."
+                    placeholder="Your personal notes about this property…"
                     value={advisorOverrides.notes}
                     onChange={(e) =>
                       setAdvisorOverrides({ ...advisorOverrides, notes: e.target.value })
@@ -189,7 +189,7 @@ export function ProductDetailLayers({ product }: Props) {
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="Add a note for the team..."
+                    placeholder="Add a note for the team…"
                     value={newAgencyNote}
                     onChange={(e) => setNewAgencyNote(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && submitAgencyNote()}
@@ -353,7 +353,7 @@ function SuggestionModal({
           <div>
             <p className="text-2xs text-muted-foreground uppercase tracking-wider mb-1">Details</p>
             <textarea
-              placeholder="Describe what should be changed and why..."
+              placeholder="Describe what should be changed and why…"
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               className="w-full text-xs bg-white/[0.03] border border-border rounded-lg px-3 py-2 text-foreground/88 placeholder:text-muted-foreground/55 outline-none resize-none h-20 leading-relaxed"

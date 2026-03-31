@@ -250,7 +250,7 @@ export function UserPermissionsModal({
                             ) : (
                                 <RefreshCw size={12} />
                             )}
-                            {isSyncing ? "Queuing..." : "Sync Now"}
+                            {isSyncing ? "Queuing…" : "Sync Now"}
                         </Button>
                     </div>
                 </div>

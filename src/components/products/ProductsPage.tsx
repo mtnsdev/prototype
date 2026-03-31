@@ -26,7 +26,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import PreviewBanner from "@/components/ui/PreviewBanner";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 
 const PRODUCT_VIEW_KEY = "product_view";
@@ -266,7 +265,6 @@ export default function ProductsPage() {
 
   return (
     <div className="h-full flex flex-col bg-background overflow-hidden">
-      {IS_PREVIEW_MODE && <PreviewBanner feature="Product Cards" variant="full" dismissible sampleDataOnly />}
       <ProductTabBar activeTab={activeTab} />
       <div className="relative z-10 shrink-0 px-6 pb-0 pt-4">
         <ProductToolbar

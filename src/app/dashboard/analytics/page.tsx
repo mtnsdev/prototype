@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { BarChart3, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -11,8 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import PreviewBanner from "@/components/ui/PreviewBanner";
-import { IS_PREVIEW_MODE } from "@/config/preview";
 import { useToast } from "@/contexts/ToastContext";
 import { cn } from "@/lib/utils";
 import {
@@ -20,14 +18,46 @@ import {
   directoryFilterSelectItemClass,
   directoryFilterSelectTriggerClass,
 } from "@/components/ui/page-search-field";
+import ImageWithFallback from "@/components/ui/ImageWithFallback";
+import { ListLabel } from "@/components/ui/typography";
 import {
   listSurfaceClass,
+  listScrollClass,
   listTableClass,
   listTheadRowClass,
+  listThClass,
   listTbodyRowClass,
   listTdClass,
   listMutedCellClass,
+  listPrimaryTextClass,
 } from "@/lib/list-ui";
+import {
+  DASHBOARD_LIST_PAGE_HEADER,
+  DASHBOARD_LIST_PAGE_HEADER_ACTIONS,
+  DASHBOARD_LIST_PAGE_HEADER_SUBTITLE,
+  DASHBOARD_LIST_PAGE_HEADER_TITLE,
+  DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK,
+} from "@/lib/dashboardChrome";
+
+function acuityBadgeClass(acuity: string): string {
+  switch (acuity) {
+    case "complete":
+      return "bg-[var(--muted-success-bg)] text-[var(--muted-success-text)] border border-[var(--muted-success-border)]";
+    case "running":
+      return "bg-[var(--muted-amber-bg)] text-[var(--muted-amber-text)] border border-[var(--muted-amber-border)]";
+    case "not_run":
+    case "failed":
+    default:
+      return "bg-[var(--muted-error-bg)] text-[var(--muted-error-text)] border border-[var(--muted-error-border)]";
+  }
+}
+
+const ACUITY_LABELS: Record<string, string> = {
+  not_run: "Not run",
+  running: "Running",
+  complete: "Complete",
+  failed: "Failed",
+};
 
 const REVENUE = [
   { m: "Oct", v: 12 },
@@ -40,11 +70,11 @@ const REVENUE = [
 const maxRev = Math.max(...REVENUE.map((r) => r.v));
 
 const STATUS_DONUT = [
-  { label: "Confirmed", n: 3, color: "rgb(52 211 153)" },
-  { label: "Draft", n: 2, color: "rgb(156 163 175)" },
-  { label: "Proposed", n: 1, color: "rgb(96 165 250)" },
-  { label: "Completed", n: 0, color: "rgb(45 212 191)" },
-  { label: "Cancelled", n: 0, color: "rgb(248 113 113)" },
+  { label: "Confirmed", n: 3, color: "var(--color-success)" },
+  { label: "Draft", n: 2, color: "var(--chrome-label)" },
+  { label: "Proposed", n: 1, color: "var(--color-info)" },
+  { label: "Completed", n: 0, color: "var(--muted-success-text)" },
+  { label: "Cancelled", n: 0, color: "var(--color-error)" },
 ];
 const totalTrips = STATUS_DONUT.reduce((s, x) => s + x.n, 0);
 let acc = 0;
@@ -55,15 +85,19 @@ const donutStops = STATUS_DONUT.filter((x) => x.n > 0).map((x) => {
   return `${x.color} ${start}% ${end}%`;
 });
 const donutBg =
-  totalTrips > 0 ? `conic-gradient(${donutStops.join(", ")})` : "conic-gradient(#333 0% 100%)";
+  totalTrips > 0
+    ? `conic-gradient(${donutStops.join(", ")})`
+    : `conic-gradient(var(--border-default) 0% 100%)`;
 
 const TOP_VICS = [
-  { id: "vic-001", name: "Jean-Christophe Chopin", trips: 2, rev: "€28,500", last: "Monaco GP", acuity: "Complete" },
-  { id: "vic-014", name: "Valérie Rousseau", trips: 1, rev: "€3,970", last: "Paris Weekend", acuity: "Complete" },
-  { id: "vic-004", name: "Eric Tournier", trips: 1, rev: "—", last: "Tuscany (draft)", acuity: "Complete" },
-  { id: "vic-003", name: "Camille Signoles", trips: 1, rev: "€42,000", last: "Maldives", acuity: "Complete" },
-  { id: "vic-011", name: "Thomas Bresson", trips: 1, rev: "—", last: "Lyon (draft)", acuity: "Not Run" },
+  { id: "vic-001", name: "Jean-Christophe Chopin", trips: 2, rev: "€28,500", last: "Monaco GP", acuity_status: "complete" as const },
+  { id: "vic-014", name: "Valérie Rousseau", trips: 1, rev: "€3,970", last: "Paris Weekend", acuity_status: "complete" as const },
+  { id: "vic-004", name: "Eric Tournier", trips: 1, rev: "—", last: "Tuscany (draft)", acuity_status: "complete" as const },
+  { id: "vic-003", name: "Camille Signoles", trips: 1, rev: "€42,000", last: "Maldives", acuity_status: "complete" as const },
+  { id: "vic-011", name: "Thomas Bresson", trips: 1, rev: "—", last: "Lyon (draft)", acuity_status: "not_run" as const },
 ];
+
+const cardClass = "rounded-xl border border-border bg-white/[0.02] p-5 md:p-6";
 
 export default function AnalyticsPage() {
   const showToast = useToast();
@@ -71,160 +105,214 @@ export default function AnalyticsPage() {
   const [askFocus, setAskFocus] = useState(false);
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-auto bg-background">
-      {IS_PREVIEW_MODE && <PreviewBanner feature="Analytics" variant="full" dismissible sampleDataOnly />}
-      <div className="max-w-6xl mx-auto p-6 space-y-8">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
-            <BarChart3 size={28} className="text-blue-400" /> Analytics
-          </h1>
-          <div className="flex items-center gap-2">
-            <Select value={range} onValueChange={setRange}>
-              <SelectTrigger className={cn(directoryFilterSelectTriggerClass, "w-[min(100%,168px)]")}>
-                <SelectValue placeholder="Period" />
-              </SelectTrigger>
-              <SelectContent className={directoryFilterSelectContentClass}>
-                <SelectItem className={directoryFilterSelectItemClass} value="month">
-                  This month
-                </SelectItem>
-                <SelectItem className={directoryFilterSelectItemClass} value="quarter">
-                  This quarter
-                </SelectItem>
-                <SelectItem className={directoryFilterSelectItemClass} value="year">
-                  This year
-                </SelectItem>
-                <SelectItem className={directoryFilterSelectItemClass} value="all">
-                  All time
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" className="border-input" onClick={() => showToast("Export — coming soon")}>
-              <Download size={14} className="mr-1" /> Export
-            </Button>
-          </div>
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-inset text-foreground">
+      <header className={DASHBOARD_LIST_PAGE_HEADER}>
+        <div className={DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK}>
+          <h1 className={DASHBOARD_LIST_PAGE_HEADER_TITLE}>Analytics</h1>
+          <p className={DASHBOARD_LIST_PAGE_HEADER_SUBTITLE}>
+            VIC, trip, and revenue signals — sample data in preview
+          </p>
         </div>
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { label: "Active VICs", val: "15", sub: "+3 vs Q3", up: true },
-            { label: "Total Trips", val: "8", sub: "+2 vs Q3", up: true },
-            { label: "Revenue", val: "€98,500", sub: "+32% vs Q3", up: true },
-            { label: "Margin", val: "25.0%", sub: "Gross", up: true },
-          ].map((k) => (
-            <div key={k.label} className="rounded-xl border border-border bg-white/[0.03] p-5">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">{k.label}</p>
-              <p className="text-3xl font-bold text-foreground mt-1">{k.val}</p>
-              <p className={cn("text-sm mt-1", k.up ? "text-emerald-500" : "text-red-400")}>{k.sub}</p>
-            </div>
-          ))}
+        <div className={DASHBOARD_LIST_PAGE_HEADER_ACTIONS}>
+          <Select value={range} onValueChange={setRange}>
+            <SelectTrigger className={cn(directoryFilterSelectTriggerClass, "h-8 w-[min(100%,168px)] text-xs")}>
+              <SelectValue placeholder="Period" />
+            </SelectTrigger>
+            <SelectContent className={directoryFilterSelectContentClass}>
+              <SelectItem className={directoryFilterSelectItemClass} value="month">
+                This month
+              </SelectItem>
+              <SelectItem className={directoryFilterSelectItemClass} value="quarter">
+                This quarter
+              </SelectItem>
+              <SelectItem className={directoryFilterSelectItemClass} value="year">
+                This year
+              </SelectItem>
+              <SelectItem className={directoryFilterSelectItemClass} value="all">
+                All time
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 border-input px-2.5 text-xs text-foreground"
+            onClick={() => showToast("Export — coming soon")}
+          >
+            <Download size={13} className="mr-1 shrink-0" />
+            Export
+          </Button>
         </div>
+      </header>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="rounded-xl border border-border bg-white/[0.03] p-6">
-            <h2 className="text-sm font-semibold text-muted-foreground/90 uppercase tracking-wider mb-4">Revenue by month</h2>
-            <div className="flex items-end justify-between gap-2 h-48 pt-4">
-              {REVENUE.map((r) => (
-                <div key={r.m} className="flex-1 flex flex-col items-center gap-2">
-                  <div
-                    className="w-full max-w-[48px] mx-auto rounded-t-md bg-gradient-to-t from-violet-600 to-violet-400/80 min-h-[8px] transition-all"
-                    style={{ height: `${(r.v / maxRev) * 100}%` }}
-                  />
-                  <span className="text-2xs text-muted-foreground">{r.m}</span>
-                  <span className="text-xs text-muted-foreground/90">€{r.v}K</span>
-                </div>
-              ))}
+      <div className="min-h-0 flex-1 overflow-auto">
+        <div className="px-6 pb-8 pt-6 space-y-6 max-w-[1600px]">
+          <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
+            {[
+              { label: "Active VICs", val: "15", sub: "+3 vs Q3", up: true },
+              { label: "Total Trips", val: "8", sub: "+2 vs Q3", up: true },
+              { label: "Revenue", val: "€98,500", sub: "+32% vs Q3", up: true },
+              { label: "Margin", val: "25.0%", sub: "Gross", up: true },
+            ].map((k) => (
+              <div key={k.label} className={cardClass}>
+                <ListLabel className="block">{k.label}</ListLabel>
+                <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground md:text-3xl">{k.val}</p>
+                <p
+                  className={cn(
+                    "mt-1 text-sm",
+                    k.up ? "text-[var(--color-success)]" : "text-[var(--color-error)]"
+                  )}
+                >
+                  {k.sub}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className={cardClass}>
+              <ListLabel className="mb-4 block">Revenue by month</ListLabel>
+              <div className="flex h-48 items-end justify-between gap-2 pt-2">
+                {REVENUE.map((r) => (
+                  <div key={r.m} className="flex flex-1 flex-col items-center gap-2">
+                    <div
+                      className="mx-auto w-full max-w-[48px] rounded-t-md bg-gradient-to-t from-[rgba(201,169,110,0.5)] to-[rgba(201,169,110,0.12)] transition-all min-h-[8px]"
+                      style={{ height: `${(r.v / maxRev) * 100}%` }}
+                    />
+                    <span className="text-2xs text-muted-foreground">{r.m}</span>
+                    <span className="text-xs text-muted-foreground/90">€{r.v}K</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className={cardClass}>
+              <ListLabel className="mb-4 block">Trips by status</ListLabel>
+              <div className="flex flex-col items-center justify-center gap-6 py-2 sm:flex-row sm:gap-8">
+                <div
+                  className="h-36 w-36 shrink-0 rounded-full"
+                  style={{
+                    background: donutBg,
+                    mask: "radial-gradient(transparent 55%, black 56%)",
+                    WebkitMask: "radial-gradient(transparent 55%, black 56%)",
+                  }}
+                />
+                <ul className="space-y-1.5 text-sm text-muted-foreground/90">
+                  {STATUS_DONUT.map((s) => (
+                    <li key={s.label} className="flex items-center gap-2">
+                      <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: s.color }} />
+                      {s.label}: {s.n}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
-          <div className="rounded-xl border border-border bg-white/[0.03] p-6">
-            <h2 className="text-sm font-semibold text-muted-foreground/90 uppercase tracking-wider mb-4">Trips by status</h2>
-            <div className="flex items-center justify-center gap-8 py-4">
-              <div
-                className="w-36 h-36 rounded-full shrink-0"
-                style={{
-                  background: donutBg,
-                  mask: "radial-gradient(transparent 55%, black 56%)",
-                  WebkitMask: "radial-gradient(transparent 55%, black 56%)",
+
+          <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden")}>
+            <div className="border-b border-border px-3 py-3">
+              <ListLabel>Top VICs</ListLabel>
+            </div>
+            <table className={listTableClass("min-w-[640px]")}>
+              <thead>
+                <tr className={listTheadRowClass}>
+                  <th className={listThClass} scope="col">
+                    Name
+                  </th>
+                  <th className={listThClass} scope="col">
+                    Trips
+                  </th>
+                  <th className={listThClass} scope="col">
+                    Revenue
+                  </th>
+                  <th className={listThClass} scope="col">
+                    Last trip
+                  </th>
+                  <th className={listThClass} scope="col">
+                    Acuity
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {TOP_VICS.map((row) => {
+                  const acuityLabel = ACUITY_LABELS[row.acuity_status] ?? row.acuity_status;
+                  return (
+                    <tr key={row.id} className={listTbodyRowClass}>
+                      <td className={listTdClass}>
+                        <div className="flex items-center gap-3">
+                          <ImageWithFallback
+                            fallbackType="avatar"
+                            alt={row.name}
+                            name={row.name}
+                            className="h-10 w-10 shrink-0"
+                          />
+                          <Link href={`/dashboard/vics/${row.id}`} className={cn(listPrimaryTextClass, "hover:underline")}>
+                            {row.name}
+                          </Link>
+                        </div>
+                      </td>
+                      <td className={cn(listTdClass, listMutedCellClass)}>{row.trips}</td>
+                      <td className={cn(listTdClass, listMutedCellClass)}>{row.rev}</td>
+                      <td className={cn(listTdClass, listMutedCellClass)}>{row.last}</td>
+                      <td className={listTdClass}>
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-2xs font-medium capitalize",
+                            acuityBadgeClass(row.acuity_status)
+                          )}
+                        >
+                          {acuityLabel.replace(/_/g, " ")}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div
+            className={cn(
+              "rounded-xl border border-border bg-white/[0.02] p-4 transition-colors",
+              askFocus && "border-[rgba(201,169,110,0.28)]"
+            )}
+          >
+            <div className="flex items-center gap-2 rounded-lg border border-input bg-inset px-3 py-2.5 md:px-4 md:py-3">
+              <span className="text-brand-cta" aria-hidden>
+                ✦
+              </span>
+              <input
+                className="min-w-0 flex-1 border-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/70"
+                placeholder="Ask a question about your data…"
+                onFocus={() => setAskFocus(true)}
+                onBlur={() => setAskFocus(false)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") showToast("AI Analytics — coming in v2");
                 }}
               />
-              <ul className="text-sm space-y-1">
-                {STATUS_DONUT.map((s) => (
-                  <li key={s.label} className="flex items-center gap-2 text-muted-foreground/90">
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: s.color }} />
-                    {s.label}: {s.n}
-                  </li>
+              <Button
+                size="sm"
+                variant="toolbarAccent"
+                className="h-8 shrink-0 px-3 text-xs"
+                onClick={() => showToast("AI Analytics — coming in v2")}
+              >
+                Ask
+              </Button>
+            </div>
+            {askFocus && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {["Top revenue VICs this quarter", "Trips with unconfirmed events", "Commission forecast next 3 months"].map((q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    className="rounded-full border border-border bg-background/30 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-input hover:bg-muted/35 hover:text-foreground"
+                    onClick={() => showToast("AI Analytics — coming in v2")}
+                  >
+                    {q}
+                  </button>
                 ))}
-              </ul>
-            </div>
+              </div>
+            )}
           </div>
-        </div>
-
-        <div className={cn(listSurfaceClass, "overflow-hidden")}>
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider px-4 py-3 border-b border-white/[0.08]">
-            Top VICs
-          </h2>
-          <table className={listTableClass()}>
-            <thead>
-              <tr className={listTheadRowClass}>
-                <th className="px-4 py-2 text-left font-medium">VIC</th>
-                <th className="px-4 py-2 text-left font-medium">Trips</th>
-                <th className="px-4 py-2 text-left font-medium">Revenue</th>
-                <th className="px-4 py-2 text-left font-medium">Last Trip</th>
-                <th className="px-4 py-2 text-left font-medium">Acuity</th>
-              </tr>
-            </thead>
-            <tbody>
-              {TOP_VICS.map((row) => (
-                <tr key={row.id} className={listTbodyRowClass}>
-                  <td className={cn(listTdClass, "px-4")}>
-                    <Link href={`/dashboard/vics/${row.id}`} className="text-foreground hover:underline">
-                      {row.name}
-                    </Link>
-                  </td>
-                  <td className={cn(listTdClass, listMutedCellClass, "px-4")}>{row.trips}</td>
-                  <td className={cn(listTdClass, listMutedCellClass, "px-4")}>{row.rev}</td>
-                  <td className={cn(listTdClass, listMutedCellClass, "px-4")}>{row.last}</td>
-                  <td className={cn(listTdClass, listMutedCellClass, "px-4")}>{row.acuity}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div
-          className={cn(
-            "rounded-xl border border-input p-4 transition-colors bg-blue-500/5",
-            askFocus && "border-blue-500/25"
-          )}
-        >
-          <div className="flex items-center gap-2 rounded-lg bg-black/20 border border-blue-500/10 px-4 py-3">
-            <span className="text-blue-400">✦</span>
-            <input
-              className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground text-sm outline-none"
-              placeholder="Ask a question about your data..."
-              onFocus={() => setAskFocus(true)}
-              onBlur={() => setAskFocus(false)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") showToast("AI Analytics — coming in v2");
-              }}
-            />
-            <Button size="sm" className="bg-foreground/20 hover:bg-foreground/30 text-foreground" onClick={() => showToast("AI Analytics — coming in v2")}>
-              →
-            </Button>
-          </div>
-          {askFocus && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {["Top revenue VICs this quarter", "Trips with unconfirmed events", "Commission forecast next 3 months"].map((q) => (
-                <button
-                  key={q}
-                  type="button"
-                  className="text-xs px-3 py-1.5 rounded-full border border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
-                  onClick={() => showToast("AI Analytics — coming in v2")}
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>

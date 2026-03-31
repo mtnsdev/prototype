@@ -107,7 +107,7 @@ const RAW: EmailIngestion[] = [
   },
   {
     id: "email-004",
-    subject: "Client Request — Eric Tournier, December Ski Trip",
+    subject: "VIC Request — Eric Tournier, December Ski Trip",
     senderEmail: "eric.tournier@gmail.com",
     senderName: "Eric Tournier",
     receivedAt: "2026-03-17T11:20:00Z",

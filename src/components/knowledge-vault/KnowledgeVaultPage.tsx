@@ -34,7 +34,6 @@ import DocumentDetailPanel from "./DocumentDetailPanel";
 import EmailIngestionView from "./EmailIngestionView";
 import KnowledgeVaultPermissionsPanel from "./KnowledgeVaultPermissionsPanel";
 import ConnectSourceModal from "./ConnectSourceModal";
-import PreviewBanner from "@/components/ui/PreviewBanner";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 import { VAULT_CATALOG_COUNT_TOOLTIP, getKnowledgeVaultDistinctTags } from "./knowledgeVaultMockData";
 import { useUser } from "@/contexts/UserContext";
@@ -60,12 +59,19 @@ import {
   type KvSortOption,
 } from "@/lib/knowledgeVaultSort";
 import { buildKnowledgeVaultSearchParams, parseKnowledgeVaultSearchParams } from "@/lib/knowledgeVaultUrl";
+import {
+  DASHBOARD_LIST_PAGE_HEADER,
+  DASHBOARD_LIST_PAGE_HEADER_ACTIONS,
+  DASHBOARD_LIST_PAGE_HEADER_SUBTITLE,
+  DASHBOARD_LIST_PAGE_HEADER_TITLE,
+  DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK,
+} from "@/lib/dashboardChrome";
 import { TEAM_EVERYONE_ID } from "@/types/teams";
 
 const EMAIL_SOURCE_ID = "src-email";
 const KV_SEARCH_DEBOUNCE_MS = 320;
 
-/** Fetch enough rows for client-side visibility filters; table pages this list. */
+/** Fetch enough rows for in-browser visibility filters; table pages this list. */
 const KV_FETCH_LIMIT = 5000;
 const KV_PAGE_SIZE = 20;
 
@@ -701,10 +707,10 @@ export default function KnowledgeVaultPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-inset text-foreground">
-      <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-4 border-b border-border pl-6 pr-[4.5rem] py-3">
-        <div className="min-w-0">
-          <h1 className="text-sm font-semibold leading-none text-foreground">Knowledge Vault</h1>
-          <p className="mt-1 text-xs leading-snug text-muted-foreground/75">
+      <header className={DASHBOARD_LIST_PAGE_HEADER}>
+        <div className={DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK}>
+          <h1 className={DASHBOARD_LIST_PAGE_HEADER_TITLE}>Knowledge Vault</h1>
+          <p className={DASHBOARD_LIST_PAGE_HEADER_SUBTITLE}>
             {vaultDocFiltersActive ? (
               <>
                 {emailOnlyView ? (
@@ -728,7 +734,7 @@ export default function KnowledgeVaultPage() {
             )}
           </p>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className={DASHBOARD_LIST_PAGE_HEADER_ACTIONS}>
           {isAdmin && !emailOnlyView && (
             <Button
               variant="outline"
@@ -787,11 +793,6 @@ export default function KnowledgeVaultPage() {
           </Button>
         </div>
       </header>
-      {IS_PREVIEW_MODE && (
-        <div className="shrink-0">
-          <PreviewBanner feature="Knowledge Vault" variant="full" dismissible sampleDataOnly />
-        </div>
-      )}
 
       <div className="flex min-h-0 flex-1">
         <main className="flex-1 min-w-0 overflow-auto flex flex-col bg-inset">
@@ -920,7 +921,7 @@ export default function KnowledgeVaultPage() {
                               ? hasServerSideListFilters
                                 ? "filtered_empty"
                                 : "api_empty"
-                              : "client_visibility",
+                              : "vic_visibility",
                           onConnectSource: () => setConnectOpen(true),
                         }
                       : undefined

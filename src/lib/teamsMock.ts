@@ -4,7 +4,7 @@ import { TEAM_EVERYONE_ID } from "@/types/teams";
 export const DEFAULT_TEAM_POLICIES: TeamPolicies = {
   canViewCommissions: true,
   canExportDocuments: true,
-  canSendToClient: true,
+  canSendToVic: true,
   canRunAcuity: true,
   sourceAccess: "all",
 };
@@ -12,7 +12,7 @@ export const DEFAULT_TEAM_POLICIES: TeamPolicies = {
 export const ALL_TEAM_POLICIES: TeamPolicies = {
   canViewCommissions: true,
   canExportDocuments: true,
-  canSendToClient: true,
+  canSendToVic: true,
   canRunAcuity: true,
   sourceAccess: "all",
 };
@@ -80,7 +80,7 @@ export const MOCK_TEAMS: Team[] = [
     policies: {
       canViewCommissions: true,
       canExportDocuments: false,
-      canSendToClient: true,
+      canSendToVic: true,
       canRunAcuity: true,
       sourceAccess: ["google_drive_shared", "email"],
     },
@@ -98,7 +98,7 @@ export const INITIAL_MOCK_TEAMS: Team[] = MOCK_TEAMS.map((t) => ({
 export type ResolvedUserPolicies = {
   canViewCommissions: boolean;
   canExportDocuments: boolean;
-  canSendToClient: boolean;
+  canSendToVic: boolean;
   canRunAcuity: boolean;
   accessibleSources: string[] | "all";
 };
@@ -111,7 +111,7 @@ export function resolveUserPolicies(
     return {
       canViewCommissions: false,
       canExportDocuments: false,
-      canSendToClient: false,
+      canSendToVic: false,
       canRunAcuity: false,
       accessibleSources: [],
     };
@@ -120,7 +120,7 @@ export function resolveUserPolicies(
     return {
       canViewCommissions: true,
       canExportDocuments: true,
-      canSendToClient: true,
+      canSendToVic: true,
       canRunAcuity: true,
       accessibleSources: "all",
     };
@@ -131,7 +131,7 @@ export function resolveUserPolicies(
     return {
       canViewCommissions: false,
       canExportDocuments: false,
-      canSendToClient: false,
+      canSendToVic: false,
       canRunAcuity: false,
       accessibleSources: [],
     };
@@ -139,7 +139,7 @@ export function resolveUserPolicies(
   return {
     canViewCommissions: userTeams.some((t) => t.policies.canViewCommissions),
     canExportDocuments: userTeams.some((t) => t.policies.canExportDocuments),
-    canSendToClient: userTeams.some((t) => t.policies.canSendToClient),
+    canSendToVic: userTeams.some((t) => t.policies.canSendToVic),
     canRunAcuity: userTeams.some((t) => t.policies.canRunAcuity),
     accessibleSources: userTeams.some((t) => t.policies.sourceAccess === "all")
       ? "all"

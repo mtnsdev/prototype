@@ -51,7 +51,7 @@ export default function DetailSidebar({ vic, className, onShowTravelProfiles }: 
   const [collapsed, setCollapsed] = useState(false);
 
   const advisorName = vic.assigned_advisor_name ?? vic.assigned_advisor_id ?? "—";
-  const clientSince = vic.client_since ? formatDate(vic.client_since) ?? vic.client_since : "—";
+  const vicSince = vic.vic_since ? formatDate(vic.vic_since) ?? vic.vic_since : "—";
   const status = vic.relationship_status?.replace(/_/g, " ") ?? "—";
   const tags = vic.tags ?? [];
 
@@ -98,7 +98,7 @@ export default function DetailSidebar({ vic, className, onShowTravelProfiles }: 
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/75 mb-2">Quick info</h3>
           <ul className="space-y-1.5 text-sm text-[rgba(245,245,245,0.85)]">
             <li><span className="text-muted-foreground/75">Advisor:</span> {advisorName}</li>
-            <li><span className="text-muted-foreground/75">Client since:</span> {clientSince}</li>
+            <li><span className="text-muted-foreground/75">VIC since:</span> {vicSince}</li>
             <li>
               <span className="text-muted-foreground/75">Status:</span>{" "}
               <span className={cn(

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import {
-  listSurfaceClass,
+  listSurfaceWithState,
   listScrollClass,
   listTableClass,
   listTheadRowClass,
@@ -23,6 +23,7 @@ import {
   listTbodyRowClass,
   listTdClass,
   listMutedCellClass,
+  listPrimaryTextClass,
 } from "@/lib/list-ui";
 import type { PipelineStage } from "@/types/itinerary";
 import { PIPELINE_STAGE_LABEL_MAP, pipelineStageBadgeClass } from "@/config/pipelineStages";
@@ -38,18 +39,21 @@ type Props = {
   canViewFinancials: boolean;
 };
 
-const COLUMNS = [
-  { key: "trip_name", label: "Trip Name", sortable: true },
-  { key: "vic", label: "VIC", sortable: false },
-  { key: "destinations", label: "Destinations", sortable: false },
-  { key: "dates", label: "Dates", sortable: true },
-  { key: "duration", label: "Duration", sortable: false },
-  { key: "pipeline", label: "Pipeline", sortable: false },
-  { key: "status", label: "Status", sortable: true },
-  { key: "events", label: "Events", sortable: false },
-  { key: "price", label: "Price", sortable: false },
-  { key: "actions", label: "Actions", sortable: false },
-];
+function columnsForList(canViewFinancials: boolean) {
+  const base = [
+    { key: "trip_name", label: "Trip name" },
+    { key: "vic", label: "VIC" },
+    { key: "destinations", label: "Destinations" },
+    { key: "dates", label: "Dates" },
+    { key: "duration", label: "Duration" },
+    { key: "pipeline", label: "Pipeline" },
+    { key: "status", label: "Status" },
+    { key: "events", label: "Events" },
+  ] as const;
+  const price = { key: "price", label: "Price" } as const;
+  const actions = { key: "actions", label: "Actions" } as const;
+  return canViewFinancials ? [...base, price, actions] : [...base, actions];
+}
 
 export default function ItineraryListView({
   itineraries,
@@ -62,25 +66,51 @@ export default function ItineraryListView({
   canViewFinancials,
 }: Props) {
   const router = useRouter();
+  const columns = columnsForList(canViewFinancials);
+  const colCount = columns.length;
+  const isRefetching = isLoading && itineraries.length > 0;
+
   if (isLoading && itineraries.length === 0) {
     return (
-      <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden p-3")}>
-        <div className="space-y-2">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-12 rounded-lg bg-white/[0.04] animate-pulse" />
-          ))}
-        </div>
+      <div className={cn(listSurfaceWithState({ refetching: false }), listScrollClass, "overflow-hidden")}>
+        <table className={listTableClass("min-w-[900px]")}>
+          <thead>
+            <tr className={listTheadRowClass}>
+              {columns.map((col) => (
+                <th key={col.key} className={listThClass} scope="col">
+                  {col.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <tr key={i} className={listTbodyRowClass}>
+                {Array.from({ length: colCount }, (_, j) => (
+                  <td key={j} className={listTdClass}>
+                    <div
+                      className={cn(
+                        "rounded bg-muted-foreground/12 animate-pulse",
+                        j === 0 ? "h-4 w-full max-w-[200px]" : "h-4 w-20"
+                      )}
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     );
   }
 
   return (
-    <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden")}>
+    <div className={cn(listSurfaceWithState({ refetching: isRefetching }), listScrollClass, "overflow-hidden transition-opacity")}>
       <table className={listTableClass("min-w-[900px]")}>
         <thead>
-          <tr className={cn(listTheadRowClass, "uppercase tracking-wider text-muted-foreground/80")}>
-            {COLUMNS.map((col) => (
-              <th key={col.key} className={listThClass}>
+          <tr className={listTheadRowClass}>
+            {columns.map((col) => (
+              <th key={col.key} className={listThClass} scope="col">
                 {col.label}
               </th>
             ))}
@@ -93,8 +123,9 @@ export default function ItineraryListView({
             const ps = (it.pipeline_stage ?? "lead") as PipelineStage;
             const plLabel = PIPELINE_STAGE_LABEL_MAP[ps];
             const eventCount = it.days?.reduce((acc, d) => acc + (d.events?.length ?? 0), 0) ?? 0;
-            const totalPrice = it.total_client_price ?? it.days?.reduce((sum, d) => sum + (d.events ?? []).reduce((s, e) => s + (e.client_price ?? 0), 0), 0) ?? 0;
+            const totalPrice = it.total_vic_price ?? it.days?.reduce((sum, d) => sum + (d.events ?? []).reduce((s, e) => s + (e.vic_price ?? 0), 0), 0) ?? 0;
             const currencySym = it.currency === "EUR" ? "€" : it.currency ?? "€";
+            const vicLabel = it.primary_vic_name || it.primary_vic_id || "—";
             return (
               <tr
                 key={id}
@@ -104,18 +135,20 @@ export default function ItineraryListView({
                 <td className={listTdClass}>
                   <Link
                     href={`/dashboard/itineraries/${id}`}
-                    className="font-medium text-foreground hover:underline"
+                    className={cn(listPrimaryTextClass, "hover:underline")}
+                    onClick={(e) => e.stopPropagation()}
                   >
                     {it.trip_name || "—"}
                   </Link>
                 </td>
-                <td className={cn(listTdClass, listMutedCellClass)} onClick={(e) => e.stopPropagation()}>
-                  <Link
-                    href={`/dashboard/vics/${it.primary_vic_id}`}
-                    className="hover:underline text-foreground"
-                  >
-                    {it.primary_vic_name || it.primary_vic_id || "—"}
-                  </Link>
+                <td className={listTdClass} onClick={(e) => e.stopPropagation()}>
+                  {it.primary_vic_id ? (
+                    <Link href={`/dashboard/vics/${it.primary_vic_id}`} className={cn(listPrimaryTextClass, "hover:underline")}>
+                      {vicLabel}
+                    </Link>
+                  ) : (
+                    <span className={listMutedCellClass}>{vicLabel}</span>
+                  )}
                 </td>
                 <td className={cn(listTdClass, listMutedCellClass, "max-w-[200px] truncate")}>
                   {(it.destinations ?? []).join(", ") || "—"}
@@ -127,15 +160,15 @@ export default function ItineraryListView({
                   {it.days?.length ?? 0} days
                 </td>
                 <td className={listTdClass}>
-                  <span className={cn("text-2xs px-2 py-0.5 rounded-full font-medium", pipelineStageBadgeClass(ps))}>
+                  <span className={cn("rounded-full px-2 py-0.5 text-2xs font-medium", pipelineStageBadgeClass(ps))}>
                     {plLabel}
                   </span>
                 </td>
                 <td className={listTdClass}>
                   <span
                     className={cn(
-                      "text-xs px-1.5 py-0.5 rounded border",
-                      statusBadge?.className ?? "bg-white/10 border-white/20"
+                      "rounded-full px-2 py-0.5 text-2xs font-medium capitalize",
+                      statusBadge?.className ?? "border border-border bg-muted-foreground/8 text-muted-foreground"
                     )}
                   >
                     {statusBadge?.label ?? it.status}
@@ -144,35 +177,39 @@ export default function ItineraryListView({
                 <td className={cn(listTdClass, listMutedCellClass)}>
                   {eventCount}
                 </td>
-                <td className={cn(listTdClass, listMutedCellClass)}>
-                  {totalPrice > 0 ? `${currencySym}${totalPrice.toLocaleString()}` : "—"}
-                </td>
-                <td className={listTdClass} onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-                        <MoreHorizontal size={16} />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/itineraries/${id}`}>View</Link>
-                      </DropdownMenuItem>
-                      {canEdit(it) && (
-                        <DropdownMenuItem onClick={() => onEdit(it)}>
-                          <Pencil size={14} className="mr-2" /> Edit
+                {canViewFinancials && (
+                  <td className={cn(listTdClass, listMutedCellClass)}>
+                    {totalPrice > 0 ? `${currencySym}${totalPrice.toLocaleString()}` : "—"}
+                  </td>
+                )}
+                <td className={cn(listTdClass, "pr-4 text-right")} onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-end gap-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreHorizontal size={16} className="text-muted-foreground" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href={`/dashboard/itineraries/${id}`}>View</Link>
                         </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem onClick={() => onDuplicate(it)}>
-                        <Copy size={14} className="mr-2" /> Duplicate
-                      </DropdownMenuItem>
-                      {canDelete(it) && (
-                        <DropdownMenuItem onClick={() => onDelete(it)} className="text-red-400">
-                          <Trash2 size={14} className="mr-2" /> Delete
+                        {canEdit(it) && (
+                          <DropdownMenuItem onClick={() => onEdit(it)}>
+                            <Pencil size={14} className="mr-2" /> Edit
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => onDuplicate(it)}>
+                          <Copy size={14} className="mr-2" /> Duplicate
                         </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                        {canDelete(it) && (
+                          <DropdownMenuItem onClick={() => onDelete(it)} className="text-[var(--muted-error-text)]">
+                            <Trash2 size={14} className="mr-2" /> Delete
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </td>
               </tr>
             );
