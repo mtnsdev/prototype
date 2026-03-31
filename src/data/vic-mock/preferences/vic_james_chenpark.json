@@ -1,0 +1,151 @@
+[
+  {
+    "id": "pref_jcp_001",
+    "domainId": "accommodation",
+    "value": "Design hotels and small luxury brands over chains. Character over size.",
+    "confidence": "medium",
+    "sources": [{ "type": "booking_data", "label": "4 bookings — all boutique/design", "date": "2026-01-20" }],
+    "firstObserved": "2024-10-01",
+    "lastConfirmed": "2026-01-20",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_jcp_002",
+    "domainId": "accommodation",
+    "value": "Loves ryokans, converted monasteries, treehouses — the more unusual the better",
+    "confidence": "medium",
+    "sources": [
+      { "type": "booking_data", "label": "Booked Tawaraya ryokan in Kyoto", "date": "2026-01-20" },
+      { "type": "client_statement", "label": "Client wishlist email", "date": "2024-09-15" }
+    ],
+    "firstObserved": "2024-09-15",
+    "lastConfirmed": "2026-01-20",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_jcp_003",
+    "domainId": "dining",
+    "value": "Oliver is a Michelin-starred executive chef — dining is THE priority. His expertise exceeds advisor's.",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Core client profile note", "date": "2024-08-01" }],
+    "firstObserved": "2024-08-01",
+    "lastConfirmed": "2026-01-20",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_jcp_004",
+    "domainId": "dining",
+    "value": "Multi-Michelin tasting menus, market visits with local chefs, notable cooking classes only",
+    "confidence": "high",
+    "sources": [
+      { "type": "itinerary_extraction", "label": "Every trip itinerary is dining-heavy", "date": "2026-01-20" },
+      { "type": "client_statement", "label": "Detailed dining requirements in every brief", "date": "2025-10-01" }
+    ],
+    "firstObserved": "2024-10-01",
+    "lastConfirmed": "2026-01-20",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_jcp_005",
+    "domainId": "dining",
+    "value": "Never tourist restaurants. Oliver has strong wine pairing opinions.",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Learned on first trip", "date": "2024-10-20" }],
+    "firstObserved": "2024-10-01",
+    "lastConfirmed": "2025-10-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_jcp_006",
+    "domainId": "experiences",
+    "value": "Contemporary art, architecture tours, natural wine producers, ceramics workshops, vinyl record shopping",
+    "confidence": "high",
+    "sources": [{ "type": "itinerary_extraction", "label": "Consistent across all 4 trips", "date": "2026-01-20" }],
+    "firstObserved": "2024-10-01",
+    "lastConfirmed": "2026-01-20",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_jcp_007",
+    "domainId": "experiences",
+    "value": "Both are photographers — James: landscape, Oliver: food. Plan photo-friendly timing.",
+    "confidence": "medium",
+    "sources": [{ "type": "advisor_note", "label": "Observed on trips", "date": "2025-06-20" }],
+    "firstObserved": "2025-06-01",
+    "lastConfirmed": "2026-01-20",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_jcp_008",
+    "domainId": "experiences",
+    "value": "No interest in beaches, golf, or guided group anything",
+    "confidence": "high",
+    "sources": [{ "type": "client_statement", "label": "Stated directly", "date": "2024-08-01" }],
+    "firstObserved": "2024-08-01",
+    "lastConfirmed": "2024-08-01",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_jcp_009",
+    "domainId": "logistics",
+    "value": "Prefer train over short flights in Europe/Japan",
+    "confidence": "medium",
+    "sources": [{ "type": "booking_data", "label": "Chose train on 3 of 4 trips", "date": "2026-01-20" }],
+    "firstObserved": "2024-10-01",
+    "lastConfirmed": "2026-01-20",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_jcp_010",
+    "domainId": "sensitivities",
+    "value": "James gets motion sick on winding roads — needs front seat or anti-nausea medication reminder",
+    "confidence": "medium",
+    "sources": [{ "type": "advisor_note", "label": "Reported after Basque Country trip", "date": "2025-10-20" }],
+    "firstObserved": "2025-10-15",
+    "lastConfirmed": "2025-10-20",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_jcp_011",
+    "domainId": "communication",
+    "value": "James handles logistics, Oliver handles dining requirements. Both on email threads.",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Established communication pattern", "date": "2024-10-01" }],
+    "firstObserved": "2024-08-01",
+    "lastConfirmed": "2026-01-20",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_jcp_012",
+    "domainId": "communication",
+    "value": "Send detailed post-trip feedback — very valuable for preference learning",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Received detailed feedback after every trip", "date": "2026-01-25" }],
+    "firstObserved": "2024-10-20",
+    "lastConfirmed": "2026-01-25",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_jcp_013",
+    "domainId": "budget",
+    "value": "$600–$1,800/night. Will spend $2K+ on a single dinner without blinking.",
+    "confidence": "medium",
+    "sources": [{ "type": "booking_data", "label": "Derived from 4 bookings", "date": "2026-01-20" }],
+    "firstObserved": "2024-10-01",
+    "lastConfirmed": "2026-01-20",
+    "conflicts": [],
+    "pinned": false
+  }
+]

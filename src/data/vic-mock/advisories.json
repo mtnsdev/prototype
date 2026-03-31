@@ -1,0 +1,78 @@
+[
+  {
+    "id": "adv_rh_001",
+    "vicId": "vic_harrington_richard",
+    "category": "medical",
+    "severity": "warning",
+    "title": "Claustrophobia — Richard",
+    "body": "Richard has mild claustrophobia. Avoid: small aircraft (propeller planes, helicopters), tight interior spaces, small elevators. Affects transfer planning and room selection.",
+    "status": "active",
+    "createdAt": "2021-06-10T00:00:00Z",
+    "createdBy": "Sarah Mitchell",
+    "isAdvisorOnly": false
+  },
+  {
+    "id": "adv_sr_001",
+    "vicId": "vic_sofia_reyes",
+    "category": "medical",
+    "severity": "critical",
+    "title": "SEVERE Tree Nut Allergy",
+    "body": "Sofia has a severe tree nut allergy and carries an EpiPen at all times. ALL properties must confirm allergen-free dining options before booking is confirmed. Request allergy card in local language for every destination. This is a life-threatening condition — not a preference.",
+    "status": "active",
+    "createdAt": "2023-04-01T00:00:00Z",
+    "createdBy": "Kristin Torres",
+    "isAdvisorOnly": false
+  },
+  {
+    "id": "adv_sr_002",
+    "vicId": "vic_sofia_reyes",
+    "category": "commission_incentive",
+    "severity": "info",
+    "title": "Six Senses — 12% Commission Incentive",
+    "body": "Six Senses running 12% advisor commission incentive through June 2026 (standard is 10%). Sofia's highest-rated trip was Six Senses Bumthang (Bhutan). Proactively recommend Six Senses properties for her next wellness trip.",
+    "status": "active",
+    "createdAt": "2026-01-15T00:00:00Z",
+    "createdBy": "System",
+    "linkedProgramId": "prog_sixsenses_2026",
+    "expiresAt": "2026-06-30T00:00:00Z",
+    "isAdvisorOnly": true
+  },
+  {
+    "id": "adv_na_001",
+    "vicId": "vic_nadia_alrashid",
+    "category": "medical",
+    "severity": "warning",
+    "title": "Fatima — Diabetes & Mobility",
+    "body": "Fatima Al-Rashid (Nadia's mother, age 75) has diabetes requiring low-glycemic meal options communicated to hotels in advance. She also uses a wheelchair for distances over 200m and requires ground-floor or elevator-accessible rooms. All properties must confirm accessibility before booking.",
+    "status": "active",
+    "createdAt": "2022-07-01T00:00:00Z",
+    "createdBy": "Sarah Mitchell",
+    "isAdvisorOnly": false
+  },
+  {
+    "id": "adv_ap_001",
+    "vicId": "vic_anya_petrova",
+    "category": "general",
+    "severity": "info",
+    "title": "ACC Scientific Sessions — New Orleans, Nov 2026",
+    "body": "Anya mentioned she is keynoting at ACC Scientific Sessions in New Orleans, November 2026. Her typical lead time for conference travel is ~3 months. Proactively send hotel options in August 2026.",
+    "status": "active",
+    "createdAt": "2026-03-15T00:00:00Z",
+    "createdBy": "Sarah Mitchell",
+    "isAdvisorOnly": true
+  },
+  {
+    "id": "adv_ap_002",
+    "vicId": "vic_anya_petrova",
+    "category": "commission_incentive",
+    "severity": "info",
+    "title": "Peninsula — 12% Advisor Incentive",
+    "body": "The Peninsula Hotels running 12% advisor commission incentive through December 2026. Anya stayed at Peninsula Chicago (Nov 2025) and rated it 4/5. Worth recommending for future conference cities with Peninsula presence (Chicago, NYC, Paris, Hong Kong, Tokyo, Bangkok, London, Istanbul).",
+    "status": "active",
+    "createdAt": "2026-02-01T00:00:00Z",
+    "createdBy": "System",
+    "linkedProgramId": "prog_peninsula_2026",
+    "expiresAt": "2026-12-31T00:00:00Z",
+    "isAdvisorOnly": true
+  }
+]

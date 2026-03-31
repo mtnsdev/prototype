@@ -1,0 +1,159 @@
+[
+  {
+    "id": "vic_harrington_richard",
+    "firstName": "Richard",
+    "lastName": "Harrington",
+    "photoUrl": null,
+    "dateOfBirth": "1963-03-03",
+    "email": "r.harrington@harringtoncap.com",
+    "phone": "+1-203-555-0147",
+    "location": "Greenwich, CT",
+    "occupation": "Retired hedge fund founder",
+    "clientSince": "2019-06-01",
+    "referredBy": {
+      "name": "Virtuoso advisor network event",
+      "type": "partner"
+    },
+    "ltvTier": "platinum",
+    "primaryAdvisorId": "adv_sarah_mitchell",
+    "primaryAdvisorName": "Sarah Mitchell",
+    "keyDates": [
+      { "label": "Birthday (Richard)", "date": "1963-03-03", "recurring": true },
+      { "label": "Birthday (Catherine)", "date": "1967-09-18", "recurring": true },
+      { "label": "Anniversary", "date": "1990-06-14", "recurring": true }
+    ],
+    "tags": ["art-lovers", "aman-loyalist", "wine-collectors", "uhnw"]
+  },
+  {
+    "id": "vic_harrington_catherine",
+    "firstName": "Catherine",
+    "lastName": "Harrington",
+    "photoUrl": null,
+    "dateOfBirth": "1967-09-18",
+    "email": "catherine.harrington@gmail.com",
+    "phone": "+1-203-555-0148",
+    "location": "Greenwich, CT",
+    "occupation": "Art collector, board member (MoMA, Greenwich Hospital)",
+    "clientSince": "2019-06-01",
+    "referredBy": {
+      "name": "Virtuoso advisor network event",
+      "type": "partner"
+    },
+    "ltvTier": "platinum",
+    "primaryAdvisorId": "adv_sarah_mitchell",
+    "primaryAdvisorName": "Sarah Mitchell",
+    "keyDates": [
+      { "label": "Birthday", "date": "1967-09-18", "recurring": true },
+      { "label": "Anniversary", "date": "1990-06-14", "recurring": true }
+    ],
+    "tags": ["art-lovers", "pescatarian", "yoga", "wine-collectors"]
+  },
+  {
+    "id": "vic_sofia_reyes",
+    "firstName": "Sofia",
+    "lastName": "Reyes-Nakamura",
+    "photoUrl": null,
+    "dateOfBirth": "1984-07-22",
+    "email": "sofia.rn@gmail.com",
+    "phone": "+1-415-555-0293",
+    "location": "San Francisco, CA",
+    "occupation": "Chief Product Officer, Series D healthtech startup",
+    "clientSince": "2023-04-01",
+    "referredBy": { "name": "Google search", "type": "organic" },
+    "ltvTier": "gold",
+    "primaryAdvisorId": "adv_kristin_torres",
+    "primaryAdvisorName": "Kristin Torres",
+    "keyDates": [{ "label": "Birthday", "date": "1984-07-22", "recurring": true }],
+    "tags": ["wellness", "adventure", "solo-traveler", "vegan", "eco-conscious"]
+  },
+  {
+    "id": "vic_nadia_alrashid",
+    "firstName": "Nadia",
+    "lastName": "Al-Rashid",
+    "photoUrl": null,
+    "dateOfBirth": "1978-04-12",
+    "email": "nadia@alrashidfamilyoffice.com",
+    "phone": "+971-50-555-8821",
+    "location": "Dubai, UAE / London, UK",
+    "occupation": "Family office director",
+    "clientSince": "2021-09-01",
+    "referredBy": {
+      "name": "Four Seasons preferred partner referral",
+      "type": "partner"
+    },
+    "ltvTier": "platinum",
+    "primaryAdvisorId": "adv_sarah_mitchell",
+    "primaryAdvisorName": "Sarah Mitchell",
+    "keyDates": [
+      { "label": "Birthday (Nadia)", "date": "1978-04-12", "recurring": true },
+      { "label": "Birthday (Khalid)", "date": "1974-08-30", "recurring": true },
+      { "label": "Birthday (Layla)", "date": "2007-01-15", "recurring": true },
+      { "label": "Birthday (Omar)", "date": "2010-06-22", "recurring": true }
+    ],
+    "tags": [
+      "multi-generational",
+      "four-seasons-loyalist",
+      "halal-required",
+      "uhnw",
+      "dual-residence"
+    ]
+  },
+  {
+    "id": "vic_james_chenpark",
+    "firstName": "James",
+    "lastName": "Chen-Park",
+    "photoUrl": null,
+    "dateOfBirth": "1990-01-15",
+    "email": "james@chenpark.co",
+    "phone": "+1-347-555-0412",
+    "location": "Brooklyn, NY",
+    "occupation": "Partner, venture capital firm",
+    "clientSince": "2024-08-01",
+    "referredBy": {
+      "name": "Oliver's restaurant partner",
+      "type": "client"
+    },
+    "ltvTier": "silver",
+    "primaryAdvisorId": "adv_kristin_torres",
+    "primaryAdvisorName": "Kristin Torres",
+    "keyDates": [
+      { "label": "Birthday (James)", "date": "1990-01-15", "recurring": true },
+      { "label": "Birthday (Oliver)", "date": "1992-08-29", "recurring": true },
+      { "label": "Anniversary", "date": "2020-10-08", "recurring": true }
+    ],
+    "tags": [
+      "food-obsessed",
+      "design-hotels",
+      "experience-collectors",
+      "photographers"
+    ]
+  },
+  {
+    "id": "vic_anya_petrova",
+    "firstName": "Anya",
+    "lastName": "Petrova",
+    "photoUrl": null,
+    "dateOfBirth": "1975-12-04",
+    "email": "apetrova@mgh.harvard.edu",
+    "phone": "+1-617-555-0831",
+    "location": "Boston, MA",
+    "occupation": "Chief of Cardiology, Mass General Hospital",
+    "clientSince": "2022-08-01",
+    "referredBy": {
+      "name": "Dr. Marcus Webb",
+      "type": "client",
+      "vicId": "vic_marcus_webb"
+    },
+    "ltvTier": "gold",
+    "primaryAdvisorId": "adv_sarah_mitchell",
+    "primaryAdvisorName": "Sarah Mitchell",
+    "keyDates": [{ "label": "Birthday", "date": "1975-12-04", "recurring": true }],
+    "tags": [
+      "bleisure",
+      "conference-traveler",
+      "spa-lover",
+      "runner",
+      "classical-music"
+    ]
+  }
+]

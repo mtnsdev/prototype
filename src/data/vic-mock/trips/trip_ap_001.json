@@ -1,0 +1,67 @@
+{
+  "id": "trip_ap_001",
+  "vicId": "vic_anya_petrova",
+  "name": "ESC Congress Barcelona",
+  "status": "completed",
+  "type": "corporate",
+  "startDate": "2026-03-14",
+  "endDate": "2026-03-19",
+  "destinations": [
+    {
+      "id": "dest_040",
+      "city": "Barcelona",
+      "country": "Spain",
+      "coordinates": { "lat": 41.3874, "lng": 2.1686 },
+      "properties": [
+        {
+          "id": "prop_040",
+          "name": "Hotel Arts Barcelona",
+          "brand": "Ritz-Carlton",
+          "roomCategory": "Deluxe Sea View",
+          "nights": 5,
+          "nightlyRate": 1100,
+          "totalCost": 5500,
+          "commissionRate": 0.1
+        }
+      ],
+      "experiences": [
+        {
+          "id": "exp_040",
+          "name": "Morning run route: Barceloneta Beach to W Hotel and back (5K)",
+          "type": "wellness",
+          "duration": "45 min"
+        },
+        {
+          "id": "exp_041",
+          "name": "Fundació Joan Miró (post-conference afternoon)",
+          "type": "cultural",
+          "duration": "2 hours",
+          "costPerPerson": 20
+        },
+        {
+          "id": "exp_042",
+          "name": "Cocktails at Dry Martini Bar",
+          "type": "entertainment",
+          "duration": "Evening"
+        }
+      ],
+      "logistics": [
+        {
+          "id": "log_040",
+          "type": "flight",
+          "from": "BOS",
+          "to": "BCN",
+          "carrier": "United",
+          "class": "Business"
+        }
+      ]
+    }
+  ],
+  "totalValue": 9800,
+  "commissionEarned": 980,
+  "commissionRate": 0.1,
+  "clientFeedback": "Hotel Arts was ideal — 10 min walk to Fira congress center.",
+  "clientRating": 4,
+  "patternTags": ["8th conference trip", "1st time in Barcelona"],
+  "travelingWith": []
+}

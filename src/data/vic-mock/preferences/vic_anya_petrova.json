@@ -1,0 +1,145 @@
+[
+  {
+    "id": "pref_ap_001",
+    "domainId": "accommodation",
+    "value": "Conference trips: walking distance to venue. Leisure: spa-focused resorts.",
+    "confidence": "high",
+    "sources": [{ "type": "booking_data", "label": "13 bookings — clear pattern", "date": "2026-03-20" }],
+    "firstObserved": "2022-09-01",
+    "lastConfirmed": "2026-03-20",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_ap_002",
+    "domainId": "accommodation",
+    "value": "Brand agnostic — location and convenience trump loyalty",
+    "confidence": "high",
+    "sources": [{ "type": "booking_data", "label": "13 stays across 12 different brands", "date": "2026-03-20" }],
+    "firstObserved": "2022-09-01",
+    "lastConfirmed": "2026-03-20",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_ap_003",
+    "domainId": "accommodation",
+    "value": "Always needs late checkout. Fast reliable WiFi non-negotiable (remote presentations).",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Requested on every single trip", "date": "2026-03-15" }],
+    "firstObserved": "2022-09-01",
+    "lastConfirmed": "2026-03-15",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_ap_004",
+    "domainId": "dining",
+    "value": "Health-conscious omnivore. Mediterranean-style preferred. Dislikes heavy/fried food.",
+    "confidence": "medium",
+    "sources": [{ "type": "advisor_note", "label": "Observed across trips", "date": "2025-08-20" }],
+    "firstObserved": "2023-01-01",
+    "lastConfirmed": "2025-08-20",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_ap_005",
+    "domainId": "dining",
+    "value": "Eats alone at conferences (values decompression). Enjoys long multicourse dinners on leisure trips.",
+    "confidence": "medium",
+    "sources": [{ "type": "advisor_note", "label": "Advisor observation", "date": "2025-11-10" }],
+    "firstObserved": "2024-05-01",
+    "lastConfirmed": "2025-11-10",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_ap_006",
+    "domainId": "experiences",
+    "value": "Spa and wellness on leisure trips",
+    "confidence": "high",
+    "sources": [{ "type": "itinerary_extraction", "label": "All leisure trips include spa", "date": "2026-01-15" }],
+    "firstObserved": "2023-01-01",
+    "lastConfirmed": "2026-01-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_ap_007",
+    "domainId": "experiences",
+    "value": "Runner — asks for hotel running routes in every destination",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Standard request", "date": "2025-11-05" }],
+    "firstObserved": "2022-09-01",
+    "lastConfirmed": "2026-03-15",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_ap_008",
+    "domainId": "experiences",
+    "value": "Classical music — will attend concerts/opera if available during stay",
+    "confidence": "medium",
+    "sources": [{ "type": "itinerary_extraction", "label": "Attended on 3 trips", "date": "2025-08-15" }],
+    "firstObserved": "2023-06-01",
+    "lastConfirmed": "2025-08-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_ap_009",
+    "domainId": "logistics",
+    "value": "United Global Services member. Extreme loyalty. Always aisle seat.",
+    "confidence": "high",
+    "sources": [{ "type": "booking_data", "label": "Axus flight data + client statement", "date": "2026-03-10" }],
+    "firstObserved": "2022-09-01",
+    "lastConfirmed": "2026-03-10",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_ap_010",
+    "domainId": "logistics",
+    "value": "Often changes flights last minute — always book flexible/refundable tickets",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Changed flights on 5 of 13 trips", "date": "2026-01-10" }],
+    "firstObserved": "2022-09-01",
+    "lastConfirmed": "2026-01-10",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_ap_011",
+    "domainId": "communication",
+    "value": "Email ONLY. Response windows: 6–7 AM and 10–11 PM. Do not call unless urgent.",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Strict boundary — client stated directly", "date": "2022-08-01" }],
+    "firstObserved": "2022-08-01",
+    "lastConfirmed": "2026-03-15",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_ap_012",
+    "domainId": "communication",
+    "value": "Extremely decisive — typically approves proposals same day she reads them",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Consistent pattern", "date": "2025-11-01" }],
+    "firstObserved": "2023-01-01",
+    "lastConfirmed": "2026-01-05",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_ap_013",
+    "domainId": "budget",
+    "value": "Conference: $500–$1,200/night. Leisure: $1,500–$2,500/night. Pays premium for flexibility.",
+    "confidence": "medium",
+    "sources": [{ "type": "booking_data", "label": "Derived from 13 bookings", "date": "2026-03-20" }],
+    "firstObserved": "2022-09-01",
+    "lastConfirmed": "2026-03-20",
+    "conflicts": [],
+    "pinned": false
+  }
+]

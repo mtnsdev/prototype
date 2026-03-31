@@ -1,0 +1,72 @@
+{
+  "id": "trip_sr_001",
+  "vicId": "vic_sofia_reyes",
+  "name": "Bali Wellness Immersion",
+  "status": "completed",
+  "type": "solo",
+  "startDate": "2026-02-05",
+  "endDate": "2026-02-15",
+  "destinations": [
+    {
+      "id": "dest_010",
+      "city": "Ubud",
+      "country": "Indonesia",
+      "coordinates": { "lat": -8.5069, "lng": 115.2625 },
+      "properties": [
+        {
+          "id": "prop_010",
+          "name": "COMO Shambhala Estate",
+          "brand": "COMO",
+          "roomCategory": "Terrace Suite",
+          "nights": 10,
+          "nightlyRate": 1200,
+          "totalCost": 12000,
+          "commissionRate": 0.1
+        }
+      ],
+      "experiences": [
+        {
+          "id": "exp_010",
+          "name": "10-day Ayurvedic wellness program",
+          "type": "wellness",
+          "provider": "COMO Shambhala",
+          "duration": "10 days",
+          "costPerPerson": 4500
+        },
+        {
+          "id": "exp_011",
+          "name": "Sunrise hike to Mount Batur",
+          "type": "adventure",
+          "provider": "Bali Adventure Tours",
+          "duration": "6 hours",
+          "costPerPerson": 150
+        },
+        {
+          "id": "exp_012",
+          "name": "Balinese cooking class (vegan adapted)",
+          "type": "culinary",
+          "provider": "Paon Bali",
+          "duration": "Half day",
+          "costPerPerson": 120
+        }
+      ],
+      "logistics": [
+        {
+          "id": "log_010",
+          "type": "flight",
+          "from": "SFO",
+          "to": "DPS",
+          "carrier": "Singapore Airlines",
+          "class": "Business"
+        }
+      ]
+    }
+  ],
+  "totalValue": 18500,
+  "commissionEarned": 1850,
+  "commissionRate": 0.1,
+  "clientFeedback": "The Ayurvedic program was transformative. Best wellness experience I've had.",
+  "clientRating": 5,
+  "patternTags": ["3rd wellness-focused trip", "1st time in Indonesia"],
+  "travelingWith": []
+}

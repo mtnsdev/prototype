@@ -1,0 +1,84 @@
+{
+  "id": "trip_rh_001",
+  "vicId": "vic_harrington_richard",
+  "name": "Tokyo Anniversary",
+  "status": "completed",
+  "type": "anniversary",
+  "startDate": "2026-01-09",
+  "endDate": "2026-01-15",
+  "destinations": [
+    {
+      "id": "dest_001",
+      "city": "Tokyo",
+      "country": "Japan",
+      "coordinates": { "lat": 35.6762, "lng": 139.6503 },
+      "properties": [
+        {
+          "id": "prop_001",
+          "name": "Aman Tokyo",
+          "brand": "Aman",
+          "roomCategory": "Premier Suite",
+          "nights": 6,
+          "nightlyRate": 4200,
+          "totalCost": 25200,
+          "commissionRate": 0.1
+        }
+      ],
+      "experiences": [
+        {
+          "id": "exp_001",
+          "name": "Private gallery tour — teamLab Borderless",
+          "type": "cultural",
+          "provider": "Art Tours Tokyo",
+          "duration": "3 hours",
+          "costPerPerson": 800
+        },
+        {
+          "id": "exp_002",
+          "name": "Omakase at Sukiyabashi Jiro (private room)",
+          "type": "culinary",
+          "duration": "2 hours",
+          "costPerPerson": 1500
+        },
+        {
+          "id": "exp_003",
+          "name": "Tsukiji outer market tour with private guide",
+          "type": "culinary",
+          "provider": "Japan Experience",
+          "duration": "Half day",
+          "costPerPerson": 400
+        }
+      ],
+      "logistics": [
+        {
+          "id": "log_001",
+          "type": "flight",
+          "from": "JFK",
+          "to": "NRT",
+          "carrier": "Japan Airlines",
+          "class": "First"
+        },
+        {
+          "id": "log_002",
+          "type": "transfer",
+          "from": "Narita Airport",
+          "to": "Aman Tokyo",
+          "details": "Private sedan"
+        }
+      ]
+    }
+  ],
+  "totalValue": 48200,
+  "commissionEarned": 4820,
+  "commissionRate": 0.1,
+  "clientFeedback": "Absolutely exceptional. The Aman Tokyo never disappoints. Omakase at Jiro was the highlight of the trip. Catherine loved the teamLab exhibition.",
+  "clientRating": 5,
+  "patternTags": ["4th Aman stay", "2nd trip to Japan", "Anniversary trip"],
+  "travelingWith": [
+    {
+      "name": "Catherine Harrington",
+      "relationship": "spouse",
+      "vicId": "vic_harrington_catherine"
+    }
+  ]
+}

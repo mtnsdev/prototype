@@ -1,0 +1,106 @@
+[
+  {
+    "id": "ae_rh_001",
+    "type": "trip_completed",
+    "title": "Completed: Tokyo Anniversary",
+    "timestamp": "2026-01-15T18:00:00Z",
+    "sourceIcon": "axus",
+    "linkedEntityId": "trip_rh_001",
+    "linkedEntityType": "trip"
+  },
+  {
+    "id": "ae_rh_002",
+    "type": "note_added",
+    "title": "Post-trip feedback logged",
+    "timestamp": "2026-01-20T14:00:00Z",
+    "sourceIcon": "manual",
+    "linkedEntityId": "trip_rh_001",
+    "linkedEntityType": "trip"
+  },
+  {
+    "id": "ae_rh_003",
+    "type": "data_updated",
+    "title": "Axus sync — 2 new preference signals extracted",
+    "timestamp": "2026-01-16T09:00:00Z",
+    "sourceIcon": "axus"
+  },
+  {
+    "id": "ae_sr_001",
+    "type": "trip_completed",
+    "title": "Completed: Bali Wellness Immersion",
+    "timestamp": "2026-02-15T12:00:00Z",
+    "sourceIcon": "axus",
+    "linkedEntityId": "trip_sr_001",
+    "linkedEntityType": "trip"
+  },
+  {
+    "id": "ae_sr_002",
+    "type": "advisory_created",
+    "title": "New: Six Senses 12% commission incentive",
+    "timestamp": "2026-01-15T10:00:00Z",
+    "sourceIcon": "virtuoso",
+    "linkedEntityId": "adv_sr_002",
+    "linkedEntityType": "advisory"
+  },
+  {
+    "id": "ae_na_001",
+    "type": "trip_completed",
+    "title": "Completed: Maldives Winter Holiday",
+    "timestamp": "2025-12-30T18:00:00Z",
+    "sourceIcon": "axus",
+    "linkedEntityId": "trip_na_001",
+    "linkedEntityType": "trip"
+  },
+  {
+    "id": "ae_jcp_001",
+    "type": "proposal_sent",
+    "title": "Proposal sent: Puglia & Sicily Food Odyssey",
+    "timestamp": "2026-03-15T09:00:00Z",
+    "sourceIcon": "manual",
+    "linkedEntityId": "prop_jcp_puglia",
+    "linkedEntityType": "proposal"
+  },
+  {
+    "id": "ae_jcp_002",
+    "type": "trip_completed",
+    "title": "Completed: Japan Food Pilgrimage",
+    "timestamp": "2026-01-18T12:00:00Z",
+    "sourceIcon": "axus",
+    "linkedEntityId": "trip_jcp_001",
+    "linkedEntityType": "trip"
+  },
+  {
+    "id": "ae_jcp_003",
+    "type": "note_added",
+    "title": "Detailed post-trip feedback received (1,500 words)",
+    "timestamp": "2026-01-25T15:00:00Z",
+    "sourceIcon": "manual"
+  },
+  {
+    "id": "ae_ap_001",
+    "type": "trip_completed",
+    "title": "Completed: ESC Congress Barcelona",
+    "timestamp": "2026-03-19T18:00:00Z",
+    "sourceIcon": "axus",
+    "linkedEntityId": "trip_ap_001",
+    "linkedEntityType": "trip"
+  },
+  {
+    "id": "ae_ap_002",
+    "type": "advisory_created",
+    "title": "New: ACC New Orleans Nov 2026 — proactive planning",
+    "timestamp": "2026-03-20T11:00:00Z",
+    "sourceIcon": "manual",
+    "linkedEntityId": "adv_ap_001",
+    "linkedEntityType": "advisory"
+  },
+  {
+    "id": "ae_ap_003",
+    "type": "advisory_created",
+    "title": "New: Peninsula 12% advisor incentive",
+    "timestamp": "2026-02-01T10:00:00Z",
+    "sourceIcon": "virtuoso",
+    "linkedEntityId": "adv_ap_002",
+    "linkedEntityType": "advisory"
+  }
+]

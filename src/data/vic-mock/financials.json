@@ -1,0 +1,153 @@
+{
+  "vic_harrington_richard": {
+    "vicId": "vic_harrington_richard",
+    "lifetimeValue": 874900,
+    "lifetimeCommission": 87490,
+    "effectiveCommissionRate": 0.1,
+    "averageTripValue": 54681,
+    "totalTrips": 16,
+    "projectedPipelineValue": 0,
+    "projectedPipelineCommission": 0,
+    "dataSource": "tripsuite",
+    "yearlyBreakdown": [
+      { "year": 2019, "totalValue": 52400, "commission": 5240, "tripCount": 1 },
+      { "year": 2021, "totalValue": 92000, "commission": 9200, "tripCount": 1 },
+      { "year": 2022, "totalValue": 152300, "commission": 15230, "tripCount": 3 },
+      { "year": 2023, "totalValue": 174400, "commission": 17440, "tripCount": 3 },
+      { "year": 2024, "totalValue": 189100, "commission": 18910, "tripCount": 3, "yoyChange": 0.084 },
+      { "year": 2025, "totalValue": 196500, "commission": 19650, "tripCount": 3, "yoyChange": 0.039 },
+      { "year": 2026, "totalValue": 48200, "commission": 4820, "tripCount": 1 }
+    ],
+    "partnerBreakdown": [
+      { "partnerName": "Aman", "partnerType": "hotel_brand", "totalValue": 201200, "commission": 20120, "stayCount": 4 },
+      { "partnerName": "Belmond", "partnerType": "hotel_brand", "totalValue": 62400, "commission": 6240, "stayCount": 1 },
+      { "partnerName": "Rosewood", "partnerType": "hotel_brand", "totalValue": 54800, "commission": 5480, "stayCount": 1 },
+      { "partnerName": "Four Seasons", "partnerType": "hotel_brand", "totalValue": 0, "commission": 0, "stayCount": 0 },
+      { "partnerName": "Soneva", "partnerType": "hotel_brand", "totalValue": 72000, "commission": 7200, "stayCount": 1 },
+      { "partnerName": "One&Only", "partnerType": "hotel_brand", "totalValue": 58300, "commission": 5830, "stayCount": 1 },
+      { "partnerName": "Eden Rock", "partnerType": "hotel_brand", "totalValue": 85000, "commission": 8500, "stayCount": 1 },
+      { "partnerName": "Singita", "partnerType": "hotel_brand", "totalValue": 46000, "commission": 4600, "stayCount": 1 }
+    ],
+    "categoryBreakdown": [
+      { "category": "accommodation", "totalValue": 612430, "percentage": 0.7 },
+      { "category": "experiences", "totalValue": 131235, "percentage": 0.15 },
+      { "category": "flights", "totalValue": 87490, "percentage": 0.1 },
+      { "category": "transfers", "totalValue": 43745, "percentage": 0.05 }
+    ]
+  },
+  "vic_sofia_reyes": {
+    "vicId": "vic_sofia_reyes",
+    "lifetimeValue": 96800,
+    "lifetimeCommission": 9680,
+    "effectiveCommissionRate": 0.1,
+    "averageTripValue": 19360,
+    "totalTrips": 5,
+    "projectedPipelineValue": 0,
+    "projectedPipelineCommission": 0,
+    "dataSource": "axus_partial",
+    "yearlyBreakdown": [
+      { "year": 2024, "totalValue": 41300, "commission": 4130, "tripCount": 2 },
+      { "year": 2025, "totalValue": 37000, "commission": 3700, "tripCount": 2, "yoyChange": -0.104 },
+      { "year": 2026, "totalValue": 18500, "commission": 1850, "tripCount": 1 }
+    ],
+    "partnerBreakdown": [
+      { "partnerName": "COMO", "partnerType": "hotel_brand", "totalValue": 18500, "commission": 1850, "stayCount": 1 },
+      { "partnerName": "Six Senses", "partnerType": "hotel_brand", "totalValue": 32400, "commission": 3240, "stayCount": 1 },
+      { "partnerName": "Nayara", "partnerType": "hotel_brand", "totalValue": 12800, "commission": 1280, "stayCount": 1 }
+    ],
+    "categoryBreakdown": [
+      { "category": "accommodation", "totalValue": 62920, "percentage": 0.65 },
+      { "category": "experiences", "totalValue": 19360, "percentage": 0.2 },
+      { "category": "flights", "totalValue": 14520, "percentage": 0.15 }
+    ]
+  },
+  "vic_nadia_alrashid": {
+    "vicId": "vic_nadia_alrashid",
+    "lifetimeValue": 1192000,
+    "lifetimeCommission": 119200,
+    "effectiveCommissionRate": 0.1,
+    "averageTripValue": 119200,
+    "totalTrips": 10,
+    "projectedPipelineValue": 0,
+    "projectedPipelineCommission": 0,
+    "dataSource": "tripsuite",
+    "yearlyBreakdown": [
+      { "year": 2021, "totalValue": 68000, "commission": 6800, "tripCount": 1 },
+      { "year": 2022, "totalValue": 250000, "commission": 25000, "tripCount": 2 },
+      { "year": 2023, "totalValue": 304000, "commission": 30400, "tripCount": 3, "yoyChange": 0.216 },
+      { "year": 2024, "totalValue": 236000, "commission": 23600, "tripCount": 2, "yoyChange": -0.224 },
+      { "year": 2025, "totalValue": 334000, "commission": 33400, "tripCount": 2, "yoyChange": 0.415 }
+    ],
+    "partnerBreakdown": [
+      { "partnerName": "Four Seasons", "partnerType": "hotel_brand", "totalValue": 482000, "commission": 48200, "stayCount": 4 },
+      { "partnerName": "Amanzoe/Aman", "partnerType": "hotel_brand", "totalValue": 294000, "commission": 29400, "stayCount": 2 },
+      { "partnerName": "Soneva", "partnerType": "hotel_brand", "totalValue": 142000, "commission": 14200, "stayCount": 1 },
+      { "partnerName": "Badrutt's Palace", "partnerType": "hotel_brand", "totalValue": 124000, "commission": 12400, "stayCount": 1 },
+      { "partnerName": "Cala di Volpe", "partnerType": "hotel_brand", "totalValue": 134000, "commission": 13400, "stayCount": 1 }
+    ],
+    "categoryBreakdown": [
+      { "category": "accommodation", "totalValue": 834400, "percentage": 0.7 },
+      { "category": "experiences", "totalValue": 178800, "percentage": 0.15 },
+      { "category": "flights", "totalValue": 119200, "percentage": 0.1 },
+      { "category": "transfers", "totalValue": 59600, "percentage": 0.05 }
+    ]
+  },
+  "vic_james_chenpark": {
+    "vicId": "vic_james_chenpark",
+    "lifetimeValue": 71000,
+    "lifetimeCommission": 5680,
+    "effectiveCommissionRate": 0.08,
+    "averageTripValue": 17750,
+    "totalTrips": 4,
+    "projectedPipelineValue": 32000,
+    "projectedPipelineCommission": 2560,
+    "dataSource": "axus_partial",
+    "yearlyBreakdown": [
+      { "year": 2024, "totalValue": 11600, "commission": 928, "tripCount": 1 },
+      { "year": 2025, "totalValue": 31000, "commission": 2480, "tripCount": 2, "yoyChange": 1.672 },
+      { "year": 2026, "totalValue": 28400, "commission": 2272, "tripCount": 1 }
+    ],
+    "partnerBreakdown": [
+      { "partnerName": "Hoshino Resorts", "partnerType": "hotel_brand", "totalValue": 4500, "commission": 360, "stayCount": 1 },
+      { "partnerName": "Tawaraya", "partnerType": "hotel_brand", "totalValue": 5500, "commission": 440, "stayCount": 1 },
+      { "partnerName": "Marqués de Riscal", "partnerType": "hotel_brand", "totalValue": 14200, "commission": 1136, "stayCount": 1 }
+    ],
+    "categoryBreakdown": [
+      { "category": "accommodation", "totalValue": 39050, "percentage": 0.55 },
+      { "category": "experiences", "totalValue": 21300, "percentage": 0.3 },
+      { "category": "flights", "totalValue": 7100, "percentage": 0.1 },
+      { "category": "transfers", "totalValue": 3550, "percentage": 0.05 }
+    ]
+  },
+  "vic_anya_petrova": {
+    "vicId": "vic_anya_petrova",
+    "lifetimeValue": 149700,
+    "lifetimeCommission": 14970,
+    "effectiveCommissionRate": 0.1,
+    "averageTripValue": 11515,
+    "totalTrips": 13,
+    "projectedPipelineValue": 0,
+    "projectedPipelineCommission": 0,
+    "dataSource": "tripsuite",
+    "yearlyBreakdown": [
+      { "year": 2022, "totalValue": 11400, "commission": 1140, "tripCount": 1 },
+      { "year": 2023, "totalValue": 41600, "commission": 4160, "tripCount": 3 },
+      { "year": 2024, "totalValue": 26500, "commission": 2650, "tripCount": 3, "yoyChange": -0.363 },
+      { "year": 2025, "totalValue": 48000, "commission": 4800, "tripCount": 3, "yoyChange": 0.811 },
+      { "year": 2026, "totalValue": 22200, "commission": 2220, "tripCount": 2 }
+    ],
+    "partnerBreakdown": [
+      { "partnerName": "Peninsula", "partnerType": "hotel_brand", "totalValue": 7200, "commission": 720, "stayCount": 1 },
+      { "partnerName": "Chablé", "partnerType": "hotel_brand", "totalValue": 12400, "commission": 1240, "stayCount": 1 },
+      { "partnerName": "Hotel Arts/Ritz-Carlton", "partnerType": "hotel_brand", "totalValue": 9800, "commission": 980, "stayCount": 1 },
+      { "partnerName": "Canaves", "partnerType": "hotel_brand", "totalValue": 18600, "commission": 1860, "stayCount": 1 },
+      { "partnerName": "Hotel Sacher", "partnerType": "hotel_brand", "totalValue": 16800, "commission": 1680, "stayCount": 1 }
+    ],
+    "categoryBreakdown": [
+      { "category": "accommodation", "totalValue": 104790, "percentage": 0.7 },
+      { "category": "experiences", "totalValue": 14970, "percentage": 0.1 },
+      { "category": "flights", "totalValue": 22455, "percentage": 0.15 },
+      { "category": "transfers", "totalValue": 7485, "percentage": 0.05 }
+    ]
+  }
+}

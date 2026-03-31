@@ -1,0 +1,95 @@
+{
+  "id": "trip_na_001",
+  "vicId": "vic_nadia_alrashid",
+  "name": "Maldives Winter Holiday",
+  "status": "completed",
+  "type": "family",
+  "startDate": "2025-12-18",
+  "endDate": "2025-12-30",
+  "destinations": [
+    {
+      "id": "dest_020",
+      "city": "Baa Atoll",
+      "country": "Maldives",
+      "coordinates": { "lat": 5.0577, "lng": 73.0013 },
+      "properties": [
+        {
+          "id": "prop_020",
+          "name": "Four Seasons Resort at Landaa Giraavaru",
+          "brand": "Four Seasons",
+          "roomCategory": "3x Two-Bedroom Beach Bungalow",
+          "nights": 12,
+          "nightlyRate": 8500,
+          "totalCost": 102000,
+          "commissionRate": 0.1
+        }
+      ],
+      "experiences": [
+        {
+          "id": "exp_020",
+          "name": "Omar — PADI Advanced Open Water certification",
+          "type": "adventure",
+          "provider": "Four Seasons dive center",
+          "duration": "4 days",
+          "costPerPerson": 1800
+        },
+        {
+          "id": "exp_021",
+          "name": "Fatima — Spa & Ayurveda wellness program (gentle, seated treatments)",
+          "type": "wellness",
+          "provider": "Four Seasons spa",
+          "duration": "6 sessions",
+          "costPerPerson": 3200
+        },
+        {
+          "id": "exp_022",
+          "name": "Family sunset dolphin cruise",
+          "type": "nature",
+          "provider": "Resort excursions",
+          "duration": "2 hours",
+          "costPerPerson": 400
+        },
+        {
+          "id": "exp_023",
+          "name": "Layla — Photography boat trip to sandbank",
+          "type": "nature",
+          "duration": "Half day",
+          "costPerPerson": 600
+        }
+      ],
+      "logistics": [
+        {
+          "id": "log_020",
+          "type": "flight",
+          "from": "DXB",
+          "to": "MLE",
+          "carrier": "Emirates",
+          "class": "Business"
+        },
+        {
+          "id": "log_021",
+          "type": "transfer",
+          "from": "Malé Airport",
+          "to": "Landaa Giraavaru",
+          "details": "Seaplane — wheelchair-accessible boarding confirmed for Fatima"
+        }
+      ]
+    }
+  ],
+  "totalValue": 148000,
+  "commissionEarned": 14800,
+  "commissionRate": 0.1,
+  "clientFeedback": "Best family trip yet. Four Seasons handled Fatima's accessibility needs beautifully.",
+  "clientRating": 5,
+  "patternTags": [
+    "2nd Maldives trip",
+    "4th Four Seasons stay",
+    "Omar's scuba milestone"
+  ],
+  "travelingWith": [
+    { "name": "Khalid Al-Rashid", "relationship": "spouse", "vicId": "vic_khalid_alrashid" },
+    { "name": "Layla Al-Rashid", "relationship": "child" },
+    { "name": "Omar Al-Rashid", "relationship": "child" },
+    { "name": "Fatima Al-Rashid", "relationship": "parent" }
+  ]
+}

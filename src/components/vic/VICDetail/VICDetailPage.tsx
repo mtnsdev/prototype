@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { LayoutDashboard } from "lucide-react";
 import { ArrowLeft, Pencil, Trash2, Share2, Play, ChevronDown, Loader2 } from "lucide-react";
 import type { VIC } from "@/types/vic";
 import { fetchVIC, getVICId, triggerAcuitySingle } from "@/lib/vic-api";
 import { FAKE_VICS } from "../fakeData";
 import { useUser } from "@/contexts/UserContext";
-import { canEditVIC, canDeleteVIC, canShareVIC, canViewSensitiveFields } from "@/utils/vicPermissions";
+import { useTeams } from "@/contexts/TeamsContext";
+import { canViewVIC, canEditVIC, canDeleteVIC, canShareVIC, canViewSensitiveFields } from "@/utils/vicPermissions";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -24,8 +26,6 @@ import AddEditVICModal from "../Modals/AddEditVICModal";
 import ShareVICModal from "../Modals/ShareVICModal";
 import TravelProfileModal from "../Modals/TravelProfileModal";
 import type { TravelProfile } from "@/types/vic";
-import PreviewBanner from "@/components/ui/PreviewBanner";
-import { IS_PREVIEW_MODE } from "@/config/preview";
 import ImageWithFallback from "@/components/ui/ImageWithFallback";
 
 const VALID_TABS: DetailTabId[] = ["overview", "identity", "relationship", "preferences", "linked_entities", "sharing", "governance"];
@@ -36,6 +36,7 @@ export default function VICDetailPage({ vicId }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useUser();
+  const { teams } = useTeams();
   const tabParam = searchParams.get("tab") as DetailTabId | string | null;
   const activeTab: DetailTabId =
     tabParam && VALID_TABS.includes(tabParam as DetailTabId) ? (tabParam as DetailTabId) : "overview";
@@ -96,10 +97,11 @@ export default function VICDetailPage({ vicId }: Props) {
   }, [openTravelFromQuery, vic, vicId, router, searchParams]);
 
   const currentUser = user ? { id: user.id, role: user.role, agency_id: user.agency_id } : null;
-  const canEdit = vic ? canEditVIC(currentUser, vic) : false;
+  const permCtx = useMemo(() => ({ teams }), [teams]);
+  const canEdit = vic ? canEditVIC(currentUser, vic, permCtx) : false;
   const canDelete = vic ? canDeleteVIC(currentUser, vic) : false;
   const canShare = vic ? canShareVIC(currentUser, vic) : false;
-  const canViewSensitive = vic ? canViewSensitiveFields(currentUser, vic) : false;
+  const canViewSensitive = vic ? canViewSensitiveFields(currentUser, vic, permCtx) : false;
 
   const handleRunAcuity = async (_mode?: "full" | "quick" | "selective") => {
     if (!vic) return;
@@ -181,6 +183,26 @@ export default function VICDetailPage({ vicId }: Props) {
     );
   }
 
+  if (user && !canViewVIC(currentUser, vic, permCtx)) {
+    return (
+      <div className="h-full flex items-center justify-center p-6">
+        <div className="text-center max-w-sm">
+          <div className="w-14 h-14 rounded-full bg-[var(--muted-error-bg)] flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl text-[var(--muted-error-text)]">!</span>
+          </div>
+          <h2 className="text-lg font-semibold text-foreground mb-2">Access denied</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            You don&apos;t have permission to view this VIC. Ask the owner to share it with you or add your team.
+          </p>
+          <Link href="/dashboard/vics" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <ArrowLeft size={16} />
+            Back to VICs
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const leg = vic as unknown as { city?: string; country?: string; company?: string; role?: string; customTags?: string[] };
   const location = [vic.home_city ?? leg.city, vic.home_country ?? leg.country].filter(Boolean).join(", ");
   const companyRole = [leg.company, leg.role].filter(Boolean).join(" · ");
@@ -192,7 +214,6 @@ export default function VICDetailPage({ vicId }: Props) {
 
   return (
     <div className="h-full overflow-y-auto bg-inset">
-      {IS_PREVIEW_MODE && <PreviewBanner feature="VIC Profile" variant="compact" sampleDataOnly />}
       <div className="max-w-6xl mx-auto p-6 space-y-6">
         <Link
           href="/dashboard/vics"
@@ -257,6 +278,12 @@ export default function VICDetailPage({ vicId }: Props) {
                 <Trash2 size={16} />
               </Button>
             )}
+            <Button variant="outline" size="sm" className="h-8 gap-1.5" asChild>
+              <Link href={`/dashboard/vics/${vicId}/advisor-profile`}>
+                <LayoutDashboard size={14} />
+                Advisor workspace
+              </Link>
+            </Button>
           </div>
         </div>
 

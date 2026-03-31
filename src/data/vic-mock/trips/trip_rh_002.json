@@ -1,0 +1,60 @@
+{
+  "id": "trip_rh_002",
+  "vicId": "vic_harrington_richard",
+  "name": "Amalfi Coast Summer",
+  "status": "completed",
+  "type": "anniversary",
+  "startDate": "2025-06-10",
+  "endDate": "2025-06-18",
+  "destinations": [
+    {
+      "id": "dest_002",
+      "city": "Ravello",
+      "country": "Italy",
+      "coordinates": { "lat": 40.6491, "lng": 14.6112 },
+      "properties": [
+        {
+          "id": "prop_002",
+          "name": "Belmond Hotel Caruso",
+          "brand": "Belmond",
+          "roomCategory": "Junior Suite Sea View",
+          "nights": 8,
+          "nightlyRate": 4800,
+          "totalCost": 38400,
+          "commissionRate": 0.1
+        }
+      ],
+      "experiences": [
+        {
+          "id": "exp_004",
+          "name": "Private boat tour of Amalfi Coast",
+          "type": "nature",
+          "provider": "Amalfi Charter",
+          "duration": "Full day",
+          "costPerPerson": 2200
+        },
+        {
+          "id": "exp_005",
+          "name": "Cooking class with local nonna",
+          "type": "culinary",
+          "provider": "Mamma Agata",
+          "duration": "4 hours",
+          "costPerPerson": 600
+        }
+      ],
+      "logistics": []
+    }
+  ],
+  "totalValue": 62400,
+  "commissionEarned": 6240,
+  "commissionRate": 0.1,
+  "clientRating": 5,
+  "patternTags": ["3rd trip to Italy", "Anniversary trip"],
+  "travelingWith": [
+    {
+      "name": "Catherine Harrington",
+      "relationship": "spouse",
+      "vicId": "vic_harrington_catherine"
+    }
+  ]
+}

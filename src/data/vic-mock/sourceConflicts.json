@@ -1,0 +1,42 @@
+[
+  {
+    "id": "conflict_rh_001",
+    "vicId": "vic_harrington_richard",
+    "field": "bed_preference",
+    "values": [
+      {
+        "value": "King bed",
+        "source": "Axus booking history (15 of 16 bookings)",
+        "date": "2025-06-15",
+        "context": "Consistent across almost all bookings"
+      },
+      {
+        "value": "Twin beds",
+        "source": "Axus booking — Claridge's, Dec 2024",
+        "date": "2024-12-01",
+        "context": "Traveling with adult daughter Alexandra, not spouse"
+      }
+    ],
+    "status": "unresolved"
+  },
+  {
+    "id": "conflict_na_001",
+    "vicId": "vic_nadia_alrashid",
+    "field": "smoking_status",
+    "values": [
+      {
+        "value": "Non-smoking (all family members)",
+        "source": "Advisor note — confirmed directly",
+        "date": "2022-12-01",
+        "context": "Sarah Mitchell confirmed with Nadia"
+      },
+      {
+        "value": "enjoking",
+        "source": "Axus profile data import",
+        "date": "2023-01-15",
+        "context": "Apparent typo in Axus system. Likely meant 'non-smoking'."
+      }
+    ],
+    "status": "unresolved"
+  }
+]

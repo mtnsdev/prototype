@@ -1,0 +1,172 @@
+[
+  {
+    "id": "pref_sr_001",
+    "domainId": "accommodation",
+    "value": "Boutique over big brand. Design-forward properties.",
+    "confidence": "medium",
+    "sources": [{ "type": "booking_data", "label": "5 bookings — all boutique/design", "date": "2026-02-15" }],
+    "firstObserved": "2024-04-01",
+    "lastConfirmed": "2026-02-15",
+    "lastConfirmedContext": "COMO Shambhala, February 2026",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_sr_002",
+    "domainId": "accommodation",
+    "value": "Eco-certifications matter",
+    "confidence": "medium",
+    "sources": [{ "type": "client_statement", "label": "Mentioned in onboarding call", "date": "2023-04-01" }],
+    "firstObserved": "2023-04-01",
+    "lastConfirmed": "2025-10-20",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_sr_003",
+    "domainId": "accommodation",
+    "value": "Prefers rooms with natural light and bathtub",
+    "confidence": "medium",
+    "sources": [{ "type": "advisor_note", "label": "Post-trip feedback", "date": "2025-05-20" }],
+    "firstObserved": "2025-05-20",
+    "lastConfirmed": "2026-02-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_sr_004",
+    "domainId": "dining",
+    "value": "Vegan. Strict — no exceptions.",
+    "confidence": "high",
+    "sources": [{ "type": "client_statement", "label": "Client stated in onboarding", "date": "2023-04-01" }],
+    "firstObserved": "2023-04-01",
+    "lastConfirmed": "2026-02-15",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_sr_005",
+    "domainId": "dining",
+    "value": "SEVERE tree nut allergy — carries EpiPen",
+    "confidence": "high",
+    "sources": [{ "type": "client_statement", "label": "Client stated directly — critical medical info", "date": "2023-04-01" }],
+    "firstObserved": "2023-04-01",
+    "lastConfirmed": "2026-02-15",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_sr_006",
+    "domainId": "dining",
+    "value": "Gluten-free by preference (not medical)",
+    "confidence": "medium",
+    "sources": [{ "type": "advisor_note", "label": "Advisor note from first trip", "date": "2024-04-10" }],
+    "firstObserved": "2024-04-10",
+    "lastConfirmed": "2025-10-20",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_sr_007",
+    "domainId": "dining",
+    "value": "Needs allergy card in local language for every destination",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Standard procedure established", "date": "2024-04-01" }],
+    "firstObserved": "2024-04-01",
+    "lastConfirmed": "2026-02-01",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_sr_008",
+    "domainId": "experiences",
+    "value": "High-intensity wellness: Vipassana retreats, altitude training, cold plunge",
+    "confidence": "high",
+    "sources": [
+      { "type": "booking_data", "label": "3 of 5 trips are wellness-focused", "date": "2026-02-15" },
+      { "type": "client_statement", "label": "Described as core travel motivation", "date": "2023-04-01" }
+    ],
+    "firstObserved": "2023-04-01",
+    "lastConfirmed": "2026-02-15",
+    "lastConfirmedContext": "COMO Shambhala — 10-day wellness program",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_sr_009",
+    "domainId": "experiences",
+    "value": "Also loves hiking, freediving, cultural immersion",
+    "confidence": "high",
+    "sources": [{ "type": "itinerary_extraction", "label": "Booked on multiple trips", "date": "2025-10-20" }],
+    "firstObserved": "2024-11-01",
+    "lastConfirmed": "2025-10-20",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_sr_010",
+    "domainId": "experiences",
+    "value": "No interest in golf, shopping, or nightlife",
+    "confidence": "high",
+    "sources": [{ "type": "client_statement", "label": "Onboarding call", "date": "2023-04-01" }],
+    "firstObserved": "2023-04-01",
+    "lastConfirmed": "2023-04-01",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_sr_011",
+    "domainId": "logistics",
+    "value": "Premium economy for <6hr flights, business for longer",
+    "confidence": "medium",
+    "sources": [{ "type": "booking_data", "label": "Axus flight data", "date": "2026-02-01" }],
+    "firstObserved": "2024-04-01",
+    "lastConfirmed": "2026-02-01",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_sr_012",
+    "domainId": "logistics",
+    "value": "Prefers local transport for authenticity. No private transfers unless safety concern.",
+    "confidence": "medium",
+    "sources": [{ "type": "client_statement", "label": "Client preference", "date": "2024-04-10" }],
+    "firstObserved": "2024-04-10",
+    "lastConfirmed": "2025-05-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_sr_013",
+    "domainId": "communication",
+    "value": "Prefers WhatsApp. Sends voice notes.",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Established communication pattern", "date": "2024-04-01" }],
+    "firstObserved": "2023-04-01",
+    "lastConfirmed": "2026-02-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_sr_014",
+    "domainId": "communication",
+    "value": "Sometimes goes dark 3–5 days during work sprints. Not a red flag.",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Observed pattern — confirmed by client", "date": "2024-11-15" }],
+    "firstObserved": "2024-04-01",
+    "lastConfirmed": "2025-10-01",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_sr_015",
+    "domainId": "budget",
+    "value": "$800–$1,500/night. Will exceed for transformative wellness.",
+    "confidence": "medium",
+    "sources": [{ "type": "booking_data", "label": "Derived from 5 bookings", "date": "2026-02-15" }],
+    "firstObserved": "2024-04-01",
+    "lastConfirmed": "2026-02-15",
+    "conflicts": [],
+    "pinned": false
+  }
+]

@@ -1,0 +1,86 @@
+[
+  {
+    "id": "tp_rh_001",
+    "vicId": "vic_harrington_richard",
+    "type": "email",
+    "title": "Post-trip follow-up — Aman Tokyo",
+    "date": "2026-01-18",
+    "direction": "outbound",
+    "contactPerson": "Margaret Chen (EA)",
+    "linkedTripId": "trip_rh_001"
+  },
+  {
+    "id": "tp_rh_002",
+    "vicId": "vic_harrington_richard",
+    "type": "call",
+    "title": "Summer 2026 planning call",
+    "date": "2026-02-12",
+    "direction": "outbound",
+    "contactPerson": "Margaret Chen (EA)",
+    "details": "Discussed Amalfi return vs. new destination. Catherine wants Puglia. Richard wants Japan again."
+  },
+  {
+    "id": "tp_rh_003",
+    "vicId": "vic_harrington_richard",
+    "type": "gift_sent",
+    "title": "Burgundy wine selection — 2023 vintage",
+    "date": "2025-12-20",
+    "direction": "outbound",
+    "details": "Holiday gift — 3 bottles from Domaine de la Romanée-Conti. Sent to Greenwich home."
+  },
+  {
+    "id": "tp_sr_001",
+    "vicId": "vic_sofia_reyes",
+    "type": "whatsapp",
+    "title": "Post-Bali voice note feedback",
+    "date": "2026-02-16",
+    "direction": "inbound",
+    "details": "3-minute voice note. Loved COMO Shambhala. Interested in Japan for wellness next."
+  },
+  {
+    "id": "tp_sr_002",
+    "vicId": "vic_sofia_reyes",
+    "type": "email",
+    "title": "Birthday note",
+    "date": "2025-07-22",
+    "direction": "outbound"
+  },
+  {
+    "id": "tp_jcp_001",
+    "vicId": "vic_james_chenpark",
+    "type": "email",
+    "title": "Puglia & Sicily proposal sent",
+    "date": "2026-03-15",
+    "direction": "outbound",
+    "linkedProposalId": "prop_jcp_puglia"
+  },
+  {
+    "id": "tp_jcp_002",
+    "vicId": "vic_james_chenpark",
+    "type": "email",
+    "title": "Detailed Japan trip feedback (both James and Oliver)",
+    "date": "2026-01-25",
+    "direction": "inbound",
+    "linkedTripId": "trip_jcp_001",
+    "details": "Extremely detailed 1,500-word email with restaurant ratings."
+  },
+  {
+    "id": "tp_ap_001",
+    "vicId": "vic_anya_petrova",
+    "type": "email",
+    "title": "Barcelona trip follow-up + ACC 2026 heads-up",
+    "date": "2026-03-20",
+    "direction": "inbound",
+    "details": "Anya confirmed she's keynoting at ACC New Orleans Nov 2026."
+  },
+  {
+    "id": "tp_ap_002",
+    "vicId": "vic_anya_petrova",
+    "type": "email",
+    "title": "Tulum wellness trip proposal",
+    "date": "2025-12-18",
+    "direction": "outbound",
+    "linkedTripId": "trip_ap_002",
+    "details": "Sent at 6:15 AM. Anya approved same day at 10:22 PM."
+  }
+]

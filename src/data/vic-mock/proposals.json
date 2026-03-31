@@ -1,0 +1,16 @@
+[
+  {
+    "id": "prop_jcp_puglia",
+    "vicId": "vic_james_chenpark",
+    "title": "Puglia & Sicily — Food & Wine Odyssey",
+    "status": "reviewing",
+    "createdAt": "2026-03-10T14:00:00Z",
+    "sentAt": "2026-03-15T09:00:00Z",
+    "lastStatusChange": "2026-03-15T09:00:00Z",
+    "daysSinceStatusChange": 16,
+    "linkedTripId": null,
+    "summary": "12-night culinary immersion across Puglia and Sicily. Three distinctive properties: Masseria Moroseta (rustic-luxe farmhouse), Palazzo Daniele (restored palazzo in Lecce), Verdura Resort (coastal Sicily with Michelin dining). Highlights: private cooking session with Michelin chef Ciccio Ferreri, natural wine tour of Etna producers, Lecce street food crawl, ceramics workshop in Grottaglie.",
+    "destinations": ["Puglia", "Lecce", "Sicily"],
+    "estimatedValue": 32000
+  }
+]

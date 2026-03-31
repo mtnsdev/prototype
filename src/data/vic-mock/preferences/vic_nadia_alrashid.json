@@ -1,0 +1,163 @@
+[
+  {
+    "id": "pref_na_001",
+    "domainId": "accommodation",
+    "value": "Four Seasons brand loyalist (8 stays)",
+    "confidence": "high",
+    "sources": [{ "type": "booking_data", "label": "Axus booking history", "date": "2025-12-20" }],
+    "firstObserved": "2021-12-01",
+    "lastConfirmed": "2025-12-20",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_na_002",
+    "domainId": "accommodation",
+    "value": "Needs interconnecting suites — minimum 2, often 3",
+    "confidence": "high",
+    "sources": [{ "type": "booking_data", "label": "Every family booking", "date": "2025-12-20" }],
+    "firstObserved": "2021-12-01",
+    "lastConfirmed": "2025-12-20",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_na_003",
+    "domainId": "accommodation",
+    "value": "Ground-floor or elevator-accessible room required for mother Fatima",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Accessibility requirement — Fatima uses wheelchair", "date": "2022-07-01" }],
+    "firstObserved": "2022-07-01",
+    "lastConfirmed": "2025-07-15",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_na_004",
+    "domainId": "accommodation",
+    "value": "Pool required — Omar swims daily",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Noted by PA Priya", "date": "2023-07-01" }],
+    "firstObserved": "2023-07-01",
+    "lastConfirmed": "2025-12-20",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_na_005",
+    "domainId": "dining",
+    "value": "Halal-certified or halal-friendly REQUIRED — not a preference",
+    "confidence": "high",
+    "sources": [{ "type": "client_statement", "label": "Stated at onboarding", "date": "2021-09-01" }],
+    "firstObserved": "2021-09-01",
+    "lastConfirmed": "2025-12-20",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_na_006",
+    "domainId": "dining",
+    "value": "Layla is vegetarian",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "PA confirmed", "date": "2023-07-01" }],
+    "firstObserved": "2023-07-01",
+    "lastConfirmed": "2025-07-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_na_007",
+    "domainId": "dining",
+    "value": "Fatima has diabetes — needs low-glycemic menu options communicated to hotel in advance",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Medical requirement — PA Priya", "date": "2022-07-01" }],
+    "firstObserved": "2022-07-01",
+    "lastConfirmed": "2025-12-20",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_na_008",
+    "domainId": "dining",
+    "value": "Nadia appreciates wine but does not drink in front of Fatima",
+    "confidence": "medium",
+    "sources": [{ "type": "advisor_note", "label": "Advisor observation over multiple trips", "date": "2024-07-15" }],
+    "firstObserved": "2023-12-01",
+    "lastConfirmed": "2025-07-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_na_009",
+    "domainId": "experiences",
+    "value": "Must plan parallel itineraries for generational splits: Nadia (cultural + shopping), Khalid (golf + lounging), Layla (city + photography), Omar (adventure sports), Fatima (gentle sightseeing with rests)",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Established pattern across all family trips", "date": "2025-07-20" }],
+    "firstObserved": "2022-07-01",
+    "lastConfirmed": "2025-07-20",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_na_010",
+    "domainId": "sensitivities",
+    "value": "Fatima cannot walk more than 200m — needs wheelchair for distances",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Medical mobility limitation", "date": "2022-07-01" }],
+    "firstObserved": "2022-07-01",
+    "lastConfirmed": "2025-12-20",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_na_011",
+    "domainId": "sensitivities",
+    "value": "Non-smoking — all family members",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Confirmed by advisor", "date": "2022-12-01" }],
+    "firstObserved": "2021-09-01",
+    "lastConfirmed": "2025-12-20",
+    "conflicts": [
+      {
+        "conflictingValue": "Axus profile field shows 'enjoking' (apparent typo)",
+        "source": { "type": "booking_data", "label": "Axus profile data import", "date": "2023-01-15" },
+        "context": "Likely typo for 'non-smoking'. Advisor confirms non-smoking.",
+        "resolved": false
+      }
+    ],
+    "pinned": false
+  },
+  {
+    "id": "pref_na_012",
+    "domainId": "budget",
+    "value": "$5,000–$12,000/night total (multiple rooms). Price not a constraint but value perception matters.",
+    "confidence": "medium",
+    "sources": [{ "type": "booking_data", "label": "Derived from 10 family bookings", "date": "2025-12-20" }],
+    "firstObserved": "2021-12-01",
+    "lastConfirmed": "2025-12-20",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_na_013",
+    "domainId": "budget",
+    "value": "Nadia will push back on charges she considers unreasonable regardless of ability to pay",
+    "confidence": "medium",
+    "sources": [{ "type": "advisor_note", "label": "Observed on 2 occasions", "date": "2024-12-15" }],
+    "firstObserved": "2023-12-01",
+    "lastConfirmed": "2024-12-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_na_014",
+    "domainId": "communication",
+    "value": "All communication through PA Priya Sharma. Priya is authorized for all decisions.",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Established protocol", "date": "2021-09-01" }],
+    "firstObserved": "2021-09-01",
+    "lastConfirmed": "2025-12-01",
+    "conflicts": [],
+    "pinned": false
+  }
+]

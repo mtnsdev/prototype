@@ -1,0 +1,246 @@
+[
+  {
+    "id": "pref_rh_001",
+    "domainId": "accommodation",
+    "value": "Always requests suite, minimum 60 sqm",
+    "confidence": "high",
+    "sources": [
+      { "type": "booking_data", "label": "Axus booking history (18 bookings)", "date": "2026-01-15" },
+      { "type": "advisor_note", "label": "Advisor note — confirmed multiple times", "date": "2025-06-01" }
+    ],
+    "firstObserved": "2019-06-01",
+    "lastConfirmed": "2026-01-15",
+    "lastConfirmedContext": "Aman Tokyo, January 2026",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_rh_002",
+    "domainId": "accommodation",
+    "value": "Prefers corner rooms, high floor",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Advisor note", "date": "2023-08-01" }],
+    "firstObserved": "2021-06-01",
+    "lastConfirmed": "2025-06-15",
+    "lastConfirmedContext": "Belmond Caruso, June 2025",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_rh_003",
+    "domainId": "accommodation",
+    "value": "Must have: espresso machine, blackout curtains, separate dressing area",
+    "confidence": "high",
+    "sources": [{ "type": "client_statement", "label": "Client email to advisor", "date": "2020-03-15" }],
+    "firstObserved": "2020-03-15",
+    "lastConfirmed": "2026-01-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_rh_004",
+    "domainId": "accommodation",
+    "value": "Aman brand loyalist (7 stays)",
+    "confidence": "high",
+    "sources": [{ "type": "booking_data", "label": "Axus booking history", "date": "2026-01-15" }],
+    "firstObserved": "2019-12-01",
+    "lastConfirmed": "2026-01-15",
+    "lastConfirmedContext": "Aman Tokyo",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_rh_005",
+    "domainId": "accommodation",
+    "value": "Exploring Rosewood as alternative to Aman",
+    "confidence": "medium",
+    "sources": [{ "type": "advisor_note", "label": "Post-trip debrief note", "date": "2024-09-30" }],
+    "firstObserved": "2024-09-01",
+    "lastConfirmed": "2024-09-30",
+    "lastConfirmedContext": "Rosewood Castiglion del Bosco, Sep 2024 — rated it highly",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_rh_006",
+    "domainId": "accommodation",
+    "value": "Requests king bed",
+    "confidence": "high",
+    "sources": [{ "type": "booking_data", "label": "Axus booking history", "date": "2025-06-01" }],
+    "firstObserved": "2019-06-01",
+    "lastConfirmed": "2025-06-15",
+    "conflicts": [
+      {
+        "conflictingValue": "Twin beds requested",
+        "source": { "type": "booking_data", "label": "Axus booking — Claridge's", "date": "2024-12-01" },
+        "context": "Traveling with adult daughter Alexandra, not spouse",
+        "resolved": false
+      }
+    ],
+    "pinned": false
+  },
+  {
+    "id": "pref_rh_007",
+    "domainId": "dining",
+    "value": "Loves Japanese cuisine",
+    "confidence": "high",
+    "sources": [
+      { "type": "booking_data", "label": "2 trips to Japan", "date": "2026-01-15" },
+      { "type": "advisor_note", "label": "Advisor note — always books omakase", "date": "2024-03-20" }
+    ],
+    "firstObserved": "2024-03-01",
+    "lastConfirmed": "2026-01-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_rh_008",
+    "domainId": "dining",
+    "value": "Wine collectors — strong Burgundy preference",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Multiple trip debriefs", "date": "2025-06-20" }],
+    "firstObserved": "2020-01-01",
+    "lastConfirmed": "2025-06-20",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_rh_009",
+    "domainId": "dining",
+    "value": "Always request chef's table or private dining for anniversaries",
+    "confidence": "high",
+    "sources": [{ "type": "booking_data", "label": "Axus — 3 anniversary trips", "date": "2025-06-15" }],
+    "firstObserved": "2021-06-14",
+    "lastConfirmed": "2025-06-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_rh_010",
+    "domainId": "dining",
+    "value": "Catherine is pescatarian",
+    "confidence": "high",
+    "sources": [{ "type": "client_statement", "label": "Client stated directly", "date": "2019-06-01" }],
+    "firstObserved": "2019-06-01",
+    "lastConfirmed": "2026-01-15",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_rh_011",
+    "domainId": "experiences",
+    "value": "Art-focused: private gallery tours, artist studio visits",
+    "confidence": "high",
+    "sources": [{ "type": "itinerary_extraction", "label": "Axus itineraries — 6 trips include art experiences", "date": "2025-06-15" }],
+    "firstObserved": "2020-06-01",
+    "lastConfirmed": "2025-06-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_rh_012",
+    "domainId": "experiences",
+    "value": "Catherine does daily yoga",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Confirmed by EA Margaret", "date": "2023-01-15" }],
+    "firstObserved": "2023-01-15",
+    "lastConfirmed": "2025-06-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_rh_013",
+    "domainId": "experiences",
+    "value": "Richard golfs but refuses group activities",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Advisor note", "date": "2022-11-15" }],
+    "firstObserved": "2022-06-01",
+    "lastConfirmed": "2024-09-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_rh_014",
+    "domainId": "experiences",
+    "value": "Both enjoy cooking classes but only private",
+    "confidence": "medium",
+    "sources": [{ "type": "itinerary_extraction", "label": "Booked on 2 trips", "date": "2024-06-15" }],
+    "firstObserved": "2023-03-01",
+    "lastConfirmed": "2024-06-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_rh_015",
+    "domainId": "logistics",
+    "value": "Business class minimum, first on flights 8+ hours",
+    "confidence": "high",
+    "sources": [{ "type": "booking_data", "label": "Axus flight data", "date": "2026-01-15" }],
+    "firstObserved": "2019-06-01",
+    "lastConfirmed": "2026-01-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_rh_016",
+    "domainId": "logistics",
+    "value": "Private transfers always",
+    "confidence": "high",
+    "sources": [{ "type": "booking_data", "label": "Axus itineraries — every trip", "date": "2026-01-15" }],
+    "firstObserved": "2019-06-01",
+    "lastConfirmed": "2026-01-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_rh_017",
+    "domainId": "sensitivities",
+    "value": "Richard has mild claustrophobia — no small aircraft or tight spaces",
+    "confidence": "high",
+    "sources": [{ "type": "client_statement", "label": "Client told advisor directly", "date": "2021-06-10" }],
+    "firstObserved": "2021-06-10",
+    "lastConfirmed": "2021-06-10",
+    "conflicts": [],
+    "pinned": true
+  },
+  {
+    "id": "pref_rh_018",
+    "domainId": "budget",
+    "value": "$2,500–$4,500/night accommodation. Higher for special occasions.",
+    "confidence": "high",
+    "sources": [{ "type": "booking_data", "label": "Derived from 16 trip booking values", "date": "2026-01-15" }],
+    "firstObserved": "2019-06-01",
+    "lastConfirmed": "2026-01-15",
+    "conflicts": [],
+    "pinned": false
+  },
+  {
+    "id": "pref_rh_019",
+    "domainId": "budget",
+    "value": "Extremely price-sensitive on flights — compares obsessively",
+    "confidence": "medium",
+    "sources": [{ "type": "advisor_note", "label": "Advisor observation", "date": "2024-01-15" }],
+    "firstObserved": "2022-01-01",
+    "lastConfirmed": "2025-02-10",
+    "conflicts": [
+      {
+        "conflictingValue": "Booked $28K first-class tickets to Tokyo without hesitation",
+        "source": { "type": "booking_data", "label": "Axus booking — Jan 2026", "date": "2026-01-05" },
+        "context": "Anniversary trip to Japan — may override price sensitivity for special occasions",
+        "resolved": false
+      }
+    ],
+    "pinned": false
+  },
+  {
+    "id": "pref_rh_020",
+    "domainId": "communication",
+    "value": "Primary contact is EA Margaret Chen. She handles 80% of communication.",
+    "confidence": "high",
+    "sources": [{ "type": "advisor_note", "label": "Established pattern since 2020", "date": "2025-12-01" }],
+    "firstObserved": "2020-01-01",
+    "lastConfirmed": "2025-12-01",
+    "conflicts": [],
+    "pinned": false
+  }
+]

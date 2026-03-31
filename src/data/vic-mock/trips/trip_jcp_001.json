@@ -1,0 +1,128 @@
+{
+  "id": "trip_jcp_001",
+  "vicId": "vic_james_chenpark",
+  "name": "Japan Food Pilgrimage",
+  "status": "completed",
+  "type": "leisure",
+  "startDate": "2026-01-08",
+  "endDate": "2026-01-18",
+  "destinations": [
+    {
+      "id": "dest_030",
+      "city": "Tokyo",
+      "country": "Japan",
+      "coordinates": { "lat": 35.6762, "lng": 139.6503 },
+      "properties": [
+        {
+          "id": "prop_030",
+          "name": "Hoshinoya Tokyo",
+          "brand": "Hoshino Resorts",
+          "roomCategory": "River View Room",
+          "nights": 5,
+          "nightlyRate": 900,
+          "totalCost": 4500,
+          "commissionRate": 0.08
+        }
+      ],
+      "experiences": [
+        {
+          "id": "exp_030",
+          "name": "Tsukiji outer market dawn tour (Oliver-led, advisor arranged access)",
+          "type": "culinary",
+          "duration": "3 hours",
+          "costPerPerson": 200
+        },
+        {
+          "id": "exp_031",
+          "name": "Omakase at Den (2 Michelin stars)",
+          "type": "culinary",
+          "duration": "3 hours",
+          "costPerPerson": 800
+        },
+        {
+          "id": "exp_032",
+          "name": "Vinyl record shopping tour — Shimokitazawa",
+          "type": "entertainment",
+          "provider": "Tokyo Music Tours",
+          "duration": "3 hours",
+          "costPerPerson": 150
+        },
+        {
+          "id": "exp_033",
+          "name": "teamLab Planets (golden hour entry for photography)",
+          "type": "cultural",
+          "duration": "2 hours",
+          "costPerPerson": 40
+        }
+      ],
+      "logistics": [
+        {
+          "id": "log_030",
+          "type": "flight",
+          "from": "JFK",
+          "to": "NRT",
+          "carrier": "ANA",
+          "class": "Business"
+        }
+      ]
+    },
+    {
+      "id": "dest_031",
+      "city": "Kyoto",
+      "country": "Japan",
+      "coordinates": { "lat": 35.0116, "lng": 135.7681 },
+      "properties": [
+        {
+          "id": "prop_031",
+          "name": "Tawaraya Ryokan",
+          "roomCategory": "Traditional Room",
+          "nights": 5,
+          "nightlyRate": 1100,
+          "totalCost": 5500
+        }
+      ],
+      "experiences": [
+        {
+          "id": "exp_034",
+          "name": "Private pottery workshop — Kiyomizu-yaki ceramics",
+          "type": "cultural",
+          "provider": "Kyoto Craft Tours",
+          "duration": "4 hours",
+          "costPerPerson": 300
+        },
+        {
+          "id": "exp_035",
+          "name": "Kaiseki at Kikunoi (3 Michelin stars)",
+          "type": "culinary",
+          "duration": "3 hours",
+          "costPerPerson": 600
+        },
+        {
+          "id": "exp_036",
+          "name": "Natural wine tasting — Kyoto Wine Lab",
+          "type": "culinary",
+          "duration": "2 hours",
+          "costPerPerson": 180
+        }
+      ],
+      "logistics": [
+        {
+          "id": "log_031",
+          "type": "rail",
+          "from": "Tokyo",
+          "to": "Kyoto",
+          "carrier": "Shinkansen",
+          "class": "Green Car (First)",
+          "details": "Reserved forward-facing window seats for James (motion sickness)"
+        }
+      ]
+    }
+  ],
+  "totalValue": 28400,
+  "commissionEarned": 2272,
+  "commissionRate": 0.08,
+  "clientFeedback": "Oliver: Tawaraya is perfection. James: Shimokitazawa vinyl haul was incredible.",
+  "clientRating": 5,
+  "patternTags": ["1st time in Japan", "Highest dining spend per trip"],
+  "travelingWith": [{ "name": "Oliver Chen-Park", "relationship": "spouse" }]
+}

@@ -1,0 +1,155 @@
+[
+  {
+    "id": "rel_rh_001",
+    "vicId": "vic_harrington_richard",
+    "relatedPersonName": "Catherine Harrington",
+    "relatedVicId": "vic_harrington_catherine",
+    "type": "spouse",
+    "dateOfBirth": "1967-09-18",
+    "contactInfo": { "email": "catherine.harrington@gmail.com", "preferredMethod": "email" },
+    "tripsTogetherCount": 15,
+    "sharedPreferences": [
+      "Both prefer suites",
+      "Both are wine collectors",
+      "Both enjoy private cooking classes"
+    ],
+    "differingPreferences": [
+      "Catherine is pescatarian, Richard is not",
+      "Catherine does yoga, Richard golfs"
+    ]
+  },
+  {
+    "id": "rel_rh_002",
+    "vicId": "vic_harrington_richard",
+    "relatedPersonName": "Alexandra Harrington",
+    "type": "child",
+    "dateOfBirth": "1995-04-22",
+    "age": 31,
+    "notes": "Joined London trip (Dec 2024) and Greek Islands (Aug 2023). No own VIC.",
+    "tripsTogetherCount": 2
+  },
+  {
+    "id": "rel_rh_003",
+    "vicId": "vic_harrington_richard",
+    "relatedPersonName": "James Harrington",
+    "type": "child",
+    "dateOfBirth": "1998-09-03",
+    "age": 28,
+    "notes": "Joined New Zealand trip (Nov 2022). No own VIC.",
+    "tripsTogetherCount": 1
+  },
+  {
+    "id": "rel_rh_004",
+    "vicId": "vic_harrington_richard",
+    "relatedPersonName": "Margaret Chen",
+    "type": "assistant",
+    "contactInfo": {
+      "email": "margaret.chen@harringtoncap.com",
+      "phone": "+1-203-555-0150",
+      "preferredMethod": "email"
+    },
+    "authorityLevel": "limited",
+    "authorityLimit": 50000,
+    "notes": "Handles 80% of communication. Authorized to approve bookings up to $50K."
+  },
+  {
+    "id": "rel_rh_005",
+    "vicId": "vic_harrington_richard",
+    "relatedPersonName": "David & Lisa Thornton",
+    "type": "referred_client",
+    "referralDate": "2023-02-15",
+    "referralContext": "Richard introduced them at a Greenwich dinner party. They became clients in 2023. LTV $142K."
+  },
+  {
+    "id": "rel_na_001",
+    "vicId": "vic_nadia_alrashid",
+    "relatedPersonName": "Khalid Al-Rashid",
+    "relatedVicId": "vic_khalid_alrashid",
+    "type": "spouse",
+    "dateOfBirth": "1974-08-30",
+    "contactInfo": { "email": "khalid@alrashidfamilyoffice.com" },
+    "tripsTogetherCount": 8,
+    "sharedPreferences": ["Both prefer Four Seasons"],
+    "differingPreferences": [
+      "Khalid prefers business hotels when alone",
+      "Nadia: cultural + shopping, Khalid: golf + lounging"
+    ],
+    "notes": "Often joins for first few days then returns for work."
+  },
+  {
+    "id": "rel_na_002",
+    "vicId": "vic_nadia_alrashid",
+    "relatedPersonName": "Layla Al-Rashid",
+    "type": "child",
+    "dateOfBirth": "2007-01-15",
+    "age": 19,
+    "notes": "University in London. Joins holidays. Vegetarian.",
+    "tripsTogetherCount": 7
+  },
+  {
+    "id": "rel_na_003",
+    "vicId": "vic_nadia_alrashid",
+    "relatedPersonName": "Omar Al-Rashid",
+    "type": "child",
+    "dateOfBirth": "2010-06-22",
+    "age": 16,
+    "notes": "Boarding school in Switzerland. Extreme sports enthusiast.",
+    "tripsTogetherCount": 8
+  },
+  {
+    "id": "rel_na_004",
+    "vicId": "vic_nadia_alrashid",
+    "relatedPersonName": "Fatima Al-Rashid",
+    "type": "parent",
+    "dateOfBirth": "1951-03-10",
+    "age": 75,
+    "notes": "Mobility limited — wheelchair for distances. Diabetes — low-glycemic options.",
+    "tripsTogetherCount": 5
+  },
+  {
+    "id": "rel_na_005",
+    "vicId": "vic_nadia_alrashid",
+    "relatedPersonName": "Priya Sharma",
+    "type": "assistant",
+    "contactInfo": {
+      "email": "priya@alrashidfamilyoffice.com",
+      "phone": "+971-50-555-8825",
+      "preferredMethod": "email"
+    },
+    "authorityLevel": "full",
+    "notes": "PA to Nadia. Authorized for all decisions. No spending limit."
+  },
+  {
+    "id": "rel_na_006",
+    "vicId": "vic_nadia_alrashid",
+    "relatedPersonName": "Nanny (Omar)",
+    "type": "companion",
+    "notes": "Travels on all family trips with Omar."
+  },
+  {
+    "id": "rel_jcp_001",
+    "vicId": "vic_james_chenpark",
+    "relatedPersonName": "Oliver Chen-Park",
+    "type": "spouse",
+    "dateOfBirth": "1992-08-29",
+    "contactInfo": { "email": "oliver@chenpark.co", "preferredMethod": "email" },
+    "tripsTogetherCount": 4,
+    "sharedPreferences": [
+      "Both love design hotels",
+      "Both are photographers",
+      "Both enjoy ceramics workshops"
+    ],
+    "differingPreferences": [
+      "Oliver handles all dining decisions (Michelin chef)",
+      "James handles logistics"
+    ]
+  },
+  {
+    "id": "rel_ap_001",
+    "vicId": "vic_anya_petrova",
+    "relatedPersonName": "Dr. Marcus Webb",
+    "type": "referral_source",
+    "referralDate": "2022-07-15",
+    "referralContext": "Colleague at Mass General. Recommended the agency after Anya mentioned needing help with conference travel."
+  }
+]
