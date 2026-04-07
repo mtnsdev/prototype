@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Bell } from "lucide-react";
 import AppleWidgetCard from "../AppleWidgetCard";
@@ -7,11 +8,28 @@ import BriefingEmptyState from "../BriefingEmptyState";
 import type { NewsAlertContent, NewsAlertItem } from "@/types/briefing";
 import { cn } from "@/lib/utils";
 
+function isUnsplashThumbnail(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return u.hostname === "images.unsplash.com" && u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function NewsThumb({ item }: { item: NewsAlertItem }) {
   if (item.thumbnail_url) {
+    const allowlisted = isUnsplashThumbnail(item.thumbnail_url);
     return (
-      <span className="h-8 w-8 shrink-0 overflow-hidden rounded-lg bg-muted ring-1 ring-border">
-        <img src={item.thumbnail_url} alt="" className="w-full h-full object-cover" />
+      <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg bg-muted ring-1 ring-border">
+        <Image
+          src={item.thumbnail_url}
+          alt=""
+          fill
+          className="object-cover"
+          sizes="32px"
+          unoptimized={!allowlisted}
+        />
       </span>
     );
   }
@@ -121,7 +139,7 @@ export default function NewsAlertsWidget({ content, staggerIndex = 0 }: Props) {
       {total > 3 && (
         <Link
           href="#"
-          className="mt-4 inline-block text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+          className="mt-4 inline-block rounded-md text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           View all {total} alerts →
         </Link>

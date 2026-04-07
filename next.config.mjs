@@ -5,6 +5,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        pathname: "/**",
+      },
+    ],
+  },
   transpilePackages: ["leaflet", "react-leaflet"],
   /** Parent folder has its own lockfile; pin Turbopack to this app. */
   turbopack: {

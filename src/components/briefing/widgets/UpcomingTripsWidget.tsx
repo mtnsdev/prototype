@@ -66,7 +66,7 @@ export default function UpcomingTripsWidget({
           action={
             <Link
               href="/dashboard/itineraries?filter=upcoming"
-              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted/50"
+              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Browse itineraries
             </Link>

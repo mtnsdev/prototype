@@ -503,19 +503,8 @@ input.chat-input-no-focus-outline:focus-visible,
     }
 }
 
-/* ==========================================
-   Reduced Motion
-   ========================================== */
-
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-}
+/* Reduced motion: handle per animation (e.g. .animate-briefing-fade-in, .animate-card-slide-in).
+   Avoid a global * transition override — it flattens focus/hover feedback and fights component rings. */
 
 /* Theme is single-source: shadcn semantic vars are set on :root above (Enable palette).
    Do not add a `.dark` class on <html> — a second theme block would override brand/CTA tokens. */

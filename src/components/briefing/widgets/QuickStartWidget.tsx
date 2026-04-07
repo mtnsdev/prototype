@@ -78,7 +78,8 @@ export default function QuickStartWidget({ content, staggerIndex = 0 }: Props) {
               key={action.label}
               href={href}
               className={cn(
-                "flex flex-col items-center justify-center rounded-xl p-4 transition-all text-center group border",
+                "group flex flex-col items-center justify-center rounded-xl border p-4 text-center transition-all",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 isAcuityVic
                   ? "border-[var(--muted-accent-border)] bg-[var(--muted-accent-bg)] hover:bg-muted/35"
                   : "border-transparent bg-muted/15 hover:bg-muted/35"
@@ -98,7 +99,7 @@ export default function QuickStartWidget({ content, staggerIndex = 0 }: Props) {
                   Acuity Lookup
                 </span>
               ) : (
-                <span className="text-xs text-muted-foreground/90 mt-2 group-hover:text-white transition-colors truncate w-full">
+                <span className="mt-2 w-full truncate text-xs text-muted-foreground/90 transition-colors group-hover:text-foreground">
                   {action.label
                     .replace("Create Itinerary", "Create Itin.")
                     .replace("Browse Products", "Browse Prods.")

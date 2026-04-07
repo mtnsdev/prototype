@@ -205,12 +205,12 @@ export default function ActionItemsWidget({
           onChange={(e) => setNewTitle(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addItem()}
           placeholder="Add item…"
-          className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-input focus:outline-none"
+          className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-input focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         />
         <button
           type="button"
           onClick={addItem}
-          className="rounded-md border border-border bg-background px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-input hover:text-foreground"
+          className="rounded-md border border-border bg-background px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-input hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           Add
         </button>

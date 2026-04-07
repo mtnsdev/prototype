@@ -1,5 +1,10 @@
 "use client";
 
+import {
+    USER_GRID_WIDGET_META,
+    type BriefingUserGridWidgetId,
+    type UserDashboardWidgetLayout,
+} from "@/lib/briefingDashboardUserLayout";
 import { cn } from "@/lib/utils";
 
 /** Shared shape for agency hub popover (column + size). Dashboard grid uses order instead — see `briefingDashboardUserLayout`. */
@@ -39,7 +44,7 @@ export function BriefingLayoutIOSSwitch({
             htmlFor={id}
             className={cn(
                 "relative inline-flex h-[31px] w-[51px] shrink-0 cursor-pointer items-center rounded-full p-0.5 transition-colors",
-                "bg-foreground/15 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
+                "bg-foreground/15 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-background",
                 checked && "bg-primary",
                 disabled && "pointer-events-none opacity-40",
             )}
@@ -96,6 +101,7 @@ export function BriefingLayoutSegmented<T extends string>({
                     onClick={() => onChange(o.value)}
                     className={cn(
                         "min-w-0 flex-1 rounded-[8px] py-2 text-[13px] font-medium transition-all duration-150",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                         value === o.value
                             ? "bg-background text-foreground shadow-sm"
                             : "text-muted-foreground hover:text-foreground/90",
@@ -104,6 +110,58 @@ export function BriefingLayoutSegmented<T extends string>({
                     {o.label}
                 </button>
             ))}
+        </div>
+    );
+}
+
+type UpdateGridWidget = (id: BriefingUserGridWidgetId, patch: Partial<UserDashboardWidgetLayout>) => void;
+
+/** Dashboard grid widgets: visibility + column (order is set via Edit layout + drag). */
+export function BriefingWidgetLayoutForm({
+    widgetId,
+    pref,
+    updateWidget,
+    disabled,
+    idSuffix,
+}: {
+    widgetId: BriefingUserGridWidgetId;
+    pref: UserDashboardWidgetLayout;
+    updateWidget: UpdateGridWidget;
+    disabled?: boolean;
+    idSuffix: string;
+}) {
+    const meta = USER_GRID_WIDGET_META[widgetId];
+    return (
+        <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-medium text-foreground">Show on dashboard</span>
+                <BriefingLayoutIOSSwitch
+                    id={`${idSuffix}-show-${widgetId}`}
+                    checked={pref.visible}
+                    disabled={disabled}
+                    aria-label={`Show ${meta.label} on dashboard`}
+                    onCheckedChange={(v) => updateWidget(widgetId, { visible: v })}
+                />
+            </div>
+            {pref.visible ? (
+                <div>
+                    <p className="mb-1.5 text-[12px] font-medium text-muted-foreground/80">Column</p>
+                    <BriefingLayoutSegmented
+                        ariaLabel={`Column for ${meta.label}`}
+                        value={pref.column}
+                        disabled={disabled}
+                        onChange={(column) => updateWidget(widgetId, { column })}
+                        options={[
+                            { value: "left" as const, label: "Left" },
+                            { value: "right" as const, label: "Right" },
+                        ]}
+                    />
+                    <p className="mt-1.5 text-[11px] text-muted-foreground/65">
+                        Use <span className="font-medium text-foreground/80">Edit layout</span> on the briefing page
+                        to drag order within each column.
+                    </p>
+                </div>
+            ) : null}
         </div>
     );
 }

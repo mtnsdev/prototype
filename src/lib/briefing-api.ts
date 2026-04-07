@@ -12,6 +12,39 @@ function getAuthHeaders(): HeadersInit {
   return headers;
 }
 
+export type FetchBriefingWidgetsForDashboardResult =
+  | { ok: true; widgets: BriefingWidget[] }
+  | { ok: false; error: string };
+
+/** Loads dashboard widgets; does not fall back to mock on failure (use for user-visible errors + retry). */
+export async function fetchBriefingWidgetsForDashboard(
+  userId?: string,
+): Promise<FetchBriefingWidgetsForDashboardResult> {
+  if (IS_PREVIEW_MODE) {
+    const { getMockBriefingWidgets } = await import("@/components/briefing/briefingMockData");
+    return { ok: true, widgets: getMockBriefingWidgets() };
+  }
+  const q = userId ? `?user_id=${encodeURIComponent(userId)}` : "";
+  try {
+    const res = await fetch(`/api/briefing/widgets${q}`, { headers: getAuthHeaders() });
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => "");
+      return {
+        ok: false,
+        error: errBody?.trim() || `Could not load widgets (HTTP ${res.status})`,
+      };
+    }
+    const data = (await res.json()) as { widgets?: BriefingWidget[] } | BriefingWidget[];
+    const raw = Array.isArray(data) ? data : data.widgets;
+    return { ok: true, widgets: Array.isArray(raw) ? raw : [] };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Network error — check your connection and try again.",
+    };
+  }
+}
+
 export async function fetchBriefingWidgets(userId?: string): Promise<BriefingWidget[]> {
   if (IS_PREVIEW_MODE) {
     const { getMockBriefingWidgets } = await import("@/components/briefing/briefingMockData");

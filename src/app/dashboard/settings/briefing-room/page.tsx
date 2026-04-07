@@ -19,8 +19,8 @@ export default function BriefingRoomSettingsPage() {
     }
 
     return (
-        <div className="h-full overflow-y-auto bg-background">
-            <div className="max-w-2xl mx-auto p-6 space-y-6">
+        <div className="briefing-nature h-full overflow-y-auto bg-background">
+            <div className="mx-auto max-w-2xl space-y-6 p-6">
                 <Breadcrumbs
                     items={[
                         { label: "Dashboard", href: "/dashboard" },
@@ -39,7 +39,7 @@ export default function BriefingRoomSettingsPage() {
 
                 <section className="rounded-2xl border border-border bg-card overflow-hidden">
                     <div className="px-5 py-4 border-b border-border flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-input">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-muted/35">
                             <Newspaper size={18} className="text-muted-foreground" />
                         </div>
                         <h2 className="text-base font-semibold text-foreground">User mode (default)</h2>
@@ -60,8 +60,8 @@ export default function BriefingRoomSettingsPage() {
 
                 <section className="rounded-2xl border border-border bg-card overflow-hidden">
                     <div className="px-5 py-4 border-b border-border flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500/15 to-amber-600/8 flex items-center justify-center border border-amber-500/20">
-                            <Shield size={18} className="text-[var(--color-warning)]" />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-muted/35">
+                            <Shield size={18} className="text-muted-foreground" />
                         </div>
                         <h2 className="text-base font-semibold text-foreground">Admin view</h2>
                     </div>
@@ -77,7 +77,7 @@ export default function BriefingRoomSettingsPage() {
 
                 <section className="rounded-2xl border border-border bg-card overflow-hidden">
                     <div className="px-5 py-4 border-b border-border flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-input">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-muted/35">
                             <LayoutDashboard size={18} className="text-muted-foreground" />
                         </div>
                         <h2 className="text-base font-semibold text-foreground">Prototype mode</h2>
@@ -100,14 +100,7 @@ export default function BriefingRoomSettingsPage() {
 
                 <Link
                     href="/dashboard"
-                    className={[
-                        "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
-                        "text-base font-medium",
-                        "bg-white/[0.06] hover:bg-white/[0.1]",
-                        "border border-border",
-                        "text-foreground",
-                        "transition-all duration-150",
-                    ].join(" ")}
+                    className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-base font-medium text-foreground transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                     <LayoutDashboard size={16} />
                     Open Briefing Room

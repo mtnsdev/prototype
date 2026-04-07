@@ -96,7 +96,7 @@ export default function AnnouncementsWidget({ isAdmin, staggerIndex = 0 }: Props
           <button
             type="button"
             onClick={() => setShowEditor(true)}
-            className="shrink-0 rounded-lg px-2.5 py-1.5 text-2xs font-medium text-primary transition-colors hover:bg-muted/40 hover:text-foreground"
+            className="shrink-0 rounded-lg px-2.5 py-1.5 text-2xs font-medium text-primary transition-colors hover:bg-muted/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             + New
           </button>
@@ -133,14 +133,14 @@ export default function AnnouncementsWidget({ isAdmin, staggerIndex = 0 }: Props
                 <button
                   type="button"
                   onClick={() => setShowEditor(false)}
-                  className="text-2xs text-muted-foreground hover:text-foreground"
+                  className="rounded-md text-2xs text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={publish}
-                  className="text-2xs font-medium text-primary hover:text-foreground"
+                  className="rounded-md text-2xs font-medium text-primary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   Publish
                 </button>
@@ -184,7 +184,7 @@ export default function AnnouncementsWidget({ isAdmin, staggerIndex = 0 }: Props
                 <button
                   type="button"
                   onClick={() => setShowEditor(true)}
-                  className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted/50"
+                  className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   Write announcement
                 </button>

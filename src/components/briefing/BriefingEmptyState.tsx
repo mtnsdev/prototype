@@ -29,7 +29,17 @@ export default function BriefingEmptyState({ icon, title, description, action, c
       {description ? (
         <p className="mt-1 max-w-[15rem] text-xs leading-relaxed text-muted-foreground">{description}</p>
       ) : null}
-      {action ? <div className="mt-4 flex justify-center">{action}</div> : null}
+      {action ? (
+        <div
+          className={cn(
+            "mt-4 flex justify-center",
+            "[&_a]:inline-flex [&_a]:rounded-md [&_a]:focus-visible:outline-none [&_a]:focus-visible:ring-2 [&_a]:focus-visible:ring-ring [&_a]:focus-visible:ring-offset-2 [&_a]:focus-visible:ring-offset-background",
+            "[&_button]:rounded-md [&_button]:focus-visible:outline-none [&_button]:focus-visible:ring-2 [&_button]:focus-visible:ring-ring [&_button]:focus-visible:ring-offset-2 [&_button]:focus-visible:ring-offset-background",
+          )}
+        >
+          {action}
+        </div>
+      ) : null}
     </div>
   );
 }
