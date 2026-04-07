@@ -3,14 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20"
+    "node": "20.x"
   },
   "scripts": {
+    "preinstall": "node scripts/ensure-node.cjs",
+    "predev": "node scripts/ensure-node.cjs",
+    "prebuild": "node scripts/ensure-node.cjs",
+    "setup:mac": "bash scripts/setup-mac.sh",
     "dev": "node scripts/start-dev.cjs",
     "dev:stop": "node scripts/start-dev.cjs --stop",
     "dev:fresh": "node scripts/start-dev.cjs --fresh",
     "dev:4001": "node scripts/start-dev.cjs 4001",
+    "dev:quick": "SKIP_DEV_CLEANUP=1 node scripts/start-dev.cjs",
     "dev:raw": "next dev -p 4002",
+    "open:dev": "open http://127.0.0.1:4002",
     "build": "next build",
     "start": "next start -p 4002",
     "lint": "eslint",
@@ -58,5 +64,8 @@
     "tailwindcss": "^4.1.18",
     "tw-animate-css": "^1.4.0",
     "typescript": "^5"
+  },
+  "volta": {
+    "node": "20.18.1"
   }
 }

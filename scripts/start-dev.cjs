@@ -6,6 +6,7 @@
  *   npm run dev
  *   npm run dev:stop
  *   npm run dev:fresh   — after cleanup, delete entire .next then dev
+ *   SKIP_DEV_CLEANUP=1  — skip killing ports / removing lock
  */
 const { execFileSync, spawnSync } = require("child_process");
 const fs = require("fs");
@@ -90,7 +91,11 @@ function freeDevEnvironment() {
   }
 }
 
-freeDevEnvironment();
+if (process.env.SKIP_DEV_CLEANUP !== "1") {
+  freeDevEnvironment();
+} else {
+  console.log("[dev] SKIP_DEV_CLEANUP=1 — skipping port/lock cleanup\n");
+}
 
 if (fresh && !stopOnly) {
   console.log("[dev] Removing .next (clean build)…");
