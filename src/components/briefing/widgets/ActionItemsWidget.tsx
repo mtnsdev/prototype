@@ -1,8 +1,11 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { CheckSquare, Circle, Check } from "lucide-react";
-import AppleWidgetCard from "../AppleWidgetCard";
+import AppleWidgetCard, { type WidgetCardDensity } from "../AppleWidgetCard";
+import BriefingEmptyState from "../BriefingEmptyState";
+import { mergeWidgetHeaderRight } from "../mergeWidgetHeaderRight";
 import type { ActionItemsContent, ActionItemEntry } from "@/types/briefing";
 import { PIPELINE_STAGE_LABEL_MAP } from "@/config/pipelineStages";
 import type { PipelineStage } from "@/types/itinerary";
@@ -29,9 +32,17 @@ type Props = {
   content: ActionItemsContent;
   staggerIndex?: number;
   isAdmin?: boolean;
+  cardDensity?: WidgetCardDensity;
+  layoutMenu?: ReactNode;
 };
 
-export default function ActionItemsWidget({ content, staggerIndex = 0, isAdmin = false }: Props) {
+export default function ActionItemsWidget({
+  content,
+  staggerIndex = 0,
+  isAdmin = false,
+  cardDensity,
+  layoutMenu,
+}: Props) {
   const [items, setItems] = useState(content.items ?? []);
   const [newTitle, setNewTitle] = useState("");
 
@@ -85,11 +96,14 @@ export default function ActionItemsWidget({ content, staggerIndex = 0, isAdmin =
         icon={<CheckSquare size={20} />}
         title="Action Items"
         staggerIndex={staggerIndex}
+        density={cardDensity ?? "default"}
+        rightElement={mergeWidgetHeaderRight(undefined, layoutMenu)}
       >
-        <div className="flex flex-col items-center justify-center py-10 text-center">
-          <CheckSquare size={28} className="text-muted-foreground/70 mb-2" />
-          <p className="text-sm text-muted-foreground">All caught up — nothing due</p>
-        </div>
+        <BriefingEmptyState
+          icon={<CheckSquare />}
+          title="All caught up"
+          description="Nothing due right now. Add a task below when you’re ready."
+        />
       </AppleWidgetCard>
     );
   }
@@ -100,53 +114,52 @@ export default function ActionItemsWidget({ content, staggerIndex = 0, isAdmin =
       icon={<CheckSquare size={20} />}
       title="Action Items"
       staggerIndex={staggerIndex}
+      density={cardDensity ?? "default"}
+      rightElement={mergeWidgetHeaderRight(undefined, layoutMenu)}
     >
-      <div className="grid grid-cols-3 gap-4 mb-4">
-        <div>
-          <p className="text-2xl font-bold text-red-400">{urgent.length}</p>
-          <p className="text-xs text-muted-foreground">urgent</p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-blue-400">{open.length}</p>
-          <p className="text-xs text-muted-foreground">open</p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-white">{total}</p>
-          <p className="text-xs text-muted-foreground">total</p>
-        </div>
+      <div className="mb-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <span>
+          <span className="font-semibold tabular-nums text-foreground/90">{urgent.length}</span> urgent
+        </span>
+        <span>
+          <span className="font-semibold tabular-nums text-muted-foreground">{open.length}</span> open
+        </span>
+        <span>
+          <span className="font-semibold tabular-nums text-foreground">{total}</span> total
+        </span>
       </div>
-      <div className="h-1 rounded-full bg-white/10 overflow-hidden mb-4">
+      <div className="mb-3 h-1 overflow-hidden rounded-full bg-muted">
         <div
-          className="h-full rounded-full bg-blue-500 transition-all"
+          className="h-full rounded-full bg-foreground/20 transition-all"
           style={{ width: `${completionPct}%` }}
         />
       </div>
-      <ul className="space-y-1">
+      <ul className="space-y-0.5">
         {top4.map((item) => (
           <li key={item.id}>
             <div
               className={cn(
-                "flex items-start gap-2 rounded-lg p-2 hover:bg-white/[0.04] transition-colors",
+                "flex items-start gap-2 rounded-md border border-transparent px-1 py-1.5 transition-colors hover:bg-muted/50",
                 item.status === "done" && "opacity-60",
-                item.priority === "high" && isOverdue(item.due_date) && "bg-red-500/5"
+                item.priority === "high" && isOverdue(item.due_date) && "bg-muted/50"
               )}
             >
               <button
                 type="button"
                 onClick={() => toggleDone(item.id)}
-                className="shrink-0 mt-0.5 text-muted-foreground hover:text-white border border-border hover:border-white/20 rounded-full p-0.5 transition-colors"
+                className="mt-0.5 shrink-0 rounded-full border border-border p-0.5 text-muted-foreground transition-colors hover:border-input hover:text-foreground"
               >
                 {item.status === "done" ? (
-                  <Check size={14} className="text-emerald-400" />
+                  <Check size={14} className="text-[var(--color-info)]" />
                 ) : (
                   <Circle size={14} />
                 )}
               </button>
               <div className="min-w-0 flex-1">
-                <p className={cn("text-sm font-medium text-white", item.status === "done" && "line-through")}>
+                <p className={cn("text-sm font-medium text-foreground", item.status === "done" && "line-through")}>
                   <span className="truncate inline align-middle max-w-full">{item.title}</span>
                   {item.related_entity_type === "itinerary" && item.pipeline_stage && (
-                    <span className="text-2xs text-emerald-400/50 bg-emerald-500/5 px-1.5 py-0.5 rounded ml-1 align-middle whitespace-nowrap">
+                    <span className="text-2xs ml-1 inline-block whitespace-nowrap rounded bg-[var(--color-info-muted)] px-1.5 py-0.5 align-middle text-[var(--color-info)]">
                       {PIPELINE_STAGE_LABEL_MAP[item.pipeline_stage as PipelineStage]}
                     </span>
                   )}
@@ -156,7 +169,12 @@ export default function ActionItemsWidget({ content, staggerIndex = 0, isAdmin =
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {item.due_date ? (
-                    <span className={cn(isOverdue(item.due_date) && "text-red-400", isDueToday(item.due_date) && !isOverdue(item.due_date) && "text-[var(--color-warning)]")}>
+                    <span
+                      className={cn(
+                        isOverdue(item.due_date) && "font-medium text-foreground/90",
+                        isDueToday(item.due_date) && !isOverdue(item.due_date) && "text-muted-foreground",
+                      )}
+                    >
                       {isOverdue(item.due_date) ? `Due ${formatDue(item.due_date)}` : isDueToday(item.due_date) ? "Due today" : `Due ${formatDue(item.due_date)}`}
                     </span>
                   ) : null}
@@ -164,7 +182,12 @@ export default function ActionItemsWidget({ content, staggerIndex = 0, isAdmin =
                 </p>
               </div>
               {item.status !== "done" && item.priority === "high" && (
-                <span className={cn("text-2xs shrink-0", isOverdue(item.due_date) ? "text-red-400" : "text-[var(--color-warning)]")}>
+                <span
+                  className={cn(
+                    "text-2xs shrink-0 text-muted-foreground",
+                    isOverdue(item.due_date) && "font-semibold text-foreground/80",
+                  )}
+                >
                   {isOverdue(item.due_date) ? "!!" : "!"}
                 </span>
               )}
@@ -175,19 +198,19 @@ export default function ActionItemsWidget({ content, staggerIndex = 0, isAdmin =
       {moreCount > 0 && (
         <p className="text-xs text-muted-foreground mt-2">+{moreCount} more items</p>
       )}
-      <div className="flex gap-2 mt-4 p-2 rounded-lg bg-white/[0.03]">
+      <div className="mt-4 flex gap-2 rounded-lg border border-border bg-muted/25 p-2">
         <input
           type="text"
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addItem()}
           placeholder="Add item…"
-          className="flex-1 min-w-0 rounded-md border border-border bg-white/5 px-3 py-2 text-sm text-white placeholder:text-muted-foreground focus:border-input focus:outline-none"
+          className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-input focus:outline-none"
         />
         <button
           type="button"
           onClick={addItem}
-          className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground/90 hover:border-white/20 hover:text-white transition-colors"
+          className="rounded-md border border-border bg-background px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-input hover:text-foreground"
         >
           Add
         </button>

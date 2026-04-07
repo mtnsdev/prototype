@@ -4,6 +4,8 @@ import React from "react";
 import { X, Globe, ExternalLink, MapPin, FileText, FolderPlus } from "lucide-react";
 import { StarRating } from "./StarRating";
 import type { PlaceCard, WebCitation, Citation } from "./types";
+import { mapGooglePlaceTypesToDirectoryCategories } from "@/lib/googlePlacesToDirectoryCategories";
+import { directoryCategoryLabel } from "@/components/products/productDirectoryProductTypes";
 
 type RightPanelProps = {
   isOpen: boolean;
@@ -170,6 +172,13 @@ export function RightPanel({
                   card.google_types?.[0] != null && card.google_types[0] !== ""
                     ? card.google_types[0].charAt(0).toUpperCase() + card.google_types[0].slice(1).toLowerCase().replace(/_/g, " ")
                     : null;
+                const directoryCategories = card.google_types?.length
+                  ? mapGooglePlaceTypesToDirectoryCategories(card.google_types)
+                  : [];
+                const directoryTypeHint =
+                  directoryCategories.length > 0
+                    ? directoryCategories.map((t) => directoryCategoryLabel(t)).join(" · ")
+                    : null;
                 const cardContent = (
                   <>
                     {card.primary_image_url ? (
@@ -191,6 +200,14 @@ export function RightPanel({
                               {placeType}
                             </span>
                           )}
+                          {directoryTypeHint ? (
+                            <span
+                              className="text-2xs text-muted-foreground"
+                              title="Mapped from Google Places types (prototype — final map TBD)"
+                            >
+                              Directory: {directoryTypeHint}
+                            </span>
+                          ) : null}
                           {card.google_rating != null && (
                             <StarRating
                               value={Math.min(5, Math.max(0, Number(card.google_rating)))}

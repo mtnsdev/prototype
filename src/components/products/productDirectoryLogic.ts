@@ -1,4 +1,5 @@
 import type {
+  DirectoryAmenityTag,
   DirectoryCollectionOption,
   DirectoryPartnerProgram,
   DirectoryProduct,
@@ -47,7 +48,10 @@ export type PartnerPortalAdminSavePayload = {
   program: DirectoryPartnerProgram;
   attachedProductIds: string[];
   useProductSpecificTerms: boolean;
-  productOverrides: Record<string, { commissionRate: number | null; amenities: string }>;
+  productOverrides: Record<
+    string,
+    { commissionRate: number | null; amenities: string; amenityTags?: DirectoryAmenityTag[] }
+  >;
 };
 
 export function validatePartnerPortalAdminPayload(payload: PartnerPortalAdminSavePayload): string | null {
@@ -107,6 +111,12 @@ export function applyPartnerPortalPayloadToProducts(args: {
         name: payload.program.programName ?? payload.program.name,
         commissionRate: override ? override.commissionRate : payload.program.commissionRate,
         amenities: override ? override.amenities : payload.program.amenities,
+        amenityTags:
+          override?.amenityTags != null
+            ? [...override.amenityTags]
+            : payload.program.amenityTags
+              ? [...payload.program.amenityTags]
+              : [],
         lastEditedAt: audit.editedAtISO,
         lastEditedById: audit.userId,
         lastEditedByName: audit.userName,

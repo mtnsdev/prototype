@@ -611,7 +611,6 @@ export default function DetailTabContent({
 }: Props) {
   const showToast = useToast();
   const { user } = useUser();
-  const isAdmin = user?.role === "admin" || user?.role === "agency_admin";
   const canViewItineraryFinancials = canViewFinancials(
     user ? { id: user.id, role: user.role, agency_id: user.agency_id } : null
   );

@@ -18,26 +18,52 @@ type UserContextType = {
     setUser: (user: User | null) => void;
     clearUser: () => void;
     getFirstName: () => string;
-    /** Demo toggle: Knowledge Vault admin UI (scope dropdown, Show all, delete, re-index). Default off = advisor. */
-    kvViewAsAdmin: boolean;
-    setKvViewAsAdmin: (value: boolean) => void;
-    /** Demo toggle: Partner portal / product directory admin (edit programs, overrides). Separate from KV. */
-    directoryViewAsAdmin: boolean;
-    setDirectoryViewAsAdmin: (value: boolean) => void;
+    /**
+     * Prototype-only: one switch for the whole app. Default off = advisor / end-user experience.
+     * On = KV admin UI, directory admin UI, editable agency briefing + agency widgets.
+     * Persists per device.
+     */
+    prototypeAdminView: boolean;
+    setPrototypeAdminView: (value: boolean) => void;
 };
 
 const UserContext = createContext<UserContextType | null>(null);
 
 const USER_STORAGE_KEY = "user_data";
-const DIRECTORY_ADMIN_DEMO_KEY = "enable_directory_admin_demo";
+const PROTOTYPE_ADMIN_KEY = "enable_prototype_admin_view";
+/** Legacy keys — read once for migration, then cleared when saving prototype lens */
+const LEGACY_KV_KEY = "enable_kv_admin_demo";
+const LEGACY_DIR_KEY = "enable_directory_admin_demo";
+const LEGACY_BRIEFING_ADVISOR_KEY = "enable_briefing_preview_advisor";
+
+function readLegacyPrototypeAdminPreference(): boolean {
+    try {
+        const kv = localStorage.getItem(LEGACY_KV_KEY) === "1";
+        const dir = localStorage.getItem(LEGACY_DIR_KEY) === "1";
+        const briefingAsAdvisor = localStorage.getItem(LEGACY_BRIEFING_ADVISOR_KEY) === "1";
+        if (kv || dir) return true;
+        if (briefingAsAdvisor) return false;
+    } catch {
+        /* ignore */
+    }
+    return false;
+}
+
+function clearLegacyPrototypeKeys(): void {
+    try {
+        localStorage.removeItem(LEGACY_KV_KEY);
+        localStorage.removeItem(LEGACY_DIR_KEY);
+        localStorage.removeItem(LEGACY_BRIEFING_ADVISOR_KEY);
+    } catch {
+        /* ignore */
+    }
+}
 
 export function UserProvider({ children }: { children: ReactNode }) {
     const [user, setUserState] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [kvViewAsAdmin, setKvViewAsAdminState] = useState(false);
-    const [directoryViewAsAdmin, setDirectoryViewAsAdminState] = useState(false);
+    const [prototypeAdminView, setPrototypeAdminViewState] = useState(false);
 
-    // Hydrate user from localStorage on mount
     useEffect(() => {
         try {
             const stored = localStorage.getItem(USER_STORAGE_KEY);
@@ -45,8 +71,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 const parsed = JSON.parse(stored);
                 setUserState(parsed);
             }
-            const dirAdmin = localStorage.getItem(DIRECTORY_ADMIN_DEMO_KEY);
-            if (dirAdmin === "1") setDirectoryViewAsAdminState(true);
+            const proto = localStorage.getItem(PROTOTYPE_ADMIN_KEY);
+            if (proto === "1") {
+                setPrototypeAdminViewState(true);
+            } else if (proto === "0") {
+                setPrototypeAdminViewState(false);
+            } else {
+                const migrated = readLegacyPrototypeAdminPreference();
+                setPrototypeAdminViewState(migrated);
+                if (migrated) {
+                    localStorage.setItem(PROTOTYPE_ADMIN_KEY, "1");
+                } else {
+                    localStorage.setItem(PROTOTYPE_ADMIN_KEY, "0");
+                }
+                clearLegacyPrototypeKeys();
+            }
         } catch (error) {
             console.error("Failed to parse stored user data:", error);
             localStorage.removeItem(USER_STORAGE_KEY);
@@ -55,17 +94,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    const setKvViewAsAdmin = useCallback((value: boolean) => {
-        setKvViewAsAdminState(value);
-    }, []);
-
-    const setDirectoryViewAsAdmin = useCallback((value: boolean) => {
-        setDirectoryViewAsAdminState(value);
+    const setPrototypeAdminView = useCallback((value: boolean) => {
+        setPrototypeAdminViewState(value);
         try {
-            if (value) localStorage.setItem(DIRECTORY_ADMIN_DEMO_KEY, "1");
-            else localStorage.removeItem(DIRECTORY_ADMIN_DEMO_KEY);
+            localStorage.setItem(PROTOTYPE_ADMIN_KEY, value ? "1" : "0");
+            clearLegacyPrototypeKeys();
         } catch {
-            /* ignore quota / private mode */
+            /* ignore */
         }
     }, []);
 
@@ -82,20 +117,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setUserState(null);
         localStorage.removeItem(USER_STORAGE_KEY);
         localStorage.removeItem("auth_token");
-        // Keep cookie in sync with local logout
         document.cookie = "auth_token=; Path=/; Max-Age=0; SameSite=Lax";
     }, []);
 
     const getFirstName = useCallback((): string => {
         if (!user) return "there";
 
-        // Try to get first name from username (e.g., "John Doe" -> "John")
         if (user.username) {
             const firstName = user.username.split(" ")[0].trim();
             if (firstName) return firstName;
         }
 
-        // Fallback to email prefix
         if (user.email) {
             const emailPrefix = user.email.split("@")[0];
             if (emailPrefix) return emailPrefix;
@@ -112,10 +144,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 setUser,
                 clearUser,
                 getFirstName,
-                kvViewAsAdmin,
-                setKvViewAsAdmin,
-                directoryViewAsAdmin,
-                setDirectoryViewAsAdmin,
+                prototypeAdminView,
+                setPrototypeAdminView,
             }}
         >
             {children}
@@ -131,7 +161,6 @@ export function useUser() {
     return context;
 }
 
-// Optional hook that returns null instead of throwing if used outside provider
 export function useUserOptional() {
     return useContext(UserContext);
 }

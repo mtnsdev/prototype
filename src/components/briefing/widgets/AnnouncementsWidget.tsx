@@ -3,6 +3,9 @@
 import { useState, useMemo } from "react";
 import { Megaphone, Pin } from "lucide-react";
 import { useToast } from "@/contexts/ToastContext";
+import { BRIEFING_WIDGET_SURFACE } from "@/lib/briefingSurface";
+import { cn } from "@/lib/utils";
+import BriefingEmptyState from "../BriefingEmptyState";
 
 export type AnnouncementItem = {
   id: string;
@@ -75,103 +78,121 @@ export default function AnnouncementsWidget({ isAdmin, staggerIndex = 0 }: Props
   };
 
   return (
-    <div
-      className="bg-white/[0.02] border border-border rounded-[20px] p-5 animate-briefing-fade-in"
-      style={{ animationDelay: `${staggerIndex * 50}ms` }}
+    <article
+      className={cn(BRIEFING_WIDGET_SURFACE, "animate-briefing-fade-in")}
+      style={{ animationDelay: `${staggerIndex * 36}ms` }}
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Megaphone className="w-4 h-4 text-[var(--color-warning)]" />
-          <span className="text-xs font-semibold tracking-wider text-muted-foreground/90 uppercase">
-            Announcements
-          </span>
+      <header className="flex items-center justify-between gap-3 border-b border-border/70 px-5 pb-4 pt-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-muted/45 text-primary/90 ring-1 ring-inset ring-border/80">
+            <Megaphone className="size-[18px]" aria-hidden />
+          </div>
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-semibold tracking-tight text-foreground">Announcements</h3>
+            <p className="text-2xs text-muted-foreground/80">Team updates on the briefing</p>
+          </div>
         </div>
-        {isAdmin && (
+        {isAdmin ? (
           <button
             type="button"
             onClick={() => setShowEditor(true)}
-            className="text-2xs text-[var(--color-warning)] hover:text-amber-300"
+            className="shrink-0 rounded-lg px-2.5 py-1.5 text-2xs font-medium text-primary transition-colors hover:bg-muted/40 hover:text-foreground"
           >
             + New
           </button>
+        ) : null}
+      </header>
+
+      <div className="px-5 pb-5 pt-4">
+        {showEditor && isAdmin ? (
+          <div className="mb-4 rounded-xl border border-border bg-muted/20 p-3">
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Title…"
+              className="mb-2 w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/55"
+            />
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="Write your announcement…"
+              className="h-20 w-full resize-none bg-transparent text-xs leading-relaxed text-foreground/88 outline-none placeholder:text-muted-foreground/55"
+            />
+            <div className="mt-2 flex items-center justify-between">
+              <label className="flex cursor-pointer items-center gap-1.5 text-2xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={pin}
+                  onChange={(e) => setPin(e.target.checked)}
+                  className="checkbox-on-dark checkbox-on-dark-sm"
+                />
+                Pin to top
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditor(false)}
+                  className="text-2xs text-muted-foreground hover:text-foreground"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={publish}
+                  className="text-2xs font-medium text-primary hover:text-foreground"
+                >
+                  Publish
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {sorted.length > 0 ? (
+          <div className="space-y-3">
+            {sorted.map((a) => (
+              <div
+                key={a.id}
+                className="rounded-xl border border-border/80 bg-muted/12 p-3.5 transition-colors hover:bg-muted/18"
+              >
+                <div className="mb-1.5 flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-foreground">{a.title}</span>
+                  {a.pinned ? <Pin className="size-3 shrink-0 text-primary/70" aria-hidden /> : null}
+                </div>
+                <p className="whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground/90">{a.content}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="text-2xs text-muted-foreground/70">
+                    {a.author} · {a.timeAgo}
+                  </span>
+                  {a.data_layer === "agency" ? (
+                    <span className="text-2xs rounded-md border border-[var(--muted-info-border)] bg-[var(--muted-info-bg)] px-1.5 py-0.5 text-[var(--muted-info-text)]">
+                      Agency
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <BriefingEmptyState
+            icon={<Megaphone />}
+            title="No announcements yet"
+            description={isAdmin ? "Publish the first note for your advisors." : "Your agency hasn’t posted anything here."}
+            action={
+              isAdmin ? (
+                <button
+                  type="button"
+                  onClick={() => setShowEditor(true)}
+                  className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted/50"
+                >
+                  Write announcement
+                </button>
+              ) : undefined
+            }
+          />
         )}
       </div>
-
-      {showEditor && isAdmin && (
-        <div className="bg-white/[0.04] rounded-xl p-3 border border-amber-500/10 mb-3">
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Title…"
-            className="w-full bg-transparent text-sm text-white placeholder:text-muted-foreground/55 font-medium mb-2 outline-none"
-          />
-          <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder="Write your announcement…"
-            className="w-full bg-transparent text-xs text-foreground/88 placeholder:text-muted-foreground/55 resize-none h-20 outline-none leading-relaxed"
-          />
-          <div className="flex items-center justify-between mt-2">
-            <label className="flex items-center gap-1.5 text-2xs text-muted-foreground cursor-pointer">
-              <input
-                type="checkbox"
-                checked={pin}
-                onChange={(e) => setPin(e.target.checked)}
-                className="checkbox-on-dark checkbox-on-dark-sm"
-              />
-              Pin to top
-            </label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setShowEditor(false)}
-                className="text-2xs text-muted-foreground hover:text-muted-foreground"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={publish}
-                className="text-2xs text-[var(--color-warning)] hover:text-amber-300 font-medium"
-              >
-                Publish
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-3">
-        {sorted.map((a) => (
-          <div
-            key={a.id}
-            className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.04]"
-          >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-medium text-white">{a.title}</span>
-              {a.pinned && <Pin className="w-3 h-3 text-[var(--color-warning)]/60 shrink-0" />}
-            </div>
-            <p className="text-xs text-muted-foreground/90 leading-relaxed whitespace-pre-wrap">
-              {a.content}
-            </p>
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              <span className="text-2xs text-muted-foreground/70">
-                {a.author} · {a.timeAgo}
-              </span>
-              {a.data_layer === "agency" && (
-                <span className="text-2xs text-blue-400/60 bg-blue-500/5 px-1.5 py-0.5 rounded">
-                  Agency
-                </span>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {list.length === 0 && (
-        <p className="text-xs text-muted-foreground/70 text-center py-4">No announcements yet</p>
-      )}
-    </div>
+    </article>
   );
 }

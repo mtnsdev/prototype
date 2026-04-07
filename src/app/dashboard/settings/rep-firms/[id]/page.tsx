@@ -77,7 +77,9 @@ export default function RepFirmDetailPage() {
         const existing = allContactsForFirm.get(key)!;
         const product = MOCK_DIRECTORY_PRODUCTS.find((p) => p.id === productId);
         if (product) {
-          existing.roles.add(product.type);
+          for (const t of product.types) {
+            existing.roles.add(t);
+          }
         }
       }
     });

@@ -5,7 +5,8 @@ import dynamic from "next/dynamic";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MapPin, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { DirectoryProduct } from "@/types/product-directory";
+import type { DirectoryProduct, DirectoryProductCategory } from "@/types/product-directory";
+import { getPrimaryDirectoryType } from "@/components/products/directoryProductTypeHelpers";
 import { clusterMapPinsGeo } from "./productDirectoryMapUtils";
 import {
   directoryCategoryColors,
@@ -55,10 +56,10 @@ export default function ProductDirectoryMapSplit({
     [products]
   );
   const typesOnMap = useMemo(() => {
-    const s = new Set<DirectoryProduct["type"]>();
+    const s = new Set<DirectoryProductCategory>();
     for (const pin of geoPins) {
-      if (pin.kind === "single") s.add(pin.product.type);
-      else pin.products.forEach((p) => s.add(p.type));
+      if (pin.kind === "single") pin.product.types.forEach((t) => s.add(t));
+      else pin.products.forEach((p) => p.types.forEach((t) => s.add(t)));
     }
     return s;
   }, [geoPins]);
@@ -133,7 +134,8 @@ export default function ProductDirectoryMapSplit({
           >
             {sidebarVirtualizer.getVirtualItems().map((virtualRow) => {
               const product = products[virtualRow.index]!;
-              const st = directoryCategoryColors(product.type);
+              const primaryType = getPrimaryDirectoryType(product);
+              const st = directoryCategoryColors(primaryType);
               const selected = selectedId === product.id;
               const missingPin = product.latitude == null || product.longitude == null;
               return (
@@ -172,7 +174,8 @@ export default function ProductDirectoryMapSplit({
                           border: `1px solid ${st.border}`,
                         }}
                       >
-                        {directoryCategoryLabel(product.type)}
+                        {directoryCategoryLabel(primaryType)}
+                        {product.types.length > 1 ? ` +${product.types.length - 1}` : ""}
                       </span>
                       {missingPin ? (
                         <span className="text-[7px] text-muted-foreground" title="No latitude/longitude on file">

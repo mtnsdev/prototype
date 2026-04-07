@@ -4,11 +4,15 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useSearchParams } from "next/navigation";
 import { Award, Check, ChevronDown, Flame, Lock, Plus, Trash2, Users } from "lucide-react";
 import type {
+  DirectoryAmenityTag,
   DirectoryCollectionOption,
   DirectoryPartnerProgram,
   DirectoryProduct,
   DirectoryProductPromotion,
 } from "@/types/product-directory";
+import { directoryProductTypeShortLabel } from "@/components/products/directoryProductTypeHelpers";
+import ProductDirectoryAmenitiesDropdown from "./ProductDirectoryAmenitiesDropdown";
+import { AMENITY_LABELS } from "./productDirectoryFilterConfig";
 import type { Team } from "@/types/teams";
 import type { RepFirm } from "@/types/rep-firm";
 import { cn } from "@/lib/utils";
@@ -33,6 +37,16 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/contexts/ToastContext";
+
+type PartnerPortalProductOverrideRow = {
+  commissionRate: number | null;
+  amenities: string;
+  amenityTags: DirectoryAmenityTag[];
+};
+
+function amenityTagsSig(tags: DirectoryAmenityTag[] | undefined): string {
+  return [...(tags ?? [])].sort().join(",");
+}
 
 export function productsInDirectoryCollection(
   col: DirectoryCollectionOption,
@@ -243,7 +257,7 @@ function partnerPortalEditIsDirty(args: {
   draftProgram: DirectoryPartnerProgram;
   attached: DirectoryProduct[];
   attachedDraftIds: string[];
-  productOverrides: Record<string, { commissionRate: number | null; amenities: string }> | undefined;
+  productOverrides: Record<string, PartnerPortalProductOverrideRow> | undefined;
   useProductSpecificTerms: boolean | undefined;
 }): boolean {
   const {
@@ -263,7 +277,7 @@ function partnerPortalEditIsDirty(args: {
     new Set(
       attached.map((p) => {
         const match = p.partnerPrograms.find((pp) => programFilterId(pp) === key);
-        return `${match?.commissionRate ?? ""}::${match?.amenities ?? ""}`;
+        return `${match?.commissionRate ?? ""}::${match?.amenities ?? ""}::${amenityTagsSig(match?.amenityTags)}`;
       })
     ).size > 1;
   if ((varianceNow ?? false) !== varianceInitial) return true;
@@ -272,13 +286,17 @@ function partnerPortalEditIsDirty(args: {
     const match = p.partnerPrograms.find((pp) => programFilterId(pp) === key);
     const c = current[p.id];
     if (!c) return false;
-    return (match?.commissionRate ?? null) !== c.commissionRate || (match?.amenities ?? "") !== c.amenities;
+    return (
+      (match?.commissionRate ?? null) !== c.commissionRate ||
+      (match?.amenities ?? "") !== c.amenities ||
+      amenityTagsSig(match?.amenityTags) !== amenityTagsSig(c.amenityTags)
+    );
   });
 }
 
 function termsSignature(program: DirectoryPartnerProgram | undefined): string {
-  if (!program) return "::";
-  return `${program.commissionRate ?? ""}::${(program.amenities ?? "").trim()}`;
+  if (!program) return ":::";
+  return `${program.commissionRate ?? ""}::${(program.amenities ?? "").trim()}::${amenityTagsSig(program.amenityTags)}`;
 }
 
 function productMatchesPartnerAttachSearch(product: DirectoryProduct, rawQuery: string): boolean {
@@ -290,7 +308,7 @@ function productMatchesPartnerAttachSearch(product: DirectoryProduct, rawQuery: 
     product.city,
     product.country,
     product.region,
-    directoryCategoryLabel(product.type),
+    ...product.types.map((t) => directoryCategoryLabel(t)),
     product.id,
   ]
     .filter(Boolean)
@@ -397,6 +415,7 @@ type PartnerProgramAddFormState = {
   expiryDate: string;
   contact: string;
   amenities: string;
+  amenityTags: DirectoryAmenityTag[];
   scope: "enable" | string;
 };
 
@@ -408,6 +427,7 @@ function emptyPartnerProgramAddForm(): PartnerProgramAddFormState {
     expiryDate: "",
     contact: "",
     amenities: "",
+    amenityTags: [],
     scope: "enable",
   };
 }
@@ -449,7 +469,7 @@ export function ProductDirectoryPartnerPortalTab({
   const [attachedDraftIds, setAttachedDraftIds] = useState<Record<string, string[]>>({});
   const [useProductSpecificTerms, setUseProductSpecificTerms] = useState<Record<string, boolean>>({});
   const [productOverrides, setProductOverrides] = useState<
-    Record<string, Record<string, { commissionRate: number | null; amenities: string }>>
+    Record<string, Record<string, PartnerPortalProductOverrideRow>>
   >({});
   const [attachProductSearchQuery, setAttachProductSearchQuery] = useState("");
   const [portalSearchQuery, setPortalSearchQuery] = useState("");
@@ -471,7 +491,7 @@ export function ProductDirectoryPartnerPortalTab({
   }, [products]);
 
   const catalogProductsForProgramAttach = useMemo(() => {
-    return [...products].filter((p) => p.type !== "rep_firm").sort((a, b) => a.name.localeCompare(b.name));
+    return [...products].sort((a, b) => a.name.localeCompare(b.name));
   }, [products]);
 
   const filteredRows = useMemo(() => {
@@ -550,17 +570,19 @@ export function ProductDirectoryPartnerPortalTab({
   const applyBeginEdit = useCallback(
     (key: string, program: DirectoryPartnerProgram, attached: DirectoryProduct[]) => {
       const attachedIds = attached.map((p) => p.id);
-      const overrides: Record<string, { commissionRate: number | null; amenities: string }> = {};
+      const overrides: Record<string, PartnerPortalProductOverrideRow> = {};
       attached.forEach((p) => {
         const match = p.partnerPrograms.find((pp) => programFilterId(pp) === key);
         overrides[p.id] = {
           commissionRate: match?.commissionRate ?? null,
           amenities: match?.amenities ?? "",
+          amenityTags: match?.amenityTags ? [...match.amenityTags] : [],
         };
       });
       const hasVariance =
         new Set(Object.values(overrides).map((x) => String(x.commissionRate ?? ""))).size > 1 ||
-        new Set(Object.values(overrides).map((x) => x.amenities.trim())).size > 1;
+        new Set(Object.values(overrides).map((x) => x.amenities.trim())).size > 1 ||
+        new Set(Object.values(overrides).map((x) => amenityTagsSig(x.amenityTags))).size > 1;
 
       setDrafts((prev) => ({
         ...prev,
@@ -845,12 +867,23 @@ export function ProductDirectoryPartnerPortalTab({
                 className={PARTNER_PORTAL_FORM_INPUT_CLASS}
               />
             </label>
+            <div className="block sm:col-span-2">
+              <span className="mb-1 block text-2xs font-medium text-muted-foreground">Amenity tags</span>
+              <ProductDirectoryAmenitiesDropdown
+                selected={addProgramForm.amenityTags}
+                onChange={(tags) => setAddProgramForm((prev) => ({ ...prev, amenityTags: tags }))}
+                triggerClassName="max-w-none w-full min-h-9"
+              />
+            </div>
             <label className="block sm:col-span-2">
-              <span className="mb-1 block text-2xs font-medium text-muted-foreground">Amenities</span>
+              <span className="mb-1 block text-2xs font-medium text-muted-foreground">
+                Extra notes / exceptions
+              </span>
               <textarea
                 rows={2}
                 value={addProgramForm.amenities}
                 onChange={(e) => setAddProgramForm((prev) => ({ ...prev, amenities: e.target.value }))}
+                placeholder="Optional — not used for structured filters"
                 className={PARTNER_PORTAL_FORM_TEXTAREA_CLASS}
               />
             </label>
@@ -936,7 +969,7 @@ export function ProductDirectoryPartnerPortalTab({
                   amenities:
                     addProgramForm.amenities.trim() || `${name} partner rate and amenities apply.`,
                   activePromotions: [],
-                  amenityTags: [],
+                  amenityTags: [...addProgramForm.amenityTags],
                   commissionType: "percentage",
                   scope: addProgramForm.scope === "enable" ? "enable" : addProgramForm.scope,
                   status: "active",
@@ -1089,6 +1122,11 @@ export function ProductDirectoryPartnerPortalTab({
                         {urgencyPill.label}
                       </span>
                     ) : null}
+                    {display.registryStatus ? (
+                      <span className="rounded-full border border-border px-2 py-0.5 text-[8px] font-medium capitalize text-muted-foreground">
+                        {display.registryStatus.replace(/-/g, " ")}
+                      </span>
+                    ) : null}
                     <span className="rounded-full border border-border bg-white/[0.03] px-2 py-0.5 text-[9px] font-medium tabular-nums text-muted-foreground">
                       {attached.length} propert{attached.length === 1 ? "y" : "ies"}
                     </span>
@@ -1129,7 +1167,12 @@ export function ProductDirectoryPartnerPortalTab({
                       </span>
                     ) : null}
                   </div>
-                  {display.amenities ? (
+                  {(display.amenityTags?.length ?? 0) > 0 ? (
+                    <p className="mt-2 text-2xs leading-relaxed text-muted-foreground">
+                      {(display.amenityTags ?? []).map((t) => AMENITY_LABELS[t]).join(" · ")}
+                    </p>
+                  ) : null}
+                  {display.amenities?.trim() ? (
                     <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{display.amenities}</p>
                   ) : null}
                   {(display.lastEditedAt || display.lastEditedByName) ? (
@@ -1295,14 +1338,33 @@ export function ProductDirectoryPartnerPortalTab({
                       className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
                     />
                   </label>
+                  <div className="block sm:col-span-2">
+                    <span className="mb-1 block text-2xs font-medium text-muted-foreground">Amenity tags</span>
+                    <p className="mb-2 text-2xs text-muted-foreground/80">
+                      Select normalized benefits for filtering. Use notes below for one-off exceptions.
+                    </p>
+                    <ProductDirectoryAmenitiesDropdown
+                      selected={drafts[key]?.amenityTags ?? []}
+                      onChange={(tags) =>
+                        setDrafts((prev) => ({
+                          ...prev,
+                          [key]: { ...prev[key], amenityTags: tags },
+                        }))
+                      }
+                      triggerClassName="max-w-none w-full min-h-9"
+                    />
+                  </div>
                   <label className="block sm:col-span-2">
-                    <span className="mb-1 block text-2xs font-medium text-muted-foreground">Amenities</span>
+                    <span className="mb-1 block text-2xs font-medium text-muted-foreground">
+                      Extra notes / exceptions
+                    </span>
                     <textarea
                       rows={2}
                       value={drafts[key]?.amenities ?? ""}
                       onChange={(e) =>
                         setDrafts((prev) => ({ ...prev, [key]: { ...prev[key], amenities: e.target.value } }))
                       }
+                      placeholder="Optional free text — not used for structured filters"
                       className="w-full resize-none rounded-lg border border-white/[0.14] bg-inset px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
                     />
                   </label>
@@ -1366,11 +1428,12 @@ export function ProductDirectoryPartnerPortalTab({
                         }
                         return attachListProducts.map((p) => {
                         const on = (attachedDraftIds[key] ?? attached.map((x) => x.id)).includes(p.id);
-                        const override = productOverrides[key]?.[p.id] ?? {
-                          commissionRate: display.commissionRate ?? null,
-                          amenities: display.amenities ?? "",
-                        };
                         const matchedProgram = p.partnerPrograms.find((pp) => programFilterId(pp) === key);
+                        const override = productOverrides[key]?.[p.id] ?? {
+                          commissionRate: matchedProgram?.commissionRate ?? display.commissionRate ?? null,
+                          amenities: matchedProgram?.amenities ?? display.amenities ?? "",
+                          amenityTags: [...(matchedProgram?.amenityTags ?? display.amenityTags ?? [])],
+                        };
                         const isCustomInView = termsSignature(matchedProgram) !== baselineSig;
                         return (
                           <div key={p.id} className="rounded-md border border-border bg-inset p-2">
@@ -1410,12 +1473,14 @@ export function ProductDirectoryPartnerPortalTab({
                                     varies
                                   </span>
                                 ) : null}
-                                <span className="text-[9px] text-muted-foreground">{directoryCategoryLabel(p.type)}</span>
+                                <span className="text-[9px] text-muted-foreground">
+                                  {directoryProductTypeShortLabel(p)}
+                                </span>
                               </div>
                             </div>
                             {on && (useProductSpecificTerms[key] ?? false) ? (
-                              <div className="mt-2 grid grid-cols-2 gap-1.5">
-                                <p className="col-span-2 border-l border-brand-cta/20 pl-2 text-[9px] leading-snug text-muted-foreground">
+                              <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                                <p className="border-l border-brand-cta/20 pl-2 text-[9px] leading-snug text-muted-foreground sm:col-span-2">
                                   Only for this property in the program.
                                 </p>
                                 <input
@@ -1429,7 +1494,10 @@ export function ProductDirectoryPartnerPortalTab({
                                       [key]: {
                                         ...(prev[key] ?? {}),
                                         [p.id]: {
-                                          ...(prev[key]?.[p.id] ?? { amenities: display.amenities ?? "" }),
+                                          ...(prev[key]?.[p.id] ?? {
+                                            amenities: display.amenities ?? "",
+                                            amenityTags: [...(display.amenityTags ?? [])],
+                                          }),
                                           commissionRate: e.target.value === "" ? null : Number(e.target.value),
                                         },
                                       },
@@ -1438,7 +1506,28 @@ export function ProductDirectoryPartnerPortalTab({
                                   placeholder="Commission %"
                                   className="h-8 rounded border border-border bg-inset px-2 text-2xs text-foreground outline-none"
                                 />
-                                <input
+                                <div className="sm:col-span-2">
+                                  <ProductDirectoryAmenitiesDropdown
+                                    selected={override.amenityTags}
+                                    onChange={(tags) =>
+                                      setProductOverrides((prev) => ({
+                                        ...prev,
+                                        [key]: {
+                                          ...(prev[key] ?? {}),
+                                          [p.id]: {
+                                            ...(prev[key]?.[p.id] ?? {
+                                              commissionRate: display.commissionRate ?? null,
+                                              amenities: display.amenities ?? "",
+                                            }),
+                                            amenityTags: tags,
+                                          },
+                                        },
+                                      }))
+                                    }
+                                    triggerClassName="max-w-none w-full min-h-8"
+                                  />
+                                </div>
+                                <textarea
                                   value={override.amenities}
                                   onChange={(e) =>
                                     setProductOverrides((prev) => ({
@@ -1448,14 +1537,16 @@ export function ProductDirectoryPartnerPortalTab({
                                         [p.id]: {
                                           ...(prev[key]?.[p.id] ?? {
                                             commissionRate: display.commissionRate ?? null,
+                                            amenityTags: [...(display.amenityTags ?? [])],
                                           }),
                                           amenities: e.target.value,
                                         },
                                       },
                                     }))
                                   }
-                                  placeholder="Amenities override"
-                                  className="h-8 rounded border border-border bg-inset px-2 text-2xs text-foreground outline-none"
+                                  placeholder="Per-property notes / exceptions"
+                                  rows={2}
+                                  className="min-h-[3.5rem] resize-none rounded border border-border bg-inset px-2 py-1.5 text-2xs text-foreground outline-none sm:col-span-2"
                                 />
                               </div>
                             ) : null}
@@ -1778,7 +1869,7 @@ export function ProductDirectoryPartnerPortalTab({
                         <p className="line-clamp-1 text-[8px] leading-tight text-muted-foreground">{placeLine}</p>
                       ) : null}
                       <div className="mt-auto flex flex-wrap items-center gap-x-1 gap-y-0.5">
-                        <span className="text-[8px] text-muted-foreground">{directoryCategoryLabel(p.type)}</span>
+                        <span className="text-[8px] text-muted-foreground">{directoryProductTypeShortLabel(p)}</span>
                         {matchingAdvisory ? (
                           <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] text-amber-400">
                             <Flame className="h-2 w-2" aria-hidden />
@@ -2067,7 +2158,7 @@ function emptyRepFirmAddForm(): RepFirmFormState {
     regionsText: "",
     productTypes: [],
     propertyCount: "",
-    scope: "enable",
+    scope: TEAM_EVERYONE_ID,
     status: "active",
   };
 }
@@ -2128,7 +2219,7 @@ function RepFirmLinkedProductStripTile({
           <p className="line-clamp-1 text-[8px] leading-tight text-muted-foreground">{placeLine}</p>
         ) : null}
         <div className="mt-auto flex flex-wrap items-center gap-x-1 gap-y-0.5">
-          <span className="text-[8px] text-muted-foreground">{directoryCategoryLabel(product.type)}</span>
+          <span className="text-[8px] text-muted-foreground">{directoryProductTypeShortLabel(product)}</span>
           {showIncentive ? (
             <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] text-amber-400">
               <Flame className="h-2 w-2" aria-hidden />
@@ -2269,7 +2360,6 @@ export function ProductDirectoryRepFirmsTab({
     >();
     repFirms.forEach((row) => map.set(row.id, []));
     products.forEach((p) => {
-      if (p.type === "rep_firm") return;
       (p.repFirmLinks ?? []).forEach((link) => {
         const existing = map.get(link.repFirmId) ?? [];
         if (!existing.some((x) => x.product.id === p.id)) {
@@ -2288,7 +2378,7 @@ export function ProductDirectoryRepFirmsTab({
   }, [repFirms, products]);
 
   const catalogProductsForRepFirmAttach = useMemo(() => {
-    return [...products].filter((p) => p.type !== "rep_firm").sort((a, b) => a.name.localeCompare(b.name));
+    return [...products].sort((a, b) => a.name.localeCompare(b.name));
   }, [products]);
 
   const parseRepFirmPatch = (form: RepFirmFormState): Partial<RepFirm> => {
@@ -2801,9 +2891,7 @@ export function ProductDirectoryRepFirmsTab({
                 onAddRepFirm(newFirm);
                 onSyncRepFirmProductLinks({
                   repFirmId: firmId,
-                  attachedProductIds: addRepFirmAttachIds.filter(
-                    (id) => products.find((p) => p.id === id)?.type !== "rep_firm"
-                  ),
+                  attachedProductIds: addRepFirmAttachIds,
                   firmName,
                   firmScope: addForm.scope,
                   firmStatus: addForm.status,
@@ -2886,9 +2974,7 @@ export function ProductDirectoryRepFirmsTab({
                               onSaveRepFirm(row.id, parseRepFirmPatch(editForm));
                               onSyncRepFirmProductLinks({
                                 repFirmId: row.id,
-                                attachedProductIds: attachDraftIds.filter(
-                                  (id) => products.find((p) => p.id === id)?.type !== "rep_firm"
-                                ),
+                                attachedProductIds: attachDraftIds,
                                 firmName: editForm.name.trim(),
                                 firmScope: editForm.scope,
                                 firmStatus: editForm.status,
@@ -3137,7 +3223,6 @@ export function ProductDirectoryRepFirmsTab({
                             <div className="mt-2 max-h-52 space-y-1.5 overflow-y-auto pr-1">
                               {(() => {
                                 const listProducts = [...products]
-                                  .filter((p) => p.type !== "rep_firm")
                                   .filter(
                                     (p) =>
                                       attachDraftIds.includes(p.id) ||
@@ -3183,7 +3268,7 @@ export function ProductDirectoryRepFirmsTab({
                                           <span className="truncate">{p.name}</span>
                                         </label>
                                         <span className="shrink-0 text-[9px] text-muted-foreground">
-                                          {directoryCategoryLabel(p.type)}
+                                          {directoryProductTypeShortLabel(p)}
                                         </span>
                                       </div>
                                       {on && usePerProductContacts ? (

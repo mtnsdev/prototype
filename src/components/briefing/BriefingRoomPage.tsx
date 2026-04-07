@@ -1,47 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import Link from "next/link";
-import {
-  Settings,
-  UserPlus,
-  Route,
-  Package,
-  Search,
-  Sparkles,
-  FileDown,
-  Zap,
-} from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
+import { useBriefingDashboardLayout } from "@/hooks/useBriefingDashboardLayout";
 import { fetchBriefingWidgets } from "@/lib/briefing-api";
-import type { BriefingWidget, QuickStartContent } from "@/types/briefing";
+import { BRIEFING_USER_GRID_WIDGET_IDS, USER_GRID_WIDGET_META } from "@/lib/briefingDashboardUserLayout";
+import type { BriefingWidget } from "@/types/briefing";
 import BriefingGrid from "./BriefingGrid";
+import BriefingAgencyContentHub from "./agency-hub/BriefingAgencyContentHub";
 import {
   getMockUpcomingTripsContentAgency,
   getMockRecentActivityContentAgency,
 } from "./briefingMockData";
-import { IS_PREVIEW_MODE, BRIEFING_PREVIEW_DEFAULT_ADMIN } from "@/config/preview";
-import { cn } from "@/lib/utils";
-
-const QUICK_START_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  UserPlus,
-  Route,
-  Package,
-  Search,
-  Sparkles,
-  FileDown,
-  Zap,
-};
-
-const QUICK_START_ROUTES: Record<string, string> = {
-  "Add VIC": "/dashboard/vics",
-  "Create Itinerary": "/dashboard/itineraries?create=1",
-  "Browse Products": "/dashboard/products",
-  "Search Knowledge": "/dashboard/knowledge-vault",
-  "Acuity Lookup": "/dashboard/vics",
-  "Run Acuity on VIC": "/dashboard/vics",
-  "Import CSV": "/dashboard/vics",
-};
+import { IS_PREVIEW_MODE } from "@/config/preview";
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -61,7 +32,15 @@ function formatDateTime(): string {
 }
 
 export default function BriefingRoomPage() {
-  const { user } = useUser();
+  const { user, prototypeAdminView } = useUser();
+  const {
+    layout: userDashboardLayout,
+    updateWidget,
+    reorderWidgets,
+    resetToDefaults,
+    isLoading: layoutHydrating,
+  } = useBriefingDashboardLayout();
+  const [editDashboardLayout, setEditDashboardLayout] = useState(false);
   const [widgets, setWidgets] = useState<BriefingWidget[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateTime, setDateTime] = useState(formatDateTime());
@@ -85,18 +64,10 @@ export default function BriefingRoomPage() {
     return () => clearInterval(t);
   }, []);
 
-  /**
-   * Admin: agency announcements (+ New), agency trips, advisor tags on actions, agency activity.
-   * Real app: role from auth. Demo user shape: { username: "Kristin", role: "agency_admin", agency_id: "travellustre" }.
-   * Switch to advisor view: set user_data role to "advisor", or set BRIEFING_PREVIEW_DEFAULT_ADMIN = false when not logged in.
-   */
-  const isAdmin =
-    user?.role === "agency_admin" ||
-    user?.role === "admin" ||
-    (IS_PREVIEW_MODE && BRIEFING_PREVIEW_DEFAULT_ADMIN && user == null);
+  const canEditBriefing = prototypeAdminView;
 
   const widgetsForGrid = useMemo(() => {
-    if (!isAdmin) return widgets;
+    if (!prototypeAdminView) return widgets;
     return widgets.map((w) => {
       if (w.id === "w-trips")
         return { ...w, content: getMockUpcomingTripsContentAgency() };
@@ -104,90 +75,129 @@ export default function BriefingRoomPage() {
         return { ...w, content: getMockRecentActivityContentAgency() };
       return w;
     });
-  }, [widgets, isAdmin]);
+  }, [widgets, prototypeAdminView]);
+
+  const hiddenWidgetCount = useMemo(
+    () =>
+      BRIEFING_USER_GRID_WIDGET_IDS.filter((id) => !userDashboardLayout[id].visible).length,
+    [userDashboardLayout],
+  );
 
   const firstName =
     user?.username?.split(/[\s@.]/)[0] ||
     user?.email?.split("@")[0] ||
-    (IS_PREVIEW_MODE && BRIEFING_PREVIEW_DEFAULT_ADMIN && user == null ? "Kristin" : "there");
-  const quickStartContent = widgets.find((w) => w.id === "w-quick")?.content as QuickStartContent | undefined;
-  const quickActions = quickStartContent?.actions?.slice(0, 6) ?? [];
-
+    (IS_PREVIEW_MODE && user == null && prototypeAdminView ? "Kristin" : "there");
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col bg-background">
-      {/* Elegant header with subtle gradient */}
-      <header className="shrink-0 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-[rgba(255,255,255,0.02)] to-transparent pointer-events-none" />
-        <div className="relative px-6 py-6 md:px-8 md:py-8">
-          <div className="flex flex-wrap items-center justify-between gap-6">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground/55 mb-1">
-                Dashboard
+    <div className="briefing-nature flex h-full min-h-0 flex-1 flex-col bg-background">
+      <header className="relative shrink-0 overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[var(--muted-info-bg)] to-transparent opacity-90" />
+        <div className="relative px-6 py-7 md:px-10 md:py-9">
+          <div className="flex flex-wrap items-end justify-between gap-8">
+            <div className="min-w-0 space-y-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/50">
+                Briefing
               </p>
-              <h1 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight">
+              <h1 className="text-balance text-2xl font-semibold tracking-[-0.02em] text-foreground md:text-[1.75rem] md:leading-snug">
                 {getGreeting()}, {firstName}
               </h1>
-              <p className="text-sm text-muted-foreground/75 mt-1">
-                Your briefing and priorities at a glance
+              <p className="max-w-md pt-0.5 text-sm leading-relaxed text-muted-foreground/80">
+                Priorities, calendar, and agency updates in one place.
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-medium text-muted-foreground/75 bg-white/[0.04] border border-border rounded-full px-4 py-2">
-                {dateTime}
-              </span>
-              <button
-                type="button"
-                title="Coming soon"
-                className="p-2 rounded-lg text-muted-foreground/75 hover:text-muted-foreground hover:bg-white/[0.06] transition-colors"
-                aria-label="Customize"
-              >
-                <Settings size={18} />
-              </button>
-            </div>
+            <p
+              role="status"
+              aria-live="polite"
+              aria-label={`Current date and time: ${dateTime}`}
+              className="shrink-0 rounded-full border border-border bg-card/85 px-4 py-2 text-xs font-medium tabular-nums text-muted-foreground shadow-sm backdrop-blur-sm"
+            >
+              {dateTime}
+            </p>
           </div>
-          {quickActions.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1 mt-5 pt-5 border-t border-border">
-              {quickActions.map((action) => {
-                const Icon = QUICK_START_ICONS[action.icon] ?? Zap;
-                const href = QUICK_START_ROUTES[action.label] ?? action.route ?? "#";
-                const acuityVic =
-                  action.label === "Acuity Lookup" || action.label === "Run Acuity on VIC";
-                return (
-                  <Link
-                    key={action.label}
-                    href={href}
-                    title={action.description}
-                    className={cn(
-                      "flex items-center gap-2 rounded-lg px-3 py-2 transition-colors",
-                      acuityVic
-                        ? "text-violet-300 hover:text-violet-200 bg-violet-500/10 hover:bg-violet-500/15 border border-violet-500/20"
-                        : "text-muted-foreground hover:text-foreground hover:bg-white/[0.06]"
-                    )}
-                  >
-                    <Icon size={18} className={acuityVic ? "text-violet-400" : undefined} />
-                    <span className="text-sm">{acuityVic ? "Acuity Lookup" : action.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[rgba(255,255,255,0.06)] to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       </header>
 
       <div className="flex min-h-0 flex-1 overflow-auto">
-        <div className="max-w-[1600px] mx-auto px-6 py-8 md:px-8 md:py-10">
+        <div className="mx-auto max-w-[1600px] px-6 py-10 md:px-10 md:py-12">
+          <BriefingAgencyContentHub canEditBriefing={canEditBriefing} publisherName={firstName} />
           {loading ? (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div
                   key={i}
-                  className="rounded-[20px] border border-border bg-white/[0.02] h-64 animate-pulse"
+                  className="h-64 animate-pulse rounded-2xl border border-border bg-muted/25"
                 />
               ))}
             </div>
           ) : (
-            <BriefingGrid widgets={widgetsForGrid} isAdmin={isAdmin} />
+            <>
+              <div className="mb-6 mt-12 flex flex-wrap items-center gap-4 md:mt-14">
+                <h2 className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/55">
+                  Your widgets
+                </h2>
+                <div className="h-px min-w-[4rem] flex-1 bg-border" aria-hidden />
+                <button
+                  type="button"
+                  disabled={layoutHydrating}
+                  onClick={() => setEditDashboardLayout((v) => !v)}
+                  className="shrink-0 rounded-xl border border-border bg-card/80 px-4 py-2 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-muted/50 disabled:opacity-40"
+                >
+                  {editDashboardLayout ? "Done" : "Edit layout"}
+                </button>
+              </div>
+              {editDashboardLayout && hiddenWidgetCount > 0 ? (
+                <div
+                  className="mb-6 rounded-2xl border border-border bg-card/80 px-4 py-3.5 shadow-sm backdrop-blur-sm"
+                  role="region"
+                  aria-label="Hidden widgets"
+                >
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
+                    Hidden — tap to show
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {BRIEFING_USER_GRID_WIDGET_IDS.filter((id) => !userDashboardLayout[id].visible).map(
+                      (id) => (
+                        <button
+                          key={id}
+                          type="button"
+                          disabled={layoutHydrating}
+                          onClick={() => updateWidget(id, { visible: true })}
+                          className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-muted/50 disabled:opacity-40"
+                        >
+                          {USER_GRID_WIDGET_META[id].label}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                </div>
+              ) : null}
+              {hiddenWidgetCount > 0 ? (
+                <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card/80 px-4 py-3.5 shadow-sm backdrop-blur-sm">
+                  <p className="text-sm text-muted-foreground">
+                    {hiddenWidgetCount} widget{hiddenWidgetCount === 1 ? "" : "s"} hidden. Use{" "}
+                    <span className="font-medium text-foreground/90">Edit layout</span> to show them, or{" "}
+                    <span className="text-foreground/90">Reset layout</span> for defaults.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={layoutHydrating}
+                    onClick={resetToDefaults}
+                    className="shrink-0 rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/50 disabled:opacity-40"
+                  >
+                    Reset layout
+                  </button>
+                </div>
+              ) : null}
+              <BriefingGrid
+                widgets={widgetsForGrid}
+                isAdmin={canEditBriefing}
+                userLayout={userDashboardLayout}
+                updateWidget={updateWidget}
+                reorderWidgets={reorderWidgets}
+                layoutLoading={layoutHydrating}
+                editLayout={editDashboardLayout}
+              />
+            </>
           )}
         </div>
       </div>

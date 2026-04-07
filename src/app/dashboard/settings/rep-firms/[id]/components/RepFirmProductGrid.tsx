@@ -1,6 +1,7 @@
 "use client";
 
 import type { DirectoryProduct } from "@/types/product-directory";
+import { directoryProductTypeShortLabel } from "@/components/products/directoryProductTypeHelpers";
 import { EntityChip } from "@/components/ui/entity-link";
 import { Package } from "lucide-react";
 
@@ -24,7 +25,7 @@ export function RepFirmProductGrid({ products }: RepFirmProductGridProps) {
             type="product"
             id={product.id}
             name={product.name}
-            meta={product.type}
+            meta={directoryProductTypeShortLabel(product)}
             className="bg-[#0a0a0f] border-white/[0.05] hover:border-white/[0.1] hover:bg-[#0f0f14]"
           />
         ))}

@@ -4,6 +4,7 @@
  */
 
 import type { Product, DataOwnershipLevel } from "@/types/product";
+import { isWorkspaceStaffRole } from "@/lib/workspaceRoles";
 
 export type CurrentUser = {
   id: number | string;
@@ -29,7 +30,7 @@ export function canEditProduct(
   if (level === "Agency" && user.agency_id)
     return (
       String(product.agency_id) === String(user.agency_id) &&
-      (user.role === "admin" || user.role === "agency_admin" || user.role === "owner")
+      (isWorkspaceStaffRole(user.role) || user.role === "owner")
     );
   return false;
 }
@@ -50,7 +51,10 @@ export function canDeleteProduct(
   const uid = String(user.id);
   if (level === "Advisor") return product.created_by === uid;
   if (level === "Agency" && user.agency_id)
-    return String(product.agency_id) === String(user.agency_id) && (user.role === "admin" || user.role === "owner");
+    return (
+      String(product.agency_id) === String(user.agency_id) &&
+      (isWorkspaceStaffRole(user.role) || user.role === "owner")
+    );
   return false;
 }
 
@@ -65,7 +69,7 @@ export function canViewFinancials(
   if (!user || !product) return false;
   const uid = String(user.id);
   if (product.created_by === uid) return true;
-  if (user.role === "admin" && user.agency_id && product.agency_id === user.agency_id) return true;
+  if (isWorkspaceStaffRole(user.role) && user.agency_id && product.agency_id === user.agency_id) return true;
   if (user.role === "owner" && user.agency_id && product.agency_id === user.agency_id) return true;
   return false;
 }
@@ -83,7 +87,7 @@ export function canLockFields(
   if (level === "Enable") return false;
   const uid = String(user.id);
   if (product.created_by === uid) return true;
-  if (user.role === "admin" && user.agency_id && product.agency_id === user.agency_id) return true;
+  if (isWorkspaceStaffRole(user.role) && user.agency_id && product.agency_id === user.agency_id) return true;
   return false;
 }
 

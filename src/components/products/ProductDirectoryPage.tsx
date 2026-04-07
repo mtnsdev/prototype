@@ -82,6 +82,7 @@ import {
 } from "./productDirectoryPersistence";
 import { resolveAdvisorCatalogFromStorage } from "./productDirectoryCatalogResolve";
 import { useProductDirectoryCatalog } from "./ProductDirectoryCatalogContext";
+import { getPrimaryDirectoryType } from "@/components/products/directoryProductTypeHelpers";
 import { directoryCategoryColors, directoryCategoryLabel } from "./productDirectoryVisual";
 import { ScopeBadge } from "@/components/ui/ScopeBadge";
 import { Button } from "@/components/ui/button";
@@ -185,8 +186,8 @@ type CompareViewProps = {
 };
 
 function ProductDirectoryCompareView({ products, canViewCommissions, onClose, onViewFullDetails }: CompareViewProps) {
-  const types = products.map((p) => p.type);
-  const typeDiffers = new Set(types).size > 1;
+  const typeSigs = products.map((p) => [...p.types].sort().join("|"));
+  const typeDiffers = new Set(typeSigs).size > 1;
   const commKeys = products.map((p) => commissionKey(p, canViewCommissions));
   const commDiffers = canViewCommissions && new Set(commKeys).size > 1;
   const progSigs = products.map(programsSignature);
@@ -221,7 +222,10 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
           const active = bookableProgramsForCompare(product);
           const topProgram = getTopBookableProgramByCommission(product);
           const topRate = topProgram ? programDisplayCommissionRate(topProgram) : null;
-          const cat = directoryCategoryColors(product.type);
+          const primaryType = getPrimaryDirectoryType(product);
+          const cat = directoryCategoryColors(primaryType);
+          const typeLabel =
+            directoryCategoryLabel(primaryType) + (product.types.length > 1 ? ` +${product.types.length - 1}` : "");
 
           return (
             <div
@@ -247,7 +251,7 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
                     className="inline-block rounded-full px-2 py-0.5 text-2xs"
                     style={{ background: cat.bg, color: cat.color, border: `1px solid ${cat.border}` }}
                   >
-                    {directoryCategoryLabel(product.type)}
+                    {typeLabel}
                   </span>
                 </div>
 
@@ -370,7 +374,7 @@ function filterCollectionsForUser(
 const DIRECTORY_SEED_NAME = "Janet";
 
 export default function ProductDirectoryPage() {
-  const { user, directoryViewAsAdmin, isLoading: userLoading } = useUser();
+  const { user, prototypeAdminView, isLoading: userLoading } = useUser();
   const toast = useToast();
   const { catalogRevision } = useProductDirectoryCatalog();
   const searchParams = useSearchParams();
@@ -384,8 +388,7 @@ export default function ProductDirectoryPage() {
     [user]
   );
   const canViewCommissions = policies.canViewCommissions;
-  const isAdmin =
-    directoryViewAsAdmin || user?.role === "admin" || user?.role === "agency_admin";
+  const isAdmin = prototypeAdminView;
 
   const [products, setProducts] = useState<DirectoryProduct[]>(
     () => cloneMockDirectoryCatalogForAdvisor("1", DIRECTORY_SEED_NAME).products
@@ -1088,11 +1091,6 @@ export default function ProductDirectoryPage() {
         prev.map((p) => {
           const links = [...(p.repFirmLinks ?? [])];
           const idx = links.findIndex((l) => l.repFirmId === args.repFirmId);
-          if (p.type === "rep_firm") {
-            if (idx < 0) return p;
-            const nextLinks = links.filter((l) => l.repFirmId !== args.repFirmId);
-            return { ...p, repFirmLinks: nextLinks, repFirmCount: nextLinks.length };
-          }
           const shouldAttach = attachedSet.has(p.id);
 
           if (!shouldAttach) {

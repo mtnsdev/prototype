@@ -20,9 +20,9 @@ type Props = {
 };
 
 export function ProductDetailLayers({ product }: Props) {
-  const { user } = useUser();
+  const { user, prototypeAdminView } = useUser();
   const toast = useToast();
-  const isAdmin = user?.role === "admin" || user?.role === "agency_admin";
+  const isAdmin = prototypeAdminView;
 
   const mock = useMemo(() => getProductLayerMock(product.id), [product.id]);
   const [advisorOverrides, setAdvisorOverrides] = useState<AdvisorLayerMock>(mock.advisorDefaults);

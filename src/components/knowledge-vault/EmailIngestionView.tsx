@@ -74,7 +74,7 @@ type EmailIngestionViewProps = {
 
 export default function EmailIngestionView({ loading = false }: EmailIngestionViewProps) {
   const router = useRouter();
-  const { kvViewAsAdmin } = useUser();
+  const { prototypeAdminView } = useUser();
   const toast = useToast();
   const {
     emails,
@@ -88,7 +88,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
     removeAttachmentTag,
   } = useKnowledgeVaultEmails();
 
-  const isAdmin = kvViewAsAdmin;
+  const isAdmin = prototypeAdminView;
 
   const [filter, setFilter] = useState<ListFilter>("all");
   const [panel, setPanel] = useState<Panel>(null);

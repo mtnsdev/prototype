@@ -15,11 +15,13 @@ import {
     Plug,
     Users,
     Database,
+    Newspaper,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUser } from "@/contexts/UserContext";
+import { isWorkspaceStaff } from "@/lib/workspaceRoles";
 
 type UserProfile = {
     email: string;
@@ -369,8 +371,41 @@ export default function SettingsPage() {
                     </div>
                 </section>
 
+                {/* Briefing Room — tied to prototype Admin view */}
+                <section className="rounded-2xl border border-border bg-card overflow-hidden">
+                    <div className="px-5 py-4 border-b border-border flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-input">
+                            <Newspaper size={18} className="text-muted-foreground" />
+                        </div>
+                        <h2 className="text-base font-semibold text-foreground">Briefing Room</h2>
+                    </div>
+                    <div className="p-5">
+                        <p className="text-compact text-muted-foreground/75 mb-4">
+                            How user mode vs admin view affects the dashboard briefing (same toggle as the user
+                            menu). On the Briefing Room, use the sliders icon on each widget card to set show,
+                            column, and size. If you hide widgets, use Reset layout on the briefing page to restore
+                            defaults.
+                        </p>
+                        <Link
+                            href="/dashboard/settings/briefing-room"
+                            className={[
+                                "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
+                                "text-base font-medium",
+                                "bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)]",
+                                "border border-input",
+                                "text-foreground",
+                                "transition-all duration-150",
+                            ].join(" ")}
+                        >
+                            <Newspaper size={16} />
+                            Briefing Room & prototype mode
+                            <ChevronRight size={16} />
+                        </Link>
+                    </div>
+                </section>
+
                 {/* Admin Section - Only visible to admins */}
-                {(user?.role === "admin" || user?.role === "agency_admin") && (
+                {isWorkspaceStaff(user) && (
                     <section className="rounded-2xl border border-border bg-card overflow-hidden">
                         <div className="px-5 py-4 border-b border-border flex items-center gap-3">
                             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center border border-amber-500/20">

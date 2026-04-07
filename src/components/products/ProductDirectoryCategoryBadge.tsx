@@ -5,13 +5,15 @@ import type { DirectoryProductCategory } from "@/types/product-directory";
 import { directoryCategoryColors, directoryCategoryLabel } from "./productDirectoryVisual";
 
 export function ProductDirectoryCategoryBadge({
-  type,
+  types,
   compact,
 }: {
-  type: DirectoryProductCategory;
+  types: DirectoryProductCategory[];
   compact?: boolean;
 }) {
-  const c = directoryCategoryColors(type);
+  const primary = types[0] ?? "hotel";
+  const extra = types.length > 1 ? types.length - 1 : 0;
+  const c = directoryCategoryColors(primary);
   return (
     <span
       className={cn(
@@ -24,7 +26,8 @@ export function ProductDirectoryCategoryBadge({
         border: `1px solid ${c.border}`,
       }}
     >
-      {directoryCategoryLabel(type)}
+      {directoryCategoryLabel(primary)}
+      {extra > 0 ? ` +${extra}` : ""}
     </span>
   );
 }

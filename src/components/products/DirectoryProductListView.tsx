@@ -249,7 +249,7 @@ export default function DirectoryProductListView({
                   </div>
                 </div>
                 <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                  <ProductDirectoryCategoryBadge type={product.type} compact />
+                  <ProductDirectoryCategoryBadge types={product.types} compact />
                   {product.activePromotion && (
                     <span className="inline-flex items-center gap-0.5 rounded border border-[rgba(201,169,110,0.12)] bg-[rgba(201,169,110,0.06)] px-1 py-px text-[8px] text-brand-cta">
                       <Sparkles className="h-2 w-2 shrink-0" />
@@ -283,7 +283,7 @@ export default function DirectoryProductListView({
                   <span className="text-[8px] text-muted-foreground">
                     {product.partnerProgramCount} prog · {product.collectionCount} lists
                   </span>
-                  {product.type !== "rep_firm" && product.repFirmCount > 0 ? (
+                  {product.repFirmCount > 0 ? (
                     <span className="inline-flex items-center gap-0.5 text-[8px] text-[#B07A5B]/70">
                       <Users className="h-2 w-2 shrink-0" aria-hidden />
                       {product.repFirmCount} rep firm{product.repFirmCount !== 1 ? "s" : ""}

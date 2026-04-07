@@ -1,0 +1,1382 @@
+[
+  {
+    "personaKey": "harringtons",
+    "linkedVicIds": [
+      "vic-001"
+    ],
+    "profile": {
+      "id": "vic-p-harringtons",
+      "firstName": "Alexander",
+      "lastName": "Harrington",
+      "dateOfBirth": "1968-04-12",
+      "email": "alex.h@example.com",
+      "phone": "+1 212 555 0142",
+      "location": "New York, NY, USA",
+      "occupation": "Private equity principal",
+      "clientSince": "2016-03-01",
+      "referredBy": {
+        "name": "Virtuoso consortium",
+        "type": "partner"
+      },
+      "ltvTier": "platinum",
+      "primaryAdvisorId": "adv-1",
+      "primaryAdvisorName": "Jordan Ellis",
+      "keyDates": [
+        {
+          "label": "Anniversary",
+          "date": "2026-06-18",
+          "recurring": true
+        },
+        {
+          "label": "Passport expiry",
+          "date": "2027-01-30",
+          "recurring": false
+        }
+      ],
+      "tags": [
+        "Ultra-HNW",
+        "Four Seasons loyalist",
+        "EA-led logistics"
+      ]
+    },
+    "domains": [
+      {
+        "id": "dom-acc",
+        "name": "accommodation",
+        "displayName": "Accommodation",
+        "icon": "bed",
+        "signals": [
+          {
+            "id": "sig-1",
+            "domainId": "dom-acc",
+            "value": "Prefers high floors, corner suites when available",
+            "confidence": "high",
+            "sources": [
+              {
+                "type": "booking_data",
+                "label": "Axus booking history",
+                "date": "2025-08-01"
+              },
+              {
+                "type": "advisor_note",
+                "label": "Advisor note (Sep 2025)"
+              }
+            ],
+            "firstObserved": "2018-02-10",
+            "lastConfirmed": "2025-09-15",
+            "lastConfirmedContext": "Four Seasons Tokyo",
+            "pinned": true
+          },
+          {
+            "id": "sig-2",
+            "domainId": "dom-acc",
+            "value": "King bed only — twin bed never acceptable",
+            "confidence": "high",
+            "sources": [
+              {
+                "type": "client_statement",
+                "label": "Client email",
+                "date": "2024-11-02"
+              }
+            ],
+            "firstObserved": "2020-01-05",
+            "lastConfirmed": "2024-11-02",
+            "conflicts": [
+              {
+                "conflictingValue": "Twin beds acceptable for ski trips",
+                "source": {
+                  "type": "itinerary_extraction",
+                  "label": "Old Axus profile"
+                },
+                "context": "Outdated household default",
+                "resolved": false
+              }
+            ],
+            "pinned": true
+          }
+        ]
+      },
+      {
+        "id": "dom-dining",
+        "name": "dining",
+        "displayName": "Dining",
+        "icon": "utensils",
+        "signals": [
+          {
+            "id": "sig-3",
+            "domainId": "dom-dining",
+            "value": "Prefers private dining or chefs table when entertaining",
+            "confidence": "medium",
+            "sources": [
+              {
+                "type": "advisor_note",
+                "label": "Advisor note"
+              }
+            ],
+            "firstObserved": "2019-06-01",
+            "lastConfirmed": "2025-04-01",
+            "pinned": false
+          }
+        ]
+      }
+    ],
+    "trips": [
+      {
+        "id": "t-h-1",
+        "vicId": "vic-p-harringtons",
+        "name": "Tokyo spring",
+        "status": "completed",
+        "type": "leisure",
+        "startDate": "2025-03-10",
+        "endDate": "2025-03-22",
+        "destinations": [
+          {
+            "id": "d-Tokyo",
+            "city": "Tokyo",
+            "country": "Japan",
+            "coordinates": {
+              "lat": 35.68,
+              "lng": 139.76
+            },
+            "properties": [
+              {
+                "id": "p1",
+                "name": "Four Seasons Hotel Tokyo",
+                "brand": "Four Seasons",
+                "roomCategory": "Suite",
+                "nights": 6,
+                "nightlyRate": 2400,
+                "totalCost": 14400
+              }
+            ],
+            "experiences": [],
+            "logistics": []
+          }
+        ],
+        "totalValue": 118000,
+        "commissionEarned": 11800,
+        "commissionRate": 0.1,
+        "clientRating": 5,
+        "patternTags": [
+          "3rd time in Tokyo",
+          "FS flagship preference"
+        ],
+        "travelingWith": [
+          {
+            "name": "Victoria Harrington",
+            "relationship": "spouse",
+            "vicId": "vic-p-victoria"
+          }
+        ]
+      },
+      {
+        "id": "t-h-2",
+        "vicId": "vic-p-harringtons",
+        "name": "London board week",
+        "status": "completed",
+        "type": "corporate",
+        "startDate": "2024-10-02",
+        "endDate": "2024-10-09",
+        "destinations": [
+          {
+            "id": "d-London",
+            "city": "London",
+            "country": "UK",
+            "coordinates": {
+              "lat": 51.5,
+              "lng": -0.12
+            },
+            "properties": [
+              {
+                "id": "p2",
+                "name": "Claridge's",
+                "brand": "Maybourne",
+                "roomCategory": "Suite",
+                "nights": 7,
+                "nightlyRate": 1900,
+                "totalCost": 13300
+              }
+            ],
+            "experiences": [],
+            "logistics": []
+          }
+        ],
+        "totalValue": 82000,
+        "patternTags": [
+          "BLEISURE split — 3 leisure days"
+        ],
+        "travelingWith": [
+          {
+            "name": "James Cole",
+            "relationship": "assistant"
+          }
+        ]
+      },
+      {
+        "id": "t-h-3",
+        "vicId": "vic-p-harringtons",
+        "name": "Amalfi anniversary",
+        "status": "confirmed",
+        "type": "anniversary",
+        "startDate": "2026-06-15",
+        "endDate": "2026-06-28",
+        "destinations": [
+          {
+            "id": "d-Ravello",
+            "city": "Ravello",
+            "country": "Italy",
+            "coordinates": {
+              "lat": 40.62,
+              "lng": 14.61
+            },
+            "properties": [
+              {
+                "id": "p3",
+                "name": "Caruso, A Belmond Hotel",
+                "brand": "Belmond",
+                "roomCategory": "Suite",
+                "nights": 8,
+                "nightlyRate": 2100,
+                "totalCost": 16800
+              }
+            ],
+            "experiences": [],
+            "logistics": []
+          }
+        ],
+        "totalValue": 94000,
+        "patternTags": [
+          "Interconnecting suites requested"
+        ],
+        "travelingWith": [
+          {
+            "name": "Victoria Harrington",
+            "relationship": "spouse",
+            "vicId": "vic-p-victoria"
+          }
+        ]
+      },
+      {
+        "id": "t-h-4",
+        "vicId": "vic-p-harringtons",
+        "name": "Maldives reset",
+        "status": "completed",
+        "type": "leisure",
+        "startDate": "2023-12-01",
+        "endDate": "2023-12-14",
+        "destinations": [
+          {
+            "id": "d-NorthMaléAtoll",
+            "city": "North Malé Atoll",
+            "country": "Maldives",
+            "coordinates": {
+              "lat": 4.2,
+              "lng": 73.5
+            },
+            "properties": [
+              {
+                "id": "p4",
+                "name": "One&Only Reethi Rah",
+                "brand": "One&Only",
+                "roomCategory": "Suite",
+                "nights": 13,
+                "nightlyRate": 3200,
+                "totalCost": 41600
+              }
+            ],
+            "experiences": [],
+            "logistics": []
+          }
+        ],
+        "totalValue": 156000,
+        "patternTags": [
+          "First time One&Only"
+        ],
+        "travelingWith": [
+          {
+            "name": "Victoria Harrington",
+            "relationship": "spouse",
+            "vicId": "vic-p-victoria"
+          }
+        ]
+      }
+    ],
+    "proposals": [
+      {
+        "id": "pr-h-1",
+        "vicId": "vic-p-harringtons",
+        "title": "Patagonia private camp extension",
+        "status": "reviewing",
+        "createdAt": "2026-02-01T10:00:00Z",
+        "sentAt": "2026-02-10T15:00:00Z",
+        "lastStatusChange": "2026-02-18T09:00:00Z",
+        "daysSinceStatusChange": 12,
+        "summary": "Add-on to June Italy — logistics via Santiago",
+        "destinations": [
+          "Santiago",
+          "El Calafate"
+        ],
+        "estimatedValue": 62000
+      }
+    ],
+    "actionItems": [
+      {
+        "id": "a-h-1",
+        "tripId": "t-h-3",
+        "title": "Confirm helicopter Ravello transfer",
+        "dueDate": "2026-04-01",
+        "status": "pending",
+        "assignedTo": "Jordan Ellis"
+      }
+    ],
+    "relationships": [
+      {
+        "id": "r-1",
+        "vicId": "vic-p-harringtons",
+        "relatedPersonName": "Victoria Harrington",
+        "relatedVicId": "vic-p-victoria",
+        "type": "spouse",
+        "tripsTogetherCount": 14,
+        "sharedPreferences": [
+          "FS / Belmond",
+          "late checkout"
+        ],
+        "differingPreferences": [
+          "Spa frequency — Victoria weekly, Alex occasional"
+        ]
+      },
+      {
+        "id": "r-2",
+        "vicId": "vic-p-harringtons",
+        "relatedPersonName": "James Cole",
+        "type": "assistant",
+        "authorityLevel": "limited",
+        "authorityLimit": 50000,
+        "notes": "Books all commercial air; hotel over $15k needs Alex SMS",
+        "contactInfo": {
+          "email": "j.cole@example.com",
+          "preferredMethod": "email"
+        }
+      },
+      {
+        "id": "r-3",
+        "vicId": "vic-p-harringtons",
+        "relatedPersonName": "Elena Marchetti",
+        "type": "referral_source",
+        "referralDate": "2015-11-20",
+        "referralContext": "NYC board overlap"
+      }
+    ],
+    "financials": {
+      "vicId": "vic-p-harringtons",
+      "lifetimeValue": 4280000,
+      "lifetimeCommission": 385200,
+      "effectiveCommissionRate": 0.09,
+      "averageTripValue": 142667,
+      "totalTrips": 18,
+      "projectedPipelineValue": 156000,
+      "projectedPipelineCommission": 14040,
+      "yearlyBreakdown": [
+        {
+          "year": 2024,
+          "totalValue": 780000,
+          "commission": 70200,
+          "tripCount": 5,
+          "yoyChange": 8
+        },
+        {
+          "year": 2025,
+          "totalValue": 910000,
+          "commission": 81900,
+          "tripCount": 6,
+          "yoyChange": 16
+        },
+        {
+          "year": 2026,
+          "totalValue": 220000,
+          "commission": 19800,
+          "tripCount": 1
+        }
+      ],
+      "partnerBreakdown": [
+        {
+          "partnerName": "Four Seasons",
+          "partnerType": "hotel_brand",
+          "totalValue": 1200000,
+          "commission": 108000,
+          "stayCount": 22
+        },
+        {
+          "partnerName": "Belmond",
+          "partnerType": "hotel_brand",
+          "totalValue": 410000,
+          "commission": 36900,
+          "stayCount": 6
+        }
+      ],
+      "categoryBreakdown": [
+        {
+          "category": "accommodation",
+          "totalValue": 2400000,
+          "percentage": 56
+        },
+        {
+          "category": "flights",
+          "totalValue": 820000,
+          "percentage": 19
+        },
+        {
+          "category": "experiences",
+          "totalValue": 610000,
+          "percentage": 14
+        },
+        {
+          "category": "transfers",
+          "totalValue": 280000,
+          "percentage": 7
+        },
+        {
+          "category": "other",
+          "totalValue": 170000,
+          "percentage": 4
+        }
+      ],
+      "dataSource": "tripsuite"
+    },
+    "touchPoints": [
+      {
+        "id": "tp-h-1",
+        "vicId": "vic-p-harringtons",
+        "type": "call",
+        "title": "Anniversary trip pacing",
+        "date": "2026-03-08T14:00:00Z",
+        "direction": "inbound",
+        "details": "Prefer fewer hotel moves"
+      },
+      {
+        "id": "tp-h-2",
+        "vicId": "vic-p-harringtons",
+        "type": "email",
+        "title": "Patagonia pdf markup",
+        "date": "2026-02-19T11:22:00Z",
+        "direction": "outbound"
+      }
+    ],
+    "specialRequests": [],
+    "giftLogs": [
+      {
+        "id": "g-h-1",
+        "vicId": "vic-p-harringtons",
+        "description": "Champagne welcome — Dom Pérignon",
+        "date": "2025-03-11",
+        "propertyOrPartner": "Four Seasons Tokyo",
+        "cost": 450
+      }
+    ],
+    "advisories": [
+      {
+        "id": "adv-h-1",
+        "vicId": "vic-p-harringtons",
+        "category": "vip_status",
+        "severity": "info",
+        "title": "Property GM escalation roster",
+        "body": "Always loop GM on FS stays >7 nights.",
+        "status": "active",
+        "createdAt": "2024-06-01T00:00:00Z",
+        "createdBy": "Jordan Ellis",
+        "isAdvisorOnly": true
+      }
+    ],
+    "sourceConflicts": [
+      {
+        "id": "sc-1",
+        "vicId": "vic-p-harringtons",
+        "field": "bed_preference",
+        "status": "unresolved",
+        "values": [
+          {
+            "value": "King only",
+            "source": "Client email",
+            "date": "2024-11-02"
+          },
+          {
+            "value": "Twins OK (ski)",
+            "source": "Legacy Axus",
+            "date": "2019-01-10",
+            "context": "Ski trip footnote"
+          }
+        ]
+      }
+    ],
+    "advisorNotes": [
+      {
+        "id": "n-h-1",
+        "vicId": "vic-p-harringtons",
+        "content": "James handles EU invoicing; US wires direct to house account.",
+        "createdAt": "2025-01-12T10:00:00Z",
+        "createdBy": "Jordan Ellis",
+        "tags": [
+          "billing",
+          "EA"
+        ]
+      }
+    ],
+    "internalFlags": [
+      "referral_vip",
+      "sensitive_client"
+    ],
+    "activity": [
+      {
+        "id": "ev-1",
+        "type": "proposal_sent",
+        "title": "Patagonia extension sent",
+        "timestamp": "2026-02-10T15:00:00Z",
+        "sourceIcon": "virtuoso",
+        "linkedEntityId": "pr-h-1",
+        "linkedEntityType": "proposal"
+      },
+      {
+        "id": "ev-2",
+        "type": "booking_created",
+        "title": "Amalfi Belmond deposit received",
+        "timestamp": "2026-01-05T09:30:00Z",
+        "sourceIcon": "axus",
+        "linkedEntityId": "t-h-3",
+        "linkedEntityType": "trip"
+      }
+    ]
+  },
+  {
+    "personaKey": "sofia-reyes-nakamura",
+    "linkedVicIds": [
+      "vic-002"
+    ],
+    "profile": {
+      "id": "vic-p-sofia",
+      "firstName": "Sofia",
+      "lastName": "Reyes-Nakamura",
+      "location": "Los Angeles, CA, USA",
+      "occupation": "Wellness founder",
+      "clientSince": "2021-09-15",
+      "ltvTier": "gold",
+      "primaryAdvisorId": "adv-1",
+      "primaryAdvisorName": "Jordan Ellis",
+      "keyDates": [
+        {
+          "label": "Birthday",
+          "date": "1989-07-22",
+          "recurring": true
+        }
+      ],
+      "tags": [
+        "Solo wellness",
+        "Dietary complexity"
+      ]
+    },
+    "domains": [
+      {
+        "id": "d-s-1",
+        "name": "sensitivities",
+        "displayName": "Sensitivities",
+        "icon": "shield",
+        "signals": [
+          {
+            "id": "s-s-1",
+            "domainId": "d-s-1",
+            "value": "Severe shellfish allergy — EpiPen on all trips",
+            "confidence": "high",
+            "sources": [
+              {
+                "type": "client_statement",
+                "label": "Intake form",
+                "date": "2021-09-15"
+              }
+            ],
+            "firstObserved": "2021-09-15",
+            "lastConfirmed": "2025-11-01",
+            "pinned": true
+          },
+          {
+            "id": "s-s-2",
+            "domainId": "d-s-1",
+            "value": "Plant-forward meals; no tasting menus with hidden dairy",
+            "confidence": "medium",
+            "sources": [
+              {
+                "type": "advisor_note",
+                "label": "Post-Bali debrief"
+              }
+            ],
+            "firstObserved": "2023-04-10",
+            "lastConfirmed": "2024-08-01",
+            "pinned": false
+          }
+        ]
+      }
+    ],
+    "trips": [
+      {
+        "id": "t-s-1",
+        "vicId": "vic-p-sofia",
+        "name": "Bali retreat",
+        "status": "completed",
+        "type": "solo",
+        "startDate": "2024-08-01",
+        "endDate": "2024-08-14",
+        "destinations": [
+          {
+            "id": "d-Ubud",
+            "city": "Ubud",
+            "country": "Indonesia",
+            "coordinates": {
+              "lat": -8.5,
+              "lng": 115.26
+            },
+            "properties": [
+              {
+                "id": "ps1",
+                "name": "Capella Ubud",
+                "brand": "Capella",
+                "roomCategory": "Suite",
+                "nights": 10,
+                "nightlyRate": 1100,
+                "totalCost": 11000
+              }
+            ],
+            "experiences": [],
+            "logistics": []
+          }
+        ],
+        "totalValue": 42000,
+        "patternTags": [
+          "First Asia solo"
+        ],
+        "travelingWith": []
+      },
+      {
+        "id": "t-s-2",
+        "vicId": "vic-p-sofia",
+        "name": "Sedona reset",
+        "status": "confirmed",
+        "type": "leisure",
+        "startDate": "2026-04-05",
+        "endDate": "2026-04-12",
+        "destinations": [
+          {
+            "id": "d-Sedona",
+            "city": "Sedona",
+            "country": "USA",
+            "coordinates": {
+              "lat": 34.87,
+              "lng": -111.76
+            },
+            "properties": [
+              {
+                "id": "ps2",
+                "name": "Enchantment Resort",
+                "roomCategory": "Suite",
+                "nights": 7,
+                "nightlyRate": 650,
+                "totalCost": 4550
+              }
+            ],
+            "experiences": [],
+            "logistics": []
+          }
+        ],
+        "totalValue": 18000,
+        "patternTags": [
+          "Repeat desert market"
+        ],
+        "travelingWith": []
+      }
+    ],
+    "proposals": [],
+    "actionItems": [],
+    "relationships": [],
+    "financials": {
+      "vicId": "vic-p-sofia",
+      "lifetimeValue": 186000,
+      "lifetimeCommission": 16740,
+      "effectiveCommissionRate": 0.09,
+      "averageTripValue": 37200,
+      "totalTrips": 5,
+      "projectedPipelineValue": 18000,
+      "projectedPipelineCommission": 1620,
+      "yearlyBreakdown": [],
+      "partnerBreakdown": [],
+      "categoryBreakdown": [
+        {
+          "category": "accommodation",
+          "totalValue": 98000,
+          "percentage": 53
+        },
+        {
+          "category": "experiences",
+          "totalValue": 52000,
+          "percentage": 28
+        },
+        {
+          "category": "other",
+          "totalValue": 36000,
+          "percentage": 19
+        }
+      ],
+      "dataSource": "tripsuite"
+    },
+    "touchPoints": [
+      {
+        "id": "tp-s-1",
+        "vicId": "vic-p-sofia",
+        "type": "whatsapp",
+        "title": "Sedona dietary checklist",
+        "date": "2026-03-01T16:00:00Z",
+        "direction": "inbound"
+      }
+    ],
+    "specialRequests": [
+      {
+        "id": "sr-s-1",
+        "vicId": "vic-p-sofia",
+        "request": "Chef to avoid cross-contact with shellfish",
+        "date": "2026-03-02",
+        "status": "active",
+        "source": "Advisor note"
+      }
+    ],
+    "giftLogs": [],
+    "advisories": [
+      {
+        "id": "ad-s-1",
+        "vicId": "vic-p-sofia",
+        "category": "medical",
+        "severity": "critical",
+        "title": "Shellfish anaphylaxis",
+        "body": "Hotel and DMC must confirm allergy protocol in writing.",
+        "status": "active",
+        "createdAt": "2021-09-15T00:00:00Z",
+        "createdBy": "Jordan Ellis",
+        "isAdvisorOnly": true
+      },
+      {
+        "id": "ad-s-2",
+        "vicId": "vic-p-sofia",
+        "category": "commission_incentive",
+        "severity": "info",
+        "title": "Virtuoso hotel bonus — Q2",
+        "body": "Stackable with preferred partner promo on select suites.",
+        "status": "active",
+        "createdAt": "2026-01-20T00:00:00Z",
+        "createdBy": "Ops",
+        "linkedProgramId": "prog-virt-q2",
+        "isAdvisorOnly": true
+      }
+    ],
+    "sourceConflicts": [],
+    "advisorNotes": [],
+    "internalFlags": [
+      "senior_advisor_approval_required"
+    ],
+    "activity": [
+      {
+        "id": "ev-s-1",
+        "type": "advisory_created",
+        "title": "Medical advisory acknowledged",
+        "timestamp": "2021-09-16T10:00:00Z"
+      }
+    ]
+  },
+  {
+    "personaKey": "al-rashid-family",
+    "linkedVicIds": [],
+    "profile": {
+      "id": "vic-p-alrashid",
+      "firstName": "Omar",
+      "lastName": "Al-Rashid",
+      "location": "Dubai, UAE",
+      "clientSince": "2014-01-10",
+      "ltvTier": "platinum",
+      "primaryAdvisorId": "adv-2",
+      "primaryAdvisorName": "Samira Noor",
+      "keyDates": [],
+      "tags": [
+        "Multi-gen",
+        "Accessibility",
+        "Interconnecting rooms"
+      ]
+    },
+    "domains": [
+      {
+        "id": "d-ar-1",
+        "name": "logistics",
+        "displayName": "Logistics",
+        "icon": "train",
+        "signals": [
+          {
+            "id": "s-ar-1",
+            "domainId": "d-ar-1",
+            "value": "Wheelchair-accessible room + roll-in shower on every segment",
+            "confidence": "high",
+            "sources": [
+              {
+                "type": "booking_data",
+                "label": "TripSuite notes"
+              }
+            ],
+            "firstObserved": "2019-03-01",
+            "lastConfirmed": "2025-12-01",
+            "pinned": true
+          }
+        ]
+      }
+    ],
+    "trips": [
+      {
+        "id": "t-ar-1",
+        "vicId": "vic-p-alrashid",
+        "name": "London multi-gen",
+        "status": "completed",
+        "type": "family",
+        "startDate": "2025-07-01",
+        "endDate": "2025-07-14",
+        "destinations": [
+          {
+            "id": "d-London",
+            "city": "London",
+            "country": "UK",
+            "coordinates": {
+              "lat": 51.5,
+              "lng": -0.12
+            },
+            "properties": [
+              {
+                "id": "par1",
+                "name": "The Langham",
+                "brand": "Langham",
+                "roomCategory": "Suite",
+                "nights": 10,
+                "nightlyRate": 1800,
+                "totalCost": 18000
+              }
+            ],
+            "experiences": [],
+            "logistics": []
+          }
+        ],
+        "totalValue": 210000,
+        "patternTags": [
+          "Parallel teen itinerary"
+        ],
+        "travelingWith": [
+          {
+            "name": "Layla Al-Rashid",
+            "relationship": "spouse"
+          },
+          {
+            "name": "Noor Al-Rashid",
+            "relationship": "child"
+          }
+        ]
+      }
+    ],
+    "proposals": [],
+    "actionItems": [],
+    "relationships": [
+      {
+        "id": "rar1",
+        "vicId": "vic-p-alrashid",
+        "relatedPersonName": "Layla Al-Rashid",
+        "type": "spouse",
+        "tripsTogetherCount": 12
+      },
+      {
+        "id": "rar2",
+        "vicId": "vic-p-alrashid",
+        "relatedPersonName": "Noor Al-Rashid",
+        "type": "child",
+        "age": 14
+      },
+      {
+        "id": "rar3",
+        "vicId": "vic-p-alrashid",
+        "relatedPersonName": "Hassan Al-Rashid",
+        "type": "parent"
+      },
+      {
+        "id": "rar4",
+        "vicId": "vic-p-alrashid",
+        "relatedPersonName": "Miriam Saeed",
+        "type": "assistant",
+        "authorityLevel": "full",
+        "authorityLimit": 250000
+      },
+      {
+        "id": "rar5",
+        "vicId": "vic-p-alrashid",
+        "relatedPersonName": "Farah El-Amin",
+        "type": "extended_family"
+      }
+    ],
+    "financials": {
+      "vicId": "vic-p-alrashid",
+      "lifetimeValue": 5100000,
+      "lifetimeCommission": 459000,
+      "effectiveCommissionRate": 0.09,
+      "averageTripValue": 425000,
+      "totalTrips": 12,
+      "projectedPipelineValue": 890000,
+      "projectedPipelineCommission": 80100,
+      "yearlyBreakdown": [],
+      "partnerBreakdown": [],
+      "categoryBreakdown": [],
+      "dataSource": "axus_partial"
+    },
+    "touchPoints": [
+      {
+        "id": "tp-ar-1",
+        "vicId": "vic-p-alrashid",
+        "type": "meeting",
+        "title": "Q1 household planning",
+        "date": "2026-02-01T13:00:00Z",
+        "direction": "inbound"
+      }
+    ],
+    "specialRequests": [
+      {
+        "id": "sr-ar-1",
+        "vicId": "vic-p-alrashid",
+        "request": "Interconnecting suites + WC adjacent",
+        "date": "2025-06-01",
+        "status": "fulfilled",
+        "source": "Pre-trip checklist",
+        "linkedTripId": "t-ar-1"
+      }
+    ],
+    "giftLogs": [],
+    "advisories": [],
+    "sourceConflicts": [],
+    "advisorNotes": [],
+    "internalFlags": [],
+    "activity": []
+  },
+  {
+    "personaKey": "chen-parks",
+    "linkedVicIds": [],
+    "profile": {
+      "id": "vic-p-chenparks",
+      "firstName": "Marcus",
+      "lastName": "Chen-Parks",
+      "location": "Chicago, IL, USA",
+      "occupation": "Michelin-experienced investor",
+      "clientSince": "2020-05-20",
+      "ltvTier": "gold",
+      "primaryAdvisorId": "adv-1",
+      "primaryAdvisorName": "Jordan Ellis",
+      "keyDates": [],
+      "tags": [
+        "Experience collectors",
+        "Active pipeline"
+      ]
+    },
+    "domains": [],
+    "trips": [
+      {
+        "id": "t-cp-1",
+        "vicId": "vic-p-chenparks",
+        "name": "Lyon research week",
+        "status": "completed",
+        "type": "bleisure",
+        "startDate": "2025-11-01",
+        "endDate": "2025-11-08",
+        "destinations": [
+          {
+            "id": "d-Lyon",
+            "city": "Lyon",
+            "country": "France",
+            "coordinates": {
+              "lat": 45.76,
+              "lng": 4.83
+            },
+            "properties": [
+              {
+                "id": "pcp1",
+                "name": "Villa Florentine",
+                "roomCategory": "Suite",
+                "nights": 6,
+                "nightlyRate": 580,
+                "totalCost": 3480
+              }
+            ],
+            "experiences": [],
+            "logistics": []
+          }
+        ],
+        "totalValue": 28000,
+        "patternTags": [
+          "Chef studio visits"
+        ],
+        "travelingWith": []
+      }
+    ],
+    "proposals": [
+      {
+        "id": "pr-cp-1",
+        "vicId": "vic-p-chenparks",
+        "title": "San Sebastián deep dive",
+        "status": "sent",
+        "createdAt": "2026-03-01T10:00:00Z",
+        "sentAt": "2026-03-15T14:00:00Z",
+        "lastStatusChange": "2026-03-15T14:00:00Z",
+        "daysSinceStatusChange": 16,
+        "summary": "Pintxos trail + two chef's tables",
+        "destinations": [
+          "San Sebastián",
+          "Hondarribia"
+        ],
+        "estimatedValue": 34000
+      }
+    ],
+    "actionItems": [
+      {
+        "id": "acp1",
+        "tripId": "t-cp-1",
+        "title": "Hold private dining — Mugaritz backup date",
+        "dueDate": "2026-03-30",
+        "status": "pending",
+        "assignedTo": "Jordan Ellis"
+      }
+    ],
+    "relationships": [],
+    "financials": {
+      "vicId": "vic-p-chenparks",
+      "lifetimeValue": 310000,
+      "lifetimeCommission": 27900,
+      "effectiveCommissionRate": 0.09,
+      "averageTripValue": 38750,
+      "totalTrips": 8,
+      "projectedPipelineValue": 34000,
+      "projectedPipelineCommission": 3060,
+      "yearlyBreakdown": [],
+      "partnerBreakdown": [],
+      "categoryBreakdown": [],
+      "dataSource": "manual"
+    },
+    "touchPoints": [
+      {
+        "id": "tp-cp-1",
+        "vicId": "vic-p-chenparks",
+        "type": "email",
+        "title": "Proposal questions — wine allocation",
+        "date": "2026-03-20T09:00:00Z",
+        "direction": "inbound",
+        "contactPerson": "EA Priya"
+      }
+    ],
+    "specialRequests": [],
+    "giftLogs": [],
+    "advisories": [],
+    "sourceConflicts": [],
+    "advisorNotes": [],
+    "internalFlags": [
+      "press_sensitive"
+    ],
+    "activity": [
+      {
+        "id": "ev-cp-1",
+        "type": "proposal_sent",
+        "title": "San Sebastián sent",
+        "timestamp": "2026-03-15T14:00:00Z",
+        "linkedEntityId": "pr-cp-1",
+        "linkedEntityType": "proposal"
+      }
+    ]
+  },
+  {
+    "personaKey": "dr-petrova",
+    "linkedVicIds": [],
+    "profile": {
+      "id": "vic-p-petrova",
+      "firstName": "Irina",
+      "lastName": "Petrova",
+      "location": "Boston, MA, USA",
+      "occupation": "Physician-researcher",
+      "clientSince": "2018-04-01",
+      "ltvTier": "silver",
+      "primaryAdvisorId": "adv-2",
+      "primaryAdvisorName": "Samira Noor",
+      "keyDates": [],
+      "tags": [
+        "Bleisure",
+        "Last-minute patterns"
+      ]
+    },
+    "domains": [],
+    "trips": [
+      {
+        "id": "t-pet-0",
+        "vicId": "vic-p-petrova",
+        "name": "Trip 1",
+        "status": "completed",
+        "type": "bleisure",
+        "startDate": "2024-01-10",
+        "endDate": "2024-01-16",
+        "destinations": [
+          {
+            "id": "d-Boston",
+            "city": "Boston",
+            "country": "USA",
+            "coordinates": {
+              "lat": 42.36,
+              "lng": -71.06
+            },
+            "properties": [
+              {
+                "id": "pp0",
+                "name": "The Newbury",
+                "roomCategory": "Suite",
+                "nights": 4,
+                "nightlyRate": 900,
+                "totalCost": 3600
+              }
+            ],
+            "experiences": [],
+            "logistics": []
+          }
+        ],
+        "totalValue": 12000,
+        "patternTags": [],
+        "travelingWith": []
+      },
+      {
+        "id": "t-pet-1",
+        "vicId": "vic-p-petrova",
+        "name": "Trip 2",
+        "status": "completed",
+        "type": "corporate",
+        "startDate": "2025-02-10",
+        "endDate": "2025-02-16",
+        "destinations": [
+          {
+            "id": "d-Boston",
+            "city": "Boston",
+            "country": "USA",
+            "coordinates": {
+              "lat": 42.36,
+              "lng": -71.06
+            },
+            "properties": [
+              {
+                "id": "pp1",
+                "name": "The Newbury",
+                "roomCategory": "Suite",
+                "nights": 4,
+                "nightlyRate": 900,
+                "totalCost": 3600
+              }
+            ],
+            "experiences": [],
+            "logistics": []
+          }
+        ],
+        "totalValue": 14000,
+        "patternTags": [],
+        "travelingWith": []
+      },
+      {
+        "id": "t-pet-2",
+        "vicId": "vic-p-petrova",
+        "name": "Trip 3",
+        "status": "completed",
+        "type": "bleisure",
+        "startDate": "2024-03-10",
+        "endDate": "2024-03-16",
+        "destinations": [
+          {
+            "id": "d-Boston",
+            "city": "Boston",
+            "country": "USA",
+            "coordinates": {
+              "lat": 42.36,
+              "lng": -71.06
+            },
+            "properties": [
+              {
+                "id": "pp2",
+                "name": "The Newbury",
+                "roomCategory": "Suite",
+                "nights": 4,
+                "nightlyRate": 900,
+                "totalCost": 3600
+              }
+            ],
+            "experiences": [],
+            "logistics": []
+          }
+        ],
+        "totalValue": 16000,
+        "patternTags": [],
+        "travelingWith": []
+      },
+      {
+        "id": "t-pet-3",
+        "vicId": "vic-p-petrova",
+        "name": "Trip 4",
+        "status": "completed",
+        "type": "corporate",
+        "startDate": "2025-04-10",
+        "endDate": "2025-04-16",
+        "destinations": [
+          {
+            "id": "d-Boston",
+            "city": "Boston",
+            "country": "USA",
+            "coordinates": {
+              "lat": 42.36,
+              "lng": -71.06
+            },
+            "properties": [
+              {
+                "id": "pp3",
+                "name": "The Newbury",
+                "roomCategory": "Suite",
+                "nights": 4,
+                "nightlyRate": 900,
+                "totalCost": 3600
+              }
+            ],
+            "experiences": [],
+            "logistics": []
+          }
+        ],
+        "totalValue": 18000,
+        "patternTags": [],
+        "travelingWith": []
+      },
+      {
+        "id": "t-pet-4",
+        "vicId": "vic-p-petrova",
+        "name": "Trip 5",
+        "status": "completed",
+        "type": "bleisure",
+        "startDate": "2024-05-10",
+        "endDate": "2024-05-16",
+        "destinations": [
+          {
+            "id": "d-Boston",
+            "city": "Boston",
+            "country": "USA",
+            "coordinates": {
+              "lat": 42.36,
+              "lng": -71.06
+            },
+            "properties": [
+              {
+                "id": "pp4",
+                "name": "The Newbury",
+                "roomCategory": "Suite",
+                "nights": 4,
+                "nightlyRate": 900,
+                "totalCost": 3600
+              }
+            ],
+            "experiences": [],
+            "logistics": []
+          }
+        ],
+        "totalValue": 20000,
+        "patternTags": [],
+        "travelingWith": []
+      },
+      {
+        "id": "t-pet-5",
+        "vicId": "vic-p-petrova",
+        "name": "Trip 6",
+        "status": "completed",
+        "type": "corporate",
+        "startDate": "2025-06-10",
+        "endDate": "2025-06-16",
+        "destinations": [
+          {
+            "id": "d-Boston",
+            "city": "Boston",
+            "country": "USA",
+            "coordinates": {
+              "lat": 42.36,
+              "lng": -71.06
+            },
+            "properties": [
+              {
+                "id": "pp5",
+                "name": "The Newbury",
+                "roomCategory": "Suite",
+                "nights": 4,
+                "nightlyRate": 900,
+                "totalCost": 3600
+              }
+            ],
+            "experiences": [],
+            "logistics": []
+          }
+        ],
+        "totalValue": 22000,
+        "patternTags": [],
+        "travelingWith": []
+      }
+    ],
+    "proposals": [],
+    "actionItems": [],
+    "relationships": [],
+    "financials": {
+      "vicId": "vic-p-petrova",
+      "lifetimeValue": 142000,
+      "lifetimeCommission": 11360,
+      "effectiveCommissionRate": 0.08,
+      "averageTripValue": 23667,
+      "totalTrips": 13,
+      "projectedPipelineValue": 0,
+      "projectedPipelineCommission": 0,
+      "yearlyBreakdown": [
+        {
+          "year": 2024,
+          "totalValue": 48000,
+          "commission": 3840,
+          "tripCount": 2
+        },
+        {
+          "year": 2025,
+          "totalValue": 52000,
+          "commission": 4160,
+          "tripCount": 3
+        }
+      ],
+      "partnerBreakdown": [],
+      "categoryBreakdown": [],
+      "dataSource": "unavailable"
+    },
+    "touchPoints": [
+      {
+        "id": "tp-pet-old",
+        "vicId": "vic-p-petrova",
+        "type": "call",
+        "title": "Spring schedule",
+        "date": "2025-10-01T15:00:00Z",
+        "direction": "outbound"
+      },
+      {
+        "id": "tp-pet-note",
+        "vicId": "vic-p-petrova",
+        "type": "note",
+        "title": "Internal CRM scratch",
+        "date": "2026-03-28T12:00:00Z",
+        "direction": "inbound"
+      }
+    ],
+    "specialRequests": [],
+    "giftLogs": [],
+    "advisories": [],
+    "sourceConflicts": [],
+    "advisorNotes": [],
+    "internalFlags": [],
+    "activity": []
+  }
+]

@@ -156,9 +156,16 @@ export default function ProductDirectoryFilterBar({
             placeholder="Search products…"
             aria-label="Search products"
           />
-          <Button type="button" variant="toolbarAccent" size="sm" className="shrink-0" onClick={onAddProduct}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="shrink-0 text-muted-foreground hover:text-foreground"
+            onClick={onAddProduct}
+            title="Prefer saving from chat / external search. Manual add is for edge cases only."
+          >
             <Plus className="h-3.5 w-3.5" />
-            Add product
+            Add manually
           </Button>
         </div>
         <FilterChipScrollRow>

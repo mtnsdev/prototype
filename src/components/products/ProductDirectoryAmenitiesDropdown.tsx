@@ -9,9 +9,11 @@ import { AMENITY_LABELS, AMENITY_GROUPS } from "./productDirectoryFilterConfig";
 type Props = {
   selected: DirectoryAmenityTag[];
   onChange: (tags: DirectoryAmenityTag[]) => void;
+  /** Optional class for the trigger button (e.g. full width in forms). */
+  triggerClassName?: string;
 };
 
-export default function ProductDirectoryAmenitiesDropdown({ selected, onChange }: Props) {
+export default function ProductDirectoryAmenitiesDropdown({ selected, onChange, triggerClassName }: Props) {
   const [amenityDropdownOpen, setAmenityDropdownOpen] = useState(false);
   const [amenitySearch, setAmenitySearch] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
@@ -72,7 +74,8 @@ export default function ProductDirectoryAmenitiesDropdown({ selected, onChange }
           "flex max-w-[200px] items-center gap-2 rounded-lg border px-3 py-1.5 text-left transition-colors",
           selected.length > 0
             ? "border-[rgba(91,138,110,0.20)] bg-[rgba(91,138,110,0.08)] text-[#5B8A6E]"
-            : "border-border bg-popover text-muted-foreground hover:border-border"
+            : "border-border bg-popover text-muted-foreground hover:border-border",
+          triggerClassName
         )}
       >
         {summary}

@@ -30,9 +30,11 @@ import type {
   DirectoryCollectionOption,
   DirectoryPartnerProgram,
   DirectoryProduct,
+  DirectoryProductCategory,
 } from "@/types/product-directory";
 import type { RepFirm, RepFirmProductLink } from "@/types/rep-firm";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScopeBadge } from "@/components/ui/ScopeBadge";
 import type { Team } from "@/types/teams";
 import { useToast } from "@/contexts/ToastContext";
@@ -41,7 +43,11 @@ import { cn } from "@/lib/utils";
 import { AMENITY_LABELS } from "./productDirectoryFilterConfig";
 import { directoryTierLabel, directoryTierStars } from "./productDirectoryDetailMeta";
 import { relativeTime } from "./productDirectoryRelativeTime";
-import { DIRECTORY_PRODUCT_TYPE_CONFIG } from "./productDirectoryProductTypes";
+import {
+  getPrimaryDirectoryType,
+  normalizeDirectoryProductTypes,
+} from "@/components/products/directoryProductTypeHelpers";
+import { DIRECTORY_PRODUCT_TYPE_CONFIG, directoryCategoryLabel } from "./productDirectoryProductTypes";
 import { getRepFirmByIdWithOverlay } from "./productDirectoryRepFirmMock";
 import {
   directoryCategoryColors,
@@ -174,7 +180,6 @@ export function ProductDirectoryDetailBody({
   const [newPersonalNote, setNewPersonalNote] = useState("");
   const [editingPersonalNoteId, setEditingPersonalNoteId] = useState<string | null>(null);
   const [editPersonalNoteDraft, setEditPersonalNoteDraft] = useState("");
-  const [personalRating, setPersonalRating] = useState(0);
   const [personalContacts, setPersonalContacts] = useState<DirectoryAgencyContact[]>([]);
   const [personalContactFormOpen, setPersonalContactFormOpen] = useState(false);
   const [editingPersonalContactId, setEditingPersonalContactId] = useState<string | null>(null);
@@ -215,6 +220,60 @@ export function ProductDirectoryDetailBody({
   const [showRepFirmEditor, setShowRepFirmEditor] = useState(false);
   const [localRepFirmLinks, setLocalRepFirmLinks] = useState<RepFirmProductLink[]>([]);
   const [incentivesExpanded, setIncentivesExpanded] = useState(false);
+  const [enableMasterDetailsOpen, setEnableMasterDetailsOpen] = useState(false);
+
+  const productTypesSig = product.types.join("|");
+  const [typesDraft, setTypesDraft] = useState<DirectoryProductCategory[]>(() => [...product.types]);
+  useEffect(() => {
+    setTypesDraft([...product.types]);
+  }, [product.id, productTypesSig]);
+
+  const normalizedTypesDraftSig = useMemo(
+    () => normalizeDirectoryProductTypes(typesDraft).join("|"),
+    [typesDraft]
+  );
+  const normalizedProductTypesSig = useMemo(
+    () => normalizeDirectoryProductTypes(product.types).join("|"),
+    [productTypesSig]
+  );
+  const typesDirty = normalizedTypesDraftSig !== normalizedProductTypesSig;
+
+  const saveEnableMasterDetails = () => {
+    const next = normalizeDirectoryProductTypes(typesDraft);
+    if (next.length === 0) {
+      toast({ title: "Select at least one category", tone: "destructive" });
+      return;
+    }
+    onPatchProduct(product.id, { types: next, updatedAt: new Date().toISOString() });
+    toast({ title: "Enable directory record updated", tone: "success" });
+    setEnableMasterDetailsOpen(false);
+  };
+
+  const cancelEnableMasterDetails = () => {
+    setTypesDraft([...product.types]);
+    setEnableMasterDetailsOpen(false);
+  };
+
+  const toggleProductType = (id: DirectoryProductCategory) => {
+    setTypesDraft((prev) => {
+      if (prev.includes(id)) {
+        const next = prev.filter((t) => t !== id);
+        if (next.length === 0) {
+          toast({ title: "Keep at least one category", tone: "destructive" });
+          return prev;
+        }
+        return next;
+      }
+      return [...prev, id];
+    });
+  };
+
+  const setPrimaryProductType = (primary: DirectoryProductCategory) => {
+    setTypesDraft((prev) => {
+      if (!prev.includes(primary)) return prev;
+      return [primary, ...prev.filter((t) => t !== primary)];
+    });
+  };
   const [vicIntelOpen, setVicIntelOpen] = useState(false);
 
   const canViewVICData = isAdmin;
@@ -243,6 +302,7 @@ export function ProductDirectoryDetailBody({
     setUpgradeConfirmText("");
     setContactUpgradeOpen(false);
     setContactUpgradeTarget(null);
+    setEnableMasterDetailsOpen(false);
   }, [product.id]);
 
   useEffect(() => {
@@ -299,7 +359,6 @@ export function ProductDirectoryDetailBody({
           ]
         : []
     );
-    setPersonalRating(detailMock.advisorDefaults.personalRating);
     setAgencyNotes(agencyMocksToDirectoryNotes(detailMock.agencyNotes));
   }, [detailMock, product.id, currentUserId, user?.email, user?.username]);
 
@@ -649,9 +708,11 @@ export function ProductDirectoryDetailBody({
     toast("Incentive dismissed");
   };
 
-  const cat = directoryCategoryColors(product.type);
-  const typeEntry = DIRECTORY_PRODUCT_TYPE_CONFIG.find((t) => t.id === product.type);
+  const primaryType = getPrimaryDirectoryType(product);
+  const cat = directoryCategoryColors(primaryType);
+  const typeEntry = DIRECTORY_PRODUCT_TYPE_CONFIG.find((t) => t.id === primaryType);
   const TypeIcon = typeEntry?.icon ?? Building2;
+  const typeSummary = product.types.map((t) => directoryCategoryLabel(t)).join(" · ");
   const placeLine =
     product.city && product.country ? `${product.city}, ${product.country}` : directoryProductPlaceLabel(product);
 
@@ -826,7 +887,10 @@ export function ProductDirectoryDetailBody({
               style={{ backgroundColor: cat.bg, color: cat.color, border: `1px solid ${cat.border}` }}
             >
               <TypeIcon className="h-2.5 w-2.5 shrink-0" />
-              {typeEntry?.label ?? product.type}
+              {typeEntry?.label ?? directoryCategoryLabel(primaryType)}
+              {product.types.length > 1 ? (
+                <span className="opacity-80"> (+{product.types.length - 1})</span>
+              ) : null}
             </span>
             {product.tier && product.tier !== "unrated" && tierStars > 0 ? (
               <span className="text-2xs text-brand-cta">{"★".repeat(tierStars)}</span>
@@ -860,14 +924,124 @@ export function ProductDirectoryDetailBody({
       ) : null}
 
       <div className="space-y-5 px-5 pb-2">
+      {isAdmin && !enableMasterDetailsOpen ? (
+        <div className="-mt-2 flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setEnableMasterDetailsOpen(true)}
+            className="h-8 gap-1.5 rounded-lg border-border bg-white/[0.02] text-xs text-foreground hover:bg-white/[0.05]"
+          >
+            <Pencil className="size-3.5 shrink-0" aria-hidden />
+            Edit product details (Enable)
+          </Button>
+        </div>
+      ) : null}
+
+      {isAdmin && enableMasterDetailsOpen ? (
+        <div className="-mt-2 rounded-xl border border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.06)] p-3">
+          <p className="mb-1 text-xs font-medium text-foreground">Enable master directory</p>
+          <p className="mb-3 text-2xs leading-relaxed text-muted-foreground">
+            Edits here update the shared product record your agency sees in the directory (filters, map, and cards).
+            Use this to suggest corrections to the Enable team after Google or manual import—more master fields can
+            live here over time.
+          </p>
+
+          <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground">Product categories</p>
+          <p className="mb-1.5 text-2xs text-muted-foreground/90">
+            Choose all that apply. The first category is the primary badge; change it with the dropdown when several
+            are selected.
+          </p>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-1 h-9 w-full justify-between gap-2 rounded-lg border-border bg-inset px-3 text-left text-xs font-normal text-foreground"
+              >
+                <span className="min-w-0 flex-1 truncate">
+                  {typesDraft.length === 0
+                    ? "Select categories…"
+                    : typesDraft.map((t) => directoryCategoryLabel(t)).join(", ")}
+                </span>
+                <ChevronDown className="size-4 shrink-0 opacity-60" aria-hidden />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-[min(100vw-2rem,20rem)] p-2">
+              <p className="mb-2 px-1 text-2xs text-muted-foreground">At least one category required.</p>
+              <ul className="max-h-56 space-y-0.5 overflow-y-auto pr-0.5">
+                {DIRECTORY_PRODUCT_TYPE_CONFIG.map((t) => {
+                  const checked = typesDraft.includes(t.id);
+                  const Icon = t.icon;
+                  return (
+                    <li key={t.id}>
+                      <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-muted/40">
+                        <input
+                          type="checkbox"
+                          className="checkbox-on-dark checkbox-on-dark-sm shrink-0"
+                          checked={checked}
+                          onChange={() => toggleProductType(t.id)}
+                        />
+                        <Icon className="size-3.5 shrink-0 opacity-80" aria-hidden />
+                        <span className="text-foreground">{t.label}</span>
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            </PopoverContent>
+          </Popover>
+
+          {typesDraft.length > 1 ? (
+            <label className="mt-3 block">
+              <span className="text-[9px] uppercase tracking-wider text-muted-foreground">Primary (hero badge)</span>
+              <select
+                className="mt-1.5 flex h-9 w-full max-w-xs rounded-lg border border-border bg-inset px-2 text-xs text-foreground"
+                value={typesDraft[0]}
+                onChange={(e) => setPrimaryProductType(e.target.value as DirectoryProductCategory)}
+              >
+                {typesDraft.map((t) => (
+                  <option key={t} value={t}>
+                    {directoryCategoryLabel(t)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+
+          <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-border/60 pt-3">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={cancelEnableMasterDetails}
+              className="h-8 text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={!typesDirty}
+              onClick={saveEnableMasterDetails}
+              className="h-8 rounded-lg text-xs"
+            >
+              Save changes
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       {/* Block 2 — Quick Facts */}
       <div className="relative z-10 -mt-2 rounded-xl border border-border bg-white/[0.03] p-3">
         <div className="grid grid-cols-3 gap-x-4 gap-y-2.5">
           <div>
             <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Type</p>
-            <p className="mt-0.5 text-xs font-medium text-foreground">
-              {typeEntry?.label ?? product.type}
-            </p>
+            <p className="mt-0.5 text-xs font-medium text-foreground">{typeSummary}</p>
           </div>
           <div>
             <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Tier</p>
@@ -880,7 +1054,7 @@ export function ProductDirectoryDetailBody({
             <p className="mt-0.5 text-xs font-medium text-foreground">{product.priceTier ?? "—"}</p>
           </div>
 
-          {product.type === "hotel" && (
+          {product.types.includes("hotel") && (
             <>
               <div>
                 <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Star Rating</p>
@@ -896,7 +1070,7 @@ export function ProductDirectoryDetailBody({
               </div>
             </>
           )}
-          {product.type === "restaurant" && (
+          {product.types.includes("restaurant") && (
             <>
               <div>
                 <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Michelin</p>
@@ -910,7 +1084,7 @@ export function ProductDirectoryDetailBody({
               </div>
             </>
           )}
-          {product.type === "experience" && (
+          {product.types.includes("experience") && (
             <>
               <div>
                 <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Duration</p>
@@ -922,7 +1096,7 @@ export function ProductDirectoryDetailBody({
               </div>
             </>
           )}
-          {product.type === "cruise" && (
+          {product.types.includes("cruise") && (
             <>
               <div>
                 <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Cruise Line</p>
@@ -934,13 +1108,13 @@ export function ProductDirectoryDetailBody({
               </div>
             </>
           )}
-          {product.type === "dmc" && (
+          {product.types.includes("dmc") && (
             <div className="col-span-2">
               <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Destinations</p>
               <p className="mt-0.5 text-xs font-medium text-foreground">{product.destinations ?? "—"}</p>
             </div>
           )}
-          {product.type === "villa" && (
+          {product.types.includes("villa") && (
             <>
               <div>
                 <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Bedrooms</p>
@@ -952,13 +1126,13 @@ export function ProductDirectoryDetailBody({
               </div>
             </>
           )}
-          {product.type === "wellness" && (
+          {product.types.includes("wellness") && (
             <div className="col-span-2">
               <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Specialty</p>
               <p className="mt-0.5 text-xs font-medium text-foreground">{product.specialty ?? "—"}</p>
             </div>
           )}
-          {product.type === "transport" && (
+          {product.types.includes("transport") && (
             <>
               <div>
                 <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Vehicle Type</p>
@@ -2221,6 +2395,10 @@ export function ProductDirectoryDetailBody({
               Private
             </span>
           </div>
+          <p className="mb-3 text-2xs leading-relaxed text-muted-foreground/70">
+            Visible only to you. Use <span className="text-muted-foreground">Suggest to agency</span> when a note
+            should become shared — an admin approves it before it appears in agency notes.
+          </p>
 
           <div className="mb-3 space-y-2">
             {personalNotes.length === 0 ? (
@@ -2321,24 +2499,6 @@ export function ProductDirectoryDetailBody({
             </Button>
           </div>
 
-          <div className="mt-3 border-t border-white/[0.05] pt-3">
-            <p className="mb-1 text-[9px] uppercase tracking-wider text-muted-foreground">My rating</p>
-            <div className="flex items-center gap-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setPersonalRating(star)}
-                  className={cn(
-                    "h-5 w-5 text-xs",
-                    star <= personalRating ? "text-brand-cta" : "text-[#2A2520]"
-                  )}
-                >
-                  ★
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         <div className="my-4 flex items-center gap-3">
@@ -2348,6 +2508,9 @@ export function ProductDirectoryDetailBody({
         </div>
 
         <div className="rounded-xl border border-[rgba(140,160,180,0.10)] bg-[rgba(140,160,180,0.03)] p-3">
+          <p className="mb-3 text-2xs leading-relaxed text-muted-foreground/70">
+            Agency notes are shared with your team after admin approval when suggested from private notes.
+          </p>
           <div className="mb-3 flex items-center gap-2">
             <Users className="h-3 w-3 shrink-0" style={{ color: "rgba(140,160,180,0.50)" }} aria-hidden />
             {agencyNotes.length > 0 ? (

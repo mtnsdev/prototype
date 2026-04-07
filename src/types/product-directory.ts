@@ -1,11 +1,9 @@
 /**
- * Product Directory (unified /dashboard/products) — 9-type advisor catalog.
+ * Product Directory (unified /dashboard/products) — advisor catalog categories.
  * Distinct from master registry `Product` in product.ts (ProductsPage legacy).
  *
- * Added `rep_firm` (March 2026) — hotel representation firms and marketing
- * companies are a first-class entity because advisors discover and book
- * independent luxury properties primarily through rep firm relationships.
- * Source: TravelLustre Systems & Data Inventory (Kristin, March 2026).
+ * Rep firms are not a product category: they live in the rep firm registry + tab
+ * and link to catalog products via `repFirmLinks`.
  */
 
 import type { DirectoryPriceTier, DirectoryTierLevel } from "@/components/products/productDirectoryDetailMeta";
@@ -19,8 +17,7 @@ export type DirectoryProductCategory =
   | "experience"
   | "cruise"
   | "wellness"
-  | "transport"
-  | "rep_firm";
+  | "transport";
 
 /** `private` = advisor-only; `agency` = agency catalog; else team id (KV-aligned). */
 export type DirectoryProductScope = "private" | "agency" | string;
@@ -94,7 +91,9 @@ export type DirectoryAmenityTag =
   | "welcome-amenity"
   | "club-lounge"
   | "complimentary-night"
-  | "dining-credit";
+  | "dining-credit"
+  | "house-car"
+  | "dedicated-host";
 
 /** Partner program lifecycle in the registry (filters + detail UI). */
 export type DirectoryProgramRegistryStatus = "active" | "expiring-soon" | "expired" | "inactive";
@@ -194,7 +193,8 @@ export interface DirectoryProduct {
   country?: string;
   latitude?: number;
   longitude?: number;
-  type: DirectoryProductCategory;
+  /** One or more directory categories (e.g. from Google Places mapping). */
+  types: DirectoryProductCategory[];
   region: string;
   description: string;
   scope: DirectoryProductScope;

@@ -4,6 +4,7 @@ import type {
   DirectoryProductCategory,
 } from "@/types/product-directory";
 import type { DirectoryPriceTier, DirectoryTierLevel } from "@/components/products/productDirectoryDetailMeta";
+import { directoryProductMatchesActiveTypeFilters } from "@/components/products/directoryProductTypeHelpers";
 import { getDirectoryProductRegistryCommission } from "@/components/products/productDirectoryCommission";
 import {
   productMatchesAmenityFilter,
@@ -65,7 +66,7 @@ export function applyDirectoryProductFilters(
   }
 
   if (skip !== "type" && f.activeTypeFilters.length > 0) {
-    result = result.filter((p) => f.activeTypeFilters.includes(p.type));
+    result = result.filter((p) => directoryProductMatchesActiveTypeFilters(p, f.activeTypeFilters));
   }
 
   if (skip !== "location" && f.locationCountries.length > 0) {

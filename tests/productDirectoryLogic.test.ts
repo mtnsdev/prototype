@@ -30,7 +30,7 @@ function makeProduct(id: string, programs: DirectoryPartnerProgram[]): Directory
     name: id,
     imageUrl: "",
     location: "",
-    type: "hotel",
+    types: ["hotel"],
     region: "",
     description: "",
     scope: "agency",

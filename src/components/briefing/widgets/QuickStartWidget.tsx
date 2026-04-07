@@ -11,6 +11,7 @@ import {
   Zap,
 } from "lucide-react";
 import AppleWidgetCard from "../AppleWidgetCard";
+import BriefingEmptyState from "../BriefingEmptyState";
 import type { QuickStartContent } from "@/types/briefing";
 import { cn } from "@/lib/utils";
 
@@ -50,10 +51,11 @@ export default function QuickStartWidget({ content, staggerIndex = 0 }: Props) {
         title="Quick Start"
         staggerIndex={staggerIndex}
       >
-        <div className="flex flex-col items-center justify-center py-8 text-center">
-          <Zap size={28} className="text-muted-foreground/70 mb-2" />
-          <p className="text-sm text-muted-foreground">No quick actions</p>
-        </div>
+        <BriefingEmptyState
+          icon={<Zap />}
+          title="No shortcuts yet"
+          description="Quick links to VICs, itineraries, and search will show here when configured."
+        />
       </AppleWidgetCard>
     );
   }
@@ -78,19 +80,21 @@ export default function QuickStartWidget({ content, staggerIndex = 0 }: Props) {
               className={cn(
                 "flex flex-col items-center justify-center rounded-xl p-4 transition-all text-center group border",
                 isAcuityVic
-                  ? "bg-violet-500/10 border-violet-500/25 hover:bg-violet-500/15"
-                  : "bg-white/[0.03] border-transparent hover:bg-white/[0.06]"
+                  ? "border-[var(--muted-accent-border)] bg-[var(--muted-accent-bg)] hover:bg-muted/35"
+                  : "border-transparent bg-muted/15 hover:bg-muted/35"
               )}
             >
               <Icon
                 size={24}
                 className={cn(
                   "transition-colors",
-                  isAcuityVic ? "text-violet-400 group-hover:text-violet-300" : "text-muted-foreground/90 group-hover:text-white"
+                  isAcuityVic
+                    ? "text-[var(--muted-accent-text)] group-hover:text-foreground"
+                    : "text-muted-foreground/90 group-hover:text-foreground"
                 )}
               />
               {isAcuityVic ? (
-                <span className="text-2xs leading-tight text-violet-200/90 mt-2 text-center font-medium">
+                <span className="mt-2 text-center text-2xs font-medium leading-tight text-[var(--muted-accent-text)]">
                   Acuity Lookup
                 </span>
               ) : (

@@ -223,33 +223,6 @@ export const MOCK_REP_FIRM_PRODUCT_LINKS: Record<string, RepFirmProductLink[]> =
       status: "active",
     },
   ],
-  "prod-dominique-debay": [
-    {
-      id: "rfl-self-prod-dominique-debay",
-      repFirmId: "rf-dominique-debay",
-      repFirmName: "Dominique Debay Collection",
-      scope: "enable",
-      status: "active",
-    },
-  ],
-  "prod-lush-experiences": [
-    {
-      id: "rfl-self-prod-lush-experiences",
-      repFirmId: "rf-lush-experiences",
-      repFirmName: "LUSH Experiences",
-      scope: "enable",
-      status: "active",
-    },
-  ],
-  "prod-index-select": [
-    {
-      id: "rfl-self-prod-index-select",
-      repFirmId: "rf-index-select",
-      repFirmName: "Index Select",
-      scope: "enable",
-      status: "active",
-    },
-  ],
   "prod-villa-001": [
     {
       id: "rfl-prod-villa-kiwi",

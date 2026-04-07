@@ -4,6 +4,7 @@ import { useCallback, useMemo, useRef } from "react";
 import { Check, Clock, Flame, Plus, Search, Sparkles, Users } from "lucide-react";
 import type { DirectoryProduct } from "@/types/product-directory";
 import { cn } from "@/lib/utils";
+import { getPrimaryDirectoryType } from "@/components/products/directoryProductTypeHelpers";
 import { directoryCategoryColors, directoryCategoryLabel } from "./productDirectoryVisual";
 import {
   getTopBookableProgramByCommission,
@@ -62,7 +63,10 @@ export default function DirectoryProductCard({
   const activePrograms = product.partnerPrograms.filter(isProgramBookable);
   const topForCommission = getTopBookableProgramByCommission(product);
   const topRate = topForCommission ? programDisplayCommissionRate(topForCommission) : null;
-  const cat = directoryCategoryColors(product.type);
+  const primaryType = getPrimaryDirectoryType(product);
+  const cat = directoryCategoryColors(primaryType);
+  const typePillLabel =
+    directoryCategoryLabel(primaryType) + (product.types.length > 1 ? ` +${product.types.length - 1}` : "");
   const placeLine =
     product.city && product.country ? `${product.city}, ${product.country}` : product.location;
   const tierUi = DIRECTORY_TIER_FILTER_UI.find((t) => t.id === (product.tier ?? "unrated"));
@@ -72,9 +76,8 @@ export default function DirectoryProductCard({
   const vicCount = useMemo(() => {
     const cached = vicProductCounts?.get(product.id);
     if (cached != null) return cached;
-    if (product.type === "rep_firm") return 0;
     return getVicsForProduct(product.id, FAKE_VICS ?? [], FAKE_ITINERARIES ?? []).length;
-  }, [product.id, product.type, vicProductCounts]);
+  }, [product.id, vicProductCounts]);
 
   const clearLongPress = useCallback(() => {
     if (longPressTimer.current) {
@@ -172,7 +175,7 @@ export default function DirectoryProductCard({
             borderColor: cat.border,
           }}
         >
-          {directoryCategoryLabel(product.type)}
+          {typePillLabel}
         </span>
 
         <div className={cn("absolute right-2 flex items-center gap-1", compact ? "top-1" : "top-2")}>
@@ -190,8 +193,7 @@ export default function DirectoryProductCard({
               title="You have personal notes"
             />
           )}
-          {product.type !== "rep_firm" &&
-          product.activeAdvisoryCount != null &&
+          {product.activeAdvisoryCount != null &&
           product.activeAdvisoryCount > 0 &&
           canViewCommissions ? (
             <div
@@ -233,7 +235,7 @@ export default function DirectoryProductCard({
               >
                 {product.name}
               </h3>
-              {product.type !== "rep_firm" && tierStarCount > 0 ? (
+              {tierStarCount > 0 ? (
                 <div className="flex shrink-0 gap-0.5">
                   {Array.from({ length: tierStarCount }, (_, i) => (
                     <span key={i} className="text-[7px]" style={{ color: tierStarColor }}>
@@ -245,7 +247,7 @@ export default function DirectoryProductCard({
             </div>
             <p className={productListingMetaLineClass}>
               {placeLine}
-              {product.type !== "rep_firm" && product.priceTier ? (
+              {product.priceTier ? (
                 <span className="ml-1.5 text-2xs text-muted-foreground">{product.priceTier}</span>
               ) : null}
             </p>
@@ -288,7 +290,7 @@ export default function DirectoryProductCard({
           </div>
         )}
 
-        {product.type !== "rep_firm" && product.repFirmCount > 0 ? (
+        {product.repFirmCount > 0 ? (
           <div className={cn("flex items-center gap-1", compact ? "mt-0.5" : "mt-1")}>
             <Users
               className={cn("shrink-0 text-[#B07A5B]/60", compact ? "h-2 w-2" : "h-2.5 w-2.5")}
@@ -341,12 +343,7 @@ export default function DirectoryProductCard({
           )}
         >
           <div className="flex items-center gap-2 whitespace-nowrap">
-          {product.type === "rep_firm" ? (
-            <span className="flex min-w-0 items-center gap-1 text-[9px] text-[#B07A5B]/70">
-              <Users className="h-2.5 w-2.5" aria-hidden />
-              <span className="truncate">{product.specialty ?? "Luxury representation"}</span>
-            </span>
-          ) : canViewCommissions && topForCommission != null && topRate != null ? (
+          {canViewCommissions && topForCommission != null && topRate != null ? (
             <span className="flex min-w-0 items-center gap-1">
               <span className="text-2xs text-[#B8976E]">
                 {topForCommission.commissionType === "flat" ? `$${topRate}` : `${topRate}%`}
@@ -356,7 +353,7 @@ export default function DirectoryProductCard({
           ) : !canViewCommissions && topForCommission != null && topRate != null ? (
             <span className="min-w-0 truncate text-[9px] text-muted-foreground">Partner rate on file</span>
           ) : null}
-          {product.type !== "rep_firm" && vicCount > 0 ? (
+          {vicCount > 0 ? (
             <span className="ml-auto flex shrink-0 items-center gap-1 text-[9px] text-[#5C5852]/70">
               <Users className="h-2.5 w-2.5" aria-hidden />
               {vicCount} VIC{vicCount !== 1 ? "s" : ""}

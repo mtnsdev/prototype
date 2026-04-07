@@ -183,6 +183,45 @@
     --sidebar-ring: rgba(201, 169, 110, 0.45);
 }
 
+/*
+ * Briefing dashboard — cool stone & slate only (scoped). No traffic-light red/yellow/green.
+ * "Positive" uses blue-gray stone; attention uses taupe & dusk mauve — still legible, not gamified.
+ */
+.briefing-nature {
+    --color-success: #7a8690;
+    --color-success-muted: rgba(122, 134, 144, 0.14);
+    --color-info: #6e7f8c;
+    --color-info-muted: rgba(110, 127, 140, 0.14);
+    --color-warning: #8f8983;
+    --color-warning-muted: rgba(143, 137, 131, 0.12);
+    --color-error: #756a72;
+    --color-error-muted: rgba(117, 106, 114, 0.14);
+
+    --muted-success-bg: rgba(122, 134, 144, 0.1);
+    --muted-success-text: #9aa3ab;
+    --muted-success-border: rgba(122, 134, 144, 0.26);
+    --muted-warning-bg: rgba(143, 137, 131, 0.1);
+    --muted-warning-text: #ada8a3;
+    --muted-warning-border: rgba(143, 137, 131, 0.24);
+    --muted-error-bg: rgba(117, 106, 114, 0.1);
+    --muted-error-text: #9b9198;
+    --muted-error-border: rgba(117, 106, 114, 0.26);
+    --muted-info-bg: rgba(110, 127, 140, 0.1);
+    --muted-info-text: #95a2ad;
+    --muted-info-border: rgba(110, 127, 140, 0.26);
+    --muted-accent-bg: rgba(115, 108, 125, 0.11);
+    --muted-accent-text: #9b94a8;
+    --muted-accent-border: rgba(115, 108, 125, 0.22);
+    --muted-amber-bg: rgba(130, 125, 118, 0.11);
+    --muted-amber-text: #a8a29b;
+    --muted-amber-border: rgba(130, 125, 118, 0.22);
+
+    --surface-base: #0c0d0e;
+    --surface-card: #141517;
+    --surface-card-hover: #191b1d;
+    --surface-elevated: #16181a;
+}
+
 @theme inline {
     /* Muted palette (elegant, low saturation) */
     --color-muted-success-bg: var(--muted-success-bg);
@@ -443,7 +482,7 @@ input.chat-input-no-focus-outline:focus-visible,
 @keyframes briefing-fade-in {
     from {
         opacity: 0;
-        transform: translateY(8px);
+        transform: translateY(6px);
     }
     to {
         opacity: 1;
@@ -452,7 +491,7 @@ input.chat-input-no-focus-outline:focus-visible,
 }
 
 .animate-briefing-fade-in {
-    animation: briefing-fade-in 0.4s ease-out forwards;
+    animation: briefing-fade-in 0.34s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     opacity: 0;
 }
 
@@ -460,6 +499,7 @@ input.chat-input-no-focus-outline:focus-visible,
     .animate-briefing-fade-in {
         animation: none;
         opacity: 1;
+        transform: none;
     }
 }
 

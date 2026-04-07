@@ -122,7 +122,7 @@ function formatKnowledgeVaultLastSync(sources: DataSource[]): string {
 }
 
 export default function KnowledgeVaultPage() {
-  const { user, kvViewAsAdmin } = useUser();
+  const { user, prototypeAdminView } = useUser();
   const toast = useToast();
   const kvShare = useKvShareSuggestions();
   const { teams: liveTeams } = useTeams();
@@ -140,7 +140,7 @@ export default function KnowledgeVaultPage() {
         : null),
     [user]
   );
-  const isAdmin = kvViewAsAdmin || effectiveUser?.role === "admin";
+  const isAdmin = prototypeAdminView;
   const currentUserOwnerId = effectiveUser?.id != null ? String(effectiveUser.id) : "1";
   const router = useRouter();
   const pathname = usePathname();

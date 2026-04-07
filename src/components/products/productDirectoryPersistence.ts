@@ -4,9 +4,10 @@ import type {
   DirectoryProduct,
 } from "@/types/product-directory";
 import type { RepFirm } from "@/types/rep-firm";
+import { migrateDirectoryProductJson } from "@/components/products/directoryProductTypeHelpers";
 
 const STORAGE_KEY = "enable-product-directory-v1";
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 const REP_FIRMS_KEY = "enable-rep-firms-registry-v1";
 const REP_FIRMS_SCHEMA = 1;
@@ -85,15 +86,17 @@ export function loadPersistedDirectory(): {
     if (!raw) return { products: null, directoryCollections: null, externalSearchMeta: null };
     const data = JSON.parse(raw) as Partial<PersistedDirectoryPayload>;
     const v = data.v;
-    if ((v !== SCHEMA_VERSION && v !== 1) || !Array.isArray(data.products)) {
+    if ((v !== SCHEMA_VERSION && v !== 1 && v !== 2) || !Array.isArray(data.products)) {
       return { products: null, directoryCollections: null, externalSearchMeta: null };
     }
     const meta =
-      v === 2 && data.externalSearchMeta && typeof data.externalSearchMeta === "object"
+      (v === 2 || v === SCHEMA_VERSION) && data.externalSearchMeta && typeof data.externalSearchMeta === "object"
         ? (data.externalSearchMeta as Record<string, DirectoryExternalSearchMeta>)
         : {};
+    const productsRaw = data.products as unknown[];
+    const products = productsRaw.map((row) => migrateDirectoryProductJson(row));
     return {
-      products: data.products as DirectoryProduct[],
+      products,
       directoryCollections: Array.isArray(data.directoryCollections)
         ? (data.directoryCollections as DirectoryCollectionOption[])
         : null,
@@ -134,6 +137,7 @@ export function clearPersistedDirectory(): void {
 export function cloneDirectoryProductsForState(products: DirectoryProduct[]): DirectoryProduct[] {
   return products.map((p) => ({
     ...p,
+    types: [...p.types],
     collectionIds: [...p.collectionIds],
     collections: [...p.collections],
     partnerPrograms: p.partnerPrograms.map((pp) => ({

@@ -6,12 +6,14 @@ import {
   WidgetType,
   type BriefingWidget,
   type NewsAlertContent,
+  type NewsAlertItem,
   type PartnerUpdateContent,
   type ActionItemsContent,
   type UpcomingTripsContent,
   type CalendarContent,
   type ClientIntelligenceContent,
   type CommissionAlertContent,
+  type CommissionAlertItem,
   type QuickStartContent,
   type FreeTextContent,
   type RecentActivityContent,
@@ -52,7 +54,7 @@ export function getMockBriefingWidgets(): BriefingWidget[] {
     {
       id: "w-commission",
       widget_type: WidgetType.CommissionAlerts,
-      title: "Commission Opportunities",
+      title: "Partner incentives",
       position: 2,
       size: "medium",
       is_visible: true,
@@ -152,6 +154,17 @@ function getMockNewsAlertContent(): NewsAlertContent {
   return {
     type: "news_alert",
     items: [
+      {
+        id: "news-trip-suite-smart",
+        headline: "Smarter confirmation import (beta)",
+        summary:
+          "Some booking tools now let you drop in a PDF or confirmation link to fill trip details faster. Double-check amenities, dates, and cruise terms until the workflow feels routine.",
+        source: "Ops note",
+        category: "industry",
+        severity: "info",
+        tags: ["Workflow"],
+        published_at: addDays(new Date(), 0),
+      },
       {
         id: "news-001",
         headline: "Air France Strike Action — June 12-15",
@@ -492,6 +505,29 @@ function getMockCalendarContent(): CalendarContent {
       { id: "c6", title: "Ponant Antarctica FAM application deadline", event_type: "deadline", date: "2026-04-01", color: "#ef4444" },
       { id: "c7", title: "Monaco GP trip departure — JC", event_type: "trip_departure", date: "2026-05-23", color: "#22c55e" },
       { id: "c8", title: "Maldives trip departure — Camille", event_type: "trip_departure", date: "2026-07-15", color: "#22c55e" },
+      {
+        id: "c9",
+        title: "Masterclass planning — villas & components (internal)",
+        event_type: "meeting",
+        date: addDays(new Date(), 9),
+        time: "11:00",
+        color: "#06b6d4",
+      },
+      {
+        id: "c10",
+        title: "Masterclass planning — emergency management (internal)",
+        event_type: "meeting",
+        date: addDays(new Date(), 16),
+        time: "11:00",
+        color: "#06b6d4",
+      },
+      {
+        id: "c11",
+        title: "Virtuoso cruise masterclass — registration check (team)",
+        event_type: "training",
+        date: addDays(new Date(), 5),
+        color: "#8b5cf6",
+      },
     ],
   };
 }
@@ -513,7 +549,8 @@ function getMockQuickStartContent(): QuickStartContent {
 function getMockFreeTextContent(): FreeTextContent {
   return {
     type: "free_text",
-    body: "**Team update — March 2026**\n\nReminder: Virtuoso Travel Week early bird registration closes April 15. All advisors attending should confirm by end of week.\n\nAlso — the Regent Seven Seas partnership renewal is pending (expires April 15). Kristin is handling the negotiation with Yuki Tanaka.",
+    body:
+      "**This week — whole agency**\n\nJune Virtuoso magazine (hotel issue): coding due April 30 — use your allocation.\n\nNashville 2027 retreat: block calendars and budget; details in weekly email.\n\nTrying the new confirmation import? Share tips or quirks with the team so everyone benefits.",
     author: "Kristin Summers",
     pinned: true,
   };
@@ -744,4 +781,17 @@ function getMockCommissionAlertContent(): CommissionAlertContent {
       },
     ],
   };
+}
+
+/** Seeds for BriefingAgencyContentHub — agency admin manual content (prototype session state). */
+export function getBriefingHubNewsSeed(): NewsAlertItem[] {
+  return getMockNewsAlertContent().items.map((i) => ({ ...i }));
+}
+
+export function getBriefingHubIncentiveSeed(): CommissionAlertItem[] {
+  return getMockCommissionAlertContent().items.map((i) => ({ ...i }));
+}
+
+export function getBriefingHubAgencyNoteSeed(): string {
+  return getMockFreeTextContent().body;
 }

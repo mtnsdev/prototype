@@ -27,6 +27,8 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import ReportIssueLauncher from "@/components/ui/ReportIssueLauncher";
 import { useUserOptional } from "@/contexts/UserContext";
+import { DemoAdminSwitchRow } from "@/components/ui/demo-admin-switch-row";
+import { DEMO_ADMIN_MENU, DEMO_ADMIN_SR } from "@/lib/demoAdminUi";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 import { useNotificationPanelOptional } from "@/components/dashboard/DashboardNotifications";
 import { DASHBOARD_CHROME_HEADER_ROW } from "@/lib/dashboardChrome";
@@ -418,7 +420,7 @@ export default function Sidebar({
                             side="top"
                             align={showLabels ? "start" : "center"}
                             sideOffset={8}
-                            className="w-[min(calc(100vw-2rem),16rem)] border-input bg-card p-0 shadow-xl"
+                            className="w-[min(calc(100vw-2rem),16rem)] overflow-hidden border-input bg-card p-0 shadow-xl"
                         >
                             <Link
                                 href="/dashboard/settings"
@@ -429,70 +431,14 @@ export default function Sidebar({
                                 <span>Settings</span>
                             </Link>
                             {userContext && (
-                                <>
-                                    <div
-                                        className="flex items-center justify-between border-t border-white/[0.04] px-3 py-2"
-                                        onPointerDown={(e) => e.preventDefault()}
-                                    >
-                                        <span className="text-2xs text-muted-foreground">KV admin</span>
-                                        <button
-                                            type="button"
-                                            role="switch"
-                                            aria-checked={userContext.kvViewAsAdmin}
-                                            onClick={() =>
-                                                userContext.setKvViewAsAdmin(!userContext.kvViewAsAdmin)
-                                            }
-                                            className={cn(
-                                                "relative h-4 w-7 shrink-0 rounded-full transition-colors",
-                                                userContext.kvViewAsAdmin ? "bg-blue-500/20" : "bg-white/[0.06]"
-                                            )}
-                                        >
-                                            <span className="sr-only">Toggle Knowledge Vault admin demo view</span>
-                                            <span
-                                                className={cn(
-                                                    "pointer-events-none absolute top-0.5 h-3 w-3 rounded-full transition-transform",
-                                                    userContext.kvViewAsAdmin
-                                                        ? "translate-x-3.5 bg-blue-400"
-                                                        : "translate-x-0.5 bg-muted-foreground/40"
-                                                )}
-                                            />
-                                        </button>
-                                    </div>
-                                    <div
-                                        className="flex items-center justify-between border-t border-white/[0.04] px-3 py-2"
-                                        onPointerDown={(e) => e.preventDefault()}
-                                    >
-                                        <span className="text-2xs text-muted-foreground">Products admin</span>
-                                        <button
-                                            type="button"
-                                            role="switch"
-                                            aria-checked={userContext.directoryViewAsAdmin}
-                                            onClick={() =>
-                                                userContext.setDirectoryViewAsAdmin(
-                                                    !userContext.directoryViewAsAdmin
-                                                )
-                                            }
-                                            className={cn(
-                                                "relative h-4 w-7 shrink-0 rounded-full transition-colors",
-                                                userContext.directoryViewAsAdmin
-                                                    ? "bg-blue-500/20"
-                                                    : "bg-white/[0.06]"
-                                            )}
-                                        >
-                                            <span className="sr-only">
-                                                Toggle product directory and partner portal admin demo view
-                                            </span>
-                                            <span
-                                                className={cn(
-                                                    "pointer-events-none absolute top-0.5 h-3 w-3 rounded-full transition-transform",
-                                                    userContext.directoryViewAsAdmin
-                                                        ? "translate-x-3.5 bg-blue-400"
-                                                        : "translate-x-0.5 bg-muted-foreground/40"
-                                                )}
-                                            />
-                                        </button>
-                                    </div>
-                                </>
+                                <div className="mx-2 my-1.5 overflow-hidden rounded-lg border border-border/80 bg-muted/10">
+                                    <DemoAdminSwitchRow
+                                        label={DEMO_ADMIN_MENU.prototypeAdminView}
+                                        checked={userContext.prototypeAdminView}
+                                        onCheckedChange={userContext.setPrototypeAdminView}
+                                        srDescription={DEMO_ADMIN_SR.prototypeAdminView}
+                                    />
+                                </div>
                             )}
                             <div className="h-px bg-border" />
                             <Button

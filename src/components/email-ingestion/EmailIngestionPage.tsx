@@ -77,7 +77,7 @@ function mimeToLabel(mime: string): string {
 }
 
 export default function EmailIngestionPage() {
-  const { user, kvViewAsAdmin } = useUser();
+  const { prototypeAdminView } = useUser();
   const { teams } = useTeams();
   const toast = useToast();
   const {
@@ -89,8 +89,7 @@ export default function EmailIngestionPage() {
     removeEmailTag,
   } = useKnowledgeVaultEmails();
 
-  const isAdmin =
-    kvViewAsAdmin || user?.role === "admin" || user?.role === "agency_admin";
+  const isAdmin = prototypeAdminView;
 
   const [activeFilter, setActiveFilter] = useState<FilterPill>("All");
   const [search, setSearch] = useState("");

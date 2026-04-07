@@ -6,6 +6,7 @@ import { ChevronLeft, Plus, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { useUser } from "@/contexts/UserContext";
+import { isWorkspaceStaff } from "@/lib/workspaceRoles";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/contexts/ToastContext";
 import type { Team } from "@/types/teams";
@@ -28,7 +29,7 @@ export default function TeamsSettingsPage() {
   const toast = useToast();
   const [teams, setTeams] = useState<Team[]>(() => cloneTeams(MOCK_TEAMS));
 
-  const isAdmin = user?.role === "admin" || user?.role === "agency_admin";
+  const isAdmin = isWorkspaceStaff(user);
 
   const canAccess = useMemo(() => {
     if (typeof window === "undefined") return true;
@@ -52,7 +53,7 @@ export default function TeamsSettingsPage() {
       },
     ]);
     toast({ title: "Team created (demo)", tone: "success" });
-  }, [toast, user?.email, user?.id]);
+  }, [toast, user]);
 
   const deleteTeam = useCallback(
     (t: Team) => {

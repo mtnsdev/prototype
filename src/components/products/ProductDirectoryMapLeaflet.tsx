@@ -6,6 +6,7 @@ import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaf
 import "leaflet/dist/leaflet.css";
 import { Search } from "lucide-react";
 import type { DirectoryProduct } from "@/types/product-directory";
+import { getPrimaryDirectoryType } from "@/components/products/directoryProductTypeHelpers";
 import type { GeoPinItem } from "./productDirectoryMapUtils";
 import {
   directoryCategoryLabel,
@@ -72,7 +73,9 @@ function PopupBody({
     <div className="min-w-[200px] text-background">
       <p className="truncate text-sm font-medium">{product.name}</p>
       <p className="text-2xs text-neutral-600">{place}</p>
-      <p className="mt-1 text-[9px] text-neutral-500">{directoryCategoryLabel(product.type)}</p>
+      <p className="mt-1 text-[9px] text-neutral-500">
+        {product.types.map((t) => directoryCategoryLabel(t)).join(" · ")}
+      </p>
       {canViewCommissions && best != null && bestRate != null && (
         <p className="mt-0.5 text-2xs text-amber-900/90">
           {bestRate}% · {programDisplayName(best)}
@@ -135,7 +138,7 @@ export default function ProductDirectoryMapLeaflet({
           const p = pin.product;
           if (p.latitude == null || p.longitude == null) return null;
           const selected = selectedId === p.id;
-          const fill = getDirectoryCategoryPinColor(p.type);
+          const fill = getDirectoryCategoryPinColor(getPrimaryDirectoryType(p));
           return (
             <CircleMarker
               key={p.id}

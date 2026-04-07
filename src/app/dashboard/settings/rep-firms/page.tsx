@@ -15,6 +15,7 @@ import {
   subscribeRepFirmsRegistry,
 } from "@/components/products/productDirectoryPersistence";
 import type { RepFirm } from "@/types/rep-firm";
+import { TEAM_EVERYONE_ID } from "@/types/teams";
 
 const PRODUCT_TYPE_OPTIONS = [
   "hotel",
@@ -57,7 +58,7 @@ function emptyForm(): RepFirmFormState {
     regionsText: "",
     productTypes: [],
     propertyCount: "",
-    scope: "enable",
+    scope: TEAM_EVERYONE_ID,
     status: "active",
   };
 }

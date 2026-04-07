@@ -129,7 +129,7 @@ const DIRECTORY_DETAIL_SEED_NAME = "Janet";
 
 export default function ProductDetailPage({ productId }: Props) {
   const router = useRouter();
-  const { user, directoryViewAsAdmin, isLoading: userLoading } = useUser();
+  const { user, prototypeAdminView, isLoading: userLoading } = useUser();
   const toast = useToast();
 
   const [directoryProduct, setDirectoryProduct] = useState<DirectoryProduct | null>(null);
@@ -171,8 +171,7 @@ export default function ProductDetailPage({ productId }: Props) {
     [user]
   );
   const canViewCommissions = policies.canViewCommissions;
-  const isAdmin =
-    directoryViewAsAdmin || user?.role === "admin" || user?.role === "agency_admin";
+  const isAdmin = prototypeAdminView;
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [repFirmsRegistry, setRepFirmsRegistry] = useState<RepFirm[]>(() => {

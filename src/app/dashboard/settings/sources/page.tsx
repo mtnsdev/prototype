@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/contexts/UserContext";
+import { isWorkspaceStaff } from "@/lib/workspaceRoles";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/contexts/ToastContext";
 import { MOCK_TEAMS } from "@/lib/teamsMock";
@@ -62,7 +63,7 @@ export default function SourcesSettingsPage() {
   const toast = useToast();
   const [sources, setSources] = useState<SourceRow[]>(() => [...INITIAL_SOURCES]);
 
-  const isAdmin = user?.role === "admin" || user?.role === "agency_admin";
+  const isAdmin = isWorkspaceStaff(user);
 
   const canAccess = useMemo(() => {
     if (typeof window === "undefined") return true;

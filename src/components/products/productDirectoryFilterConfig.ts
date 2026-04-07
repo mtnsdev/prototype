@@ -57,6 +57,8 @@ export const AMENITY_GROUPS: { label: string; tags: { id: DirectoryAmenityTag; l
       { id: "hotel-credit", label: "Hotel Credit" },
       { id: "complimentary-night", label: "Complimentary Night" },
       { id: "airport-transfer", label: "Airport Transfer" },
+      { id: "house-car", label: "House car / transfer" },
+      { id: "dedicated-host", label: "Dedicated host / butler" },
     ],
   },
 ];
@@ -89,6 +91,8 @@ export const AMENITY_LABELS: Record<DirectoryAmenityTag, string> = {
   "club-lounge": "Club Lounge",
   "complimentary-night": "Free Night",
   "dining-credit": "Dining",
+  "house-car": "House car",
+  "dedicated-host": "Dedicated host",
 };
 
 export type CommissionBracketId = "any" | "5-10" | "10-15" | "15+";
