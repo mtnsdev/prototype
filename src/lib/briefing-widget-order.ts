@@ -1,28 +1,9 @@
-import {
-  WidgetType,
-  type BriefingWidget,
-  type IntelligenceEmbedContent,
-} from "@/types/briefing";
+import { WidgetType, type BriefingWidget } from "@/types/briefing";
 
 /**
  * Default tile order when API `position` values are arbitrary (Announcements strip is separate).
  */
 export function defaultBriefingWidgetSortRank(w: BriefingWidget): number {
-  if (w.widget_type === WidgetType.IntelligenceEmbed) {
-    const c = w.content as IntelligenceEmbedContent;
-    if (c.type !== "intelligence_embed") return 500;
-    const v: Record<IntelligenceEmbedContent["variant"], number> = {
-      recent_activity: 10,
-      action_items: 20,
-      knowledge_highlights: 35,
-      advisories: 48,
-      publication_feed: 62,
-      product_intel: 64,
-      pre_departure: 85,
-      upcoming_trips: 88,
-    };
-    return v[c.variant] ?? 500;
-  }
   const rank: Partial<Record<WidgetType, number>> = {
     [WidgetType.RecentActivity]: 10,
     [WidgetType.ActionItems]: 20,

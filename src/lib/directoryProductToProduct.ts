@@ -23,8 +23,6 @@ function directoryTypeToCategory(t: DirectoryProductCategory): ProductCategory {
       return "cruise";
     case "transport":
       return "transportation";
-    case "rep_firm":
-      return "rep_firm";
     default:
       return "activity";
   }
@@ -69,12 +67,13 @@ function locationParts(p: DirectoryProduct): { city: string; country: string } {
 export function directoryProductToProduct(p: DirectoryProduct): Product {
   const { city, country } = locationParts(p);
   const rate = p.effectiveCommissionRate ?? p.commissionRate ?? p.baseCommissionRate ?? undefined;
+  const primaryType: DirectoryProductCategory = p.types[0] ?? "experience";
 
   return {
     id: p.id,
     name: p.name,
     description: p.description,
-    category: directoryTypeToCategory(p.type),
+    category: directoryTypeToCategory(primaryType),
     status: "active" as ProductStatus,
     country,
     city,
