@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Zap } from "lucide-react";
+import { useMemo, useState } from "react";
+import Link from "next/link";
+import { MoreHorizontal, Pause, Play, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,6 +11,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -24,7 +31,7 @@ import { IS_PREVIEW_MODE } from "@/config/preview";
 import { useToast } from "@/contexts/ToastContext";
 import { AutomationBuilderModal } from "@/components/itineraries/CompetitorFeatureModals";
 import { cn } from "@/lib/utils";
-import { listCardRowBaseClass } from "@/lib/list-ui";
+import { listSurfaceClass } from "@/lib/list-ui";
 import {
   DASHBOARD_LIST_PAGE_HEADER,
   DASHBOARD_LIST_PAGE_HEADER_ACTIONS,
@@ -43,8 +50,9 @@ type AutomationRecord = {
   enabled: boolean;
   lastRun: string | null;
   runCount: number;
-  /** Shown on list card */
   applied: string;
+  /** Primary follow-up for this automation (prototype deep links). */
+  relatedCta?: { label: string; href: string };
 };
 
 const INITIAL_MOCK: AutomationRecord[] = [
@@ -59,6 +67,7 @@ const INITIAL_MOCK: AutomationRecord[] = [
     lastRun: "12 Mar 2026",
     runCount: 3,
     applied: "12 VICs",
+    relatedCta: { label: "Review upcoming birthdays", href: "/dashboard/vics" },
   },
   {
     id: "auto-002",
@@ -71,6 +80,7 @@ const INITIAL_MOCK: AutomationRecord[] = [
     lastRun: "15 Mar 2026",
     runCount: 1,
     applied: "15 VICs",
+    relatedCta: { label: "View VICs with expiring passports", href: "/dashboard/vics" },
   },
   {
     id: "auto-003",
@@ -83,6 +93,7 @@ const INITIAL_MOCK: AutomationRecord[] = [
     lastRun: null,
     runCount: 0,
     applied: "All confirmed trips",
+    relatedCta: { label: "Open departing trips", href: "/dashboard/itineraries" },
   },
   {
     id: "auto-004",
@@ -95,6 +106,7 @@ const INITIAL_MOCK: AutomationRecord[] = [
     lastRun: "20 Feb 2026",
     runCount: 5,
     applied: "All completed trips",
+    relatedCta: { label: "See completed itineraries", href: "/dashboard/itineraries" },
   },
 ];
 
@@ -157,13 +169,40 @@ function actionSummary(action: string): string {
 }
 
 export default function AutomationsPage() {
-  const showToast = useToast();
+  const toast = useToast();
   const [builderOpen, setBuilderOpen] = useState(false);
   const [automations, setAutomations] = useState<AutomationRecord[]>(INITIAL_MOCK);
   const [editingAutomation, setEditingAutomation] = useState<AutomationRecord | null>(null);
 
+  const stats = useMemo(() => {
+    const active = automations.filter((a) => a.enabled).length;
+    const paused = automations.length - active;
+    const totalRuns = automations.reduce((s, a) => s + a.runCount, 0);
+    const ranThisWeek = automations.filter((a) => a.lastRun != null).length;
+    return { active, paused, totalRuns, ranThisWeek };
+  }, [automations]);
+
   const updateField = <K extends keyof AutomationRecord>(key: K, value: AutomationRecord[K]) => {
     setEditingAutomation((prev) => (prev ? { ...prev, [key]: value } : null));
+  };
+
+  const toggleEnabled = (id: string) => {
+    setAutomations((list) =>
+      list.map((x) => (x.id === id ? { ...x, enabled: !x.enabled } : x)),
+    );
+    toast({
+      title: "Automation updated",
+      description: "Status saved for this workflow.",
+      tone: "success",
+    });
+  };
+
+  const runNow = (name: string) => {
+    toast({
+      title: "Run queued",
+      description: `“${name}” will execute on the next scheduler tick (prototype).`,
+      tone: "default",
+    });
   };
 
   return (
@@ -172,7 +211,7 @@ export default function AutomationsPage() {
         <div className={DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK}>
           <h1 className={DASHBOARD_LIST_PAGE_HEADER_TITLE}>Automations</h1>
           <p className={DASHBOARD_LIST_PAGE_HEADER_SUBTITLE}>
-            {automations.length} workflow{automations.length !== 1 ? "s" : ""} · triggers and actions (preview)
+            Turn insights into repeatable workflows — triggers, actions, and clear next steps
           </p>
         </div>
         <div className={DASHBOARD_LIST_PAGE_HEADER_ACTIONS}>
@@ -185,6 +224,40 @@ export default function AutomationsPage() {
             <Zap size={14} className="shrink-0" />
             Create automation
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 border-input px-2.5 text-xs text-foreground"
+                aria-label="More automation actions"
+              >
+                <MoreHorizontal size={16} className="shrink-0" aria-hidden />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[11rem]">
+              <DropdownMenuItem
+                onClick={() =>
+                  toast({
+                    title: "Run history",
+                    description: "Full execution logs will live here when backend wiring is ready.",
+                  })
+                }
+              >
+                View run history
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  toast({
+                    title: "Templates",
+                    description: "Automation templates are coming in a future iteration.",
+                  })
+                }
+              >
+                Browse templates
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
@@ -195,50 +268,132 @@ export default function AutomationsPage() {
       )}
 
       <div className="min-h-0 flex-1 overflow-auto">
-        <div className="max-w-[920px] space-y-3 px-6 pb-8 pt-6">
-          {automations.map((a) => (
-            <button
-              key={a.id}
-              type="button"
-              onClick={() => setEditingAutomation({ ...a })}
-              className={cn(listCardRowBaseClass, "w-full flex-col items-stretch gap-0 rounded-xl py-4")}
-            >
-              <div className="flex items-start gap-3">
-                <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[rgba(201,169,110,0.22)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
-                  aria-hidden
-                >
-                  <Zap size={18} />
-                </div>
-                <div className="min-w-0 flex-1 text-left">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium text-foreground">{a.name}</span>
-                    <span
-                      className={cn(
-                        "rounded-full border px-2 py-0.5 text-2xs font-medium uppercase tracking-wider",
-                        a.enabled
-                          ? "border-[var(--muted-success-border)] text-[var(--muted-success-text)]"
-                          : "border-border text-muted-foreground"
-                      )}
+        <div className="mx-auto max-w-[960px] space-y-6 px-6 pb-8 pt-6">
+          <div
+            className={cn(
+              listSurfaceClass,
+              "grid grid-cols-2 gap-4 p-4 sm:grid-cols-4 sm:gap-3",
+            )}
+          >
+            <div>
+              <p className="text-2xs font-medium uppercase tracking-wider text-muted-foreground/70">Active</p>
+              <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">{stats.active}</p>
+            </div>
+            <div>
+              <p className="text-2xs font-medium uppercase tracking-wider text-muted-foreground/70">Paused</p>
+              <p className="mt-1 text-2xl font-semibold tabular-nums text-muted-foreground">{stats.paused}</p>
+            </div>
+            <div>
+              <p className="text-2xs font-medium uppercase tracking-wider text-muted-foreground/70">Total runs</p>
+              <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">{stats.totalRuns}</p>
+            </div>
+            <div>
+              <p className="text-2xs font-medium uppercase tracking-wider text-muted-foreground/70">
+                With recent activity
+              </p>
+              <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">{stats.ranThisWeek}</p>
+            </div>
+          </div>
+
+          <p className="text-sm text-muted-foreground">
+            Each workflow has a <span className="font-medium text-foreground/90">suggested next step</span> tied to
+            VICs or itineraries so you are never stuck on “what now?”.
+          </p>
+
+          <ul className="space-y-3">
+            {automations.map((a) => (
+              <li
+                key={a.id}
+                className={cn(
+                  "rounded-xl border border-border bg-card/40 p-4 shadow-sm",
+                  !a.enabled && "opacity-90",
+                )}
+              >
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex min-w-0 flex-1 gap-3">
+                    <div
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[rgba(201,169,110,0.22)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
+                      aria-hidden
                     >
-                      {a.enabled ? "Active" : "Paused"}
-                    </span>
+                      <Zap size={18} />
+                    </div>
+                    <div className="min-w-0 text-left">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium text-foreground">{a.name}</span>
+                        <span
+                          className={cn(
+                            "rounded-full border px-2 py-0.5 text-2xs font-medium uppercase tracking-wider",
+                            a.enabled
+                              ? "border-[var(--muted-success-border)] text-[var(--muted-success-text)]"
+                              : "border-border text-muted-foreground",
+                          )}
+                        >
+                          {a.enabled ? "Active" : "Paused"}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-muted-foreground/90">
+                        <span className="text-muted-foreground">When:</span>{" "}
+                        {triggerSummary(a.trigger, a.triggerValue)}
+                      </p>
+                      <p className="text-sm text-muted-foreground/90">
+                        <span className="text-muted-foreground">Then:</span> {actionSummary(a.action)}
+                      </p>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Applies to {a.applied} · Last run: {a.lastRun ?? "—"} · {a.runCount} run
+                        {a.runCount !== 1 ? "s" : ""}
+                      </p>
+                      {a.relatedCta ? (
+                        <Button variant="link" size="sm" className="mt-2 h-auto p-0 text-xs font-medium" asChild>
+                          <Link href={a.relatedCta.href}>{a.relatedCta.label}</Link>
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
-                  <p className="mt-1 text-sm text-muted-foreground/90">
-                    <span className="text-muted-foreground">Trigger:</span>{" "}
-                    {triggerSummary(a.trigger, a.triggerValue)}
-                  </p>
-                  <p className="text-sm text-muted-foreground/90">
-                    <span className="text-muted-foreground">Action:</span> {actionSummary(a.action)}
-                  </p>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Applied to: {a.applied} · Last triggered: {a.lastRun ?? "—"} · {a.runCount} run
-                    {a.runCount !== 1 ? "s" : ""}
-                  </p>
+
+                  <div className="flex shrink-0 flex-wrap gap-2 sm:flex-col sm:items-stretch">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 border-input text-xs"
+                      onClick={() => setEditingAutomation({ ...a })}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="h-8 text-xs"
+                      disabled={!a.enabled}
+                      onClick={() => runNow(a.name)}
+                    >
+                      Run now
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-xs text-muted-foreground"
+                      onClick={() => toggleEnabled(a.id)}
+                    >
+                      {a.enabled ? (
+                        <>
+                          <Pause size={14} className="mr-1 shrink-0" aria-hidden />
+                          Pause
+                        </>
+                      ) : (
+                        <>
+                          <Play size={14} className="mr-1 shrink-0" aria-hidden />
+                          Resume
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </button>
-          ))}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 
@@ -246,7 +401,7 @@ export default function AutomationsPage() {
         open={builderOpen}
         onClose={() => setBuilderOpen(false)}
         onSaveDraft={() => {
-          showToast("Save Draft — coming soon");
+          toast("Save Draft — coming soon");
           setBuilderOpen(false);
         }}
       />
@@ -278,7 +433,7 @@ export default function AutomationsPage() {
                       onClick={() => updateField("enabled", !editingAutomation.enabled)}
                       className={cn(
                         "relative h-4 w-8 shrink-0 rounded-full transition-colors",
-                        editingAutomation.enabled ? "bg-[var(--muted-success-bg)]" : "bg-white/[0.08]"
+                        editingAutomation.enabled ? "bg-[var(--muted-success-bg)]" : "bg-white/[0.08]",
                       )}
                     >
                       <span
@@ -286,7 +441,7 @@ export default function AutomationsPage() {
                           "absolute top-0.5 h-3 w-3 rounded-full transition-all",
                           editingAutomation.enabled
                             ? "left-[18px] bg-[var(--color-success)]"
-                            : "left-0.5 bg-muted-foreground/45"
+                            : "left-0.5 bg-muted-foreground/45",
                         )}
                       />
                     </button>
@@ -325,7 +480,9 @@ export default function AutomationsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">Conditions</span>
+                  <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Conditions
+                  </span>
                   <div className="rounded-lg border border-border bg-inset px-3 py-2.5">
                     <p className="text-xs text-muted-foreground/90">
                       {editingAutomation.conditionDescription || "No conditions — applies to all"}
@@ -369,7 +526,7 @@ export default function AutomationsPage() {
                     if (!confirm("Delete this automation?")) return;
                     const id = editingAutomation.id;
                     setAutomations((list) => list.filter((x) => x.id !== id));
-                    showToast("Automation deleted");
+                    toast({ title: "Automation deleted", tone: "default" });
                     setEditingAutomation(null);
                   }}
                 >
@@ -385,7 +542,7 @@ export default function AutomationsPage() {
                     onClick={() => {
                       const next = editingAutomation;
                       setAutomations((list) => list.map((x) => (x.id === next.id ? { ...next } : x)));
-                      showToast("Automation updated");
+                      toast({ title: "Automation updated", description: "Changes saved.", tone: "success" });
                       setEditingAutomation(null);
                     }}
                   >

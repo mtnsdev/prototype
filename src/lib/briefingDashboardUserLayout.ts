@@ -187,3 +187,96 @@ export function saveUserDashboardLayoutToStorage(
         /* quota / private mode */
     }
 }
+
+// --- Named briefing views (multiple saved widget layouts) ---
+
+export const BRIEFING_USER_VIEWS_STORAGE_KEY = "briefing_user_dashboard_views_v1";
+
+export type BriefingViewRecord = {
+    name: string;
+    layout: Record<BriefingUserGridWidgetId, UserDashboardWidgetLayout>;
+};
+
+export type BriefingViewsState = {
+    activeViewId: string;
+    views: Record<string, BriefingViewRecord>;
+};
+
+export function newBriefingViewId(): string {
+    return `v_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+export function defaultBriefingViewsState(): BriefingViewsState {
+    const id = "default";
+    return {
+        activeViewId: id,
+        views: {
+            [id]: { name: "Default", layout: defaultUserDashboardLayout() },
+        },
+    };
+}
+
+function isBriefingViewRecordShape(v: unknown): v is { name: string; layout: unknown } {
+    if (!v || typeof v !== "object") return false;
+    const o = v as Record<string, unknown>;
+    return typeof o.name === "string" && o.layout !== null && typeof o.layout === "object";
+}
+
+export function parseBriefingViewsJson(raw: string | null): BriefingViewsState {
+    if (!raw) return defaultBriefingViewsState();
+    try {
+        const j = JSON.parse(raw) as Record<string, unknown>;
+        const activeViewId = typeof j.activeViewId === "string" ? j.activeViewId : "";
+        const viewsRaw = j.views;
+        if (!viewsRaw || typeof viewsRaw !== "object") return defaultBriefingViewsState();
+
+        const views: Record<string, BriefingViewRecord> = {};
+        for (const [vid, rec] of Object.entries(viewsRaw)) {
+            if (!isBriefingViewRecordShape(rec)) continue;
+            let layout: Record<BriefingUserGridWidgetId, UserDashboardWidgetLayout>;
+            try {
+                layout = parseUserDashboardLayoutJson(JSON.stringify(rec.layout));
+            } catch {
+                layout = defaultUserDashboardLayout();
+            }
+            views[vid] = {
+                name: rec.name.trim() || "Untitled",
+                layout,
+            };
+        }
+
+        if (Object.keys(views).length === 0) return defaultBriefingViewsState();
+        const active = views[activeViewId] ? activeViewId : Object.keys(views)[0];
+        return { activeViewId: active, views };
+    } catch {
+        return defaultBriefingViewsState();
+    }
+}
+
+export function saveBriefingViewsToStorage(state: BriefingViewsState): void {
+    try {
+        localStorage.setItem(BRIEFING_USER_VIEWS_STORAGE_KEY, JSON.stringify(state));
+    } catch {
+        /* quota / private mode */
+    }
+}
+
+/** Load named views, or migrate from legacy single-layout storage. */
+export function loadBriefingViewsFromStorage(): BriefingViewsState {
+    if (typeof window === "undefined") return defaultBriefingViewsState();
+
+    const rawViews = localStorage.getItem(BRIEFING_USER_VIEWS_STORAGE_KEY);
+    if (rawViews) {
+        return parseBriefingViewsJson(rawViews);
+    }
+
+    const legacyLayout = loadUserDashboardLayoutFromStorage();
+    const state: BriefingViewsState = {
+        activeViewId: "default",
+        views: {
+            default: { name: "Default", layout: legacyLayout },
+        },
+    };
+    saveBriefingViewsToStorage(state);
+    return state;
+}

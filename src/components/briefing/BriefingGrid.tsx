@@ -6,14 +6,19 @@ import {
     KeyboardSensor,
     PointerSensor,
     closestCorners,
-    useDroppable,
     useSensor,
     useSensors,
 } from "@dnd-kit/core";
-import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+    SortableContext,
+    arrayMove,
+    rectSortingStrategy,
+    sortableKeyboardCoordinates,
+    useSortable,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { EyeOff, GripVertical } from "lucide-react";
-import { cloneElement, isValidElement, type ReactElement, type ReactNode } from "react";
+import { cloneElement, isValidElement, useMemo, type ReactElement, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import type { BriefingWidget } from "@/types/briefing";
 import type { WidgetCardDensity } from "./AppleWidgetCard";
@@ -30,12 +35,35 @@ import {
     type UserDashboardWidgetLayout,
 } from "@/lib/briefingDashboardUserLayout";
 
-const DROP_LEFT = "briefing-drop-left";
-const DROP_RIGHT = "briefing-drop-right";
-const SORT_LEFT = "briefing-sort-left";
-const SORT_RIGHT = "briefing-sort-right";
+const SORT_GRID = "briefing-sort-grid";
 
 const CARD_DENSITY: WidgetCardDensity = "default";
+
+/** Row-major 2-column order: (L0,R0), (L1,R1), … */
+export function interleaveBriefingColumns(
+    leftIds: BriefingUserGridWidgetId[],
+    rightIds: BriefingUserGridWidgetId[],
+): BriefingUserGridWidgetId[] {
+    const out: BriefingUserGridWidgetId[] = [];
+    const n = Math.max(leftIds.length, rightIds.length);
+    for (let i = 0; i < n; i++) {
+        if (leftIds[i]) out.push(leftIds[i]);
+        if (rightIds[i]) out.push(rightIds[i]);
+    }
+    return out;
+}
+
+export function splitInterleavedBriefingColumns(
+    flat: BriefingUserGridWidgetId[],
+): { left: BriefingUserGridWidgetId[]; right: BriefingUserGridWidgetId[] } {
+    const left: BriefingUserGridWidgetId[] = [];
+    const right: BriefingUserGridWidgetId[] = [];
+    flat.forEach((id, idx) => {
+        if (idx % 2 === 0) left.push(id);
+        else right.push(id);
+    });
+    return { left, right };
+}
 
 type Props = {
     widgets: BriefingWidget[];
@@ -137,15 +165,12 @@ function hideButtonOnly(
     );
 }
 
-function injectLayoutMenu(
-    child: ReactElement | null,
-    layoutMenu: ReactNode,
-): ReactNode {
+function injectLayoutMenu(child: ReactElement | null, layoutMenu: ReactNode): ReactNode {
     if (!child || !isValidElement(child)) return child;
     return cloneElement(child as ReactElement<{ layoutMenu?: ReactNode }>, { layoutMenu });
 }
 
-function BriefingGridSortableRow({
+function BriefingGridSortableCell({
     id,
     layoutLoading,
     onHide,
@@ -193,113 +218,21 @@ function BriefingGridSortableRow({
     );
 
     return (
-        <div ref={setNodeRef} style={style} className={cn(isDragging && "z-10 opacity-[0.92]")}>
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={cn(
+                "min-h-[272px] h-full",
+                isDragging && "z-10 opacity-[0.92]",
+            )}
+        >
             {injectLayoutMenu(children, headerActions)}
         </div>
     );
 }
 
-function BriefingGridColumnEdit({
-    dropId,
-    sortableId,
-    ids,
-    layoutLoading,
-    updateWidget,
-    isAdmin,
-    byId,
-    colLabel,
-}: {
-    dropId: string;
-    sortableId: string;
-    ids: BriefingUserGridWidgetId[];
-    layoutLoading: boolean;
-    updateWidget: Props["updateWidget"];
-    isAdmin: boolean;
-    byId: Map<string, BriefingWidget>;
-    colLabel: "Left" | "Right";
-}) {
-    const { setNodeRef, isOver } = useDroppable({ id: dropId });
-
-    return (
-        <div
-            ref={setNodeRef}
-            className={cn(
-                "flex min-h-[100px] flex-col gap-6 rounded-2xl transition-colors",
-                isOver && "bg-muted/20 ring-1 ring-border/80",
-            )}
-            data-briefing-column={colLabel.toLowerCase()}
-        >
-            <SortableContext id={sortableId} items={ids} strategy={verticalListSortingStrategy}>
-                {ids.map((wid, i) => {
-                    const w = byId.get(wid);
-                    if (!w) return null;
-                    const core = renderWidgetCore(wid, w, i, isAdmin);
-                    if (!core) return null;
-                    return (
-                        <BriefingGridSortableRow
-                            key={wid}
-                            id={wid}
-                            layoutLoading={layoutLoading}
-                            onHide={() => updateWidget(wid, { visible: false })}
-                        >
-                            {core}
-                        </BriefingGridSortableRow>
-                    );
-                })}
-            </SortableContext>
-            {ids.length === 0 ? (
-                <p className="rounded-2xl border border-dashed border-border/80 px-4 py-8 text-center text-sm text-muted-foreground">
-                    Drop widgets here ({colLabel.toLowerCase()} column)
-                </p>
-            ) : null}
-        </div>
-    );
-}
-
-function BriefingGridColumnStatic({
-    ids,
-    layoutLoading,
-    updateWidget,
-    isAdmin,
-    byId,
-}: {
-    ids: BriefingUserGridWidgetId[];
-    layoutLoading: boolean;
-    updateWidget: Props["updateWidget"];
-    isAdmin: boolean;
-    byId: Map<string, BriefingWidget>;
-}) {
-    return (
-        <div className="flex flex-col gap-6">
-            {ids.map((wid, i) => {
-                const w = byId.get(wid);
-                if (!w) return null;
-                const core = renderWidgetCore(wid, w, i, isAdmin);
-                if (!core) return null;
-                return (
-                    <div key={wid}>
-                        {injectLayoutMenu(
-                            core,
-                            hideButtonOnly(wid, layoutLoading, () => updateWidget(wid, { visible: false })),
-                        )}
-                    </div>
-                );
-            })}
-        </div>
-    );
-}
-
-function containerForId(
-    id: string,
-    leftIds: BriefingUserGridWidgetId[],
-    rightIds: BriefingUserGridWidgetId[],
-): "left" | "right" | undefined {
-    if (id === DROP_LEFT) return "left";
-    if (id === DROP_RIGHT) return "right";
-    if (leftIds.includes(id as BriefingUserGridWidgetId)) return "left";
-    if (rightIds.includes(id as BriefingUserGridWidgetId)) return "right";
-    return undefined;
-}
+const gridClass =
+    "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 sm:grid-flow-dense auto-rows-fr";
 
 export default function BriefingGrid({
     widgets,
@@ -315,6 +248,11 @@ export default function BriefingGrid({
     const leftIds = sortIdsForColumn([...BRIEFING_USER_GRID_WIDGET_IDS], "left", userLayout, byId);
     const rightIds = sortIdsForColumn([...BRIEFING_USER_GRID_WIDGET_IDS], "right", userLayout, byId);
 
+    const flatIds = useMemo(
+        () => interleaveBriefingColumns(leftIds, rightIds),
+        [leftIds, rightIds],
+    );
+
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 10 } }),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -322,103 +260,63 @@ export default function BriefingGrid({
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
-        if (!over) return;
-
+        if (!over || active.id === over.id) return;
         const activeId = String(active.id) as BriefingUserGridWidgetId;
-        if (!BRIEFING_USER_GRID_WIDGET_IDS.includes(activeId)) return;
-
-        const overId = String(over.id);
-
-        const activeContainer = containerForId(activeId, leftIds, rightIds);
-        const overContainer = containerForId(overId, leftIds, rightIds);
-        if (!activeContainer || !overContainer) return;
-
-        let nextLeft = [...leftIds];
-        let nextRight = [...rightIds];
-
-        const getList = (c: "left" | "right") => (c === "left" ? nextLeft : nextRight);
-        const setList = (c: "left" | "right", list: BriefingUserGridWidgetId[]) => {
-            if (c === "left") nextLeft = list;
-            else nextRight = list;
-        };
-
-        if (activeContainer === overContainer) {
-            const list = getList(activeContainer);
-            if (!BRIEFING_USER_GRID_WIDGET_IDS.includes(overId as BriefingUserGridWidgetId)) return;
-            const oldIndex = list.indexOf(activeId);
-            const newIndex = list.indexOf(overId as BriefingUserGridWidgetId);
-            if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
-            setList(activeContainer, arrayMove(list, oldIndex, newIndex));
-        } else {
-            const sourceList = [...getList(activeContainer)];
-            const destList = [...getList(overContainer)];
-            const si = sourceList.indexOf(activeId);
-            if (si === -1) return;
-            sourceList.splice(si, 1);
-
-            let insertIndex: number;
-            if (overId === DROP_LEFT || overId === DROP_RIGHT) {
-                insertIndex = destList.length;
-            } else if (BRIEFING_USER_GRID_WIDGET_IDS.includes(overId as BriefingUserGridWidgetId)) {
-                insertIndex = destList.indexOf(overId as BriefingUserGridWidgetId);
-                if (insertIndex === -1) insertIndex = destList.length;
-            } else {
-                return;
-            }
-
-            destList.splice(insertIndex, 0, activeId);
-            setList(activeContainer, sourceList);
-            setList(overContainer, destList);
+        const overId = String(over.id) as BriefingUserGridWidgetId;
+        if (!BRIEFING_USER_GRID_WIDGET_IDS.includes(activeId) || !BRIEFING_USER_GRID_WIDGET_IDS.includes(overId)) {
+            return;
         }
-
-        reorderWidgets(nextLeft, nextRight);
+        const oldIndex = flatIds.indexOf(activeId);
+        const newIndex = flatIds.indexOf(overId);
+        if (oldIndex === -1 || newIndex === -1) return;
+        const nextFlat = arrayMove(flatIds, oldIndex, newIndex);
+        const { left, right } = splitInterleavedBriefingColumns(nextFlat);
+        reorderWidgets(left, right);
     };
 
     if (!editLayout) {
         return (
-            <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
-                <BriefingGridColumnStatic
-                    ids={leftIds}
-                    layoutLoading={layoutLoading}
-                    updateWidget={updateWidget}
-                    isAdmin={isAdmin}
-                    byId={byId}
-                />
-                <BriefingGridColumnStatic
-                    ids={rightIds}
-                    layoutLoading={layoutLoading}
-                    updateWidget={updateWidget}
-                    isAdmin={isAdmin}
-                    byId={byId}
-                />
+            <div className={gridClass} data-briefing-widget-grid>
+                {flatIds.map((wid, i) => {
+                    const w = byId.get(wid);
+                    if (!w) return null;
+                    const core = renderWidgetCore(wid, w, i, isAdmin);
+                    if (!core) return null;
+                    return (
+                        <div key={wid} className="min-h-[272px] h-full">
+                            {injectLayoutMenu(
+                                core,
+                                hideButtonOnly(wid, layoutLoading, () => updateWidget(wid, { visible: false })),
+                            )}
+                        </div>
+                    );
+                })}
             </div>
         );
     }
 
     return (
         <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
-            <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
-                <BriefingGridColumnEdit
-                    dropId={DROP_LEFT}
-                    sortableId={SORT_LEFT}
-                    ids={leftIds}
-                    layoutLoading={layoutLoading}
-                    updateWidget={updateWidget}
-                    isAdmin={isAdmin}
-                    byId={byId}
-                    colLabel="Left"
-                />
-                <BriefingGridColumnEdit
-                    dropId={DROP_RIGHT}
-                    sortableId={SORT_RIGHT}
-                    ids={rightIds}
-                    layoutLoading={layoutLoading}
-                    updateWidget={updateWidget}
-                    isAdmin={isAdmin}
-                    byId={byId}
-                    colLabel="Right"
-                />
-            </div>
+            <SortableContext id={SORT_GRID} items={flatIds} strategy={rectSortingStrategy}>
+                <div className={gridClass} data-briefing-widget-grid>
+                    {flatIds.map((wid, i) => {
+                        const w = byId.get(wid);
+                        if (!w) return null;
+                        const core = renderWidgetCore(wid, w, i, isAdmin);
+                        if (!core) return null;
+                        return (
+                            <BriefingGridSortableCell
+                                key={wid}
+                                id={wid}
+                                layoutLoading={layoutLoading}
+                                onHide={() => updateWidget(wid, { visible: false })}
+                            >
+                                {core}
+                            </BriefingGridSortableCell>
+                        );
+                    })}
+                </div>
+            </SortableContext>
         </DndContext>
     );
 }

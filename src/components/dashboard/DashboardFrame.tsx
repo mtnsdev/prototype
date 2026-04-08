@@ -3,7 +3,9 @@
 import { Suspense, useState } from "react";
 import { Menu } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { ChatProvider, useChatContextOptional } from "@/contexts/ChatContext";
+import ClaireDock from "@/components/dashboard/ClaireDock";
+import CommandPalette from "@/components/dashboard/CommandPalette";
+import { ChatProvider } from "@/contexts/ChatContext";
 import { UserProvider } from "@/contexts/UserContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { KnowledgeVaultEmailProvider } from "@/contexts/KnowledgeVaultEmailContext";
@@ -27,15 +29,10 @@ function SidebarFallback() {
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const chatContext = useChatContextOptional();
 
   const sidebarProps = {
     collapsed: sidebarCollapsed,
     onToggle: () => setSidebarCollapsed((v) => !v),
-    selectedConversationId: chatContext?.selectedConversationId,
-    onSelectConversation: chatContext?.setSelectedConversationId,
-    onOpenHistory: chatContext?.openHistory,
-    refreshTrigger: chatContext?.refreshTrigger,
   };
 
   return (
@@ -92,6 +89,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         <div className="md:hidden">
           <ReportIssueLauncher />
         </div>
+
+        <ClaireDock />
+        <CommandPalette />
       </div>
     </div>
   );

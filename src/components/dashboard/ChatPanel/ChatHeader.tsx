@@ -7,21 +7,28 @@ type ChatHeaderProps = {
   sessionTitle: string;
   firstMessagePreview: string | null;
   onBackToHome?: () => void;
+  assistantName?: string;
+  assistantSubtitle?: string;
 };
 
 /** Matches sidebar header: `px-3 py-3` so the bar aligns with TravelLustre / Enable VIC row */
 const headerBarClass =
   "shrink-0 border-b border-border px-3 py-3";
 
-export function ChatHeader({ isEmptyState, sessionTitle, firstMessagePreview, onBackToHome }: ChatHeaderProps) {
+export function ChatHeader({
+  isEmptyState,
+  sessionTitle,
+  firstMessagePreview,
+  onBackToHome,
+  assistantName = "Claire",
+  assistantSubtitle = "Enable VICs AI",
+}: ChatHeaderProps) {
   if (isEmptyState) {
     return (
       <div className={headerBarClass}>
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold leading-none text-foreground">Chat</h2>
-          <p className="mt-1 text-xs leading-snug text-muted-foreground/75">
-            Ask questions about your documents
-          </p>
+          <h2 className="text-sm font-semibold leading-none text-foreground">{assistantName}</h2>
+          <p className="mt-1 text-xs leading-snug text-muted-foreground/75">{assistantSubtitle}</p>
         </div>
       </div>
     );

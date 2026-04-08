@@ -14,6 +14,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -545,12 +551,26 @@ export default function ProductToolbar({
           )}
 
           {!isEnableTab && onAddProduct != null ? (
-            <Button type="button" variant="toolbarAccent" size="sm" onClick={onAddProduct}>
-              <Plus className="h-3.5 w-3.5" />
-              Add product
-            </Button>
-          ) : null}
-          {!isEnableTab ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="toolbarAccent" size="sm" className="gap-1">
+                  <Plus className="h-3.5 w-3.5" />
+                  Add
+                  <ChevronDown className="h-3.5 w-3.5 opacity-70" aria-hidden />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[10rem]">
+                <DropdownMenuItem onClick={onAddProduct} className="gap-2">
+                  <Plus className="h-3.5 w-3.5" aria-hidden />
+                  New product
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onImportCSV} className="gap-2">
+                  <Upload className="h-3.5 w-3.5" aria-hidden />
+                  Import CSV
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : !isEnableTab ? (
             <Button variant="outline" size="sm" onClick={onImportCSV} className={outlineToolbarBtnClass}>
               <Upload className="h-3.5 w-3.5" />
               Import CSV

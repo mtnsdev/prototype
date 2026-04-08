@@ -330,14 +330,6 @@ function BriefingAgencyUserViewWidgets({
 
   return (
     <section className="mb-8 space-y-5" aria-label="Agency briefing">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground/55">Agency briefing</p>
-        <p className="text-sm text-muted-foreground/75 mt-1 max-w-2xl">
-          Updates from your agency. Use the sliders on each block to show or hide it, move it left or right, and
-          change size—only for you. Staff still edit what’s published (Admin view in the user menu).
-        </p>
-      </div>
-
       {hiddenHubCount > 0 ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card/60 px-4 py-3">
           <p className="text-sm text-muted-foreground">

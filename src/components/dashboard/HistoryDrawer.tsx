@@ -6,58 +6,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Conversation } from "./Sidebar";
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
+import { groupConversationsByDate } from "@/components/dashboard/claireConversationsUtils";
 
 type Props = {
     isOpen: boolean;
     onClose: () => void;
     onSelectConversation: (id: number) => void;
     selectedConversationId?: number | null;
+    /** Stack above persistent Claire dock (higher z-index). */
+    stackClassNames?: { backdrop?: string; panel?: string };
 };
-
-type GroupedConversations = {
-    today: Conversation[];
-    yesterday: Conversation[];
-    lastWeek: Conversation[];
-    older: Conversation[];
-};
-
-function groupConversationsByDate(conversations: Conversation[]): GroupedConversations {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const lastWeek = new Date(today);
-    lastWeek.setDate(lastWeek.getDate() - 7);
-
-    const groups: GroupedConversations = {
-        today: [],
-        yesterday: [],
-        lastWeek: [],
-        older: [],
-    };
-
-    conversations.forEach((conv) => {
-        const convDate = new Date(conv.updated_at);
-
-        if (convDate >= today) {
-            groups.today.push(conv);
-        } else if (convDate >= yesterday) {
-            groups.yesterday.push(conv);
-        } else if (convDate >= lastWeek) {
-            groups.lastWeek.push(conv);
-        } else {
-            groups.older.push(conv);
-        }
-    });
-
-    return groups;
-}
 
 export default function HistoryDrawer({
     isOpen,
     onClose,
     onSelectConversation,
     selectedConversationId,
+    stackClassNames,
 }: Props) {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
@@ -150,12 +115,20 @@ export default function HistoryDrawer({
         <>
             {/* Backdrop */}
             <div
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-200"
+                className={[
+                    "fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-200",
+                    stackClassNames?.backdrop ?? "z-40",
+                ].join(" ")}
                 onClick={onClose}
             />
 
             {/* Drawer */}
-            <div className="fixed right-0 top-0 h-full w-[400px] max-w-full bg-background border-l border-border z-50 flex flex-col shadow-2xl">
+            <div
+                className={[
+                    "fixed right-0 top-0 h-full w-[400px] max-w-full bg-background border-l border-border flex flex-col shadow-2xl",
+                    stackClassNames?.panel ?? "z-50",
+                ].join(" ")}
+            >
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-border">
                     <div className="flex items-center gap-3">
@@ -163,7 +136,7 @@ export default function HistoryDrawer({
                             <Clock size={18} className="text-muted-foreground" />
                         </div>
                         <div>
-                            <h2 className="text-base font-semibold text-foreground">Chat History</h2>
+                            <h2 className="text-base font-semibold text-foreground">Conversations</h2>
                             <p className="text-xs text-muted-foreground/75">
                                 {conversations.length} conversation{conversations.length !== 1 ? "s" : ""}
                             </p>
@@ -274,7 +247,7 @@ export default function HistoryDrawer({
     );
 }
 
-function ConversationGroup({
+export function ConversationGroup({
     title,
     conversations,
     selectedId,

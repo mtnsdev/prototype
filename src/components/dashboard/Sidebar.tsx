@@ -10,8 +10,6 @@ import {
     PanelLeftOpen,
     Settings,
     LogOut,
-    Plus,
-    History,
     User,
     Users,
     Building2,
@@ -47,10 +45,6 @@ type Props = {
     layout?: "rail" | "drawer";
     /** Close mobile drawer after navigation */
     onRequestClose?: () => void;
-    selectedConversationId?: number | null;
-    onSelectConversation?: (id: number | null) => void;
-    onOpenHistory?: () => void;
-    refreshTrigger?: number;
 };
 
 export default function Sidebar({
@@ -58,53 +52,18 @@ export default function Sidebar({
     onToggle,
     layout = "rail",
     onRequestClose,
-    selectedConversationId,
-    onSelectConversation,
-    onOpenHistory,
-    refreshTrigger,
 }: Props) {
     const pathname = usePathname();
     const router = useRouter();
     const userContext = useUserOptional();
-    const [recentConversations, setRecentConversations] = useState<Conversation[]>([]);
     const notificationPanel = useNotificationPanelOptional();
     const [notificationCountHydrated, setNotificationCountHydrated] = useState(false);
     useEffect(() => setNotificationCountHydrated(true), []);
     const unreadNotifications =
         notificationCountHydrated && notificationPanel ? notificationPanel.unreadCount : 0;
-    const isOnChatPage = pathname.startsWith("/dashboard/chat");
     const isDrawer = layout === "drawer";
     const showLabels = !collapsed || isDrawer;
     const navClose = isDrawer ? onRequestClose : undefined;
-
-
-    useEffect(() => {
-        if (!isOnChatPage) return;
-        const token = localStorage.getItem("auth_token");
-        if (!token) return;
-
-        let cancelled = false;
-        fetch(`/api/chat/sessions`, {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => (res.ok ? res.json() : null))
-            .then((data) => {
-                if (cancelled || !data) return;
-                const conversations = data.slice(0, 5).map((session: { id: number; title?: string; created_at: string; updated_at: string }) => ({
-                    id: session.id,
-                    title: session.title || `Chat ${session.id}`,
-                    created_at: session.created_at,
-                    updated_at: session.updated_at,
-                }));
-                setRecentConversations(conversations);
-            })
-            .catch((err) => {
-                if (!cancelled) console.error("Failed to fetch sessions:", err);
-            });
-        return () => {
-            cancelled = true;
-        };
-    }, [isOnChatPage, refreshTrigger]);
 
     const handleSignOut = () => {
         // Local-only logout - clear user data and token
@@ -116,14 +75,6 @@ export default function Sidebar({
             document.cookie = "auth_token=; Path=/; Max-Age=0; SameSite=Lax";
         }
         router.push("/login");
-    };
-
-    const handleNewChat = () => {
-        if (!pathname.startsWith("/dashboard/chat")) {
-            router.push("/dashboard/chat");
-        }
-        onSelectConversation?.(null);
-        onRequestClose?.();
     };
 
     return (
@@ -217,66 +168,8 @@ export default function Sidebar({
                     )}
                 </div>
 
-                {/* New Chat — always visible so user can start a chat from any page */}
-                <div className="border-b border-border p-2.5">
-                    <Button
-                        variant="cta"
-                        onClick={handleNewChat}
-                        className={cn(
-                            "group w-full gap-2.5 rounded-lg font-medium",
-                            !showLabels ? "justify-center px-0" : ""
-                        )}
-                        aria-label={showLabels ? undefined : "New chat"}
-                    >
-                        <Plus size={16} className="opacity-90" aria-hidden />
-                        {showLabels && <span className="text-sm">New Chat</span>}
-                    </Button>
-                </div>
-
-                {/* Recent Conversations (only on chat page) */}
-                {isOnChatPage && showLabels && recentConversations.length > 0 && (
-                    <div className="p-2.5 border-b border-border flex-shrink-0">
-                        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground/55 px-2 mb-2">Recent</p>
-                        <div className="space-y-0.5">
-                            {recentConversations.map((conv) => (
-                                <Button
-                                    key={conv.id}
-                                    variant="ghost"
-                                    onClick={() => {
-                                        onSelectConversation?.(conv.id);
-                                        navClose?.();
-                                    }}
-                                    className={`w-full justify-start px-3 py-2 rounded-md text-compact truncate font-normal h-auto ${selectedConversationId === conv.id ? "bg-white/10 text-foreground" : "text-muted-foreground hover:bg-white/6 hover:text-foreground"}`}
-                                    title={conv.title}
-                                >
-                                    {conv.title}
-                                </Button>
-                            ))}
-                        </div>
-                        <Button
-                            variant="ghost"
-                            onClick={() => {
-                                onOpenHistory?.();
-                                navClose?.();
-                            }}
-                            className="w-full justify-start gap-2 px-3 py-2 mt-2 rounded-md text-compact font-normal h-auto text-muted-foreground/75 hover:text-muted-foreground hover:bg-white/5"
-                        >
-                            <History size={14} />
-                            <span>View all history</span>
-                        </Button>
-                    </div>
-                )}
-
-                {/* Nav */}
+                {/* Nav — daily workflow order */}
                 <nav className="p-2.5 space-y-1 flex-1 overflow-y-auto" aria-label="Main">
-                    <NavLink
-                        href="/dashboard/chat"
-                        collapsed={!showLabels}
-                        onNavigate={navClose}
-                        icon={<MessageSquare size={18} />}
-                        label="Chat"
-                        active={pathname.startsWith("/dashboard/chat")}
-                    />
                     <NavLink
                         href="/dashboard"
                         collapsed={!showLabels}
@@ -284,18 +177,6 @@ export default function Sidebar({
                         icon={<LayoutDashboard size={18} />}
                         label="Briefing Room"
                         active={pathname === "/dashboard"}
-                        navTag={IS_PREVIEW_MODE ? "sample" : undefined}
-                    />
-                    <NavLink
-                        href="/dashboard/knowledge-vault"
-                        collapsed={!showLabels}
-                        onNavigate={navClose}
-                        icon={<BookOpen size={18} />}
-                        label="Knowledge"
-                        active={
-                            pathname.startsWith("/dashboard/knowledge-vault") ||
-                            pathname.startsWith("/dashboard/knowledge")
-                        }
                         navTag={IS_PREVIEW_MODE ? "sample" : undefined}
                     />
                     <NavLink
@@ -344,6 +225,30 @@ export default function Sidebar({
                         label="Automations"
                         active={pathname.startsWith("/dashboard/automations")}
                         navTag={IS_PREVIEW_MODE ? "sample" : undefined}
+                    />
+
+                    <NavLink
+                        href="/dashboard/knowledge-vault"
+                        collapsed={!showLabels}
+                        onNavigate={navClose}
+                        icon={<BookOpen size={18} />}
+                        label="Knowledge"
+                        active={
+                            pathname.startsWith("/dashboard/knowledge-vault") ||
+                            pathname.startsWith("/dashboard/knowledge")
+                        }
+                        navTag={IS_PREVIEW_MODE ? "sample" : undefined}
+                    />
+
+                    <NavLink
+                        href="/dashboard/chat"
+                        collapsed={!showLabels}
+                        onNavigate={navClose}
+                        icon={<MessageSquare size={18} />}
+                        label="Claire"
+                        subLabel="Enable VICs AI"
+                        title={!showLabels ? "Claire — Enable VICs AI" : undefined}
+                        active={pathname.startsWith("/dashboard/chat")}
                     />
 
                     {/* <NavLink
@@ -501,6 +406,8 @@ function NavLink({
     navTag,
     notificationPill,
     unreadAlertCount,
+    title,
+    subLabel,
 }: {
     href: string;
     collapsed: boolean;
@@ -509,6 +416,10 @@ function NavLink({
     label: string;
     active?: boolean;
     badge?: string;
+    /** Native title tooltip (e.g. expanded subtitle when rail is collapsed). */
+    title?: string;
+    /** Second line when the rail is expanded (e.g. product tagline). */
+    subLabel?: string;
     /** Shown when IS_PREVIEW_MODE; "sample" = Sample data, "construction" = Under construction */
     navTag?: "sample" | "construction" | "coming_soon";
     /** Unprocessed email ingestion count (Knowledge Vault) */
@@ -525,6 +436,7 @@ function NavLink({
             href={href}
             onClick={() => onNavigate?.()}
             aria-label={linkAriaLabel}
+            title={title}
             className={[
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-compact",
                 "transition-all duration-150 ease-out",
@@ -551,7 +463,14 @@ function NavLink({
             </span>
             {!collapsed && (
                 <>
-                    <span className="truncate flex-1 min-w-0">{label}</span>
+                    <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5 text-left">
+                        <span className="truncate w-full">{label}</span>
+                        {subLabel ? (
+                            <span className="w-full truncate text-2xs font-normal text-muted-foreground/65 leading-tight">
+                                {subLabel}
+                            </span>
+                        ) : null}
+                    </span>
                     {showUnread ? (
                         <span
                             className="shrink-0 ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border border-[var(--muted-error-border)] bg-[var(--muted-error-bg)] px-1.5 text-2xs font-semibold text-[var(--muted-error-text)] tabular-nums"

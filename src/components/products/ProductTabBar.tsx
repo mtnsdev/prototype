@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Product directory tabs = mutually exclusive catalogs (mine / agency / enable).
+ * Rep firms and similar dimensions stay filters on the active tab — see `docs/products-directory-ia.md`.
+ */
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 

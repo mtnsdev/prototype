@@ -14,22 +14,28 @@ import {
   getMockRecentActivityContentAgency,
 } from "./briefingMockData";
 import { IS_PREVIEW_MODE } from "@/config/preview";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import BriefingCatchUpDialog from "@/components/briefing/BriefingCatchUpDialog";
+import BriefingPublicationsStub from "@/components/briefing/BriefingPublicationsStub";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
 
 function getGreeting(): string {
   const h = new Date().getHours();
   if (h >= 5 && h < 12) return "Good morning";
   if (h >= 12 && h < 17) return "Good afternoon";
   return "Good evening";
-}
-
-function formatDateTime(): string {
-  return new Date().toLocaleString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 export default function BriefingRoomPage() {
@@ -40,12 +46,19 @@ export default function BriefingRoomPage() {
     reorderWidgets,
     resetToDefaults,
     isLoading: layoutHydrating,
+    activeViewId,
+    viewsList,
+    selectView,
+    saveLayoutAsNewView,
+    renameActiveView,
+    deleteActiveView,
+    canDeleteActiveView,
   } = useBriefingDashboardLayout();
   const [editDashboardLayout, setEditDashboardLayout] = useState(false);
+  const [catchUpOpen, setCatchUpOpen] = useState(false);
   const [widgets, setWidgets] = useState<BriefingWidget[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [dateTime, setDateTime] = useState(formatDateTime());
 
   const focusRing =
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
@@ -72,11 +85,6 @@ export default function BriefingRoomPage() {
   useEffect(() => {
     load();
   }, [load]);
-
-  useEffect(() => {
-    const t = setInterval(() => setDateTime(formatDateTime()), 60_000);
-    return () => clearInterval(t);
-  }, []);
 
   const canEditBriefing = prototypeAdminView;
 
@@ -106,26 +114,25 @@ export default function BriefingRoomPage() {
       <header className="relative shrink-0 overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[var(--muted-info-bg)] to-transparent opacity-90" />
         <div className="relative px-6 py-7 md:px-10 md:py-9">
-          <div className="flex flex-wrap items-end justify-between gap-8">
-            <div className="min-w-0 space-y-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/50">
-                Briefing
-              </p>
-              <h1 className="text-balance text-2xl font-semibold tracking-[-0.02em] text-foreground md:text-[1.75rem] md:leading-snug">
-                {getGreeting()}, {firstName}
-              </h1>
-              <p className="max-w-md pt-0.5 text-sm leading-relaxed text-muted-foreground/80">
-                Priorities, calendar, and agency updates in one place.
-              </p>
-            </div>
-            <p
-              role="status"
-              aria-live="polite"
-              aria-label={`Current date and time: ${dateTime}`}
-              className="shrink-0 rounded-full border border-border bg-card/85 px-4 py-2 text-xs font-medium tabular-nums text-muted-foreground shadow-sm backdrop-blur-sm"
-            >
-              {dateTime}
+          <div className="min-w-0 space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/50">
+              Briefing
             </p>
+            <h1 className="text-balance text-2xl font-semibold tracking-[-0.02em] text-foreground md:text-[1.75rem] md:leading-snug">
+              {getGreeting()}, {firstName}
+            </h1>
+            <p className="max-w-md pt-0.5 text-sm leading-relaxed text-muted-foreground/80">
+              Priorities, calendar, and agency updates in one place.
+            </p>
+            <div className="pt-4">
+              <button
+                type="button"
+                onClick={() => setCatchUpOpen(true)}
+                className={`rounded-xl border border-border bg-card/90 px-4 py-2.5 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-muted/50 ${focusRing}`}
+              >
+                Catch up
+              </button>
+            </div>
           </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
@@ -133,6 +140,8 @@ export default function BriefingRoomPage() {
 
       <div className="flex min-h-0 flex-1 overflow-auto">
         <div className="mx-auto max-w-[1600px] px-6 py-10 md:px-10 md:py-12">
+          <BriefingCatchUpDialog open={catchUpOpen} onOpenChange={setCatchUpOpen} />
+          <BriefingPublicationsStub />
           <BriefingAgencyContentHub canEditBriefing={canEditBriefing} publisherName={firstName} />
           {loadError && !loading ? (
             <div
@@ -157,19 +166,87 @@ export default function BriefingRoomPage() {
             </div>
           ) : loadError ? null : (
             <>
-              <div className="mb-6 mt-12 flex flex-wrap items-center gap-4 md:mt-14">
-                <h2 className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/55">
-                  Your widgets
-                </h2>
-                <div className="h-px min-w-[4rem] flex-1 bg-border" aria-hidden />
-                <button
-                  type="button"
-                  disabled={layoutHydrating}
-                  onClick={() => setEditDashboardLayout((v) => !v)}
-                  className={`shrink-0 rounded-xl border border-border bg-card/80 px-4 py-2 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-muted/50 disabled:opacity-40 ${focusRing}`}
-                >
-                  {editDashboardLayout ? "Done" : "Edit layout"}
-                </button>
+              <div className="mb-6 mt-12 flex flex-col gap-4 md:mt-14">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h2 className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/55">
+                    Your widgets
+                  </h2>
+                  <div className="h-px min-w-[2rem] flex-1 bg-border" aria-hidden />
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground/70">View</span>
+                  <Select
+                    value={activeViewId}
+                    onValueChange={selectView}
+                    disabled={layoutHydrating}
+                  >
+                    <SelectTrigger size="sm" className="w-[min(100%,220px)] border-border bg-card/80">
+                      <SelectValue placeholder="Select view" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover text-popover-foreground">
+                      {viewsList.map((v) => (
+                        <SelectItem key={v.id} value={v.id}>
+                          {v.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        disabled={layoutHydrating}
+                        className={`inline-flex items-center gap-2 rounded-xl border border-border bg-card/80 px-3 py-2 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-muted/50 disabled:opacity-40 ${focusRing}`}
+                        aria-label="View actions"
+                      >
+                        <MoreHorizontal className="size-4 opacity-80" aria-hidden />
+                        View actions
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="min-w-[11rem]">
+                      <DropdownMenuItem
+                        disabled={layoutHydrating}
+                        onClick={() => {
+                          const name = window.prompt("Name for this view", "My briefing");
+                          if (name != null) saveLayoutAsNewView(name);
+                        }}
+                      >
+                        Save as new view
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled={layoutHydrating}
+                        onClick={() => {
+                          const current = viewsList.find((v) => v.id === activeViewId)?.name ?? "";
+                          const name = window.prompt("Rename view", current);
+                          if (name != null) renameActiveView(name);
+                        }}
+                      >
+                        Rename view
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        disabled={layoutHydrating || !canDeleteActiveView}
+                        onClick={() => {
+                          if (!canDeleteActiveView) return;
+                          if (window.confirm("Delete this saved view? Widget layout will be removed.")) {
+                            deleteActiveView();
+                          }
+                        }}
+                      >
+                        Delete view
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <div className="ml-auto flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={layoutHydrating}
+                      onClick={() => setEditDashboardLayout((v) => !v)}
+                      className={`shrink-0 rounded-xl border border-border bg-card/80 px-4 py-2 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-muted/50 disabled:opacity-40 ${focusRing}`}
+                    >
+                      {editDashboardLayout ? "Done" : "Edit layout"}
+                    </button>
+                  </div>
+                </div>
               </div>
               {editDashboardLayout && hiddenWidgetCount > 0 ? (
                 <div

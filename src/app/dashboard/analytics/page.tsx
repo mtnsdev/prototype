@@ -1,9 +1,16 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useUserOptional } from "@/contexts/UserContext";
 import Link from "next/link";
-import { Download, TrendingUp, TrendingDown } from "lucide-react";
+import { Download, MoreHorizontal, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -86,6 +93,33 @@ const PIPELINE_DATA = [
 
 const cardClass = "rounded-xl border border-border bg-white/[0.02] p-5 md:p-6";
 
+function AnalyticsKpiAttributionBanner() {
+  const userContext = useUserOptional();
+  const opsLens = userContext?.prototypeAdminView ?? false;
+  const [loadedAt] = useState(() => new Date());
+  const loadedLabel = useMemo(
+    () =>
+      new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(loadedAt),
+    [loadedAt],
+  );
+
+  return (
+    <div
+      className="rounded-lg border border-border bg-muted/10 px-4 py-3 text-xs leading-relaxed text-muted-foreground"
+      role="note"
+    >
+      <span className="font-medium text-foreground/90">Sample metrics</span>
+      <span className="mx-1.5 text-muted-foreground/45">·</span>
+      <span className="font-medium text-foreground/90">Scope:</span>{" "}
+      {opsLens
+        ? "Agency roll-up across advisors (illustrative only)."
+        : "Your personal book and pipelines (illustrative only)."}
+      <span className="mx-1.5 text-muted-foreground/45">·</span>
+      <span className="font-medium text-foreground/90">Loaded:</span> {loadedLabel}
+    </div>
+  );
+}
+
 function getDataForRange(range: string) {
   const ytdData = MONTHLY_REVENUE_12M.slice(-12); // Last 12 months
   const last90 = MONTHLY_REVENUE_12M.slice(-3);
@@ -162,10 +196,26 @@ function getDataForRange(range: string) {
 }
 
 export default function AnalyticsPage() {
-  const showToast = useToast();
+  const toast = useToast();
   const [range, setRange] = useState("ytd");
 
-  const data = useMemo(() => getDataForRange(range), [range]);
+  const data = useMemo(() => {
+    const base = getDataForRange(range);
+    const vicsNeedingAttention = Math.min(
+      12,
+      Math.max(1, Math.round(base.activeVics * 0.17)),
+    );
+    /** Prototype: deals in early stages without recent movement */
+    const stalePipelineCount = Math.min(14, Math.max(4, Math.round(base.activeVics * 0.35)));
+    /** Prototype: confirmed trips missing final checklist */
+    const tripsNeedingFollowUp = base.tripCompletion < 94 ? 3 : 1;
+    return {
+      ...base,
+      vicsNeedingAttention,
+      stalePipelineCount,
+      tripsNeedingFollowUp,
+    };
+  }, [range]);
 
   const maxRevenue = Math.max(...data.monthlyData.map((m) => m.value));
   const revenueChange =
@@ -216,6 +266,11 @@ export default function AnalyticsPage() {
     a.href = url;
     a.download = `analytics-${range}-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
+    toast({
+      title: "Export started",
+      description: "Your analytics CSV download should begin shortly.",
+      tone: "success",
+    });
   };
 
   return (
@@ -255,20 +310,30 @@ export default function AnalyticsPage() {
               </SelectItem>
             </SelectContent>
           </Select>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 border-input px-2.5 text-xs text-foreground"
-            onClick={handleExport}
-          >
-            <Download size={13} className="mr-1 shrink-0" />
-            Export
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 border-input px-2.5 text-xs text-foreground"
+                aria-label="More actions"
+              >
+                <MoreHorizontal size={16} className="shrink-0" aria-hidden />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[10rem]">
+              <DropdownMenuItem onClick={handleExport} className="gap-2">
+                <Download size={14} className="shrink-0 opacity-80" aria-hidden />
+                Export CSV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
       <div className="min-h-0 flex-1 overflow-auto">
         <div className="px-6 pb-8 pt-6 space-y-6 max-w-[1600px]">
+          <AnalyticsKpiAttributionBanner />
           {/* KPI Row */}
           <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
             <div className={cardClass}>
@@ -286,6 +351,12 @@ export default function AnalyticsPage() {
                   </span>
                   <span className="text-xs text-muted-foreground/70">vs last year</span>
                 </div>
+                <p className="mt-2 text-xs text-muted-foreground/80">
+                  Spot revenue dips early and align outreach with booking cycles.
+                </p>
+                <Button variant="outline" size="sm" className="mt-3 h-8 border-input text-xs" asChild>
+                  <Link href="/dashboard/products">Explore revenue drivers</Link>
+                </Button>
               </div>
             </div>
 
@@ -304,6 +375,15 @@ export default function AnalyticsPage() {
                   </span>
                   <span className="text-xs text-muted-foreground/70">this quarter</span>
                 </div>
+                <p className="mt-2 text-xs text-muted-foreground/80">
+                  <span className="font-medium text-[var(--muted-amber-text)]">
+                    {data.vicsNeedingAttention} need attention
+                  </span>{" "}
+                  — lower recent activity vs peers
+                </p>
+                <Button variant="outline" size="sm" className="mt-3 h-8 border-input text-xs" asChild>
+                  <Link href="/dashboard/vics">Reach out / view VICs</Link>
+                </Button>
               </div>
             </div>
 
@@ -322,6 +402,13 @@ export default function AnalyticsPage() {
                   </span>
                   <span className="text-xs text-muted-foreground/70">vs last year</span>
                 </div>
+                <p className="mt-2 text-xs text-muted-foreground/80">
+                  Top partner: <span className="font-medium text-foreground/90">Four Seasons</span> — consider
+                  promoting similar inventory.
+                </p>
+                <Button variant="outline" size="sm" className="mt-3 h-8 border-input text-xs" asChild>
+                  <Link href="/dashboard/products?tab=enable">Browse partner programs</Link>
+                </Button>
               </div>
             </div>
 
@@ -339,6 +426,21 @@ export default function AnalyticsPage() {
                     Healthy
                   </span>
                 </div>
+                <p className="mt-2 text-xs text-muted-foreground/80">
+                  {data.tripCompletion < 94 ? (
+                    <>
+                      <span className="font-medium text-[var(--muted-amber-text)]">
+                        {data.tripsNeedingFollowUp} trips
+                      </span>{" "}
+                      may need a final confirmation nudge.
+                    </>
+                  ) : (
+                    <>Completion is on track — keep an eye on departures in the next 30 days.</>
+                  )}
+                </p>
+                <Button variant="outline" size="sm" className="mt-3 h-8 border-input text-xs" asChild>
+                  <Link href="/dashboard/itineraries">Open itineraries</Link>
+                </Button>
               </div>
             </div>
           </div>
@@ -436,7 +538,20 @@ export default function AnalyticsPage() {
 
           {/* Pipeline */}
           <div className={cardClass}>
-            <ListLabel className="mb-4 block">Pipeline by Stage</ListLabel>
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+              <ListLabel className="block">Pipeline by Stage</ListLabel>
+              <div className="flex flex-col items-end gap-2 text-right">
+                <p className="max-w-xs text-xs text-muted-foreground/80">
+                  <span className="font-medium text-[var(--muted-amber-text)]">
+                    {data.stalePipelineCount} opportunities
+                  </span>{" "}
+                  have no activity in 14+ days.
+                </p>
+                <Button variant="outline" size="sm" className="h-8 border-input text-xs" asChild>
+                  <Link href="/dashboard/vics">Prioritize follow-ups</Link>
+                </Button>
+              </div>
+            </div>
             <div className="space-y-3">
               {PIPELINE_DATA.map((stage) => {
                 const percentage = (stage.count / pipelineTotal) * 100;
@@ -467,8 +582,11 @@ export default function AnalyticsPage() {
 
           {/* Top VICs Table */}
           <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden")}>
-            <div className="border-b border-border px-3 py-3">
-              <ListLabel>Top 10 VICs by Revenue</ListLabel>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-3 py-3">
+              <ListLabel className="mb-0">Top 10 VICs by Revenue</ListLabel>
+              <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground" asChild>
+                <Link href="/dashboard/vics">View all VICs</Link>
+              </Button>
             </div>
             <table className={listTableClass("min-w-[800px]")}>
               <thead>
@@ -488,6 +606,9 @@ export default function AnalyticsPage() {
                   <th className={cn(listThClass, "text-right")} scope="col">
                     Last Trip
                   </th>
+                  <th className={listThClass} scope="col">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -502,6 +623,7 @@ export default function AnalyticsPage() {
                       : daysSince === 1
                         ? "Yesterday"
                         : `${daysSince} days ago`;
+                  const lowActivity = daysSince > 14;
 
                   return (
                     <tr key={vic.id} className={listTbodyRowClass}>
@@ -517,10 +639,15 @@ export default function AnalyticsPage() {
                             href={`/dashboard/vics/${vic.id}`}
                             className={cn(
                               listPrimaryTextClass,
-                              "hover:underline font-medium"
+                              "hover:underline font-medium inline-flex items-center gap-2"
                             )}
                           >
                             {vic.name}
+                            {lowActivity ? (
+                              <span className="rounded-md border border-[var(--muted-amber-border)] bg-[var(--muted-amber-bg)] px-1.5 py-0.5 text-2xs font-medium text-[var(--muted-amber-text)]">
+                                Quieter
+                              </span>
+                            ) : null}
                           </Link>
                         </div>
                       </td>
@@ -543,6 +670,18 @@ export default function AnalyticsPage() {
                         className={cn(listTdClass, listMutedCellClass, "text-right")}
                       >
                         {lastTripLabel}
+                      </td>
+                      <td className={listTdClass}>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <Button variant="outline" size="sm" className="h-7 border-input px-2 text-2xs" asChild>
+                            <Link href={`/dashboard/vics/${vic.id}`}>View</Link>
+                          </Button>
+                          {lowActivity ? (
+                            <Button variant="secondary" size="sm" className="h-7 px-2 text-2xs" asChild>
+                              <Link href={`/dashboard/vics/${vic.id}?focus=outreach`}>Reach out</Link>
+                            </Button>
+                          ) : null}
+                        </div>
                       </td>
                     </tr>
                   );

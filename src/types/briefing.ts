@@ -18,6 +18,17 @@ export enum WidgetType {
   RecentActivity = "recent_activity",
 }
 
+/** Variants for `IntelligenceEmbedWidget` (briefing grid → intelligence-layer widgets). */
+export type IntelligenceEmbedVariant =
+  | "recent_activity"
+  | "action_items"
+  | "advisories"
+  | "upcoming_trips"
+  | "pre_departure"
+  | "knowledge_highlights"
+  | "publication_feed"
+  | "product_intel";
+
 export type WidgetSize = "small" | "medium" | "large";
 
 export interface NewsAlertItem {

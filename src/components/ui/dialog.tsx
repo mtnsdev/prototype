@@ -52,16 +52,19 @@ function DialogContent({
   children,
   showCloseButton = true,
   sheetSide,
+  overlayClassName,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
   /** Left edge sheet (e.g. mobile navigation) */
   sheetSide?: "left"
+  /** Merged onto overlay (e.g. higher z-index for command palette over docks) */
+  overlayClassName?: string
 }) {
   const isLeftSheet = sheetSide === "left"
   return (
     <DialogPortal data-slot="dialog-portal">
-      <DialogOverlay />
+      <DialogOverlay className={overlayClassName} />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(

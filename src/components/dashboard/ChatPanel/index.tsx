@@ -9,6 +9,7 @@ import { useProductDirectoryCatalogOptional } from "@/components/products/Produc
 import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 import type { Message, ChatPanelProps, BotResponse, Citation, WebCitation, Conflict, PlaceCard } from "./types";
 import { ChatHeader } from "./ChatHeader";
+import ClaireDataAttributionBar from "@/components/dashboard/ClaireDataAttributionBar";
 import { EmptyState } from "./EmptyState";
 import { BotMessageCard } from "./BotMessageCard";
 import { ChatInput } from "./ChatInput";
@@ -21,6 +22,9 @@ export default function ChatPanel({
   onConversationCreated,
   userName = "there",
   onBackToHome,
+  assistantName = "Claire",
+  assistantSubtitle = "Enable VICs AI",
+  showDataAttribution = true,
 }: ChatPanelProps) {
   const userContext = useUserOptional();
   const toast = useToast();
@@ -402,7 +406,10 @@ export default function ChatPanel({
             sessionTitle={sessionTitle}
             firstMessagePreview={firstMessagePreview}
             onBackToHome={onBackToHome}
+            assistantName={assistantName}
+            assistantSubtitle={assistantSubtitle}
           />
+          {showDataAttribution ? <ClaireDataAttributionBar /> : null}
 
           <div
             ref={messagesScrollRef}

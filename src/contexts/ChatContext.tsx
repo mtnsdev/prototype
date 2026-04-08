@@ -10,6 +10,15 @@ type ChatContextType = {
     closeHistory: () => void;
     refreshTrigger: number;
     triggerRefresh: () => void;
+    /** Persistent Claire panel (FAB) */
+    claireOpen: boolean;
+    claireFullscreen: boolean;
+    openClaire: () => void;
+    closeClaire: () => void;
+    toggleClaire: () => void;
+    setClaireFullscreen: (value: boolean) => void;
+    toggleClaireFullscreen: () => void;
+    startNewClaireConversation: () => void;
 };
 
 const ChatContext = createContext<ChatContextType | null>(null);
@@ -18,10 +27,26 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const [claireOpen, setClaireOpen] = useState(false);
+    const [claireFullscreen, setClaireFullscreen] = useState(false);
 
     const openHistory = useCallback(() => setIsHistoryOpen(true), []);
     const closeHistory = useCallback(() => setIsHistoryOpen(false), []);
     const triggerRefresh = useCallback(() => setRefreshTrigger((n) => n + 1), []);
+
+    const openClaire = useCallback(() => setClaireOpen(true), []);
+    const closeClaire = useCallback(() => {
+        setClaireOpen(false);
+        setClaireFullscreen(false);
+    }, []);
+    const toggleClaire = useCallback(() => setClaireOpen((o) => !o), []);
+
+    const toggleClaireFullscreen = useCallback(() => setClaireFullscreen((f) => !f), []);
+
+    const startNewClaireConversation = useCallback(() => {
+        setSelectedConversationId(null);
+        triggerRefresh();
+    }, [triggerRefresh]);
 
     return (
         <ChatContext.Provider
@@ -33,6 +58,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
                 closeHistory,
                 refreshTrigger,
                 triggerRefresh,
+                claireOpen,
+                claireFullscreen,
+                openClaire,
+                closeClaire,
+                toggleClaire,
+                setClaireFullscreen,
+                toggleClaireFullscreen,
+                startNewClaireConversation,
             }}
         >
             {children}
@@ -48,7 +81,6 @@ export function useChatContext() {
     return context;
 }
 
-// Optional hook that returns null instead of throwing if used outside provider
 export function useChatContextOptional() {
     return useContext(ChatContext);
 }

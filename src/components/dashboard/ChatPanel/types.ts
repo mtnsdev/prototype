@@ -76,4 +76,8 @@ export type ChatPanelProps = {
   onConversationCreated?: (id: number) => void;
   userName?: string;
   onBackToHome?: () => void;
+  assistantName?: string;
+  assistantSubtitle?: string;
+  /** Show scope / freshness strip (Claire trust layer). Default true. */
+  showDataAttribution?: boolean;
 };
