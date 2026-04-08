@@ -29,12 +29,9 @@ import {
   mergeVicListIntoUrl,
   parseVicListSearchParams,
 } from "@/lib/vicListUrl";
-import {
-  DASHBOARD_LIST_PAGE_HEADER,
-  DASHBOARD_LIST_PAGE_HEADER_SUBTITLE,
-  DASHBOARD_LIST_PAGE_HEADER_TITLE,
-  DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK,
-} from "@/lib/dashboardChrome";
+import { AppWindowHeader } from "@/components/ui/app-window-header";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 const VIC_VIEW_KEY = "vic_view";
 const VIC_SORT_KEY = "vic_sortBy";
@@ -58,8 +55,8 @@ export default function VICPage() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
-  const [relationshipStatus, setRelationshipStatus] = useState<string | null>(null);
-  const [acuityStatusFilter, setAcuityStatusFilter] = useState<string | null>(null);
+  const [relationshipStatus, setRelationshipStatus] = useState<RelationshipStatus | null>(null);
+  const [acuityStatusFilter, setAcuityStatusFilter] = useState<AcuityStatus | null>(null);
 
   const [viewMode, setViewMode] = useState<"list" | "cards">("list");
   const [sortBy, setSortBy] = useState("full_name");
@@ -330,30 +327,37 @@ export default function VICPage() {
     setPage(1);
   };
 
+  const clearFacetFilters = () => {
+    setSelectedCountry(null);
+    setRelationshipStatus(null);
+    setAcuityStatusFilter(null);
+    setPage(1);
+  };
+
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-inset">
-      <header className={DASHBOARD_LIST_PAGE_HEADER}>
-        <div className={DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK}>
-          <h1 className={DASHBOARD_LIST_PAGE_HEADER_TITLE}>VICs</h1>
-          <p className={DASHBOARD_LIST_PAGE_HEADER_SUBTITLE}>
-            {hasActiveFilters ? (
-              <>
-                <span>
-                  {totalCount} VIC{totalCount !== 1 ? "s" : ""}
-                </span>
-                {" · "}
-                matching filters
-              </>
-            ) : (
-              <span>
-                {totalCount} VIC{totalCount !== 1 ? "s" : ""}
-              </span>
-            )}
-          </p>
-        </div>
-      </header>
+      <AppWindowHeader
+        title="VICs"
+        subtitle={
+          activeTab === "mine"
+            ? hasActiveFilters
+              ? "Your contacts · results narrowed by search or filters"
+              : "Your contacts"
+            : hasActiveFilters
+              ? "Shared with you · results narrowed by search or filters"
+              : "Shared with you"
+        }
+        actions={
+          activeTab === "mine" ? (
+            <Button type="button" variant="toolbarAccent" size="sm" onClick={openAdd} className="shrink-0">
+              <Plus className="h-3.5 w-3.5" aria-hidden />
+              Add VIC
+            </Button>
+          ) : null
+        }
+      />
       <TabBar activeTab={activeTab} className="shrink-0" />
-      <div className="relative z-10 shrink-0 px-6 pb-0 pt-4">
+      <div className="relative z-10 shrink-0 px-4 pb-0 pt-3 md:px-6">
         <VICToolbar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -374,17 +378,38 @@ export default function VICPage() {
         totalCount={totalCount}
         page={page}
         pageSize={PAGE_SIZE}
-        onAddVIC={activeTab === "mine" ? openAdd : undefined}
         onClearFilters={clearFilters}
-        bulkSelectedCount={selectedVicIds.size}
-        onBulkRunAcuity={selectedVicIds.size > 0 ? () => setBulkAcuityModalOpen(true) : undefined}
-        onBulkDelete={selectedVicIds.size > 0 ? () => {
+        onClearFacetFilters={clearFacetFilters}
+        selectedCount={selectedVicIds.size}
+        onBulkAcuity={() => setBulkAcuityModalOpen(true)}
+        onBulkDelete={() => {
           const ids = Array.from(selectedVicIds);
           if (ids.length === 1) {
             const first = vics.find((v) => getVICId(v) === ids[0]);
-            if (first) { setDeletingVic(first); setDeleteModalOpen(true); }
+            if (first) {
+              setDeletingVic(first);
+              setDeleteModalOpen(true);
+            }
           } else setBulkDeleteIds(ids);
-        } : undefined}
+        }}
+        onBulkShare={() =>
+          showToast("Use Share on each row for now — multi-select share is coming.")
+        }
+        canBulkAcuity={canRunAcuity}
+        canBulkDelete={
+          selectedVicIds.size > 0 &&
+          Array.from(selectedVicIds).every((id) => {
+            const v = vics.find((vic) => getVICId(vic) === id);
+            return v != null && canDelete(v);
+          })
+        }
+        canBulkShare={
+          selectedVicIds.size > 0 &&
+          Array.from(selectedVicIds).every((id) => {
+            const v = vics.find((vic) => getVICId(vic) === id);
+            return v != null && canShare(v);
+          })
+        }
         />
       </div>
 

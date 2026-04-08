@@ -709,6 +709,9 @@ export const FAKE_ITINERARIES: Itinerary[] = [
   } as Itinerary,
 ];
 
+/** Demo advisor used when “Mine” has no user id or no matching mock rows (prototype sample data). */
+export const FAKE_ITINERARY_DEMO_ADVISOR_ID = "1";
+
 export type ItineraryFilters = {
   tab: "mine" | "agency";
   userId?: string;
@@ -743,12 +746,20 @@ export function filterAndPaginateFakeItineraries(
   itineraries: Itinerary[],
   filters: ItineraryFilters
 ): { itineraries: Itinerary[]; total: number } {
-  let list = [...itineraries];
+  const source = [...itineraries];
+
+  let list = source;
 
   if (filters.tab === "mine") {
-    list = list.filter((it) => it.primary_advisor_id === filters.userId);
+    const uid = filters.userId ?? FAKE_ITINERARY_DEMO_ADVISOR_ID;
+    list = list.filter((it) => it.primary_advisor_id === uid);
+    if (list.length === 0) {
+      list = source.filter((it) => it.primary_advisor_id === FAKE_ITINERARY_DEMO_ADVISOR_ID);
+    }
   } else if (filters.tab === "agency") {
-    list = list.filter((it) => (it.agency_id ?? "") === (filters.agencyId ?? ""));
+    if (filters.agencyId) {
+      list = list.filter((it) => (it.agency_id ?? "") === filters.agencyId);
+    }
   }
 
   if (filters.search) list = list.filter((it) => matchesSearch(it, filters.search!));

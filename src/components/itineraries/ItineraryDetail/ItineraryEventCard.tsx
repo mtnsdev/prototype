@@ -154,7 +154,9 @@ export default function ItineraryEventCard({
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onEdit?.()}>Edit</DropdownMenuItem>
               <DropdownMenuItem onClick={() => onUpdate()} className="text-[var(--muted-error-text)]">Remove</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => showToast("Move to another day — available in the next release")}>Move to another day</DropdownMenuItem>
+              <DropdownMenuItem disabled className="text-muted-foreground">
+                Move: drag the grip on the timeline
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => showToast("Change status — available in the next release")}>Change status</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

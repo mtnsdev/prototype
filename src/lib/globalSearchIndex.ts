@@ -227,7 +227,23 @@ export function buildCmdKIndex(): CmdKResult[] {
     };
   });
 
-  return [...docs, ...products, ...vics];
+  const itineraries: CmdKResult[] = FAKE_ITINERARIES.slice(0, 10).map((i) => {
+    const parts = (i.primary_vic_name || "?").split(/\s+/).filter(Boolean);
+    const initials =
+      parts.length >= 2
+        ? `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase()
+        : ((i.primary_vic_name || "??").slice(0, 2).toUpperCase() || "??");
+    return {
+      kind: "itinerary" as const,
+      id: i.id,
+      title: i.trip_name || "Untitled trip",
+      subtitle: (i.destinations || []).join(", ") || "—",
+      initials,
+      href: `/dashboard/itineraries/${i.id}`,
+    };
+  });
+
+  return [...docs, ...products, ...vics, ...itineraries];
 }
 
 export function filterCmdKIndex(items: CmdKResult[], q: string): CmdKResult[] {

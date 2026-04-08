@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef, Fragment } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, Fragment } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   Pencil,
   Trash2,
   Copy,
@@ -23,6 +22,7 @@ import {
   Heart,
   Archive,
   Mail,
+  Columns2,
 } from "lucide-react";
 import type { Itinerary, ItineraryDay, ItineraryEvent, PipelineStage, PipelineEvent } from "@/types/itinerary";
 import { fetchItinerary } from "@/lib/itineraries-api";
@@ -34,11 +34,12 @@ import { useToast } from "@/contexts/ToastContext";
 import { canEditItinerary, canDeleteItinerary, canViewFinancials } from "@/utils/itineraryPermissions";
 import { ITINERARY_STATUS_BADGES, formatDateRange } from "../statusConfig";
 import { Button } from "@/components/ui/button";
-import Breadcrumbs from "@/components/ui/breadcrumbs";
+import { ShellCrumbOverride } from "@/contexts/DashboardShellContext";
 import ItineraryDetailSidebar from "./ItineraryDetailSidebar";
 import ItineraryTimeline from "./ItineraryTimeline";
 import DeleteItineraryModal from "../Modals/DeleteItineraryModal";
 import StatusChangeDropdown from "./StatusChangeDropdown";
+import { APP_DOCUMENT_HEAD, APP_TOOLBAR_ROW } from "@/lib/dashboardChrome";
 import { cn } from "@/lib/utils";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 import EventDetailPanel from "./EventDetailPanel";
@@ -58,6 +59,14 @@ import {
   DestinationGuideModal,
   ActivitySuggestModal,
 } from "../CompetitorFeatureModals";
+import {
+  applyItineraryOverlay,
+  persistItineraryDays,
+  sumItineraryEventVicPrices,
+} from "@/lib/itineraryLocalOverlay";
+import { getItineraryIssues } from "@/lib/itineraryValidation";
+import ItineraryIssuesStrip from "./ItineraryIssuesStrip";
+import EditItineraryMetadataDialog from "./EditItineraryMetadataDialog";
 
 type Props = { itineraryId: string };
 
@@ -117,8 +126,9 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
     version: number;
     at: string;
   } | null>(null);
+  const [metadataOpen, setMetadataOpen] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!itineraryId) {
       setLoading(false);
       setError("Itinerary not found");
@@ -132,7 +142,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
     if (useFakeFirst) {
       const fake = FAKE_ITINERARIES.find((i) => i.id === itineraryId);
       if (fake) {
-        setItinerary(withPipelineDefaults(fake));
+        setItinerary(withPipelineDefaults(applyItineraryOverlay(fake)));
         setLoading(false);
         return;
       }
@@ -144,7 +154,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
       if (useFakeFirst) {
         const fake = FAKE_ITINERARIES.find((i) => i.id === itineraryId);
         if (fake) {
-          setItinerary(withPipelineDefaults(fake));
+          setItinerary(withPipelineDefaults(applyItineraryOverlay(fake)));
           setLoading(false);
           return;
         }
@@ -154,11 +164,21 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [itineraryId]);
 
   useEffect(() => {
     load();
-  }, [itineraryId]);
+  }, [load]);
+
+  useEffect(() => {
+    const onOverlay = (ev: Event) => {
+      const d = (ev as CustomEvent<{ itineraryId?: string }>).detail;
+      if (d?.itineraryId != null && d.itineraryId !== itineraryId) return;
+      load();
+    };
+    window.addEventListener("enable-itinerary-overlay-changed", onOverlay);
+    return () => window.removeEventListener("enable-itinerary-overlay-changed", onOverlay);
+  }, [itineraryId, load]);
 
   useEffect(() => {
     if (pipelineTarget == null) return;
@@ -193,6 +213,41 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
       total_vic_price: opt.total_vic_price ?? itinerary.total_vic_price,
     };
   }, [itinerary, hasMultiOption, optionIndex, tripOpts]);
+
+  const itineraryIssues = useMemo(
+    () => (displayItinerary ? getItineraryIssues(displayItinerary) : []),
+    [displayItinerary]
+  );
+
+  const handleDaysChange = useCallback(
+    (newDays: ItineraryDay[]) => {
+      setItinerary((prev) => {
+        if (!prev) return prev;
+        const nextTotal = sumItineraryEventVicPrices({ ...prev, days: newDays });
+        if (!hasMultiOption || optionIndex === 0) {
+          persistItineraryDays(prev.id, newDays);
+          return { ...prev, days: newDays, total_vic_price: nextTotal };
+        }
+        const opts = [...(prev.trip_options ?? [])];
+        const i = optionIndex - 1;
+        if (opts[i]) {
+          opts[i] = { ...opts[i], days: newDays, total_vic_price: nextTotal };
+          return { ...prev, trip_options: opts };
+        }
+        return { ...prev, days: newDays, total_vic_price: nextTotal };
+      });
+    },
+    [hasMultiOption, optionIndex]
+  );
+
+  const shellCrumbs = useMemo(() => {
+    if (loading || !displayItinerary) return [];
+    return [
+      { label: "Home", href: "/dashboard" },
+      { label: "Itineraries", href: "/dashboard/itineraries" },
+      { label: displayItinerary.trip_name || "Itinerary" },
+    ];
+  }, [loading, displayItinerary]);
 
   const effPublish = publishLocal ?? {
     state: (itinerary?.publish_state ?? "never") as "never" | "published_clean" | "unpublished_changes",
@@ -292,25 +347,13 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
 
   return (
     <div className="h-full flex flex-col bg-inset overflow-hidden">
+      {shellCrumbs.length > 0 ? <ShellCrumbOverride crumbs={shellCrumbs} /> : null}
       <div className="shrink-0 flex flex-col">
-        <div className="px-4 pt-3">
-          <Breadcrumbs
-            items={[
-              { label: "Dashboard", href: "/dashboard" },
-              { label: "Itineraries", href: "/dashboard/itineraries" },
-              { label: itinerary.trip_name || "Itinerary" },
-            ]}
-            className="mb-3"
-          />
-          <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground">
-            <Link href="/dashboard/itineraries" className="inline-flex items-center gap-1">
-              <ArrowLeft size={18} /> Back to Itineraries
-            </Link>
-          </Button>
-        </div>
-        <div className="w-full border-b border-border bg-card/50 px-4 py-5">
-          <h1 className="text-xl font-semibold text-foreground tracking-tight">{itinerary.trip_name}</h1>
-          <div className="flex flex-wrap items-center gap-2 mt-2">
+        <div className={APP_DOCUMENT_HEAD}>
+          <h1 className="text-lg font-semibold tracking-[-0.02em] text-foreground md:text-xl">
+            {itinerary.trip_name}
+          </h1>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             <span className={cn("text-xs px-1.5 py-0.5 rounded-md border", statusBadge?.className ?? "bg-muted-foreground/10 border-border text-muted-foreground")}>
               {statusBadge?.label ?? itinerary.status}
             </span>
@@ -340,15 +383,24 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
           </div>
         </div>
       </div>
-      <header className="shrink-0 border-b border-border px-4 py-2 flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-2 flex-wrap">
+      <header className={APP_TOOLBAR_ROW}>
+        <div className="flex flex-wrap items-center gap-2">
           {canEdit && (
-            <Button variant="outline" size="sm" asChild className="border-input text-foreground">
-              <Link href={`/dashboard/itineraries/${itineraryId}/edit`}>
-                <Pencil size={14} className="mr-1" /> Edit
-              </Link>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="border-input text-foreground"
+              onClick={() => setMetadataOpen(true)}
+            >
+              <Pencil size={14} className="mr-1" /> Edit details
             </Button>
           )}
+          <Button variant="outline" size="sm" asChild className="border-input text-foreground">
+            <Link href={`/dashboard/itineraries/${itineraryId}/workspace`} title="Trip + catalog side by side">
+              <Columns2 size={14} className="mr-1" /> Split view
+            </Link>
+          </Button>
           <Button
             size="sm"
             className="bg-brand-cta text-brand-cta-foreground hover:bg-brand-cta-hover font-medium"
@@ -502,6 +554,8 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
         )}
       </div>
 
+      <ItineraryIssuesStrip issues={itineraryIssues} className="mt-2" />
+
       {hasMultiOption && (
         <div className="shrink-0 px-4 py-2 border-b border-border flex flex-wrap items-center gap-2">
           <button
@@ -552,6 +606,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
             editEvent={editEvent}
             onEditEventClose={() => setEditEvent(null)}
             onEditEventRequest={(day, ev) => setEditEvent({ day, event: ev })}
+            onDaysChange={canEdit ? handleDaysChange : undefined}
           />
         </main>
         <ItineraryDetailSidebar
@@ -654,6 +709,13 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
         onClose={() => setSuggestOpen(false)}
         vicName={itinerary.primary_vic_name ?? "VIC"}
         onAdd={() => showToast("Activity added (mock)")}
+      />
+
+      <EditItineraryMetadataDialog
+        open={metadataOpen}
+        onClose={() => setMetadataOpen(false)}
+        itinerary={itinerary}
+        onSaved={(next) => setItinerary(withPipelineDefaults(next))}
       />
     </div>
   );

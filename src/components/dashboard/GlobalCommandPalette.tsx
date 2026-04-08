@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type CSSProperties } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Building2, FileText, Search, Map } from "lucide-react";
+import { Building2, CornerDownRight, FileText, Map, Search } from "lucide-react";
 import { useGlobalSearch } from "@/contexts/GlobalSearchContext";
 import { useTeams } from "@/contexts/TeamsContext";
 import { ScopeBadge } from "@/components/ui/ScopeBadge";
@@ -28,10 +28,23 @@ function avatarStyle(initials: string): CSSProperties {
   };
 }
 
+const SHELL_JUMP_COMMANDS = [
+  { id: "home", title: "Open Home", subtitle: "Briefing & widgets", href: "/dashboard" },
+  { id: "chat", title: "Open Assistant", subtitle: "Conversations", href: "/dashboard/chat" },
+  { id: "vics", title: "Open VICs", subtitle: "Client registry", href: "/dashboard/vics" },
+  { id: "itineraries", title: "Open Itineraries", subtitle: "Trips & proposals", href: "/dashboard/itineraries" },
+  { id: "products", title: "Open Catalog", subtitle: "Product directory", href: "/dashboard/products" },
+  { id: "knowledge", title: "Open Knowledge", subtitle: "Vault & documents", href: "/dashboard/knowledge-vault" },
+  { id: "new-trip", title: "New itinerary", subtitle: "Start a trip draft", href: "/dashboard/itineraries?create=1" },
+  { id: "analytics", title: "Open Analytics", subtitle: "Performance", href: "/dashboard/analytics" },
+  { id: "settings", title: "Open Settings", subtitle: "Workspace & integrations", href: "/dashboard/settings" },
+] as const;
+
 type Row =
   | { rowKind: "section"; id: string; label: string }
   | { rowKind: "hit"; id: string; hit: CmdKResult }
-  | { rowKind: "recent"; id: string; hit: CmdKRecent };
+  | { rowKind: "recent"; id: string; hit: CmdKRecent }
+  | { rowKind: "command"; id: string; title: string; subtitle: string; href: string };
 
 export default function GlobalCommandPalette() {
   const { open, closeSearch } = useGlobalSearch();
@@ -64,6 +77,19 @@ export default function GlobalCommandPalette() {
   const rows = useMemo((): Row[] => {
     const out: Row[] = [];
     const q = query.trim();
+
+    if (!q) {
+      out.push({ rowKind: "section", id: "sec-jump", label: "Jump" });
+      SHELL_JUMP_COMMANDS.forEach((c) => {
+        out.push({
+          rowKind: "command",
+          id: `cmd-${c.id}`,
+          title: c.title,
+          subtitle: c.subtitle,
+          href: c.href,
+        });
+      });
+    }
 
     if (!q && recents.length > 0) {
       out.push({ rowKind: "section", id: "sec-recent", label: "Recent" });
@@ -98,7 +124,11 @@ export default function GlobalCommandPalette() {
   }, [filtered, query, recents]);
 
   const selectable = useMemo(
-    () => rows.filter((r): r is Extract<Row, { rowKind: "hit" | "recent" }> => r.rowKind !== "section"),
+    () =>
+      rows.filter(
+        (r): r is Extract<Row, { rowKind: "hit" | "recent" | "command" }> =>
+          r.rowKind === "hit" || r.rowKind === "recent" || r.rowKind === "command"
+      ),
     [rows]
   );
 
@@ -122,6 +152,10 @@ export default function GlobalCommandPalette() {
   const activateCurrent = useCallback(() => {
     const sel = selectable[activeFlat];
     if (!sel) return;
+    if (sel.rowKind === "command") {
+      go(sel.href, sel.title, "doc");
+      return;
+    }
     if (sel.rowKind === "recent") {
       go(sel.hit.href, sel.hit.title, sel.hit.kind);
       return;
@@ -192,10 +226,10 @@ export default function GlobalCommandPalette() {
         onClick={closeSearch}
       />
       <div
-        className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-border bg-popover shadow-2xl"
+        className="relative w-full max-w-xl overflow-hidden rounded-[14px] border border-border/60 bg-popover shadow-xl"
         role="dialog"
         aria-modal="true"
-        aria-label="Global search"
+        aria-label="Command palette"
       >
         <div className="flex items-center gap-3 border-b border-border px-5 py-4">
           <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
@@ -203,7 +237,7 @@ export default function GlobalCommandPalette() {
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search everything…"
+            placeholder="Search entities, or run a jump command…"
             aria-autocomplete="list"
             aria-controls="cmdk-listbox"
             className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground/65 outline-none"
@@ -259,6 +293,31 @@ export default function GlobalCommandPalette() {
                       {r.kind}
                     </span>
                     <span className="min-w-0 flex-1 truncate text-compact text-foreground">{r.title}</span>
+                  </button>
+                );
+              }
+
+              if (row.rowKind === "command") {
+                return (
+                  <button
+                    key={row.id}
+                    id={optId}
+                    type="button"
+                    role="option"
+                    aria-selected={isActive}
+                    data-cmdk-active={isActive ? "true" : undefined}
+                    onClick={() => go(row.href, row.title, "doc")}
+                    onMouseEnter={() => setActiveFlat(flat)}
+                    className={cn(
+                      "flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors",
+                      isActive ? "bg-muted/80" : "hover:bg-muted/50"
+                    )}
+                  >
+                    <CornerDownRight className="h-4 w-4 shrink-0 text-muted-foreground/65" aria-hidden />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-compact block truncate text-foreground">{row.title}</span>
+                      <span className="text-2xs text-muted-foreground/65">{row.subtitle}</span>
+                    </div>
                   </button>
                 );
               }

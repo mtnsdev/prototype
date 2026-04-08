@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Heart,
   TrendingUp,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +38,7 @@ const WIDGET_ICONS: Record<WidgetType, React.ComponentType<{ size?: number; clas
   [WidgetType.QuickStart]: Zap,
   [WidgetType.FreeText]: FileText,
   [WidgetType.RecentActivity]: Activity,
+  [WidgetType.IntelligenceEmbed]: Sparkles,
 };
 
 type Props = {

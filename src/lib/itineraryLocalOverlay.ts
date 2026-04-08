@@ -1,6 +1,6 @@
 /**
- * Preview-only: persist itinerary edits (e.g. add product as event) in localStorage.
- * Merged onto `FAKE_ITINERARIES` wherever itineraries are shown until a real API exists.
+ * Preview-only: persist itinerary edits (add product, reorder days, metadata) in localStorage.
+ * Merged onto `FAKE_ITINERARIES` until a real API exists.
  */
 
 import type { Itinerary, ItineraryDay, ItineraryEvent, EventType } from "@/types/itinerary";
@@ -18,10 +18,6 @@ export function sumItineraryEventVicPrices(it: Itinerary): number {
   return s;
 }
 
-/**
- * Preview-only estimate when product has no retail price — keeps trip totals moving when adding from Products.
- * Replace with real pricing when the API supplies quotes per line item.
- */
 function indicativeVicPriceFromProduct(p: Product): number {
   switch (p.price_range) {
     case "budget":
@@ -41,13 +37,41 @@ function indicativeVicPriceFromProduct(p: Product): number {
 
 const STORAGE_KEY = "enable_vic_itinerary_overlay_v1";
 
+export type ItineraryMetadataOverlayPatch = Partial<
+  Pick<Itinerary, "trip_name" | "trip_start_date" | "trip_end_date" | "destinations" | "traveler_count" | "description" | "notes">
+>;
+
 type OverlayFile = {
   version: 1;
   appendedByItinerary: Record<string, Array<{ dayNumber: number; event: ItineraryEvent }>>;
+  /** Full `days` replace base + appends for this itinerary (canonical after reorder). */
+  dayStructures?: Record<string, ItineraryDay[]>;
+  metadataByItinerary?: Record<string, ItineraryMetadataOverlayPatch>;
 };
 
 function productId(p: Product): string {
   return p.id ?? p._id ?? "";
+}
+
+function normalizeFile(raw: unknown): OverlayFile {
+  if (!raw || typeof raw !== "object") return { version: 1, appendedByItinerary: {} };
+  const o = raw as Record<string, unknown>;
+  const app = o.appendedByItinerary;
+  return {
+    version: 1,
+    appendedByItinerary:
+      app != null && typeof app === "object" && !Array.isArray(app)
+        ? (app as OverlayFile["appendedByItinerary"])
+        : {},
+    dayStructures:
+      o.dayStructures != null && typeof o.dayStructures === "object"
+        ? (o.dayStructures as OverlayFile["dayStructures"])
+        : undefined,
+    metadataByItinerary:
+      o.metadataByItinerary != null && typeof o.metadataByItinerary === "object"
+        ? (o.metadataByItinerary as OverlayFile["metadataByItinerary"])
+        : undefined,
+  };
 }
 
 function safeRead(): OverlayFile {
@@ -55,11 +79,7 @@ function safeRead(): OverlayFile {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { version: 1, appendedByItinerary: {} };
-    const p = JSON.parse(raw) as OverlayFile;
-    if (p?.version !== 1 || p.appendedByItinerary == null || typeof p.appendedByItinerary !== "object") {
-      return { version: 1, appendedByItinerary: {} };
-    }
-    return p;
+    return normalizeFile(JSON.parse(raw));
   } catch {
     return { version: 1, appendedByItinerary: {} };
   }
@@ -71,6 +91,14 @@ function safeWrite(data: OverlayFile) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch {
     /* quota / private mode */
+  }
+}
+
+function dispatchOverlay(itineraryId?: string) {
+  try {
+    window.dispatchEvent(new CustomEvent("enable-itinerary-overlay-changed", { detail: { itineraryId } }));
+  } catch {
+    /* ignore */
   }
 }
 
@@ -121,25 +149,65 @@ export function persistProductAddedEvent(
   arr.push({ dayNumber: Math.max(1, Math.floor(opts.day)), event });
   file.appendedByItinerary[itineraryId] = arr;
   safeWrite(file);
+  dispatchOverlay(itineraryId);
+}
+
+/** Persist full day list (e.g. after drag-and-drop). Clears incremental appends for this itinerary. */
+export function persistItineraryDays(itineraryId: string, days: ItineraryDay[]): void {
+  if (typeof window === "undefined") return;
+  const file = safeRead();
+  file.dayStructures = file.dayStructures ?? {};
   try {
-    window.dispatchEvent(new CustomEvent("enable-itinerary-overlay-changed", { detail: { itineraryId } }));
+    file.dayStructures[itineraryId] = structuredClone(days);
   } catch {
-    /* ignore */
+    file.dayStructures[itineraryId] = JSON.parse(JSON.stringify(days)) as ItineraryDay[];
+  }
+  delete file.appendedByItinerary[itineraryId];
+  safeWrite(file);
+  dispatchOverlay(itineraryId);
+}
+
+/** Merge trip metadata fields for preview (trip name, dates, etc.). */
+export function persistItineraryMetadata(itineraryId: string, patch: ItineraryMetadataOverlayPatch): void {
+  if (typeof window === "undefined") return;
+  const file = safeRead();
+  file.metadataByItinerary = file.metadataByItinerary ?? {};
+  file.metadataByItinerary[itineraryId] = { ...file.metadataByItinerary[itineraryId], ...patch };
+  safeWrite(file);
+  dispatchOverlay(itineraryId);
+}
+
+function cloneItinerary(base: Itinerary): Itinerary {
+  try {
+    return structuredClone(base);
+  } catch {
+    return JSON.parse(JSON.stringify(base)) as Itinerary;
   }
 }
 
-/** Deep-merge appended events onto a base itinerary (from mock or API). */
+/** Deep-merge overlay onto a base itinerary (from mock or API). */
 export function applyItineraryOverlay(base: Itinerary): Itinerary {
   const file = safeRead();
-  const appended = file.appendedByItinerary[base.id];
-  if (!appended?.length) return base;
+  const clone = cloneItinerary(base);
 
-  let clone: Itinerary;
-  try {
-    clone = structuredClone(base);
-  } catch {
-    clone = JSON.parse(JSON.stringify(base)) as Itinerary;
+  const meta = file.metadataByItinerary?.[base.id];
+  if (meta) {
+    Object.assign(clone, meta);
   }
+
+  const structured = file.dayStructures?.[base.id];
+  if (structured?.length !== undefined) {
+    try {
+      clone.days = structuredClone(structured);
+    } catch {
+      clone.days = JSON.parse(JSON.stringify(structured)) as ItineraryDay[];
+    }
+    clone.total_vic_price = sumItineraryEventVicPrices(clone);
+    return clone;
+  }
+
+  const appended = file.appendedByItinerary[base.id];
+  if (!appended?.length) return clone;
 
   for (const { dayNumber, event } of appended) {
     const dn = Math.max(1, dayNumber);
@@ -158,7 +226,6 @@ export function applyItineraryOverlay(base: Itinerary): Itinerary {
     day.events = [...(day.events ?? []), { ...event }];
   }
 
-  /** Add VIC sell for preview-appended lines only; keep mock headline total as baseline. */
   const appendedVicSum = appended.reduce((s, x) => s + (x.event.vic_price ?? 0), 0);
   if (appendedVicSum > 0) {
     const baseline =
@@ -192,7 +259,7 @@ export function itineraryHasLocalOverlayAppends(itineraryId: string): boolean {
   return (list?.length ?? 0) > 0;
 }
 
-/** Remove all preview-appended itinerary events and notify listeners. */
+/** Remove all preview-local itinerary overlay data and notify listeners. */
 export function clearItineraryOverlay(): void {
   if (typeof window === "undefined") return;
   try {
@@ -200,9 +267,5 @@ export function clearItineraryOverlay(): void {
   } catch {
     /* ignore */
   }
-  try {
-    window.dispatchEvent(new CustomEvent("enable-itinerary-overlay-changed", { detail: {} }));
-  } catch {
-    /* ignore */
-  }
+  dispatchOverlay();
 }

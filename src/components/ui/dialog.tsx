@@ -56,12 +56,13 @@ function DialogContent({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
-  /** Left edge sheet (e.g. mobile navigation) */
-  sheetSide?: "left"
+  /** Edge sheet (mobile nav left; assistant / panels right) */
+  sheetSide?: "left" | "right"
   /** Merged onto overlay (e.g. higher z-index for command palette over docks) */
   overlayClassName?: string
 }) {
   const isLeftSheet = sheetSide === "left"
+  const isRightSheet = sheetSide === "right"
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay className={overlayClassName} />
@@ -70,7 +71,9 @@ function DialogContent({
         className={cn(
           isLeftSheet
             ? "fixed inset-y-0 left-0 top-0 z-50 flex h-full max-h-none w-[min(288px,100vw)] max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-y-0 border-l-0 border-r border-border bg-background p-0 shadow-2xl outline-none duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-left-4 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-left-4"
-            : "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-xl border border-border bg-background p-6 shadow-2xl duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:max-w-lg",
+            : isRightSheet
+              ? "fixed inset-y-0 right-0 top-0 z-50 flex h-full max-h-none w-[min(100vw,28rem)] max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-y-0 border-r-0 border-l border-border bg-background p-0 shadow-2xl outline-none duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-right-4 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-right-4"
+              : "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-xl border border-border bg-background p-6 shadow-2xl duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:max-w-lg",
           className
         )}
         {...props}
@@ -81,7 +84,7 @@ function DialogContent({
             data-slot="dialog-close"
             className={cn(
               "absolute rounded-xs opacity-70 text-muted-foreground transition-opacity hover:opacity-100 hover:bg-[rgba(255,255,255,0.06)] focus:ring-2 focus:ring-ring focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-              isLeftSheet ? "top-3 right-3" : "top-4 right-4"
+              isLeftSheet ? "top-3 right-3" : isRightSheet ? "top-3 left-3" : "top-4 right-4"
             )}
           >
             <XIcon />

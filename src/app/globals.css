@@ -629,5 +629,7 @@ input.chat-input-no-focus-outline:focus-visible,
 }
 
 .transition-all {
-  transition: all 200ms ease-out;
+    transition: all 200ms ease-out;
 }
+
+/* App window chrome (menu bar, path, title, toolbar) — class names live in src/lib/dashboardChrome.ts */

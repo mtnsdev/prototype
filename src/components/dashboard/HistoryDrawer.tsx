@@ -117,7 +117,7 @@ export default function HistoryDrawer({
             <div
                 className={[
                     "fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-200",
-                    stackClassNames?.backdrop ?? "z-40",
+                    stackClassNames?.backdrop ?? "z-[100]",
                 ].join(" ")}
                 onClick={onClose}
             />
@@ -125,8 +125,8 @@ export default function HistoryDrawer({
             {/* Drawer */}
             <div
                 className={[
-                    "fixed right-0 top-0 h-full w-[400px] max-w-full bg-background border-l border-border flex flex-col shadow-2xl",
-                    stackClassNames?.panel ?? "z-50",
+                    "fixed right-0 top-0 flex h-full w-[400px] max-w-full flex-col border-l border-border bg-background shadow-2xl",
+                    stackClassNames?.panel ?? "z-[110]",
                 ].join(" ")}
             >
                 {/* Header */}

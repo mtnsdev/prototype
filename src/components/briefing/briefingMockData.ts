@@ -538,7 +538,7 @@ function getMockQuickStartContent(): QuickStartContent {
     actions: [
       { label: "Add VIC", icon: "UserPlus", route: "/dashboard/vics", description: "Create a new VIC profile" },
       { label: "Create Itinerary", icon: "Route", route: "/dashboard/itineraries?create=1", description: "Start a new trip" },
-      { label: "Browse Products", icon: "Package", route: "/dashboard/products", description: "Search the product registry" },
+      { label: "Browse catalog", icon: "Package", route: "/dashboard/products", description: "Open the product directory" },
       { label: "Search Knowledge", icon: "Search", route: "/dashboard/search", description: "Search across knowledge bases" },
       { label: "Acuity Lookup", icon: "Sparkles", route: "/dashboard/vics", description: "Open VIC list to run Acuity on a specific VIC" },
       { label: "Import CSV", icon: "FileDown", route: "/dashboard/vics", description: "Bulk import VICs" },

@@ -25,7 +25,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Copy, Pencil, Plus, Trash2 } from "lucide-react";
+import { Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import type { Product } from "@/types/product";
 import type {
   DirectoryCollectionOption,
@@ -64,7 +64,7 @@ import {
   VERIFICATION_BADGES,
 } from "@/config/productCategoryConfig";
 import { Button } from "@/components/ui/button";
-import Breadcrumbs from "@/components/ui/breadcrumbs";
+import { ShellCrumbOverride } from "@/contexts/DashboardShellContext";
 import DeleteProductModal from "../Modals/DeleteProductModal";
 import AddProductModal from "../Modals/AddProductModal";
 import CopyToAgencyModal from "../Modals/CopyToAgencyModal";
@@ -352,19 +352,16 @@ export default function ProductDetailPage({ productId }: Props) {
     load();
   }, [productId, load]);
 
-    if (getDirectoryProductById(productId) && directoryProduct) {
+  if (getDirectoryProductById(productId) && directoryProduct) {
     return (
       <div className="min-h-screen bg-inset p-6 md:p-8">
-        <Button
-          variant="ghost"
-          size="sm"
-          asChild
-          className="mb-6 text-muted-foreground hover:text-foreground"
-        >
-          <Link href="/dashboard/products" className="inline-flex items-center gap-2">
-            <ArrowLeft size={18} /> Back to Products
-          </Link>
-        </Button>
+        <ShellCrumbOverride
+          crumbs={[
+            { label: "Home", href: "/dashboard" },
+            { label: "Catalog", href: "/dashboard/products" },
+            { label: directoryProduct.name },
+          ]}
+        />
         <div className="mx-auto w-full max-w-[420px]">
           <ProductDirectoryDetailBody
             product={directoryProduct}
@@ -411,6 +408,15 @@ export default function ProductDetailPage({ productId }: Props) {
   const layer = (product?.data_ownership_level ?? "Advisor") as keyof typeof DATA_LAYER_BADGES;
   const ver = (product?.verification_status ?? "unverified") as keyof typeof VERIFICATION_BADGES;
 
+  const shellCrumbs = useMemo(() => {
+    if (loading || !product) return [];
+    return [
+      { label: "Home", href: "/dashboard" },
+      { label: "Catalog", href: "/dashboard/products" },
+      { label: product.name },
+    ];
+  }, [loading, product]);
+
   if (loading) {
     return <div className="p-6 text-muted-foreground">Loading product…</div>;
   }
@@ -435,6 +441,7 @@ export default function ProductDetailPage({ productId }: Props) {
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background">
+      {shellCrumbs.length > 0 ? <ShellCrumbOverride crumbs={shellCrumbs} /> : null}
       <div className="relative h-[240px] w-full shrink-0 overflow-hidden bg-zinc-900">
         <ImageWithFallback
           fallbackType="product"
@@ -467,21 +474,6 @@ export default function ProductDetailPage({ productId }: Props) {
       </div>
       <header className="flex flex-col gap-3 border-b border-border p-4 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <div className="flex min-w-0 flex-wrap items-center gap-2 lg:flex-1 lg:gap-3">
-          <div className="w-full mb-1">
-            <Breadcrumbs
-              items={[
-                { label: "Dashboard", href: "/dashboard" },
-                { label: "Products", href: "/dashboard/products" },
-                { label: product.name },
-              ]}
-            />
-          </div>
-          <Button variant="ghost" size="sm" asChild className="shrink-0 text-muted-foreground hover:text-foreground">
-            <Link href="/dashboard/products" className="inline-flex items-center gap-1.5">
-              <ArrowLeft className="size-3.5" aria-hidden />
-              Back to Products
-            </Link>
-          </Button>
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
               <Icon className="size-3.5" aria-hidden />

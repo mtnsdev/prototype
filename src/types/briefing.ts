@@ -16,6 +16,7 @@ export enum WidgetType {
   QuickStart = "quick_start",
   FreeText = "free_text",
   RecentActivity = "recent_activity",
+  IntelligenceEmbed = "intelligence_embed",
 }
 
 /** Variants for `IntelligenceEmbedWidget` (briefing grid → intelligence-layer widgets). */
@@ -195,6 +196,11 @@ export interface CommissionAlertContent {
   items: CommissionAlertItem[];
 }
 
+export interface IntelligenceEmbedContent {
+  type: "intelligence_embed";
+  variant: IntelligenceEmbedVariant;
+}
+
 export type WidgetContent =
   | NewsAlertContent
   | PartnerUpdateContent
@@ -205,7 +211,8 @@ export type WidgetContent =
   | CommissionAlertContent
   | QuickStartContent
   | FreeTextContent
-  | RecentActivityContent;
+  | RecentActivityContent
+  | IntelligenceEmbedContent;
 
 export interface BriefingWidget {
   id: string;

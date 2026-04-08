@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useUser } from "@/contexts/UserContext";
 import { useBriefingDashboardLayout } from "@/hooks/useBriefingDashboardLayout";
@@ -14,6 +15,8 @@ import {
   getMockRecentActivityContentAgency,
 } from "./briefingMockData";
 import { IS_PREVIEW_MODE } from "@/config/preview";
+import { cn } from "@/lib/utils";
+import { getCmdKRecents, type CmdKRecent } from "@/lib/cmdkRecents";
 import {
   Select,
   SelectContent,
@@ -38,7 +41,24 @@ function getGreeting(): string {
   return "Good evening";
 }
 
-export default function BriefingRoomPage() {
+/** Same output on server and client (avoids `Intl` hydration mismatches). */
+function formatDateTime(d = new Date()): string {
+  const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const w = weekdays[d.getDay()] ?? "";
+  const mon = months[d.getMonth()] ?? "";
+  const day = d.getDate();
+  const h = String(d.getHours()).padStart(2, "0");
+  const m = String(d.getMinutes()).padStart(2, "0");
+  return `${w}, ${day} ${mon}, ${h}:${m}`;
+}
+
+type BriefingRoomPageProps = {
+  /** macOS-style home desktop (replaces “Briefing” framing in header). */
+  desktopMode?: boolean;
+};
+
+export default function BriefingRoomPage({ desktopMode = false }: BriefingRoomPageProps) {
   const { user, prototypeAdminView } = useUser();
   const {
     layout: userDashboardLayout,
@@ -59,6 +79,21 @@ export default function BriefingRoomPage() {
   const [widgets, setWidgets] = useState<BriefingWidget[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [dateTime, setDateTime] = useState(formatDateTime);
+  const [cmdRecents, setCmdRecents] = useState<CmdKRecent[]>([]);
+
+  useEffect(() => {
+    if (!desktopMode) return;
+    setCmdRecents(getCmdKRecents());
+    const onVis = () => setCmdRecents(getCmdKRecents());
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [desktopMode]);
+
+  useEffect(() => {
+    const t = setInterval(() => setDateTime(formatDateTime()), 60_000);
+    return () => clearInterval(t);
+  }, []);
 
   const focusRing =
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
@@ -110,33 +145,75 @@ export default function BriefingRoomPage() {
     user?.email?.split("@")[0] ||
     (IS_PREVIEW_MODE && user == null && prototypeAdminView ? "Kristin" : "there");
   return (
-    <div className="briefing-nature flex h-full min-h-0 flex-1 flex-col bg-background">
+    <div
+      className={cn(
+        "briefing-nature flex h-full min-h-0 flex-1 flex-col bg-background",
+        desktopMode &&
+          "bg-[radial-gradient(ellipse_120%_80%_at_50%_-20%,var(--muted-info-bg),transparent_55%),radial-gradient(ellipse_80%_50%_at_100%_50%,color-mix(in_oklab,var(--muted-info-bg)_35%,transparent),transparent)]"
+      )}
+    >
       <header className="relative shrink-0 overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[var(--muted-info-bg)] to-transparent opacity-90" />
         <div className="relative px-6 py-7 md:px-10 md:py-9">
-          <div className="min-w-0 space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/50">
-              Briefing
-            </p>
-            <h1 className="text-balance text-2xl font-semibold tracking-[-0.02em] text-foreground md:text-[1.75rem] md:leading-snug">
-              {getGreeting()}, {firstName}
-            </h1>
-            <p className="max-w-md pt-0.5 text-sm leading-relaxed text-muted-foreground/80">
-              Priorities, calendar, and agency updates in one place.
-            </p>
-            <div className="pt-4">
-              <button
-                type="button"
-                onClick={() => setCatchUpOpen(true)}
-                className={`rounded-xl border border-border bg-card/90 px-4 py-2.5 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-muted/50 ${focusRing}`}
-              >
-                Catch up
-              </button>
+          <div className="flex flex-wrap items-end justify-between gap-8">
+            <div className="min-w-0 space-y-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/50">
+                {desktopMode ? "Desktop" : "Briefing"}
+              </p>
+              <h1 className="text-balance text-2xl font-semibold tracking-[-0.02em] text-foreground md:text-[1.75rem] md:leading-snug">
+                {getGreeting()}, {firstName}
+              </h1>
+              <p className="max-w-md pt-0.5 text-sm leading-relaxed text-muted-foreground/80">
+                {desktopMode
+                  ? "Widgets and recents on your workspace. Open apps from the dock below."
+                  : "Priorities, calendar, and agency updates in one place."}
+              </p>
+              {!desktopMode ? (
+                <div className="pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setCatchUpOpen(true)}
+                    className={`rounded-xl border border-border bg-card/90 px-4 py-2.5 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-muted/50 ${focusRing}`}
+                  >
+                    Catch up
+                  </button>
+                </div>
+              ) : null}
             </div>
+            <p
+              role="status"
+              aria-live="polite"
+              aria-label={`Current date and time: ${dateTime}`}
+              className="shrink-0 rounded-full border border-border bg-card/85 px-4 py-2 text-xs font-medium tabular-nums text-muted-foreground shadow-sm backdrop-blur-sm"
+            >
+              {dateTime}
+            </p>
           </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       </header>
+
+      {desktopMode && cmdRecents.length > 0 ? (
+        <div className="shrink-0 border-b border-border/60 bg-card/20 px-6 py-3 md:px-10">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/55">
+            Recent windows
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {cmdRecents.slice(0, 6).map((r) => (
+              <Link
+                key={r.href}
+                href={r.href}
+                className="max-w-[11rem] rounded-xl border border-border bg-card/80 px-3 py-2 shadow-sm backdrop-blur-sm transition-colors hover:bg-muted/50"
+              >
+                <span className="text-2xs font-medium uppercase tracking-wide text-muted-foreground/65">
+                  {r.kind}
+                </span>
+                <span className="block truncate text-sm font-medium text-foreground">{r.title}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="flex min-h-0 flex-1 overflow-auto">
         <div className="mx-auto max-w-[1600px] px-6 py-10 md:px-10 md:py-12">

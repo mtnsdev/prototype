@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { APP_TOOLBAR_ROW } from "@/lib/dashboardChrome";
 import { cn } from "@/lib/utils";
 
 export type ItineraryTab = "mine" | "agency";
@@ -29,37 +31,15 @@ export default function ItineraryTabBar({ activeTab, onTabChange, className }: P
 
   return (
     <div
-      role="tablist"
-      aria-label="Itinerary scope"
-      className={cn(
-        "flex shrink-0 gap-0.5 border-b border-border pl-6 pr-[4.5rem]",
-        className
-      )}
+      className={cn(APP_TOOLBAR_ROW, "justify-start pl-5 pr-[4.5rem] md:pl-6", className)}
+      role="presentation"
     >
-      {TABS.map(({ value, label }) => {
-        const selected = activeTab === value;
-        return (
-          <button
-            key={value}
-            type="button"
-            role="tab"
-            aria-selected={selected}
-            onClick={() => setTab(value)}
-            className={cn(
-              "relative px-3 py-2.5 text-xs font-medium transition-colors",
-              selected ? "text-foreground" : "text-muted-foreground hover:text-muted-foreground"
-            )}
-          >
-            {label}
-            {selected ? (
-              <span
-                className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-brand-cta"
-                aria-hidden
-              />
-            ) : null}
-          </button>
-        );
-      })}
+      <SegmentedControl<ItineraryTab>
+        aria-label="Itinerary scope"
+        value={activeTab}
+        onChange={setTab}
+        options={TABS}
+      />
     </div>
   );
 }

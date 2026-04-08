@@ -1,10 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Bookmark, Building2, LayoutGrid, Search, Trash2, Users } from "lucide-react";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { cn } from "@/lib/utils";
 import {
+  APP_TOOLBAR_ROW,
   DASHBOARD_LIST_PAGE_HEADER,
   DASHBOARD_LIST_PAGE_HEADER_SUBTITLE,
   DASHBOARD_LIST_PAGE_HEADER_TITLE,
@@ -373,7 +376,7 @@ function filterCollectionsForUser(
 
 const DIRECTORY_SEED_NAME = "Janet";
 
-export default function ProductDirectoryPage() {
+export default function ProductDirectoryPage({ embedMode = false }: { embedMode?: boolean }) {
   const { user, prototypeAdminView, isLoading: userLoading } = useUser();
   const toast = useToast();
   const { catalogRevision } = useProductDirectoryCatalog();
@@ -465,6 +468,10 @@ export default function ProductDirectoryPage() {
   const browseScrollRef = useRef<HTMLDivElement>(null);
 
   const [mainTab, setMainTab] = useState<ProductDirectoryMainTab>("browse");
+  useEffect(() => {
+    if (!embedMode) return;
+    setMainTab("browse");
+  }, [embedMode]);
   const [partnerPortalDirty, setPartnerPortalDirty] = useState(false);
   const [partnerPortalMountKey, setPartnerPortalMountKey] = useState(0);
   const [repFirmsMountKey, setRepFirmsMountKey] = useState(0);
@@ -1492,49 +1499,56 @@ export default function ProductDirectoryPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-inset text-foreground">
-      <header className={DASHBOARD_LIST_PAGE_HEADER}>
+      <header
+        className={cn(
+          DASHBOARD_LIST_PAGE_HEADER,
+          embedMode && "h-12 min-h-12 border-b border-border bg-card/25 pl-4 pr-4"
+        )}
+      >
         <div className={DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK}>
-          <h1 className={DASHBOARD_LIST_PAGE_HEADER_TITLE}>Product Directory</h1>
+          <h1 className={DASHBOARD_LIST_PAGE_HEADER_TITLE}>
+            {embedMode ? "Catalog" : "Product Directory"}
+          </h1>
           <p className={DASHBOARD_LIST_PAGE_HEADER_SUBTITLE}>
-            {mainTab === "browse"
-              ? `${sortedProducts.length} product${sortedProducts.length !== 1 ? "s" : ""}`
-              : mainTab === "collections"
-                ? `${availableCollections.length} collection${availableCollections.length !== 1 ? "s" : ""}`
-                : mainTab === "rep-firms"
-                  ? `${repFirms.length} rep firm${repFirms.length !== 1 ? "s" : ""}`
-                : `${portalRowCount} program${portalRowCount !== 1 ? "s" : ""} · rates, linked properties & incentives`}
+            {embedMode
+              ? `${sortedProducts.length} product${sortedProducts.length !== 1 ? "s" : ""} · split view`
+              : mainTab === "browse"
+                ? `${sortedProducts.length} product${sortedProducts.length !== 1 ? "s" : ""}`
+                : mainTab === "collections"
+                  ? `${availableCollections.length} collection${availableCollections.length !== 1 ? "s" : ""}`
+                  : mainTab === "rep-firms"
+                    ? `${repFirms.length} rep firm${repFirms.length !== 1 ? "s" : ""}`
+                    : `${portalRowCount} program${portalRowCount !== 1 ? "s" : ""} · rates, linked properties & incentives`}
           </p>
         </div>
+        {embedMode ? (
+          <Link
+            href="/dashboard/products"
+            className="shrink-0 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Full catalog →
+          </Link>
+        ) : null}
       </header>
 
-      <div className="flex shrink-0 gap-0.5 border-b border-border pl-6 pr-[4.5rem]">
-        {(
-          [
-            { id: "browse" as const, label: "Products" },
-            { id: "collections" as const, label: "Collections" },
-            { id: "rep-firms" as const, label: "Rep Firms" },
-            { id: "partner-portal" as const, label: "Partner portal" },
-          ] as const
-        ).map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => trySetMainTab(t.id)}
-            className={cn(
-              "relative px-3 py-2.5 text-xs font-medium transition-colors",
-              mainTab === t.id ? "text-foreground" : "text-muted-foreground hover:text-muted-foreground"
-            )}
-          >
-            {t.label}
-            {mainTab === t.id ? (
-              <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-brand-cta" />
-            ) : null}
-          </button>
-        ))}
-      </div>
+      {!embedMode ? (
+        <div className={cn(APP_TOOLBAR_ROW, "justify-start pl-5 pr-[4.5rem] md:pl-6")}>
+          <SegmentedControl<ProductDirectoryMainTab>
+            aria-label="Product directory section"
+            value={mainTab}
+            onChange={(v) => trySetMainTab(v)}
+            options={[
+              { value: "browse", label: "Products" },
+              { value: "collections", label: "Collections" },
+              { value: "rep-firms", label: "Rep Firms" },
+              { value: "partner-portal", label: "Partner portal" },
+            ]}
+          />
+        </div>
+      ) : null}
 
       {mainTab === "browse" ? (
-      <div className="relative z-10 shrink-0 px-6 pb-0 pt-4">
+      <div className={cn("relative z-10 shrink-0 px-6 pb-0 pt-4", embedMode && "px-3 pt-2")}>
         <ProductDirectoryFilterBar
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}

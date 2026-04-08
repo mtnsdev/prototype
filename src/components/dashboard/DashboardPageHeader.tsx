@@ -1,28 +1,19 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { cn } from "@/lib/utils";
-import { typographyPageTitleClass } from "@/components/ui/typography";
-import {
-  DASHBOARD_LIST_PAGE_HEADER,
-  DASHBOARD_LIST_PAGE_HEADER_ACTIONS,
-} from "@/lib/dashboardChrome";
+import { AppWindowHeader } from "@/components/ui/app-window-header";
 
 type Props = {
   title: ReactNode;
+  subtitle?: ReactNode;
   /** Renders on the right (sync, filters export, etc.). */
   actions?: ReactNode;
   className?: string;
 };
 
-/** Page title row for dashboard pages. */
-export default function DashboardPageHeader({ title, actions, className }: Props) {
+/** Page title row for dashboard list/index pages (window chrome). */
+export default function DashboardPageHeader({ title, subtitle, actions, className }: Props) {
   return (
-    <header className={cn(DASHBOARD_LIST_PAGE_HEADER, className)}>
-      <div className={cn("min-w-0 line-clamp-1", typographyPageTitleClass)}>{title}</div>
-      {actions ? (
-        <div className={DASHBOARD_LIST_PAGE_HEADER_ACTIONS}>{actions}</div>
-      ) : null}
-    </header>
+    <AppWindowHeader title={title} subtitle={subtitle} actions={actions} className={className} />
   );
 }
