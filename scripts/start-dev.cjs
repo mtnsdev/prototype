@@ -3,12 +3,13 @@
  * Local Next.js dev bootstrap — kills stale processes + lock, then starts dev.
  * Uses execFileSync (no shell) so paths with spaces (e.g. "Enable Local") work.
  *
- *   npm run dev
+ *   npm run dev         — Turbopack dev (Next 16 default)
+ *   npm run dev:webpack — webpack dev (opt-in; use if you hit Turbopack issues)
  *   npm run dev:stop
  *   npm run dev:fresh   — after cleanup, delete entire .next then dev
  *   SKIP_DEV_CLEANUP=1  — skip killing ports / removing lock
  */
-const { execFileSync, spawnSync } = require("child_process");
+const { execFileSync, spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
@@ -75,7 +76,7 @@ function freeDevEnvironment() {
 
   if (process.platform !== "win32") {
     try {
-      execFileSync("sleep", ["0.35"], { stdio: "ignore" });
+      execFileSync("sleep", ["1"], { stdio: "ignore" });
     } catch {
       /* ignore */
     }
@@ -141,15 +142,38 @@ if (HOST) nextArgs.push("-H", HOST);
 if (process.env.DEV_WEBPACK === "1") nextArgs.push("--webpack");
 
 console.log(
-  `[dev] Starting Next.js on http://localhost:${PORT}` +
-    (HOST ? ` (host ${HOST})` : "") +
+  `[dev] Starting Next.js — open http://127.0.0.1:${PORT} (or http://localhost:${PORT})` +
+    (HOST ? `  [bind: ${HOST}]` : "") +
     "\n"
 );
 
-const r = spawnSync(nextBin, nextArgs, {
+// Use spawn (not spawnSync) so SIGINT/SIGTERM reach the Next process and ports unlock on exit.
+const child = spawn(nextBin, nextArgs, {
   stdio: "inherit",
   cwd: root,
   env: { ...process.env },
 });
 
-process.exit(r.status === null ? 1 : r.status);
+function forwardSignal(sig) {
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  try {
+    child.kill(sig);
+  } catch {
+    /* ignore */
+  }
+}
+
+process.on("SIGINT", () => forwardSignal("SIGINT"));
+process.on("SIGTERM", () => forwardSignal("SIGTERM"));
+
+child.on("error", (err) => {
+  console.error("[dev] Failed to start Next.js:", err.message);
+  process.exit(1);
+});
+
+child.on("exit", (code, signal) => {
+  if (signal === "SIGINT" || signal === "SIGTERM") {
+    process.exit(0);
+  }
+  process.exit(code === null ? 1 : code);
+});

@@ -5,6 +5,7 @@ import { Award, Lock, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/contexts/ToastContext";
 import { useUser } from "@/contexts/UserContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { ScopeBadge } from "@/components/ui/ScopeBadge";
 import { MOCK_TEAMS } from "@/lib/teamsMock";
 import type { Product } from "@/types/product";
@@ -20,9 +21,9 @@ type Props = {
 };
 
 export function ProductDetailLayers({ product }: Props) {
-  const { user, prototypeAdminView } = useUser();
+  const { user } = useUser();
+  const { isAdmin } = usePermissions();
   const toast = useToast();
-  const isAdmin = prototypeAdminView;
 
   const mock = useMemo(() => getProductLayerMock(product.id), [product.id]);
   const [advisorOverrides, setAdvisorOverrides] = useState<AdvisorLayerMock>(mock.advisorDefaults);

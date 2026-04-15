@@ -33,6 +33,17 @@ export interface DirectoryProductPromotion {
   title?: string;
   /** Advisor-facing terms, stacking rules, or internal notes for the incentive. */
   details?: string;
+  /**
+   * When merged from the partner-program registry `Promotion`, mirrors `Promotion.rateType`.
+   * Omitted legacy rows default to percentage in the UI.
+   */
+  rateType?: "percentage" | "flat";
+  /** Registry: whether the incentive stacks with the base program commission. */
+  stacksWithBase?: boolean;
+  /** Volume incentive metric when set on the registry promotion. */
+  volumeMetric?: "room_nights" | "bookings" | "revenue";
+  volumeThreshold?: number | null;
+  volumeRetroactive?: boolean;
 }
 
 /**
@@ -134,6 +145,8 @@ export interface DirectoryAgencyContact {
   note?: string;
   addedBy?: string;
   addedById?: string;
+  /** ISO — when the contact was added (prototype / audit). */
+  addedAt?: string;
   /** Submitted from private contacts; awaiting admin approval. */
   pendingUpgrade?: boolean;
   upgradedById?: string;
@@ -195,6 +208,8 @@ export interface DirectoryProduct {
   longitude?: number;
   /** One or more directory categories (e.g. from Google Places mapping). */
   types: DirectoryProductCategory[];
+  /** Raw Google Places types when provided by search/API (optional; aids DMC detection). */
+  google_types?: string[];
   region: string;
   description: string;
   scope: DirectoryProductScope;
@@ -223,6 +238,21 @@ export interface DirectoryProduct {
   addedAt?: string;
   /** ISO — last registry / enrichment update. */
   updatedAt?: string;
+  /**
+   * Planned opening (hotels/cruises). Displayed on cards/detail when set.
+   * Prefer ISO date; optional `openingLabel` overrides formatting (e.g. “Q2 2026”).
+   */
+  openingDate?: string | null;
+  openingLabel?: string | null;
+
+  /** DMC operational fields (populated for DMC-type products; null or omitted for others). */
+  general_requests_email?: string | null;
+  pricing_model?: string | null;
+  payment_process?: string | null;
+  commission_process?: string | null;
+  after_hours_support?: string | null;
+  destinations_served?: string | null;
+  repped_by?: string | null;
 }
 
 export interface DirectoryCollectionOption {

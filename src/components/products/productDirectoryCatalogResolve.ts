@@ -28,18 +28,39 @@ export function resolveAdvisorCatalogFromStorage(
       ? { ...persisted.externalSearchMeta }
       : {};
 
+  const seeded = cloneMockDirectoryCatalogForAdvisor(advisorUid, advisorDisplayName);
+
   if (persisted.products?.length) {
-    return {
-      products: cloneDirectoryProductsForState(persisted.products),
-      directoryCollections:
-        persisted.directoryCollections && persisted.directoryCollections.length > 0
-          ? cloneDirectoryCollectionsForState(persisted.directoryCollections)
-          : cloneMockDirectoryCatalogForAdvisor(advisorUid, advisorDisplayName).collections,
-      externalSearchMeta: meta,
-    };
+    try {
+      const products = cloneDirectoryProductsForState(persisted.products);
+      /** Corrupt / partial saves can yield an empty list; never strand the UI with no catalog. */
+      if (products.length === 0) {
+        return {
+          products: seeded.products,
+          directoryCollections:
+            persisted.directoryCollections && persisted.directoryCollections.length > 0
+              ? cloneDirectoryCollectionsForState(persisted.directoryCollections)
+              : seeded.collections,
+          externalSearchMeta: meta,
+        };
+      }
+      return {
+        products,
+        directoryCollections:
+          persisted.directoryCollections && persisted.directoryCollections.length > 0
+            ? cloneDirectoryCollectionsForState(persisted.directoryCollections)
+            : seeded.collections,
+        externalSearchMeta: meta,
+      };
+    } catch {
+      return {
+        products: seeded.products,
+        directoryCollections: seeded.collections,
+        externalSearchMeta: meta,
+      };
+    }
   }
 
-  const seeded = cloneMockDirectoryCatalogForAdvisor(advisorUid, advisorDisplayName);
   return {
     products: seeded.products,
     directoryCollections: seeded.collections,

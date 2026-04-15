@@ -6,6 +6,10 @@ import { Check, Plus, Search, Sparkles, Users } from "lucide-react";
 import type { DirectoryProduct } from "@/types/product-directory";
 import { cn } from "@/lib/utils";
 import { ProductDirectoryCategoryBadge } from "./ProductDirectoryCategoryBadge";
+import {
+  dmcOperationalDataPresent,
+  isDMCProduct,
+} from "@/components/products/directoryProductTypeHelpers";
 import { directoryProductPlaceLabel } from "./productDirectoryVisual";
 import {
   getTopBookableProgramByCommission,
@@ -14,6 +18,7 @@ import {
 } from "./productDirectoryCommission";
 import { DIRECTORY_TIER_FILTER_UI } from "./productDirectoryFilterConfig";
 import { listCardRowBaseClass } from "@/lib/list-ui";
+import { formatProductOpeningLine } from "@/lib/productDirectoryOpening";
 
 type Props = {
   products: DirectoryProduct[];
@@ -97,6 +102,7 @@ export default function DirectoryProductListView({
         const tierUi = DIRECTORY_TIER_FILTER_UI.find((t) => t.id === (product.tier ?? "unrated"));
         const tierStarCount = tierUi?.stars ?? 0;
         const tierStarColor = tierUi?.color ?? "#4A4540";
+        const openingLine = formatProductOpeningLine(product);
 
         const onPointerDown = () => {
           if (!onEnterBulkMode || bulkMode) return;
@@ -218,6 +224,9 @@ export default function DirectoryProductListView({
                         <span className="ml-1 text-[9px] text-muted-foreground">{product.priceTier}</span>
                       ) : null}
                     </p>
+                    {openingLine ? (
+                      <p className="truncate text-[9px] font-medium text-[#C9A96E]/90">{openingLine}</p>
+                    ) : null}
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
                     {product.hasTeamData && (
@@ -274,9 +283,6 @@ export default function DirectoryProductListView({
                       {topRate}% <span className="text-muted-foreground">· {programDisplayName(topProg)}</span>
                     </span>
                   )}
-                  {!canViewCommissions && topProg != null && topRate != null && (
-                    <span className="text-[8px] text-muted-foreground">Rate on file</span>
-                  )}
                   {canViewCommissions && topRate == null && (
                     <span className="text-[8px] text-muted-foreground">Unrated</span>
                   )}
@@ -300,6 +306,11 @@ export default function DirectoryProductListView({
                     >
                       <Search className="h-2 w-2 shrink-0" aria-hidden />
                       Search
+                    </span>
+                  ) : null}
+                  {isDMCProduct(product) && dmcOperationalDataPresent(product) ? (
+                    <span className="inline-flex rounded-full bg-[rgba(212,165,116,0.15)] px-2 py-px text-[9px] text-[rgba(212,165,116,0.85)]">
+                      Operations on file
                     </span>
                   ) : null}
                 </div>

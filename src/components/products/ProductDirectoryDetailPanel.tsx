@@ -16,6 +16,8 @@
 
 "use client";
 
+import { useLayoutEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { DirectoryCollectionOption, DirectoryProduct } from "@/types/product-directory";
 import type { RepFirm } from "@/types/rep-firm";
 import type { Team } from "@/types/teams";
@@ -23,6 +25,8 @@ import Link from "next/link";
 import { ProductDirectoryDetailBody } from "./ProductDirectoryDetailBody";
 
 type Props = {
+  /** Distance from viewport top to start the dim + sidebar (below catalog chrome). */
+  backdropTopPx?: number;
   product: DirectoryProduct;
   canViewCommissions: boolean;
   isAdmin: boolean;
@@ -37,9 +41,12 @@ type Props = {
   onRequestCreateCollection?: () => void;
   partnerProgramCustomKeys?: string[];
   repFirmsRegistry?: RepFirm[] | null;
+  /** When true, inline partner-program editing is disabled (registry is source of truth). */
+  partnerProgramsManagedInRegistry?: boolean;
 };
 
 export default function ProductDirectoryDetailPanel({
+  backdropTopPx = 0,
   product,
   canViewCommissions,
   isAdmin,
@@ -54,17 +61,26 @@ export default function ProductDirectoryDetailPanel({
   onRequestCreateCollection,
   partnerProgramCustomKeys,
   repFirmsRegistry,
+  partnerProgramsManagedInRegistry,
 }: Props) {
-  return (
+  const [mounted, setMounted] = useState(false);
+  useLayoutEffect(() => setMounted(true), []);
+
+  const top = Math.max(0, backdropTopPx);
+
+  /** Portal to body so no dashboard `overflow` / stacking context can sit above catalog tabs. */
+  const node = (
     <>
       <button
         type="button"
-        className="fixed inset-0 z-30 cursor-default bg-black/40"
+        className="fixed right-0 bottom-0 left-0 z-[80] cursor-default bg-black/40"
+        style={{ top }}
         aria-label="Close panel"
         onClick={onClose}
       />
       <aside
-        className="fixed inset-y-0 right-0 z-40 flex w-full max-w-[420px] flex-col overflow-hidden border-l border-border bg-inset shadow-2xl animate-in slide-in-from-right duration-200 ease-out"
+        className="fixed right-0 bottom-0 z-[90] flex w-full max-w-[420px] flex-col overflow-hidden border-l border-border bg-inset shadow-2xl animate-in slide-in-from-right duration-200 ease-out"
+        style={{ top }}
       >
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
           <ProductDirectoryDetailBody
@@ -83,6 +99,7 @@ export default function ProductDirectoryDetailPanel({
             onRequestCreateCollection={onRequestCreateCollection}
             partnerProgramCustomKeys={partnerProgramCustomKeys}
             repFirmsRegistry={repFirmsRegistry}
+            partnerProgramsManagedInRegistry={partnerProgramsManagedInRegistry}
           />
         </div>
         {/* Footer: Link to full detail view */}
@@ -99,4 +116,7 @@ export default function ProductDirectoryDetailPanel({
       </aside>
     </>
   );
+
+  if (!mounted || typeof document === "undefined") return null;
+  return createPortal(node, document.body);
 }

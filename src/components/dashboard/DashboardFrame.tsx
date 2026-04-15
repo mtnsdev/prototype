@@ -9,6 +9,7 @@ import { KvShareSuggestionsProvider } from "@/contexts/KvShareSuggestionsContext
 import ReportIssueLauncher from "@/components/ui/ReportIssueLauncher";
 import { NotificationPanelProvider } from "@/components/dashboard/DashboardNotifications";
 import { ProductDirectoryCatalogProvider } from "@/components/products/ProductDirectoryCatalogContext";
+import { PartnerProgramsProvider } from "@/contexts/PartnerProgramsContext";
 import { GlobalSearchProvider } from "@/contexts/GlobalSearchContext";
 import { DashboardShellProvider } from "@/contexts/DashboardShellContext";
 import DashboardShellChrome from "@/components/dashboard/DashboardShellChrome";
@@ -63,6 +64,7 @@ function DashboardChrome({ children }: { children: React.ReactNode }) {
 export default function DashboardFrame({ children }: { children: React.ReactNode }) {
   return (
     <UserProvider>
+      <PartnerProgramsProvider>
       <ProductDirectoryCatalogProvider>
         <TeamsProvider>
           <KvShareSuggestionsProvider>
@@ -82,6 +84,7 @@ export default function DashboardFrame({ children }: { children: React.ReactNode
           </KvShareSuggestionsProvider>
         </TeamsProvider>
       </ProductDirectoryCatalogProvider>
+      </PartnerProgramsProvider>
     </UserProvider>
   );
 }

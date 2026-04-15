@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Flame,
   Lock,
+  Pin,
   Pencil,
   Plus,
   Search,
@@ -34,6 +35,15 @@ import type {
 } from "@/types/product-directory";
 import type { RepFirm, RepFirmProductLink } from "@/types/rep-firm";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScopeBadge } from "@/components/ui/ScopeBadge";
 import type { Team } from "@/types/teams";
@@ -44,7 +54,9 @@ import { AMENITY_LABELS } from "./productDirectoryFilterConfig";
 import { directoryTierLabel, directoryTierStars } from "./productDirectoryDetailMeta";
 import { relativeTime } from "./productDirectoryRelativeTime";
 import {
+  dmcOperationalDataPresent,
   getPrimaryDirectoryType,
+  isDMCProduct,
   normalizeDirectoryProductTypes,
 } from "@/components/products/directoryProductTypeHelpers";
 import { DIRECTORY_PRODUCT_TYPE_CONFIG, directoryCategoryLabel } from "./productDirectoryProductTypes";
@@ -65,6 +77,7 @@ import { getProductLayerMock } from "./ProductDetail/productLayerMock";
 import { FAKE_VICS } from "@/components/vic/fakeData";
 import { FAKE_ITINERARIES } from "@/components/itineraries/fakeData";
 import { getItinerariesForProduct, getVicsForProduct } from "@/lib/entityCrossLinks";
+import { formatProductOpeningLine } from "@/lib/productDirectoryOpening";
 
 function clonePartnerProgramsForEdit(list: DirectoryPartnerProgram[]): DirectoryPartnerProgram[] {
   return list.map((p) => ({
@@ -80,10 +93,21 @@ function agencyMocksToDirectoryNotes(
   return mocks.map((n) => ({
     id: n.id,
     authorName: n.author,
+    authorId: `mock-${n.id}`,
     text: n.content,
     createdAt: new Date().toISOString(),
     pinned: n.pinned,
   }));
+}
+
+function TeamScopedFieldNotice({ show }: { show: boolean }) {
+  if (!show) return null;
+  return (
+    <span className="inline-flex items-center gap-1 text-[9px] text-muted-foreground/80">
+      <Lock className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
+      View only
+    </span>
+  );
 }
 
 const stableDateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -97,6 +121,19 @@ function formatIsoDateStable(value: string): string {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
   return stableDateFormatter.format(parsed);
+}
+
+function dmcOperationsField(label: string, value: string | number | null | undefined) {
+  return (
+    <div>
+      <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wider text-[rgba(245,245,245,0.4)]">
+        {label}
+      </p>
+      <p className="text-[13px] text-[#F5F5F5]">
+        {value != null && String(value).trim() !== "" ? String(value) : "—"}
+      </p>
+    </div>
+  );
 }
 
 function formatAdvisoryIncentiveLabel(
@@ -147,6 +184,8 @@ type Props = {
   partnerProgramCustomKeys?: string[];
   /** Live rep firm registry (enables regions/footer lookup beyond seed mock). */
   repFirmsRegistry?: RepFirm[] | null;
+  /** Partner program rows come from the agency registry — hide destructive inline edits. */
+  partnerProgramsManagedInRegistry?: boolean;
 };
 
 export function ProductDirectoryDetailBody({
@@ -165,6 +204,7 @@ export function ProductDirectoryDetailBody({
   onRequestCreateCollection,
   partnerProgramCustomKeys = [],
   repFirmsRegistry = null,
+  partnerProgramsManagedInRegistry = false,
 }: Props) {
   const canRemoveFromCollection = canRemoveFromCollectionProp ?? (() => true);
   const inlinePickerEnabled = Boolean(
@@ -218,15 +258,27 @@ export function ProductDirectoryDetailBody({
     clonePartnerProgramsForEdit(product.partnerPrograms)
   );
   const [showRepFirmEditor, setShowRepFirmEditor] = useState(false);
+  const [repFirmSuggestOpen, setRepFirmSuggestOpen] = useState(false);
+  const [repFirmSuggestText, setRepFirmSuggestText] = useState("");
   const [localRepFirmLinks, setLocalRepFirmLinks] = useState<RepFirmProductLink[]>([]);
   const [incentivesExpanded, setIncentivesExpanded] = useState(false);
   const [enableMasterDetailsOpen, setEnableMasterDetailsOpen] = useState(false);
 
   const productTypesSig = product.types.join("|");
   const [typesDraft, setTypesDraft] = useState<DirectoryProductCategory[]>(() => [...product.types]);
+  const [openingDateDraft, setOpeningDateDraft] = useState(() =>
+    product.openingDate ? product.openingDate.slice(0, 10) : ""
+  );
+  const [openingLabelDraft, setOpeningLabelDraft] = useState(() => product.openingLabel ?? "");
+
   useEffect(() => {
     setTypesDraft([...product.types]);
   }, [product.id, productTypesSig]);
+
+  useEffect(() => {
+    setOpeningDateDraft(product.openingDate ? product.openingDate.slice(0, 10) : "");
+    setOpeningLabelDraft(product.openingLabel ?? "");
+  }, [product.id, product.openingDate, product.openingLabel]);
 
   const normalizedTypesDraftSig = useMemo(
     () => normalizeDirectoryProductTypes(typesDraft).join("|"),
@@ -238,19 +290,38 @@ export function ProductDirectoryDetailBody({
   );
   const typesDirty = normalizedTypesDraftSig !== normalizedProductTypesSig;
 
+  const openingDirty = useMemo(() => {
+    const pDate = product.openingDate ? product.openingDate.slice(0, 10) : "";
+    const dDate = openingDateDraft.trim();
+    const datePart = dDate !== pDate;
+    const labelPart = (openingLabelDraft.trim() || null) !== (product.openingLabel?.trim() || null);
+    return datePart || labelPart;
+  }, [openingDateDraft, openingLabelDraft, product.openingDate, product.openingLabel]);
+
+  const masterDetailsDirty = typesDirty || openingDirty;
+
   const saveEnableMasterDetails = () => {
     const next = normalizeDirectoryProductTypes(typesDraft);
     if (next.length === 0) {
       toast({ title: "Select at least one category", tone: "destructive" });
       return;
     }
-    onPatchProduct(product.id, { types: next, updatedAt: new Date().toISOString() });
+    const nextOpeningDate = openingDateDraft.trim() || null;
+    const nextOpeningLabel = openingLabelDraft.trim() || null;
+    onPatchProduct(product.id, {
+      types: next,
+      openingDate: nextOpeningDate,
+      openingLabel: nextOpeningLabel,
+      updatedAt: new Date().toISOString(),
+    });
     toast({ title: "Enable directory record updated", tone: "success" });
     setEnableMasterDetailsOpen(false);
   };
 
   const cancelEnableMasterDetails = () => {
     setTypesDraft([...product.types]);
+    setOpeningDateDraft(product.openingDate ? product.openingDate.slice(0, 10) : "");
+    setOpeningLabelDraft(product.openingLabel ?? "");
     setEnableMasterDetailsOpen(false);
   };
 
@@ -387,7 +458,6 @@ export function ProductDirectoryDetailBody({
     const t = newAgencyNote.trim();
     if (!t) return;
     const displayName = user?.username ?? user?.email ?? "You";
-    const requiresApproval = !isAdmin;
     setAgencyNotes((prev) => [
       {
         id: `n_${Date.now()}`,
@@ -395,14 +465,19 @@ export function ProductDirectoryDetailBody({
         authorId: currentUserId,
         text: t,
         createdAt: new Date().toISOString(),
-        pendingUpgrade: requiresApproval,
-        upgradedById: requiresApproval ? currentUserId : undefined,
-        upgradedByName: requiresApproval ? displayName : undefined,
       },
       ...prev,
     ]);
     setNewAgencyNote("");
-    toast(requiresApproval ? "Note submitted for review" : "Note posted");
+    toast("Note posted");
+  };
+
+  const toggleAgencyNotePin = (noteId: string) => {
+    if (!isAdmin) return;
+    setAgencyNotes((prev) =>
+      prev.map((n) => (n.id === noteId ? { ...n, pinned: !n.pinned } : n))
+    );
+    toast("Note updated");
   };
 
   const deleteAgencyNote = (id: string) => {
@@ -644,8 +719,6 @@ export function ProductDirectoryDetailBody({
     const editId = editingAgencyContactId;
     const prev = editId ? agencyContacts.find((c) => c.id === editId) : undefined;
     const displayName = user?.username ?? user?.email ?? "You";
-    const requiresApproval = !isAdmin;
-    const pendingUpgrade = requiresApproval ? true : (prev?.pendingUpgrade ?? false);
     const row: DirectoryAgencyContact = {
       id: editId ?? `c_${Date.now()}`,
       name,
@@ -655,9 +728,7 @@ export function ProductDirectoryDetailBody({
       note: newAgencyContactNote.trim() || undefined,
       addedBy: prev?.addedBy ?? displayName,
       addedById: prev?.addedById ?? currentUserId,
-      pendingUpgrade,
-      upgradedById: pendingUpgrade ? currentUserId : prev?.upgradedById,
-      upgradedByName: pendingUpgrade ? displayName : prev?.upgradedByName,
+      addedAt: prev?.addedAt ?? new Date().toISOString(),
     };
     const next = editId ? agencyContacts.map((c) => (c.id === editId ? row : c)) : [...agencyContacts, row];
     setAgencyContacts(next);
@@ -669,10 +740,6 @@ export function ProductDirectoryDetailBody({
     setNewAgencyContactNote("");
     setEditingAgencyContactId(null);
     setAgencyContactFormOpen(false);
-    if (requiresApproval) {
-      toast(editId ? "Contact update submitted for review" : "Contact submitted for review");
-      return;
-    }
     toast(editId ? "Contact updated" : "Contact saved");
   };
 
@@ -715,6 +782,7 @@ export function ProductDirectoryDetailBody({
   const typeSummary = product.types.map((t) => directoryCategoryLabel(t)).join(" · ");
   const placeLine =
     product.city && product.country ? `${product.city}, ${product.country}` : directoryProductPlaceLabel(product);
+  const openingLine = useMemo(() => formatProductOpeningLine(product), [product]);
 
   const tierStars = directoryTierStars(product.tier);
   const enrichment = Math.min(5, Math.max(0, product.enrichmentScore ?? 0));
@@ -723,7 +791,7 @@ export function ProductDirectoryDetailBody({
     [product.id, product.imageUrl, product.imageGalleryUrls]
   );
 
-  const showPartnerProgramEditor = isAdmin && partnerProgramsEditMode;
+  const showPartnerProgramEditor = isAdmin && partnerProgramsEditMode && !partnerProgramsManagedInRegistry;
   const repFirmLinks = showRepFirmEditor ? localRepFirmLinks : (product.repFirmLinks ?? []);
   const topCommissionProgram = getTopBookableProgramByCommission(product);
   const baseCommissionForAdvisories = topCommissionProgram ? programDisplayCommissionRate(topCommissionProgram) : null;
@@ -901,8 +969,18 @@ export function ProductDirectoryDetailBody({
               </span>
             ) : null}
           </div>
-          <h2 className="text-lg font-semibold leading-tight text-white drop-shadow-sm">{product.name}</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-lg font-semibold leading-tight text-white drop-shadow-sm">{product.name}</h2>
+            {isAdmin ? (
+              <span className="rounded-full border border-white/10 bg-white/[0.06] px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wide text-muted-foreground">
+                Admin
+              </span>
+            ) : null}
+          </div>
           <p className="mt-0.5 text-xs text-white/70">{placeLine}</p>
+          {openingLine ? (
+            <p className="mt-1 text-[10px] font-medium text-[#C9A96E]">{openingLine}</p>
+          ) : null}
         </div>
       </div>
 
@@ -1012,6 +1090,42 @@ export function ProductDirectoryDetailBody({
             </label>
           ) : null}
 
+          <div className="mt-4 space-y-3 border-t border-border/60 pt-3">
+            <div>
+              <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground">Planned opening</p>
+              <p className="mb-2 text-2xs leading-relaxed text-muted-foreground/90">
+                Optional. Custom label overrides the formatted date on cards (e.g. &quot;Q2 2026&quot; or &quot;Maiden
+                voyage Dec 2026&quot;). Leave both empty to hide opening.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="dir-opening-date" className="text-2xs text-muted-foreground">
+                    Opening date
+                  </Label>
+                  <Input
+                    id="dir-opening-date"
+                    type="date"
+                    value={openingDateDraft}
+                    onChange={(e) => setOpeningDateDraft(e.target.value)}
+                    className="mt-1 h-9 border-border bg-inset text-xs text-foreground"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label htmlFor="dir-opening-label" className="text-2xs text-muted-foreground">
+                    Custom label (optional)
+                  </Label>
+                  <Input
+                    id="dir-opening-label"
+                    value={openingLabelDraft}
+                    onChange={(e) => setOpeningLabelDraft(e.target.value)}
+                    placeholder="Overrides date line when set"
+                    className="mt-1 h-9 border-border bg-inset text-xs text-foreground"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-border/60 pt-3">
             <Button
               type="button"
@@ -1026,7 +1140,7 @@ export function ProductDirectoryDetailBody({
               type="button"
               variant="secondary"
               size="sm"
-              disabled={!typesDirty}
+              disabled={!masterDetailsDirty}
               onClick={saveEnableMasterDetails}
               className="h-8 rounded-lg text-xs"
             >
@@ -1174,6 +1288,37 @@ export function ProductDirectoryDetailBody({
         </div>
       </div>
 
+      {(isDMCProduct(product) || dmcOperationalDataPresent(product)) && (
+        <div className="relative z-10 mt-4 border-t border-[rgba(255,255,255,0.08)] pt-4">
+          <p className="mb-3 text-[12px] font-semibold uppercase tracking-wider text-[#D4A574]">
+            DMC Operations
+          </p>
+          <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+            <div>
+              <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wider text-[rgba(245,245,245,0.4)]">
+                General Requests
+              </p>
+              {product.general_requests_email != null && String(product.general_requests_email).trim() !== "" ? (
+                <a
+                  href={`mailto:${product.general_requests_email}`}
+                  className="text-[13px] text-[#D4A574] transition-colors hover:text-[#E5B87A]"
+                >
+                  {product.general_requests_email}
+                </a>
+              ) : (
+                <p className="text-[13px] text-[#F5F5F5]">—</p>
+              )}
+            </div>
+            {dmcOperationsField("Repped By", product.repped_by)}
+            {dmcOperationsField("Pricing Model", product.pricing_model)}
+            {dmcOperationsField("Payment Process", product.payment_process)}
+            {dmcOperationsField("Commission Process", product.commission_process)}
+            {dmcOperationsField("After Hours Support", product.after_hours_support)}
+            {dmcOperationsField("Destinations Served", product.destinations_served)}
+          </div>
+        </div>
+      )}
+
       {/* Block 3 — Description + Tags + Website */}
       <div className="space-y-3">
         <p className="text-sm leading-relaxed text-[rgba(245,240,235,0.75)]">{product.description}</p>
@@ -1205,15 +1350,23 @@ export function ProductDirectoryDetailBody({
       {/* Block 4 — Partner Programs */}
       <div className="border-t border-border pt-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Award className="h-3.5 w-3.5 shrink-0 text-brand-cta" />
             <span className="text-xs font-medium text-foreground">Partner Programs</span>
+            <TeamScopedFieldNotice show={!isAdmin} />
             <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-muted-foreground">
               {(showPartnerProgramEditor ? localPartnerPrograms : product.partnerPrograms).length}
             </span>
           </div>
           {isAdmin ? (
-            showPartnerProgramEditor ? (
+            partnerProgramsManagedInRegistry ? (
+              <Link
+                href="/dashboard/settings/programs"
+                className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-border bg-white/[0.04] px-2.5 text-xs text-muted-foreground transition-colors hover:bg-white/[0.07] hover:text-foreground"
+              >
+                Manage in Partner Programs
+              </Link>
+            ) : showPartnerProgramEditor ? (
               <Button
                 type="button"
                 variant="outline"
@@ -1395,20 +1548,25 @@ export function ProductDirectoryDetailBody({
                       {(program.activePromotions?.length ?? 0) > 0 ? (
                         <div className="rounded-lg border border-border bg-inset/80 p-2">
                           <p className="mb-1.5 text-[9px] font-medium uppercase tracking-wider text-[#B8976E]">
-                            Promotions (effective %)
+                            Promotions (effective rate)
                           </p>
                           <div className="space-y-2">
                             {program.activePromotions.map((pr) => (
                               <div key={pr.id} className="flex flex-wrap items-center gap-2 text-2xs text-muted-foreground">
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  className="w-16 rounded border border-border bg-inset px-1.5 py-1 text-xs text-foreground"
-                                  value={pr.effectiveRate}
-                                  onChange={(e) =>
-                                    updatePromotionRate(index, pr.id, Number(e.target.value) || 0)
-                                  }
-                                />
+                                <span className="inline-flex items-center gap-1">
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    className="w-16 rounded border border-border bg-inset px-1.5 py-1 text-xs text-foreground"
+                                    value={pr.effectiveRate}
+                                    onChange={(e) =>
+                                      updatePromotionRate(index, pr.id, Number(e.target.value) || 0)
+                                    }
+                                  />
+                                  <span className="text-[9px] text-muted-foreground">
+                                    {(pr.rateType ?? "percentage") === "flat" ? "flat" : "%"}
+                                  </span>
+                                </span>
                                 <span className="text-[9px]">
                                   Book {pr.bookingStart.slice(0, 10)} → {pr.bookingEnd.slice(0, 10)} · Travel{" "}
                                   {pr.travelStart.slice(0, 10)} → {pr.travelEnd.slice(0, 10)}
@@ -1468,9 +1626,10 @@ export function ProductDirectoryDetailBody({
                 expMs != null &&
                 expMs < 30 * 24 * 60 * 60 * 1000 &&
                 expMs >= 0;
-              const showFooter =
-                (canViewCommissions && displayRate != null) ||
-                (program.expiryDate != null && program.expiryDate !== "");
+              const showCommissionPublic = canViewCommissions && displayRate != null;
+              const showLockedCommissionHint = !canViewCommissions && active && displayRate != null;
+              const showExpiryFooter = program.expiryDate != null && program.expiryDate !== "";
+              const showFooter = showCommissionPublic || showLockedCommissionHint || showExpiryFooter;
               return (
                 <div
                   key={program.id}
@@ -1509,7 +1668,9 @@ export function ProductDirectoryDetailBody({
                           <li key={pr.id} className="space-y-0.5">
                             <div>
                               <span className="font-semibold text-brand-cta">
-                                {program.commissionType === "flat" ? `$${pr.effectiveRate}` : `${pr.effectiveRate}%`}
+                                {(pr.rateType ?? "percentage") === "flat"
+                                  ? `$${pr.effectiveRate}`
+                                  : `${pr.effectiveRate}%`}
                               </span> · book{" "}
                               {pr.bookingStart.slice(0, 10)}–{pr.bookingEnd.slice(0, 10)}
                             </div>
@@ -1548,16 +1709,30 @@ export function ProductDirectoryDetailBody({
                     </p>
                   ) : null}
                   {showFooter ? (
-                    <div className="flex items-center gap-3 border-t border-white/[0.04] bg-white/[0.015] px-3 py-2">
-                      {canViewCommissions && displayRate != null ? (
-                        <span className="text-xs font-semibold text-[#B8976E]">
-                          {program.commissionType === "flat" ? `$${displayRate}` : `${displayRate}%`}
-                        </span>
-                      ) : null}
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.04] bg-white/[0.015] px-3 py-2">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        {showCommissionPublic ? (
+                          <span className="text-xs font-semibold text-[#B8976E]">
+                            {program.commissionType === "flat" ? `$${displayRate}` : `${displayRate}%`}
+                          </span>
+                        ) : null}
+                        {showLockedCommissionHint ? (
+                          <>
+                            <span className="text-[9px] text-muted-foreground">Partner program active</span>
+                            <span
+                              className="inline-flex items-center gap-0.5 text-[9px] text-muted-foreground/80"
+                              title="Contact your admin for commission information."
+                            >
+                              <Lock className="h-3 w-3 shrink-0 opacity-80" aria-hidden />
+                              Commission details
+                            </span>
+                          </>
+                        ) : null}
+                      </div>
                       {program.expiryDate != null && program.expiryDate !== "" ? (
                         <span
                           className={cn(
-                            "ml-auto text-[9px]",
+                            "text-[9px]",
                             isExpiring ? "text-[var(--color-warning)]" : "text-muted-foreground"
                           )}
                         >
@@ -1607,7 +1782,17 @@ export function ProductDirectoryDetailBody({
                 Edit rep firms
               </Button>
             )
-          ) : null}
+          ) : (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => setRepFirmSuggestOpen(true)}
+              className="h-8 shrink-0 rounded-lg border border-[rgba(176,122,91,0.35)] bg-[rgba(176,122,91,0.08)] text-xs text-[#B07A5B] hover:bg-[rgba(176,122,91,0.14)]"
+            >
+              Suggest update
+            </Button>
+          )}
         </div>
 
         {showRepFirmEditor ? (
@@ -2188,9 +2373,11 @@ export function ProductDirectoryDetailBody({
         </div>
 
         <div className="rounded-xl border border-[rgba(140,160,180,0.10)] bg-[rgba(140,160,180,0.03)] p-3">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <UserPlus className="h-3.5 w-3.5 text-[rgba(140,160,180,0.5)]" aria-hidden />
+              <span className="text-[11px] font-medium text-foreground">Agency contacts</span>
+              <TeamScopedFieldNotice show={!isAdmin} />
               {agencyContacts.length > 0 ? (
                 <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-muted-foreground">
                   {agencyContacts.length}
@@ -2251,7 +2438,10 @@ export function ProductDirectoryDetailBody({
                       </div>
                       {c.note ? <p className="mt-0.5 text-[9px] italic text-muted-foreground">{c.note}</p> : null}
                       {c.addedBy ? (
-                        <span className="mt-0.5 block text-[8px] text-muted-foreground/65">Added by {c.addedBy}</span>
+                        <span className="mt-0.5 block text-[8px] text-muted-foreground/65">
+                          Added by {c.addedBy}
+                          {c.addedAt ? ` · ${formatIsoDateStable(c.addedAt)}` : ""}
+                        </span>
                       ) : null}
                       {c.pendingUpgrade ? (
                         <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[9px] text-brand-cta">
@@ -2508,11 +2698,13 @@ export function ProductDirectoryDetailBody({
         </div>
 
         <div className="rounded-xl border border-[rgba(140,160,180,0.10)] bg-[rgba(140,160,180,0.03)] p-3">
-          <p className="mb-3 text-2xs leading-relaxed text-muted-foreground/70">
-            Agency notes are shared with your team after admin approval when suggested from private notes.
+          <p className="mb-2 text-2xs leading-relaxed text-muted-foreground/70">
+            Agency notes are visible to your team.
           </p>
-          <div className="mb-3 flex items-center gap-2">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
             <Users className="h-3 w-3 shrink-0" style={{ color: "rgba(140,160,180,0.50)" }} aria-hidden />
+            <span className="text-[11px] font-medium text-foreground">Agency notes</span>
+            <TeamScopedFieldNotice show={!isAdmin} />
             {agencyNotes.length > 0 ? (
               <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-muted-foreground">
                 {agencyNotes.length}
@@ -2590,15 +2782,29 @@ export function ProductDirectoryDetailBody({
                     <>
                       <p className="text-xs leading-relaxed text-[#C8C0B8]">{note.text}</p>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <span className="text-2xs text-muted-foreground">{note.authorName}</span>
+                        <span className="text-2xs font-medium text-muted-foreground">{note.authorName}</span>
                         <span className="text-2xs text-muted-foreground/65">·</span>
-                        <span className="text-2xs text-muted-foreground/65">{relativeTime(note.createdAt)}</span>
+                        <span className="text-2xs text-muted-foreground/65" title={formatIsoDateStable(note.createdAt)}>
+                          {relativeTime(note.createdAt)} ({formatIsoDateStable(note.createdAt)})
+                        </span>
                         {note.pinned ? (
                           <span className="ml-auto text-[9px] text-amber-500/60">Pinned</span>
                         ) : null}
                       </div>
                       {canEditAgencyNote(note) && !note.pendingUpgrade ? (
-                        <div className="mt-2 flex gap-2">
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {isAdmin ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="xs"
+                              className="h-6 text-[9px] text-muted-foreground/65 hover:text-brand-cta"
+                              onClick={() => toggleAgencyNotePin(note.id)}
+                            >
+                              <Pin className="size-3" aria-hidden />
+                              {note.pinned ? "Unpin" : "Pin"}
+                            </Button>
+                          ) : null}
                           <Button
                             type="button"
                             variant="ghost"
@@ -2648,7 +2854,7 @@ export function ProductDirectoryDetailBody({
               onClick={postAgencyNote}
               className="self-center h-7 text-[rgba(140,160,180,0.75)] hover:text-[rgba(140,160,180,0.95)]"
             >
-              {isAdmin ? "Post" : "Submit"}
+              Post
             </Button>
           </div>
         </div>
@@ -2843,6 +3049,42 @@ export function ProductDirectoryDetailBody({
           </div>
         </div>
       )}
+
+      <Dialog open={repFirmSuggestOpen} onOpenChange={setRepFirmSuggestOpen}>
+        <DialogContent className="border-border bg-popover sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Suggest a change to rep firm details</DialogTitle>
+          </DialogHeader>
+          <textarea
+            className="min-h-[100px] w-full resize-none rounded-lg border border-border bg-inset px-3 py-2 text-xs text-foreground outline-none placeholder:text-muted-foreground"
+            placeholder="Describe the update you would like an admin to review…"
+            value={repFirmSuggestText}
+            onChange={(e) => setRepFirmSuggestText(e.target.value)}
+          />
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => setRepFirmSuggestOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              className="border-[rgba(176,122,91,0.30)] bg-[rgba(176,122,91,0.10)] text-[#B07A5B] hover:bg-[rgba(176,122,91,0.15)]"
+              onClick={() => {
+                if (!repFirmSuggestText.trim()) return;
+                toast({
+                  title: "Suggestion recorded (demo)",
+                  description: "Changes are not applied until an admin reviews them.",
+                  tone: "success",
+                });
+                setRepFirmSuggestOpen(false);
+                setRepFirmSuggestText("");
+              }}
+            >
+              Submit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {contactUpgradeOpen && contactUpgradeTarget && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">

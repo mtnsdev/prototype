@@ -3,7 +3,17 @@
  */
 
 import { IS_PREVIEW_MODE } from "@/config/preview";
+import { getMockBriefingWidgets } from "@/components/briefing/briefingMockData";
 import type { BriefingWidget } from "@/types/briefing";
+
+const BRIEFING_WIDGETS_FETCH_MS = 15_000;
+
+function fetchTimeoutSignal(): AbortSignal | undefined {
+  if (typeof AbortSignal !== "undefined" && "timeout" in AbortSignal && typeof AbortSignal.timeout === "function") {
+    return AbortSignal.timeout(BRIEFING_WIDGETS_FETCH_MS);
+  }
+  return undefined;
+}
 
 function getAuthHeaders(): HeadersInit {
   const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
@@ -21,12 +31,14 @@ export async function fetchBriefingWidgetsForDashboard(
   userId?: string,
 ): Promise<FetchBriefingWidgetsForDashboardResult> {
   if (IS_PREVIEW_MODE) {
-    const { getMockBriefingWidgets } = await import("@/components/briefing/briefingMockData");
     return { ok: true, widgets: getMockBriefingWidgets() };
   }
   const q = userId ? `?user_id=${encodeURIComponent(userId)}` : "";
   try {
-    const res = await fetch(`/api/briefing/widgets${q}`, { headers: getAuthHeaders() });
+    const res = await fetch(`/api/briefing/widgets${q}`, {
+      headers: getAuthHeaders(),
+      signal: fetchTimeoutSignal(),
+    });
     if (!res.ok) {
       const errBody = await res.text().catch(() => "");
       return {
@@ -47,17 +59,18 @@ export async function fetchBriefingWidgetsForDashboard(
 
 export async function fetchBriefingWidgets(userId?: string): Promise<BriefingWidget[]> {
   if (IS_PREVIEW_MODE) {
-    const { getMockBriefingWidgets } = await import("@/components/briefing/briefingMockData");
     return getMockBriefingWidgets();
   }
   const q = userId ? `?user_id=${encodeURIComponent(userId)}` : "";
   try {
-    const res = await fetch(`/api/briefing/widgets${q}`, { headers: getAuthHeaders() });
+    const res = await fetch(`/api/briefing/widgets${q}`, {
+      headers: getAuthHeaders(),
+      signal: fetchTimeoutSignal(),
+    });
     if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
     const data = await res.json();
     return Array.isArray(data.widgets) ? data.widgets : data;
   } catch {
-    const { getMockBriefingWidgets } = await import("@/components/briefing/briefingMockData");
     return getMockBriefingWidgets();
   }
 }

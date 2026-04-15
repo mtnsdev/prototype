@@ -45,7 +45,7 @@ export const MOCK_TEAMS: Team[] = [
   {
     id: TEAM_EVERYONE_ID,
     name: "Everyone",
-    memberIds: ["1", "user-sarah", "user-james", "user-lisa", "user-mark", "user-emma", "user-david"],
+    memberIds: ["1", "2", "user-sarah", "user-james", "user-lisa", "user-mark", "user-emma", "user-david"],
     isDefault: true,
     policies: { ...DEFAULT_TEAM_POLICIES, sourceAccess: "all" },
     createdBy: "system",

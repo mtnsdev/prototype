@@ -143,7 +143,7 @@ export default function BriefingRoomPage({ desktopMode = false }: BriefingRoomPa
   const firstName =
     user?.username?.split(/[\s@.]/)[0] ||
     user?.email?.split("@")[0] ||
-    (IS_PREVIEW_MODE && user == null && prototypeAdminView ? "Kristin" : "there");
+    (IS_PREVIEW_MODE && user == null ? "Kristin" : "there");
   return (
     <div
       className={cn(

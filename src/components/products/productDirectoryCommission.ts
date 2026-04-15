@@ -1,5 +1,15 @@
 import type { DirectoryPartnerProgram, DirectoryProduct, DirectoryProgramRegistryStatus } from "@/types/product-directory";
 
+/**
+ * Commission display rules (product directory):
+ * - **Card / list:** show the **highest active bookable rate** from linked partner programs
+ *   (`getTopBookableProgramByCommission` → `programDisplayCommissionRate`).
+ * - **Filter “Has rate” / commission threshold:** derived from the same registry programs
+ *   (`getDirectoryProductRegistryCommission`, `productHasRatedCommission`).
+ * - **Range / multi-program:** when multiple programs exist, the UI highlights the max rate;
+ *   a future range slider can use min/max over the same bookable set (April 2026 call).
+ */
+
 export type ProgramStatus = "active" | "inactive";
 
 /** Demo “today” for expiry / expiring-soon derivation (stable in mocks). */
@@ -38,6 +48,7 @@ export function programDisplayName(program: DirectoryPartnerProgram): string {
 export function programDisplayCommissionRate(program: DirectoryPartnerProgram): number | null {
   let max: number | null = program.commissionRate != null ? program.commissionRate : null;
   for (const pr of program.activePromotions ?? []) {
+    if (pr.rateType === "flat") continue;
     max = max == null ? pr.effectiveRate : Math.max(max, pr.effectiveRate);
   }
   return max;

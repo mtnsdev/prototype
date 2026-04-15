@@ -12,6 +12,10 @@ import {
   productMatchesRepFirmFilter,
 } from "@/components/products/productDirectoryFilterConfig";
 import { productMatchesLocationCountries } from "@/components/products/locationGroups";
+import {
+  directoryProductOpeningSearchText,
+  productHasPlannedOpening,
+} from "@/lib/productDirectoryOpening";
 
 export type DirectoryFilterSkip =
   | "search"
@@ -24,7 +28,8 @@ export type DirectoryFilterSkip =
   | "repFirm"
   | "activeIncentive"
   | "tier"
-  | "price";
+  | "price"
+  | "plannedOpening";
 
 export type DirectoryPageFilterInput = {
   q: string;
@@ -38,6 +43,8 @@ export type DirectoryPageFilterInput = {
   /** Registry rep firm ids — product must have a repFirmLink to one of these. */
   selectedRepFirmIds: string[];
   hasActiveIncentive?: boolean;
+  /** Only products with a planned opening (label or valid opening date). */
+  hasPlannedOpening?: boolean;
   selectedTiers: DirectoryTierLevel[];
   selectedPriceTiers: DirectoryPriceTier[];
 };
@@ -52,17 +59,20 @@ export function applyDirectoryProductFilters(
   const q = f.q.trim().toLowerCase();
 
   if (skip !== "search" && q) {
-    result = result.filter(
-      (p) =>
+    result = result.filter((p) => {
+      const openingHaystack = directoryProductOpeningSearchText(p);
+      return (
         p.name.toLowerCase().includes(q) ||
         p.location.toLowerCase().includes(q) ||
         (p.description ?? "").toLowerCase().includes(q) ||
+        openingHaystack.includes(q) ||
         p.partnerPrograms.some(
           (pp) =>
             pp.name.toLowerCase().includes(q) ||
             (pp.programName ?? "").toLowerCase().includes(q)
         )
-    );
+      );
+    });
   }
 
   if (skip !== "type" && f.activeTypeFilters.length > 0) {
@@ -101,6 +111,10 @@ export function applyDirectoryProductFilters(
 
   if (skip !== "activeIncentive" && f.hasActiveIncentive) {
     result = result.filter((p) => (p.activeAdvisoryCount ?? 0) > 0);
+  }
+
+  if (skip !== "plannedOpening" && f.hasPlannedOpening) {
+    result = result.filter((p) => productHasPlannedOpening(p));
   }
 
   if (skip !== "tier" && f.selectedTiers.length > 0) {

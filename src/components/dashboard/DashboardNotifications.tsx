@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   AtSign,
@@ -18,11 +19,17 @@ import {
   CheckCircle,
   Clock,
   RefreshCw,
+  Sparkles,
   XCircle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useKvShareSuggestionsOptional } from "@/contexts/KvShareSuggestionsContext";
+import { usePartnerPrograms } from "@/contexts/PartnerProgramsContext";
 import { useToast } from "@/contexts/ToastContext";
+import {
+  buildPartnerProgramAlerts,
+  type PartnerProgramAlert,
+} from "@/lib/partnerProgramNotifications";
 import { relativeTime } from "@/components/products/productDirectoryRelativeTime";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +41,9 @@ export type NotificationType =
   | "sync_failed"
   | "onboarding"
   | "program_expiring"
+  | "promotion_starting"
+  | "promotion_ending"
+  | "partner_link_expiring"
   | "mention";
 
 export type NotificationFilterTab = "all" | "alerts" | "updates" | "digest";
@@ -61,6 +71,9 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   sync_failed: "Sync issue",
   onboarding: "Getting started",
   program_expiring: "Program renewal",
+  promotion_starting: "Incentive starting",
+  promotion_ending: "Incentive ending",
+  partner_link_expiring: "Property link",
   mention: "Mention",
 };
 
@@ -69,6 +82,9 @@ function notificationCategory(type: NotificationType): NotificationFilterTab {
     case "approval_request":
     case "sync_failed":
     case "program_expiring":
+    case "promotion_starting":
+    case "promotion_ending":
+    case "partner_link_expiring":
     case "approval_rejected":
       return "alerts";
     case "sync_complete":
@@ -84,6 +100,27 @@ function notificationCategory(type: NotificationType): NotificationFilterTab {
 
 export function notificationTypeLabel(type: NotificationType): string {
   return TYPE_LABELS[type];
+}
+
+function partnerAlertToApp(a: PartnerProgramAlert): AppNotification {
+  const type: NotificationType =
+    a.kind === "program_renewal"
+      ? "program_expiring"
+      : a.kind === "promotion_starting"
+        ? "promotion_starting"
+        : a.kind === "promotion_ending"
+          ? "promotion_ending"
+          : "partner_link_expiring";
+  return {
+    id: a.id,
+    type,
+    title: a.title,
+    body: a.body,
+    timestamp: a.timestamp,
+    read: false,
+    actionUrl: a.actionUrl,
+    actionLabel: a.actionLabel,
+  };
 }
 
 /**
@@ -194,7 +231,12 @@ function typeIcon(type: NotificationType): LucideIcon {
     case "sync_failed":
       return AlertTriangle;
     case "program_expiring":
+    case "promotion_ending":
       return Clock;
+    case "promotion_starting":
+      return Sparkles;
+    case "partner_link_expiring":
+      return AlertTriangle;
     case "mention":
       return AtSign;
     case "approval_request":
@@ -210,11 +252,15 @@ function iconColorClass(type: NotificationType): string {
       return "text-[#5B8A6E]";
     case "approval_rejected":
     case "sync_failed":
+    case "partner_link_expiring":
       return "text-[#A66B6B]";
     case "sync_complete":
       return "text-muted-foreground";
     case "program_expiring":
+    case "promotion_ending":
       return "text-brand-cta";
+    case "promotion_starting":
+      return "text-[#C9A96E]";
     case "mention":
       return "text-brand-cta";
     default:
@@ -237,7 +283,8 @@ const RESUME_TOAST_MS = 45_000;
 
 type PendingDismissUndo =
   | { kind: "standard"; notification: AppNotification; expiresAt: number }
-  | { kind: "kv"; sid: string; expiresAt: number };
+  | { kind: "kv"; sid: string; expiresAt: number }
+  | { kind: "partner"; notifId: string; expiresAt: number };
 
 function readPendingDismissUndo(): PendingDismissUndo | null {
   if (typeof window === "undefined") return null;
@@ -251,6 +298,7 @@ function readPendingDismissUndo(): PendingDismissUndo | null {
     }
     if (parsed.kind === "standard" && parsed.notification?.id) return parsed;
     if (parsed.kind === "kv" && typeof parsed.sid === "string") return parsed;
+    if (parsed.kind === "partner" && typeof parsed.notifId === "string") return parsed;
     window.localStorage.removeItem(DISMISS_UNDO_STORAGE_KEY);
     return null;
   } catch {
@@ -314,12 +362,18 @@ type ProviderProps = { children: ReactNode };
 
 export function NotificationPanelProvider({ children }: ProviderProps) {
   const toast = useToast();
+  const router = useRouter();
   const kv = useKvShareSuggestionsOptional();
+  const partnerPrograms = usePartnerPrograms();
   const resumeUndoToastFiredRef = useRef(false);
+  const prevPartnerAlertCountRef = useRef<number | null>(null);
+  const partnerAlertToastPrimedRef = useRef(false);
   const [filterTab, setFilterTab] = useState<NotificationFilterTab>("all");
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [kvFeedSuppressed, setKvFeedSuppressed] = useState(false);
+  const [partnerProgramFeedSuppressed, setPartnerProgramFeedSuppressed] = useState(false);
   const [dismissedKvIds, setDismissedKvIds] = useState<string[]>([]);
+  const [dismissedPartnerProgramNotifIds, setDismissedPartnerProgramNotifIds] = useState<string[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>(() =>
     MOCK_NOTIFICATIONS.map((n) => ({ ...n }))
   );
@@ -337,13 +391,21 @@ export function NotificationPanelProvider({ children }: ProviderProps) {
         filterTab?: NotificationFilterTab;
         unreadOnly?: boolean;
         kvFeedSuppressed?: boolean;
+        partnerProgramFeedSuppressed?: boolean;
         dismissedKvIds?: string[];
+        dismissedPartnerProgramNotifIds?: string[];
       };
       if (Array.isArray(parsed.notifications)) setNotifications(parsed.notifications);
       if (parsed.filterTab) setFilterTab(parsed.filterTab);
       if (typeof parsed.unreadOnly === "boolean") setUnreadOnly(parsed.unreadOnly);
       if (typeof parsed.kvFeedSuppressed === "boolean") setKvFeedSuppressed(parsed.kvFeedSuppressed);
+      if (typeof parsed.partnerProgramFeedSuppressed === "boolean") {
+        setPartnerProgramFeedSuppressed(parsed.partnerProgramFeedSuppressed);
+      }
       if (Array.isArray(parsed.dismissedKvIds)) setDismissedKvIds(parsed.dismissedKvIds);
+      if (Array.isArray(parsed.dismissedPartnerProgramNotifIds)) {
+        setDismissedPartnerProgramNotifIds(parsed.dismissedPartnerProgramNotifIds);
+      }
     } catch {
       // Keep defaults when persistence is unavailable or corrupted.
     } finally {
@@ -360,10 +422,21 @@ export function NotificationPanelProvider({ children }: ProviderProps) {
         filterTab,
         unreadOnly,
         kvFeedSuppressed,
+        partnerProgramFeedSuppressed,
         dismissedKvIds,
+        dismissedPartnerProgramNotifIds,
       })
     );
-  }, [dismissedKvIds, filterTab, kvFeedSuppressed, notifications, restored, unreadOnly]);
+  }, [
+    dismissedKvIds,
+    dismissedPartnerProgramNotifIds,
+    filterTab,
+    kvFeedSuppressed,
+    partnerProgramFeedSuppressed,
+    notifications,
+    restored,
+    unreadOnly,
+  ]);
 
   const kvAsNotifications = useMemo((): AppNotification[] => {
     if (!kv || kvFeedSuppressed) return [];
@@ -383,7 +456,47 @@ export function NotificationPanelProvider({ children }: ProviderProps) {
       }));
   }, [kv, kvFeedSuppressed, dismissedKvIds]);
 
-  const merged = useMemo(() => [...kvAsNotifications, ...notifications], [kvAsNotifications, notifications]);
+  const partnerProgramAsNotifications = useMemo((): AppNotification[] => {
+    if (partnerProgramFeedSuppressed) return [];
+    const alerts = buildPartnerProgramAlerts(partnerPrograms.snapshot);
+    return alerts
+      .filter((a) => !dismissedPartnerProgramNotifIds.includes(a.id))
+      .map(partnerAlertToApp);
+  }, [
+    partnerProgramFeedSuppressed,
+    partnerPrograms.snapshot,
+    partnerPrograms.revision,
+    dismissedPartnerProgramNotifIds,
+  ]);
+
+  useEffect(() => {
+    if (!restored) return;
+    const count = partnerProgramAsNotifications.length;
+    if (!partnerAlertToastPrimedRef.current) {
+      partnerAlertToastPrimedRef.current = true;
+      prevPartnerAlertCountRef.current = count;
+      return;
+    }
+    const prev = prevPartnerAlertCountRef.current ?? 0;
+    if (count > prev) {
+      const delta = count - prev;
+      toast({
+        title: delta === 1 ? "New partner program alert" : `${delta} new partner program alerts`,
+        description: "Temporary incentives, renewals, or expiring property links.",
+        tone: "default",
+        action: {
+          label: "Open",
+          onClick: () => router.push("/dashboard/notifications"),
+        },
+      });
+    }
+    prevPartnerAlertCountRef.current = count;
+  }, [restored, partnerProgramAsNotifications.length, router, toast]);
+
+  const merged = useMemo(
+    () => [...kvAsNotifications, ...partnerProgramAsNotifications, ...notifications],
+    [kvAsNotifications, partnerProgramAsNotifications, notifications]
+  );
 
   const unreadCount = useMemo(() => merged.filter((n) => !n.read).length, [merged]);
   const recentCount = useMemo(() => {
@@ -405,18 +518,25 @@ export function NotificationPanelProvider({ children }: ProviderProps) {
     clearPendingDismissUndo();
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setKvFeedSuppressed(true);
+    setPartnerProgramFeedSuppressed(true);
   }, []);
 
   const clearAll = useCallback(() => {
     clearPendingDismissUndo();
     setNotifications([]);
     setKvFeedSuppressed(true);
+    setPartnerProgramFeedSuppressed(true);
+    setDismissedPartnerProgramNotifIds([]);
   }, []);
 
   const markOneRead = useCallback((id: string) => {
     if (id.startsWith("kv-")) {
       const sid = id.slice(3);
       setDismissedKvIds((prev) => (prev.includes(sid) ? prev : [...prev, sid]));
+      return;
+    }
+    if (id.startsWith("pp-")) {
+      setDismissedPartnerProgramNotifIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
       return;
     }
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
@@ -438,6 +558,11 @@ export function NotificationPanelProvider({ children }: ProviderProps) {
     clearPendingDismissUndo();
   }, []);
 
+  const restorePartnerAfterDismiss = useCallback((notifId: string) => {
+    setDismissedPartnerProgramNotifIds((prev) => prev.filter((id) => id !== notifId));
+    clearPendingDismissUndo();
+  }, []);
+
   useEffect(() => {
     if (!restored) return;
     if (resumeUndoToastFiredRef.current) return;
@@ -452,7 +577,15 @@ export function NotificationPanelProvider({ children }: ProviderProps) {
         duration: RESUME_TOAST_MS,
         action: { label: "Undo", onClick: () => restoreKvAfterDismiss(pending.sid) },
       });
-    } else {
+    } else if (pending.kind === "partner") {
+      toast({
+        title: "Notification dismissed",
+        description: "Undo is still available after refresh.",
+        tone: "default",
+        duration: RESUME_TOAST_MS,
+        action: { label: "Undo", onClick: () => restorePartnerAfterDismiss(pending.notifId) },
+      });
+    } else if (pending.kind === "standard") {
       toast({
         title: "Notification dismissed",
         description: "Undo is still available after refresh.",
@@ -464,7 +597,7 @@ export function NotificationPanelProvider({ children }: ProviderProps) {
         },
       });
     }
-  }, [restored, toast, restoreKvAfterDismiss, restoreStandardAfterDismiss]);
+  }, [restored, toast, restoreKvAfterDismiss, restorePartnerAfterDismiss, restoreStandardAfterDismiss]);
 
   const dismissOne = useCallback(
     (n: AppNotification) => {
@@ -484,6 +617,20 @@ export function NotificationPanelProvider({ children }: ProviderProps) {
         });
         return;
       }
+      if (n.id.startsWith("pp-")) {
+        setDismissedPartnerProgramNotifIds((prev) => (prev.includes(n.id) ? prev : [...prev, n.id]));
+        writePendingDismissUndo({ kind: "partner", notifId: n.id, expiresAt });
+        toast({
+          title: "Notification dismissed",
+          description: "Undo to show partner alerts again.",
+          tone: "default",
+          action: {
+            label: "Undo",
+            onClick: () => restorePartnerAfterDismiss(n.id),
+          },
+        });
+        return;
+      }
       const snapshot = { ...n };
       setNotifications((prev) => prev.filter((item) => item.id !== n.id));
       writePendingDismissUndo({ kind: "standard", notification: snapshot, expiresAt });
@@ -497,7 +644,7 @@ export function NotificationPanelProvider({ children }: ProviderProps) {
         },
       });
     },
-    [toast, restoreKvAfterDismiss, restoreStandardAfterDismiss]
+    [toast, restoreKvAfterDismiss, restorePartnerAfterDismiss, restoreStandardAfterDismiss]
   );
 
   const removeById = useCallback((id: string) => {
@@ -506,6 +653,9 @@ export function NotificationPanelProvider({ children }: ProviderProps) {
       clearPendingDismissUndo();
     }
     if (pending?.kind === "kv" && id.startsWith("kv-") && pending.sid === id.slice(3)) {
+      clearPendingDismissUndo();
+    }
+    if (pending?.kind === "partner" && pending.notifId === id) {
       clearPendingDismissUndo();
     }
     setNotifications((prev) => prev.filter((n) => n.id !== id));

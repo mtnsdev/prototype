@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Award, Check, ChevronDown, Flame, Lock, Plus, Trash2, Users } from "lucide-react";
+import { Award, Check, ChevronDown, Flame, Lock, Plus, Share2, Trash2, Users } from "lucide-react";
 import type {
   DirectoryAmenityTag,
   DirectoryCollectionOption,
@@ -25,6 +25,7 @@ import {
   programFilterId,
 } from "./productDirectoryCommission";
 import type { PartnerPortalAdminSavePayload } from "./productDirectoryLogic";
+import type { VolumeMetric } from "@/types/partner-programs";
 import { directoryCategoryLabel } from "./productDirectoryVisual";
 import { PageSearchField } from "@/components/ui/page-search-field";
 import {
@@ -36,6 +37,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/contexts/ToastContext";
 
 type PartnerPortalProductOverrideRow = {
@@ -63,6 +70,10 @@ type CollectionsTabProps = {
   collections: DirectoryCollectionOption[];
   products: DirectoryProduct[];
   teams: Team[];
+  isAdmin: boolean;
+  canDeleteCollection: (c: DirectoryCollectionOption) => boolean;
+  onShareCollectionWithTeam: (collectionId: string, teamId: string) => void;
+  onDeleteCollection: (collectionId: string) => void;
   onOpenCollection: (collectionId: string) => void;
   onNewCollection: () => void;
 };
@@ -71,6 +82,10 @@ export function ProductDirectoryCollectionsTab({
   collections,
   products,
   teams,
+  isAdmin,
+  canDeleteCollection,
+  onShareCollectionWithTeam,
+  onDeleteCollection,
   onOpenCollection,
   onNewCollection,
 }: CollectionsTabProps) {
@@ -146,58 +161,109 @@ export function ProductDirectoryCollectionsTab({
         const members = productsInDirectoryCollection(col, products);
         const preview = members.slice(0, 4);
         const placeholders = 4 - preview.length;
+        const shareTargets = teams.filter((t) => !t.isDefault);
+        const showShare = isAdmin && !col.isSystem;
+        const showDelete = canDeleteCollection(col);
 
         return (
-          <button
+          <div
             key={col.id}
-            type="button"
-            onClick={() => onOpenCollection(col.id)}
-            className="group overflow-hidden rounded-xl border border-border bg-popover text-left transition-colors hover:border-brand-cta/20 hover:bg-[#101018]"
+            className="group relative overflow-hidden rounded-xl border border-border bg-popover text-left transition-colors hover:border-brand-cta/20 hover:bg-[#101018]"
           >
-            <div className="grid aspect-square grid-cols-2 grid-rows-2 gap-px bg-inset p-px">
-              {preview.map((p) => (
-                <div key={p.id} className="relative min-h-0 min-w-0 overflow-hidden bg-[#14141c]">
-                  <img
-                    src={p.imageUrl}
-                    alt=""
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-              ))}
-              {placeholders > 0
-                ? Array.from({ length: placeholders }).map((_, i) => (
-                    <div
-                      key={`empty-${i}`}
-                      className="flex min-h-0 min-w-0 items-center justify-center bg-white/[0.04] text-[8px] text-muted-foreground/55"
-                    >
-                      Empty
-                    </div>
-                  ))
-                : null}
-            </div>
-            <div className="p-2">
-              <div className="min-w-0">
-                <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                  <p className="min-w-0 truncate text-xs font-medium text-foreground">{col.name}</p>
-                  {col.isSystem ? (
-                    <span className="shrink-0 text-[9px] text-muted-foreground bg-white/[0.03] border border-white/[0.04] px-1.5 py-0.5 rounded">
-                      Auto
-                    </span>
+            <button
+              type="button"
+              onClick={() => onOpenCollection(col.id)}
+              className="w-full text-left"
+            >
+              <div className="grid aspect-square grid-cols-2 grid-rows-2 gap-px bg-inset p-px">
+                {preview.map((p) => (
+                  <div key={p.id} className="relative min-h-0 min-w-0 overflow-hidden bg-[#14141c]">
+                    <img
+                      src={p.imageUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+                {placeholders > 0
+                  ? Array.from({ length: placeholders }).map((_, i) => (
+                      <div
+                        key={`empty-${i}`}
+                        className="flex min-h-0 min-w-0 items-center justify-center bg-white/[0.04] text-[8px] text-muted-foreground/55"
+                      >
+                        Empty
+                      </div>
+                    ))
+                  : null}
+              </div>
+              <div className="p-2">
+                <div className="min-w-0">
+                  <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                    <p className="min-w-0 truncate text-xs font-medium text-foreground">{col.name}</p>
+                    {col.isSystem ? (
+                      <span className="shrink-0 text-[9px] text-muted-foreground bg-white/[0.03] border border-white/[0.04] px-1.5 py-0.5 rounded">
+                        Auto
+                      </span>
+                    ) : null}
+                  </div>
+                  {col.description ? (
+                    <p className="mt-0.5 line-clamp-2 text-[9px] leading-snug text-muted-foreground">{col.description}</p>
                   ) : null}
-                </div>
-                {col.description ? (
-                  <p className="mt-0.5 line-clamp-2 text-[9px] leading-snug text-muted-foreground">{col.description}</p>
-                ) : null}
-                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                  <span className="text-[9px] text-muted-foreground">
-                    {members.length} product{members.length !== 1 ? "s" : ""}
-                  </span>
-                  <ScopeBadge scope={collectionScopeForBadge(col)} teams={teams} />
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <span className="text-[9px] text-muted-foreground">
+                      {members.length} product{members.length !== 1 ? "s" : ""}
+                    </span>
+                    <ScopeBadge scope={collectionScopeForBadge(col)} teams={teams} />
+                  </div>
                 </div>
               </div>
-            </div>
-          </button>
+            </button>
+            {(showShare || showDelete) && (
+              <div
+                className="absolute right-1.5 top-1.5 z-[1] flex items-center gap-0.5"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {showShare && shareTargets.length > 0 ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex h-7 items-center gap-0.5 rounded-md border border-border bg-popover/95 px-1.5 text-[9px] font-medium text-muted-foreground shadow-sm backdrop-blur-sm hover:text-foreground"
+                        title="Share with team"
+                      >
+                        <Share2 className="h-3 w-3 shrink-0 opacity-80" aria-hidden />
+                        <span className="hidden sm:inline">Share</span>
+                        <ChevronDown className="h-2.5 w-2.5 shrink-0 opacity-60" aria-hidden />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-[10rem]">
+                      {shareTargets.map((t) => (
+                        <DropdownMenuItem
+                          key={t.id}
+                          className="text-xs"
+                          onClick={() => onShareCollectionWithTeam(col.id, t.id)}
+                        >
+                          {t.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : null}
+                {showDelete ? (
+                  <button
+                    type="button"
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-popover/95 text-muted-foreground shadow-sm backdrop-blur-sm hover:text-[#A66B6B]"
+                    title="Delete collection"
+                    aria-label={`Delete collection ${col.name}`}
+                    onClick={() => onDeleteCollection(col.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                ) : null}
+              </div>
+            )}
+          </div>
         );
       })}
         </div>
@@ -394,6 +460,10 @@ function newPartnerPortalIncentive(baseCommission: number | null): DirectoryProd
     travelEnd: `${travelEnd.toISOString().slice(0, 10)}T00:00:00.000Z`,
     title: "",
     details: "",
+    rateType: "percentage",
+    stacksWithBase: true,
+    volumeThreshold: null,
+    volumeRetroactive: false,
   };
 }
 
@@ -739,7 +809,7 @@ export function ProductDirectoryPartnerPortalTab({
       {!isAdmin && (
         <p className="inline-flex w-fit max-w-full items-center gap-2 rounded-lg border border-border bg-white/[0.02] px-3 py-2 text-xs text-muted-foreground">
           <Lock className="h-3.5 w-3.5 shrink-0 text-[#5C5852]" aria-hidden />
-          Read-only for advisors. Ask an agency admin to update programs.
+          View only — commission details are hidden. Ask an admin to edit programs.
         </p>
       )}
       <div className="space-y-3">
@@ -1160,7 +1230,9 @@ export function ProductDirectoryPartnerPortalTab({
                         })}
                       </span>
                     ) : null}
-                    {display.contact ? <span className="text-muted-foreground">· {display.contact}</span> : null}
+                    {canViewCommissions && display.contact ? (
+                      <span className="text-muted-foreground">· {display.contact}</span>
+                    ) : null}
                     {hasProductVariance ? (
                       <span className="text-[8px] font-normal normal-case tracking-normal text-muted-foreground">
                         · terms vary by product
@@ -1556,11 +1628,13 @@ export function ProductDirectoryPartnerPortalTab({
                       })()}
                     </div>
                   </div>
-                  <PortalSectionTitle step={3}>Time-bound incentives</PortalSectionTitle>
+                  <PortalSectionTitle step={3}>Temporary incentives</PortalSectionTitle>
                   <div className="rounded-lg border border-amber-400/25 bg-amber-400/[0.07] p-3">
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                       <p className="max-w-md text-2xs leading-relaxed text-muted-foreground">
-                        Optional bonuses or rate lifts. Windows should fall on or before the program expiry above.
+                        Same fields as Settings → Partner programs → Temporary incentives: rate type, stacking, optional
+                        volume metric, threshold, retroactive flag, and booking / travel windows. Windows should fall on
+                        or before the program expiry above.
                       </p>
                       <button
                         type="button"
@@ -1584,7 +1658,8 @@ export function ProductDirectoryPartnerPortalTab({
                     </div>
                     {(display.activePromotions?.length ?? 0) === 0 ? (
                       <p className="rounded-md border border-dashed border-border bg-inset/50 px-3 py-3 text-center text-2xs text-muted-foreground">
-                        No incentives yet. Use Add incentive to capture title, details, effective %, and date windows.
+                        No incentives yet. Add title, details, rate type, stacking, optional volume metric, and booking /
+                        travel windows.
                       </p>
                     ) : (
                       <div className="space-y-3">
@@ -1653,14 +1728,11 @@ export function ProductDirectoryPartnerPortalTab({
                                 className="w-full resize-none rounded border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none placeholder:text-muted-foreground/65"
                               />
                             </label>
-                            <div className="grid gap-2 sm:grid-cols-3">
-                              <label className="flex items-center gap-1 text-2xs text-muted-foreground">
-                                Effective rate
-                                <input
-                                  type="number"
-                                  min={0}
-                                  step="0.1"
-                                  value={pr.effectiveRate}
+                            <div className="mb-2 grid gap-2 sm:grid-cols-2">
+                              <label className="block">
+                                <span className="mb-0.5 block text-[9px] text-muted-foreground">Rate type</span>
+                                <select
+                                  value={pr.rateType ?? "percentage"}
                                   onChange={(e) =>
                                     setDrafts((prev) => ({
                                       ...prev,
@@ -1668,16 +1740,172 @@ export function ProductDirectoryPartnerPortalTab({
                                         ...prev[key],
                                         activePromotions: (prev[key]?.activePromotions ?? []).map((x) =>
                                           x.id === pr.id
-                                            ? { ...x, effectiveRate: Math.max(0, Number(e.target.value) || 0) }
+                                            ? { ...x, rateType: e.target.value as "percentage" | "flat" }
                                             : x
                                         ),
                                       },
                                     }))
                                   }
-                                  className="w-16 rounded border border-border bg-inset px-1 py-0.5 text-2xs text-foreground outline-none"
-                                />
-                                %
+                                  className="h-8 w-full rounded border border-border bg-inset px-2 text-2xs text-foreground outline-none"
+                                >
+                                  <option value="percentage">Percentage</option>
+                                  <option value="flat">Flat</option>
+                                </select>
                               </label>
+                              <label className="block">
+                                <span className="mb-0.5 block text-[9px] text-muted-foreground">
+                                  {(pr.rateType ?? "percentage") === "flat" ? "Flat amount" : "Effective rate"}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  {(pr.rateType ?? "percentage") === "flat" ? (
+                                    <span className="text-2xs text-muted-foreground">$</span>
+                                  ) : null}
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    step={(pr.rateType ?? "percentage") === "flat" ? 1 : 0.1}
+                                    value={pr.effectiveRate}
+                                    onChange={(e) =>
+                                      setDrafts((prev) => ({
+                                        ...prev,
+                                        [key]: {
+                                          ...prev[key],
+                                          activePromotions: (prev[key]?.activePromotions ?? []).map((x) =>
+                                            x.id === pr.id
+                                              ? { ...x, effectiveRate: Math.max(0, Number(e.target.value) || 0) }
+                                              : x
+                                          ),
+                                        },
+                                      }))
+                                    }
+                                    className="min-w-0 flex-1 rounded border border-border bg-inset px-1 py-0.5 text-2xs text-foreground outline-none"
+                                  />
+                                  {(pr.rateType ?? "percentage") === "flat" ? null : (
+                                    <span className="text-2xs text-muted-foreground">%</span>
+                                  )}
+                                </span>
+                              </label>
+                            </div>
+                            <label className="mb-2 flex items-start gap-2 text-2xs text-muted-foreground">
+                              <input
+                                type="checkbox"
+                                checked={pr.stacksWithBase ?? true}
+                                onChange={(e) =>
+                                  setDrafts((prev) => ({
+                                    ...prev,
+                                    [key]: {
+                                      ...prev[key],
+                                      activePromotions: (prev[key]?.activePromotions ?? []).map((x) =>
+                                        x.id === pr.id ? { ...x, stacksWithBase: e.target.checked } : x
+                                      ),
+                                    },
+                                  }))
+                                }
+                                className="mt-0.5 rounded border-border"
+                              />
+                              <span>Stacks with base commission (off = override / seasonal-style)</span>
+                            </label>
+                            <div className="mb-2 space-y-2 rounded-md border border-border bg-white/[0.03] p-2">
+                              <p className="text-[9px] font-medium uppercase text-muted-foreground">
+                                Volume incentive (optional)
+                              </p>
+                              <p className="text-[9px] leading-snug text-muted-foreground">
+                                Choose a metric to mark this as a volume incentive. Threshold is optional.
+                              </p>
+                              <div className="grid gap-2 sm:grid-cols-2">
+                                <label className="block">
+                                  <span className="mb-0.5 block text-[9px] text-muted-foreground">Volume metric</span>
+                                  <select
+                                    value={pr.volumeMetric ?? ""}
+                                    onChange={(e) => {
+                                      const v = e.target.value as VolumeMetric | "";
+                                      setDrafts((prev) => ({
+                                        ...prev,
+                                        [key]: {
+                                          ...prev[key],
+                                          activePromotions: (prev[key]?.activePromotions ?? []).map((x) =>
+                                            x.id === pr.id
+                                              ? {
+                                                  ...x,
+                                                  volumeMetric: v === "" ? undefined : v,
+                                                  volumeThreshold: v === "" ? null : x.volumeThreshold,
+                                                  volumeRetroactive: v === "" ? false : x.volumeRetroactive,
+                                                }
+                                              : x
+                                          ),
+                                        },
+                                      }));
+                                    }}
+                                    className="h-8 w-full rounded border border-border bg-inset px-2 text-2xs text-foreground outline-none"
+                                  >
+                                    <option value="">None (not volume)</option>
+                                    <option value="room_nights">Room nights</option>
+                                    <option value="bookings">Bookings</option>
+                                    <option value="revenue">Revenue</option>
+                                  </select>
+                                </label>
+                                <label className="block">
+                                  <span className="mb-0.5 block text-[9px] text-muted-foreground">
+                                    Threshold (optional)
+                                  </span>
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    step={1}
+                                    disabled={!pr.volumeMetric}
+                                    value={
+                                      pr.volumeThreshold != null && Number.isFinite(pr.volumeThreshold)
+                                        ? pr.volumeThreshold
+                                        : ""
+                                    }
+                                    onChange={(e) => {
+                                      const raw = e.target.value;
+                                      setDrafts((prev) => ({
+                                        ...prev,
+                                        [key]: {
+                                          ...prev[key],
+                                          activePromotions: (prev[key]?.activePromotions ?? []).map((x) =>
+                                            x.id === pr.id
+                                              ? {
+                                                  ...x,
+                                                  volumeThreshold: raw === "" ? null : Math.max(0, Number(raw) || 0),
+                                                }
+                                              : x
+                                          ),
+                                        },
+                                      }));
+                                    }}
+                                    className="h-8 w-full rounded border border-border bg-inset px-2 text-2xs text-foreground outline-none disabled:opacity-50"
+                                    placeholder="e.g. 10"
+                                  />
+                                </label>
+                              </div>
+                              <label className="flex items-start gap-2 text-[9px] leading-snug text-muted-foreground">
+                                <input
+                                  type="checkbox"
+                                  disabled={!pr.volumeMetric}
+                                  checked={pr.volumeRetroactive ?? false}
+                                  onChange={(e) =>
+                                    setDrafts((prev) => ({
+                                      ...prev,
+                                      [key]: {
+                                        ...prev[key],
+                                        activePromotions: (prev[key]?.activePromotions ?? []).map((x) =>
+                                          x.id === pr.id
+                                            ? { ...x, volumeRetroactive: e.target.checked }
+                                            : x
+                                        ),
+                                      },
+                                    }))
+                                  }
+                                  className="mt-0.5 rounded border-border disabled:opacity-50"
+                                />
+                                <span>
+                                  Retroactive in window — informational (whether past bookings in the window count).
+                                </span>
+                              </label>
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-2">
                               <label className="text-[9px] text-muted-foreground">
                                 Booking window
                                 <div className="mt-0.5 flex items-center gap-1">
@@ -1765,9 +1993,7 @@ export function ProductDirectoryPartnerPortalTab({
 
               {(display.activePromotions?.length ?? 0) > 0 ? (
                 <div className="mt-3 rounded-xl border border-[rgba(201,169,110,0.12)] bg-[rgba(201,169,110,0.04)] p-3">
-                  <p className="mb-2 text-[9px] font-medium uppercase tracking-wider text-[#B8976E]">
-                    Temporary incentives
-                  </p>
+                  <p className="mb-2 text-[9px] font-medium uppercase tracking-wider text-[#B8976E]">Preview</p>
                   <ul className="space-y-3">
                     {display.activePromotions.map((pr) => (
                       <li
@@ -1776,7 +2002,10 @@ export function ProductDirectoryPartnerPortalTab({
                       >
                         <div className="flex flex-wrap items-baseline justify-between gap-2">
                           <span className="font-semibold text-brand-cta">
-                            {display.commissionType === "flat" ? `$${pr.effectiveRate}` : `${pr.effectiveRate}%`} effective
+                            {(pr.rateType ?? "percentage") === "flat"
+                              ? `$${pr.effectiveRate}`
+                              : `${pr.effectiveRate}%`}{" "}
+                            effective
                           </span>
                           <span className="text-muted-foreground">
                             Book {new Date(pr.bookingStart).toLocaleDateString()} –{" "}
@@ -1785,6 +2014,16 @@ export function ProductDirectoryPartnerPortalTab({
                             {new Date(pr.travelEnd).toLocaleDateString()}
                           </span>
                         </div>
+                        <p className="mt-0.5 text-[9px] text-muted-foreground">
+                          {(pr.stacksWithBase ?? true) ? "Stacks with base" : "Does not stack (override / seasonal-style)"}
+                          {pr.volumeMetric != null ? (
+                            <>
+                              {" · "}
+                              Volume: {pr.volumeThreshold ?? "—"} {pr.volumeMetric.replace("_", " ")}
+                              {pr.volumeRetroactive ? " · retroactive (info)" : ""}
+                            </>
+                          ) : null}
+                        </p>
                         {pr.title?.trim() ? (
                           <p className="mt-1 text-xs font-medium text-foreground">{pr.title.trim()}</p>
                         ) : null}
@@ -2585,7 +2824,7 @@ export function ProductDirectoryRepFirmsTab({
       {!isAdmin && (
         <p className="inline-flex w-fit max-w-full items-center gap-2 rounded-lg border border-border bg-white/[0.02] px-3 py-2 text-xs text-muted-foreground">
           <Lock className="h-3.5 w-3.5 shrink-0 text-[#5C5852]" aria-hidden />
-          Read-only view. You can suggest updates for admin review.
+          Read only — suggest changes for admin review.
         </p>
       )}
 
@@ -3522,7 +3761,7 @@ export function ProductDirectoryRepFirmsTab({
                     id: `rfs-${Date.now()}`,
                     repFirmName: suggestedFirmName.trim(),
                     note: suggestionNote.trim(),
-                    suggestedBy: "Advisor",
+                    suggestedBy: editorDisplayName,
                     createdAt: new Date().toISOString(),
                     status: "pending",
                   },

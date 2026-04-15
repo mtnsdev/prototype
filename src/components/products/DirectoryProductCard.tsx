@@ -4,7 +4,11 @@ import { useCallback, useMemo, useRef } from "react";
 import { Check, Clock, Flame, Plus, Search, Sparkles, Users } from "lucide-react";
 import type { DirectoryProduct } from "@/types/product-directory";
 import { cn } from "@/lib/utils";
-import { getPrimaryDirectoryType } from "@/components/products/directoryProductTypeHelpers";
+import {
+  dmcOperationalDataPresent,
+  getPrimaryDirectoryType,
+  isDMCProduct,
+} from "@/components/products/directoryProductTypeHelpers";
 import { directoryCategoryColors, directoryCategoryLabel } from "./productDirectoryVisual";
 import {
   getTopBookableProgramByCommission,
@@ -19,6 +23,7 @@ import { productListingMetaLineClass, productListingTitleClass } from "@/lib/pro
 import { FAKE_ITINERARIES } from "@/components/itineraries/fakeData";
 import { FAKE_VICS } from "@/components/vic/fakeData";
 import { getVicsForProduct } from "@/lib/entityCrossLinks";
+import { formatProductOpeningLine } from "@/lib/productDirectoryOpening";
 
 type Props = {
   product: DirectoryProduct;
@@ -78,6 +83,8 @@ export default function DirectoryProductCard({
     if (cached != null) return cached;
     return getVicsForProduct(product.id, FAKE_VICS ?? [], FAKE_ITINERARIES ?? []).length;
   }, [product.id, vicProductCounts]);
+
+  const openingLine = useMemo(() => formatProductOpeningLine(product), [product]);
 
   const clearLongPress = useCallback(() => {
     if (longPressTimer.current) {
@@ -251,6 +258,9 @@ export default function DirectoryProductCard({
                 <span className="ml-1.5 text-2xs text-muted-foreground">{product.priceTier}</span>
               ) : null}
             </p>
+            {openingLine ? (
+              <p className="mt-0.5 text-[9px] font-medium text-[#C9A96E]/90">{openingLine}</p>
+            ) : null}
           </div>
           {showRemoveFromCollection && onRemoveFromCollection && (
             <button
@@ -302,6 +312,12 @@ export default function DirectoryProductCard({
           </div>
         ) : null}
 
+        {isDMCProduct(product) && dmcOperationalDataPresent(product) && !compact ? (
+          <span className="mt-1.5 inline-flex w-fit rounded-full bg-[rgba(212,165,116,0.15)] px-2 py-0.5 text-[11px] text-[rgba(212,165,116,0.85)]">
+            Operations on file
+          </span>
+        ) : null}
+
         {product.updatedAt && !compact ? (
           <div className="mt-1 flex items-center justify-end gap-1">
             <Clock className="h-2.5 w-2.5 text-muted-foreground/65" aria-hidden />
@@ -350,8 +366,6 @@ export default function DirectoryProductCard({
               </span>
               <span className="truncate text-[9px] text-muted-foreground">via {programDisplayName(topForCommission)}</span>
             </span>
-          ) : !canViewCommissions && topForCommission != null && topRate != null ? (
-            <span className="min-w-0 truncate text-[9px] text-muted-foreground">Partner rate on file</span>
           ) : null}
           {vicCount > 0 ? (
             <span className="ml-auto flex shrink-0 items-center gap-1 text-[9px] text-[#5C5852]/70">

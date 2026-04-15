@@ -12,7 +12,6 @@ import { useUser } from "@/contexts/UserContext";
 import { useTeams } from "@/contexts/TeamsContext";
 import { canViewVIC, canEditVIC, canDeleteVIC, canShareVIC, canViewSensitiveFields } from "@/utils/vicPermissions";
 import { Button } from "@/components/ui/button";
-import { ShellCrumbOverride } from "@/contexts/DashboardShellContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -143,15 +142,6 @@ export default function VICDetailPage({ vicId }: Props) {
     router.push("/dashboard/vics");
   };
 
-  const shellCrumbs = useMemo(() => {
-    if (loading || !vic) return [];
-    return [
-      { label: "Home", href: "/dashboard" },
-      { label: "VICs", href: "/dashboard/vics" },
-      { label: vic.full_name || "VIC" },
-    ];
-  }, [loading, vic]);
-
   if (loading) {
     return (
       <div className="h-full overflow-y-auto bg-inset">
@@ -224,7 +214,6 @@ export default function VICDetailPage({ vicId }: Props) {
 
   return (
     <div className="h-full overflow-y-auto bg-inset">
-      {shellCrumbs.length > 0 ? <ShellCrumbOverride crumbs={shellCrumbs} /> : null}
       <div className="max-w-6xl mx-auto p-6 space-y-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-4 min-w-0">

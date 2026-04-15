@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import type { DirectoryProduct, DirectoryProductCategory } from "@/types/product-directory";
 import { getPrimaryDirectoryType } from "@/components/products/directoryProductTypeHelpers";
 import { clusterMapPinsGeo } from "./productDirectoryMapUtils";
+import { formatProductOpeningLine } from "@/lib/productDirectoryOpening";
 import {
   directoryCategoryColors,
   directoryCategoryLabel,
@@ -138,6 +139,7 @@ export default function ProductDirectoryMapSplit({
               const st = directoryCategoryColors(primaryType);
               const selected = selectedId === product.id;
               const missingPin = product.latitude == null || product.longitude == null;
+              const openingLine = formatProductOpeningLine(product);
               return (
                 <div
                   key={product.id}
@@ -165,6 +167,9 @@ export default function ProductDirectoryMapSplit({
                   >
                     <p className="truncate text-xs font-medium leading-tight text-foreground">{product.name}</p>
                     <p className="truncate text-[9px] text-muted-foreground">{directoryProductPlaceLabel(product)}</p>
+                    {openingLine ? (
+                      <p className="truncate text-[8px] font-medium text-[#C9A96E]/90">{openingLine}</p>
+                    ) : null}
                     <div className="mt-0.5 flex flex-wrap items-center gap-1">
                       <span
                         className="inline-block rounded px-1 py-px text-[8px] leading-tight"
@@ -256,7 +261,9 @@ export default function ProductDirectoryMapSplit({
               </button>
             </div>
             <div className="max-h-32 space-y-0.5 overflow-y-auto">
-              {clusterProducts.map((p) => (
+              {clusterProducts.map((p) => {
+                const clusterOpening = formatProductOpeningLine(p);
+                return (
                 <button
                   key={p.id}
                   type="button"
@@ -267,6 +274,11 @@ export default function ProductDirectoryMapSplit({
                   }}
                 >
                   <span className="block truncate">{p.name}</span>
+                  {clusterOpening ? (
+                    <span className="mt-0.5 block truncate text-[8px] font-medium text-[#C9A96E]/90">
+                      {clusterOpening}
+                    </span>
+                  ) : null}
                   {externalSearchCollectionId && p.collectionIds.includes(externalSearchCollectionId) ? (
                     <span
                       className="mt-0.5 flex items-center gap-0.5 text-[8px] text-muted-foreground"
@@ -280,7 +292,8 @@ export default function ProductDirectoryMapSplit({
                     </span>
                   ) : null}
                 </button>
-              ))}
+              );
+              })}
             </div>
           </div>
         )}

@@ -6,6 +6,11 @@ import { StarRating } from "./StarRating";
 import type { PlaceCard, WebCitation, Citation } from "./types";
 import { mapGooglePlaceTypesToDirectoryCategories } from "@/lib/googlePlacesToDirectoryCategories";
 import { directoryCategoryLabel } from "@/components/products/productDirectoryProductTypes";
+import {
+  dmcOperationalDataPresent,
+  isDMCProduct,
+} from "@/components/products/directoryProductTypeHelpers";
+import { getDirectoryProductById } from "@/components/products/productDirectoryMock";
 
 type RightPanelProps = {
   isOpen: boolean;
@@ -167,6 +172,14 @@ export function RightPanel({
           {mode === "places" && (
             <div className="grid grid-cols-1 gap-3">
               {placeCards.map((card, idx) => {
+                const linkedDirectoryProduct =
+                  card.directory_product_id != null && card.directory_product_id !== ""
+                    ? getDirectoryProductById(card.directory_product_id)
+                    : undefined;
+                const showDmcOperationsOnFile =
+                  linkedDirectoryProduct != null &&
+                  isDMCProduct(linkedDirectoryProduct) &&
+                  dmcOperationalDataPresent(linkedDirectoryProduct);
                 const placeUrl = card.google_maps_url || card.website || null;
                 const placeType =
                   card.google_types?.[0] != null && card.google_types[0] !== ""
@@ -216,6 +229,11 @@ export function RightPanel({
                               size={12}
                             />
                           )}
+                          {showDmcOperationsOnFile ? (
+                            <span className="inline-flex items-center rounded-full bg-[rgba(212,165,116,0.15)] px-2 py-0.5 text-[10px] text-[rgba(212,165,116,0.85)]">
+                              Operations on file
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                       {(card.address || card.city || card.country) && (

@@ -22,7 +22,7 @@
 
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Copy, Pencil, Plus, Trash2 } from "lucide-react";
@@ -51,7 +51,10 @@ import {
   repFirmsEqual,
   subscribeRepFirmsRegistry,
 } from "../productDirectoryPersistence";
+import { resolveAdvisorCatalogFromStorage } from "../productDirectoryCatalogResolve";
+import { useProductDirectoryCatalog } from "../ProductDirectoryCatalogContext";
 import { useUser } from "@/contexts/UserContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useToast } from "@/contexts/ToastContext";
 import { canEditProduct, canDeleteProduct, canViewFinancials } from "@/utils/productPermissions";
 import {
@@ -64,7 +67,6 @@ import {
   VERIFICATION_BADGES,
 } from "@/config/productCategoryConfig";
 import { Button } from "@/components/ui/button";
-import { ShellCrumbOverride } from "@/contexts/DashboardShellContext";
 import DeleteProductModal from "../Modals/DeleteProductModal";
 import AddProductModal from "../Modals/AddProductModal";
 import CopyToAgencyModal from "../Modals/CopyToAgencyModal";
@@ -77,9 +79,11 @@ import { ProductDetailLayers } from "./ProductDetailLayers";
 import { getProductLayerMock } from "./productLayerMock";
 import { ProductDirectoryDetailBody } from "../ProductDirectoryDetailBody";
 import ProductDirectoryCollectionPicker from "../ProductDirectoryCollectionPicker";
-import { MOCK_TEAMS, resolveUserPolicies } from "@/lib/teamsMock";
+import { MOCK_TEAMS } from "@/lib/teamsMock";
 import type { Team } from "@/types/teams";
 import { programFilterId } from "../productDirectoryCommission";
+import { usePartnerProgramsOptional } from "@/contexts/PartnerProgramsContext";
+import { applyPartnerRegistryToProduct } from "@/lib/partnerProgramMerge";
 
 type Props = { productId: string };
 
@@ -129,19 +133,32 @@ const DIRECTORY_DETAIL_SEED_NAME = "Janet";
 
 export default function ProductDetailPage({ productId }: Props) {
   const router = useRouter();
-  const { user, prototypeAdminView, isLoading: userLoading } = useUser();
+  const { user, isLoading: userLoading } = useUser();
+  const { isAdmin, canViewCommissions } = usePermissions();
   const toast = useToast();
+  const { catalogRevision, patchPersistedDirectory } = useProductDirectoryCatalog();
 
   const [directoryProduct, setDirectoryProduct] = useState<DirectoryProduct | null>(null);
 
+  const isCatalogDirectoryProduct = useMemo(() => {
+    if (!productId) return false;
+    const advisorUid = String(user?.id ?? "1");
+    const advisorName = user?.username ?? user?.email?.split("@")[0] ?? "You";
+    const { products } = resolveAdvisorCatalogFromStorage(advisorUid, advisorName);
+    return products.some((p) => p.id === productId) || Boolean(getDirectoryProductById(productId));
+  }, [productId, user?.id, user?.username, user?.email, catalogRevision]);
+
   useEffect(() => {
     if (userLoading) return;
-    const d = getDirectoryProductById(productId);
+    const advisorUid = String(user?.id ?? "1");
+    const advisorName = user?.username ?? user?.email?.split("@")[0] ?? "You";
+    const { products } = resolveAdvisorCatalogFromStorage(advisorUid, advisorName);
+    const fromResolved = products.find((p) => p.id === productId);
+    const d = fromResolved ?? getDirectoryProductById(productId);
     if (!d) {
       setDirectoryProduct(null);
       return;
     }
-    const advisorUid = String(user?.id ?? "1");
     let p = cloneDirectoryProduct(d);
     if (
       advisorUid !== DIRECTORY_EXTERNAL_SEARCH_MOCK_SEED_ADVISOR_ID &&
@@ -152,7 +169,7 @@ export default function ProductDetailPage({ productId }: Props) {
       p = { ...p, collectionIds: nextIds, collections: nextRefs, collectionCount: nextIds.length };
     }
     setDirectoryProduct(p);
-  }, [productId, userLoading, user?.id]);
+  }, [productId, userLoading, user?.id, user?.username, user?.email, catalogRevision]);
 
   useEffect(() => {
     return subscribeRepFirmsRegistry(() => {
@@ -166,12 +183,6 @@ export default function ProductDetailPage({ productId }: Props) {
   }, []);
 
   const uid = user ? String(user.id) : "1";
-  const policies = useMemo(
-    () => resolveUserPolicies(user ? { id: String(user.id), role: user.role } : null, MOCK_TEAMS),
-    [user]
-  );
-  const canViewCommissions = policies.canViewCommissions;
-  const isAdmin = prototypeAdminView;
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [repFirmsRegistry, setRepFirmsRegistry] = useState<RepFirm[]>(() => {
@@ -179,7 +190,6 @@ export default function ProductDetailPage({ productId }: Props) {
     if (loaded && loaded.length > 0) return cloneRepFirmsForState(loaded);
     return cloneRepFirmsForState(MOCK_REP_FIRMS);
   });
-  const detailCatalogSeedRef = useRef<string | null>(null);
   const [directoryCollections, setDirectoryCollections] = useState<DirectoryCollectionOption[]>(() =>
     cloneMockDirectoryCatalogForAdvisor("1", DIRECTORY_DETAIL_SEED_NAME).collections
   );
@@ -188,19 +198,26 @@ export default function ProductDetailPage({ productId }: Props) {
     if (userLoading) return;
     const advisorUid = String(user?.id ?? "1");
     const advisorName = user?.username ?? user?.email?.split("@")[0] ?? "You";
-    if (detailCatalogSeedRef.current === advisorUid) return;
-    detailCatalogSeedRef.current = advisorUid;
-    setDirectoryCollections(cloneMockDirectoryCatalogForAdvisor(advisorUid, advisorName).collections);
-  }, [userLoading, user?.id, user?.username, user?.email]);
+    const { directoryCollections: cols } = resolveAdvisorCatalogFromStorage(advisorUid, advisorName);
+    setDirectoryCollections(cols);
+  }, [userLoading, user?.id, user?.username, user?.email, catalogRevision]);
 
   const availableCollections = useMemo(
     () => filterCollectionsForUser(uid, directoryCollections, MOCK_TEAMS),
     [uid, directoryCollections]
   );
 
-  const patchDirectoryProduct = useCallback((id: string, patch: Partial<DirectoryProduct>) => {
-    setDirectoryProduct((prev) => (prev && prev.id === id ? { ...prev, ...patch } : prev));
-  }, []);
+  const patchDirectoryProduct = useCallback(
+    (
+      id: string,
+      patch: Partial<DirectoryProduct>,
+      persistOptions?: { replaceCollections?: DirectoryCollectionOption[] }
+    ) => {
+      setDirectoryProduct((prev) => (prev && prev.id === id ? { ...prev, ...patch } : prev));
+      patchPersistedDirectory(id, patch, persistOptions);
+    },
+    [patchPersistedDirectory]
+  );
 
   const saveDirectoryCollections = useCallback(
     (selectedIds: string[]) => {
@@ -216,17 +233,19 @@ export default function ProductDetailPage({ productId }: Props) {
           return c;
         });
         const refs = buildDirectoryCollectionRefs(selectedIds, next);
-        patchDirectoryProduct(directoryProduct.id, {
+        const productPatch = {
           collectionIds: selectedIds,
           collections: refs,
           collectionCount: selectedIds.length,
-        });
+        };
+        setDirectoryProduct((dp) => (dp && dp.id === pid ? { ...dp, ...productPatch } : dp));
+        patchPersistedDirectory(pid, productPatch, { replaceCollections: next });
         return next;
       });
       setPickerOpen(false);
       toast({ title: "Collections updated", tone: "success" });
     },
-    [directoryProduct, patchDirectoryProduct, toast]
+    [directoryProduct, patchPersistedDirectory, toast]
   );
 
   const createDirectoryCollectionDetail = useCallback(
@@ -267,11 +286,23 @@ export default function ProductDetailPage({ productId }: Props) {
         };
       }
 
-      setDirectoryCollections((prev) => [...prev, newCol]);
+      setDirectoryCollections((prev) => {
+        const nextCols = [...prev, newCol];
+        const nextIds = [...directoryProduct.collectionIds, id];
+        const refs = buildDirectoryCollectionRefs(nextIds, nextCols);
+        const productPatch = {
+          collectionIds: nextIds,
+          collections: refs,
+          collectionCount: nextIds.length,
+        };
+        setDirectoryProduct((dp) => (dp && dp.id === pid ? { ...dp, ...productPatch } : dp));
+        patchPersistedDirectory(pid, productPatch, { replaceCollections: nextCols });
+        return nextCols;
+      });
       toast({ title: `Created “${newCol.name}”`, tone: "success" });
       return id;
     },
-    [directoryProduct, uid, user, toast]
+    [directoryProduct, uid, user, toast, patchPersistedDirectory]
   );
 
   const handleQuickAddDirectoryCollection = useCallback(
@@ -286,32 +317,54 @@ export default function ProductDetailPage({ productId }: Props) {
             : c
         );
         const refs = buildDirectoryCollectionRefs(nextIds, next);
-        patchDirectoryProduct(directoryProduct.id, {
+        const productPatch = {
           collectionIds: nextIds,
           collections: refs,
           collectionCount: nextIds.length,
-        });
+        };
+        setDirectoryProduct((dp) => (dp && dp.id === pid ? { ...dp, ...productPatch } : dp));
+        patchPersistedDirectory(pid, productPatch, { replaceCollections: next });
         return next;
       });
     },
-    [directoryProduct, patchDirectoryProduct]
+    [directoryProduct, patchPersistedDirectory]
   );
 
   const canRemoveFromCollectionDir = useCallback(
     (collectionId: string) => {
       if (isAdmin) return true;
       const c = directoryCollections.find((x) => x.id === collectionId);
-      return c?.ownerId === uid;
+      if (!c) return false;
+      if (c.scope === "team") return false;
+      if (c.isSystem && c.scope === "private") return c.ownerId === uid;
+      return c.ownerId === uid;
     },
     [isAdmin, uid, directoryCollections]
   );
+  const allCatalogProducts = useMemo(() => {
+    const advisorUid = String(user?.id ?? "1");
+    const advisorName = user?.username ?? user?.email?.split("@")[0] ?? "You";
+    return resolveAdvisorCatalogFromStorage(advisorUid, advisorName).products;
+  }, [user?.id, user?.username, user?.email, catalogRevision]);
+
   const customProgramKeys = useMemo(
-    () => (directoryProduct ? customProgramKeysForProduct(directoryProduct, MOCK_DIRECTORY_PRODUCTS) : []),
-    [directoryProduct]
+    () => (directoryProduct ? customProgramKeysForProduct(directoryProduct, allCatalogProducts) : []),
+    [directoryProduct, allCatalogProducts]
+  );
+
+  const partnerProgramsCtx = usePartnerProgramsOptional();
+  const directoryProductView = useMemo(() => {
+    if (!directoryProduct) return null;
+    if (!partnerProgramsCtx) return directoryProduct;
+    return applyPartnerRegistryToProduct(directoryProduct, partnerProgramsCtx.snapshot);
+  }, [directoryProduct, partnerProgramsCtx]);
+
+  const partnerProgramsManagedInRegistry = Boolean(
+    partnerProgramsCtx?.snapshot.links.some((l) => l.productId === productId)
   );
 
   const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(() => !getDirectoryProductById(productId));
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -321,7 +374,11 @@ export default function ProductDetailPage({ productId }: Props) {
   const [itineraryModalOpen, setItineraryModalOpen] = useState(false);
 
   const load = useCallback(async () => {
-    if (!productId || getDirectoryProductById(productId)) return;
+    if (!productId) return;
+    const advisorUid = String(user?.id ?? "1");
+    const advisorName = user?.username ?? user?.email?.split("@")[0] ?? "You";
+    const { products } = resolveAdvisorCatalogFromStorage(advisorUid, advisorName);
+    if (products.some((p) => p.id === productId) || getDirectoryProductById(productId)) return;
     setLoading(true);
     setError(null);
     try {
@@ -340,31 +397,33 @@ export default function ProductDetailPage({ productId }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [productId]);
+  }, [productId, user?.id, user?.username, user?.email]);
 
   useEffect(() => {
-    if (getDirectoryProductById(productId)) {
+    if (isCatalogDirectoryProduct) {
       setLoading(false);
       setError(null);
       setProduct(null);
       return;
     }
     load();
-  }, [productId, load]);
+  }, [productId, load, isCatalogDirectoryProduct]);
 
-  if (getDirectoryProductById(productId) && directoryProduct) {
+  if (isCatalogDirectoryProduct && !directoryProduct) {
     return (
       <div className="min-h-screen bg-inset p-6 md:p-8">
-        <ShellCrumbOverride
-          crumbs={[
-            { label: "Home", href: "/dashboard" },
-            { label: "Catalog", href: "/dashboard/products" },
-            { label: directoryProduct.name },
-          ]}
-        />
+        <div className="mx-auto w-full max-w-[420px] p-6 text-muted-foreground">Loading catalog product…</div>
+      </div>
+    );
+  }
+
+  if (directoryProduct) {
+    const directoryProductForView = directoryProductView ?? directoryProduct;
+    return (
+      <div className="min-h-screen bg-inset p-6 md:p-8">
         <div className="mx-auto w-full max-w-[420px]">
           <ProductDirectoryDetailBody
-            product={directoryProduct}
+            product={directoryProductForView}
             canViewCommissions={canViewCommissions}
             isAdmin={isAdmin}
             teams={MOCK_TEAMS}
@@ -383,6 +442,7 @@ export default function ProductDetailPage({ productId }: Props) {
             onRequestCreateCollection={() => setPickerOpen(true)}
             partnerProgramCustomKeys={customProgramKeys}
             repFirmsRegistry={repFirmsRegistry}
+            partnerProgramsManagedInRegistry={partnerProgramsManagedInRegistry}
           />
         </div>
         {pickerOpen && (
@@ -408,15 +468,6 @@ export default function ProductDetailPage({ productId }: Props) {
   const layer = (product?.data_ownership_level ?? "Advisor") as keyof typeof DATA_LAYER_BADGES;
   const ver = (product?.verification_status ?? "unverified") as keyof typeof VERIFICATION_BADGES;
 
-  const shellCrumbs = useMemo(() => {
-    if (loading || !product) return [];
-    return [
-      { label: "Home", href: "/dashboard" },
-      { label: "Catalog", href: "/dashboard/products" },
-      { label: product.name },
-    ];
-  }, [loading, product]);
-
   if (loading) {
     return <div className="p-6 text-muted-foreground">Loading product…</div>;
   }
@@ -441,7 +492,6 @@ export default function ProductDetailPage({ productId }: Props) {
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background">
-      {shellCrumbs.length > 0 ? <ShellCrumbOverride crumbs={shellCrumbs} /> : null}
       <div className="relative h-[240px] w-full shrink-0 overflow-hidden bg-zinc-900">
         <ImageWithFallback
           fallbackType="product"

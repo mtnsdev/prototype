@@ -13,6 +13,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { isAuthBypassEnabled } from "@/lib/authBypass";
 
 declare global {
     interface Window {
@@ -61,7 +62,7 @@ function LoginContent() {
     const [forceChangeLoading, setForceChangeLoading] = useState(false);
     const [forceChangeSucceeded, setForceChangeSucceeded] = useState(false);
 
-    const redirectUrl = searchParams.get("redirect") || "/dashboard/chat";
+    const redirectUrl = searchParams.get("redirect") || "/dashboard/products";
     const reason = searchParams.get("reason");
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -72,6 +73,12 @@ function LoginContent() {
             setInfo("Password updated successfully. Please sign in with your new password.");
         }
     }, [reason]);
+
+    useEffect(() => {
+        if (!isAuthBypassEnabled()) return;
+        const target = redirectUrl.startsWith("/") ? redirectUrl : "/dashboard/products";
+        router.replace(target);
+    }, [router, redirectUrl]);
 
     const setAuthCookie = useCallback((token: string) => {
         const secure = window.location.protocol === "https:" ? "; Secure" : "";

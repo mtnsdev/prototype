@@ -16,6 +16,7 @@ import {
     Users,
     Database,
     Newspaper,
+    Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -447,6 +448,21 @@ export default function SettingsPage() {
                                 >
                                     <Users size={16} className="text-[#B07A5B]" />
                                     Rep Firms
+                                    <ChevronRight size={16} className="ml-auto opacity-60" />
+                                </Link>
+                                <Link
+                                    href="/dashboard/settings/programs"
+                                    className={[
+                                        "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
+                                        "text-[14px] font-medium",
+                                        "bg-white/[0.06] hover:bg-white/[0.1]",
+                                        "border border-border",
+                                        "text-foreground",
+                                        "transition-all duration-150",
+                                    ].join(" ")}
+                                >
+                                    <Award size={16} className="text-brand-cta" />
+                                    Partner Programs
                                     <ChevronRight size={16} className="ml-auto opacity-60" />
                                 </Link>
                                 <Link

@@ -6,6 +6,7 @@ import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaf
 import "leaflet/dist/leaflet.css";
 import { Search } from "lucide-react";
 import type { DirectoryProduct } from "@/types/product-directory";
+import { formatProductOpeningLine } from "@/lib/productDirectoryOpening";
 import { getPrimaryDirectoryType } from "@/components/products/directoryProductTypeHelpers";
 import type { GeoPinItem } from "./productDirectoryMapUtils";
 import {
@@ -69,10 +70,12 @@ function PopupBody({
   const bestRate = best != null ? programDisplayCommissionRate(best) : null;
   const place =
     product.city && product.country ? `${product.city}, ${product.country}` : directoryProductPlaceLabel(product);
+  const openingLine = formatProductOpeningLine(product);
   return (
     <div className="min-w-[200px] text-background">
       <p className="truncate text-sm font-medium">{product.name}</p>
       <p className="text-2xs text-neutral-600">{place}</p>
+      {openingLine ? <p className="text-[9px] font-medium text-amber-800/95">{openingLine}</p> : null}
       <p className="mt-1 text-[9px] text-neutral-500">
         {product.types.map((t) => directoryCategoryLabel(t)).join(" · ")}
       </p>

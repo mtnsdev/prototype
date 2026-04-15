@@ -1,6 +1,6 @@
 /**
  * Command palette entries. `opsOnly` items appear when the user has the agency ops lens
- * (`prototypeAdminView` in UserContext) — mirrors independent advisor vs agency ops.
+ * (`prototypeAdminView` in UserContext, derived from `user.role === "admin"`) — advisor vs agency ops.
  */
 
 export type DashboardCommand = {

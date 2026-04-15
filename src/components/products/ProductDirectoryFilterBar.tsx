@@ -65,6 +65,8 @@ type Props = {
   onCommissionFilterActiveChange: (v: boolean) => void;
   hasActiveIncentive: boolean;
   onHasActiveIncentiveChange: (v: boolean) => void;
+  hasPlannedOpening: boolean;
+  onHasPlannedOpeningChange: (v: boolean) => void;
   sortByCommission: boolean;
   onSortByCommissionChange: (v: boolean) => void;
   selectedTiers: DirectoryTierLevel[];
@@ -107,6 +109,8 @@ export default function ProductDirectoryFilterBar({
   onCommissionFilterActiveChange,
   hasActiveIncentive,
   onHasActiveIncentiveChange,
+  hasPlannedOpening,
+  onHasPlannedOpeningChange,
   sortByCommission,
   onSortByCommissionChange,
   selectedTiers,
@@ -279,6 +283,13 @@ export default function ProductDirectoryFilterBar({
           onChange={onSelectedRepFirmIdsChange}
         />
         <ProductDirectoryAmenitiesDropdown selected={selectedAmenities} onChange={onSelectedAmenitiesChange} />
+        <div className="flex items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 py-1.5">
+          <span className="text-xs text-muted-foreground">Planned opening</span>
+          <ProductDirectoryFilterSwitch
+            checked={hasPlannedOpening}
+            onCheckedChange={onHasPlannedOpeningChange}
+          />
+        </div>
         {canViewCommissions ? (
           <div className="flex items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 py-1.5">
             <span className="text-xs text-muted-foreground">Active incentives</span>

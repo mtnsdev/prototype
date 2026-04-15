@@ -6,7 +6,8 @@ import type {
 import type { RepFirm } from "@/types/rep-firm";
 import { migrateDirectoryProductJson } from "@/components/products/directoryProductTypeHelpers";
 
-const STORAGE_KEY = "enable-product-directory-v1";
+/** localStorage key for the advisor directory snapshot — used for cross-tab `storage` sync. */
+export const DIRECTORY_CATALOG_LOCAL_STORAGE_KEY = "enable-product-directory-v1";
 const SCHEMA_VERSION = 3;
 
 const REP_FIRMS_KEY = "enable-rep-firms-registry-v1";
@@ -82,7 +83,7 @@ export function loadPersistedDirectory(): {
     return { products: null, directoryCollections: null, externalSearchMeta: null };
   }
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(DIRECTORY_CATALOG_LOCAL_STORAGE_KEY);
     if (!raw) return { products: null, directoryCollections: null, externalSearchMeta: null };
     const data = JSON.parse(raw) as Partial<PersistedDirectoryPayload>;
     const v = data.v;
@@ -120,7 +121,7 @@ export function persistDirectorySnapshot(
       externalSearchMeta: externalSearchMeta && Object.keys(externalSearchMeta).length > 0 ? externalSearchMeta : undefined,
       savedAt: new Date().toISOString(),
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    localStorage.setItem(DIRECTORY_CATALOG_LOCAL_STORAGE_KEY, JSON.stringify(payload));
   } catch {
     /* quota / private mode */
   }
@@ -128,11 +129,13 @@ export function persistDirectorySnapshot(
 
 export function clearPersistedDirectory(): void {
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(DIRECTORY_CATALOG_LOCAL_STORAGE_KEY);
   } catch {
     /* ignore */
   }
 }
+
+export { mergeDirectoryProductPatchInCatalog } from "@/lib/directoryProductMerge";
 
 export function cloneDirectoryProductsForState(products: DirectoryProduct[]): DirectoryProduct[] {
   return products.map((p) => ({

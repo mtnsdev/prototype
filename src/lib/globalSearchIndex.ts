@@ -3,6 +3,11 @@ import { knowledgeDocumentUiScope } from "@/lib/knowledgeDocumentScope";
 import type { KnowledgeDocument } from "@/types/knowledge-vault";
 import { FAKE_VICS } from "@/components/vic/fakeData";
 import { FAKE_PRODUCTS } from "@/components/products/fakeData";
+import { MOCK_DIRECTORY_PRODUCTS } from "@/components/products/productDirectoryMock";
+import {
+  directoryProductSearchHaystack,
+  directoryProductTypeShortLabel,
+} from "@/components/products/directoryProductTypeHelpers";
 import { FAKE_ITINERARIES } from "@/components/itineraries/fakeData";
 
 export type CmdKResult =
@@ -108,29 +113,48 @@ export function globalSearch(query: string): CmdKResult[] {
       };
     });
 
-  // Search Products by name, city, country, category, tags
-  const productResults = FAKE_PRODUCTS.map((prod) => {
+  // Search legacy registry products + advisor directory catalog (includes DMC operational text)
+  const legacyProductRows = FAKE_PRODUCTS.map((prod) => {
     const nameScore = fuzzySearch(prod.name, q);
     const cityScore = fuzzySearch(prod.city || "", q);
     const countryScore = fuzzySearch(prod.country || "", q);
     const catScore = fuzzySearch(prod.category || "", q);
     const tagsScore = (prod.tags || []).some((t) => fuzzySearch(t, q) > 0) ? 10 : 0;
     const score = nameScore + cityScore + countryScore + catScore + tagsScore;
+    return { source: "legacy" as const, prod, score };
+  }).filter((r) => r.score > 0);
 
-    return { prod, score };
-  })
-    .filter((r) => r.score > 0)
+  const directoryProductRows = MOCK_DIRECTORY_PRODUCTS.map((p) => {
+    const nameScore = fuzzySearch(p.name, q);
+    const hayScore = fuzzySearch(directoryProductSearchHaystack(p), q);
+    const tagScore = (p.tags ?? []).some((t) => fuzzySearch(t, q) > 0) ? 12 : 0;
+    const score = Math.max(nameScore, hayScore) + tagScore;
+    return { source: "directory" as const, product: p, score };
+  }).filter((r) => r.score > 0);
+
+  const productResults = [...legacyProductRows, ...directoryProductRows]
     .sort((a, b) => b.score - a.score)
-    .slice(0, 10)
-    .map((r) => {
-      const p = r.prod;
-      const typeLabel = TYPE_LABEL[p.category] || p.category || "Product";
+    .slice(0, 14)
+    .map((row) => {
+      if (row.source === "legacy") {
+        const p = row.prod;
+        const typeLabel = TYPE_LABEL[p.category] || p.category || "Product";
+        return {
+          kind: "product" as const,
+          id: p.id,
+          title: p.name,
+          subtitle: [p.city, p.country].filter(Boolean).join(", ") || "—",
+          typeLabel,
+          href: `/dashboard/products/${p.id}`,
+        };
+      }
+      const p = row.product;
       return {
         kind: "product" as const,
         id: p.id,
         title: p.name,
-        subtitle: [p.city, p.country].filter(Boolean).join(", ") || "—",
-        typeLabel,
+        subtitle: [p.city, p.country].filter(Boolean).join(", ") || p.location || "—",
+        typeLabel: directoryProductTypeShortLabel(p),
         href: `/dashboard/products/${p.id}`,
       };
     });
@@ -202,7 +226,15 @@ export function buildCmdKIndex(): CmdKResult[] {
       href: `/dashboard/knowledge-vault?doc=${encodeURIComponent(d.id)}`,
     }));
 
-  const products: CmdKResult[] = FAKE_PRODUCTS.slice(0, 8).map((p) => ({
+  const directoryShowcase: CmdKResult[] = MOCK_DIRECTORY_PRODUCTS.slice(0, 6).map((p) => ({
+    kind: "product" as const,
+    id: p.id,
+    title: p.name,
+    subtitle: [p.city, p.country].filter(Boolean).join(", ") || p.location || "—",
+    typeLabel: directoryProductTypeShortLabel(p),
+    href: `/dashboard/products/${p.id}`,
+  }));
+  const legacyShowcase: CmdKResult[] = FAKE_PRODUCTS.slice(0, 6).map((p) => ({
     kind: "product" as const,
     id: p.id,
     title: p.name,
@@ -210,6 +242,14 @@ export function buildCmdKIndex(): CmdKResult[] {
     typeLabel: TYPE_LABEL[p.category] || p.category || "Product",
     href: `/dashboard/products/${p.id}`,
   }));
+  const seenProductIds = new Set<string>();
+  const products: CmdKResult[] = [];
+  for (const row of [...directoryShowcase, ...legacyShowcase]) {
+    if (seenProductIds.has(row.id)) continue;
+    seenProductIds.add(row.id);
+    products.push(row);
+    if (products.length >= 10) break;
+  }
 
   const vics: CmdKResult[] = FAKE_VICS.slice(0, 12).map((v) => {
     const parts = v.full_name.split(/\s+/).filter(Boolean);

@@ -34,7 +34,6 @@ import { useToast } from "@/contexts/ToastContext";
 import { canEditItinerary, canDeleteItinerary, canViewFinancials } from "@/utils/itineraryPermissions";
 import { ITINERARY_STATUS_BADGES, formatDateRange } from "../statusConfig";
 import { Button } from "@/components/ui/button";
-import { ShellCrumbOverride } from "@/contexts/DashboardShellContext";
 import ItineraryDetailSidebar from "./ItineraryDetailSidebar";
 import ItineraryTimeline from "./ItineraryTimeline";
 import DeleteItineraryModal from "../Modals/DeleteItineraryModal";
@@ -240,15 +239,6 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
     [hasMultiOption, optionIndex]
   );
 
-  const shellCrumbs = useMemo(() => {
-    if (loading || !displayItinerary) return [];
-    return [
-      { label: "Home", href: "/dashboard" },
-      { label: "Itineraries", href: "/dashboard/itineraries" },
-      { label: displayItinerary.trip_name || "Itinerary" },
-    ];
-  }, [loading, displayItinerary]);
-
   const effPublish = publishLocal ?? {
     state: (itinerary?.publish_state ?? "never") as "never" | "published_clean" | "unpublished_changes",
     version: itinerary?.published_version ?? 0,
@@ -347,7 +337,6 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
 
   return (
     <div className="h-full flex flex-col bg-inset overflow-hidden">
-      {shellCrumbs.length > 0 ? <ShellCrumbOverride crumbs={shellCrumbs} /> : null}
       <div className="shrink-0 flex flex-col">
         <div className={APP_DOCUMENT_HEAD}>
           <h1 className="text-lg font-semibold tracking-[-0.02em] text-foreground md:text-xl">

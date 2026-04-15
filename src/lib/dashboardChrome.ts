@@ -1,6 +1,6 @@
 /**
  * Dashboard / app chrome — hierarchical surfaces inspired by desktop OS patterns:
- * system shell (menu) → path → window title → toolbar → content.
+ * system shell (menu) → window title → toolbar → content.
  *
  * Use semantic Tailwind tokens only (background, border, muted, foreground).
  */
@@ -8,10 +8,6 @@
 /** Top system row (global shell: identity, search, system actions). */
 export const DASHBOARD_CHROME_HEADER_ROW =
   "flex h-[52px] shrink-0 items-center gap-3 border-b border-border/50 bg-background/80 px-3 backdrop-blur-xl supports-[backdrop-filter]:bg-background/65 md:px-4";
-
-/** Breadcrumb / path row under the system menu bar. */
-export const APP_SHELL_PATH_ROW =
-  "flex min-h-9 shrink-0 items-center gap-1 border-b border-border/40 bg-background/30 px-3 py-1.5 backdrop-blur-sm supports-[backdrop-filter]:bg-background/20 md:px-4";
 
 /** List & index pages: document title + subtitle + primary actions (right). */
 export const APP_WINDOW_TITLE_BAR =
@@ -35,7 +31,7 @@ export const APP_WINDOW_ACTIONS =
 export const APP_TOOLBAR_ROW =
   "flex shrink-0 flex-wrap items-center gap-2 border-b border-border/50 bg-muted/20 px-4 py-2 backdrop-blur-md supports-[backdrop-filter]:bg-muted/12 md:px-6";
 
-/** Detail / document hero under shell crumbs (trip name, product title strip). */
+/** Detail / document hero (trip name, product title strip). */
 export const APP_DOCUMENT_HEAD =
   "w-full border-b border-border/60 bg-background/40 px-5 py-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/30";
 

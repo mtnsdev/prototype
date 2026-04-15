@@ -4,18 +4,15 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Bookmark, Building2, LayoutGrid, Search, Trash2, Users } from "lucide-react";
-import { SegmentedControl } from "@/components/ui/segmented-control";
+import { ProductCatalogSectionTabs } from "@/components/products/ProductCatalogSectionTabs";
+import type { CatalogSegment, ProductDirectoryMainTab } from "@/components/products/productDirectoryCatalogSegments";
 import { cn } from "@/lib/utils";
-import {
-  APP_TOOLBAR_ROW,
-  DASHBOARD_LIST_PAGE_HEADER,
-  DASHBOARD_LIST_PAGE_HEADER_SUBTITLE,
-  DASHBOARD_LIST_PAGE_HEADER_TITLE,
-  DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK,
-} from "@/lib/dashboardChrome";
+import { APP_TOOLBAR_ROW } from "@/lib/dashboardChrome";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/contexts/ToastContext";
-import { MOCK_TEAMS, resolveUserPolicies } from "@/lib/teamsMock";
+import { MOCK_TEAMS } from "@/lib/teamsMock";
+import { usePermissions } from "@/hooks/usePermissions";
+import { DirectoryRoleToggle } from "@/components/products/DirectoryRoleToggle";
 import type {
   DirectoryAmenityTag,
   DirectoryCollectionOption,
@@ -39,7 +36,6 @@ import ProductDirectoryDetailPanel from "./ProductDirectoryDetailPanel";
 import ProductDirectoryCollectionPicker from "./ProductDirectoryCollectionPicker";
 import ProductDirectoryMapSplit from "./ProductDirectoryMapSplit";
 import {
-  buildPartnerPortalRows,
   ProductDirectoryCollectionsTab,
   ProductDirectoryPartnerPortalTab,
   ProductDirectoryRepFirmsTab,
@@ -85,6 +81,9 @@ import {
 } from "./productDirectoryPersistence";
 import { resolveAdvisorCatalogFromStorage } from "./productDirectoryCatalogResolve";
 import { useProductDirectoryCatalog } from "./ProductDirectoryCatalogContext";
+import { usePartnerProgramsOptional } from "@/contexts/PartnerProgramsContext";
+import { applyPartnerRegistryToProduct } from "@/lib/partnerProgramMerge";
+import { syncPartnerPortalPayloadToRegistry } from "@/lib/partnerPortalRegistrySync";
 import { getPrimaryDirectoryType } from "@/components/products/directoryProductTypeHelpers";
 import { directoryCategoryColors, directoryCategoryLabel } from "./productDirectoryVisual";
 import { ScopeBadge } from "@/components/ui/ScopeBadge";
@@ -101,8 +100,6 @@ import { TEAM_EVERYONE_ID } from "@/types/teams";
 import { MOCK_REP_FIRMS } from "./productDirectoryRepFirmMock";
 import type { RepFirm, RepFirmProductLink } from "@/types/rep-firm";
 import { getProductId } from "@/lib/products-api";
-
-type ProductDirectoryMainTab = "browse" | "collections" | "partner-portal" | "rep-firms";
 
 function maxActiveIncentiveValue(product: DirectoryProduct): number {
   const active = (product.commissionAdvisories ?? []).filter((a) => a.status === "active");
@@ -377,25 +374,26 @@ function filterCollectionsForUser(
 const DIRECTORY_SEED_NAME = "Janet";
 
 export default function ProductDirectoryPage({ embedMode = false }: { embedMode?: boolean }) {
-  const { user, prototypeAdminView, isLoading: userLoading } = useUser();
+  const { user, isLoading: userLoading } = useUser();
+  const { isAdmin, canViewCommissions } = usePermissions();
   const toast = useToast();
-  const { catalogRevision } = useProductDirectoryCatalog();
+  const { catalogRevision, clearPersistedCatalogSnapshot } = useProductDirectoryCatalog();
+  const partnerProgramsCtx = usePartnerProgramsOptional();
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const uid = user ? String(user.id) : "1";
   const editorDisplayName = user?.username ?? user?.email?.split("@")[0] ?? "Admin";
-
-  const policies = useMemo(
-    () => resolveUserPolicies(user ? { id: String(user.id), role: user.role } : null, MOCK_TEAMS),
-    [user]
-  );
-  const canViewCommissions = policies.canViewCommissions;
-  const isAdmin = prototypeAdminView;
+  const resetCatalogHandledRef = useRef(false);
 
   const [products, setProducts] = useState<DirectoryProduct[]>(
     () => cloneMockDirectoryCatalogForAdvisor("1", DIRECTORY_SEED_NAME).products
   );
+
+  const viewProducts = useMemo(() => {
+    if (!partnerProgramsCtx) return products;
+    return products.map((p) => applyPartnerRegistryToProduct(p, partnerProgramsCtx.snapshot));
+  }, [products, partnerProgramsCtx]);
 
   const [directoryCollections, setDirectoryCollections] = useState<DirectoryCollectionOption[]>(
     () => cloneMockDirectoryCatalogForAdvisor("1", DIRECTORY_SEED_NAME).collections
@@ -412,6 +410,32 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     setDirectoryCollections(r.directoryCollections);
     setExternalSearchMeta(r.externalSearchMeta);
   }, [userLoading, user?.id, user?.username, user?.email, catalogRevision]);
+
+  /** `?resetCatalog=1` — clears local catalog storage and reloads demo products (no DevTools). */
+  useEffect(() => {
+    if (searchParams.get("resetCatalog") !== "1") {
+      resetCatalogHandledRef.current = false;
+      return;
+    }
+    if (resetCatalogHandledRef.current) return;
+    resetCatalogHandledRef.current = true;
+    clearPersistedCatalogSnapshot();
+    toast({
+      title: "Catalog reset",
+      description: "Saved directory data was cleared; showing demo products again.",
+      tone: "success",
+    });
+    const p = new URLSearchParams(searchParams.toString());
+    p.delete("resetCatalog");
+    const qs = p.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [
+    searchParams,
+    pathname,
+    router,
+    clearPersistedCatalogSnapshot,
+    toast,
+  ]);
 
   const externalSearchTooltipForProduct = useCallback(
     (productId: string) => externalSearchSavedTooltip(productId, externalSearchMeta),
@@ -434,6 +458,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
   const [commissionFilterActive, setCommissionFilterActive] = useState(false);
   const [selectedRepFirmIds, setSelectedRepFirmIds] = useState<string[]>([]);
   const [hasActiveIncentive, setHasActiveIncentive] = useState(false);
+  const [hasPlannedOpening, setHasPlannedOpening] = useState(false);
   const [sortByCommission, setSortByCommission] = useState(false);
   const [selectedTiers, setSelectedTiers] = useState<DirectoryTierLevel[]>([]);
   const [selectedPriceTiers, setSelectedPriceTiers] = useState<DirectoryPriceTier[]>([]);
@@ -467,7 +492,47 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
   const [compareMode, setCompareMode] = useState(false);
   const browseScrollRef = useRef<HTMLDivElement>(null);
 
+  const dismissDirectoryOverlays = useCallback(() => {
+    setDetailProductId(null);
+    setPickerProductId(null);
+  }, []);
+
+  const catalogChromeRef = useRef<HTMLDivElement>(null);
+  /** Viewport Y where product preview scrim starts — below segment tabs + optional browse filters. */
+  const [detailBackdropTopPx, setDetailBackdropTopPx] = useState(140);
+
   const [mainTab, setMainTab] = useState<ProductDirectoryMainTab>("browse");
+
+  const measureCatalogChromeBottom = useCallback(() => {
+    const el = catalogChromeRef.current;
+    if (!el) return;
+    const bottom = Math.ceil(el.getBoundingClientRect().bottom);
+    if (bottom < 8) return;
+    setDetailBackdropTopPx(bottom);
+  }, []);
+
+  useLayoutEffect(() => {
+    const el = catalogChromeRef.current;
+    if (!el) return;
+    measureCatalogChromeBottom();
+    const ro = new ResizeObserver(() => measureCatalogChromeBottom());
+    ro.observe(el);
+    window.addEventListener("resize", measureCatalogChromeBottom);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measureCatalogChromeBottom);
+    };
+  }, [mainTab, embedMode, measureCatalogChromeBottom]);
+
+  /** Panel portals to document.body — re-measure after paint so `top` clears catalog tabs. */
+  useLayoutEffect(() => {
+    if (!detailProductId) return;
+    measureCatalogChromeBottom();
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => measureCatalogChromeBottom());
+    });
+    return () => cancelAnimationFrame(id);
+  }, [detailProductId, measureCatalogChromeBottom]);
   useEffect(() => {
     if (!embedMode) return;
     setMainTab("browse");
@@ -477,7 +542,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
   const [repFirmsMountKey, setRepFirmsMountKey] = useState(0);
   const [repFirmsDirty, setRepFirmsDirty] = useState(false);
   const [tabLeaveDialogOpen, setTabLeaveDialogOpen] = useState(false);
-  const [pendingMainTab, setPendingMainTab] = useState<ProductDirectoryMainTab | null>(null);
+  const [pendingCatalogSegment, setPendingCatalogSegment] = useState<CatalogSegment | null>(null);
 
   const [createCollectionOpen, setCreateCollectionOpen] = useState(false);
   const [addProductModalOpen, setAddProductModalOpen] = useState(false);
@@ -491,8 +556,6 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     if (loaded && loaded.length > 0) return cloneRepFirmsForState(loaded);
     return cloneRepFirmsForState(MOCK_REP_FIRMS);
   });
-
-  const portalRowCount = useMemo(() => buildPartnerPortalRows(products).length, [products]);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -574,22 +637,49 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
         mainTab === "partner-portal" && t !== "partner-portal" && partnerPortalDirty;
       const repFirmBlocked = mainTab === "rep-firms" && t !== "rep-firms" && repFirmsDirty;
       if (partnerBlocked || repFirmBlocked) {
-        setPendingMainTab(t);
+        setPendingCatalogSegment(t);
         setTabLeaveDialogOpen(true);
         return;
       }
+      dismissDirectoryOverlays();
       setMainTab(t);
       applyUrlForTab(t);
     },
-    [applyUrlForTab, mainTab, partnerPortalDirty, repFirmsDirty]
+    [applyUrlForTab, dismissDirectoryOverlays, mainTab, partnerPortalDirty, repFirmsDirty]
+  );
+
+  const trySelectCatalogSegment = useCallback(
+    (t: CatalogSegment) => {
+      if (t === "destinations") {
+        const partnerBlocked = mainTab === "partner-portal" && partnerPortalDirty;
+        const repFirmBlocked = mainTab === "rep-firms" && repFirmsDirty;
+        if (partnerBlocked || repFirmBlocked) {
+          setPendingCatalogSegment("destinations");
+          setTabLeaveDialogOpen(true);
+          return;
+        }
+        dismissDirectoryOverlays();
+        router.push("/dashboard/products/destinations");
+        return;
+      }
+      trySetMainTab(t);
+    },
+    [
+      dismissDirectoryOverlays,
+      mainTab,
+      partnerPortalDirty,
+      repFirmsDirty,
+      router,
+      trySetMainTab,
+    ]
   );
 
   const confirmLeavePartnerTab = useCallback(() => {
-    const t = pendingMainTab;
+    const t = pendingCatalogSegment;
     const leavingPartner = mainTab === "partner-portal";
     const leavingRepFirms = mainTab === "rep-firms";
     setTabLeaveDialogOpen(false);
-    setPendingMainTab(null);
+    setPendingCatalogSegment(null);
     if (leavingPartner) {
       setPartnerPortalMountKey((k) => k + 1);
       setPartnerPortalDirty(false);
@@ -598,15 +688,20 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
       setRepFirmsMountKey((k) => k + 1);
       setRepFirmsDirty(false);
     }
+    dismissDirectoryOverlays();
+    if (t === "destinations") {
+      router.push("/dashboard/products/destinations");
+      return;
+    }
     if (t) {
       setMainTab(t);
       applyUrlForTab(t);
     }
-  }, [applyUrlForTab, pendingMainTab, mainTab]);
+  }, [applyUrlForTab, dismissDirectoryOverlays, pendingCatalogSegment, mainTab, router]);
 
   const cancelLeavePartnerTab = useCallback(() => {
     setTabLeaveDialogOpen(false);
-    setPendingMainTab(null);
+    setPendingCatalogSegment(null);
   }, []);
 
   useEffect(() => {
@@ -689,7 +784,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
   /** System collections cannot be renamed or have metadata edited in the browse header. */
   const canEditActiveCollectionMetadata = canEditActiveCollection && !activeCollectionMeta?.isSystem;
   const canShareActiveCollection =
-    canEditActiveCollection && activeCollectionMeta != null && !activeCollectionMeta.isSystem;
+    isAdmin && activeCollectionMeta != null && !activeCollectionMeta.isSystem;
 
   const filterInput: DirectoryPageFilterInput = useMemo(
     () => ({
@@ -703,6 +798,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
       commissionRange,
       selectedRepFirmIds,
       hasActiveIncentive,
+      hasPlannedOpening,
       selectedTiers,
       selectedPriceTiers,
     }),
@@ -717,14 +813,15 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
       commissionRange,
       selectedRepFirmIds,
       hasActiveIncentive,
+      hasPlannedOpening,
       selectedTiers,
       selectedPriceTiers,
     ]
   );
 
   const filteredProducts = useMemo(
-    () => applyDirectoryProductFilters(products, filterInput, canViewCommissions),
-    [products, filterInput, canViewCommissions]
+    () => applyDirectoryProductFilters(viewProducts, filterInput, canViewCommissions),
+    [viewProducts, filterInput, canViewCommissions]
   );
 
   const emptyStateHint = useMemo(() => {
@@ -734,7 +831,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     const f = filterInput;
 
     const push = (skip: DirectoryFilterSkip, label: string, onClear: () => void) => {
-      const n = applyDirectoryProductFilters(products, f, canViewCommissions, skip).length;
+      const n = applyDirectoryProductFilters(viewProducts, f, canViewCommissions, skip).length;
       if (n > 0) hints.push({ label, count: n, onClear });
     };
 
@@ -761,13 +858,14 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
       });
     }
     if (f.hasActiveIncentive) push("activeIncentive", "active incentives", () => setHasActiveIncentive(false));
+    if (f.hasPlannedOpening) push("plannedOpening", "planned opening", () => setHasPlannedOpening(false));
     if (f.activeTypeFilters.length > 0) push("type", "type", () => setActiveTypeFilters([]));
     if (f.selectedTiers.length > 0) push("tier", "tier", () => setSelectedTiers([]));
     if (f.selectedPriceTiers.length > 0) push("price", "price", () => setSelectedPriceTiers([]));
 
     hints.sort((a, b) => b.count - a.count);
     return hints[0] ?? null;
-  }, [filteredProducts.length, products, filterInput, canViewCommissions]);
+  }, [filteredProducts.length, viewProducts, filterInput, canViewCommissions]);
 
   const clearAllFilters = useCallback(() => {
     setSearchQuery("");
@@ -780,6 +878,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     setCommissionRange([0, 25]);
     setSelectedRepFirmIds([]);
     setHasActiveIncentive(false);
+    setHasPlannedOpening(false);
     setSelectedTiers([]);
     setSelectedPriceTiers([]);
     setSortByCommission(false);
@@ -861,14 +960,14 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     filteredProductIds.length > 0 && filteredProductIds.every((productId) => selectedProductIds.has(productId));
   const selectedProgramTemplateById = useMemo(() => {
     const templates = new Map<string, DirectoryProduct["partnerPrograms"][number]>();
-    for (const product of products) {
+    for (const product of viewProducts) {
       for (const program of product.partnerPrograms) {
         const key = programFilterId(program);
         if (!templates.has(key)) templates.set(key, clonePartnerProgramTemplate(program));
       }
     }
     return templates;
-  }, [products]);
+  }, [viewProducts]);
   const partnerProgramTargets = useMemo(
     () =>
       AGENCY_PROGRAM_OPTIONS.map((option) => ({
@@ -1046,18 +1145,22 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     if (!compareMode) return [];
     const list: DirectoryProduct[] = [];
     for (const id of selectedProductIds) {
-      const p = products.find((x) => x.id === id);
+      const p = viewProducts.find((x) => x.id === id);
       if (p) list.push(p);
     }
     return list;
-  }, [compareMode, selectedProductIds, products]);
+  }, [compareMode, selectedProductIds, viewProducts]);
 
   useEffect(() => {
     if (!compareMode) return;
     if (compareProducts.length < 2 || compareProducts.length > 4) setCompareMode(false);
   }, [compareMode, compareProducts.length]);
 
-  const detailProduct = detailProductId ? (products.find((p) => p.id === detailProductId) ?? null) : null;
+  const detailProduct = detailProductId ? (viewProducts.find((p) => p.id === detailProductId) ?? null) : null;
+
+  const partnerProgramsManagedInRegistry = Boolean(
+    detailProductId && partnerProgramsCtx?.snapshot.links.some((l) => l.productId === detailProductId)
+  );
 
   useLayoutEffect(() => {
     if (mainTab !== "browse" || viewMode !== "grid" || !detailProductId) return;
@@ -1173,10 +1276,53 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     (collectionId: string) => {
       if (isAdmin) return true;
       const c = directoryCollections.find((x) => x.id === collectionId);
-      if (c?.isSystem && c.scope === "private") return c.ownerId === uid;
-      return c?.ownerId === uid;
+      if (!c) return false;
+      if (c.scope === "team") return false;
+      if (c.isSystem && c.scope === "private") return c.ownerId === uid;
+      return c.ownerId === uid;
     },
     [isAdmin, uid, directoryCollections]
+  );
+
+  const canDeleteCollection = useCallback(
+    (c: DirectoryCollectionOption) => {
+      if (c.isSystem) return false;
+      if (isAdmin) return true;
+      return c.scope === "private" && c.ownerId === uid;
+    },
+    [isAdmin, uid]
+  );
+
+  const handleShareCollectionWithTeam = useCallback(
+    (collectionId: string, teamId: string) => {
+      const team = MOCK_TEAMS.find((t) => t.id === teamId);
+      setDirectoryCollections((prev) =>
+        prev.map((c) =>
+          c.id === collectionId
+            ? { ...c, scope: "team" as const, teamId, teamName: team?.name ?? "Team" }
+            : c
+        )
+      );
+      toast({ title: `Shared with ${team?.name ?? "team"} (demo)`, tone: "success" });
+    },
+    [toast]
+  );
+
+  const handleDeleteCollection = useCallback(
+    (collectionId: string) => {
+      setDirectoryCollections((prev) => prev.filter((c) => c.id !== collectionId));
+      setProducts((prev) =>
+        prev.map((p) => {
+          if (!p.collectionIds.includes(collectionId)) return p;
+          const nextIds = p.collectionIds.filter((id) => id !== collectionId);
+          const nextRefs = p.collections.filter((r) => r.id !== collectionId);
+          return { ...p, collectionIds: nextIds, collections: nextRefs, collectionCount: nextIds.length };
+        })
+      );
+      setCollectionFilter((prev) => prev.filter((id) => id !== collectionId));
+      toast({ title: "Collection removed", tone: "success" });
+    },
+    [toast]
   );
 
   const savePicker = useCallback(
@@ -1239,6 +1385,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
         return false;
       }
       const editorName = user?.username ?? user?.email?.split("@")[0] ?? "Admin";
+      const editedAtISO = new Date().toISOString();
       let updatedCount = 0;
       setProducts((prev) => {
         const result = applyPartnerPortalPayloadToProducts({
@@ -1248,20 +1395,34 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
           audit: {
             userId: uid,
             userName: editorName,
-            editedAtISO: new Date().toISOString(),
+            editedAtISO,
           },
         });
         updatedCount = result.updatedCount;
+        if (partnerProgramsCtx && updatedCount > 0) {
+          syncPartnerPortalPayloadToRegistry({
+            programKey,
+            payload,
+            snapshot: partnerProgramsCtx.snapshot,
+            upsertProgram: partnerProgramsCtx.upsertProgram,
+            upsertLink: partnerProgramsCtx.upsertLink,
+            removeLink: partnerProgramsCtx.removeLink,
+            nowIso: editedAtISO,
+            editorId: uid,
+          });
+        }
         return result.products;
       });
       toast({
         title: `Updated program across ${updatedCount} product${updatedCount !== 1 ? "s" : ""}`,
-        description: "Saved in this browser until API sync.",
+        description: partnerProgramsCtx
+          ? "Saved to catalog and Partner Programs registry (this browser)."
+          : "Saved in this browser until API sync.",
         tone: "success",
       });
       return true;
     },
-    [toast, uid, user]
+    [toast, uid, user, partnerProgramsCtx]
   );
 
   const openCreateCollectionModal = useCallback(
@@ -1499,56 +1660,42 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-inset text-foreground">
-      <header
-        className={cn(
-          DASHBOARD_LIST_PAGE_HEADER,
-          embedMode && "h-12 min-h-12 border-b border-border bg-card/25 pl-4 pr-4"
-        )}
-      >
-        <div className={DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK}>
-          <h1 className={DASHBOARD_LIST_PAGE_HEADER_TITLE}>
-            {embedMode ? "Catalog" : "Product Directory"}
-          </h1>
-          <p className={DASHBOARD_LIST_PAGE_HEADER_SUBTITLE}>
-            {embedMode
-              ? `${sortedProducts.length} product${sortedProducts.length !== 1 ? "s" : ""} · split view`
-              : mainTab === "browse"
-                ? `${sortedProducts.length} product${sortedProducts.length !== 1 ? "s" : ""}`
-                : mainTab === "collections"
-                  ? `${availableCollections.length} collection${availableCollections.length !== 1 ? "s" : ""}`
-                  : mainTab === "rep-firms"
-                    ? `${repFirms.length} rep firm${repFirms.length !== 1 ? "s" : ""}`
-                    : `${portalRowCount} program${portalRowCount !== 1 ? "s" : ""} · rates, linked properties & incentives`}
+      <div ref={catalogChromeRef} className="shrink-0">
+      {embedMode ? (
+        <div
+          className={cn(
+            APP_TOOLBAR_ROW,
+            "relative z-50 flex flex-wrap items-center justify-between gap-3 bg-card/25"
+          )}
+        >
+          <p className="min-w-0 text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">Catalog</span>
+            {" · "}
+            {sortedProducts.length} product{sortedProducts.length !== 1 ? "s" : ""} · split view
           </p>
-        </div>
-        {embedMode ? (
           <Link
             href="/dashboard/products"
             className="shrink-0 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             Full catalog →
           </Link>
-        ) : null}
-      </header>
-
-      {!embedMode ? (
-        <div className={cn(APP_TOOLBAR_ROW, "justify-start pl-5 pr-[4.5rem] md:pl-6")}>
-          <SegmentedControl<ProductDirectoryMainTab>
-            aria-label="Product directory section"
-            value={mainTab}
-            onChange={(v) => trySetMainTab(v)}
-            options={[
-              { value: "browse", label: "Products" },
-              { value: "collections", label: "Collections" },
-              { value: "rep-firms", label: "Rep Firms" },
-              { value: "partner-portal", label: "Partner portal" },
-            ]}
-          />
         </div>
-      ) : null}
+      ) : (
+        <div
+          className={cn(
+            APP_TOOLBAR_ROW,
+            "relative z-50 min-w-0 flex flex-wrap items-center justify-between gap-3 pl-5 pr-5 md:pl-6 md:pr-6"
+          )}
+        >
+          <div className="min-w-0 max-w-full flex-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <ProductCatalogSectionTabs value={mainTab} onChange={trySelectCatalogSegment} />
+          </div>
+          <DirectoryRoleToggle className="shrink-0" />
+        </div>
+      )}
 
       {mainTab === "browse" ? (
-      <div className={cn("relative z-10 shrink-0 px-6 pb-0 pt-4", embedMode && "px-3 pt-2")}>
+      <div className={cn("relative z-50 shrink-0 px-6 pb-0 pt-4", embedMode && "px-3 pt-2")}>
         <ProductDirectoryFilterBar
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}
@@ -1574,6 +1721,8 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
         onCommissionFilterActiveChange={setCommissionFilterActive}
         hasActiveIncentive={hasActiveIncentive}
         onHasActiveIncentiveChange={setHasActiveIncentive}
+        hasPlannedOpening={hasPlannedOpening}
+        onHasPlannedOpeningChange={setHasPlannedOpening}
         sortByCommission={sortByCommission}
         onSortByCommissionChange={setSortByCommission}
         selectedTiers={selectedTiers}
@@ -1597,6 +1746,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
         selectedAmenities.length > 0 ||
         (canViewCommissions && commissionFilterActive) ||
         hasActiveIncentive ||
+        hasPlannedOpening ||
         selectedTiers.length > 0 ||
         selectedPriceTiers.length > 0 ||
         activeTypeFilters.length > 0 ||
@@ -1689,6 +1839,16 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
               className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[9px] text-amber-400 transition-colors hover:bg-amber-500/20"
             >
               Active incentives
+              <span className="text-muted-foreground">✕</span>
+            </button>
+          ) : null}
+          {hasPlannedOpening ? (
+            <button
+              type="button"
+              onClick={() => setHasPlannedOpening(false)}
+              className="flex items-center gap-1 rounded-full bg-[rgba(201,169,110,0.10)] px-2 py-0.5 text-[9px] text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.14)]"
+            >
+              Planned opening
               <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
@@ -1847,6 +2007,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
 
       </div>
       ) : null}
+      </div>
 
       <div ref={browseScrollRef} className="relative z-0 min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-4">
         <div
@@ -1860,6 +2021,10 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
             collections={availableCollections}
             products={products}
             teams={MOCK_TEAMS}
+            isAdmin={isAdmin}
+            canDeleteCollection={canDeleteCollection}
+            onShareCollectionWithTeam={handleShareCollectionWithTeam}
+            onDeleteCollection={handleDeleteCollection}
             onOpenCollection={(id) => {
               setCollectionFilter([id]);
               trySetMainTab("browse");
@@ -1923,7 +2088,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
         >
           <ProductDirectoryPartnerPortalTab
             key={partnerPortalMountKey}
-            products={products}
+            products={viewProducts}
             teams={MOCK_TEAMS}
             canViewCommissions={canViewCommissions}
             isAdmin={isAdmin}
@@ -1958,7 +2123,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
                 !detailProduct && "xl:grid-cols-4"
               )}
             >
-              {userLoading || (sortedProducts.length === 0 && products.length > 0)
+              {userLoading
                 ? Array.from({ length: 6 }).map((_, i) => (
                     <ProductCardSkeleton key={i} />
                   ))
@@ -2071,6 +2236,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
       {/* Slide-in detail: 7-block layout + layer mock data in ProductDirectoryDetailBody */}
       {detailProduct && (
         <ProductDirectoryDetailPanel
+          backdropTopPx={detailBackdropTopPx}
           product={detailProduct}
           canViewCommissions={canViewCommissions}
           isAdmin={isAdmin}
@@ -2087,6 +2253,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
           onRequestCreateCollection={() => setPickerProductId(detailProduct.id)}
           partnerProgramCustomKeys={detailProductCustomProgramKeys}
           repFirmsRegistry={repFirms}
+          partnerProgramsManagedInRegistry={partnerProgramsManagedInRegistry}
         />
       )}
 

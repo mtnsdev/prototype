@@ -1,0 +1,18 @@
+{
+  "description": "Maps Google Places type strings to Enable directory categories. Extend when ingestion finds new Google types.",
+  "version": "2026-04-15",
+  "mappings": [
+    { "google": "lodging", "enable": "hotel" },
+    { "google": "hotel", "enable": "hotel" },
+    { "google": "resort_hotel", "enable": "hotel" },
+    { "google": "spa", "enable": "wellness" },
+    { "google": "restaurant", "enable": "restaurant" },
+    { "google": "food", "enable": "restaurant" },
+    { "google": "travel_agency", "enable": "dmc" },
+    { "google": "tour_operator", "enable": "dmc" },
+    { "google": "tourist_attraction", "enable": "experience" },
+    { "google": "airport", "enable": "transport" },
+    { "google": "transit_station", "enable": "transport" },
+    { "google": "marina", "enable": "cruise" }
+  ]
+}
