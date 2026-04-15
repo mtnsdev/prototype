@@ -70,6 +70,9 @@ export function HotelSection({ byGroup }: Props) {
                           <span className="font-medium text-foreground">{h.name}</span>
                         )}
                         {h.contact ? <p className={cn("mt-0.5 text-xs", destMuted)}>{h.contact}</p> : null}
+                        {h.repFirm ? (
+                          <p className={cn("mt-0.5 text-xs", destMuted2)}>Rep: {h.repFirm}</p>
+                        ) : null}
                         {h.note ? <p className={cn("mt-1 text-xs", destMuted2)}>{h.note}</p> : null}
                         {h.properties && h.properties.length > 0 ? (
                           <div className="mt-2 flex flex-wrap gap-1">

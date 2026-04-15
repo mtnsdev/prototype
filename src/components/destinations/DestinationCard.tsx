@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Building2, MapPin, Utensils, Users } from "lucide-react";
+import { Building2, FileText, MapPin, Utensils, Users } from "lucide-react";
 import type { DestinationSummary } from "@/data/destinations";
 import { cn } from "@/lib/utils";
 import { destCardClass, destMuted, destMuted2 } from "./destinationStyles";
@@ -76,6 +76,10 @@ export function DestinationCard({ summary, highlightQuery = "" }: Props) {
           <span className="inline-flex items-center gap-1">
             <Utensils className="size-3.5 shrink-0 text-brand-cta" aria-hidden />
             {summary.restaurantCount} restaurants
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <FileText className="size-3.5 shrink-0 text-brand-cta" aria-hidden />
+            {summary.documentCount} documents
           </span>
         </div>
         <span className={cn("inline-flex items-center gap-1 text-xs font-medium text-brand-cta", destMuted)}>

@@ -50,7 +50,7 @@ export function DestinationSectionNav({ active, onChange, showYacht, stats }: Pr
     : BASE;
 
   return (
-    <div className="flex w-full flex-col gap-4 lg:w-[220px] lg:shrink-0">
+    <div className="flex w-full flex-col gap-4 lg:sticky lg:top-4 lg:w-[200px] lg:shrink-0 lg:self-start">
       <nav
         aria-label="Destination sections"
         className="flex gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] lg:flex-col lg:overflow-visible [&::-webkit-scrollbar]:hidden"

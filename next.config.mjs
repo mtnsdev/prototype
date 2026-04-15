@@ -1,7 +1,8 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+/** Absolute app root (directory that contains `package.json` + `node_modules`). */
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)));
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -14,10 +15,15 @@ const nextConfig = {
       },
     ],
   },
-  transpilePackages: ["leaflet", "react-leaflet"],
-  /** Parent folder has its own lockfile; pin Turbopack to this app. */
+  /** Zod v4 + Turbopack can mis-resolve `json-schema-processors` without transpilation. */
+  transpilePackages: ["zod", "leaflet", "react-leaflet"],
+  /**
+   * Parent `Enable Prototype/` also has `package-lock.json`. Without an explicit root,
+   * Turbopack can mis-infer the workspace (e.g. treat `src/app` as the project root) and
+   * fail to resolve `next/dist/...` internals. Pin to this folder only.
+   */
   turbopack: {
-    root: __dirname,
+    root: projectRoot,
   },
 };
 

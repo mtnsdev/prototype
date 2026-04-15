@@ -20,9 +20,9 @@ export function ProductCatalogSectionTabs({ value, onChange, className }: Props)
       options={[
         { value: "browse", label: "Products" },
         { value: "collections", label: "Collections" },
+        { value: "destinations", label: "Destinations" },
         { value: "rep-firms", label: "Rep Firms" },
         { value: "partner-portal", label: "Partner portal" },
-        { value: "destinations", label: "Destinations" },
       ]}
     />
   );

@@ -32,19 +32,28 @@ export function RestaurantSection({ byRegion }: Props) {
       <div className="flex flex-wrap gap-2">
         {regions.map((r) => {
           const on = r === active;
+          const n = byRegion[r]?.length ?? 0;
           return (
             <button
               key={r}
               type="button"
               onClick={() => setActive(r)}
               className={cn(
-                "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
                 on
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
-              {r}
+              <span>{r}</span>
+              <span
+                className={cn(
+                  "rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+                  on ? "bg-primary-foreground/20 text-primary-foreground" : "bg-background/60 text-muted-foreground",
+                )}
+              >
+                {n}
+              </span>
             </button>
           );
         })}

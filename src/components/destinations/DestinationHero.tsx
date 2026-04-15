@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useState } from "react";
-import { Bookmark, MessageCircle } from "lucide-react";
+import { Bookmark, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Destination } from "@/data/destinations";
 import { useChatContext } from "@/contexts/ChatContext";
@@ -11,22 +11,25 @@ import { destMuted } from "./destinationStyles";
 
 type Props = {
   destination: Destination;
+  /** Editor / split view: hide advisor actions. */
+  mode?: "full" | "preview";
 };
 
-export function DestinationHero({ destination }: Props) {
+export function DestinationHero({ destination, mode = "full" }: Props) {
   const { openClaire, startNewClaireConversation } = useChatContext();
   const [saved, setSaved] = useState(false);
   const hasImage = Boolean(destination.heroImage?.trim());
+  const preview = mode === "preview";
 
   const onAsk = useCallback(() => {
-    startNewClaireConversation();
-    openClaire();
     if (typeof window !== "undefined") {
       sessionStorage.setItem(
         "claire_destination_context",
         JSON.stringify({ slug: destination.slug, name: destination.name }),
       );
     }
+    startNewClaireConversation();
+    openClaire();
   }, [destination.name, destination.slug, openClaire, startNewClaireConversation]);
 
   return (
@@ -50,24 +53,30 @@ export function DestinationHero({ destination }: Props) {
             <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">{destination.name}</h1>
             <p className={cn("mt-1 max-w-2xl text-sm md:text-base", destMuted)}>{destination.tagline}</p>
           </div>
-          <div className="flex shrink-0 flex-wrap gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="border-border bg-background/55 text-foreground backdrop-blur-sm hover:bg-accent"
-              aria-pressed={saved}
-              aria-label={saved ? "Remove saved destination" : "Save destination"}
-              onClick={() => setSaved((s) => !s)}
-            >
-              <Bookmark className={cn("mr-1.5 size-4", saved && "fill-brand-cta text-brand-cta")} />
-              {saved ? "Saved" : "Save"}
-            </Button>
-            <Button type="button" size="sm" variant="cta" onClick={onAsk} aria-label={`Ask about ${destination.name}`}>
-              <MessageCircle className="mr-1.5 size-4" />
-              Ask about {destination.name}
-            </Button>
-          </div>
+          {!preview ? (
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="border-border bg-background/55 text-foreground backdrop-blur-sm hover:bg-accent"
+                aria-pressed={saved}
+                aria-label={saved ? "Remove saved destination" : "Save destination"}
+                onClick={() => setSaved((s) => !s)}
+              >
+                <Bookmark className={cn("mr-1.5 size-4", saved && "fill-brand-cta text-brand-cta")} />
+                {saved ? "Saved" : "Save"}
+              </Button>
+              <Button type="button" size="sm" variant="cta" onClick={onAsk} aria-label={`Ask about ${destination.name}`}>
+                <MessageSquare className="mr-1.5 size-4" aria-hidden />
+                Ask about {destination.name}
+              </Button>
+            </div>
+          ) : (
+            <p className="shrink-0 rounded-md border border-border bg-card/80 px-2 py-1 text-2xs font-medium uppercase tracking-wide text-muted-foreground">
+              Preview
+            </p>
+          )}
         </div>
       </div>
       {destination.subRegions.length > 0 ? (

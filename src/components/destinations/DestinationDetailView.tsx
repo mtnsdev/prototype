@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -29,9 +30,13 @@ function countRestaurants(d: Destination) {
 
 type Props = {
   destination: Destination;
+  /** When true, hero hides advisor actions (editor preview). */
+  previewMode?: boolean;
+  /** e.g. admin “Edit destination” control — aligned with breadcrumbs. */
+  headerAside?: ReactNode;
 };
 
-export function DestinationDetailView({ destination }: Props) {
+export function DestinationDetailView({ destination, previewMode = false, headerAside }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -84,7 +89,7 @@ export function DestinationDetailView({ destination }: Props) {
         Skip to destination content
       </a>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6">
-        <div className="mx-auto mb-4 max-w-6xl">
+        <div className="mx-auto mb-4 flex max-w-6xl flex-wrap items-center justify-between gap-3">
           <Breadcrumbs
             items={[
               { label: "Products", href: "/dashboard/products" },
@@ -92,6 +97,7 @@ export function DestinationDetailView({ destination }: Props) {
               { label: destination.name },
             ]}
           />
+          {headerAside ? <div className="shrink-0">{headerAside}</div> : null}
         </div>
 
         <Link
@@ -100,7 +106,7 @@ export function DestinationDetailView({ destination }: Props) {
         >
           ← All destinations
         </Link>
-        <DestinationHero destination={destination} />
+        <DestinationHero destination={destination} mode={previewMode ? "preview" : "full"} />
 
         <p className={cn("mx-auto mt-4 max-w-4xl text-sm leading-relaxed", destMuted)}>{destination.description}</p>
 
@@ -129,8 +135,8 @@ export function DestinationDetailView({ destination }: Props) {
                   <p className={cn("text-sm", destMuted)}>No DMC partners listed yet.</p>
                 ) : (
                   <div className="space-y-3">
-                    {destination.dmcPartners.map((p) => (
-                      <DMCPartnerCard key={p.name} partner={p} />
+                    {destination.dmcPartners.map((p, i) => (
+                      <DMCPartnerCard key={p.productId ?? p.name} partner={p} defaultOpen={i === 0} />
                     ))}
                   </div>
                 )

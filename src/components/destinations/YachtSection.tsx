@@ -27,8 +27,42 @@ export function YachtSection({ companies }: Props) {
               <ExternalLink className="size-4 shrink-0 opacity-80" aria-hidden />
             </a>
           </div>
-          <p className={cn("mt-2 text-sm", destMuted)}>{c.contact}</p>
-          <p className={cn("mt-1 text-xs", destMuted)}>Destinations served: {c.destinations}</p>
+          {c.contactName || c.email || c.phone ? (
+            <dl className={cn("mt-2 space-y-1 text-sm", destMuted)}>
+              {c.contactName ? (
+                <div>
+                  <dt className="sr-only">Contact name</dt>
+                  <dd>{c.contactName}</dd>
+                </div>
+              ) : null}
+              {c.email ? (
+                <div>
+                  <dt className="sr-only">Email</dt>
+                  <dd>
+                    <a
+                      href={`mailto:${c.email}`}
+                      className="text-brand-cta underline-offset-4 hover:underline"
+                    >
+                      {c.email}
+                    </a>
+                  </dd>
+                </div>
+              ) : null}
+              {c.phone ? (
+                <div>
+                  <dt className="sr-only">Phone</dt>
+                  <dd>
+                    <a href={`tel:${c.phone.replace(/\s/g, "")}`} className="text-foreground hover:underline">
+                      {c.phone}
+                    </a>
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
+          ) : (
+            <p className={cn("mt-2 text-sm", destMuted)}>{c.contact}</p>
+          )}
+          <p className={cn("mt-2 text-xs", destMuted)}>Destinations served: {c.destinations}</p>
         </div>
       ))}
     </div>

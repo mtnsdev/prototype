@@ -115,6 +115,27 @@ if (!fs.existsSync(nextBin)) {
   process.exit(1);
 }
 
+/** Corrupted installs can leave `hot-reloader/pages` empty → "unable to load" / module-not-found in the browser. */
+const nextHmrWebsocket = path.join(
+  root,
+  "node_modules",
+  "next",
+  "dist",
+  "client",
+  "dev",
+  "hot-reloader",
+  "pages",
+  "websocket.js"
+);
+if (!fs.existsSync(nextHmrWebsocket)) {
+  console.error(
+    "[dev] Next.js install looks incomplete (missing dev HMR files).\n" +
+      "    Fix: rm -rf node_modules/next && npm install\n" +
+      "    Or full reset: rm -rf node_modules .next && npm install"
+  );
+  process.exit(1);
+}
+
 const reactVirtualPkg = path.join(
   root,
   "node_modules",

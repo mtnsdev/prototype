@@ -32,7 +32,7 @@ export function DestinationsCatalogChrome({ children }: { children: React.ReactN
         </div>
         <DirectoryRoleToggle className="shrink-0" />
       </div>
-      {children}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useChatContext } from "@/contexts/ChatContext";
 import { Loader2, ChevronDown } from "lucide-react";
 import PdfModal from "../PdfModal";
 import { useUserOptional } from "@/contexts/UserContext";
@@ -56,6 +57,12 @@ export default function ChatPanel({
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [hintPulseSeen, setHintPulseSeen] = useState<Set<number>>(new Set());
   const hintPulseStartedRef = useRef<Set<number>>(new Set());
+  const { refreshTrigger } = useChatContext();
+  const [destinationGuideContext, setDestinationGuideContext] = useState<{
+    slug: string;
+    name: string;
+  } | null>(null);
+  const destinationPrefixConsumedRef = useRef(false);
 
   const showSendingLoader = useDelayedLoading(loading);
   const showConversationLoader = useDelayedLoading(loadingConversation);
@@ -117,12 +124,28 @@ export default function ChatPanel({
   useEffect(() => {
     if (conversationId) {
       loadSession(conversationId);
-    } else {
-      setMessages([]);
-      setCurrentSessionId(null);
-      setSessionTitle("");
+      setDestinationGuideContext(null);
+      destinationPrefixConsumedRef.current = false;
+      return;
     }
-  }, [conversationId, loadSession]);
+    setMessages([]);
+    setCurrentSessionId(null);
+    setSessionTitle("");
+    destinationPrefixConsumedRef.current = false;
+    try {
+      const raw = sessionStorage.getItem("claire_destination_context");
+      if (raw) {
+        const parsed = JSON.parse(raw) as { slug?: string; name?: string };
+        if (parsed?.slug && parsed?.name) {
+          setDestinationGuideContext({ slug: parsed.slug, name: parsed.name });
+          return;
+        }
+      }
+    } catch {
+      // ignore malformed storage
+    }
+    setDestinationGuideContext(null);
+  }, [conversationId, loadSession, refreshTrigger]);
 
   useEffect(() => {
     setRightPanelMessageIndex(null);
@@ -183,6 +206,16 @@ export default function ChatPanel({
     const text = (messageText || input).trim();
     if (!text || loading) return;
     setInput("");
+    let queryForApi = text;
+    if (!destinationPrefixConsumedRef.current && destinationGuideContext) {
+      queryForApi = `[Destination context: The advisor is viewing the "${destinationGuideContext.name}" destination guide (slug: ${destinationGuideContext.slug}). Prioritize Knowledge Vault and catalog information relevant to this destination.]\n\n${text}`;
+      destinationPrefixConsumedRef.current = true;
+      try {
+        sessionStorage.removeItem("claire_destination_context");
+      } catch {
+        // ignore
+      }
+    }
     setMessages((m) => [...m, { role: "user", text }]);
     setLoading(true);
     setThinkingSteps([]);
@@ -197,7 +230,7 @@ export default function ChatPanel({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          query: text,
+          query: queryForApi,
           session_id: currentSessionId || undefined,
           external_search: externalSearchMode,
           search_places: searchPlacesMode,
@@ -417,6 +450,17 @@ export default function ChatPanel({
             style={{ minHeight: 0 }}
             onScroll={checkShowScrollToBottom}
           >
+            {isEmptyState && destinationGuideContext ? (
+              <div className="mb-4 rounded-xl border border-brand-cta/25 bg-brand-cta/[0.06] px-4 py-3 text-sm text-foreground">
+                <p>
+                  <span className="font-medium text-brand-cta">Destination context · </span>
+                  You opened Claire from the <span className="font-semibold">{destinationGuideContext.name}</span>{" "}
+                  guide. Your first message is scoped so retrieval can prioritize Knowledge Vault material for this
+                  destination.
+                </p>
+              </div>
+            ) : null}
+
             {isEmptyState && (
               <EmptyState displayName={displayName} onSuggestionClick={(s) => send(s)} />
             )}

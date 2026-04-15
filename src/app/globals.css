@@ -315,6 +315,9 @@ html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    /* Prevent flash of unstyled / wrong canvas behind flex layouts */
+    background-color: var(--background);
+    min-height: 100%;
 }
 
 body {

@@ -8,6 +8,8 @@ import { destCardClass, destMuted, destMuted2 } from "./destinationStyles";
 
 type Props = {
   partner: DMCPartner;
+  /** First card on the page is expanded by default (spec). */
+  defaultOpen?: boolean;
 };
 
 function Row({ label, value }: { label: string; value?: string }) {
@@ -20,8 +22,8 @@ function Row({ label, value }: { label: string; value?: string }) {
   );
 }
 
-export function DMCPartnerCard({ partner }: Props) {
-  const [open, setOpen] = useState(false);
+export function DMCPartnerCard({ partner, defaultOpen = false }: Props) {
+  const [open, setOpen] = useState(defaultOpen);
   const panelId = useId();
 
   return (

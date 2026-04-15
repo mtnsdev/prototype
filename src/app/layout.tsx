@@ -24,8 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${libreFranklin.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en" className="min-h-dvh bg-background text-foreground">
+      <body className={`${libreFranklin.variable} ${geistMono.variable} min-h-dvh bg-background text-foreground antialiased`}>
         <a href="#main-content" className="skip-to-main">
           Skip to main content
         </a>

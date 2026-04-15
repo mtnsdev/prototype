@@ -22,6 +22,9 @@ export function TourismSection({ regions }: Props) {
         <div key={r.name} className={cn(destCardClass(), "p-4")}>
           <h3 className="font-semibold text-foreground">{r.name}</h3>
           {r.description ? <p className={cn("mt-1 text-sm", destMuted)}>{r.description}</p> : null}
+          {r.contact ? (
+            <p className={cn("mt-2 text-sm", destMuted)}>{r.contact}</p>
+          ) : null}
           <div className="mt-3 flex flex-wrap gap-2">
             {r.links.map((l, idx) => (
               <a

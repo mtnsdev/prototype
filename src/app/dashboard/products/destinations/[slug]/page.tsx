@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDestinationBySlug, listDestinationSlugs } from "@/data/destinations";
-import { DestinationDetailView } from "@/components/destinations/DestinationDetailView";
+import { DestinationDetailClient } from "@/components/destinations/DestinationDetailClient";
 import { DestinationDetailSkeleton } from "@/components/destinations/DestinationDetailSkeleton";
 
 export function generateStaticParams() {
@@ -33,7 +33,7 @@ export default async function DestinationDetailPage({
   if (!destination) notFound();
   return (
     <Suspense fallback={<DestinationDetailSkeleton />}>
-      <DestinationDetailView destination={destination} />
+      <DestinationDetailClient canonical={destination} />
     </Suspense>
   );
 }
