@@ -1,55 +1,117 @@
 /**
  * Rep Firm Registry — first-class entity mirroring Partner Programs.
  * A RepFirm is the firm itself; RepFirmProductLink is the join record
- * connecting a firm to a DirectoryProduct (like DirectoryPartnerProgram
- * connects a program to a product).
+ * connecting a firm to a DirectoryProduct.
  */
+
+export type RepFirmSpecialty =
+  | "hotels"
+  | "dmcs"
+  | "camps_lodges"
+  | "villas"
+  | "cruise"
+  | "spas"
+  | "transportation"
+  | "tourism_board"
+  | "multi";
+
+export type RepFirmStatus = "active" | "inactive" | "prospect";
+
+export interface RepFirmHeadquarters {
+  city: string | null;
+  country: string | null;
+  address: string | null;
+}
+
+export interface RepFirmSocialMedia {
+  facebook: string | null;
+  instagram: string | null;
+  linkedin: string | null;
+}
+
+export interface RepFirmContactRow {
+  name: string;
+  title: string | null;
+  email: string | null;
+  phone: string | null;
+  /** When set, supersedes single `email` for display; `email` remains first line for legacy. */
+  emailAddresses?: string[];
+  /** When set, supersedes single `phone` for display; `phone` remains first line for legacy. */
+  phoneNumbers?: string[];
+  photoUrl: string | null;
+}
 
 export interface RepFirm {
   id: string;
   name: string;
-  /** Short tagline shown in list views. */
+  /** Display / short line — legacy; prefer representativeNames + contacts. */
   tagline?: string;
-  website?: string;
+  /** Longer firm narrative (e.g. Lux Pages); catalog shows description ?? tagline when set. */
+  description?: string | null;
+  /** e.g. ["Heidi LaRusso", "Camille Durand"] */
+  representativeNames: string[];
+  specialty: RepFirmSpecialty[];
+  /** Regions covered (Lux Pages taxonomy / post-audit labels). */
+  regionsCovered: string[];
+  phone: string | null;
+  headquarters: RepFirmHeadquarters | null;
+  websiteUrl: string | null;
+  portalUrl: string | null;
+  /** Admin-only in UI — never overwritten by Lux sync. */
+  portalCredentialsNote: string | null;
+  socialMedia: RepFirmSocialMedia | null;
+  contacts: RepFirmContactRow[];
+  /** Advisor user id — agency-owned. */
+  relationshipOwner: string | null;
+  /** Agency-owned notes — never overwritten by Lux sync. */
+  notes: string | null;
+  status: RepFirmStatus;
   logoUrl?: string;
-  /** Primary contact name. */
-  contactName?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  /** Regions the firm covers (e.g. ["Europe", "Middle East"]). */
-  regions: string[];
-  /** Which product types they represent: hotel, villa, cruise, etc. */
-  productTypes: string[];
-  /** How many properties they represent (display metric). */
+  /** Optional display metric — may diverge from live link count. */
   propertyCount?: number;
-  /** Enable-level vs agency-specific. */
+  /** Enable-level vs team-specific scope for the registry row. */
   scope: "enable" | string;
-  status: "active" | "inactive";
   /** ISO date strings. */
   createdAt?: string;
   updatedAt?: string;
-  /** Audit metadata for admin edits (directory rep-firms tab). */
   lastEditedAt?: string;
   lastEditedById?: string;
   lastEditedByName?: string;
+  luxPagesId?: string | null;
+  luxPagesLastSynced?: string | null;
+  luxPagesLastVerified?: string | null;
+  agencyId?: string;
+  createdBy?: string;
+
+  // --- Legacy fields (optional — removed after migration from localStorage) ---
+  /** @deprecated Use regionsCovered */
+  regions?: string[];
+  /** @deprecated Use specialty */
+  productTypes?: string[];
+  /** @deprecated Use contacts / representativeNames */
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  /** @deprecated Use websiteUrl */
+  website?: string;
 }
 
 export interface RepFirmProductLink {
   id: string;
-  /** References RepFirm.id */
   repFirmId: string;
-  /** Display name of the firm (denormalized for card rendering). */
   repFirmName: string;
-  /** The rep at this firm who handles this specific property. */
   contactName?: string;
   contactEmail?: string;
   contactPhone?: string;
-  /** Scope: enable-curated vs team-specific. */
+  /** Multiple emails for this product link when using per-product contacts. */
+  contactEmails?: string[];
+  /** Multiple phone numbers for this product link when using per-product contacts. */
+  contactPhones?: string[];
   scope?: "enable" | string;
   status?: "active" | "inactive";
-  /** Optional notes about the relationship. */
   notes?: string;
-  /** Audit trail. */
+  /** e.g. "US market", "European market" */
+  market?: string | null;
   lastEditedAt?: string;
   lastEditedById?: string;
   lastEditedByName?: string;

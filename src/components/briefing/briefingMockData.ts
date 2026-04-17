@@ -245,7 +245,7 @@ function getMockPartnerUpdateContent(): PartnerUpdateContent {
       },
       { id: "pu5", partner_name: "Belmond", update_type: "rate_change", title: "Trains & Cruises 2026 Rates", description: "Venice Simplon-Orient-Express and river cruise rates updated.", effective_date: "2026-04-01", action_required: false },
       { id: "pu6", partner_name: "Ponant", update_type: "fam_trip", title: "Antarctica FAM — Jan 2027", description: "Limited places for qualified advisors. Apply by 30 Sept 2026.", effective_date: "2027-01-15", action_required: true, action_url: "#" },
-      { id: "pu7", partner_name: "Silversea", update_type: "policy_change", title: "Door-to-Door All-Inclusive Terms", description: "Updated inclusions and booking conditions. See partner portal.", action_required: false },
+      { id: "pu7", partner_name: "Silversea", update_type: "policy_change", title: "Door-to-Door All-Inclusive Terms", description: "Updated inclusions and booking conditions. See partner programs.", action_required: false },
       { id: "pu8", partner_name: "A&K", update_type: "training", title: "DMC Specialist Certification", description: "New certification for Europe and Africa. Modules available online.", effective_date: "2026-05-01", action_required: false },
     ],
   };

@@ -23,6 +23,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/contexts/ToastContext";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import type { DriveStatus } from "@/types/google-drive";
+import { BRIEFING_ROOM_PATH } from "@/lib/briefingRoutes";
 
 const OAUTH_POPUP_WIDTH = 600;
 const OAUTH_POPUP_HEIGHT = 700;
@@ -615,7 +616,7 @@ export default function IntegrationsPage() {
                 <div className="mb-8">
                     <Breadcrumbs
                         items={[
-                            { label: "Dashboard", href: "/dashboard" },
+                            { label: "Dashboard", href: BRIEFING_ROOM_PATH },
                             { label: "Settings", href: "/dashboard/settings" },
                             { label: "Integrations" },
                         ]}

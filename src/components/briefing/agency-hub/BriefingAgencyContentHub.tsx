@@ -8,7 +8,6 @@ import {
   Trash2,
   Megaphone,
   Bell,
-  Pencil,
   Plus,
   Eye,
   FileEdit,
@@ -17,6 +16,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { EditIconButton } from "@/components/ui/edit-icon-button";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -259,7 +259,7 @@ function BriefingAgencyUserViewWidgets({
               {sortedAnnouncements.map((a) => (
                 <div
                   key={a.id}
-                  className="rounded-xl border border-border bg-white/[0.02] p-4 transition-colors hover:bg-white/[0.035]"
+                  className="rounded-xl border border-border bg-card/50 p-4 transition-colors hover:bg-muted/35"
                 >
                   <div className="flex items-center gap-2 flex-wrap mb-2">
                     <span className="text-sm font-semibold text-foreground">{a.title}</span>
@@ -301,14 +301,14 @@ function BriefingAgencyUserViewWidgets({
                   <li
                     key={item.id}
                     className={cn(
-                      "rounded-xl border px-4 py-3 flex justify-between gap-3 items-start transition-colors hover:bg-white/[0.03]",
+                      "rounded-xl border px-4 py-3 flex justify-between gap-3 items-start transition-colors hover:bg-muted/30",
                       incentiveBorder(item.urgency),
                     )}
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-foreground">{item.title}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">{item.partner_name}</p>
-                      <p className="text-sm font-medium text-[#C9A96E] mt-1.5">{item.bonus_display}</p>
+                      <p className="mt-1.5 text-sm font-medium text-brand-cta">{item.bonus_display}</p>
                       <p className="text-2xs text-muted-foreground/70 mt-1.5">
                         {formatIncentiveEndLabel(item.valid_until)}
                         <span className="text-muted-foreground/55">
@@ -340,7 +340,7 @@ function BriefingAgencyUserViewWidgets({
             type="button"
             disabled={hubLayoutLoading}
             onClick={resetHubLayout}
-            className="shrink-0 rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-white/[0.06] disabled:opacity-40"
+            className="shrink-0 rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/45 disabled:opacity-40"
           >
             Reset agency layout
           </button>
@@ -809,7 +809,7 @@ export default function BriefingAgencyContentHub({ canEditBriefing, publisherNam
                       <Eye className="size-3.5" aria-hidden />
                       Preview (published)
                     </div>
-                    <div className="rounded-xl border border-border bg-white/[0.02] p-4 min-h-[220px] shadow-inner">
+                    <div className="min-h-[220px] rounded-xl border border-border bg-inset p-4 shadow-inner">
                       {simpleAgencyNoteMarkdown(publishedNote)}
                     </div>
                     <p className="text-2xs text-muted-foreground/65 leading-relaxed">
@@ -821,7 +821,7 @@ export default function BriefingAgencyContentHub({ canEditBriefing, publisherNam
                   </div>
                 </div>
               ) : (
-                <div className="rounded-xl border border-border bg-gradient-to-b from-white/[0.03] to-transparent p-5 shadow-sm">
+                <div className="rounded-xl border border-border bg-gradient-to-b from-muted/25 to-transparent p-5 shadow-sm">
                   {simpleAgencyNoteMarkdown(publishedNote)}
                 </div>
               )}
@@ -849,7 +849,7 @@ export default function BriefingAgencyContentHub({ canEditBriefing, publisherNam
                   <li
                     key={a.id}
                     className={cn(
-                      "group rounded-xl border px-4 py-3 flex gap-3 justify-between items-start transition-colors hover:bg-white/[0.03]",
+                      "group flex items-start justify-between gap-3 rounded-xl border px-4 py-3 transition-colors hover:bg-muted/30",
                       severityBorder(a.severity),
                     )}
                   >
@@ -868,16 +868,10 @@ export default function BriefingAgencyContentHub({ canEditBriefing, publisherNam
                     </div>
                     {canEditBriefing && (
                       <div className="flex shrink-0 gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 text-muted-foreground hover:text-foreground"
+                        <EditIconButton
+                          label={`Edit alert: ${a.headline}`}
                           onClick={() => openEditNews(a)}
-                          aria-label={`Edit alert: ${a.headline}`}
-                        >
-                          <Pencil className="size-3.5" />
-                        </Button>
+                        />
                         <Button
                           type="button"
                           variant="ghost"
@@ -931,7 +925,7 @@ export default function BriefingAgencyContentHub({ canEditBriefing, publisherNam
                 {sortedAnnouncements.map((a) => (
                   <div
                     key={a.id}
-                    className="group rounded-xl border border-border bg-white/[0.02] p-4 transition-colors hover:bg-white/[0.035]"
+                    className="group rounded-xl border border-border bg-card/50 p-4 transition-colors hover:bg-muted/35"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1 space-y-2">
@@ -955,16 +949,10 @@ export default function BriefingAgencyContentHub({ canEditBriefing, publisherNam
                       </div>
                       {canEditBriefing && (
                         <div className="flex shrink-0 gap-0.5">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 text-muted-foreground hover:text-foreground"
+                          <EditIconButton
+                            label={`Edit announcement: ${a.title}`}
                             onClick={() => openEditAnn(a)}
-                            aria-label={`Edit announcement: ${a.title}`}
-                          >
-                            <Pencil className="size-3.5" />
-                          </Button>
+                          />
                           <Button
                             type="button"
                             variant="ghost"
@@ -1008,14 +996,14 @@ export default function BriefingAgencyContentHub({ canEditBriefing, publisherNam
                   <li
                     key={item.id}
                     className={cn(
-                      "group rounded-xl border px-4 py-3 flex justify-between gap-3 items-start transition-colors hover:bg-white/[0.03]",
+                      "group flex items-start justify-between gap-3 rounded-xl border px-4 py-3 transition-colors hover:bg-muted/30",
                       incentiveBorder(item.urgency),
                     )}
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-foreground">{item.title}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">{item.partner_name}</p>
-                      <p className="text-sm font-medium text-[#C9A96E] mt-1.5">{item.bonus_display}</p>
+                      <p className="mt-1.5 text-sm font-medium text-brand-cta">{item.bonus_display}</p>
                       <p className="text-2xs text-muted-foreground/70 mt-1.5">
                         {formatIncentiveEndLabel(item.valid_until)}
                         <span className="text-muted-foreground/55">
@@ -1026,16 +1014,10 @@ export default function BriefingAgencyContentHub({ canEditBriefing, publisherNam
                     </div>
                     {canEditBriefing && (
                       <div className="flex shrink-0 gap-0.5">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 text-muted-foreground hover:text-foreground"
+                        <EditIconButton
+                          label={`Edit incentive: ${item.title}`}
                           onClick={() => openEditInc(item)}
-                          aria-label={`Edit incentive: ${item.title}`}
-                        >
-                          <Pencil className="size-3.5" />
-                        </Button>
+                        />
                         <Button
                           type="button"
                           variant="ghost"

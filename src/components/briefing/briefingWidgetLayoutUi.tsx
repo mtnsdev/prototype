@@ -43,8 +43,8 @@ export function BriefingLayoutIOSSwitch({
         <label
             htmlFor={id}
             className={cn(
-                "relative inline-flex h-[31px] w-[51px] shrink-0 cursor-pointer items-center rounded-full p-0.5 transition-colors",
-                "bg-foreground/15 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-background",
+                "relative inline-flex h-[31px] w-[51px] shrink-0 cursor-pointer items-center rounded-full bg-muted/50 p-0.5 transition-colors",
+                "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-background",
                 checked && "bg-primary",
                 disabled && "pointer-events-none opacity-40",
             )}
@@ -62,7 +62,7 @@ export function BriefingLayoutIOSSwitch({
             />
             <span
                 className={cn(
-                    "pointer-events-none block size-[27px] rounded-full bg-background shadow-md transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+                    "pointer-events-none block size-[27px] rounded-full bg-card shadow-md transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
                     "translate-x-0 peer-checked:translate-x-5",
                 )}
             />
@@ -88,7 +88,7 @@ export function BriefingLayoutSegmented<T extends string>({
             role="group"
             aria-label={ariaLabel}
             className={cn(
-                "flex rounded-[10px] bg-foreground/[0.06] p-0.5",
+                "flex rounded-[10px] bg-muted/40 p-0.5",
                 disabled && "pointer-events-none opacity-45",
             )}
         >
@@ -103,7 +103,7 @@ export function BriefingLayoutSegmented<T extends string>({
                         "min-w-0 flex-1 rounded-[8px] py-2 text-[13px] font-medium transition-all duration-150",
                         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                         value === o.value
-                            ? "bg-background text-foreground shadow-sm"
+                            ? "bg-card text-foreground shadow-sm"
                             : "text-muted-foreground hover:text-foreground/90",
                     )}
                 >

@@ -1,38 +1,573 @@
 "use client";
 
-import type { Dispatch, SetStateAction } from "react";
-import { Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
-import type {
-  Destination,
-  DMCPartner,
-  Restaurant,
-  Hotel,
-  YachtCompany,
-  TourismRegion,
-  DestinationDocument,
+import type { Dispatch, ReactNode, SetStateAction } from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import {
+  DndContext,
+  type DragEndEvent,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useDroppable,
+  useDraggable,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { FileStack, FileText, GripVertical, Package, Trash2 } from "lucide-react";
+import {
+  type Destination,
+  type DestinationDocument,
+  type EditorProductSlot,
+  type EditorTabSection,
 } from "@/data/destinations";
+import {
+  createEditorSectionFromPreset,
+  DEFAULT_NEW_SECTION_PRODUCT_SLOT,
+  ensureEditorWorkspace,
+  type EditorSectionPresetId,
+} from "@/lib/destinationEditorTabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { CatalogProductPicker } from "@/components/destinations/editor/CatalogProductPicker";
-import {
-  mergeDirectoryProductIntoDmc,
-  mergeDirectoryProductIntoHotel,
-  mergeDirectoryProductIntoRestaurant,
-  mergeDirectoryProductIntoYacht,
-} from "@/lib/catalogProductMerge";
+import { CatalogSectionMultiPicker } from "@/components/destinations/editor/CatalogProductPicker";
+import { applyDirectoryProductToDestination } from "@/lib/catalogProductMerge";
 
 const inputAreaClass =
   "min-h-[88px] w-full rounded-md border border-input bg-inset px-3 py-2 text-sm text-foreground shadow-xs outline-none placeholder:text-muted-foreground/70 focus-visible:border-[rgba(255,255,255,0.25)] focus-visible:ring-[3px] focus-visible:ring-[rgba(255,255,255,0.1)]";
 
-export function moveInArray<T>(arr: T[], from: number, to: number): T[] {
-  if (from === to || from < 0 || to < 0 || from >= arr.length || to >= arr.length) return arr;
-  const next = [...arr];
-  const [item] = next.splice(from, 1);
-  next.splice(to, 0, item!);
-  return next;
+const PALETTE: {
+  id: "palette-catalog" | "palette-text" | "palette-files";
+  label: string;
+  preset: EditorSectionPresetId;
+  Icon: typeof Package;
+}[] = [
+  { id: "palette-catalog", label: "Catalog", preset: "catalog", Icon: Package },
+  { id: "palette-text", label: "Text", preset: "text", Icon: FileText },
+  { id: "palette-files", label: "Files", preset: "documents", Icon: FileStack },
+];
+
+function insertId(index: number) {
+  return `insert-${index}` as const;
+}
+
+function palettePresetFromActiveId(activeId: string): EditorSectionPresetId | null {
+  const row = PALETTE.find((p) => p.id === activeId);
+  return row?.preset ?? null;
+}
+
+function sectionBlockKind(sec: EditorTabSection): "catalog" | "text" | "files" | "mixed" {
+  const n = [sec.includeProducts, sec.includeText, sec.includeDocuments].filter(Boolean).length;
+  if (n > 1) return "mixed";
+  if (sec.includeProducts) return "catalog";
+  if (sec.includeText) return "text";
+  if (sec.includeDocuments) return "files";
+  return "mixed";
+}
+
+function PaletteBlock({
+  item,
+  onKeyboardAdd,
+  layout = "row",
+}: {
+  item: (typeof PALETTE)[number];
+  onKeyboardAdd: () => void;
+  layout?: "row" | "stack";
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: item.id,
+    data: { kind: "palette", preset: item.preset },
+  });
+  const style = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : undefined;
+
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      style={style}
+      className={cn(
+        "flex min-w-0 items-center gap-2 rounded-lg border border-border/80 bg-muted/20 px-3 py-2.5 text-sm font-medium text-foreground shadow-none transition-colors",
+        layout === "row" ? "flex-1 justify-center" : "w-full justify-start",
+        "hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+        isDragging && "opacity-40",
+      )}
+      {...listeners}
+      {...attributes}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onKeyboardAdd();
+        }
+      }}
+    >
+      <item.Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+      {item.label}
+    </button>
+  );
+}
+
+function PaletteDragOverlayPreview({ item }: { item: (typeof PALETTE)[number] }) {
+  const Icon = item.Icon;
+  return (
+    <div className="flex min-w-[8rem] items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 text-sm font-medium shadow-md">
+      <Icon className="size-4 text-muted-foreground" aria-hidden />
+      {item.label}
+    </div>
+  );
+}
+
+function InsertDropSlot({
+  index,
+  paletteDragging,
+}: {
+  index: number;
+  paletteDragging: boolean;
+}) {
+  const id = insertId(index);
+  const { isOver, setNodeRef } = useDroppable({
+    id,
+    data: { kind: "insert", index },
+  });
+
+  const show = paletteDragging || isOver;
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "relative flex min-h-[2px] items-center justify-center transition-all",
+        show ? "min-h-10 py-1" : "min-h-[2px]",
+      )}
+    >
+      <div
+        className={cn(
+          "w-full rounded-md border border-dashed transition-colors",
+          isOver && paletteDragging
+            ? "border-brand-cta bg-brand-cta/10"
+            : show
+              ? "border-border bg-muted/15"
+              : "border-transparent",
+        )}
+      >
+        {show ? (
+          <span className="block py-2 text-center text-2xs text-muted-foreground">
+            {index === 0 ? "Drop here to add at the start" : "Drop here to add"}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function SectionDocumentPicker({
+  documents,
+  value,
+  onChange,
+}: {
+  documents: DestinationDocument[];
+  value: number[] | undefined;
+  onChange: (next: number[] | undefined) => void;
+}) {
+  const raw = value;
+
+  const isIncluded = (i: number) => {
+    if (raw === undefined) return true;
+    return raw.includes(i);
+  };
+
+  const toggle = (index: number) => {
+    const nn = documents.length;
+    let documentIndices: number[] | undefined;
+
+    if (raw === undefined) {
+      const next = documents.map((_, j) => j).filter((j) => j !== index);
+      if (next.length === 0) documentIndices = [];
+      else if (next.length === nn) documentIndices = undefined;
+      else documentIndices = next;
+    } else if (raw.length === 0) {
+      documentIndices = [index];
+    } else {
+      const s = new Set(raw);
+      if (s.has(index)) s.delete(index);
+      else s.add(index);
+      const arr = [...s].sort((a, b) => a - b);
+      if (arr.length === 0) documentIndices = [];
+      else if (arr.length === nn) documentIndices = undefined;
+      else documentIndices = arr;
+    }
+    onChange(documentIndices);
+  };
+
+  if (documents.length === 0) {
+    return (
+      <p className="rounded-md border border-dashed border-border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+        Upload files on this destination first, then pick which appear in this section.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-medium text-foreground">Files in this section</p>
+      <ul className="space-y-2">
+        {documents.map((doc, i) => (
+          <li key={`${doc.name}-${i}`}>
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-card/40 px-3 py-2">
+              <input
+                type="checkbox"
+                className="mt-1 size-4 shrink-0 rounded border border-input bg-inset"
+                checked={isIncluded(i)}
+                onChange={() => toggle(i)}
+              />
+              <span className="min-w-0 flex-1 text-sm text-foreground">
+                <span className="font-medium">{doc.name}</span>
+                <span className="ml-2 text-2xs uppercase text-muted-foreground">{doc.type}</span>
+              </span>
+            </label>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function SortableEditorSection({
+  section: sec,
+  sectionIndex: si,
+  draft,
+  setDraft,
+  patchSection,
+  patchSections,
+}: {
+  section: EditorTabSection;
+  sectionIndex: number;
+  draft: Destination;
+  setDraft: Dispatch<SetStateAction<Destination>>;
+  patchSection: (si: number, patch: Partial<EditorTabSection>) => void;
+  patchSections: (fn: (sections: EditorTabSection[]) => void) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: sec.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const kind = sectionBlockKind(sec);
+
+  return (
+    <div ref={setNodeRef} style={style} className={cn(isDragging && "z-10")}>
+      <Card
+        className={cn(
+          "gap-0 overflow-hidden py-0 shadow-none",
+          isDragging && "opacity-95 ring-1 ring-border",
+        )}
+      >
+        <CardHeader className="flex flex-row flex-nowrap items-center gap-2 border-b border-border/80 bg-muted/15 px-3 py-2.5 sm:px-4">
+          <button
+            type="button"
+            className="shrink-0 cursor-grab touch-none rounded-md p-1 text-muted-foreground hover:bg-muted/80 hover:text-foreground active:cursor-grabbing"
+            aria-label="Drag to reorder section"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="size-4" aria-hidden />
+          </button>
+          <span
+            className="hidden shrink-0 tabular-nums text-[10px] text-muted-foreground sm:inline"
+            aria-hidden
+          >
+            {si + 1}
+          </span>
+          <div className="min-w-0 flex-1">
+            <Label htmlFor={`sec-head-${sec.id}`} className="sr-only">
+              Section title
+            </Label>
+            <Input
+              id={`sec-head-${sec.id}`}
+              value={sec.heading ?? ""}
+              placeholder="Untitled section"
+              onChange={(e) => patchSection(si, { heading: e.target.value || undefined })}
+              className="h-8 border-transparent bg-transparent px-0 text-sm font-semibold text-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+            />
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
+            aria-label="Remove section"
+            onClick={() =>
+              patchSections((sections) => {
+                const ix = sections.findIndex((s) => s.id === sec.id);
+                if (ix >= 0) sections.splice(ix, 1);
+              })
+            }
+          >
+            <Trash2 className="size-4" aria-hidden />
+          </Button>
+        </CardHeader>
+
+        <CardContent className="space-y-4 px-3 py-4 sm:px-4">
+          {(kind === "catalog" || kind === "mixed") && sec.includeProducts ? (
+            <div className="space-y-3 rounded-lg border border-border/60 bg-background/50 p-3">
+              <CatalogSectionMultiPicker
+                onAddProducts={(products) => {
+                  setDraft((d0) => {
+                    let d = d0;
+                    let lastSlot: EditorProductSlot | undefined;
+                    for (const product of products) {
+                      const { destination, slot } = applyDirectoryProductToDestination(d, product);
+                      d = destination;
+                      lastSlot = slot;
+                    }
+                    const w = structuredClone(ensureEditorWorkspace(d));
+                    const cur = w.sections[si];
+                    if (cur && lastSlot) {
+                      w.sections[si] = { ...cur, productSlot: lastSlot };
+                    }
+                    return { ...d, editorWorkspace: w };
+                  });
+                }}
+              />
+            </div>
+          ) : null}
+
+          {(kind === "text" || kind === "mixed") && sec.includeText ? (
+            <div className="space-y-1.5">
+              <Label htmlFor={`sec-txt-${sec.id}`} className="text-xs text-muted-foreground">
+                Text
+              </Label>
+              <textarea
+                id={`sec-txt-${sec.id}`}
+                className={inputAreaClass}
+                rows={5}
+                value={sec.textBody ?? ""}
+                onChange={(e) => patchSection(si, { textBody: e.target.value })}
+            />
+          </div>
+        ) : null}
+
+          {(kind === "files" || kind === "mixed") && sec.includeDocuments ? (
+            <SectionDocumentPicker
+              documents={draft.documents}
+              value={sec.documentIndices}
+              onChange={(documentIndices) => patchSection(si, { documentIndices })}
+            />
+          ) : null}
+
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+type BuildEditorContextValue = {
+  draft: Destination;
+  setDraft: Dispatch<SetStateAction<Destination>>;
+  paletteDragging: boolean;
+  appendPreset: (preset: EditorSectionPresetId) => void;
+  patchSections: (fn: (sections: EditorTabSection[]) => void) => void;
+  patchSection: (si: number, patch: Partial<EditorTabSection>) => void;
+};
+
+const BuildEditorContext = createContext<BuildEditorContextValue | null>(null);
+
+function useBuildEditor() {
+  const v = useContext(BuildEditorContext);
+  if (!v) throw new Error("Build editor components must be used inside BuildEditorProvider");
+  return v;
+}
+
+/** Wraps sidebar palette + main guide; drag-and-drop connects both. */
+export function BuildEditorProvider({
+  draft,
+  setDraft,
+  children,
+}: {
+  draft: Destination;
+  setDraft: Dispatch<SetStateAction<Destination>>;
+  children: ReactNode;
+}) {
+  const [paletteDragging, setPaletteDragging] = useState(false);
+  const [dragPaletteId, setDragPaletteId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const patchSections = useCallback(
+    (fn: (sections: EditorTabSection[]) => void) => {
+      setDraft((d) => {
+        const w = structuredClone(ensureEditorWorkspace(d));
+        fn(w.sections);
+        return { ...d, editorWorkspace: w };
+      });
+    },
+    [setDraft],
+  );
+
+  const patchSection = useCallback(
+    (si: number, patch: Partial<EditorTabSection>) => {
+      patchSections((sections) => {
+        const cur = sections[si];
+        if (cur) sections[si] = { ...cur, ...patch };
+      });
+    },
+    [patchSections],
+  );
+
+  const appendPreset = useCallback(
+    (preset: EditorSectionPresetId) => {
+      patchSections((sections) => {
+        sections.push(createEditorSectionFromPreset(preset));
+      });
+    },
+    [patchSections],
+  );
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      setPaletteDragging(false);
+      setDragPaletteId(null);
+
+      const activeId = String(active.id);
+      const overId = over ? String(over.id) : "";
+
+      const preset = palettePresetFromActiveId(activeId);
+      if (preset && overId.startsWith("insert-")) {
+        const idx = parseInt(overId.slice("insert-".length), 10);
+        if (!Number.isNaN(idx)) {
+          patchSections((sections) => {
+            sections.splice(idx, 0, createEditorSectionFromPreset(preset));
+          });
+        }
+        return;
+      }
+
+      if (!over || activeId === overId) return;
+
+      patchSections((sections) => {
+        const ids = sections.map((s) => s.id);
+        if (!ids.includes(activeId) || !ids.includes(overId)) return;
+        const oldIndex = sections.findIndex((s) => s.id === activeId);
+        const newIndex = sections.findIndex((s) => s.id === overId);
+        if (oldIndex < 0 || newIndex < 0) return;
+        const next = arrayMove(sections, oldIndex, newIndex);
+        sections.length = 0;
+        sections.push(...next);
+      });
+    },
+    [patchSections],
+  );
+
+  const ctx = useMemo(
+    (): BuildEditorContextValue => ({
+      draft,
+      setDraft,
+      paletteDragging,
+      appendPreset,
+      patchSections,
+      patchSection,
+    }),
+    [draft, setDraft, paletteDragging, appendPreset, patchSections, patchSection],
+  );
+
+  const dragOverlayItem = dragPaletteId ? PALETTE.find((p) => p.id === dragPaletteId) : undefined;
+
+  return (
+    <BuildEditorContext.Provider value={ctx}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={({ active }) => {
+          const id = String(active.id);
+          if (id.startsWith("palette-")) {
+            setPaletteDragging(true);
+            setDragPaletteId(id);
+          }
+        }}
+        onDragCancel={() => {
+          setPaletteDragging(false);
+          setDragPaletteId(null);
+        }}
+        onDragEnd={handleDragEnd}
+      >
+        {children}
+        <DragOverlay dropAnimation={null}>
+          {dragOverlayItem ? <PaletteDragOverlayPreview item={dragOverlayItem} /> : null}
+        </DragOverlay>
+      </DndContext>
+    </BuildEditorContext.Provider>
+  );
+}
+
+/** Palette for adding blocks; must be inside BuildEditorProvider. */
+export function BuildPaletteToolbar() {
+  const { appendPreset } = useBuildEditor();
+  return (
+    <div className="space-y-2">
+      <p className="text-2xs leading-snug text-muted-foreground">
+        Drag into the guide below, or press Enter on a control to add.
+      </p>
+      <div className="flex flex-row flex-wrap gap-2" role="toolbar" aria-label="Section blocks">
+        {PALETTE.map((item) => (
+          <PaletteBlock
+            key={item.id}
+            item={item}
+            layout="row"
+            onKeyboardAdd={() => appendPreset(item.preset)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Drop zones + section list; must be inside BuildEditorProvider. */
+export function BuildGuideCanvas() {
+  const { draft, setDraft, paletteDragging, patchSection, patchSections } = useBuildEditor();
+  const ws = ensureEditorWorkspace(draft);
+  const sectionIds = ws.sections.map((s) => s.id);
+
+  return (
+    <div className="rounded-xl border border-border/70 bg-background/30 p-2 sm:p-3">
+      <p className="mb-2 px-1 text-2xs font-medium uppercase tracking-wide text-muted-foreground">Guide</p>
+      <InsertDropSlot index={0} paletteDragging={paletteDragging} />
+      {ws.sections.length === 0 ? (
+        <p className="px-2 py-4 text-center text-sm text-muted-foreground">
+          Drop Catalog, Text, or Files on the dashed line to add a section.
+        </p>
+      ) : null}
+      <SortableContext items={sectionIds} strategy={verticalListSortingStrategy}>
+        {ws.sections.map((sec, si) => (
+          <div key={sec.id} className="space-y-1">
+            <SortableEditorSection
+              section={sec}
+              sectionIndex={si}
+              draft={draft}
+              setDraft={setDraft}
+              patchSection={patchSection}
+              patchSections={patchSections}
+            />
+            <InsertDropSlot index={si + 1} paletteDragging={paletteDragging} />
+          </div>
+        ))}
+      </SortableContext>
+    </div>
+  );
 }
 
 export function EditorOverview({
@@ -44,20 +579,14 @@ export function EditorOverview({
 }) {
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="dest-name">Destination name</Label>
-          <Input
-            id="dest-name"
-            value={draft.name}
-            onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-            autoComplete="off"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="dest-slug">Slug (read-only)</Label>
-          <Input id="dest-slug" value={draft.slug} readOnly className="opacity-80" />
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="dest-name">Destination name</Label>
+        <Input
+          id="dest-name"
+          value={draft.name}
+          onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
+          autoComplete="off"
+        />
       </div>
       <div className="space-y-2">
         <Label htmlFor="dest-tagline">Tagline</Label>
@@ -71,9 +600,12 @@ export function EditorOverview({
         <Label htmlFor="dest-hero">Hero image URL</Label>
         <Input
           id="dest-hero"
+          type="url"
+          inputMode="url"
+          placeholder="https://…"
           value={draft.heroImage}
           onChange={(e) => setDraft((d) => ({ ...d, heroImage: e.target.value }))}
-          placeholder="https://…"
+          autoComplete="off"
         />
       </div>
       <div className="space-y-2">
@@ -86,791 +618,6 @@ export function EditorOverview({
           rows={4}
         />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="dest-subs">Sub-regions (one per line)</Label>
-        <textarea
-          id="dest-subs"
-          className={inputAreaClass}
-          value={draft.subRegions.join("\n")}
-          onChange={(e) =>
-            setDraft((d) => ({
-              ...d,
-              subRegions: e.target.value
-                .split("\n")
-                .map((s) => s.trim())
-                .filter(Boolean),
-            }))
-          }
-          rows={5}
-        />
-      </div>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  children,
-  className,
-}: {
-  label: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn("space-y-1.5", className)}>
-      <p className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      {children}
-    </div>
-  );
-}
-
-export function EditorDMCList({
-  draft,
-  setDraft,
-}: {
-  draft: Destination;
-  setDraft: Dispatch<SetStateAction<Destination>>;
-}) {
-  const update = (i: number, patch: Partial<DMCPartner>) => {
-    setDraft((d) => {
-      const next = [...d.dmcPartners];
-      next[i] = { ...next[i]!, ...patch };
-      return { ...d, dmcPartners: next };
-    });
-  };
-
-  const remove = (i: number) => {
-    setDraft((d) => ({ ...d, dmcPartners: d.dmcPartners.filter((_, j) => j !== i) }));
-  };
-
-  const add = () => {
-    const row: DMCPartner = {
-      name: "New DMC partner",
-      preferred: false,
-    };
-    setDraft((d) => ({ ...d, dmcPartners: [...d.dmcPartners, row] }));
-  };
-
-  return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Operational fields mirror the <span className="text-foreground">catalog product</span> in production. Here you
-        can curate the full prototype row.
-      </p>
-      {draft.dmcPartners.map((p, i) => (
-        <Card key={p.productId ?? `${p.name}-${i}`} className="gap-3 py-4">
-          <CardHeader className="gap-1 pb-0">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <CardTitle className="text-base">DMC {i + 1}</CardTitle>
-              <div className="flex flex-wrap gap-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  aria-label="Move up"
-                  disabled={i === 0}
-                  onClick={() =>
-                    setDraft((d) => ({ ...d, dmcPartners: moveInArray(d.dmcPartners, i, i - 1) }))
-                  }
-                >
-                  <ChevronUp className="size-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8"
-                  aria-label="Move down"
-                  disabled={i === draft.dmcPartners.length - 1}
-                  onClick={() =>
-                    setDraft((d) => ({ ...d, dmcPartners: moveInArray(d.dmcPartners, i, i + 1) }))
-                  }
-                >
-                  <ChevronDown className="size-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive hover:text-destructive"
-                  aria-label="Remove DMC"
-                  onClick={() => remove(i)}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </div>
-            </div>
-            <CardDescription>Pick a DMC from the Product Directory mock — fields hydrate from the catalog card.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 pt-2">
-            <CatalogProductPicker
-              value={p.productId ?? ""}
-              allowedTypes={["dmc"]}
-              label="Catalog product (DMC)"
-              onSelect={(product) =>
-                setDraft((d) => {
-                  const next = [...d.dmcPartners];
-                  next[i] = mergeDirectoryProductIntoDmc(next[i]!, product);
-                  return { ...d, dmcPartners: next };
-                })
-              }
-            />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Display name" className="sm:col-span-2">
-                <Input value={p.name} onChange={(e) => update(i, { name: e.target.value })} />
-              </Field>
-            </div>
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
-              <input
-                type="checkbox"
-                className="size-4 rounded border-input"
-                checked={p.preferred}
-                onChange={(e) => update(i, { preferred: e.target.checked })}
-              />
-              Preferred partner (this destination)
-            </label>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Repped by">
-                <Input value={p.reppedBy ?? ""} onChange={(e) => update(i, { reppedBy: e.target.value || undefined })} />
-              </Field>
-              <Field label="Website">
-                <Input value={p.website ?? ""} onChange={(e) => update(i, { website: e.target.value || undefined })} />
-              </Field>
-              <Field label="Key contact">
-                <Input
-                  value={p.keyContact ?? ""}
-                  onChange={(e) => update(i, { keyContact: e.target.value || undefined })}
-                />
-              </Field>
-              <Field label="General requests email">
-                <Input
-                  value={p.generalRequests ?? ""}
-                  onChange={(e) => update(i, { generalRequests: e.target.value || undefined })}
-                />
-              </Field>
-              <Field label="Pricing model" className="sm:col-span-2">
-                <Input value={p.pricing ?? ""} onChange={(e) => update(i, { pricing: e.target.value || undefined })} />
-              </Field>
-              <Field label="Payment process" className="sm:col-span-2">
-                <Input
-                  value={p.paymentProcess ?? ""}
-                  onChange={(e) => update(i, { paymentProcess: e.target.value || undefined })}
-                />
-              </Field>
-              <Field label="Commission process" className="sm:col-span-2">
-                <Input
-                  value={p.commissionProcess ?? ""}
-                  onChange={(e) => update(i, { commissionProcess: e.target.value || undefined })}
-                />
-              </Field>
-              <Field label="After hours" className="sm:col-span-2">
-                <Input value={p.afterHours ?? ""} onChange={(e) => update(i, { afterHours: e.target.value || undefined })} />
-              </Field>
-            </div>
-            <Field label="Advisor notes (destination)">
-              <textarea
-                className={inputAreaClass}
-                rows={2}
-                value={p.notes ?? ""}
-                onChange={(e) => update(i, { notes: e.target.value || undefined })}
-              />
-            </Field>
-            <Field label="Recent feedback">
-              <textarea
-                className={inputAreaClass}
-                rows={2}
-                value={p.feedback ?? ""}
-                onChange={(e) => update(i, { feedback: e.target.value || undefined })}
-              />
-            </Field>
-          </CardContent>
-        </Card>
-      ))}
-      <Button type="button" variant="outline" size="sm" onClick={add} className="gap-1">
-        <Plus className="size-4" />
-        Add DMC
-      </Button>
-    </div>
-  );
-}
-
-function RestaurantRow({
-  r,
-  onChange,
-  onRemove,
-}: {
-  r: Restaurant;
-  onChange: (next: Restaurant) => void;
-  onRemove: () => void;
-}) {
-  return (
-    <div className="rounded-lg border border-border bg-background/40 p-3 space-y-2">
-      <CatalogProductPicker
-        value={r.productId ?? ""}
-        allowedTypes={["restaurant"]}
-        label="Catalog product (Dining)"
-        onSelect={(product) => onChange(mergeDirectoryProductIntoRestaurant(r, product))}
-      />
-      <div className="grid gap-2 sm:grid-cols-2">
-        <Field label="Name">
-          <Input value={r.name} onChange={(e) => onChange({ ...r, name: e.target.value })} />
-        </Field>
-        <Field label="URL" className="sm:col-span-2">
-          <Input value={r.url ?? ""} onChange={(e) => onChange({ ...r, url: e.target.value || undefined })} />
-        </Field>
-        <Field label="Curation note" className="sm:col-span-2">
-          <Input value={r.note ?? ""} onChange={(e) => onChange({ ...r, note: e.target.value || undefined })} />
-        </Field>
-      </div>
-      <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={onRemove}>
-        Remove row
-      </Button>
-    </div>
-  );
-}
-
-export function EditorRestaurantMap({
-  draft,
-  setDraft,
-}: {
-  draft: Destination;
-  setDraft: Dispatch<SetStateAction<Destination>>;
-}) {
-  const regions = Object.keys(draft.restaurants);
-
-  const setRegionKey = (oldKey: string, newKey: string) => {
-    if (!newKey.trim() || oldKey === newKey) return;
-    setDraft((d) => {
-      if (d.restaurants[newKey] !== undefined) return d;
-      const next = { ...d.restaurants };
-      next[newKey] = next[oldKey] ?? [];
-      delete next[oldKey];
-      return { ...d, restaurants: next };
-    });
-  };
-
-  const addRegion = () => {
-    const name = typeof window !== "undefined" ? window.prompt("New region name")?.trim() : "";
-    if (!name) return;
-    setDraft((d) => {
-      if (d.restaurants[name]) return d;
-      return { ...d, restaurants: { ...d.restaurants, [name]: [] } };
-    });
-  };
-
-  const removeRegion = (region: string) => {
-    setDraft((d) => {
-      const next = { ...d.restaurants };
-      delete next[region];
-      return { ...d, restaurants: next };
-    });
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">Pins dining products by sub-region (catalog IDs optional).</p>
-        <Button type="button" variant="outline" size="sm" onClick={addRegion} className="gap-1">
-          <Plus className="size-4" />
-          Add region
-        </Button>
-      </div>
-      {regions.map((region) => (
-        <Card key={region} className="gap-3 py-4">
-          <CardHeader className="pb-2">
-            <div className="flex flex-wrap items-end gap-2">
-              <div className="min-w-[200px] flex-1 space-y-2">
-                <Label>Region name</Label>
-                <Input defaultValue={region} onBlur={(e) => setRegionKey(region, e.target.value.trim())} />
-              </div>
-              <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => removeRegion(region)}>
-                Remove region
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {(draft.restaurants[region] ?? []).map((row, idx) => (
-              <RestaurantRow
-                key={`${region}-${idx}-${row.name}`}
-                r={row}
-                onChange={(next) => {
-                  setDraft((d) => {
-                    const list = [...(d.restaurants[region] ?? [])];
-                    list[idx] = next;
-                    return { ...d, restaurants: { ...d.restaurants, [region]: list } };
-                  });
-                }}
-                onRemove={() => {
-                  setDraft((d) => {
-                    const list = (d.restaurants[region] ?? []).filter((_, j) => j !== idx);
-                    return { ...d, restaurants: { ...d.restaurants, [region]: list } };
-                  });
-                }}
-              />
-            ))}
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() =>
-                setDraft((d) => ({
-                  ...d,
-                  restaurants: {
-                    ...d.restaurants,
-                    [region]: [...(d.restaurants[region] ?? []), { name: "Restaurant" }],
-                  },
-                }))
-              }
-            >
-              Add restaurant
-            </Button>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-function HotelRow({
-  h,
-  onChange,
-  onRemove,
-}: {
-  h: Hotel;
-  onChange: (next: Hotel) => void;
-  onRemove: () => void;
-}) {
-  return (
-    <div className="rounded-lg border border-border bg-background/40 p-3 space-y-2">
-      <CatalogProductPicker
-        value={h.productId ?? ""}
-        allowedTypes={["hotel", "villa", "wellness"]}
-        label="Catalog product (Accommodation)"
-        onSelect={(product) => onChange(mergeDirectoryProductIntoHotel(h, product))}
-      />
-      <div className="grid gap-2 sm:grid-cols-2">
-        <Field label="Name">
-          <Input value={h.name} onChange={(e) => onChange({ ...h, name: e.target.value })} />
-        </Field>
-        <Field label="Contact" className="sm:col-span-2">
-          <Input value={h.contact ?? ""} onChange={(e) => onChange({ ...h, contact: e.target.value || undefined })} />
-        </Field>
-        <Field label="Rep firm" className="sm:col-span-2">
-          <Input value={h.repFirm ?? ""} onChange={(e) => onChange({ ...h, repFirm: e.target.value || undefined })} />
-        </Field>
-        <Field label="URL" className="sm:col-span-2">
-          <Input value={h.url ?? ""} onChange={(e) => onChange({ ...h, url: e.target.value || undefined })} />
-        </Field>
-        <Field label="Curation note" className="sm:col-span-2">
-          <Input value={h.note ?? ""} onChange={(e) => onChange({ ...h, note: e.target.value || undefined })} />
-        </Field>
-        <Field label="Sub-properties (comma-separated)" className="sm:col-span-2">
-          <Input
-            value={(h.properties ?? []).join(", ")}
-            onChange={(e) =>
-              onChange({
-                ...h,
-                properties: e.target.value
-                  .split(",")
-                  .map((s) => s.trim())
-                  .filter(Boolean),
-              })
-            }
-          />
-        </Field>
-      </div>
-      <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={onRemove}>
-        Remove row
-      </Button>
-    </div>
-  );
-}
-
-export function EditorHotelMap({
-  draft,
-  setDraft,
-}: {
-  draft: Destination;
-  setDraft: Dispatch<SetStateAction<Destination>>;
-}) {
-  const groups = Object.keys(draft.hotels);
-
-  const setGroupKey = (oldKey: string, newKey: string) => {
-    if (!newKey.trim() || oldKey === newKey) return;
-    setDraft((d) => {
-      if (d.hotels[newKey] !== undefined) return d;
-      const next = { ...d.hotels };
-      next[newKey] = next[oldKey] ?? [];
-      delete next[oldKey];
-      return { ...d, hotels: next };
-    });
-  };
-
-  const addGroup = () => {
-    const name = typeof window !== "undefined" ? window.prompt("New group name")?.trim() : "";
-    if (!name) return;
-    setDraft((d) => {
-      if (d.hotels[name]) return d;
-      return { ...d, hotels: { ...d.hotels, [name]: [] } };
-    });
-  };
-
-  const removeGroup = (group: string) => {
-    setDraft((d) => {
-      const next = { ...d.hotels };
-      delete next[group];
-      return { ...d, hotels: next };
-    });
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">Collapsible groups map to the public page (collection or sub-region).</p>
-        <Button type="button" variant="outline" size="sm" onClick={addGroup} className="gap-1">
-          <Plus className="size-4" />
-          Add group
-        </Button>
-      </div>
-      {groups.map((group) => (
-        <Card key={group} className="gap-3 py-4">
-          <CardHeader className="pb-2">
-            <div className="flex flex-wrap items-end gap-2">
-              <div className="min-w-[200px] flex-1 space-y-2">
-                <Label>Group name</Label>
-                <Input defaultValue={group} onBlur={(e) => setGroupKey(group, e.target.value.trim())} />
-              </div>
-              <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => removeGroup(group)}>
-                Remove group
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {(draft.hotels[group] ?? []).map((row, idx) => (
-              <HotelRow
-                key={`${group}-${idx}-${row.name}`}
-                h={row}
-                onChange={(next) => {
-                  setDraft((d) => {
-                    const list = [...(d.hotels[group] ?? [])];
-                    list[idx] = next;
-                    return { ...d, hotels: { ...d.hotels, [group]: list } };
-                  });
-                }}
-                onRemove={() => {
-                  setDraft((d) => {
-                    const list = (d.hotels[group] ?? []).filter((_, j) => j !== idx);
-                    return { ...d, hotels: { ...d.hotels, [group]: list } };
-                  });
-                }}
-              />
-            ))}
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() =>
-                setDraft((d) => ({
-                  ...d,
-                  hotels: {
-                    ...d.hotels,
-                    [group]: [...(d.hotels[group] ?? []), { name: "Hotel" }],
-                  },
-                }))
-              }
-            >
-              Add hotel
-            </Button>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-export function EditorYachtList({
-  draft,
-  setDraft,
-}: {
-  draft: Destination;
-  setDraft: Dispatch<SetStateAction<Destination>>;
-}) {
-  const list = draft.yachtCompanies ?? [];
-
-  const update = (i: number, patch: Partial<YachtCompany>) => {
-    setDraft((d) => {
-      const arr = [...(d.yachtCompanies ?? [])];
-      arr[i] = { ...arr[i]!, ...patch };
-      return { ...d, yachtCompanies: arr };
-    });
-  };
-
-  const remove = (i: number) => {
-    setDraft((d) => ({
-      ...d,
-      yachtCompanies: (d.yachtCompanies ?? []).filter((_, j) => j !== i),
-    }));
-  };
-
-  const add = () => {
-    const row: YachtCompany = {
-      name: "Charter company",
-      contact: "",
-      url: "https://example.com",
-      destinations: "",
-    };
-    setDraft((d) => ({ ...d, yachtCompanies: [...(d.yachtCompanies ?? []), row] }));
-  };
-
-  return (
-    <div className="space-y-4">
-      {list.map((y, i) => (
-        <Card key={y.productId ?? `${y.name}-${i}`} className="gap-3 py-4">
-          <CardHeader className="flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base">Yacht {i + 1}</CardTitle>
-            <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => remove(i)}>
-              <Trash2 className="size-4" />
-            </Button>
-          </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <CatalogProductPicker
-                value={y.productId ?? ""}
-                allowedTypes={["cruise", "transport", "experience"]}
-                label="Catalog product (cruise / transport / experience)"
-                onSelect={(product) =>
-                  setDraft((d) => {
-                    const arr = [...(d.yachtCompanies ?? [])];
-                    arr[i] = mergeDirectoryProductIntoYacht(arr[i]!, product);
-                    return { ...d, yachtCompanies: arr };
-                  })
-                }
-              />
-            </div>
-            <Field label="Company name" className="sm:col-span-2">
-              <Input value={y.name} onChange={(e) => update(i, { name: e.target.value })} />
-            </Field>
-            <Field label="URL" className="sm:col-span-2">
-              <Input value={y.url} onChange={(e) => update(i, { url: e.target.value })} />
-            </Field>
-            <Field label="Contact (fallback line)" className="sm:col-span-2">
-              <Input value={y.contact} onChange={(e) => update(i, { contact: e.target.value })} />
-            </Field>
-            <Field label="Contact name">
-              <Input value={y.contactName ?? ""} onChange={(e) => update(i, { contactName: e.target.value || undefined })} />
-            </Field>
-            <Field label="Email">
-              <Input value={y.email ?? ""} onChange={(e) => update(i, { email: e.target.value || undefined })} />
-            </Field>
-            <Field label="Phone" className="sm:col-span-2">
-              <Input value={y.phone ?? ""} onChange={(e) => update(i, { phone: e.target.value || undefined })} />
-            </Field>
-            <Field label="Destinations served" className="sm:col-span-2">
-              <Input value={y.destinations} onChange={(e) => update(i, { destinations: e.target.value })} />
-            </Field>
-          </CardContent>
-        </Card>
-      ))}
-      <Button type="button" variant="outline" size="sm" onClick={add} className="gap-1">
-        <Plus className="size-4" />
-        Add yacht charter
-      </Button>
-    </div>
-  );
-}
-
-export function EditorTourismList({
-  draft,
-  setDraft,
-}: {
-  draft: Destination;
-  setDraft: Dispatch<SetStateAction<Destination>>;
-}) {
-  const update = (i: number, patch: Partial<TourismRegion>) => {
-    setDraft((d) => {
-      const next = [...d.tourismRegions];
-      next[i] = { ...next[i]!, ...patch };
-      return { ...d, tourismRegions: next };
-    });
-  };
-
-  const updateLink = (ri: number, li: number, patch: Partial<{ label: string; url: string }>) => {
-    setDraft((d) => {
-      const regions = [...d.tourismRegions];
-      const links = [...(regions[ri]?.links ?? [])];
-      links[li] = { ...links[li]!, ...patch };
-      regions[ri] = { ...regions[ri]!, links };
-      return { ...d, tourismRegions: regions };
-    });
-  };
-
-  const addRegion = () => {
-    setDraft((d) => ({
-      ...d,
-      tourismRegions: [...d.tourismRegions, { name: "New region", links: [{ label: "Link", url: "https://example.com" }] }],
-    }));
-  };
-
-  return (
-    <div className="space-y-4">
-      {draft.tourismRegions.map((region, ri) => (
-        <Card key={`${region.name}-${ri}`} className="gap-3 py-4">
-          <CardHeader className="flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base">Region {ri + 1}</CardTitle>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="text-destructive"
-              onClick={() =>
-                setDraft((d) => ({
-                  ...d,
-                  tourismRegions: d.tourismRegions.filter((_, j) => j !== ri),
-                }))
-              }
-            >
-              Remove
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Field label="Name">
-              <Input value={region.name} onChange={(e) => update(ri, { name: e.target.value })} />
-            </Field>
-            <Field label="Description">
-              <textarea
-                className={inputAreaClass}
-                rows={2}
-                value={region.description ?? ""}
-                onChange={(e) => update(ri, { description: e.target.value || undefined })}
-              />
-            </Field>
-            <Field label="Tourism contact">
-              <Input
-                value={region.contact ?? ""}
-                onChange={(e) => update(ri, { contact: e.target.value || undefined })}
-              />
-            </Field>
-            <div className="space-y-2">
-              <p className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">Official links</p>
-              {region.links.map((link, li) => (
-                <div key={`${ri}-${li}`} className="flex flex-wrap gap-2">
-                  <Input
-                    className="min-w-[120px] flex-1"
-                    value={link.label}
-                    onChange={(e) => updateLink(ri, li, { label: e.target.value })}
-                  />
-                  <Input
-                    className="min-w-[180px] flex-[2]"
-                    value={link.url}
-                    onChange={(e) => updateLink(ri, li, { url: e.target.value })}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive"
-                    onClick={() =>
-                      setDraft((d) => {
-                        const regions = [...d.tourismRegions];
-                        const links = regions[ri]!.links.filter((_, j) => j !== li);
-                        regions[ri] = { ...regions[ri]!, links };
-                        return { ...d, tourismRegions: regions };
-                      })
-                    }
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() =>
-                  setDraft((d) => {
-                    const regions = [...d.tourismRegions];
-                    regions[ri] = {
-                      ...regions[ri]!,
-                      links: [...regions[ri]!.links, { label: "New link", url: "https://" }],
-                    };
-                    return { ...d, tourismRegions: regions };
-                  })
-                }
-              >
-                Add link
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-      <Button type="button" variant="outline" size="sm" onClick={addRegion} className="gap-1">
-        <Plus className="size-4" />
-        Add tourism region
-      </Button>
-    </div>
-  );
-}
-
-export function EditorDocuments({
-  draft,
-  setDraft,
-}: {
-  draft: Destination;
-  setDraft: Dispatch<SetStateAction<Destination>>;
-}) {
-  const update = (i: number, patch: Partial<DestinationDocument>) => {
-    setDraft((d) => {
-      const next = [...d.documents];
-      next[i] = { ...next[i]!, ...patch };
-      return { ...d, documents: next };
-    });
-  };
-
-  const remove = (i: number) => {
-    setDraft((d) => ({ ...d, documents: d.documents.filter((_, j) => j !== i) }));
-  };
-
-  const add = () => {
-    setDraft((d) => ({
-      ...d,
-      documents: [...d.documents, { name: "New document", type: "pdf" }],
-    }));
-  };
-
-  return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Prototype: cards deep-link to Knowledge Vault search. Production binds to vault document IDs.
-      </p>
-      {draft.documents.map((doc, i) => (
-        <div key={`${doc.name}-${i}`} className="flex flex-wrap items-end gap-2 rounded-lg border border-border bg-card/40 p-3">
-          <div className="min-w-[200px] flex-1 space-y-1.5">
-            <Label>Title</Label>
-            <Input value={doc.name} onChange={(e) => update(i, { name: e.target.value })} />
-          </div>
-          <div className="w-32 space-y-1.5">
-            <Label>Type</Label>
-            <select
-              className="flex h-9 w-full rounded-md border border-input bg-inset px-2 text-sm text-foreground outline-none"
-              value={doc.type}
-              onChange={(e) => update(i, { type: e.target.value as DestinationDocument["type"] })}
-            >
-              <option value="pdf">pdf</option>
-              <option value="docx">docx</option>
-              <option value="xlsx">xlsx</option>
-            </select>
-          </div>
-          <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => remove(i)}>
-            <Trash2 className="size-4" />
-          </Button>
-        </div>
-      ))}
-      <Button type="button" variant="outline" size="sm" onClick={add} className="gap-1">
-        <Plus className="size-4" />
-        Add document
-      </Button>
     </div>
   );
 }

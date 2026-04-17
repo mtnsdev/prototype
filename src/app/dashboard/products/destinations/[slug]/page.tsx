@@ -1,8 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { getDestinationBySlug, listDestinationSlugs } from "@/data/destinations";
-import { DestinationDetailClient } from "@/components/destinations/DestinationDetailClient";
+import { DestinationDetailResolve } from "@/components/destinations/DestinationSlugRoutes";
 import { DestinationDetailSkeleton } from "@/components/destinations/DestinationDetailSkeleton";
 
 export function generateStaticParams() {
@@ -29,11 +28,9 @@ export default async function DestinationDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const destination = getDestinationBySlug(slug);
-  if (!destination) notFound();
   return (
     <Suspense fallback={<DestinationDetailSkeleton />}>
-      <DestinationDetailClient canonical={destination} />
+      <DestinationDetailResolve slug={slug} />
     </Suspense>
   );
 }

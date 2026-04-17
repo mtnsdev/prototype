@@ -13,6 +13,11 @@ const nextConfig = {
         hostname: "images.unsplash.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "picsum.photos",
+        pathname: "/**",
+      },
     ],
   },
   /** Zod v4 + Turbopack can mis-resolve `json-schema-processors` without transpilation. */

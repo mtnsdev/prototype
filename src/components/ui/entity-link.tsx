@@ -20,9 +20,17 @@ const ENTITY_CONFIG: Record<EntityType, { icon: typeof User; basePath: string; c
   vic:       { icon: User,      basePath: "/dashboard/vics",         color: "text-blue-400 hover:text-blue-300" },
   product:   { icon: Package,   basePath: "/dashboard/products",     color: "text-emerald-400 hover:text-emerald-300" },
   itinerary: { icon: Route,     basePath: "/dashboard/itineraries",  color: "text-purple-400 hover:text-purple-300" },
-  rep_firm:  { icon: Building2, basePath: "/dashboard/settings/rep-firms", color: "text-amber-400 hover:text-amber-300" },
+  rep_firm:  { icon: Building2, basePath: "/dashboard/products", color: "text-amber-400 hover:text-amber-300" },
   acuity:    { icon: Sparkles,  basePath: "/dashboard/vics",         color: "text-[#C9A96E] hover:text-[#d4b87e]" },
 };
+
+function entityHref(type: EntityType, id: string): string {
+  if (type === "rep_firm") {
+    return `/dashboard/products?tab=rep-firms&repFirm=${encodeURIComponent(id)}`;
+  }
+  const { basePath } = ENTITY_CONFIG[type];
+  return `${basePath}/${id}`;
+}
 
 interface EntityLinkProps {
   type: EntityType;
@@ -48,7 +56,7 @@ export function EntityLink({
 }: EntityLinkProps) {
   const config = ENTITY_CONFIG[type];
   const Icon = config.icon;
-  const href = `${config.basePath}/${id}`;
+  const href = entityHref(type, id);
 
   return (
     <Link
@@ -88,7 +96,7 @@ export function EntityChip({
 }) {
   const config = ENTITY_CONFIG[type];
   const Icon = config.icon;
-  const href = `${config.basePath}/${id}`;
+  const href = entityHref(type, id);
 
   return (
     <Link

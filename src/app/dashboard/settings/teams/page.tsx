@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/contexts/ToastContext";
 import type { Team } from "@/types/teams";
 import { DEFAULT_TEAM_POLICIES, MOCK_TEAMS } from "@/lib/teamsMock";
+import { BRIEFING_ROOM_PATH } from "@/lib/briefingRoutes";
 
 function cloneTeams(t: Team[]): Team[] {
   return t.map((x) => ({
@@ -86,7 +87,7 @@ export default function TeamsSettingsPage() {
       <div className="max-w-2xl mx-auto p-6 space-y-6">
         <Breadcrumbs
           items={[
-            { label: "Dashboard", href: "/dashboard" },
+            { label: "Dashboard", href: BRIEFING_ROOM_PATH },
             { label: "Settings", href: "/dashboard/settings" },
             { label: "Teams" },
           ]}

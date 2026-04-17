@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { DestinationEditorDynamic } from "@/components/destinations/editor/DestinationEditorDynamic";
+import { DestinationEditorResolve } from "@/components/destinations/DestinationSlugRoutes";
 import { getDestinationBySlug } from "@/data/destinations";
 
 export async function generateMetadata({
@@ -22,8 +21,5 @@ export default async function DestinationEditPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const canonical = getDestinationBySlug(slug);
-  if (!canonical) notFound();
-
-  return <DestinationEditorDynamic canonical={canonical} />;
+  return <DestinationEditorResolve slug={slug} />;
 }

@@ -50,7 +50,7 @@ export interface CommissionIncentive {
   /** How this was discovered */
   source:
     | "virtuoso"
-    | "partner_portal"
+    | "partner_program"
     | "email"
     | "manual"
     | "rep_firm";

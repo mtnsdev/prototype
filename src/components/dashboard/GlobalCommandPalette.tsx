@@ -29,7 +29,7 @@ function avatarStyle(initials: string): CSSProperties {
 }
 
 const SHELL_JUMP_COMMANDS = [
-  { id: "home", title: "Open Home", subtitle: "Briefing & widgets", href: "/dashboard" },
+  { id: "home", title: "Open Home", subtitle: "Briefing & widgets", href: "/dashboard/briefing-room" },
   { id: "chat", title: "Open Assistant", subtitle: "Conversations", href: "/dashboard/chat" },
   { id: "vics", title: "Open VICs", subtitle: "Client registry", href: "/dashboard/vics" },
   { id: "itineraries", title: "Open Itineraries", subtitle: "Trips & proposals", href: "/dashboard/itineraries" },

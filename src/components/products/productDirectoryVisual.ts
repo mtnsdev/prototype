@@ -1,4 +1,5 @@
 import type { DirectoryProduct, DirectoryProductCategory } from "@/types/product-directory";
+import type { DirectoryPriceTier } from "./productDirectoryDetailMeta";
 import {
   directoryCategoryColors,
   directoryCategoryLabel,
@@ -10,6 +11,27 @@ export { directoryCategoryColors, directoryCategoryLabel, directoryCategoryMarke
 export function directoryProductPlaceLabel(p: DirectoryProduct): string {
   if (p.city && p.country) return `${p.city}, ${p.country}`;
   return p.location;
+}
+
+/** Normalized price bands for editing and comparison (max 5). */
+export function directoryProductPriceBandsNormalized(p: DirectoryProduct): DirectoryPriceTier[] {
+  if (p.priceBands && p.priceBands.length > 0) return p.priceBands.slice(0, 5);
+  if (p.priceTier) return [p.priceTier];
+  return [];
+}
+
+/** Card / chip line: multiple bands or legacy single tier. */
+export function directoryProductPriceDisplay(p: DirectoryProduct): string | null {
+  const bands = directoryProductPriceBandsNormalized(p);
+  if (bands.length > 0) return bands.join(" · ");
+  return null;
+}
+
+/** OR semantics for price filter: any selected tier matches any band (or legacy `priceTier`). */
+export function directoryProductPriceTiersForFilter(p: DirectoryProduct): DirectoryPriceTier[] {
+  const bands = directoryProductPriceBandsNormalized(p);
+  if (bands.length > 0) return [...new Set(bands)];
+  return [];
 }
 
 /** @deprecated Prefer `directoryCategoryLabel` / `directoryCategoryColors`. */

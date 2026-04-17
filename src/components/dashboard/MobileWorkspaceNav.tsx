@@ -7,6 +7,7 @@ import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { BRIEFING_ROOM_PATH } from "@/lib/briefingRoutes";
 import {
   LayoutDashboard,
   Users,
@@ -21,7 +22,7 @@ import {
 } from "lucide-react";
 
 const LINKS: { href: string; label: string; icon: typeof LayoutDashboard }[] = [
-  { href: "/dashboard", label: "Home", icon: LayoutDashboard },
+  { href: BRIEFING_ROOM_PATH, label: "Home", icon: LayoutDashboard },
   { href: "/dashboard/vics", label: "VICs", icon: Users },
   { href: "/dashboard/itineraries", label: "Itineraries", icon: Route },
   { href: "/dashboard/products", label: "Catalog", icon: Building2 },
@@ -63,8 +64,8 @@ export default function MobileWorkspaceNav() {
           <nav className="flex flex-col gap-0.5 p-3 pt-14" aria-label="Main">
             {LINKS.map(({ href, label, icon: Icon }) => {
               const active =
-                href === "/dashboard"
-                  ? pathname === "/dashboard"
+                href === BRIEFING_ROOM_PATH
+                  ? pathname === BRIEFING_ROOM_PATH || pathname === "/dashboard"
                   : pathname === href || pathname.startsWith(`${href}/`);
               return (
                 <Link

@@ -3,14 +3,14 @@
 import { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Shield, Users, FolderLock, ArrowLeft, FlaskConical, Sparkles } from "lucide-react";
+import { Shield, Users, FolderLock, ArrowLeft, FlaskConical, Sparkles, Megaphone } from "lucide-react";
 
 const ADMIN_NAV_ITEMS = [
-    { href: "/dashboard/settings/admin", label: "Overview", icon: Shield, exact: true },
     { href: "/dashboard/settings/admin/users", label: "Users", icon: Users },
     { href: "/dashboard/settings/admin/permissions", label: "Permissions", icon: FolderLock },
     { href: "/dashboard/settings/admin/acuity-settings", label: "VIC Intelligence", icon: Sparkles },
     { href: "/dashboard/settings/admin/bulk-test", label: "Bulk Test", icon: FlaskConical },
+    { href: "/admin/briefing-room", label: "Briefing CMS", icon: Megaphone },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -42,9 +42,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 {/* Navigation Tabs */}
                 <div className="flex gap-1 mb-6 p-1 rounded-xl bg-[rgba(255,255,255,0.03)] border border-border">
                     {ADMIN_NAV_ITEMS.map((item) => {
-                        const isActive = item.exact
-                            ? pathname === item.href
-                            : pathname.startsWith(item.href);
+                        const isActive =
+                            item.href.startsWith("/admin")
+                                ? pathname === item.href
+                                : pathname.startsWith(item.href);
                         const Icon = item.icon;
 
                         return (

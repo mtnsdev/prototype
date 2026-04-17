@@ -71,7 +71,7 @@ export const MOCK_COMMISSION_ADVISORIES: CommissionAdvisory[] = [
     validFrom: "2026-06-01T00:00:00.000Z",
     validUntil: "2026-09-30T23:59:59.000Z",
     source: "rep_firm",
-    sourceName: "Dominique Debay",
+    sourceName: "LUSH Experiences",
     status: "upcoming",
     createdAt: "2026-03-31T09:00:00.000Z",
   },

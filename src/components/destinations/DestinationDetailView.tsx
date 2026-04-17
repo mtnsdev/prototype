@@ -2,83 +2,163 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { useCallback, useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { List, Map as MapIcon } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
 import type { Destination } from "@/data/destinations";
-import { destinationHasYachtData } from "@/data/destinations";
-import { parseDestinationSectionParam } from "@/lib/destinationSectionUrl";
-import Breadcrumbs from "@/components/ui/breadcrumbs";
+import { useUser } from "@/contexts/UserContext";
+import { resolveAdvisorCatalogFromStorage } from "@/components/products/productDirectoryCatalogResolve";
+import { mergeDestinationWithCatalog } from "@/lib/destinationCatalogJoin";
+import {
+  buildDestinationItemSectionMap,
+  buildVirtualSectionsFromDestination,
+} from "@/lib/destinationSectionModel";
+import {
+  resolveDestinationItemIdFromHash,
+  resolveDestinationSectionId,
+} from "@/lib/destinationSectionUrl";
+import { logDestinationEvent } from "@/lib/destinationAnalytics";
+import { destinationMapCoverageRatio } from "@/lib/destinationMapCoverage";
+import { buildDestinationMapPins } from "@/lib/destinationMapPins";
 import { DestinationHero } from "./DestinationHero";
-import { DestinationSectionNav, type DestinationSectionId } from "./DestinationSectionNav";
-import { DMCPartnerCard } from "./DMCPartnerCard";
-import { RestaurantSection } from "./RestaurantSection";
-import { HotelSection } from "./HotelSection";
-import { YachtSection } from "./YachtSection";
-import { TourismSection } from "./TourismSection";
-import { DocumentsSection } from "./DocumentsSection";
+import { DestinationSectionNav, type DestinationNavItem } from "./DestinationSectionNav";
+import { SectionRenderer } from "./SectionRenderer";
 import { DestinationAgencyNotes } from "./DestinationAgencyNotes";
+import { TripReportBanner } from "./TripReportBanner";
 import { destMuted, destPage } from "./destinationStyles";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
-function countHotels(d: Destination) {
-  return Object.values(d.hotels).reduce((n, list) => n + list.length, 0);
-}
-
-function countRestaurants(d: Destination) {
-  return Object.values(d.restaurants).reduce((n, list) => n + list.length, 0);
-}
+const DestinationMapView = dynamic(
+  () => import("./DestinationMapView").then((m) => m.DestinationMapView),
+  { ssr: false, loading: () => <p className="text-sm text-muted-foreground">Loading map…</p> },
+);
 
 type Props = {
   destination: Destination;
-  /** When true, hero hides advisor actions (editor preview). */
   previewMode?: boolean;
-  /** e.g. admin “Edit destination” control — aligned with breadcrumbs. */
   headerAside?: ReactNode;
 };
 
 export function DestinationDetailView({ destination, previewMode = false, headerAside }: Props) {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { user, isLoading: userLoading } = useUser();
 
-  const showYacht = destinationHasYachtData(destination);
+  const [clientHash, setClientHash] = useState("");
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
+
+  const displayDestination = useMemo(() => {
+    if (userLoading || !user) return destination;
+    const { products } = resolveAdvisorCatalogFromStorage(
+      String(user.id),
+      user.username ?? user.email?.split("@")[0] ?? "Advisor",
+    );
+    return mergeDestinationWithCatalog(destination, products);
+  }, [destination, user, userLoading]);
+
+  const sections = useMemo(
+    () => buildVirtualSectionsFromDestination(displayDestination),
+    [displayDestination],
+  );
+
+  const itemToSection = useMemo(
+    () => buildDestinationItemSectionMap(displayDestination, sections),
+    [displayDestination, sections],
+  );
+
+  const validIds = useMemo(() => sections.map((s) => s.id), [sections]);
+
+  useEffect(() => {
+    setClientHash(typeof window !== "undefined" ? window.location.hash : "");
+    const onHash = () => setClientHash(window.location.hash);
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
 
   const active = useMemo(
-    () => parseDestinationSectionParam(searchParams.get("section"), showYacht),
-    [searchParams, showYacht],
+    () =>
+      resolveDestinationSectionId({
+        destinationSlug: displayDestination.slug,
+        querySection: searchParams.get("section"),
+        hash: clientHash || null,
+        validSectionIds: validIds,
+        itemToSection,
+      }),
+    [displayDestination.slug, searchParams, clientHash, validIds, itemToSection],
   );
+
+  const activeSection = useMemo(
+    () => sections.find((s) => s.id === active) ?? sections[0],
+    [sections, active],
+  );
+
+  const navItems: DestinationNavItem[] = useMemo(
+    () =>
+      sections.map((s) => ({
+        id: s.id,
+        label: s.title,
+        iconKey: s.iconKey,
+        count: s.count,
+      })),
+    [sections],
+  );
+
+  const mapRatio = useMemo(() => destinationMapCoverageRatio(displayDestination), [displayDestination]);
+  const showMapToggle = mapRatio >= 0.3 && displayDestination.mapCenter != null;
+
+  const mapPins = useMemo(
+    () => buildDestinationMapPins(displayDestination, sections, activeSection?.id),
+    [displayDestination, sections, activeSection?.id],
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const h = window.location.hash;
+    if (h) {
+      logDestinationEvent("deep_link_opened", { destination: displayDestination.slug, source: "hash" });
+    }
+  }, [displayDestination.slug]);
+
+  useEffect(() => {
+    logDestinationEvent(
+      "destination_viewed",
+      { destination: displayDestination.slug },
+      user?.id != null ? String(user.id) : undefined,
+    );
+  }, [displayDestination.slug, user?.id]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const itemId = resolveDestinationItemIdFromHash(clientHash);
+    if (!itemId) return;
+    const t = window.setTimeout(() => {
+      document.getElementById(`item-${itemId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+    return () => window.clearTimeout(t);
+  }, [clientHash, activeSection?.id]);
 
   const setSection = useCallback(
-    (id: DestinationSectionId) => {
+    (id: string) => {
       const p = new URLSearchParams(searchParams.toString());
-      p.set("section", id);
+      p.delete("section");
       const qs = p.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      const base = qs ? `${pathname}?${qs}` : pathname;
+      const nextHash = `#section-${id}`;
+      window.history.replaceState(null, "", `${base}${nextHash}`);
+      setClientHash(nextHash);
     },
-    [pathname, router, searchParams],
+    [pathname, searchParams],
   );
 
-  const stats = useMemo(
-    () => ({
-      dmcs: destination.dmcPartners.length,
-      restaurants: countRestaurants(destination),
-      hotels: countHotels(destination),
-      documents: destination.documents.length,
-    }),
-    [destination],
+  const onMapToggle = useCallback(
+    (mode: "list" | "map") => {
+      setViewMode(mode);
+      logDestinationEvent("map_toggled", { destination: displayDestination.slug, on: mode === "map" });
+    },
+    [displayDestination.slug],
   );
-
-  const sectionTitle = (id: DestinationSectionId) => {
-    const map: Record<DestinationSectionId, string> = {
-      dmc: "DMC partners",
-      restaurants: "Restaurants",
-      hotels: "Hotels",
-      yacht: "Yacht charters",
-      tourism: "Tourism & regional info",
-      documents: "Documents",
-    };
-    return map[id];
-  };
 
   return (
     <div className={cn(destPage)}>
@@ -88,81 +168,123 @@ export function DestinationDetailView({ destination, previewMode = false, header
       >
         Skip to destination content
       </a>
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6">
-        <div className="mx-auto mb-4 flex max-w-6xl flex-wrap items-center justify-between gap-3">
-          <Breadcrumbs
-            items={[
-              { label: "Products", href: "/dashboard/products" },
-              { label: "Destinations", href: "/dashboard/products/destinations" },
-              { label: destination.name },
-            ]}
-          />
-          {headerAside ? <div className="shrink-0">{headerAside}</div> : null}
-        </div>
-
-        <Link
-          href="/dashboard/products/destinations"
-          className="mb-4 inline-flex text-sm font-medium text-brand-cta transition-colors hover:text-brand-cta-hover hover:underline"
-        >
-          ← All destinations
-        </Link>
-        <DestinationHero destination={destination} mode={previewMode ? "preview" : "full"} />
-
-        <p className={cn("mx-auto mt-4 max-w-4xl text-sm leading-relaxed", destMuted)}>{destination.description}</p>
-
-        <DestinationAgencyNotes destinationSlug={destination.slug} />
-
-        <div className="mx-auto mt-8 flex max-w-6xl flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
-          <DestinationSectionNav
-            active={active}
-            onChange={setSection}
-            showYacht={showYacht}
-            stats={stats}
-          />
-
-          <main
-            id="destination-main"
-            tabIndex={-1}
-            className="min-w-0 flex-1 rounded-xl border border-border bg-card p-4 outline-none md:p-6"
-            aria-labelledby="destination-section-title"
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-4">
+        <div className="w-full">
+          <div
+            className={cn(
+              "mb-3 flex min-w-0 flex-wrap items-center gap-3",
+              headerAside ? "justify-between" : "",
+            )}
           >
-            <h2 id="destination-section-title" className="text-lg font-semibold text-foreground">
-              {sectionTitle(active)}
-            </h2>
-            <div className="mt-4">
-              {active === "dmc" ? (
-                destination.dmcPartners.length === 0 ? (
-                  <p className={cn("text-sm", destMuted)}>No DMC partners listed yet.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {destination.dmcPartners.map((p, i) => (
-                      <DMCPartnerCard key={p.productId ?? p.name} partner={p} defaultOpen={i === 0} />
-                    ))}
-                  </div>
-                )
-              ) : null}
+            <Link
+              href="/dashboard/products/destinations"
+              className="inline-flex shrink-0 text-sm font-medium text-brand-cta transition-colors hover:text-brand-cta-hover hover:underline"
+            >
+              ← All destinations
+            </Link>
+            {headerAside ? (
+              <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">{headerAside}</div>
+            ) : null}
+          </div>
+          <DestinationHero destination={displayDestination} mode={previewMode ? "preview" : "full"} />
 
-              {active === "restaurants" ? (
-                <RestaurantSection byRegion={destination.restaurants} />
-              ) : null}
-
-              {active === "hotels" ? <HotelSection byGroup={destination.hotels} /> : null}
-
-              {active === "yacht" ? (
-                showYacht && destination.yachtCompanies?.length ? (
-                  <YachtSection companies={destination.yachtCompanies} />
-                ) : (
-                  <p className={cn("text-sm", destMuted)}>No yacht charter partners listed for this destination.</p>
-                )
-              ) : null}
-
-              {active === "tourism" ? <TourismSection regions={destination.tourismRegions} /> : null}
-
-              {active === "documents" ? (
-                <DocumentsSection documents={destination.documents} destinationSlug={destination.slug} />
-              ) : null}
+          {showMapToggle ? (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                View
+              </span>
+              <Button
+                type="button"
+                size="sm"
+                variant={viewMode === "list" ? "toolbarAccent" : "outline"}
+                className="gap-1.5"
+                onClick={() => onMapToggle("list")}
+              >
+                <List className="size-3.5" aria-hidden />
+                List
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={viewMode === "map" ? "toolbarAccent" : "outline"}
+                className="gap-1.5"
+                onClick={() => onMapToggle("map")}
+              >
+                <MapIcon className="size-3.5" aria-hidden />
+                Map
+              </Button>
             </div>
-          </main>
+          ) : null}
+
+          <p className={cn("mt-4 text-sm leading-relaxed", destMuted)}>{displayDestination.description}</p>
+
+          <div className="mt-4">
+            <TripReportBanner
+              destinationSlug={displayDestination.slug}
+              destinationName={displayDestination.name}
+              reports={displayDestination.tripReports ?? []}
+            />
+          </div>
+
+          <DestinationAgencyNotes destinationSlug={displayDestination.slug} />
+
+          <div className="mt-8 lg:grid lg:grid-cols-[minmax(0,1fr)_220px] lg:items-start lg:gap-8">
+            <div className="min-w-0 space-y-5">
+              {navItems.length > 0 ? (
+                <div className="lg:hidden">
+                  <DestinationSectionNav
+                    variant="horizontal"
+                    items={navItems}
+                    activeId={active}
+                    onChange={setSection}
+                  />
+                </div>
+              ) : null}
+
+              <main
+                id="destination-main"
+                tabIndex={-1}
+                className="min-w-0 scroll-mt-24 outline-none"
+                aria-labelledby="destination-section-title"
+              >
+                <h2 id="destination-section-title" className="sr-only">
+                  {activeSection?.title ?? "Destination"}
+                </h2>
+                {activeSection ? (
+                  <>
+                    {viewMode === "map" && showMapToggle && displayDestination.mapCenter ? (
+                      <DestinationMapView
+                        pins={mapPins}
+                        destinationSlug={displayDestination.slug}
+                        center={displayDestination.mapCenter}
+                      />
+                    ) : (
+                      <div id={`section-${activeSection.id}`} className="scroll-mt-28">
+                        <SectionRenderer section={activeSection} destinationSlug={displayDestination.slug} />
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className={cn("text-sm", destMuted)}>
+                    No curated sections yet for this destination. Check back as content is added.
+                  </p>
+                )}
+              </main>
+            </div>
+
+            {navItems.length > 0 ? (
+              <aside className="hidden min-w-0 lg:block" aria-label="Section navigation">
+                <div className="sticky top-4">
+                  <DestinationSectionNav
+                    variant="vertical"
+                    items={navItems}
+                    activeId={active}
+                    onChange={setSection}
+                  />
+                </div>
+              </aside>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

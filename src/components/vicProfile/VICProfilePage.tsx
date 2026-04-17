@@ -16,6 +16,7 @@ import { FinancialsTab } from "./tabs/FinancialsTab";
 import { CommunicationsTab } from "./tabs/CommunicationsTab";
 import { AdvisoriesNotesTab } from "./tabs/AdvisoriesNotesTab";
 import { getAllPersonaBundles } from "@/lib/vic-profile-mock";
+import { BRIEFING_ROOM_PATH } from "@/lib/briefingRoutes";
 
 export type VicProfileTabId =
   | "overview"
@@ -123,7 +124,7 @@ export function VICProfilePage({ routeVicId }: Props) {
       <div className="mx-auto max-w-5xl space-y-6 p-6">
         <Breadcrumbs
           items={[
-            { label: "Dashboard", href: "/dashboard" },
+            { label: "Dashboard", href: BRIEFING_ROOM_PATH },
             { label: "VICs", href: "/dashboard/vics" },
             { label: bundle.profile.firstName + " " + bundle.profile.lastName, href: `/dashboard/vics/${routeVicId}` },
             { label: "Advisor Profile" },

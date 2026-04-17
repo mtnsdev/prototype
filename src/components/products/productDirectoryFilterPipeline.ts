@@ -5,7 +5,10 @@ import type {
 } from "@/types/product-directory";
 import type { DirectoryPriceTier, DirectoryTierLevel } from "@/components/products/productDirectoryDetailMeta";
 import { directoryProductMatchesActiveTypeFilters } from "@/components/products/directoryProductTypeHelpers";
-import { getDirectoryProductRegistryCommission } from "@/components/products/productDirectoryCommission";
+import {
+  getActiveIncentiveOfferCount,
+  getDirectoryProductRegistryCommission,
+} from "@/components/products/productDirectoryCommission";
 import {
   productMatchesAmenityFilter,
   productMatchesProgramFilter,
@@ -16,6 +19,7 @@ import {
   directoryProductOpeningSearchText,
   productHasPlannedOpening,
 } from "@/lib/productDirectoryOpening";
+import { directoryProductPriceTiersForFilter } from "@/components/products/productDirectoryVisual";
 
 export type DirectoryFilterSkip =
   | "search"
@@ -110,7 +114,7 @@ export function applyDirectoryProductFilters(
   }
 
   if (skip !== "activeIncentive" && f.hasActiveIncentive) {
-    result = result.filter((p) => (p.activeAdvisoryCount ?? 0) > 0);
+    result = result.filter((p) => getActiveIncentiveOfferCount(p) > 0);
   }
 
   if (skip !== "plannedOpening" && f.hasPlannedOpening) {
@@ -122,7 +126,10 @@ export function applyDirectoryProductFilters(
   }
 
   if (skip !== "price" && f.selectedPriceTiers.length > 0) {
-    result = result.filter((p) => p.priceTier != null && f.selectedPriceTiers.includes(p.priceTier));
+    result = result.filter((p) => {
+      const tiers = directoryProductPriceTiersForFilter(p);
+      return tiers.some((t) => f.selectedPriceTiers.includes(t));
+    });
   }
 
   return result;

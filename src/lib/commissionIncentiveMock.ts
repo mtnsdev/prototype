@@ -116,7 +116,7 @@ export const MOCK_COMMISSION_INCENTIVES: CommissionIncentive[] = [
     terms_summary:
       "Tier 1: 3-4 cabins = 3% bonus. Tier 2: 5-6 cabins = 4% bonus. Tier 3: 7+ cabins = 5% bonus. Applied to expedition and luxury voyages.",
     min_booking_value: 75000,
-    source: "partner_portal",
+    source: "partner_program",
     urgency: "medium",
     created_at: toISO(addDays(now, -14)),
   },
@@ -170,7 +170,7 @@ export const MOCK_COMMISSION_INCENTIVES: CommissionIncentive[] = [
     terms_summary:
       "Additional 2% commission on bookings for guests with previous One&Only stay within past 3 years. Applies to all One&Only destinations.",
     min_booking_value: 5000,
-    source: "partner_portal",
+    source: "partner_program",
     urgency: "low",
     created_at: toISO(addDays(now, -30)),
   },

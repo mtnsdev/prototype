@@ -4,45 +4,22 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Destination } from "@/data/destinations";
+import { ensureEditorWorkspace, GUIDE_TAB_ID } from "@/lib/destinationEditorTabs";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/contexts/ToastContext";
-import {
-  clearAllDestinationOverrides,
-  clearDraftDestination,
-  DESTINATION_STORAGE_EVENT,
-  hasDraftDestination,
-  loadEditorBootstrap,
-  loadPublishedDestination,
-  publishDestination,
-  saveDraftDestination,
-} from "@/lib/destinationLocalEdits";
+import { loadPublishedDestination, publishDestination } from "@/lib/destinationLocalEdits";
 import { safeParseDestination } from "@/lib/destinationEditorSchema";
-import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { DestinationDetailView } from "@/components/destinations/DestinationDetailView";
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
+  BuildEditorProvider,
+  BuildGuideCanvas,
+  BuildPaletteToolbar,
   EditorOverview,
-  EditorDMCList,
-  EditorRestaurantMap,
-  EditorHotelMap,
-  EditorYachtList,
-  EditorTourismList,
-  EditorDocuments,
 } from "./DestinationEditorForms";
-
-const SECTIONS = [
-  { id: "overview", label: "Overview & regions" },
-  { id: "dmc", label: "DMC partners" },
-  { id: "restaurants", label: "Restaurants" },
-  { id: "hotels", label: "Hotels" },
-  { id: "yachts", label: "Yacht charters" },
-  { id: "tourism", label: "Tourism" },
-  { id: "documents", label: "Documents" },
-] as const;
-
-type SectionId = (typeof SECTIONS)[number]["id"];
 
 export function DestinationEditorPage({ canonical }: { canonical: Destination }) {
   const { isAdmin } = usePermissions();
@@ -51,21 +28,24 @@ export function DestinationEditorPage({ canonical }: { canonical: Destination })
   const toast = useToast();
   const slug = canonical.slug;
 
-  const [draft, setDraft] = useState<Destination>(() => loadEditorBootstrap(slug, canonical));
-  const [section, setSection] = useState<SectionId>("overview");
-  const [savedSnapshot, setSavedSnapshot] = useState(() => JSON.stringify(loadEditorBootstrap(slug, canonical)));
-  const [hasDraftKey, setHasDraftKey] = useState(() =>
-    typeof window !== "undefined" ? hasDraftDestination(slug) : false,
-  );
+  const [draft, setDraft] = useState<Destination>(() => {
+    const d = loadPublishedDestination(slug, canonical);
+    return { ...d, editorWorkspace: ensureEditorWorkspace(d) };
+  });
+  const [activeTabId, setActiveTabId] = useState("overview");
+  const [savedSnapshot, setSavedSnapshot] = useState(() => {
+    const d = loadPublishedDestination(slug, canonical);
+    return JSON.stringify({ ...d, editorWorkspace: ensureEditorWorkspace(d) });
+  });
+
+  const workspace = useMemo(() => ensureEditorWorkspace(draft), [draft]);
 
   const dirty = useMemo(() => JSON.stringify(draft) !== savedSnapshot, [draft, savedSnapshot]);
 
   useEffect(() => {
-    const sync = () => setHasDraftKey(hasDraftDestination(slug));
-    sync();
-    window.addEventListener(DESTINATION_STORAGE_EVENT, sync);
-    return () => window.removeEventListener(DESTINATION_STORAGE_EVENT, sync);
-  }, [slug]);
+    if (activeTabId === "overview" || activeTabId === GUIDE_TAB_ID) return;
+    setActiveTabId(GUIDE_TAB_ID);
+  }, [activeTabId]);
 
   useEffect(() => {
     if (!isLoading && !isAdmin) {
@@ -83,32 +63,17 @@ export function DestinationEditorPage({ canonical }: { canonical: Destination })
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [dirty]);
 
-  const handleSaveDraft = useCallback(() => {
-    const parsed = safeParseDestination({ ...draft, slug });
-    if (!parsed.success) {
-      toast({
-        title: "Validation failed",
-        description: "Fix invalid fields (empty names, malformed rows) and try again.",
-        tone: "destructive",
-      });
-      return;
-    }
-    const toSave = { ...parsed.data, slug };
-    if (!saveDraftDestination(slug, toSave)) {
-      toast({ title: "Could not save draft", description: "Data failed validation.", tone: "destructive" });
-      return;
-    }
-    setDraft(toSave);
-    setSavedSnapshot(JSON.stringify(toSave));
-    toast({
-      title: "Draft saved",
-      description: "Advisors still see the last published version until you publish.",
-      tone: "success",
+  const setGuideLabel = useCallback((label: string) => {
+    setDraft((d) => {
+      const w = structuredClone(ensureEditorWorkspace(d));
+      w.guideLabel = label;
+      return { ...d, editorWorkspace: w };
     });
-  }, [draft, slug, toast]);
+  }, []);
 
   const handlePublish = useCallback(() => {
-    const parsed = safeParseDestination({ ...draft, slug });
+    const normalized = { ...draft, slug, editorWorkspace: ensureEditorWorkspace(draft) };
+    const parsed = safeParseDestination(normalized);
     if (!parsed.success) {
       toast({
         title: "Cannot publish",
@@ -117,7 +82,7 @@ export function DestinationEditorPage({ canonical }: { canonical: Destination })
       });
       return;
     }
-    const toSave = { ...parsed.data, slug };
+    const toSave = { ...parsed.data, slug, editorWorkspace: ensureEditorWorkspace(parsed.data as Destination) };
     if (!publishDestination(slug, toSave)) {
       toast({ title: "Publish failed", tone: "destructive" });
       return;
@@ -131,23 +96,6 @@ export function DestinationEditorPage({ canonical }: { canonical: Destination })
     });
   }, [draft, slug, toast]);
 
-  const handleDiscardDraft = useCallback(() => {
-    if (!window.confirm("Discard the saved draft and reload the last published version?")) return;
-    clearDraftDestination(slug);
-    const next = loadPublishedDestination(slug, canonical);
-    setDraft(next);
-    setSavedSnapshot(JSON.stringify(next));
-    toast({ title: "Draft discarded", tone: "default" });
-  }, [canonical, slug, toast]);
-
-  const handleReset = useCallback(() => {
-    if (!window.confirm("Remove published overrides and draft for this destination, restoring bundled seed data?")) return;
-    clearAllDestinationOverrides(slug);
-    setDraft(canonical);
-    setSavedSnapshot(JSON.stringify(canonical));
-    toast({ title: "Restored seed data", tone: "default" });
-  }, [canonical, slug, toast]);
-
   if (isLoading || !isAdmin) {
     return (
       <div className="px-6 py-10 text-sm text-muted-foreground">{isLoading ? "Loading…" : "Redirecting…"}</div>
@@ -159,43 +107,24 @@ export function DestinationEditorPage({ canonical }: { canonical: Destination })
       <header className="shrink-0 border-b border-border bg-background/95 px-4 py-4 backdrop-blur md:px-6">
         <div className="mx-auto flex max-w-[1600px] flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0 space-y-2">
-            <Breadcrumbs
-              items={[
-                { label: "Products", href: "/dashboard/products" },
-                { label: "Destinations", href: "/dashboard/products/destinations" },
-                { label: canonical.name, href: `/dashboard/products/destinations/${slug}` },
-                { label: "Edit" },
-              ]}
-            />
             <div>
               <h1 className="text-lg font-semibold text-foreground">Edit destination</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Pick catalog products to hydrate rows. <span className="text-foreground">Save draft</span> is local
-                only; <span className="text-foreground">Publish</span> updates what advisors see.
+                Switch <span className="text-foreground">Overview</span> or <span className="text-foreground">Build</span>{" "}
+                in the sidebar. One page scrolls — guide tools on top, then the advisor page.{" "}
+                <span className="text-foreground">Publish</span> saves locally for advisors.
               </p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {dirty ? (
               <span className="text-xs font-medium text-brand-cta" aria-live="polite">
-                Unsaved changes
+                Unpublished changes
               </span>
             ) : (
-              <span className="text-xs text-muted-foreground">In sync with last save</span>
+              <span className="text-xs text-muted-foreground">Matches published</span>
             )}
-            {hasDraftKey ? (
-              <span className="text-xs text-muted-foreground">Draft on disk</span>
-            ) : null}
-            <Button type="button" variant="outline" size="sm" onClick={handleReset}>
-              Reset to seed
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={handleDiscardDraft} disabled={!hasDraftKey}>
-              Discard draft
-            </Button>
-            <Button type="button" variant="secondary" size="sm" onClick={handleSaveDraft} disabled={!dirty}>
-              Save draft
-            </Button>
-            <Button type="button" variant="cta" size="sm" onClick={handlePublish}>
+            <Button type="button" variant="cta" size="sm" onClick={handlePublish} disabled={!dirty}>
               Publish
             </Button>
             <Button type="button" variant="ghost" size="sm" asChild>
@@ -205,50 +134,84 @@ export function DestinationEditorPage({ canonical }: { canonical: Destination })
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-0 lg:flex-row lg:min-h-0">
-        <aside className="flex w-full shrink-0 flex-col border-border lg:w-56 lg:border-r">
-          <nav className="flex gap-1 overflow-x-auto p-3 lg:flex-col lg:overflow-visible" aria-label="Editor sections">
-            {SECTIONS.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => setSection(s.id)}
-                className={cn(
-                  "whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm transition-colors",
-                  section === s.id
-                    ? "bg-muted font-medium text-foreground"
-                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-                )}
-              >
-                {s.label}
-              </button>
-            ))}
-          </nav>
-        </aside>
+      <div className="mx-auto flex w-full max-w-[1600px] flex-1 min-h-0 flex-col gap-0 lg:flex-row">
+        {activeTabId === GUIDE_TAB_ID ? (
+          <BuildEditorProvider draft={draft} setDraft={setDraft}>
+            <aside className="flex w-full shrink-0 flex-col border-border lg:w-56 lg:min-h-0 lg:border-r">
+              <nav className="flex flex-col gap-0.5 p-2" aria-label="Editor">
+                <button
+                  type="button"
+                  onClick={() => setActiveTabId("overview")}
+                  className="rounded-lg px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+                >
+                  Overview
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTabId(GUIDE_TAB_ID)}
+                  className="rounded-lg bg-muted/50 px-3 py-2 text-left text-sm font-medium text-foreground transition-colors"
+                >
+                  Build
+                </button>
+              </nav>
+            </aside>
 
-        <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(300px,420px)] lg:gap-0">
-          <div className="min-h-0 overflow-y-auto border-border p-4 md:p-6 lg:border-r">
-            <div className="mx-auto max-w-3xl pb-24">
-              {section === "overview" ? <EditorOverview draft={draft} setDraft={setDraft} /> : null}
-              {section === "dmc" ? <EditorDMCList draft={draft} setDraft={setDraft} /> : null}
-              {section === "restaurants" ? <EditorRestaurantMap draft={draft} setDraft={setDraft} /> : null}
-              {section === "hotels" ? <EditorHotelMap draft={draft} setDraft={setDraft} /> : null}
-              {section === "yachts" ? <EditorYachtList draft={draft} setDraft={setDraft} /> : null}
-              {section === "tourism" ? <EditorTourismList draft={draft} setDraft={setDraft} /> : null}
-              {section === "documents" ? <EditorDocuments draft={draft} setDraft={setDraft} /> : null}
+            <div className="min-h-0 flex-1 overflow-y-auto border-border lg:border-l">
+              <div className="mx-auto max-w-3xl space-y-5 p-4 md:p-6 lg:py-8">
+                <div className="space-y-2">
+                  <Label htmlFor="guide-tab-label">Guide label</Label>
+                  <Input
+                    id="guide-tab-label"
+                    value={workspace.guideLabel ?? ""}
+                    onChange={(e) => setGuideLabel(e.target.value)}
+                    placeholder="Optional label in the destination sidebar"
+                  />
+                </div>
+                <BuildPaletteToolbar />
+                <BuildGuideCanvas />
+              </div>
+              <div className="border-t border-border/70">
+                <DestinationDetailView
+                  destination={{ ...draft, editorWorkspace: ensureEditorWorkspace(draft) }}
+                  previewMode
+                />
+              </div>
             </div>
-          </div>
+          </BuildEditorProvider>
+        ) : (
+          <>
+            <aside className="flex w-full shrink-0 flex-col border-border lg:w-56 lg:min-h-0 lg:border-r">
+              <nav className="flex flex-col gap-0.5 p-2" aria-label="Editor">
+                <button
+                  type="button"
+                  onClick={() => setActiveTabId("overview")}
+                  className="rounded-lg bg-muted/50 px-3 py-2 text-left text-sm font-medium text-foreground transition-colors"
+                >
+                  Overview
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTabId(GUIDE_TAB_ID)}
+                  className="rounded-lg px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+                >
+                  Build
+                </button>
+              </nav>
+            </aside>
 
-          <div className="hidden min-h-0 flex-col border-t border-border bg-background/50 lg:flex lg:border-t-0 lg:border-l">
-            <div className="shrink-0 border-b border-border px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Live preview</p>
-              <p className="mt-0.5 text-2xs text-muted-foreground">Shows your current editor state (draft).</p>
+            <div className="min-h-0 flex-1 overflow-y-auto border-border lg:border-l">
+              <div className="mx-auto max-w-3xl p-4 md:p-6 lg:py-8">
+                <EditorOverview draft={draft} setDraft={setDraft} />
+              </div>
+              <div className="border-t border-border/70">
+                <DestinationDetailView
+                  destination={{ ...draft, editorWorkspace: ensureEditorWorkspace(draft) }}
+                  previewMode
+                />
+              </div>
             </div>
-            <div className="min-h-0 max-h-[calc(100vh-12rem)] flex-1 overflow-y-auto p-3">
-              <DestinationDetailView destination={draft} previewMode />
-            </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );

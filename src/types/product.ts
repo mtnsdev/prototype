@@ -240,6 +240,7 @@ export type {
   DirectoryProduct,
   DirectoryProductCategory,
   DirectoryProductCollectionRef,
+  DirectoryProductIncentive,
   DirectoryProductPromotion,
   DirectoryProductScope,
   DirectoryProgramRegistryStatus,

@@ -8,9 +8,9 @@ import {
   Info,
   Shield,
   Lock,
-  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EditIconButton } from "@/components/ui/edit-icon-button";
 import type { KnowledgeDocument } from "@/types/knowledge-vault";
 import { DataSourceType } from "@/types/knowledge-vault";
 import { cn } from "@/lib/utils";
@@ -517,17 +517,16 @@ function DetailBody({
                         {canEditTags && (
                           <>
                             {canRenameTags && (
-                              <button
-                                type="button"
+                              <EditIconButton
+                                label={`Rename tag ${tag}`}
+                                size="icon-xs"
+                                className="h-5 w-5 min-h-0 text-muted-foreground/70 hover:bg-transparent hover:text-muted-foreground"
+                                iconClassName="size-2.5"
                                 onClick={() => {
                                   setTagBeingRenamed(tag);
                                   setRenameValue(tag);
                                 }}
-                                className="text-muted-foreground/70 hover:text-muted-foreground"
-                                aria-label={`Rename tag ${tag}`}
-                              >
-                                <Pencil className="w-2.5 h-2.5" aria-hidden />
-                              </button>
+                              />
                             )}
                             <button
                               type="button"

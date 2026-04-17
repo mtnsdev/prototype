@@ -29,12 +29,17 @@ export interface Program {
   commissionType: CommissionKind;
   commissionCurrency: string;
   amenities: DirectoryAmenityTag[];
+  /** Free-text amenities not in the standard catalog (shown alongside `amenities`). */
+  customAmenities: string[];
   hasPropertyLevelOverrides: boolean;
   agencyContact: ProgramAgencyContact;
   agreementStart: string | null;
   renewalDate: string | null;
   status: ProgramStatus;
-  notes: string | null;
+  /** Agency-specific negotiated terms (Claromentis agency_program_details). */
+  agencyTerms: string | null;
+  /** Agency-specific rate when different from standard program rate. */
+  agencyNegotiatedRate: string | null;
   agencyId: string;
   createdBy: string;
   createdAt: string;
@@ -63,20 +68,20 @@ export interface ProductProgramLink {
   updatedAt: string;
 }
 
-/** Derived at runtime for display / commission rules — not persisted on `Promotion`. */
-export type PromotionDerivedKind = "rate_override" | "bonus" | "seasonal" | "volume_incentive";
+/** Derived at runtime for display / commission rules — not persisted on `Incentive`. */
+export type IncentiveDerivedKind = "rate_override" | "bonus" | "seasonal" | "volume_incentive";
 
-export type PromotionRateType = "percentage" | "flat";
+export type IncentiveRateType = "percentage" | "flat";
 
 export type VolumeMetric = "room_nights" | "bookings" | "revenue";
 
-export interface Promotion {
+export interface Incentive {
   id: string;
   programId: string;
   productIds: string[] | "all";
   name: string;
   rateValue: string;
-  rateType: PromotionRateType;
+  rateType: IncentiveRateType;
   stacksWithBase: boolean;
   bookingWindowStart: string | null;
   bookingWindowEnd: string | null;
@@ -95,5 +100,5 @@ export interface Promotion {
 export interface PartnerProgramsSnapshot {
   programs: Program[];
   links: ProductProgramLink[];
-  promotions: Promotion[];
+  incentives: Incentive[];
 }

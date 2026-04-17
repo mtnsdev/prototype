@@ -10,12 +10,17 @@
     "sourceMap": false
   },
   "include": [
+    "tests/partnerPortalData.test.ts",
+    "tests/partnerProgramEffectiveRate.test.ts",
     "tests/productDirectoryLogic.test.ts",
     "tests/productDirectoryOpening.test.ts",
     "tests/productDirectoryCatalogMerge.test.ts",
     "tests/productDirectoryFilterPipeline.test.ts",
     "tests/vicPermissions.test.ts",
-    "tests/promotionModel.test.ts",
+    "tests/incentiveModel.test.ts",
+    "tests/activeIncentiveOfferCount.test.ts",
+    "tests/destinationUnifiedCatalog.test.ts",
+    "src/lib/destinationUnifiedCatalog.ts",
     "src/components/products/productDirectoryLogic.ts",
     "src/components/products/productDirectoryCommission.ts",
     "src/components/products/productDirectoryPersistence.ts",
@@ -26,6 +31,11 @@
     "src/components/products/productDirectoryDetailMeta.ts",
     "src/utils/vicPermissions.ts",
     "src/types/vic.ts",
-    "src/types/teams.ts"
+    "src/types/teams.ts",
+    "src/lib/partnerPortalData.ts",
+    "src/lib/partnerProgramMerge.ts",
+    "src/lib/incentiveUi.ts",
+    "src/types/partner-programs.ts",
+    "src/lib/partnerProgramsSeed.ts"
   ]
 }

@@ -1,17 +1,17 @@
 "use client";
 
-import Image from "next/image";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Building2, FileText, MapPin, Utensils, Users } from "lucide-react";
 import type { DestinationSummary } from "@/data/destinations";
+import { productListingMetaLineClass } from "@/lib/productListingPrimitives";
 import { cn } from "@/lib/utils";
-import { destCardClass, destMuted, destMuted2 } from "./destinationStyles";
 import { highlightMatch } from "./highlightSearch";
+import { DestinationRemoteHeroImage } from "./DestinationRemoteHeroImage";
 
 const GRADIENTS = [
-  "from-[#1a1a2e] to-[#16213e]",
+  "from-[#242436] to-[#1c2434]",
   "from-[#2d132c] to-[#1f4068]",
-  "from-[#0f3460] to-[#16213e]",
+  "from-[#1a3050] to-[#16213e]",
   "from-[#1b4332] to-[#2d6a4f]",
   "from-[#3c096c] to-[#240046]",
 ];
@@ -28,64 +28,77 @@ type Props = {
   highlightQuery?: string;
 };
 
+/**
+ * Listing tile aligned with `DirectoryProductCard` (browse grid): same shell + 140px top band.
+ * Place name sits on the hero/gradient band; body shows tagline + stats only.
+ */
 export function DestinationCard({ summary, highlightQuery = "" }: Props) {
   const href = `/dashboard/products/destinations/${summary.slug}`;
-  const hasImage = Boolean(summary.heroImage?.trim());
+  const hero = summary.heroImage?.trim() ?? "";
+  const [heroFailed, setHeroFailed] = useState(false);
+  useEffect(() => {
+    setHeroFailed(false);
+  }, [hero]);
+  const showHero = hero.length > 0 && !heroFailed;
 
   return (
     <Link
       href={href}
+      prefetch={false}
       className={cn(
-        destCardClass("group flex min-h-[220px] flex-col overflow-hidden"),
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cta/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "group relative flex h-full min-h-0 cursor-pointer flex-col overflow-hidden rounded-xl border transition-all",
+        "border-white/[0.04] bg-white/[0.02] hover:border-border hover:bg-white/[0.04]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A96E]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       )}
     >
-      <div className="relative h-36 w-full shrink-0 overflow-hidden">
-        {hasImage ? (
-          <Image
-            src={summary.heroImage}
+      <div className="relative h-[140px] w-full shrink-0 overflow-hidden">
+        {showHero ? (
+          <DestinationRemoteHeroImage
+            src={hero}
             alt=""
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-            sizes="(max-width:768px) 100vw, (max-width:1280px) 33vw, 25vw"
+            className="absolute inset-0 size-full"
+            sizes="(max-width: 768px) 100vw, 360px"
+            onBroken={() => setHeroFailed(true)}
           />
         ) : (
-          <div
-            className={cn("flex h-full w-full items-end bg-gradient-to-br p-4", gradientForSlug(summary.slug))}
-            aria-hidden
-          />
+          <div className={cn("h-full w-full bg-gradient-to-br", gradientForSlug(summary.slug))} aria-hidden />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#08080c]/75 via-[#08080c]/20 to-transparent" />
-        <div className="absolute bottom-3 left-3 right-3">
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#08080c]/85 via-[#08080c]/35 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 px-3 pb-2.5 pt-8">
+          <p
+            className={cn(
+              "line-clamp-2 text-left text-[13px] font-semibold leading-snug text-white",
+              "drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]",
+            )}
+          >
             {highlightMatch(summary.name, highlightQuery)}
-          </h2>
-          <p className={cn("line-clamp-2 text-xs", destMuted2)}>{highlightMatch(summary.tagline, highlightQuery)}</p>
+          </p>
         </div>
       </div>
-      <div className="flex flex-1 flex-col gap-2 px-4 pb-4 pt-3">
-        <div className={cn("flex flex-wrap gap-x-3 gap-y-1 text-xs", destMuted)}>
-          <span className="inline-flex items-center gap-1">
-            <Users className="size-3.5 shrink-0 text-brand-cta" aria-hidden />
-            {summary.dmcCount} DMCs
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <Building2 className="size-3.5 shrink-0 text-brand-cta" aria-hidden />
-            {summary.hotelCount} hotels
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <Utensils className="size-3.5 shrink-0 text-brand-cta" aria-hidden />
-            {summary.restaurantCount} restaurants
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <FileText className="size-3.5 shrink-0 text-brand-cta" aria-hidden />
-            {summary.documentCount} documents
-          </span>
+
+      <div className="flex flex-1 flex-col p-3">
+        <div className="min-w-0 flex-1">
+          <p className={cn(productListingMetaLineClass, "line-clamp-2 text-foreground/95")}>
+            {highlightMatch(summary.tagline, highlightQuery)}
+          </p>
+          <p className="mt-2 text-[8px] leading-relaxed text-muted-foreground">
+            <span className="tabular-nums font-medium text-foreground/90">{summary.totalItemCount}</span> curated items
+            <span className="mx-1 text-muted-foreground/80">·</span>
+            <span className="tabular-nums">{summary.dmcCount}</span> DMC ·{" "}
+            <span className="tabular-nums">{summary.hotelCount}</span> hotels ·{" "}
+            <span className="tabular-nums">{summary.restaurantCount}</span> restaurants ·{" "}
+            <span className="tabular-nums">{summary.documentCount}</span> docs
+            {summary.tripReportCount > 0 ? (
+              <>
+                <span className="mx-1 text-muted-foreground/80">·</span>
+                <span className="tabular-nums">{summary.tripReportCount}</span> trip reports
+              </>
+            ) : null}
+          </p>
+          {summary.activityHint ? (
+            <p className="mt-1.5 text-[8px] text-muted-foreground/90">{summary.activityHint}</p>
+          ) : null}
         </div>
-        <span className={cn("inline-flex items-center gap-1 text-xs font-medium text-brand-cta", destMuted)}>
-          <MapPin className="size-3.5" aria-hidden />
-          View guide
-        </span>
       </div>
     </Link>
   );

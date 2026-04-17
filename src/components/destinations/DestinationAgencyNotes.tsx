@@ -86,7 +86,7 @@ export function DestinationAgencyNotes({ destinationSlug }: Props) {
   if (!canView) {
     return (
       <div
-        className={cn(destCardClass(), "mx-auto mt-6 max-w-4xl border-dashed p-4")}
+        className={cn(destCardClass(), "mt-5 border-dashed p-3 md:p-4")}
         role="region"
         aria-label="Agency notes unavailable"
       >
@@ -99,7 +99,7 @@ export function DestinationAgencyNotes({ destinationSlug }: Props) {
 
   return (
     <div
-      className={cn(destCardClass(), "mx-auto mt-6 max-w-4xl p-4 md:p-5")}
+      className={cn(destCardClass(), "mt-5 p-3 md:p-4")}
       role="region"
       aria-label="Agency destination notes"
     >
@@ -108,7 +108,7 @@ export function DestinationAgencyNotes({ destinationSlug }: Props) {
       </div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <h2 className="text-base font-semibold text-foreground">Agency notes</h2>
+          <h2 className="text-sm font-semibold text-foreground">Agency notes</h2>
           <p className={`mt-1 text-xs ${destMuted}`}>
             Shared with everyone at your agency.{canEdit ? " Only agency leads can edit." : " Read-only for your role."}
           </p>
@@ -133,7 +133,7 @@ export function DestinationAgencyNotes({ destinationSlug }: Props) {
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            rows={5}
+            rows={4}
             placeholder="Internal reminders, preferred suppliers, blackout context…"
             className={cn(
               "mt-1 w-full resize-y rounded-lg border border-border bg-inset px-3 py-2 text-sm leading-relaxed text-foreground",

@@ -11,7 +11,6 @@ import {
   Clock,
   Contact,
   ExternalLink,
-  Flame,
   Lock,
   Pin,
   Pencil,
@@ -51,7 +50,13 @@ import { useToast } from "@/contexts/ToastContext";
 import { useUser } from "@/contexts/UserContext";
 import { cn } from "@/lib/utils";
 import { AMENITY_LABELS } from "./productDirectoryFilterConfig";
-import { directoryTierLabel, directoryTierStars } from "./productDirectoryDetailMeta";
+import {
+  DIRECTORY_TIER_LEVELS,
+  directoryTierLabel,
+  directoryTierStars,
+  type DirectoryPriceTier,
+  type DirectoryTierLevel,
+} from "./productDirectoryDetailMeta";
 import { relativeTime } from "./productDirectoryRelativeTime";
 import {
   dmcOperationalDataPresent,
@@ -61,30 +66,135 @@ import {
 } from "@/components/products/directoryProductTypeHelpers";
 import { DIRECTORY_PRODUCT_TYPE_CONFIG, directoryCategoryLabel } from "./productDirectoryProductTypes";
 import { getRepFirmByIdWithOverlay } from "./productDirectoryRepFirmMock";
+import { RepFirmContactsLuxReadonlyTable } from "@/components/products/rep-firms/RepFirmContactsLuxTable";
 import {
   directoryCategoryColors,
   directoryProductGalleryImages,
   directoryProductPlaceLabel,
+  directoryProductPriceBandsNormalized,
+  directoryProductPriceDisplay,
 } from "./productDirectoryVisual";
 import {
-  directoryProductPartnerProgramsSyncPatch,
   getTopBookableProgramByCommission,
   programFilterId,
   programDisplayCommissionRate,
   programDisplayName,
 } from "./productDirectoryCommission";
 import { getProductLayerMock } from "./ProductDetail/productLayerMock";
-import { FAKE_VICS } from "@/components/vic/fakeData";
-import { FAKE_ITINERARIES } from "@/components/itineraries/fakeData";
-import { getItinerariesForProduct, getVicsForProduct } from "@/lib/entityCrossLinks";
 import { formatProductOpeningLine } from "@/lib/productDirectoryOpening";
+import {
+  defaultChannelFormRows,
+  emailsForContact,
+  persistedContactChannels,
+  phonesForContact,
+} from "@/lib/directoryAgencyContactChannels";
 
-function clonePartnerProgramsForEdit(list: DirectoryPartnerProgram[]): DirectoryPartnerProgram[] {
-  return list.map((p) => ({
-    ...p,
-    activePromotions: p.activePromotions.map((x) => ({ ...x })),
-    amenityTags: p.amenityTags ? [...p.amenityTags] : undefined,
-  }));
+const DIRECTORY_PRICE_BAND_OPTIONS: DirectoryPriceTier[] = ["$", "$$", "$$$", "$$$$", "$$$$$"];
+
+/** Repeating email / phone rows for agency & private contact forms. */
+function ContactChannelFormFields({
+  emailRows,
+  phoneRows,
+  onEmailChange,
+  onPhoneChange,
+  onAddEmail,
+  onAddPhone,
+  onRemoveEmail,
+  onRemovePhone,
+}: {
+  emailRows: string[];
+  phoneRows: string[];
+  onEmailChange: (index: number, value: string) => void;
+  onPhoneChange: (index: number, value: string) => void;
+  onAddEmail: () => void;
+  onAddPhone: () => void;
+  onRemoveEmail: (index: number) => void;
+  onRemovePhone: (index: number) => void;
+}) {
+  return (
+    <>
+      <div className="space-y-1.5">
+        <span className="text-[9px] font-medium text-muted-foreground">Email addresses</span>
+        {emailRows.map((val, i) => (
+          <div key={`em-${i}`} className="flex min-w-0 gap-1.5">
+            <input
+              value={val}
+              onChange={(e) => onEmailChange(i, e.target.value)}
+              placeholder="Email address (optional)"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              className="min-w-0 flex-1 rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
+            />
+            {emailRows.length > 1 ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                aria-label="Remove this email address"
+                onClick={() => onRemoveEmail(i)}
+              >
+                <X className="size-3.5" aria-hidden />
+              </Button>
+            ) : null}
+          </div>
+        ))}
+        <Button
+          type="button"
+          variant="ghost"
+          size="xs"
+          onClick={onAddEmail}
+          className="h-7 px-1.5 text-[10px] text-muted-foreground hover:text-foreground"
+        >
+          <Plus className="mr-1 size-3 opacity-70" aria-hidden />
+          Add another email address
+        </Button>
+      </div>
+      <div className="space-y-1.5">
+        <span className="text-[9px] font-medium text-muted-foreground">Phone numbers</span>
+        {phoneRows.map((val, i) => (
+          <div key={`ph-${i}`} className="flex min-w-0 gap-1.5">
+            <input
+              value={val}
+              onChange={(e) => onPhoneChange(i, e.target.value)}
+              placeholder="Phone number (optional)"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              className="min-w-0 flex-1 rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
+            />
+            {phoneRows.length > 1 ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                aria-label="Remove this phone number"
+                onClick={() => onRemovePhone(i)}
+              >
+                <X className="size-3.5" aria-hidden />
+              </Button>
+            ) : null}
+          </div>
+        ))}
+        <Button
+          type="button"
+          variant="ghost"
+          size="xs"
+          onClick={onAddPhone}
+          className="h-7 px-1.5 text-[10px] text-muted-foreground hover:text-foreground"
+        >
+          <Plus className="mr-1 size-3 opacity-70" aria-hidden />
+          Add another phone number
+        </Button>
+      </div>
+    </>
+  );
+}
+
+function normalizeGalleryUrlList(urls: string[]): string[] {
+  return urls.map((u) => u.trim()).filter(Boolean);
 }
 
 function agencyMocksToDirectoryNotes(
@@ -184,8 +294,6 @@ type Props = {
   partnerProgramCustomKeys?: string[];
   /** Live rep firm registry (enables regions/footer lookup beyond seed mock). */
   repFirmsRegistry?: RepFirm[] | null;
-  /** Partner program rows come from the agency registry — hide destructive inline edits. */
-  partnerProgramsManagedInRegistry?: boolean;
 };
 
 export function ProductDirectoryDetailBody({
@@ -204,7 +312,6 @@ export function ProductDirectoryDetailBody({
   onRequestCreateCollection,
   partnerProgramCustomKeys = [],
   repFirmsRegistry = null,
-  partnerProgramsManagedInRegistry = false,
 }: Props) {
   const canRemoveFromCollection = canRemoveFromCollectionProp ?? (() => true);
   const inlinePickerEnabled = Boolean(
@@ -225,8 +332,8 @@ export function ProductDirectoryDetailBody({
   const [editingPersonalContactId, setEditingPersonalContactId] = useState<string | null>(null);
   const [pcName, setPcName] = useState("");
   const [pcRole, setPcRole] = useState("");
-  const [pcEmail, setPcEmail] = useState("");
-  const [pcPhone, setPcPhone] = useState("");
+  const [pcEmails, setPcEmails] = useState<string[]>(() => defaultChannelFormRows().emails);
+  const [pcPhones, setPcPhones] = useState<string[]>(() => defaultChannelFormRows().phones);
   const [pcNote, setPcNote] = useState("");
 
   const [agencyNotes, setAgencyNotes] = useState<DirectoryAgencyNote[]>([]);
@@ -239,8 +346,8 @@ export function ProductDirectoryDetailBody({
   const [contactUpgradeTarget, setContactUpgradeTarget] = useState<{
     name: string;
     role: string;
-    email: string;
-    phone?: string;
+    emails: string[];
+    phones: string[];
     note?: string;
   } | null>(null);
   const [agencyContacts, setAgencyContacts] = useState<DirectoryAgencyContact[]>(product.agencyContacts);
@@ -248,20 +355,19 @@ export function ProductDirectoryDetailBody({
   const [editingAgencyContactId, setEditingAgencyContactId] = useState<string | null>(null);
   const [newAgencyContactName, setNewAgencyContactName] = useState("");
   const [newAgencyContactRole, setNewAgencyContactRole] = useState("");
-  const [newAgencyContactEmail, setNewAgencyContactEmail] = useState("");
-  const [newAgencyContactPhone, setNewAgencyContactPhone] = useState("");
+  const [newAgencyContactEmails, setNewAgencyContactEmails] = useState<string[]>(() =>
+    defaultChannelFormRows().emails,
+  );
+  const [newAgencyContactPhones, setNewAgencyContactPhones] = useState<string[]>(() =>
+    defaultChannelFormRows().phones,
+  );
   const [newAgencyContactNote, setNewAgencyContactNote] = useState("");
   const [panelCollectionOpen, setPanelCollectionOpen] = useState(false);
   const [panelCollectionSearch, setPanelCollectionSearch] = useState("");
-  const [partnerProgramsEditMode, setPartnerProgramsEditMode] = useState(false);
-  const [localPartnerPrograms, setLocalPartnerPrograms] = useState<DirectoryPartnerProgram[]>(() =>
-    clonePartnerProgramsForEdit(product.partnerPrograms)
-  );
   const [showRepFirmEditor, setShowRepFirmEditor] = useState(false);
   const [repFirmSuggestOpen, setRepFirmSuggestOpen] = useState(false);
   const [repFirmSuggestText, setRepFirmSuggestText] = useState("");
   const [localRepFirmLinks, setLocalRepFirmLinks] = useState<RepFirmProductLink[]>([]);
-  const [incentivesExpanded, setIncentivesExpanded] = useState(false);
   const [enableMasterDetailsOpen, setEnableMasterDetailsOpen] = useState(false);
 
   const productTypesSig = product.types.join("|");
@@ -270,6 +376,40 @@ export function ProductDirectoryDetailBody({
     product.openingDate ? product.openingDate.slice(0, 10) : ""
   );
   const [openingLabelDraft, setOpeningLabelDraft] = useState(() => product.openingLabel ?? "");
+  const [nameDraft, setNameDraft] = useState(() => product.name);
+  const [descriptionDraft, setDescriptionDraft] = useState(() => product.description);
+  const [tierDraft, setTierDraft] = useState<DirectoryTierLevel>(() => product.tier ?? "unrated");
+  const [priceBandsDraft, setPriceBandsDraft] = useState<DirectoryPriceTier[]>(() =>
+    directoryProductPriceBandsNormalized(product)
+  );
+  const [heroDraft, setHeroDraft] = useState(() => product.imageUrl ?? "");
+  const [galleryDrafts, setGalleryDrafts] = useState<string[]>(() =>
+    normalizeGalleryUrlList([...(product.imageGalleryUrls ?? [])]).slice(0, 5)
+  );
+
+  useEffect(() => {
+    setNameDraft(product.name);
+    setDescriptionDraft(product.description);
+    setTierDraft(product.tier ?? "unrated");
+    setPriceBandsDraft(directoryProductPriceBandsNormalized(product));
+    setHeroDraft(product.imageUrl ?? "");
+    setGalleryDrafts(normalizeGalleryUrlList([...(product.imageGalleryUrls ?? [])]).slice(0, 5));
+  }, [product.id]);
+
+  useEffect(() => {
+    if (!enableMasterDetailsOpen) return;
+    setNameDraft(product.name);
+    setDescriptionDraft(product.description);
+    setTierDraft(product.tier ?? "unrated");
+    setPriceBandsDraft(directoryProductPriceBandsNormalized(product));
+    setHeroDraft(product.imageUrl ?? "");
+    setGalleryDrafts(normalizeGalleryUrlList([...(product.imageGalleryUrls ?? [])]).slice(0, 5));
+    setTypesDraft([...product.types]);
+    setOpeningDateDraft(product.openingDate ? product.openingDate.slice(0, 10) : "");
+    setOpeningLabelDraft(product.openingLabel ?? "");
+    // Intentionally only when toggling the editor — avoids resetting drafts on every parent re-render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `product` read when editor opens
+  }, [enableMasterDetailsOpen]);
 
   useEffect(() => {
     setTypesDraft([...product.types]);
@@ -298,17 +438,63 @@ export function ProductDirectoryDetailBody({
     return datePart || labelPart;
   }, [openingDateDraft, openingLabelDraft, product.openingDate, product.openingLabel]);
 
-  const masterDetailsDirty = typesDirty || openingDirty;
+  const coreCatalogDirty = useMemo(() => {
+    if (nameDraft.trim() !== product.name.trim()) return true;
+    if (descriptionDraft !== product.description) return true;
+    if (tierDraft !== (product.tier ?? "unrated")) return true;
+    const pBands = directoryProductPriceBandsNormalized(product);
+    if (JSON.stringify(priceBandsDraft) !== JSON.stringify(pBands)) return true;
+    if ((heroDraft.trim() || "") !== (product.imageUrl?.trim() || "")) return true;
+    const gNew = normalizeGalleryUrlList(galleryDrafts);
+    const gOld = normalizeGalleryUrlList([...(product.imageGalleryUrls ?? [])]);
+    if (JSON.stringify(gNew) !== JSON.stringify(gOld)) return true;
+    return false;
+  }, [
+    nameDraft,
+    descriptionDraft,
+    tierDraft,
+    priceBandsDraft,
+    heroDraft,
+    galleryDrafts,
+    product.name,
+    product.description,
+    product.tier,
+    product.imageUrl,
+    product.imageGalleryUrls,
+    product.priceBands,
+    product.priceTier,
+  ]);
+
+  const masterDetailsDirty = coreCatalogDirty || typesDirty || openingDirty;
 
   const saveEnableMasterDetails = () => {
+    const name = nameDraft.trim();
+    if (!name) {
+      toast({ title: "Product name is required", tone: "destructive" });
+      return;
+    }
+    const hero = heroDraft.trim();
+    if (!hero) {
+      toast({ title: "Hero image URL is required", tone: "destructive" });
+      return;
+    }
     const next = normalizeDirectoryProductTypes(typesDraft);
     if (next.length === 0) {
       toast({ title: "Select at least one category", tone: "destructive" });
       return;
     }
+    const nextBands = priceBandsDraft.slice(0, 5);
+    const nextGallery = normalizeGalleryUrlList(galleryDrafts).slice(0, 5);
     const nextOpeningDate = openingDateDraft.trim() || null;
     const nextOpeningLabel = openingLabelDraft.trim() || null;
     onPatchProduct(product.id, {
+      name,
+      description: descriptionDraft.trim(),
+      tier: tierDraft,
+      priceBands: nextBands.length > 0 ? nextBands : undefined,
+      priceTier: nextBands[0] ?? undefined,
+      imageUrl: hero,
+      imageGalleryUrls: nextGallery.length > 0 ? nextGallery : undefined,
       types: next,
       openingDate: nextOpeningDate,
       openingLabel: nextOpeningLabel,
@@ -319,6 +505,12 @@ export function ProductDirectoryDetailBody({
   };
 
   const cancelEnableMasterDetails = () => {
+    setNameDraft(product.name);
+    setDescriptionDraft(product.description);
+    setTierDraft(product.tier ?? "unrated");
+    setPriceBandsDraft(directoryProductPriceBandsNormalized(product));
+    setHeroDraft(product.imageUrl ?? "");
+    setGalleryDrafts(normalizeGalleryUrlList([...(product.imageGalleryUrls ?? [])]).slice(0, 5));
     setTypesDraft([...product.types]);
     setOpeningDateDraft(product.openingDate ? product.openingDate.slice(0, 10) : "");
     setOpeningLabelDraft(product.openingLabel ?? "");
@@ -345,22 +537,9 @@ export function ProductDirectoryDetailBody({
       return [primary, ...prev.filter((t) => t !== primary)];
     });
   };
-  const [vicIntelOpen, setVicIntelOpen] = useState(false);
-
-  const canViewVICData = isAdmin;
-  const vicLinks = useMemo(
-    () => getVicsForProduct(product.id, FAKE_VICS ?? [], FAKE_ITINERARIES ?? []),
-    [product.id]
-  );
-  const itineraryLinks = useMemo(
-    () => getItinerariesForProduct(product.id, FAKE_ITINERARIES ?? []),
-    [product.id]
-  );
-
   useEffect(() => {
     setPanelCollectionOpen(false);
     setPanelCollectionSearch("");
-    setPartnerProgramsEditMode(false);
     setShowRepFirmEditor(false);
     setLocalRepFirmLinks([]);
     setEditingAgencyNoteId(null);
@@ -377,34 +556,15 @@ export function ProductDirectoryDetailBody({
   }, [product.id]);
 
   useEffect(() => {
-    setLocalPartnerPrograms(clonePartnerProgramsForEdit(product.partnerPrograms));
-  }, [product.id]);
-
-  useEffect(() => {
     setLocalRepFirmLinks((product.repFirmLinks ?? []).map((l) => ({ ...l })));
   }, [product.id, product.repFirmLinks]);
 
-  const vicIntelDate = (isoDate?: string) => {
-    if (!isoDate) return "n/a";
-    const parsed = new Date(isoDate);
-    if (Number.isNaN(parsed.getTime())) return "n/a";
-    return parsed.toLocaleDateString("en-US", { month: "short", year: "2-digit", timeZone: "UTC" });
-  };
-
-  const hashColor = (input: string): string => {
-    let hash = 0;
-    for (let i = 0; i < input.length; i += 1) hash = (hash << 5) - hash + input.charCodeAt(i);
-    const colors = ["#B8976E", "#5B8A6E", "#7A6B9C", "#8B6F5A", "#5C5852"];
-    return colors[Math.abs(hash) % colors.length];
-  };
-
-  const displayVicName = (name: string) => {
-    if (isAdmin) return name;
-    const parts = name.trim().split(/\s+/);
-    if (parts.length <= 1) return name;
-    const last = parts[parts.length - 1];
-    return `${parts.slice(0, -1).join(" ")} ${last.charAt(0)}.`;
-  };
+  useEffect(() => {
+    if (!isAdmin && showRepFirmEditor) {
+      setShowRepFirmEditor(false);
+      setLocalRepFirmLinks((product.repFirmLinks ?? []).map((l) => ({ ...l })));
+    }
+  }, [isAdmin, showRepFirmEditor, product.repFirmLinks]);
 
   useEffect(() => {
     const notes = detailMock.advisorDefaults.notes?.trim();
@@ -540,8 +700,9 @@ export function ProductDirectoryDetailBody({
     setEditingPersonalContactId(null);
     setPcName("");
     setPcRole("");
-    setPcEmail("");
-    setPcPhone("");
+    const empty = defaultChannelFormRows();
+    setPcEmails(empty.emails);
+    setPcPhones(empty.phones);
     setPcNote("");
     setPersonalContactFormOpen(true);
   };
@@ -550,8 +711,10 @@ export function ProductDirectoryDetailBody({
     setEditingPersonalContactId(c.id);
     setPcName(c.name);
     setPcRole(c.role);
-    setPcEmail(c.email === "—" ? "" : c.email);
-    setPcPhone(c.phone === "—" ? "" : c.phone);
+    const em = emailsForContact(c);
+    const ph = phonesForContact(c);
+    setPcEmails(em.length ? em : [""]);
+    setPcPhones(ph.length ? ph : [""]);
     setPcNote(c.note ?? "");
     setPersonalContactFormOpen(true);
   };
@@ -560,12 +723,12 @@ export function ProductDirectoryDetailBody({
     const name = pcName.trim();
     const role = pcRole.trim();
     if (!name || !role) return;
+    const channels = persistedContactChannels(pcEmails, pcPhones);
     const row: DirectoryAgencyContact = {
       id: editingPersonalContactId ?? `pc_${Date.now()}`,
       name,
       role,
-      email: pcEmail.trim() || "—",
-      phone: pcPhone.trim() || "—",
+      ...channels,
       note: pcNote.trim() || undefined,
       addedBy: user?.username ?? user?.email ?? "You",
       addedById: currentUserId,
@@ -581,8 +744,9 @@ export function ProductDirectoryDetailBody({
     setEditingPersonalContactId(null);
     setPcName("");
     setPcRole("");
-    setPcEmail("");
-    setPcPhone("");
+    const empty = defaultChannelFormRows();
+    setPcEmails(empty.emails);
+    setPcPhones(empty.phones);
     setPcNote("");
   };
 
@@ -595,8 +759,9 @@ export function ProductDirectoryDetailBody({
     setEditingAgencyContactId(null);
     setNewAgencyContactName("");
     setNewAgencyContactRole("");
-    setNewAgencyContactEmail("");
-    setNewAgencyContactPhone("");
+    const empty = defaultChannelFormRows();
+    setNewAgencyContactEmails(empty.emails);
+    setNewAgencyContactPhones(empty.phones);
     setNewAgencyContactNote("");
     setAgencyContactFormOpen(true);
   };
@@ -605,8 +770,10 @@ export function ProductDirectoryDetailBody({
     setEditingAgencyContactId(c.id);
     setNewAgencyContactName(c.name);
     setNewAgencyContactRole(c.role);
-    setNewAgencyContactEmail(c.email === "—" ? "" : c.email);
-    setNewAgencyContactPhone(c.phone === "—" ? "" : c.phone);
+    const em = emailsForContact(c);
+    const ph = phonesForContact(c);
+    setNewAgencyContactEmails(em.length ? em : [""]);
+    setNewAgencyContactPhones(ph.length ? ph : [""]);
     setNewAgencyContactNote(c.note ?? "");
     setAgencyContactFormOpen(true);
   };
@@ -652,8 +819,8 @@ export function ProductDirectoryDetailBody({
     setContactUpgradeTarget({
       name: contact.name,
       role: contact.role,
-      email: contact.email === "—" ? "" : contact.email,
-      phone: contact.phone === "—" ? undefined : contact.phone,
+      emails: emailsForContact(contact),
+      phones: phonesForContact(contact),
       note: contact.note,
     });
     setContactUpgradeOpen(true);
@@ -662,12 +829,12 @@ export function ProductDirectoryDetailBody({
   const confirmContactUpgrade = () => {
     if (!contactUpgradeTarget) return;
     const displayName = user?.username ?? user?.email ?? "You";
+    const channels = persistedContactChannels(contactUpgradeTarget.emails, contactUpgradeTarget.phones);
     const row: DirectoryAgencyContact = {
       id: `ac-upgrade-${Date.now()}`,
       name: contactUpgradeTarget.name,
       role: contactUpgradeTarget.role,
-      email: contactUpgradeTarget.email.trim() || "—",
-      phone: contactUpgradeTarget.phone?.trim() || "—",
+      ...channels,
       note: contactUpgradeTarget.note?.trim() || undefined,
       addedBy: displayName,
       addedById: currentUserId,
@@ -719,12 +886,12 @@ export function ProductDirectoryDetailBody({
     const editId = editingAgencyContactId;
     const prev = editId ? agencyContacts.find((c) => c.id === editId) : undefined;
     const displayName = user?.username ?? user?.email ?? "You";
+    const channels = persistedContactChannels(newAgencyContactEmails, newAgencyContactPhones);
     const row: DirectoryAgencyContact = {
       id: editId ?? `c_${Date.now()}`,
       name,
       role,
-      email: newAgencyContactEmail.trim() || "—",
-      phone: newAgencyContactPhone.trim() || "—",
+      ...channels,
       note: newAgencyContactNote.trim() || undefined,
       addedBy: prev?.addedBy ?? displayName,
       addedById: prev?.addedById ?? currentUserId,
@@ -735,8 +902,9 @@ export function ProductDirectoryDetailBody({
     onPatchProduct(product.id, { agencyContacts: next });
     setNewAgencyContactName("");
     setNewAgencyContactRole("");
-    setNewAgencyContactEmail("");
-    setNewAgencyContactPhone("");
+    const empty = defaultChannelFormRows();
+    setNewAgencyContactEmails(empty.emails);
+    setNewAgencyContactPhones(empty.phones);
     setNewAgencyContactNote("");
     setEditingAgencyContactId(null);
     setAgencyContactFormOpen(false);
@@ -785,13 +953,12 @@ export function ProductDirectoryDetailBody({
   const openingLine = useMemo(() => formatProductOpeningLine(product), [product]);
 
   const tierStars = directoryTierStars(product.tier);
-  const enrichment = Math.min(5, Math.max(0, product.enrichmentScore ?? 0));
   const galleryImages = useMemo(
     () => directoryProductGalleryImages(product),
     [product.id, product.imageUrl, product.imageGalleryUrls]
   );
+  const headerPriceDisplay = useMemo(() => directoryProductPriceDisplay(product), [product]);
 
-  const showPartnerProgramEditor = isAdmin && partnerProgramsEditMode && !partnerProgramsManagedInRegistry;
   const repFirmLinks = showRepFirmEditor ? localRepFirmLinks : (product.repFirmLinks ?? []);
   const topCommissionProgram = getTopBookableProgramByCommission(product);
   const baseCommissionForAdvisories = topCommissionProgram ? programDisplayCommissionRate(topCommissionProgram) : null;
@@ -806,81 +973,8 @@ export function ProductDirectoryDetailBody({
   const totalVisibleAdvisories =
     advisoryGroups.active.length + advisoryGroups.upcoming.length + advisoryGroups.expired.length;
 
-  const beginPartnerProgramsEdit = () => {
-    setLocalPartnerPrograms(clonePartnerProgramsForEdit(product.partnerPrograms));
-    setPartnerProgramsEditMode(true);
-  };
-
-  const cancelPartnerProgramsEdit = () => {
-    setLocalPartnerPrograms(clonePartnerProgramsForEdit(product.partnerPrograms));
-    setPartnerProgramsEditMode(false);
-  };
-
-  const savePartnerProgramsFromState = () => {
-    onPatchProduct(product.id, directoryProductPartnerProgramsSyncPatch(product, localPartnerPrograms));
-    toast("Partner programs saved");
-    setPartnerProgramsEditMode(false);
-  };
-
-  const updateProgramAt = (index: number, patch: Partial<DirectoryPartnerProgram>) => {
-    setLocalPartnerPrograms((prev) => {
-      const copy = [...prev];
-      const cur = { ...copy[index], ...patch };
-      if (patch.programName != null || patch.name != null) {
-        const nm = (patch.programName ?? patch.name) as string;
-        cur.programName = nm;
-        cur.name = nm;
-      }
-      copy[index] = cur;
-      return copy;
-    });
-  };
-
-  const updatePromotionRate = (progIndex: number, promoId: string, effectiveRate: number) => {
-    setLocalPartnerPrograms((prev) =>
-      prev.map((p, i) => {
-        if (i !== progIndex) return p;
-        return {
-          ...p,
-          activePromotions: p.activePromotions.map((pr) =>
-            pr.id === promoId ? { ...pr, effectiveRate } : pr
-          ),
-        };
-      })
-    );
-  };
-
-  const removeProgramAt = (index: number) => {
-    const next = localPartnerPrograms.filter((_, i) => i !== index);
-    setLocalPartnerPrograms(next);
-    onPatchProduct(product.id, directoryProductPartnerProgramsSyncPatch(product, next));
-    toast("Partner program removed");
-  };
-
-  const addPartnerProgram = () => {
-    const stamp = Date.now();
-    const row: DirectoryPartnerProgram = {
-      id: `pp_new_${stamp}`,
-      name: "New partner program",
-      programId: `prog_new_${stamp}`,
-      programName: "New partner program",
-      commissionRate: 10,
-      expiryDate: null,
-      contact: "",
-      activePromotions: [],
-      amenities: "",
-      amenityTags: [],
-      commissionType: "percentage",
-      status: "active",
-      scope: "enable",
-    };
-    const next = [...localPartnerPrograms, row];
-    setLocalPartnerPrograms(next);
-    onPatchProduct(product.id, directoryProductPartnerProgramsSyncPatch(product, next));
-    toast("Program linked — edit fields and save");
-  };
-
   const beginRepFirmsEdit = () => {
+    if (!isAdmin) return;
     setLocalRepFirmLinks((product.repFirmLinks ?? []).map((l) => ({ ...l })));
     setShowRepFirmEditor(true);
   };
@@ -891,14 +985,17 @@ export function ProductDirectoryDetailBody({
   };
 
   const updateRepFirmLinkAt = (index: number, patch: Partial<RepFirmProductLink>) => {
+    if (!isAdmin) return;
     setLocalRepFirmLinks((prev) => prev.map((l, i) => (i === index ? { ...l, ...patch } : l)));
   };
 
   const removeRepFirmLinkAt = (index: number) => {
+    if (!isAdmin) return;
     setLocalRepFirmLinks((prev) => prev.filter((_, i) => i !== index));
   };
 
   const addRepFirmLink = () => {
+    if (!isAdmin) return;
     setLocalRepFirmLinks((prev) => [
       ...prev,
       {
@@ -912,6 +1009,7 @@ export function ProductDirectoryDetailBody({
   };
 
   const saveRepFirmLinksFromState = () => {
+    if (!isAdmin) return;
     onPatchProduct(product.id, {
       repFirmLinks: localRepFirmLinks,
       repFirmCount: localRepFirmLinks.length,
@@ -921,7 +1019,7 @@ export function ProductDirectoryDetailBody({
   };
 
   return (
-    <div className="flex min-h-0 flex-col pb-0">
+    <div className="flex min-h-0 min-w-0 w-full max-w-full flex-col pb-0">
       {/* Block 1 — Hero + Identity */}
       <div className="relative h-[200px] w-full shrink-0 overflow-hidden bg-popover">
         {product.imageUrl ? (
@@ -963,9 +1061,9 @@ export function ProductDirectoryDetailBody({
             {product.tier && product.tier !== "unrated" && tierStars > 0 ? (
               <span className="text-2xs text-brand-cta">{"★".repeat(tierStars)}</span>
             ) : null}
-            {product.priceTier ? (
+            {headerPriceDisplay ? (
               <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[9px] text-muted-foreground">
-                {product.priceTier}
+                {headerPriceDisplay}
               </span>
             ) : null}
           </div>
@@ -1018,115 +1116,292 @@ export function ProductDirectoryDetailBody({
       ) : null}
 
       {isAdmin && enableMasterDetailsOpen ? (
-        <div className="-mt-2 rounded-xl border border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.06)] p-3">
-          <p className="mb-1 text-xs font-medium text-foreground">Enable master directory</p>
-          <p className="mb-3 text-2xs leading-relaxed text-muted-foreground">
-            Edits here update the shared product record your agency sees in the directory (filters, map, and cards).
-            Use this to suggest corrections to the Enable team after Google or manual import—more master fields can
-            live here over time.
-          </p>
+        <div className="relative z-0 mt-1 rounded-xl border border-border/70 bg-card/50 p-4 shadow-sm">
+          <div className="mb-4 border-b border-border/50 pb-3">
+            <p className="text-xs font-medium text-foreground">Edit directory record</p>
+            <p className="mt-0.5 text-2xs leading-snug text-muted-foreground">
+              Updates cards, filters, and map for everyone in the agency.
+            </p>
+          </div>
 
-          <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground">Product categories</p>
-          <p className="mb-1.5 text-2xs text-muted-foreground/90">
-            Choose all that apply. The first category is the primary badge; change it with the dropdown when several
-            are selected.
-          </p>
-
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="mt-1 h-9 w-full justify-between gap-2 rounded-lg border-border bg-inset px-3 text-left text-xs font-normal text-foreground"
-              >
-                <span className="min-w-0 flex-1 truncate">
-                  {typesDraft.length === 0
-                    ? "Select categories…"
-                    : typesDraft.map((t) => directoryCategoryLabel(t)).join(", ")}
-                </span>
-                <ChevronDown className="size-4 shrink-0 opacity-60" aria-hidden />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-[min(100vw-2rem,20rem)] p-2">
-              <p className="mb-2 px-1 text-2xs text-muted-foreground">At least one category required.</p>
-              <ul className="max-h-56 space-y-0.5 overflow-y-auto pr-0.5">
-                {DIRECTORY_PRODUCT_TYPE_CONFIG.map((t) => {
-                  const checked = typesDraft.includes(t.id);
-                  const Icon = t.icon;
-                  return (
-                    <li key={t.id}>
-                      <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-muted/40">
-                        <input
-                          type="checkbox"
-                          className="checkbox-on-dark checkbox-on-dark-sm shrink-0"
-                          checked={checked}
-                          onChange={() => toggleProductType(t.id)}
-                        />
-                        <Icon className="size-3.5 shrink-0 opacity-80" aria-hidden />
-                        <span className="text-foreground">{t.label}</span>
-                      </label>
-                    </li>
-                  );
-                })}
-              </ul>
-            </PopoverContent>
-          </Popover>
-
-          {typesDraft.length > 1 ? (
-            <label className="mt-3 block">
-              <span className="text-[9px] uppercase tracking-wider text-muted-foreground">Primary (hero badge)</span>
-              <select
-                className="mt-1.5 flex h-9 w-full max-w-xs rounded-lg border border-border bg-inset px-2 text-xs text-foreground"
-                value={typesDraft[0]}
-                onChange={(e) => setPrimaryProductType(e.target.value as DirectoryProductCategory)}
-              >
-                {typesDraft.map((t) => (
-                  <option key={t} value={t}>
-                    {directoryCategoryLabel(t)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
-
-          <div className="mt-4 space-y-3 border-t border-border/60 pt-3">
-            <div>
-              <p className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground">Planned opening</p>
-              <p className="mb-2 text-2xs leading-relaxed text-muted-foreground/90">
-                Optional. Custom label overrides the formatted date on cards (e.g. &quot;Q2 2026&quot; or &quot;Maiden
-                voyage Dec 2026&quot;). Leave both empty to hide opening.
-              </p>
-              <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-4">
+            <div className="rounded-lg border border-border/40 bg-background/40 p-3">
+              <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Basics</p>
+              <div className="space-y-3">
                 <div>
-                  <Label htmlFor="dir-opening-date" className="text-2xs text-muted-foreground">
-                    Opening date
+                  <Label htmlFor="dir-product-name" className="text-2xs text-muted-foreground">
+                    Name
                   </Label>
                   <Input
-                    id="dir-opening-date"
-                    type="date"
-                    value={openingDateDraft}
-                    onChange={(e) => setOpeningDateDraft(e.target.value)}
-                    className="mt-1 h-9 border-border bg-inset text-xs text-foreground"
+                    id="dir-product-name"
+                    value={nameDraft}
+                    onChange={(e) => setNameDraft(e.target.value)}
+                    className="mt-1 h-9 border-border bg-background text-xs text-foreground"
+                    autoComplete="off"
                   />
                 </div>
-                <div className="sm:col-span-2">
-                  <Label htmlFor="dir-opening-label" className="text-2xs text-muted-foreground">
-                    Custom label (optional)
+                <div>
+                  <Label htmlFor="dir-product-desc" className="text-2xs text-muted-foreground">
+                    Description
+                  </Label>
+                  <textarea
+                    id="dir-product-desc"
+                    value={descriptionDraft}
+                    onChange={(e) => setDescriptionDraft(e.target.value)}
+                    rows={3}
+                    placeholder="Short summary for listings…"
+                    className="mt-1 min-h-[72px] w-full resize-y rounded-md border border-border bg-background px-2.5 py-2 text-xs leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-brand-cta/30"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="dir-product-tier" className="text-2xs text-muted-foreground">
+                    Tier
+                  </Label>
+                  <select
+                    id="dir-product-tier"
+                    value={tierDraft}
+                    onChange={(e) => setTierDraft(e.target.value as DirectoryTierLevel)}
+                    className="mt-1 flex h-9 w-full rounded-md border border-border bg-background px-2 text-xs text-foreground outline-none"
+                  >
+                    {DIRECTORY_TIER_LEVELS.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-border/40 bg-background/40 p-3">
+              <div className="mb-2 flex items-baseline justify-between gap-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Price bands</p>
+                <span className="text-[9px] text-muted-foreground/80">Max 5 · optional</span>
+              </div>
+              <p className="mb-2 text-[10px] leading-snug text-muted-foreground/90">
+                Shown on cards; price filter matches if any band fits.
+              </p>
+              {priceBandsDraft.length < 5 ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mb-2 h-7 w-full border-dashed text-2xs"
+                  onClick={() =>
+                    setPriceBandsDraft((prev) => [...prev, "$$$" as DirectoryPriceTier].slice(0, 5))
+                  }
+                >
+                  <Plus className="mr-1 size-3 opacity-70" aria-hidden />
+                  Add price band
+                </Button>
+              ) : null}
+              {priceBandsDraft.length === 0 ? (
+                <p className="text-[10px] text-muted-foreground/70">None — no $ line on the card.</p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {priceBandsDraft.map((band, i) => (
+                    <li key={i} className="flex min-w-0 items-center gap-1.5">
+                      <select
+                        value={band}
+                        onChange={(e) =>
+                          setPriceBandsDraft((prev) => {
+                            const next = [...prev];
+                            next[i] = e.target.value as DirectoryPriceTier;
+                            return next;
+                          })
+                        }
+                        className="h-8 min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-xs text-foreground outline-none"
+                      >
+                        {DIRECTORY_PRICE_BAND_OPTIONS.map((opt) => (
+                          <option key={opt} value={opt}>
+                            {opt}
+                          </option>
+                        ))}
+                      </select>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 shrink-0 p-0 text-muted-foreground hover:text-foreground"
+                        aria-label="Remove band"
+                        onClick={() => setPriceBandsDraft((prev) => prev.filter((_, j) => j !== i))}
+                      >
+                        <Trash2 className="size-3.5" aria-hidden />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-border/40 bg-background/40 p-3">
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Images</p>
+              <div className="space-y-2">
+                <div>
+                  <Label htmlFor="dir-hero-url" className="text-2xs text-muted-foreground">
+                    Hero (required)
                   </Label>
                   <Input
-                    id="dir-opening-label"
-                    value={openingLabelDraft}
-                    onChange={(e) => setOpeningLabelDraft(e.target.value)}
-                    placeholder="Overrides date line when set"
-                    className="mt-1 h-9 border-border bg-inset text-xs text-foreground"
+                    id="dir-hero-url"
+                    value={heroDraft}
+                    onChange={(e) => setHeroDraft(e.target.value)}
+                    placeholder="https://…"
+                    className="mt-1 h-8 border-border bg-background font-mono text-[11px] leading-tight text-foreground"
+                    autoComplete="off"
                   />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <Label className="text-2xs text-muted-foreground">Gallery (up to 5)</Label>
+                    {galleryDrafts.length < 5 ? (
+                      <button
+                        type="button"
+                        className="text-[10px] font-medium text-brand-cta/90 hover:text-brand-cta"
+                        onClick={() => setGalleryDrafts((prev) => [...prev, ""].slice(0, 5))}
+                      >
+                        + Add URL
+                      </button>
+                    ) : null}
+                  </div>
+                  {galleryDrafts.length > 0 ? (
+                    <ul className="mt-1.5 space-y-1.5">
+                      {galleryDrafts.map((url, i) => (
+                        <li key={i} className="flex min-w-0 items-center gap-1.5">
+                          <Input
+                            value={url}
+                            onChange={(e) =>
+                              setGalleryDrafts((prev) => {
+                                const next = [...prev];
+                                next[i] = e.target.value;
+                                return next;
+                              })
+                            }
+                            placeholder="https://…"
+                            className="h-8 min-w-0 flex-1 border-border bg-background font-mono text-[11px] leading-tight text-foreground"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 shrink-0 p-0 text-muted-foreground hover:text-foreground"
+                            aria-label="Remove image URL"
+                            onClick={() => setGalleryDrafts((prev) => prev.filter((_, j) => j !== i))}
+                          >
+                            <Trash2 className="size-3.5" aria-hidden />
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-1 text-[10px] text-muted-foreground/70">Optional extra thumbnails.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-border/40 bg-background/40 p-3">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Categories & opening
+              </p>
+              <p className="mb-2 text-[10px] leading-snug text-muted-foreground/90">
+                First selected type drives the badge; add types for filters.
+              </p>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 w-full justify-between gap-2 rounded-md border-border bg-background px-3 text-left text-xs font-normal text-foreground"
+                  >
+                    <span className="min-w-0 flex-1 truncate">
+                      {typesDraft.length === 0
+                        ? "Select types…"
+                        : typesDraft.map((t) => directoryCategoryLabel(t)).join(", ")}
+                    </span>
+                    <ChevronDown className="size-4 shrink-0 opacity-60" aria-hidden />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="start"
+                  sideOffset={6}
+                  className="z-[100] w-[min(100vw-2rem,20rem)] max-h-[min(320px,50vh)] overflow-hidden p-2"
+                >
+                  <p className="mb-2 px-1 text-2xs text-muted-foreground">Pick at least one.</p>
+                  <ul className="max-h-48 space-y-0.5 overflow-y-auto overscroll-contain pr-0.5">
+                    {DIRECTORY_PRODUCT_TYPE_CONFIG.map((t) => {
+                      const checked = typesDraft.includes(t.id);
+                      const Icon = t.icon;
+                      return (
+                        <li key={t.id}>
+                          <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-muted/40">
+                            <input
+                              type="checkbox"
+                              className="checkbox-on-dark checkbox-on-dark-sm shrink-0"
+                              checked={checked}
+                              onChange={() => toggleProductType(t.id)}
+                            />
+                            <Icon className="size-3.5 shrink-0 opacity-80" aria-hidden />
+                            <span className="text-foreground">{t.label}</span>
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </PopoverContent>
+              </Popover>
+
+              {typesDraft.length > 1 ? (
+                <label className="mt-2 block">
+                  <span className="text-2xs text-muted-foreground">Primary badge</span>
+                  <select
+                    className="mt-1 flex h-8 w-full rounded-md border border-border bg-background px-2 text-xs text-foreground"
+                    value={typesDraft[0]}
+                    onChange={(e) => setPrimaryProductType(e.target.value as DirectoryProductCategory)}
+                  >
+                    {typesDraft.map((t) => (
+                      <option key={t} value={t}>
+                        {directoryCategoryLabel(t)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              <div className="mt-3 border-t border-border/30 pt-3">
+                <p className="mb-2 text-2xs font-medium text-muted-foreground">Planned opening (optional)</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div>
+                    <Label htmlFor="dir-opening-date" className="text-[10px] text-muted-foreground">
+                      Date
+                    </Label>
+                    <Input
+                      id="dir-opening-date"
+                      type="date"
+                      value={openingDateDraft}
+                      onChange={(e) => setOpeningDateDraft(e.target.value)}
+                      className="mt-0.5 h-8 border-border bg-background text-xs text-foreground"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="dir-opening-label" className="text-[10px] text-muted-foreground">
+                      Label
+                    </Label>
+                    <Input
+                      id="dir-opening-label"
+                      value={openingLabelDraft}
+                      onChange={(e) => setOpeningLabelDraft(e.target.value)}
+                      placeholder="e.g. Q2 2026 — overrides date on card"
+                      className="mt-0.5 h-8 border-border bg-background text-xs text-foreground"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-border/60 pt-3">
+          <div className="sticky bottom-0 z-[1] -mx-4 mt-1 flex flex-wrap justify-end gap-2 border-t border-border/50 bg-card/85 px-4 py-3 backdrop-blur-md supports-[backdrop-filter]:bg-card/70">
             <Button
               type="button"
               variant="ghost"
@@ -1151,7 +1426,7 @@ export function ProductDirectoryDetailBody({
       ) : null}
 
       {/* Block 2 — Quick Facts */}
-      <div className="relative z-10 -mt-2 rounded-xl border border-border bg-white/[0.03] p-3">
+      <div className="relative z-10 mt-3 rounded-xl border border-border bg-white/[0.03] p-3">
         <div className="grid grid-cols-3 gap-x-4 gap-y-2.5">
           <div>
             <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Type</p>
@@ -1165,7 +1440,7 @@ export function ProductDirectoryDetailBody({
           </div>
           <div>
             <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Price</p>
-            <p className="mt-0.5 text-xs font-medium text-foreground">{product.priceTier ?? "—"}</p>
+            <p className="mt-0.5 text-xs font-medium text-foreground">{headerPriceDisplay ?? "—"}</p>
           </div>
 
           {product.types.includes("hotel") && (
@@ -1260,26 +1535,6 @@ export function ProductDirectoryDetailBody({
           )}
 
           <div>
-            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Enrichment</p>
-            <div className="mt-1 flex items-center gap-1.5">
-              <div className="flex gap-[2px]">
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="h-3 w-1.5 rounded-[1px]"
-                    style={{
-                      backgroundColor: i < enrichment ? "#5B8A6E" : "rgba(255,255,255,0.06)",
-                    }}
-                  />
-                ))}
-              </div>
-              <span className="text-[9px] text-muted-foreground">
-                {enrichment}/5
-              </span>
-            </div>
-          </div>
-
-          <div>
             <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Updated</p>
             <p className="mt-0.5 text-xs font-medium text-foreground">
               {product.updatedAt ? relativeTime(product.updatedAt) : "—"}
@@ -1347,7 +1602,7 @@ export function ProductDirectoryDetailBody({
         ) : null}
       </div>
 
-      {/* Block 4 — Partner Programs */}
+      {/* Block 4 — Partner Programs (read-only on product; edit in Partner Programs) */}
       <div className="border-t border-border pt-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -1355,257 +1610,29 @@ export function ProductDirectoryDetailBody({
             <span className="text-xs font-medium text-foreground">Partner Programs</span>
             <TeamScopedFieldNotice show={!isAdmin} />
             <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-muted-foreground">
-              {(showPartnerProgramEditor ? localPartnerPrograms : product.partnerPrograms).length}
+              {product.partnerPrograms.length}
             </span>
           </div>
-          {isAdmin ? (
-            partnerProgramsManagedInRegistry ? (
-              <Link
-                href="/dashboard/settings/programs"
-                className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-border bg-white/[0.04] px-2.5 text-xs text-muted-foreground transition-colors hover:bg-white/[0.07] hover:text-foreground"
-              >
-                Manage in Partner Programs
-              </Link>
-            ) : showPartnerProgramEditor ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={cancelPartnerProgramsEdit}
-                className="h-8 shrink-0 rounded-lg text-xs"
-              >
-                Cancel editing
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={beginPartnerProgramsEdit}
-                className="h-8 shrink-0 rounded-lg border border-brand-cta/35 bg-[rgba(201,169,110,0.08)] text-xs text-brand-cta hover:bg-[rgba(201,169,110,0.14)]"
-              >
-                <Pencil className="size-3.5" aria-hidden />
-                Edit programs
-              </Button>
-            )
-          ) : null}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button
+              asChild
+              variant="secondary"
+              size="sm"
+              className="h-8 shrink-0 rounded-lg border border-brand-cta/35 bg-[rgba(201,169,110,0.08)] text-xs text-brand-cta hover:bg-[rgba(201,169,110,0.14)]"
+            >
+              <Link href="/dashboard/products?tab=partner">Partner Programs</Link>
+            </Button>
+          </div>
         </div>
-        {showPartnerProgramEditor ? (
-          <p className="mb-2 text-[9px] text-muted-foreground">Edit below, then use Save all program changes.</p>
+        {canViewCommissions ? (
+          <p className="mb-2 text-[9px] leading-snug text-muted-foreground">
+            Each program shows a <span className="text-foreground/90">guaranteed base</span> first, then{" "}
+            <span className="text-foreground/90">temporary incentives</span> (booking / travel windows) — never added into one
+            headline number.
+          </p>
         ) : null}
 
-        {showPartnerProgramEditor ? (
-          <>
-            {localPartnerPrograms.length === 0 ? (
-              <div className="rounded-xl border border-white/[0.03] bg-white/[0.015] py-6 text-center">
-                <p className="text-2xs text-muted-foreground">No partner programs linked</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {localPartnerPrograms.map((program, index) => {
-                  const scopeVal = program.scope === "enable" ? "enable" : (program.scope ?? "");
-                  return (
-                    <div
-                      key={program.id}
-                      className="space-y-2 rounded-xl border border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.04)] p-3"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
-                          Program {index + 1}
-                        </span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="xs"
-                          onClick={() => removeProgramAt(index)}
-                          className="h-7 gap-1 text-[9px] text-[#A66B6B]/80 hover:text-[#A66B6B]"
-                        >
-                          <Trash2 className="size-3" aria-hidden />
-                          Remove
-                        </Button>
-                      </div>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        <label className="block sm:col-span-2">
-                          <span className="mb-0.5 block text-[9px] text-muted-foreground">Display name</span>
-                          <input
-                            value={program.programName ?? program.name}
-                            onChange={(e) =>
-                              updateProgramAt(index, { programName: e.target.value, name: e.target.value })
-                            }
-                            className="w-full rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
-                          />
-                        </label>
-                        <label className="block">
-                          <span className="mb-0.5 block text-[9px] text-muted-foreground">Program id (filter key)</span>
-                          <input
-                            value={program.programId ?? ""}
-                            onChange={(e) => updateProgramAt(index, { programId: e.target.value })}
-                            className="w-full rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
-                          />
-                        </label>
-                        <label className="block">
-                          <span className="mb-0.5 block text-[9px] text-muted-foreground">Scope</span>
-                          <select
-                            value={scopeVal}
-                            onChange={(e) => {
-                              const v = e.target.value;
-                              updateProgramAt(index, { scope: v === "enable" ? "enable" : v });
-                            }}
-                            className="w-full rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
-                          >
-                            <option value="enable">Enable</option>
-                            {teams.map((t) => (
-                              <option key={t.id} value={t.id}>
-                                {t.name}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className="block">
-                          <span className="mb-0.5 block text-[9px] text-muted-foreground">Status</span>
-                          <select
-                            value={program.status ?? "active"}
-                            onChange={(e) =>
-                              updateProgramAt(index, {
-                                status: e.target.value as "active" | "inactive",
-                              })
-                            }
-                            className="w-full rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
-                          >
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                          </select>
-                        </label>
-                        <label className="block">
-                          <span className="mb-0.5 block text-[9px] text-muted-foreground">Commission type</span>
-                          <select
-                            value={program.commissionType ?? "percentage"}
-                            onChange={(e) =>
-                              updateProgramAt(index, {
-                                commissionType: e.target.value as "percentage" | "flat",
-                              })
-                            }
-                            className="w-full rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
-                          >
-                            <option value="percentage">Percentage (%)</option>
-                            <option value="flat">Flat fee ($)</option>
-                          </select>
-                        </label>
-                        <label className="block">
-                          <span className="mb-0.5 block text-[9px] text-muted-foreground">
-                            {(program.commissionType ?? "percentage") === "flat" ? "Commission $" : "Commission %"}
-                          </span>
-                          <input
-                            type="number"
-                            step="0.1"
-                            min={0}
-                            value={program.commissionRate ?? ""}
-                            onChange={(e) => {
-                              const v = e.target.value;
-                              updateProgramAt(index, {
-                                commissionRate: v === "" ? null : Number(v),
-                              });
-                            }}
-                            className="w-full rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
-                          />
-                        </label>
-                        <label className="block">
-                          <span className="mb-0.5 block text-[9px] text-muted-foreground">Agreement expiry</span>
-                          <input
-                            type="date"
-                            value={
-                              program.expiryDate && !Number.isNaN(new Date(program.expiryDate).getTime())
-                                ? program.expiryDate.slice(0, 10)
-                                : ""
-                            }
-                            onChange={(e) => {
-                              const v = e.target.value;
-                              updateProgramAt(index, {
-                                expiryDate: v ? `${v}T12:00:00.000Z` : null,
-                              });
-                            }}
-                            className="w-full rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
-                          />
-                        </label>
-                        <label className="block sm:col-span-2">
-                          <span className="mb-0.5 block text-[9px] text-muted-foreground">Contact</span>
-                          <input
-                            value={program.contact ?? ""}
-                            onChange={(e) => updateProgramAt(index, { contact: e.target.value })}
-                            className="w-full rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
-                          />
-                        </label>
-                        <label className="block sm:col-span-2">
-                          <span className="mb-0.5 block text-[9px] text-muted-foreground">Amenities copy</span>
-                          <textarea
-                            value={program.amenities ?? ""}
-                            onChange={(e) => updateProgramAt(index, { amenities: e.target.value })}
-                            rows={3}
-                            className="w-full resize-none rounded-lg border border-border bg-inset px-2 py-1.5 text-xs text-foreground outline-none"
-                          />
-                        </label>
-                      </div>
-                      {(program.activePromotions?.length ?? 0) > 0 ? (
-                        <div className="rounded-lg border border-border bg-inset/80 p-2">
-                          <p className="mb-1.5 text-[9px] font-medium uppercase tracking-wider text-[#B8976E]">
-                            Promotions (effective rate)
-                          </p>
-                          <div className="space-y-2">
-                            {program.activePromotions.map((pr) => (
-                              <div key={pr.id} className="flex flex-wrap items-center gap-2 text-2xs text-muted-foreground">
-                                <span className="inline-flex items-center gap-1">
-                                  <input
-                                    type="number"
-                                    step="0.1"
-                                    className="w-16 rounded border border-border bg-inset px-1.5 py-1 text-xs text-foreground"
-                                    value={pr.effectiveRate}
-                                    onChange={(e) =>
-                                      updatePromotionRate(index, pr.id, Number(e.target.value) || 0)
-                                    }
-                                  />
-                                  <span className="text-[9px] text-muted-foreground">
-                                    {(pr.rateType ?? "percentage") === "flat" ? "flat" : "%"}
-                                  </span>
-                                </span>
-                                <span className="text-[9px]">
-                                  Book {pr.bookingStart.slice(0, 10)} → {pr.bookingEnd.slice(0, 10)} · Travel{" "}
-                                  {pr.travelStart.slice(0, 10)} → {pr.travelEnd.slice(0, 10)}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            <div className="mt-2 flex flex-col gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                className="h-8 w-full rounded-lg border border-brand-cta/30 bg-[rgba(201,169,110,0.1)] text-xs font-medium text-brand-cta hover:bg-[rgba(201,169,110,0.15)]"
-                onClick={addPartnerProgram}
-              >
-                <Plus className="size-3.5" aria-hidden />
-                Link program
-              </Button>
-              {localPartnerPrograms.length > 0 ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={savePartnerProgramsFromState}
-                  className="h-8 w-full rounded-lg text-xs font-medium"
-                >
-                  Save all program changes
-                </Button>
-              ) : null}
-            </div>
-          </>
-        ) : product.partnerPrograms.length === 0 ? (
+        {product.partnerPrograms.length === 0 ? (
           <div className="rounded-xl border border-white/[0.03] bg-white/[0.015] py-6 text-center">
             <p className="text-2xs text-muted-foreground">No partner programs linked</p>
           </div>
@@ -1629,7 +1656,8 @@ export function ProductDirectoryDetailBody({
               const showCommissionPublic = canViewCommissions && displayRate != null;
               const showLockedCommissionHint = !canViewCommissions && active && displayRate != null;
               const showExpiryFooter = program.expiryDate != null && program.expiryDate !== "";
-              const showFooter = showCommissionPublic || showLockedCommissionHint || showExpiryFooter;
+              const incentiveCount = program.activeIncentives?.length ?? 0;
+              const showFooter = showLockedCommissionHint || showExpiryFooter;
               return (
                 <div
                   key={program.id}
@@ -1658,24 +1686,54 @@ export function ProductDirectoryDetailBody({
                       ) : null}
                     </div>
                   </div>
-                  {(program.activePromotions?.length ?? 0) > 0 ? (
+                  {showCommissionPublic ? (
+                    <div className="border-b border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                      <p className="text-[8px] font-medium uppercase tracking-wider text-[#B8976E]">
+                        Guaranteed base rate
+                      </p>
+                      <p className="mt-0.5 text-sm font-semibold text-[#B8976E]">
+                        {program.commissionType === "flat" ? `$${displayRate}` : `${displayRate}%`}
+                      </p>
+                    </div>
+                  ) : null}
+                  {incentiveCount > 0 ? (
                     <div className="border-b border-white/[0.04] px-3 py-2">
                       <p className="mb-1 text-[8px] font-medium uppercase tracking-wider text-[#B8976E]">
-                        Offers
+                        Temporary incentives
                       </p>
-                      <ul className="space-y-1 text-[9px] text-muted-foreground">
-                        {program.activePromotions.map((pr) => (
-                          <li key={pr.id} className="space-y-0.5">
-                            <div>
+                      <p className="mb-2 text-[9px] leading-snug text-muted-foreground">
+                        Separate from the base — eligibility depends on booking and travel windows.
+                      </p>
+                      <ul className="space-y-2 text-[9px] text-muted-foreground">
+                        {program.activeIncentives!.map((pr) => (
+                          <li key={pr.id} className="space-y-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-2">
+                            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                               <span className="font-semibold text-brand-cta">
                                 {(pr.rateType ?? "percentage") === "flat"
                                   ? `$${pr.effectiveRate}`
                                   : `${pr.effectiveRate}%`}
-                              </span> · book{" "}
-                              {pr.bookingStart.slice(0, 10)}–{pr.bookingEnd.slice(0, 10)}
+                              </span>
+                              {pr.title?.trim() ? (
+                                <span className="text-2xs font-medium text-foreground">{pr.title.trim()}</span>
+                              ) : null}
                             </div>
-                            {pr.title?.trim() ? (
-                              <p className="text-2xs font-medium text-foreground">{pr.title.trim()}</p>
+                            <p className="text-[9px]">
+                              <span className="text-muted-foreground">Book: </span>
+                              {pr.bookingStart || pr.bookingEnd ? (
+                                <>
+                                  {pr.bookingStart?.slice(0, 10) ?? "—"}
+                                  {pr.bookingEnd ? ` → ${pr.bookingEnd.slice(0, 10)}` : ""}
+                                </>
+                              ) : (
+                                "Open"
+                              )}
+                            </p>
+                            {(pr.travelStart || pr.travelEnd) ? (
+                              <p className="text-[9px]">
+                                <span className="text-muted-foreground">Travel: </span>
+                                {pr.travelStart?.slice(0, 10) ?? "—"}
+                                {pr.travelEnd ? ` → ${pr.travelEnd.slice(0, 10)}` : ""}
+                              </p>
                             ) : null}
                             {pr.details?.trim() ? (
                               <p className="whitespace-pre-wrap text-[9px] leading-snug text-muted-foreground">
@@ -1687,7 +1745,7 @@ export function ProductDirectoryDetailBody({
                       </ul>
                     </div>
                   ) : null}
-                  {(program.amenityTags?.length ?? 0) > 0 && (
+                  {(program.amenityTags?.length ?? 0) > 0 ? (
                     <div className="flex flex-wrap gap-1 px-3 pb-2">
                       {(program.amenityTags ?? []).map((tag) => (
                         <span
@@ -1698,8 +1756,7 @@ export function ProductDirectoryDetailBody({
                         </span>
                       ))}
                     </div>
-                  )}
-                  {program.amenities ? (
+                  ) : program.amenities ? (
                     <p className="px-3 pb-2 text-2xs leading-relaxed text-muted-foreground">{program.amenities}</p>
                   ) : null}
                   {(program.lastEditedAt || program.lastEditedByName) ? (
@@ -1711,11 +1768,6 @@ export function ProductDirectoryDetailBody({
                   {showFooter ? (
                     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.04] bg-white/[0.015] px-3 py-2">
                       <div className="flex min-w-0 flex-wrap items-center gap-2">
-                        {showCommissionPublic ? (
-                          <span className="text-xs font-semibold text-[#B8976E]">
-                            {program.commissionType === "flat" ? `$${displayRate}` : `${displayRate}%`}
-                          </span>
-                        ) : null}
                         {showLockedCommissionHint ? (
                           <>
                             <span className="text-[9px] text-muted-foreground">Partner program active</span>
@@ -1747,6 +1799,95 @@ export function ProductDirectoryDetailBody({
             })}
           </div>
         )}
+
+        {canViewCommissions ? (
+          totalVisibleAdvisories === 0 ? (
+            <div className="mt-4 rounded-xl border border-white/[0.03] bg-white/[0.015] py-6 text-center">
+              <p className="mb-1 text-[10px] font-medium text-foreground">Commission incentives</p>
+              <p className="text-2xs text-muted-foreground">No advisory incentives on this product yet.</p>
+            </div>
+          ) : (
+            <div className="mt-4 space-y-3">
+              <p className="text-[10px] font-medium text-foreground">
+                Commission incentives{" "}
+                <span className="font-normal text-muted-foreground">({advisoryGroups.active.length} active)</span>
+              </p>
+              {(
+                [
+                  ["ACTIVE", advisoryGroups.active, "active"],
+                  ["UPCOMING", advisoryGroups.upcoming, "upcoming"],
+                  ["EXPIRED", advisoryGroups.expired, "expired"],
+                ] as const
+              ).map(([label, items, kind]) => {
+                if (items.length === 0) return null;
+                return (
+                  <div key={label}>
+                    <p className="mb-2 text-[10px] tracking-wide text-muted-foreground">{label}</p>
+                    <div className="space-y-2">
+                      {items.map((advisory) => {
+                        const SourceIcon =
+                          {
+                            rep_firm: Users,
+                            partner_program: Award,
+                            internal: Building2,
+                            virtuoso: Star,
+                          }[advisory.source] ?? Building2;
+                        return (
+                          <div
+                            key={advisory.id}
+                            className={cn(
+                              "rounded-xl border border-white/[0.05] bg-white/[0.02] p-3",
+                              kind === "active" && "border-l-2 border-l-border",
+                              kind === "upcoming" && "border-l-2 border-l-muted-foreground/40 border-dashed opacity-80",
+                              kind === "expired" && "opacity-50"
+                            )}
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <p className="text-xs font-medium text-foreground">{advisory.title}</p>
+                              <span className="text-[10px] text-muted-foreground">
+                                {formatAdvisoryIncentiveLabel(advisory.incentiveType, advisory.incentiveValue)}
+                              </span>
+                            </div>
+                            <p className={cn("mt-1 text-[10px] text-muted-foreground", kind === "expired" && "line-through")}>
+                              {kind === "upcoming"
+                                ? `Starts ${formatIsoDateStable(advisory.validFrom)}`
+                                : kind === "expired"
+                                  ? `Ended ${formatIsoDateStable(advisory.validUntil)}`
+                                  : `${formatIsoDateStable(advisory.validFrom)} – ${formatIsoDateStable(advisory.validUntil)}`}
+                            </p>
+                            <p className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+                              <SourceIcon className="h-3 w-3" aria-hidden />
+                              via {advisory.sourceName}
+                            </p>
+                            {advisory.details?.trim() ? (
+                              <p className="mt-1 text-2xs leading-relaxed text-muted-foreground">{advisory.details.trim()}</p>
+                            ) : null}
+                            <p className="mt-2 text-2xs text-muted-foreground">
+                              {advisoryProjectionText(
+                                advisory.incentiveType,
+                                advisory.incentiveValue,
+                                baseCommissionForAdvisories
+                              )}
+                            </p>
+                            {kind === "active" && isAdmin ? (
+                              <button
+                                type="button"
+                                onClick={() => dismissAdvisory(advisory.id)}
+                                className="mt-2 rounded-md border border-border bg-muted/20 px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-muted/35"
+                              >
+                                Dismiss
+                              </button>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )
+        ) : null}
       </div>
 
       {/* Block 5 — Rep Firms */}
@@ -1951,7 +2092,26 @@ export function ProductDirectoryDetailBody({
             {repFirmLinks.map((link) => {
               const active = (link.status ?? "active") === "active";
               const firmRow = getRepFirmByIdWithOverlay(link.repFirmId, repFirmsRegistry);
-              const regionsLabel = firmRow?.regions?.length ? firmRow.regions.join(", ") : "—";
+              const linkEmails =
+                link.contactEmails && link.contactEmails.filter((x) => x.trim()).length > 0
+                  ? link.contactEmails.map((x) => x.trim()).filter(Boolean)
+                  : link.contactEmail?.trim()
+                    ? [link.contactEmail.trim()]
+                    : [];
+              const linkPhones =
+                link.contactPhones && link.contactPhones.filter((x) => x.trim()).length > 0
+                  ? link.contactPhones.map((x) => x.trim()).filter(Boolean)
+                  : link.contactPhone?.trim()
+                    ? [link.contactPhone.trim()]
+                    : [];
+              const hasPerProductContact =
+                !!(link.contactName?.trim() || linkEmails.length > 0 || linkPhones.length > 0);
+              const regionsLabel = (() => {
+                const rc = firmRow?.regionsCovered?.length
+                  ? firmRow.regionsCovered
+                  : firmRow?.regions;
+                return rc?.length ? rc.join(", ") : "—";
+              })();
               return (
                 <div
                   key={link.id}
@@ -1971,24 +2131,99 @@ export function ProductDirectoryDetailBody({
                         <ScopeBadge scope={link.scope} teams={teams} className="shrink-0" />
                       ) : null}
                       {!active ? <span className="text-[8px] uppercase text-[#6B6560]">Inactive</span> : null}
+                      {firmRow?.luxPagesId ? (
+                        <span className="shrink-0 rounded border border-border bg-card px-1.5 py-0.5 text-[8px] text-muted-foreground">
+                          LuxPages
+                        </span>
+                      ) : null}
                     </div>
                   </div>
-                  {link.contactName || link.contactEmail || link.contactPhone ? (
-                    <p className="px-3 pb-2 text-[10px] text-[#9B9590]">
-                      Contact: {link.contactName ?? "—"}
-                      {link.contactEmail ? (
-                        <>
-                          {" "}
-                          ·{" "}
-                          <a
-                            href={`mailto:${link.contactEmail}`}
-                            className="text-[#B07A5B]/70 hover:text-[#B07A5B]"
-                          >
-                            {link.contactEmail}
-                          </a>
-                        </>
+                  {firmRow?.luxPagesLastVerified ? (
+                    <p className="px-3 pb-1 text-[9px] text-[#6B6560]">
+                      Verified by LuxPages:{" "}
+                      {new Date(firmRow.luxPagesLastVerified).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
+                  ) : null}
+                  {firmRow?.websiteUrl || firmRow?.portalUrl ? (
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-3 pb-1.5">
+                      {firmRow.websiteUrl ? (
+                        <a
+                          href={firmRow.websiteUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 text-[10px] leading-none text-[#B07A5B]/80 hover:text-[#B07A5B]"
+                        >
+                          <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
+                          Website
+                        </a>
                       ) : null}
-                      {link.contactPhone ? <> · {link.contactPhone}</> : null}
+                      {firmRow.portalUrl ? (
+                        <a
+                          href={firmRow.portalUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 text-[10px] leading-none text-[#B07A5B]/80 hover:text-[#B07A5B]"
+                        >
+                          <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
+                          Advisor portal
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {firmRow && firmRow.contacts.length > 0 ? (
+                    <div className="min-w-0 max-w-full px-3 pb-2">
+                      <RepFirmContactsLuxReadonlyTable
+                        contacts={firmRow.contacts}
+                        firmName={firmRow.name}
+                        attribution={link.repFirmName}
+                        className="[&_th]:text-[#6B6560] [&_td]:text-[#F5F0EB]"
+                      />
+                    </div>
+                  ) : null}
+                  {hasPerProductContact ? (
+                    <div className="space-y-1 px-3 pb-2 text-[10px] text-[#9B9590]">
+                      {firmRow && firmRow.contacts.length > 0 ? (
+                        <span className="block text-[9px] uppercase tracking-wider text-[#6B6560]">
+                          Contact for this property
+                        </span>
+                      ) : null}
+                      <p>
+                        <span className="text-[#9B9590]">
+                          {firmRow && firmRow.contacts.length > 0 ? "" : "Contact: "}
+                          {link.contactName?.trim() || "—"}
+                        </span>
+                      </p>
+                      {linkEmails.length > 0 ? (
+                        <div className="flex flex-col gap-0.5">
+                          {linkEmails.map((em, i) => (
+                            <a
+                              key={`${link.id}-em-${i}`}
+                              href={`mailto:${em}`}
+                              className="break-all text-[#B07A5B]/70 hover:text-[#B07A5B]"
+                            >
+                              {em}
+                            </a>
+                          ))}
+                        </div>
+                      ) : null}
+                      {linkPhones.length > 0 ? (
+                        <div className="flex flex-col gap-0.5">
+                          {linkPhones.map((ph, i) => (
+                            <span key={`${link.id}-ph-${i}`} className="break-all text-[#9B9590]">
+                              {ph}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {link.market ? (
+                    <p className="px-3 pb-2 text-[9px] text-[#9B9590]">
+                      Market: <span className="text-[#F5F0EB]/90">{link.market}</span>
                     </p>
                   ) : null}
                   {link.notes ? (
@@ -2026,183 +2261,6 @@ export function ProductDirectoryDetailBody({
         )}
       </div>
 
-      {/* Block 6 — VIC intelligence */}
-      {canViewVICData ? (
-        <div className="border-t border-border pt-4">
-          <button
-            type="button"
-            onClick={() => setVicIntelOpen((open) => !open)}
-            className="mb-3 flex w-full items-center justify-between gap-2 text-left"
-          >
-            <div className="flex items-center gap-2">
-              <Users className="h-3.5 w-3.5 shrink-0 text-[#B8976E]" />
-              <span className="text-xs font-medium text-foreground">VIC intelligence</span>
-              <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-muted-foreground">
-                {vicLinks.length}
-              </span>
-            </div>
-            <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform", vicIntelOpen && "rotate-180")} />
-          </button>
-          {vicIntelOpen ? (
-            <div className="space-y-3">
-              <p className="text-[10px] text-muted-foreground">
-                {vicLinks.length} VIC{vicLinks.length !== 1 ? "s" : ""} linked via itinerary activity or manual signals.
-              </p>
-              {vicLinks.length > 0 ? (
-                <div className="space-y-2">
-                  {vicLinks.map((link) => (
-                    <div key={`${link.vicId}-${link.productId}`} className="flex items-center justify-between gap-2 rounded-lg border border-white/[0.04] bg-white/[0.015] px-2.5 py-2">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span
-                          className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-medium text-[#0E0E0E]"
-                          style={{ backgroundColor: hashColor(link.vicName) }}
-                        >
-                          {link.vicName.charAt(0).toUpperCase()}
-                        </span>
-                        <span className="truncate text-xs text-foreground">{displayVicName(link.vicName)}</span>
-                      </div>
-                      <span className="shrink-0 text-[10px] text-muted-foreground">
-                        {link.visitCount} visit{link.visitCount !== 1 ? "s" : ""} · {vicIntelDate(link.lastVisitDate)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="rounded-lg border border-white/[0.03] bg-white/[0.015] px-3 py-2 text-[10px] text-muted-foreground">
-                  No linked VICs yet.
-                </p>
-              )}
-              <div className="border-t border-border/70 pt-2">
-                <p className="text-xs text-foreground">
-                  Also in {itineraryLinks.length} itinerar{itineraryLinks.length === 1 ? "y" : "ies"}
-                </p>
-                {itineraryLinks.length > 0 ? (
-                  <div className="mt-2 space-y-1.5">
-                    {itineraryLinks.map((row) => (
-                      <div key={row.itineraryId} className="flex items-center justify-between gap-2 text-[10px]">
-                        <span className="truncate text-foreground">{row.itineraryName}</span>
-                        {canViewCommissions ? (
-                          <span className="shrink-0 text-[#B8976E]">
-                            {new Intl.NumberFormat("en-US", {
-                              style: "currency",
-                              currency: "EUR",
-                              maximumFractionDigits: 0,
-                            }).format(row.totalSpend)}
-                          </span>
-                        ) : (
-                          <span className="shrink-0 text-muted-foreground">{row.eventCount} event{row.eventCount !== 1 ? "s" : ""}</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      {canViewCommissions ? (
-        <div className="border-t border-border pt-4">
-          <button
-            type="button"
-            onClick={() => setIncentivesExpanded((prev) => !prev)}
-            className="mb-3 flex w-full items-center justify-between gap-2 text-left"
-          >
-            <div className="flex items-center gap-2">
-              <Flame className="h-3.5 w-3.5 text-amber-400" aria-hidden />
-              <span className="text-xs font-medium text-foreground">Commission Incentives</span>
-            </div>
-            <span className="text-2xs text-amber-300">
-              {incentivesExpanded ? "▲" : "▼"} {advisoryGroups.active.length} active
-            </span>
-          </button>
-          {incentivesExpanded ? (
-            totalVisibleAdvisories === 0 ? (
-              <div className="rounded-xl border border-white/[0.03] bg-white/[0.015] py-6 text-center">
-                <p className="text-2xs text-muted-foreground">No advisory incentives on this product yet.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {(
-                  [
-                    ["ACTIVE", advisoryGroups.active, "active"],
-                    ["UPCOMING", advisoryGroups.upcoming, "upcoming"],
-                    ["EXPIRED", advisoryGroups.expired, "expired"],
-                  ] as const
-                ).map(([label, items, kind]) => {
-                  if (items.length === 0) return null;
-                  return (
-                    <div key={label}>
-                      <p className="mb-2 text-[10px] tracking-wide text-muted-foreground">{label}</p>
-                      <div className="space-y-2">
-                        {items.map((advisory) => {
-                          const SourceIcon =
-                            {
-                              rep_firm: Users,
-                              partner_program: Award,
-                              internal: Building2,
-                              virtuoso: Star,
-                            }[advisory.source] ?? Building2;
-                          return (
-                            <div
-                              key={advisory.id}
-                              className={cn(
-                                "rounded-xl border border-white/[0.05] bg-white/[0.02] p-3",
-                                kind === "active" && "border-l-2 border-l-amber-400",
-                                kind === "upcoming" && "border-l-2 border-l-amber-500 border-dashed opacity-80",
-                                kind === "expired" && "opacity-50"
-                              )}
-                            >
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <p className="text-xs font-medium text-foreground">{advisory.title}</p>
-                                <span className="text-[10px] text-amber-300">
-                                  {formatAdvisoryIncentiveLabel(advisory.incentiveType, advisory.incentiveValue)}
-                                </span>
-                              </div>
-                              <p className={cn("mt-1 text-[10px] text-muted-foreground", kind === "expired" && "line-through")}>
-                                {kind === "upcoming"
-                                  ? `Starts ${formatIsoDateStable(advisory.validFrom)}`
-                                  : kind === "expired"
-                                    ? `Ended ${formatIsoDateStable(advisory.validUntil)}`
-                                    : `${formatIsoDateStable(advisory.validFrom)} – ${formatIsoDateStable(advisory.validUntil)}`}
-                              </p>
-                              <p className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
-                                <SourceIcon className="h-3 w-3" aria-hidden />
-                                via {advisory.sourceName}
-                              </p>
-                              {advisory.details?.trim() ? (
-                                <p className="mt-1 text-2xs leading-relaxed text-muted-foreground">{advisory.details.trim()}</p>
-                              ) : null}
-                              <p className="mt-2 text-2xs text-amber-200/90">
-                                {advisoryProjectionText(
-                                  advisory.incentiveType,
-                                  advisory.incentiveValue,
-                                  baseCommissionForAdvisories
-                                )}
-                              </p>
-                              {kind === "active" && isAdmin ? (
-                                <button
-                                  type="button"
-                                  onClick={() => dismissAdvisory(advisory.id)}
-                                  className="mt-2 rounded-md border border-amber-500/20 bg-amber-500/5 px-2 py-1 text-[10px] text-amber-300 transition-colors hover:bg-amber-500/10"
-                                >
-                                  Dismiss
-                                </button>
-                              ) : null}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )
-          ) : null}
-        </div>
-      ) : null}
-
       {/* Contacts — personal (private) then agency (shared) */}
       <div className="border-t border-border pt-4">
         <div className="mb-3 flex items-center gap-2">
@@ -2238,7 +2296,10 @@ export function ProductDirectoryDetailBody({
             <p className="py-2 text-center text-2xs text-muted-foreground/65">None yet</p>
           ) : (
             <div className="space-y-1.5">
-              {personalContacts.map((c) => (
+              {personalContacts.map((c) => {
+                const contactEmails = emailsForContact(c);
+                const contactPhones = phonesForContact(c);
+                return (
                 <div
                   key={c.id}
                   className="flex items-start justify-between gap-2 rounded-lg border border-white/[0.05] bg-white/[0.02] px-2.5 py-2"
@@ -2248,17 +2309,28 @@ export function ProductDirectoryDetailBody({
                       <span className="text-xs font-medium text-foreground">{c.name}</span>
                       <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[8px] text-muted-foreground">{c.role}</span>
                     </div>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-2">
-                      {c.email && c.email !== "—" ? (
-                        <a
-                          href={`mailto:${c.email}`}
-                          className="text-[9px] text-brand-cta/60 transition-colors hover:text-brand-cta"
-                        >
-                          {c.email}
-                        </a>
+                    <div className="mt-0.5 space-y-0.5">
+                      {contactEmails.length > 0 ? (
+                        <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+                          {contactEmails.map((email, i) => (
+                            <a
+                              key={`${c.id}-e-${i}`}
+                              href={`mailto:${email}`}
+                              className="break-all text-[9px] text-brand-cta/60 transition-colors hover:text-brand-cta"
+                            >
+                              {email}
+                            </a>
+                          ))}
+                        </div>
                       ) : null}
-                      {c.phone && c.phone !== "—" ? (
-                        <span className="text-[9px] text-muted-foreground">{c.phone}</span>
+                      {contactPhones.length > 0 ? (
+                        <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+                          {contactPhones.map((phone, i) => (
+                            <span key={`${c.id}-p-${i}`} className="break-all text-[9px] text-muted-foreground">
+                              {phone}
+                            </span>
+                          ))}
+                        </div>
                       ) : null}
                     </div>
                     {c.note ? <p className="mt-0.5 text-[9px] text-muted-foreground">{c.note}</p> : null}
@@ -2295,7 +2367,8 @@ export function ProductDirectoryDetailBody({
                     </Button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
           {personalContactFormOpen && (
@@ -2315,17 +2388,23 @@ export function ProductDirectoryDetailBody({
                 placeholder="Role *"
                 className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
               />
-              <input
-                value={pcEmail}
-                onChange={(e) => setPcEmail(e.target.value)}
-                placeholder="Email"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
-              />
-              <input
-                value={pcPhone}
-                onChange={(e) => setPcPhone(e.target.value)}
-                placeholder="Phone"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
+              <ContactChannelFormFields
+                emailRows={pcEmails}
+                phoneRows={pcPhones}
+                onEmailChange={(index, value) =>
+                  setPcEmails((prev) => prev.map((row, j) => (j === index ? value : row)))
+                }
+                onPhoneChange={(index, value) =>
+                  setPcPhones((prev) => prev.map((row, j) => (j === index ? value : row)))
+                }
+                onAddEmail={() => setPcEmails((prev) => [...prev, ""])}
+                onAddPhone={() => setPcPhones((prev) => [...prev, ""])}
+                onRemoveEmail={(index) =>
+                  setPcEmails((prev) => (prev.length <= 1 ? prev : prev.filter((_, j) => j !== index)))
+                }
+                onRemovePhone={(index) =>
+                  setPcPhones((prev) => (prev.length <= 1 ? prev : prev.filter((_, j) => j !== index)))
+                }
               />
               <input
                 value={pcNote}
@@ -2353,8 +2432,9 @@ export function ProductDirectoryDetailBody({
                     setEditingPersonalContactId(null);
                     setPcName("");
                     setPcRole("");
-                    setPcEmail("");
-                    setPcPhone("");
+                    const emptyPc = defaultChannelFormRows();
+                    setPcEmails(emptyPc.emails);
+                    setPcPhones(emptyPc.phones);
                     setPcNote("");
                   }}
                   className="h-7 text-muted-foreground"
@@ -2413,6 +2493,8 @@ export function ProductDirectoryDetailBody({
             <div className="space-y-1.5">
               {agencyContacts.map((c) => {
                 const canEdit = isAdmin || c.addedById === currentUserId;
+                const contactEmails = emailsForContact(c);
+                const contactPhones = phonesForContact(c);
                 return (
                   <div
                     key={c.id}
@@ -2423,17 +2505,28 @@ export function ProductDirectoryDetailBody({
                         <span className="text-xs font-medium text-foreground">{c.name}</span>
                         <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[8px] text-muted-foreground">{c.role}</span>
                       </div>
-                      <div className="mt-0.5 flex flex-wrap items-center gap-2">
-                        {c.email && c.email !== "—" ? (
-                          <a
-                            href={`mailto:${c.email}`}
-                            className="text-[9px] text-brand-cta/60 transition-colors hover:text-brand-cta"
-                          >
-                            {c.email}
-                          </a>
+                      <div className="mt-0.5 space-y-0.5">
+                        {contactEmails.length > 0 ? (
+                          <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+                            {contactEmails.map((email, i) => (
+                              <a
+                                key={`${c.id}-e-${i}`}
+                                href={`mailto:${email}`}
+                                className="break-all text-[9px] text-brand-cta/60 transition-colors hover:text-brand-cta"
+                              >
+                                {email}
+                              </a>
+                            ))}
+                          </div>
                         ) : null}
-                        {c.phone && c.phone !== "—" ? (
-                          <span className="text-[9px] text-muted-foreground">{c.phone}</span>
+                        {contactPhones.length > 0 ? (
+                          <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+                            {contactPhones.map((phone, i) => (
+                              <span key={`${c.id}-p-${i}`} className="break-all text-[9px] text-muted-foreground">
+                                {phone}
+                              </span>
+                            ))}
+                          </div>
                         ) : null}
                       </div>
                       {c.note ? <p className="mt-0.5 text-[9px] italic text-muted-foreground">{c.note}</p> : null}
@@ -2519,17 +2612,27 @@ export function ProductDirectoryDetailBody({
                 placeholder="Role *"
                 className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
               />
-              <input
-                value={newAgencyContactEmail}
-                onChange={(e) => setNewAgencyContactEmail(e.target.value)}
-                placeholder="Email"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
-              />
-              <input
-                value={newAgencyContactPhone}
-                onChange={(e) => setNewAgencyContactPhone(e.target.value)}
-                placeholder="Phone"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
+              <ContactChannelFormFields
+                emailRows={newAgencyContactEmails}
+                phoneRows={newAgencyContactPhones}
+                onEmailChange={(index, value) =>
+                  setNewAgencyContactEmails((prev) => prev.map((row, j) => (j === index ? value : row)))
+                }
+                onPhoneChange={(index, value) =>
+                  setNewAgencyContactPhones((prev) => prev.map((row, j) => (j === index ? value : row)))
+                }
+                onAddEmail={() => setNewAgencyContactEmails((prev) => [...prev, ""])}
+                onAddPhone={() => setNewAgencyContactPhones((prev) => [...prev, ""])}
+                onRemoveEmail={(index) =>
+                  setNewAgencyContactEmails((prev) =>
+                    prev.length <= 1 ? prev : prev.filter((_, j) => j !== index),
+                  )
+                }
+                onRemovePhone={(index) =>
+                  setNewAgencyContactPhones((prev) =>
+                    prev.length <= 1 ? prev : prev.filter((_, j) => j !== index),
+                  )
+                }
               />
               <input
                 value={newAgencyContactNote}
@@ -2557,8 +2660,9 @@ export function ProductDirectoryDetailBody({
                     setEditingAgencyContactId(null);
                     setNewAgencyContactName("");
                     setNewAgencyContactRole("");
-                    setNewAgencyContactEmail("");
-                    setNewAgencyContactPhone("");
+                    const emptyAg = defaultChannelFormRows();
+                    setNewAgencyContactEmails(emptyAg.emails);
+                    setNewAgencyContactPhones(emptyAg.phones);
                     setNewAgencyContactNote("");
                   }}
                   className="h-7 text-muted-foreground"
@@ -3093,9 +3197,42 @@ export function ProductDirectoryDetailBody({
             <div className="mb-3 rounded-lg border border-white/[0.04] bg-white/[0.03] p-2.5">
               <p className="text-xs font-medium text-foreground">{contactUpgradeTarget.name}</p>
               <p className="text-2xs text-muted-foreground">{contactUpgradeTarget.role}</p>
-              <p className="text-2xs text-muted-foreground">
-                {contactUpgradeTarget.email.trim() || "—"}
-              </p>
+              <div className="mt-1.5 space-y-1">
+                <div>
+                  <p className="text-[9px] font-medium text-muted-foreground">Email addresses</p>
+                  {contactUpgradeTarget.emails.filter((e) => e.trim()).length > 0 ? (
+                    <ul className="mt-0.5 list-inside list-disc space-y-0.5">
+                      {contactUpgradeTarget.emails
+                        .map((e) => e.trim())
+                        .filter(Boolean)
+                        .map((email, i) => (
+                          <li key={`e-${i}-${email}`} className="break-all text-2xs text-muted-foreground">
+                            {email}
+                          </li>
+                        ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-0.5 text-2xs text-muted-foreground">—</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-[9px] font-medium text-muted-foreground">Phone numbers</p>
+                  {contactUpgradeTarget.phones.filter((p) => p.trim()).length > 0 ? (
+                    <ul className="mt-0.5 list-inside list-disc space-y-0.5">
+                      {contactUpgradeTarget.phones
+                        .map((p) => p.trim())
+                        .filter(Boolean)
+                        .map((phone, i) => (
+                          <li key={`p-${i}-${phone}`} className="break-all text-2xs text-muted-foreground">
+                            {phone}
+                          </li>
+                        ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-0.5 text-2xs text-muted-foreground">—</p>
+                  )}
+                </div>
+              </div>
             </div>
             <p className="mb-1 text-2xs leading-relaxed text-muted-foreground">
               This contact will be submitted for admin approval before becoming visible to the team.

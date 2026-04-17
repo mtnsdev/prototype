@@ -1,6 +1,6 @@
 import type { VolumeMetric } from "@/types/partner-programs";
 
-export type PromotionFormWindowInput = {
+export type IncentiveFormWindowInput = {
   bookingStart: string;
   bookingEnd: string;
   travelStart: string;
@@ -12,6 +12,9 @@ export type PromotionFormWindowInput = {
   linkedProductIds: string[];
 };
 
+/** @deprecated Use `IncentiveFormWindowInput`. */
+export type PromotionFormWindowInput = IncentiveFormWindowInput;
+
 function dayOrderMs(a: string, b: string): number | null {
   const ta = Date.parse(`${a}T12:00:00.000Z`);
   const tb = Date.parse(`${b}T12:00:00.000Z`);
@@ -20,7 +23,7 @@ function dayOrderMs(a: string, b: string): number | null {
 }
 
 /** Returns an error message or null when the form is valid. */
-export function validatePromotionForm(input: PromotionFormWindowInput): string | null {
+export function validateIncentiveForm(input: IncentiveFormWindowInput): string | null {
   const bs = input.bookingStart.trim();
   const be = input.bookingEnd.trim();
   if (bs && be) {
@@ -49,3 +52,6 @@ export function validatePromotionForm(input: PromotionFormWindowInput): string |
 
   return null;
 }
+
+/** @deprecated Use `validateIncentiveForm`. */
+export const validatePromotionForm = validateIncentiveForm;

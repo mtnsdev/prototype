@@ -5,24 +5,27 @@ import type {
 } from "@/types/product-directory";
 import type { RepFirm } from "@/types/rep-firm";
 import { migrateDirectoryProductJson } from "@/components/products/directoryProductTypeHelpers";
+import { cloneRepFirmRecord, migrateRepFirmList } from "@/lib/repFirmMigrate";
 
 /** localStorage key for the advisor directory snapshot — used for cross-tab `storage` sync. */
 export const DIRECTORY_CATALOG_LOCAL_STORAGE_KEY = "enable-product-directory-v1";
 const SCHEMA_VERSION = 3;
 
-const REP_FIRMS_KEY = "enable-rep-firms-registry-v1";
-const REP_FIRMS_SCHEMA = 1;
+/** Exported so you can clear stuck prototype data in DevTools → Application → Local Storage. */
+export const REP_FIRMS_LOCAL_STORAGE_KEY = "enable-rep-firms-registry-v1";
+const REP_FIRMS_KEY = REP_FIRMS_LOCAL_STORAGE_KEY;
+/**
+ * v2: full RepFirm model (specialty, contacts, HQ, Lux fields). v1: legacy rows — migrated on load.
+ * v3: bump invalidates older stored snapshots so prototype seed (demo contacts, HQ, etc.) loads again.
+ */
+const REP_FIRMS_SCHEMA = 3;
 /** Same-tab sync when registry is saved from Settings or Products. */
 export const REP_FIRMS_REGISTRY_UPDATED = "enable-rep-firms-registry-updated";
 
 export type PersistedRepFirmsPayload = { v: number; repFirms: RepFirm[] };
 
 export function cloneRepFirmsForState(repFirms: RepFirm[]): RepFirm[] {
-  return repFirms.map((f) => ({
-    ...f,
-    regions: [...f.regions],
-    productTypes: [...f.productTypes],
-  }));
+  return repFirms.map((f) => cloneRepFirmRecord(f));
 }
 
 function normalizeRepFirmsJson(repFirms: RepFirm[]): string {
@@ -39,9 +42,21 @@ export function loadRepFirmsFromStorage(): RepFirm[] | null {
   try {
     const raw = localStorage.getItem(REP_FIRMS_KEY);
     if (!raw) return null;
-    const data = JSON.parse(raw) as Partial<PersistedRepFirmsPayload>;
-    if (data.v !== REP_FIRMS_SCHEMA || !Array.isArray(data.repFirms)) return null;
-    return data.repFirms as RepFirm[];
+    const data = JSON.parse(raw) as Partial<PersistedRepFirmsPayload> & { v?: number };
+    if (!Array.isArray(data.repFirms)) return null;
+    const v = data.v ?? 1;
+    if (v !== 1 && v !== REP_FIRMS_SCHEMA) return null;
+    const migrated = migrateRepFirmList(data.repFirms);
+    if (v === 1) {
+      try {
+        const payload: PersistedRepFirmsPayload = { v: REP_FIRMS_SCHEMA, repFirms: migrated };
+        localStorage.setItem(REP_FIRMS_KEY, JSON.stringify(payload));
+        window.dispatchEvent(new Event(REP_FIRMS_REGISTRY_UPDATED));
+      } catch {
+        /* quota */
+      }
+    }
+    return migrated;
   } catch {
     return null;
   }
@@ -145,7 +160,7 @@ export function cloneDirectoryProductsForState(products: DirectoryProduct[]): Di
     collections: [...p.collections],
     partnerPrograms: p.partnerPrograms.map((pp) => ({
       ...pp,
-      activePromotions: (pp.activePromotions ?? []).map((x) => ({ ...x })),
+      activeIncentives: (pp.activeIncentives ?? []).map((x) => ({ ...x })),
       amenityTags: pp.amenityTags ? [...pp.amenityTags] : [],
     })),
     repFirmLinks: (p.repFirmLinks ?? []).map((l) => ({ ...l })),

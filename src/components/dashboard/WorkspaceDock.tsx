@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useChatContext } from "@/contexts/ChatContext";
+import { BRIEFING_ROOM_PATH } from "@/lib/briefingRoutes";
 
 const DOCK_APPS: {
   href: string;
@@ -23,7 +24,12 @@ const DOCK_APPS: {
   icon: typeof LayoutDashboard;
   match: (path: string) => boolean;
 }[] = [
-  { href: "/dashboard", label: "Home", icon: LayoutDashboard, match: (p) => p === "/dashboard" },
+  {
+    href: BRIEFING_ROOM_PATH,
+    label: "Home",
+    icon: LayoutDashboard,
+    match: (p) => p === BRIEFING_ROOM_PATH || p === "/dashboard",
+  },
   { href: "/dashboard/vics", label: "VICs", icon: Users, match: (p) => p.startsWith("/dashboard/vics") },
   {
     href: "/dashboard/itineraries",

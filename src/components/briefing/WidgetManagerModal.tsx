@@ -85,7 +85,7 @@ export default function WidgetManagerModal({ open, onClose, widgets, onSave }: P
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="bg-accent border-input max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col overflow-hidden border-border bg-background">
         <DialogHeader>
           <DialogTitle className="text-foreground">Customize Briefing Room</DialogTitle>
         </DialogHeader>
@@ -96,10 +96,10 @@ export default function WidgetManagerModal({ open, onClose, widgets, onSave }: P
             return (
               <div
                 key={meta.type}
-                className="flex items-center justify-between gap-4 rounded-lg border border-border bg-white/[0.03] p-3"
+                className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/25 p-3"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-foreground shrink-0">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted/45 text-foreground">
                     <meta.Icon size={20} />
                   </div>
                   <div>
@@ -113,7 +113,7 @@ export default function WidgetManagerModal({ open, onClose, widgets, onSave }: P
                       <select
                         value={w.size}
                         onChange={(e) => setSize(w.id, e.target.value as WidgetSize)}
-                        className="rounded border border-input bg-white/5 px-2 py-1 text-xs text-foreground"
+                        className="rounded border border-border bg-inset px-2 py-1 text-xs text-foreground outline-none"
                       >
                         <option value="small">Small</option>
                         <option value="medium">Medium</option>
@@ -151,11 +151,11 @@ export default function WidgetManagerModal({ open, onClose, widgets, onSave }: P
             );
           })}
         </div>
-        <DialogFooter className="border-t border-input pt-4">
-          <Button variant="outline" onClick={reset} className="border-input text-foreground">
+        <DialogFooter className="border-t border-border pt-4">
+          <Button variant="outline" onClick={reset}>
             Reset to default
           </Button>
-          <Button variant="outline" onClick={onClose} className="border-input text-foreground">
+          <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button onClick={handleSave}>Save</Button>

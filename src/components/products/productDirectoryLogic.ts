@@ -9,6 +9,7 @@ import {
   directoryProductPartnerProgramsSyncPatch,
   programFilterId,
 } from "./productDirectoryCommission";
+import { directoryCategoryLabel } from "./productDirectoryVisual";
 
 export function createDirectoryCollectionRecord(args: {
   id: string;
@@ -44,7 +45,7 @@ export function createDirectoryCollectionRecord(args: {
   };
 }
 
-export type PartnerPortalAdminSavePayload = {
+export type PartnerProgramsAdminSavePayload = {
   program: DirectoryPartnerProgram;
   attachedProductIds: string[];
   useProductSpecificTerms: boolean;
@@ -54,7 +55,7 @@ export type PartnerPortalAdminSavePayload = {
   >;
 };
 
-export function validatePartnerPortalAdminPayload(payload: PartnerPortalAdminSavePayload): string | null {
+export function validatePartnerProgramsAdminPayload(payload: PartnerProgramsAdminSavePayload): string | null {
   if (payload.attachedProductIds.length === 0) return "Attach at least one product.";
   if (payload.program.commissionRate != null && payload.program.commissionRate < 0) {
     return "Commission cannot be negative.";
@@ -63,7 +64,7 @@ export function validatePartnerPortalAdminPayload(payload: PartnerPortalAdminSav
   if (exp && Number.isNaN(new Date(exp).getTime())) return "Invalid expiry date.";
   const expTs = exp ? new Date(exp).getTime() : null;
 
-  for (const pr of payload.program.activePromotions ?? []) {
+  for (const pr of payload.program.activeIncentives ?? []) {
     if (pr.effectiveRate < 0) return "Incentive effective rate cannot be negative.";
     const bStart = new Date(pr.bookingStart).getTime();
     const bEnd = new Date(pr.bookingEnd).getTime();
@@ -85,10 +86,10 @@ export function validatePartnerPortalAdminPayload(payload: PartnerPortalAdminSav
   return null;
 }
 
-export function applyPartnerPortalPayloadToProducts(args: {
+export function applyPartnerProgramsPayloadToProducts(args: {
   products: DirectoryProduct[];
   programKey: string;
-  payload: PartnerPortalAdminSavePayload;
+  payload: PartnerProgramsAdminSavePayload;
   audit: { userId: string; userName: string; editedAtISO: string };
 }): { products: DirectoryProduct[]; updatedCount: number } {
   const { products, programKey, payload, audit } = args;
@@ -128,5 +129,24 @@ export function applyPartnerPortalPayloadToProducts(args: {
     return { ...p, ...directoryProductPartnerProgramsSyncPatch(p, nextPrograms) };
   });
   return { products: next, updatedCount };
+}
+
+/** Product picker search (partner programs + rep firms attach lists). */
+export function productMatchesPartnerAttachSearch(product: DirectoryProduct, rawQuery: string): boolean {
+  const q = rawQuery.trim().toLowerCase();
+  if (!q) return true;
+  const blob = [
+    product.name,
+    product.location,
+    product.city,
+    product.country,
+    product.region,
+    ...product.types.map((t) => directoryCategoryLabel(t)),
+    product.id,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  return blob.includes(q);
 }
 

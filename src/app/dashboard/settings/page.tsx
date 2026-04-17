@@ -15,14 +15,13 @@ import {
     Plug,
     Users,
     Database,
-    Newspaper,
-    Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUser } from "@/contexts/UserContext";
 import { isWorkspaceStaff } from "@/lib/workspaceRoles";
+import { BRIEFING_ROOM_PATH } from "@/lib/briefingRoutes";
 
 type UserProfile = {
     email: string;
@@ -96,7 +95,7 @@ export default function SettingsPage() {
     const handleSignOut = () => {
         setIsSigningOut(true);
         clearUser();
-        router.push("/dashboard");
+        router.push(BRIEFING_ROOM_PATH);
     };
 
     const handlePasswordChange = async () => {
@@ -372,39 +371,6 @@ export default function SettingsPage() {
                     </div>
                 </section>
 
-                {/* Briefing Room — tied to prototype Admin view */}
-                <section className="rounded-2xl border border-border bg-card overflow-hidden">
-                    <div className="px-5 py-4 border-b border-border flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/8 to-white/4 flex items-center justify-center border border-input">
-                            <Newspaper size={18} className="text-muted-foreground" />
-                        </div>
-                        <h2 className="text-base font-semibold text-foreground">Briefing Room</h2>
-                    </div>
-                    <div className="p-5">
-                        <p className="text-compact text-muted-foreground/75 mb-4">
-                            How user mode vs admin view affects the dashboard briefing (same toggle as the user
-                            menu). On the Briefing Room, use the sliders icon on each widget card to set show,
-                            column, and size. If you hide widgets, use Reset layout on the briefing page to restore
-                            defaults.
-                        </p>
-                        <Link
-                            href="/dashboard/settings/briefing-room"
-                            className={[
-                                "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
-                                "text-base font-medium",
-                                "bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)]",
-                                "border border-input",
-                                "text-foreground",
-                                "transition-all duration-150",
-                            ].join(" ")}
-                        >
-                            <Newspaper size={16} />
-                            Briefing Room & prototype mode
-                            <ChevronRight size={16} />
-                        </Link>
-                    </div>
-                </section>
-
                 {/* Admin Section - Only visible to admins */}
                 {isWorkspaceStaff(user) && (
                     <section className="rounded-2xl border border-border bg-card overflow-hidden">
@@ -433,36 +399,6 @@ export default function SettingsPage() {
                                 >
                                     <Users size={16} className="text-violet-400" />
                                     Teams
-                                    <ChevronRight size={16} className="ml-auto opacity-60" />
-                                </Link>
-                                <Link
-                                    href="/dashboard/settings/rep-firms"
-                                    className={[
-                                        "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
-                                        "text-[14px] font-medium",
-                                        "bg-white/[0.06] hover:bg-white/[0.1]",
-                                        "border border-white/[0.08]",
-                                        "text-[#F5F5F5]",
-                                        "transition-all duration-150",
-                                    ].join(" ")}
-                                >
-                                    <Users size={16} className="text-[#B07A5B]" />
-                                    Rep Firms
-                                    <ChevronRight size={16} className="ml-auto opacity-60" />
-                                </Link>
-                                <Link
-                                    href="/dashboard/settings/programs"
-                                    className={[
-                                        "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
-                                        "text-[14px] font-medium",
-                                        "bg-white/[0.06] hover:bg-white/[0.1]",
-                                        "border border-border",
-                                        "text-foreground",
-                                        "transition-all duration-150",
-                                    ].join(" ")}
-                                >
-                                    <Award size={16} className="text-brand-cta" />
-                                    Partner Programs
                                     <ChevronRight size={16} className="ml-auto opacity-60" />
                                 </Link>
                                 <Link

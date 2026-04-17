@@ -1,29 +1,31 @@
 "use client";
 
 import { useCallback, useMemo, useRef } from "react";
-import { Check, Clock, Flame, Plus, Search, Sparkles, Users } from "lucide-react";
+import { Check, Flame, Plus, Search, Users } from "lucide-react";
 import type { DirectoryProduct } from "@/types/product-directory";
 import { cn } from "@/lib/utils";
+import { getPrimaryDirectoryType } from "@/components/products/directoryProductTypeHelpers";
 import {
-  dmcOperationalDataPresent,
-  getPrimaryDirectoryType,
-  isDMCProduct,
-} from "@/components/products/directoryProductTypeHelpers";
-import { directoryCategoryColors, directoryCategoryLabel } from "./productDirectoryVisual";
+  directoryCategoryColors,
+  directoryCategoryLabel,
+  directoryProductPriceDisplay,
+} from "./productDirectoryVisual";
 import {
+  getActiveIncentiveOfferCount,
+  getDirectoryProductRegistryCommission,
   getTopBookableProgramByCommission,
-  isProgramBookable,
-  productHasDistinctPartnerTerms,
   programDisplayCommissionRate,
   programDisplayName,
 } from "./productDirectoryCommission";
 import { DIRECTORY_TIER_FILTER_UI } from "./productDirectoryFilterConfig";
-import { relativeTime } from "./productDirectoryRelativeTime";
 import { productListingMetaLineClass, productListingTitleClass } from "@/lib/productListingPrimitives";
-import { FAKE_ITINERARIES } from "@/components/itineraries/fakeData";
-import { FAKE_VICS } from "@/components/vic/fakeData";
-import { getVicsForProduct } from "@/lib/entityCrossLinks";
 import { formatProductOpeningLine } from "@/lib/productDirectoryOpening";
+
+function repFirmLinksTitle(product: DirectoryProduct): string | undefined {
+  const links = product.repFirmLinks ?? [];
+  if (links.length <= 1) return undefined;
+  return links.map((l) => l.repFirmName?.trim() || l.repFirmId).join(" · ");
+}
 
 type Props = {
   product: DirectoryProduct;
@@ -41,9 +43,10 @@ type Props = {
   showSavedFromSearch?: boolean;
   /** Native tooltip for “Saved from search” (e.g. saved-by + query). */
   savedFromSearchTitle?: string;
-  vicProductCounts?: Map<string, number>;
   /** Smaller image + padding for dense lists (e.g. rep firm linked properties). */
   compact?: boolean;
+  /** When false, rep firm chips are hidden (e.g. main Products browse — detail tab still has full info). */
+  showRepFirmLinks?: boolean;
 };
 
 export default function DirectoryProductCard({
@@ -60,14 +63,21 @@ export default function DirectoryProductCard({
   onEnterBulkMode,
   showSavedFromSearch = false,
   savedFromSearchTitle,
-  vicProductCounts,
   compact = false,
+  showRepFirmLinks = true,
 }: Props) {
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ignoreNextClickRef = useRef(false);
-  const activePrograms = product.partnerPrograms.filter(isProgramBookable);
   const topForCommission = getTopBookableProgramByCommission(product);
-  const topRate = topForCommission ? programDisplayCommissionRate(topForCommission) : null;
+  const rateFromTopProgram = topForCommission ? programDisplayCommissionRate(topForCommission) : null;
+  /** Prefer program rate; else registry max from bookable programs; else product-level listing (helps DMCs / sparse program data). */
+  const cardCommission =
+    rateFromTopProgram ??
+    getDirectoryProductRegistryCommission(product) ??
+    product.commissionRate ??
+    product.baseCommissionRate;
+  const commissionIsFlat =
+    rateFromTopProgram != null && topForCommission?.commissionType === "flat";
   const primaryType = getPrimaryDirectoryType(product);
   const cat = directoryCategoryColors(primaryType);
   const typePillLabel =
@@ -77,14 +87,13 @@ export default function DirectoryProductCard({
   const tierUi = DIRECTORY_TIER_FILTER_UI.find((t) => t.id === (product.tier ?? "unrated"));
   const tierStarCount = tierUi?.stars ?? 0;
   const tierStarColor = tierUi?.color ?? "#4A4540";
-  const showVariedTerms = productHasDistinctPartnerTerms(product);
-  const vicCount = useMemo(() => {
-    const cached = vicProductCounts?.get(product.id);
-    if (cached != null) return cached;
-    return getVicsForProduct(product.id, FAKE_VICS ?? [], FAKE_ITINERARIES ?? []).length;
-  }, [product.id, vicProductCounts]);
+  const activeIncentiveOfferCount = getActiveIncentiveOfferCount(product);
 
   const openingLine = useMemo(() => formatProductOpeningLine(product), [product]);
+  const priceDisplayLine = useMemo(() => directoryProductPriceDisplay(product), [product]);
+
+  const repFirmLinks = product.repFirmLinks ?? [];
+  const repFirmTitle = useMemo(() => repFirmLinksTitle(product), [product]);
 
   const clearLongPress = useCallback(() => {
     if (longPressTimer.current) {
@@ -200,17 +209,6 @@ export default function DirectoryProductCard({
               title="You have personal notes"
             />
           )}
-          {product.activeAdvisoryCount != null &&
-          product.activeAdvisoryCount > 0 &&
-          canViewCommissions ? (
-            <div
-              className="flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-medium text-amber-400"
-              title={`${product.activeAdvisoryCount} active incentive${product.activeAdvisoryCount !== 1 ? "s" : ""}`}
-            >
-              <Flame className="h-2.5 w-2.5" aria-hidden />
-              {product.activeAdvisoryCount > 1 ? product.activeAdvisoryCount : null}
-            </div>
-          ) : null}
         </div>
 
         <button
@@ -254,8 +252,8 @@ export default function DirectoryProductCard({
             </div>
             <p className={productListingMetaLineClass}>
               {placeLine}
-              {product.priceTier ? (
-                <span className="ml-1.5 text-2xs text-muted-foreground">{product.priceTier}</span>
+              {priceDisplayLine ? (
+                <span className="ml-1.5 text-2xs text-muted-foreground">{priceDisplayLine}</span>
               ) : null}
             </p>
             {openingLine ? (
@@ -276,115 +274,91 @@ export default function DirectoryProductCard({
           )}
         </div>
 
-        {activePrograms.length > 0 && !compact && (
-          <div className="mt-1.5 flex flex-wrap items-center gap-1">
-            {activePrograms.slice(0, 3).map((pp) => (
-              <span
-                key={pp.id}
-                className="rounded-full border px-1.5 py-0.5 text-[8px]"
-                style={{
-                  background: "rgba(201,169,110,0.06)",
-                  borderColor: "rgba(201,169,110,0.12)",
-                  color: "#B8976E",
-                }}
-              >
-                {programDisplayName(pp)}
-              </span>
-            ))}
-            {activePrograms.length > 3 && (
-              <span className="self-center text-[8px] text-muted-foreground">+{activePrograms.length - 3}</span>
-            )}
-            {showVariedTerms ? (
-              <span className="text-[8px] font-medium text-[#A38F6E]">· custom terms</span>
-            ) : null}
-          </div>
-        )}
-
-        {product.repFirmCount > 0 ? (
-          <div className={cn("flex items-center gap-1", compact ? "mt-0.5" : "mt-1")}>
-            <Users
-              className={cn("shrink-0 text-[#B07A5B]/60", compact ? "h-2 w-2" : "h-2.5 w-2.5")}
-              aria-hidden
-            />
-            <span className={cn("text-[#B07A5B]/60", compact ? "text-[7px]" : "text-[8px]")}>
-              {product.repFirmCount} rep firm{product.repFirmCount !== 1 ? "s" : ""}
-            </span>
-          </div>
-        ) : null}
-
-        {isDMCProduct(product) && dmcOperationalDataPresent(product) && !compact ? (
-          <span className="mt-1.5 inline-flex w-fit rounded-full bg-[rgba(212,165,116,0.15)] px-2 py-0.5 text-[11px] text-[rgba(212,165,116,0.85)]">
-            Operations on file
-          </span>
-        ) : null}
-
-        {product.updatedAt && !compact ? (
-          <div className="mt-1 flex items-center justify-end gap-1">
-            <Clock className="h-2.5 w-2.5 text-muted-foreground/65" aria-hidden />
-            <span className="text-[8px] text-muted-foreground/65">Updated {relativeTime(product.updatedAt)}</span>
-          </div>
-        ) : null}
-
-        {product.activePromotion && !compact && (
-          <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.10)] bg-[rgba(201,169,110,0.06)] px-2 py-1.5">
-            <Sparkles className="h-3 w-3 shrink-0 text-brand-cta" aria-hidden />
-            {canViewCommissions ? (
-              <span className="text-2xs text-brand-cta">
-                {(() => {
-                  const fmt = topForCommission?.commissionType === "flat" ? (v: number) => `$${v}` : (v: number) => `${v}%`;
-                  return product.baseCommissionRate != null ? (
-                    <>
-                      <del className="opacity-50">{fmt(product.baseCommissionRate)}</del> {fmt(product.effectiveCommissionRate!)}
-                    </>
-                  ) : (
-                    <>{fmt(product.effectiveCommissionRate!)}</>
-                  );
-                })()}
-              </span>
-            ) : (
-              <span className="text-2xs text-brand-cta">Active promotion</span>
-            )}
-            <span className="rounded-full bg-[rgba(201,169,110,0.15)] px-1.5 py-0.5 text-[8px] font-medium text-brand-cta">
-              promo
-            </span>
-          </div>
-        )}
-
-        <div
-          className={cn(
-            "mt-auto overflow-hidden border-t border-white/[0.04] text-brand-cta/80",
-            compact
-              ? "max-h-[2.25rem] border-white/[0.03] pt-1.5 text-[10px]"
-              : "h-6 pt-2 text-xs"
-          )}
-        >
-          <div className="flex items-center gap-2 whitespace-nowrap">
-          {canViewCommissions && topForCommission != null && topRate != null ? (
-            <span className="flex min-w-0 items-center gap-1">
-              <span className="text-2xs text-[#B8976E]">
-                {topForCommission.commissionType === "flat" ? `$${topRate}` : `${topRate}%`}
-              </span>
-              <span className="truncate text-[9px] text-muted-foreground">via {programDisplayName(topForCommission)}</span>
-            </span>
-          ) : null}
-          {vicCount > 0 ? (
-            <span className="ml-auto flex shrink-0 items-center gap-1 text-[9px] text-[#5C5852]/70">
-              <Users className="h-2.5 w-2.5" aria-hidden />
-              {vicCount} VIC{vicCount !== 1 ? "s" : ""}
-            </span>
-          ) : null}
-          {showSavedFromSearch ? (
-            <span
-              className="group relative ml-auto flex shrink-0 items-center gap-1 text-[9px] text-muted-foreground"
-              title={
-                savedFromSearchTitle ??
-                "Saved from chat or external search to your External Search collection."
-              }
+        <div className="mt-auto flex min-h-0 flex-col">
+          {showRepFirmLinks && repFirmLinks.length > 0 ? (
+            <div
+              className={cn("flex min-w-0 flex-wrap gap-1", compact ? "mb-1" : "mb-1.5")}
+              title={repFirmTitle}
             >
-              <Search className="h-2.5 w-2.5 shrink-0" aria-hidden />
-              <span>Saved from search</span>
-            </span>
+              {repFirmLinks.map((link) => {
+                const label = link.repFirmName?.trim() || link.repFirmId;
+                return (
+                  <span
+                    key={link.id}
+                    className={cn(
+                      "inline-flex max-w-full min-w-0 items-center gap-0.5 rounded-full border",
+                      compact ? "px-1.5 py-px text-[7px]" : "px-1.5 py-0.5 text-[8px]"
+                    )}
+                    style={{
+                      background: "rgba(176, 122, 91, 0.08)",
+                      borderColor: "rgba(176, 122, 91, 0.18)",
+                      color: "#B07A5B",
+                    }}
+                  >
+                    <Users className="h-2 w-2 shrink-0 opacity-90" aria-hidden />
+                    <span className="min-w-0 truncate">{label}</span>
+                  </span>
+                );
+              })}
+            </div>
           ) : null}
+
+          <div
+            className={cn(
+              "overflow-hidden border-t border-white/[0.04] text-brand-cta/80",
+              compact
+                ? "max-h-[2.25rem] border-white/[0.03] pt-1.5 text-[10px]"
+                : "min-h-6 pt-2 text-xs"
+            )}
+          >
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+              {canViewCommissions && cardCommission != null ? (
+                <span className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5">
+                  <span
+                    className="inline-flex items-center gap-0.5 text-2xs text-[#B8976E]"
+                    title={
+                      activeIncentiveOfferCount > 0
+                        ? `${activeIncentiveOfferCount} active temporary incentive${activeIncentiveOfferCount !== 1 ? "s" : ""}`
+                        : undefined
+                    }
+                  >
+                    {activeIncentiveOfferCount > 0 ? (
+                      <Flame className="h-2.5 w-2.5 shrink-0 text-[#c9a96e]/90" aria-hidden />
+                    ) : null}
+                    {commissionIsFlat ? `$${cardCommission}` : `${cardCommission}%`}{" "}
+                    <span className="font-normal text-muted-foreground">base</span>
+                  </span>
+                  {rateFromTopProgram != null && topForCommission ? (
+                    <span className="truncate text-[9px] text-muted-foreground">
+                      via {programDisplayName(topForCommission)}
+                    </span>
+                  ) : (
+                    <span className="truncate text-[9px] text-muted-foreground">Listed rate</span>
+                  )}
+                  {activeIncentiveOfferCount > 0 ? (
+                    <span
+                      className="text-[8px] text-muted-foreground"
+                      title="Time-bound incentives apply separately; see product detail."
+                    >
+                      · {activeIncentiveOfferCount} temporary incentive
+                      {activeIncentiveOfferCount !== 1 ? "s" : ""}
+                    </span>
+                  ) : null}
+                </span>
+              ) : null}
+              {showSavedFromSearch ? (
+                <span
+                  className="group relative flex shrink-0 items-center gap-1 text-[9px] text-muted-foreground"
+                  title={
+                    savedFromSearchTitle ??
+                    "Saved from chat or external search to your External Search collection."
+                  }
+                >
+                  <Search className="h-2.5 w-2.5 shrink-0" aria-hidden />
+                  <span>Saved from search</span>
+                </span>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>

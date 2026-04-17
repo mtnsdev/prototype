@@ -9,6 +9,8 @@ type Props<T extends string> = {
   onChange: (value: T) => void;
   options: SegmentedOption<T>[];
   className?: string;
+  /** Active segment style — `gold` matches Enable dark toolbar accent. */
+  activeTone?: "default" | "gold";
   /** Accessible label for the tablist */
   "aria-label"?: string;
 };
@@ -21,6 +23,7 @@ export function SegmentedControl<T extends string>({
   onChange,
   options,
   className,
+  activeTone = "default",
   "aria-label": ariaLabel,
 }: Props<T>) {
   return (
@@ -43,10 +46,12 @@ export function SegmentedControl<T extends string>({
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(o.value)}
             className={cn(
-              "relative rounded-lg px-3 py-1.5 text-xs font-medium transition-[color,background-color,box-shadow] duration-150",
+              "relative rounded-lg px-3 py-1.5 text-xs font-medium transition-[color,background-color,box-shadow,border-color] duration-150",
               selected
-                ? "bg-background/90 text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+                ? activeTone === "gold"
+                  ? "border border-[rgba(201,169,110,0.35)] bg-[rgba(201,169,110,0.12)] text-brand-cta shadow-sm ring-1 ring-[rgba(201,169,110,0.12)]"
+                  : "bg-background/90 text-foreground shadow-sm"
+                : "border border-transparent text-muted-foreground hover:text-foreground"
             )}
           >
             {o.label}

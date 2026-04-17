@@ -10,7 +10,7 @@ import {
   dmcOperationalDataPresent,
   isDMCProduct,
 } from "@/components/products/directoryProductTypeHelpers";
-import { directoryProductPlaceLabel } from "./productDirectoryVisual";
+import { directoryProductPlaceLabel, directoryProductPriceDisplay } from "./productDirectoryVisual";
 import {
   getTopBookableProgramByCommission,
   programDisplayCommissionRate,
@@ -37,6 +37,8 @@ type Props = {
   scrollToProductId?: string | null;
   /** Scroll container for virtualization (Product Directory browse column). */
   scrollParentRef: React.RefObject<HTMLDivElement | null>;
+  /** When false, hide the “N rep firms” summary (main Products browse). */
+  showRepFirmSummary?: boolean;
 };
 
 const ROW_ESTIMATE_PX = 68;
@@ -57,6 +59,7 @@ export default function DirectoryProductListView({
   externalSearchTooltip,
   scrollToProductId,
   scrollParentRef,
+  showRepFirmSummary = true,
 }: Props) {
   const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ignoreClickProductIdRef = useRef<string | null>(null);
@@ -103,6 +106,7 @@ export default function DirectoryProductListView({
         const tierStarCount = tierUi?.stars ?? 0;
         const tierStarColor = tierUi?.color ?? "#4A4540";
         const openingLine = formatProductOpeningLine(product);
+        const priceDisplayLine = directoryProductPriceDisplay(product);
 
         const onPointerDown = () => {
           if (!onEnterBulkMode || bulkMode) return;
@@ -220,8 +224,8 @@ export default function DirectoryProductListView({
                     </div>
                     <p className="truncate text-2xs leading-tight text-muted-foreground">
                       {directoryProductPlaceLabel(product)}
-                      {product.priceTier ? (
-                        <span className="ml-1 text-[9px] text-muted-foreground">{product.priceTier}</span>
+                      {priceDisplayLine ? (
+                        <span className="ml-1 text-[9px] text-muted-foreground">{priceDisplayLine}</span>
                       ) : null}
                     </p>
                     {openingLine ? (
@@ -259,7 +263,7 @@ export default function DirectoryProductListView({
                 </div>
                 <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
                   <ProductDirectoryCategoryBadge types={product.types} compact />
-                  {product.activePromotion && (
+                  {product.activeIncentive && (
                     <span className="inline-flex items-center gap-0.5 rounded border border-[rgba(201,169,110,0.12)] bg-[rgba(201,169,110,0.06)] px-1 py-px text-[8px] text-brand-cta">
                       <Sparkles className="h-2 w-2 shrink-0" />
                       {canViewCommissions ? (
@@ -289,7 +293,7 @@ export default function DirectoryProductListView({
                   <span className="text-[8px] text-muted-foreground">
                     {product.partnerProgramCount} prog · {product.collectionCount} lists
                   </span>
-                  {product.repFirmCount > 0 ? (
+                  {showRepFirmSummary && product.repFirmCount > 0 ? (
                     <span className="inline-flex items-center gap-0.5 text-[8px] text-[#B07A5B]/70">
                       <Users className="h-2 w-2 shrink-0" aria-hidden />
                       {product.repFirmCount} rep firm{product.repFirmCount !== 1 ? "s" : ""}

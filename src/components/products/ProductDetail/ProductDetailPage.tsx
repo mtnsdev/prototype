@@ -359,10 +359,6 @@ export default function ProductDetailPage({ productId }: Props) {
     return applyPartnerRegistryToProduct(directoryProduct, partnerProgramsCtx.snapshot);
   }, [directoryProduct, partnerProgramsCtx]);
 
-  const partnerProgramsManagedInRegistry = Boolean(
-    partnerProgramsCtx?.snapshot.links.some((l) => l.productId === productId)
-  );
-
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -442,7 +438,6 @@ export default function ProductDetailPage({ productId }: Props) {
             onRequestCreateCollection={() => setPickerOpen(true)}
             partnerProgramCustomKeys={customProgramKeys}
             repFirmsRegistry={repFirmsRegistry}
-            partnerProgramsManagedInRegistry={partnerProgramsManagedInRegistry}
           />
         </div>
         {pickerOpen && (

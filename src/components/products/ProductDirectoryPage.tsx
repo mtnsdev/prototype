@@ -12,7 +12,6 @@ import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/contexts/ToastContext";
 import { MOCK_TEAMS } from "@/lib/teamsMock";
 import { usePermissions } from "@/hooks/usePermissions";
-import { DirectoryRoleToggle } from "@/components/products/DirectoryRoleToggle";
 import type {
   DirectoryAmenityTag,
   DirectoryCollectionOption,
@@ -35,9 +34,9 @@ import DirectoryProductListView from "./DirectoryProductListView";
 import ProductDirectoryDetailPanel from "./ProductDirectoryDetailPanel";
 import ProductDirectoryCollectionPicker from "./ProductDirectoryCollectionPicker";
 import ProductDirectoryMapSplit from "./ProductDirectoryMapSplit";
+import { PartnerPortalTab } from "./PartnerPortalTab";
 import {
   ProductDirectoryCollectionsTab,
-  ProductDirectoryPartnerPortalTab,
   ProductDirectoryRepFirmsTab,
 } from "./ProductDirectoryTabsViews";
 import type { Team } from "@/types/teams";
@@ -63,12 +62,7 @@ import {
   programDisplayName,
   programFilterId,
 } from "./productDirectoryCommission";
-import {
-  applyPartnerPortalPayloadToProducts,
-  createDirectoryCollectionRecord,
-  type PartnerPortalAdminSavePayload,
-  validatePartnerPortalAdminPayload,
-} from "./productDirectoryLogic";
+import { createDirectoryCollectionRecord } from "./productDirectoryLogic";
 import {
   cloneDirectoryCollectionsForState,
   cloneDirectoryProductsForState,
@@ -83,7 +77,6 @@ import { resolveAdvisorCatalogFromStorage } from "./productDirectoryCatalogResol
 import { useProductDirectoryCatalog } from "./ProductDirectoryCatalogContext";
 import { usePartnerProgramsOptional } from "@/contexts/PartnerProgramsContext";
 import { applyPartnerRegistryToProduct } from "@/lib/partnerProgramMerge";
-import { syncPartnerPortalPayloadToRegistry } from "@/lib/partnerPortalRegistrySync";
 import { getPrimaryDirectoryType } from "@/components/products/directoryProductTypeHelpers";
 import { directoryCategoryColors, directoryCategoryLabel } from "./productDirectoryVisual";
 import { ScopeBadge } from "@/components/ui/ScopeBadge";
@@ -99,6 +92,7 @@ import {
 import { TEAM_EVERYONE_ID } from "@/types/teams";
 import { MOCK_REP_FIRMS } from "./productDirectoryRepFirmMock";
 import type { RepFirm, RepFirmProductLink } from "@/types/rep-firm";
+import { persistedPerProductRepLinkContacts } from "@/lib/repFirmContactChannels";
 import { getProductId } from "@/lib/products-api";
 
 function maxActiveIncentiveValue(product: DirectoryProduct): number {
@@ -154,7 +148,7 @@ function clonePartnerProgramTemplate(
 ): DirectoryProduct["partnerPrograms"][number] {
   return {
     ...program,
-    activePromotions: (program.activePromotions ?? []).map((promo) => ({ ...promo })),
+    activeIncentives: (program.activeIncentives ?? []).map((promo) => ({ ...promo })),
     amenityTags: program.amenityTags ? [...program.amenityTags] : undefined,
   };
 }
@@ -537,8 +531,12 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     if (!embedMode) return;
     setMainTab("browse");
   }, [embedMode]);
-  const [partnerPortalDirty, setPartnerPortalDirty] = useState(false);
-  const [partnerPortalMountKey, setPartnerPortalMountKey] = useState(0);
+  const [partnerProgramsDirty, setPartnerProgramsDirty] = useState(false);
+  /** When true, partner add/edit fills the browse column and only the editor body scrolls (no nested scroll with browseScrollRef). */
+  const [partnerProgramEditorOpen, setPartnerProgramEditorOpen] = useState(false);
+  /** Same for rep firm add/edit. */
+  const [repFirmEditorOpen, setRepFirmEditorOpen] = useState(false);
+  const [partnerProgramsMountKey, setPartnerProgramsMountKey] = useState(0);
   const [repFirmsMountKey, setRepFirmsMountKey] = useState(0);
   const [repFirmsDirty, setRepFirmsDirty] = useState(false);
   const [tabLeaveDialogOpen, setTabLeaveDialogOpen] = useState(false);
@@ -566,16 +564,22 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
 
   useEffect(() => {
     const tab = searchParams.get("tab");
+    if (!embedMode && pathname === "/dashboard/products" && tab === "destinations") {
+      router.replace("/dashboard/products/destinations");
+      return;
+    }
     const next: ProductDirectoryMainTab =
       tab === "collections"
         ? "collections"
+        : tab === "destinations"
+          ? "destinations"
         : tab === "rep-firms" || tab === "rep_firms"
           ? "rep-firms"
-        : tab === "partner" || tab === "partner-portal"
-          ? "partner-portal"
+        : tab === "partner" || tab === "partner-programs" || tab === "partner-portal"
+          ? "partner-programs"
           : "browse";
     setMainTab((prev) => (prev === next ? prev : next));
-  }, [searchParams]);
+  }, [embedMode, pathname, router, searchParams]);
 
   useEffect(() => {
     const selectedProductId = searchParams.get("selected");
@@ -594,6 +598,9 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
         p.delete("program");
       } else if (t === "collections") {
         p.set("tab", "collections");
+        p.delete("program");
+      } else if (t === "destinations") {
+        p.set("tab", "destinations");
         p.delete("program");
       } else if (t === "rep-firms") {
         p.set("tab", "rep-firms");
@@ -632,9 +639,21 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
 
   const trySetMainTab = useCallback(
     (t: ProductDirectoryMainTab) => {
+      if (t === "destinations") {
+        const partnerBlocked = mainTab === "partner-programs" && partnerProgramsDirty;
+        const repFirmBlocked = mainTab === "rep-firms" && repFirmsDirty;
+        if (partnerBlocked || repFirmBlocked) {
+          setPendingCatalogSegment(t);
+          setTabLeaveDialogOpen(true);
+          return;
+        }
+        dismissDirectoryOverlays();
+        router.push("/dashboard/products/destinations");
+        return;
+      }
       if (t === mainTab) return;
       const partnerBlocked =
-        mainTab === "partner-portal" && t !== "partner-portal" && partnerPortalDirty;
+        mainTab === "partner-programs" && t !== "partner-programs" && partnerProgramsDirty;
       const repFirmBlocked = mainTab === "rep-firms" && t !== "rep-firms" && repFirmsDirty;
       if (partnerBlocked || repFirmBlocked) {
         setPendingCatalogSegment(t);
@@ -645,55 +664,45 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
       setMainTab(t);
       applyUrlForTab(t);
     },
-    [applyUrlForTab, dismissDirectoryOverlays, mainTab, partnerPortalDirty, repFirmsDirty]
+    [
+      applyUrlForTab,
+      dismissDirectoryOverlays,
+      mainTab,
+      partnerProgramsDirty,
+      repFirmsDirty,
+      router,
+    ]
   );
 
   const trySelectCatalogSegment = useCallback(
     (t: CatalogSegment) => {
-      if (t === "destinations") {
-        const partnerBlocked = mainTab === "partner-portal" && partnerPortalDirty;
-        const repFirmBlocked = mainTab === "rep-firms" && repFirmsDirty;
-        if (partnerBlocked || repFirmBlocked) {
-          setPendingCatalogSegment("destinations");
-          setTabLeaveDialogOpen(true);
-          return;
-        }
-        dismissDirectoryOverlays();
-        router.push("/dashboard/products/destinations");
-        return;
-      }
       trySetMainTab(t);
     },
-    [
-      dismissDirectoryOverlays,
-      mainTab,
-      partnerPortalDirty,
-      repFirmsDirty,
-      router,
-      trySetMainTab,
-    ]
+    [trySetMainTab]
   );
 
   const confirmLeavePartnerTab = useCallback(() => {
     const t = pendingCatalogSegment;
-    const leavingPartner = mainTab === "partner-portal";
+    const leavingPartner = mainTab === "partner-programs";
     const leavingRepFirms = mainTab === "rep-firms";
     setTabLeaveDialogOpen(false);
     setPendingCatalogSegment(null);
     if (leavingPartner) {
-      setPartnerPortalMountKey((k) => k + 1);
-      setPartnerPortalDirty(false);
+      setPartnerProgramsMountKey((k) => k + 1);
+      setPartnerProgramsDirty(false);
+      setPartnerProgramEditorOpen(false);
     }
     if (leavingRepFirms) {
       setRepFirmsMountKey((k) => k + 1);
       setRepFirmsDirty(false);
+      setRepFirmEditorOpen(false);
     }
     dismissDirectoryOverlays();
-    if (t === "destinations") {
-      router.push("/dashboard/products/destinations");
-      return;
-    }
     if (t) {
+      if (t === "destinations") {
+        router.push("/dashboard/products/destinations");
+        return;
+      }
       setMainTab(t);
       applyUrlForTab(t);
     }
@@ -1084,15 +1093,16 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
           }
           const firm = repFirmById.get(repFirmId);
           if (!firm) continue;
+          const primaryContact = firm.contacts?.[0];
           nextLinks.push({
             id: `rfl-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
             repFirmId,
             repFirmName: firm.name,
             scope: firm.scope,
-            status: firm.status,
-            contactName: firm.contactName,
-            contactEmail: firm.contactEmail,
-            contactPhone: firm.contactPhone,
+            status: firm.status === "inactive" ? "inactive" : "active",
+            contactName: primaryContact?.name ?? firm.contactName,
+            contactEmail: primaryContact?.email ?? firm.contactEmail,
+            contactPhone: primaryContact?.phone ?? firm.contactPhone,
             lastEditedAt: now,
             lastEditedByName: editorDisplayName,
           });
@@ -1158,10 +1168,6 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
 
   const detailProduct = detailProductId ? (viewProducts.find((p) => p.id === detailProductId) ?? null) : null;
 
-  const partnerProgramsManagedInRegistry = Boolean(
-    detailProductId && partnerProgramsCtx?.snapshot.links.some((l) => l.productId === detailProductId)
-  );
-
   useLayoutEffect(() => {
     if (mainTab !== "browse" || viewMode !== "grid" || !detailProductId) return;
     const el = document.querySelector(`[data-directory-product-id="${CSS.escape(detailProductId)}"]`);
@@ -1184,14 +1190,21 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
       attachedProductIds: string[];
       firmName: string;
       firmScope: string;
-      firmStatus: "active" | "inactive";
+      firmStatus: "active" | "inactive" | "prospect";
       usePerProductContacts: boolean;
       perProductContacts: Record<
         string,
-        { contactName: string; contactEmail: string; contactPhone: string; notes: string }
+        {
+          contactName: string;
+          contactEmails: string[];
+          contactPhones: string[];
+          notes: string;
+          market: string;
+        }
       >;
       firmContact: { contactName?: string; contactEmail?: string; contactPhone?: string };
     }) => {
+      if (!isAdmin) return;
       const editorName = editorDisplayName;
       const attachedSet = new Set(args.attachedProductIds);
       const now = new Date().toISOString();
@@ -1216,14 +1229,15 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
               repFirmId: args.repFirmId,
               repFirmName: args.firmName,
               scope: scopeVal,
-              status: args.firmStatus,
+              status: args.firmStatus === "inactive" ? "inactive" : "active",
               ...(args.usePerProductContacts && row
-                ? {
-                    contactName: row.contactName.trim() || undefined,
-                    contactEmail: row.contactEmail.trim() || undefined,
-                    contactPhone: row.contactPhone.trim() || undefined,
-                    notes: row.notes.trim() || undefined,
-                  }
+                ? persistedPerProductRepLinkContacts({
+                    contactName: row.contactName,
+                    emailRows: row.contactEmails,
+                    phoneRows: row.contactPhones,
+                    notes: row.notes,
+                    market: row.market,
+                  })
                 : {
                     contactName: args.firmContact.contactName,
                     contactEmail: args.firmContact.contactEmail,
@@ -1240,16 +1254,19 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
           const row = args.usePerProductContacts ? args.perProductContacts[p.id] : undefined;
           const contactPatch =
             args.usePerProductContacts && row
-              ? {
-                  contactName: row.contactName.trim() || undefined,
-                  contactEmail: row.contactEmail.trim() || undefined,
-                  contactPhone: row.contactPhone.trim() || undefined,
-                  notes: row.notes.trim() || undefined,
-                }
+              ? persistedPerProductRepLinkContacts({
+                  contactName: row.contactName,
+                  emailRows: row.contactEmails,
+                  phoneRows: row.contactPhones,
+                  notes: row.notes,
+                  market: row.market,
+                })
               : {
                   contactName: args.firmContact.contactName,
                   contactEmail: args.firmContact.contactEmail,
                   contactPhone: args.firmContact.contactPhone,
+                  contactEmails: undefined,
+                  contactPhones: undefined,
                   notes: existing.notes,
                 };
 
@@ -1257,7 +1274,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
             ...existing,
             repFirmName: args.firmName,
             scope: scopeVal,
-            status: args.firmStatus,
+            status: args.firmStatus === "inactive" ? "inactive" : "active",
             ...contactPatch,
             lastEditedAt: now,
             lastEditedByName: editorName,
@@ -1267,7 +1284,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
         })
       );
     },
-    [editorDisplayName]
+    [editorDisplayName, isAdmin]
   );
 
   const isBookmarked = useCallback((p: DirectoryProduct) => p.collectionIds.length > 0, []);
@@ -1375,54 +1392,6 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
       return id;
     },
     [uid, user, pickerProductId, products, toast]
-  );
-
-  const saveProgramFromPartnerPortal = useCallback(
-    (programKey: string, payload: PartnerPortalAdminSavePayload): boolean => {
-      const validationError = validatePartnerPortalAdminPayload(payload);
-      if (validationError) {
-        toast({ title: validationError, tone: "destructive" });
-        return false;
-      }
-      const editorName = user?.username ?? user?.email?.split("@")[0] ?? "Admin";
-      const editedAtISO = new Date().toISOString();
-      let updatedCount = 0;
-      setProducts((prev) => {
-        const result = applyPartnerPortalPayloadToProducts({
-          products: prev,
-          programKey,
-          payload,
-          audit: {
-            userId: uid,
-            userName: editorName,
-            editedAtISO,
-          },
-        });
-        updatedCount = result.updatedCount;
-        if (partnerProgramsCtx && updatedCount > 0) {
-          syncPartnerPortalPayloadToRegistry({
-            programKey,
-            payload,
-            snapshot: partnerProgramsCtx.snapshot,
-            upsertProgram: partnerProgramsCtx.upsertProgram,
-            upsertLink: partnerProgramsCtx.upsertLink,
-            removeLink: partnerProgramsCtx.removeLink,
-            nowIso: editedAtISO,
-            editorId: uid,
-          });
-        }
-        return result.products;
-      });
-      toast({
-        title: `Updated program across ${updatedCount} product${updatedCount !== 1 ? "s" : ""}`,
-        description: partnerProgramsCtx
-          ? "Saved to catalog and Partner Programs registry (this browser)."
-          : "Saved in this browser until API sync.",
-        tone: "success",
-      });
-      return true;
-    },
-    [toast, uid, user, partnerProgramsCtx]
   );
 
   const openCreateCollectionModal = useCallback(
@@ -1684,18 +1653,26 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
         <div
           className={cn(
             APP_TOOLBAR_ROW,
-            "relative z-50 min-w-0 flex flex-wrap items-center justify-between gap-3 pl-5 pr-5 md:pl-6 md:pr-6"
+            "relative z-50 min-w-0 flex flex-wrap items-center gap-3 px-6"
           )}
         >
           <div className="min-w-0 max-w-full flex-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <ProductCatalogSectionTabs value={mainTab} onChange={trySelectCatalogSegment} />
+            <ProductCatalogSectionTabs
+              value={mainTab}
+              onChange={trySelectCatalogSegment}
+              showPartnerPortal
+            />
           </div>
-          <DirectoryRoleToggle className="shrink-0" />
         </div>
       )}
 
       {mainTab === "browse" ? (
-      <div className={cn("relative z-50 shrink-0 px-6 pb-0 pt-4", embedMode && "px-3 pt-2")}>
+      <div
+        className={cn(
+          "relative z-50 shrink-0 border-b border-border bg-inset px-6 py-3",
+          embedMode && "px-3 py-2"
+        )}
+      >
         <ProductDirectoryFilterBar
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}
@@ -2009,7 +1986,17 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
       ) : null}
       </div>
 
-      <div ref={browseScrollRef} className="relative z-0 min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-4">
+      <div
+        ref={browseScrollRef}
+        className={cn(
+          "relative z-0 min-h-0 flex-1 px-6 pb-6",
+          ((mainTab === "partner-programs" && partnerProgramEditorOpen) ||
+            (mainTab === "rep-firms" && repFirmEditorOpen))
+            ? "flex flex-col overflow-hidden"
+            : "overflow-y-auto",
+          mainTab === "browse" ? "pt-4" : "pt-0"
+        )}
+      >
         <div
           className={cn(
             "min-h-0",
@@ -2035,12 +2022,17 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
         <div
           className={cn(
             "min-h-0",
+            mainTab === "rep-firms" &&
+              repFirmEditorOpen &&
+              "flex h-full min-h-0 flex-1 flex-col overflow-hidden",
             mainTab !== "rep-firms" && "pointer-events-none hidden"
           )}
           aria-hidden={mainTab !== "rep-firms"}
         >
           <ProductDirectoryRepFirmsTab
             key={repFirmsMountKey}
+            repTabVisible={mainTab === "rep-firms"}
+            onEditorSurfaceChange={setRepFirmEditorOpen}
             repFirms={repFirms}
             products={products}
             teams={MOCK_TEAMS}
@@ -2049,11 +2041,16 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
             canViewCommissions={canViewCommissions}
             externalSearchCollectionId={DIRECTORY_EXTERNAL_COLLECTION_ID}
             getExternalSearchTooltip={externalSearchTooltipForProduct}
-            onSaveRepFirm={(id, patch) =>
-              setRepFirms((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)))
-            }
-            onAddRepFirm={(firm) => setRepFirms((prev) => [firm, ...prev])}
+            onSaveRepFirm={(id, patch) => {
+              if (!isAdmin) return;
+              setRepFirms((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
+            }}
+            onAddRepFirm={(firm) => {
+              if (!isAdmin) return;
+              setRepFirms((prev) => [firm, ...prev]);
+            }}
             onRemoveRepFirm={(id) => {
+              if (!isAdmin) return;
               setRepFirms((prev) => prev.filter((f) => f.id !== id));
               setProducts((prev) =>
                 prev.map((p) => {
@@ -2082,19 +2079,29 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
         <div
           className={cn(
             "min-h-0",
-            mainTab !== "partner-portal" && "pointer-events-none hidden"
+            mainTab === "partner-programs" &&
+              partnerProgramEditorOpen &&
+              "flex min-h-0 flex-1 flex-col overflow-hidden",
+            mainTab !== "partner-programs" && "pointer-events-none hidden"
           )}
-          aria-hidden={mainTab !== "partner-portal"}
+          aria-hidden={mainTab !== "partner-programs"}
         >
-          <ProductDirectoryPartnerPortalTab
-            key={partnerPortalMountKey}
-            products={viewProducts}
-            teams={MOCK_TEAMS}
-            canViewCommissions={canViewCommissions}
+          <PartnerPortalTab
+            key={partnerProgramsMountKey}
             isAdmin={isAdmin}
-            onSelectProduct={(id) => setDetailProductId(id)}
-            onAdminSaveProgram={saveProgramFromPartnerPortal}
-            onDirtyChange={setPartnerPortalDirty}
+            canViewCommissions={canViewCommissions}
+            partnerTabVisible={mainTab === "partner-programs"}
+            onEditorSurfaceChange={setPartnerProgramEditorOpen}
+            onDirtyChange={setPartnerProgramsDirty}
+            catalogProducts={viewProducts}
+            onSelectProduct={(id) => {
+              trySetMainTab("browse");
+              setDetailProductId(id);
+            }}
+            onBrowseByProgram={(programId) => {
+              setSelectedProgramIds([programId]);
+              trySetMainTab("browse");
+            }}
           />
         </div>
         <div
@@ -2118,10 +2125,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
             <>
           {viewMode === "grid" && (
             <div
-              className={cn(
-                "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 view-transition-active",
-                !detailProduct && "xl:grid-cols-4"
-              )}
+              className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 view-transition-active"
             >
               {userLoading
                 ? Array.from({ length: 6 }).map((_, i) => (
@@ -2131,6 +2135,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
                 <DirectoryProductCard
                   key={product.id}
                   product={product}
+                  showRepFirmLinks={false}
                   canViewCommissions={canViewCommissions}
                   bookmarked={isBookmarked(product)}
                   onProductClick={() => {
@@ -2162,6 +2167,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
           {viewMode === "list" && (
             <DirectoryProductListView
               products={sortedProducts}
+              showRepFirmSummary={false}
               canViewCommissions={canViewCommissions}
               isBookmarked={isBookmarked}
               onRowClick={(p) => {
@@ -2253,7 +2259,6 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
           onRequestCreateCollection={() => setPickerProductId(detailProduct.id)}
           partnerProgramCustomKeys={detailProductCustomProgramKeys}
           repFirmsRegistry={repFirms}
-          partnerProgramsManagedInRegistry={partnerProgramsManagedInRegistry}
         />
       )}
 

@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import PartnerProgramsRegistry from "@/components/settings/PartnerProgramsRegistry";
-
-export default function PartnerProgramsSettingsPage() {
-  return <PartnerProgramsRegistry />;
+export default function PartnerProgramsSettingsRedirectPage() {
+  redirect("/dashboard/products?tab=partner");
 }

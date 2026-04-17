@@ -165,7 +165,8 @@ if (process.env.DEV_WEBPACK === "1") nextArgs.push("--webpack");
 console.log(
   `[dev] Starting Next.js — open http://127.0.0.1:${PORT} (or http://localhost:${PORT})` +
     (HOST ? `  [bind: ${HOST}]` : "") +
-    "\n"
+    "\n" +
+    "[dev] First page after “Ready” compiles on demand (Turbopack); wait rather than reloading repeatedly. Later navigations are fast.\n"
 );
 
 // Use spawn (not spawnSync) so SIGINT/SIGTERM reach the Next process and ports unlock on exit.

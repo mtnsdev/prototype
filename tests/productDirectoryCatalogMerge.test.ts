@@ -15,7 +15,7 @@ function minimalProduct(id: string, name: string): DirectoryProduct {
     scope: "agency",
     baseCommissionRate: null,
     effectiveCommissionRate: null,
-    activePromotion: null,
+    activeIncentive: null,
     commissionRate: null,
     partnerProgramCount: 0,
     repFirmLinks: [],

@@ -14,7 +14,7 @@ export type DashboardCommand = {
 };
 
 export const DASHBOARD_COMMANDS: DashboardCommand[] = [
-    { id: "briefing", label: "Briefing Room", href: "/dashboard", group: "Go to", keywords: ["home", "start", "dashboard"] },
+    { id: "briefing", label: "Briefing Room", href: "/dashboard/briefing-room", group: "Go to", keywords: ["home", "start", "dashboard"] },
     { id: "products", label: "Products", href: "/dashboard/products", group: "Go to", keywords: ["catalog", "directory", "hotels"] },
     { id: "vics", label: "VICs", href: "/dashboard/vics", group: "Go to", keywords: ["clients", "customers"] },
     { id: "itineraries", label: "Itineraries", href: "/dashboard/itineraries", group: "Go to", keywords: ["trips", "travel"] },
@@ -44,18 +44,18 @@ export const DASHBOARD_COMMANDS: DashboardCommand[] = [
     {
         id: "ops-rep-firms",
         label: "Admin: Rep firms",
-        href: "/dashboard/settings/rep-firms",
+        href: "/dashboard/products?tab=rep-firms",
         group: "Agency ops",
         opsOnly: true,
         keywords: ["partners"],
     },
     {
         id: "ops-briefing",
-        label: "Admin: Briefing room",
-        href: "/dashboard/settings/briefing-room",
+        label: "Admin: Briefing room CMS",
+        href: "/admin/briefing-room",
         group: "Agency ops",
         opsOnly: true,
-        keywords: ["publish", "agency hub"],
+        keywords: ["publish", "agency hub", "cms"],
     },
     {
         id: "ops-integrations",

@@ -2,10 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import type { DirectoryPartnerProgram, DirectoryProduct } from "../src/types/product-directory";
 import {
-  applyPartnerPortalPayloadToProducts,
+  applyPartnerProgramsPayloadToProducts,
   createDirectoryCollectionRecord,
-  validatePartnerPortalAdminPayload,
-  type PartnerPortalAdminSavePayload,
+  validatePartnerProgramsAdminPayload,
+  type PartnerProgramsAdminSavePayload,
 } from "../src/components/products/productDirectoryLogic";
 
 function makeProgram(id: string, programId: string, rate: number, amenities: string): DirectoryPartnerProgram {
@@ -16,7 +16,7 @@ function makeProgram(id: string, programId: string, rate: number, amenities: str
     programName: "Program",
     commissionRate: rate,
     expiryDate: null,
-    activePromotions: [],
+    activeIncentives: [],
     amenities,
     amenityTags: [],
     status: "active",
@@ -36,7 +36,7 @@ function makeProduct(id: string, programs: DirectoryPartnerProgram[]): Directory
     scope: "agency",
     baseCommissionRate: null,
     effectiveCommissionRate: null,
-    activePromotion: null,
+    activeIncentive: null,
     commissionRate: null,
     partnerProgramCount: programs.length,
     repFirmLinks: [],
@@ -64,14 +64,14 @@ test("createDirectoryCollectionRecord builds team collection", () => {
   assert.deepEqual(col.productIds, ["p1"]);
 });
 
-function basePayload(overrides: Partial<PartnerPortalAdminSavePayload> = {}): PartnerPortalAdminSavePayload {
+function basePayload(overrides: Partial<PartnerProgramsAdminSavePayload> = {}): PartnerProgramsAdminSavePayload {
   return {
     program: {
       id: "pp1",
       name: "P",
       commissionRate: 10,
       expiryDate: null,
-      activePromotions: [],
+      activeIncentives: [],
       amenities: "",
     },
     attachedProductIds: ["p1"],
@@ -81,33 +81,33 @@ function basePayload(overrides: Partial<PartnerPortalAdminSavePayload> = {}): Pa
   };
 }
 
-test("validatePartnerPortalAdminPayload rejects empty attachments", () => {
+test("validatePartnerProgramsAdminPayload rejects empty attachments", () => {
   const bad = basePayload({ attachedProductIds: [] });
-  assert.equal(validatePartnerPortalAdminPayload(bad), "Attach at least one product.");
+  assert.equal(validatePartnerProgramsAdminPayload(bad), "Attach at least one product.");
 });
 
-test("validatePartnerPortalAdminPayload rejects negative program commission", () => {
+test("validatePartnerProgramsAdminPayload rejects negative program commission", () => {
   const bad = basePayload({
     program: {
       ...basePayload().program,
       commissionRate: -1,
     },
   });
-  assert.equal(validatePartnerPortalAdminPayload(bad), "Commission cannot be negative.");
+  assert.equal(validatePartnerProgramsAdminPayload(bad), "Commission cannot be negative.");
 });
 
-test("validatePartnerPortalAdminPayload rejects invalid expiry", () => {
+test("validatePartnerProgramsAdminPayload rejects invalid expiry", () => {
   const bad = basePayload({
     program: { ...basePayload().program, expiryDate: "not-a-date" },
   });
-  assert.equal(validatePartnerPortalAdminPayload(bad), "Invalid expiry date.");
+  assert.equal(validatePartnerProgramsAdminPayload(bad), "Invalid expiry date.");
 });
 
-test("validatePartnerPortalAdminPayload rejects negative incentive rate", () => {
+test("validatePartnerProgramsAdminPayload rejects negative incentive rate", () => {
   const bad = basePayload({
     program: {
       ...basePayload().program,
-      activePromotions: [
+      activeIncentives: [
         {
           id: "promo1",
           effectiveRate: -1,
@@ -119,15 +119,15 @@ test("validatePartnerPortalAdminPayload rejects negative incentive rate", () => 
       ],
     },
   });
-  assert.equal(validatePartnerPortalAdminPayload(bad), "Incentive effective rate cannot be negative.");
+  assert.equal(validatePartnerProgramsAdminPayload(bad), "Incentive effective rate cannot be negative.");
 });
 
-test("validatePartnerPortalAdminPayload rejects promotion window after program expiry", () => {
+test("validatePartnerProgramsAdminPayload rejects promotion window after program expiry", () => {
   const bad = basePayload({
     program: {
       ...basePayload().program,
       expiryDate: "2026-01-15T12:00:00.000Z",
-      activePromotions: [
+      activeIncentives: [
         {
           id: "promo1",
           effectiveRate: 5,
@@ -140,17 +140,17 @@ test("validatePartnerPortalAdminPayload rejects promotion window after program e
     },
   });
   assert.equal(
-    validatePartnerPortalAdminPayload(bad),
+    validatePartnerProgramsAdminPayload(bad),
     "Promotion windows cannot exceed program expiry date."
   );
 });
 
-test("validatePartnerPortalAdminPayload rejects negative override commission", () => {
+test("validatePartnerProgramsAdminPayload rejects negative override commission", () => {
   const bad = basePayload({
     useProductSpecificTerms: true,
     productOverrides: { p1: { commissionRate: -0.5, amenities: "" } },
   });
-  assert.equal(validatePartnerPortalAdminPayload(bad), "Negative commission on product p1.");
+  assert.equal(validatePartnerProgramsAdminPayload(bad), "Negative commission on product p1.");
 });
 
 test("createDirectoryCollectionRecord builds private collection", () => {
@@ -166,11 +166,11 @@ test("createDirectoryCollectionRecord builds private collection", () => {
   assert.deepEqual(col.productIds, []);
 });
 
-test("applyPartnerPortalPayloadToProducts propagates overrides and audits", () => {
+test("applyPartnerProgramsPayloadToProducts propagates overrides and audits", () => {
   const p1 = makeProduct("p1", [makeProgram("pp-a1", "prog-a", 10, "base")]);
   const p2 = makeProduct("p2", [makeProgram("pp-a2", "prog-a", 10, "base")]);
   const p3 = makeProduct("p3", []);
-  const payload: PartnerPortalAdminSavePayload = {
+  const payload: PartnerProgramsAdminSavePayload = {
     program: {
       id: "x",
       name: "Prog A",
@@ -178,7 +178,7 @@ test("applyPartnerPortalPayloadToProducts propagates overrides and audits", () =
       programName: "Prog A",
       commissionRate: 12,
       expiryDate: "2026-12-31T12:00:00.000Z",
-      activePromotions: [],
+      activeIncentives: [],
       amenities: "global",
       status: "active",
       scope: "enable",
@@ -191,7 +191,7 @@ test("applyPartnerPortalPayloadToProducts propagates overrides and audits", () =
     },
   };
 
-  const result = applyPartnerPortalPayloadToProducts({
+  const result = applyPartnerProgramsPayloadToProducts({
     products: [p1, p2, p3],
     programKey: "prog-a",
     payload,

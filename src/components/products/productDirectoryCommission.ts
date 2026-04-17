@@ -2,12 +2,9 @@ import type { DirectoryPartnerProgram, DirectoryProduct, DirectoryProgramRegistr
 
 /**
  * Commission display rules (product directory):
- * - **Card / list:** show the **highest active bookable rate** from linked partner programs
- *   (`getTopBookableProgramByCommission` → `programDisplayCommissionRate`).
- * - **Filter “Has rate” / commission threshold:** derived from the same registry programs
- *   (`getDirectoryProductRegistryCommission`, `productHasRatedCommission`).
- * - **Range / multi-program:** when multiple programs exist, the UI highlights the max rate;
- *   a future range slider can use min/max over the same bookable set (April 2026 call).
+ * - **Card / list:** show the **highest guaranteed base rate** from linked partner programs (no folded incentives).
+ * - **Filter “Has rate” / commission threshold:** same base-only numbers (`getDirectoryProductRegistryCommission`).
+ * - **Incentive indicator:** flame / count via `getActiveIncentiveOfferCount` — never a combined “effective” headline on cards (April 17 2026).
  */
 
 export type ProgramStatus = "active" | "inactive";
@@ -44,14 +41,9 @@ export function programDisplayName(program: DirectoryPartnerProgram): string {
   return program.programName ?? program.name;
 }
 
-/** Max display rate for one program (base vs active promotions). Null = no rate to show. */
+/** Guaranteed base display rate for one program (registry merge stores base in `commissionRate`). */
 export function programDisplayCommissionRate(program: DirectoryPartnerProgram): number | null {
-  let max: number | null = program.commissionRate != null ? program.commissionRate : null;
-  for (const pr of program.activePromotions ?? []) {
-    if (pr.rateType === "flat") continue;
-    max = max == null ? pr.effectiveRate : Math.max(max, pr.effectiveRate);
-  }
-  return max;
+  return program.commissionRate != null ? program.commissionRate : null;
 }
 
 /**
@@ -68,6 +60,25 @@ export function getDirectoryProductRegistryCommission(product: DirectoryProduct)
 
 export function productHasRatedCommission(product: DirectoryProduct): boolean {
   return getDirectoryProductRegistryCommission(product) != null;
+}
+
+/**
+ * Active time-bound incentives from linked **bookable** partner programs (merged onto `activeIncentives`).
+ */
+export function countBookableActivePartnerProgramIncentives(product: DirectoryProduct): number {
+  return product.partnerPrograms
+    .filter(isProgramBookable)
+    .reduce((sum, p) => sum + (p.activeIncentives?.length ?? 0), 0);
+}
+
+/** @deprecated Use `countBookableActivePartnerProgramIncentives`. */
+export const countBookableActivePartnerProgramPromotions = countBookableActivePartnerProgramIncentives;
+
+/**
+ * Total active temporary incentives for cards / filters: commission advisories plus registry incentives.
+ */
+export function getActiveIncentiveOfferCount(product: DirectoryProduct): number {
+  return (product.activeAdvisoryCount ?? 0) + countBookableActivePartnerProgramIncentives(product);
 }
 
 /** Bookable program used for commission + amenity highlights (prefers programs with a quoted rate). */
@@ -115,7 +126,7 @@ export function isExpiringSoonDate(iso: string | null | undefined): boolean {
 function clonePartnerProgram(p: DirectoryPartnerProgram): DirectoryPartnerProgram {
   return {
     ...p,
-    activePromotions: p.activePromotions.map((x) => ({ ...x })),
+    activeIncentives: p.activeIncentives.map((x) => ({ ...x })),
     amenityTags: p.amenityTags ? [...p.amenityTags] : undefined,
   };
 }
@@ -138,6 +149,7 @@ export function directoryProductPartnerProgramsSyncPatch(
     partnerProgramCount: cloned.length,
     commissionRate: rate,
     effectiveCommissionRate: rate,
-    activePromotion: top?.activePromotions?.[0] ?? null,
+    baseCommissionRate: rate,
+    activeIncentive: top?.activeIncentives?.[0] ?? null,
   };
 }

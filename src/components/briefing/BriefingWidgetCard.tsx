@@ -77,8 +77,8 @@ export default function BriefingWidgetCard({
   return (
     <article
       className={cn(
-        "rounded-2xl border border-border bg-[rgba(255,255,255,0.02)] flex flex-col overflow-hidden col-span-1",
-        "backdrop-blur-sm transition-all duration-200 hover:border-input hover:bg-[rgba(255,255,255,0.03)]",
+        "col-span-1 flex flex-col overflow-hidden rounded-2xl border border-border bg-card/80 backdrop-blur-sm transition-all duration-200",
+        "hover:border-border/90 hover:bg-card",
         colSpanClass,
         className
       )}
@@ -86,7 +86,7 @@ export default function BriefingWidgetCard({
     >
       <div className="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-border">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-white/[0.06] flex items-center justify-center shrink-0 text-[rgba(245,245,245,0.85)]">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted/45 text-foreground/90">
             <IconComponent size={18} />
           </div>
           <h3 className="font-medium text-foreground truncate text-sm">
@@ -131,9 +131,9 @@ export default function BriefingWidgetCard({
       <div className="flex-1 min-h-0 overflow-auto p-5">
         {isLoading ? (
           <div className="animate-pulse space-y-3">
-            <div className="h-4 bg-white/[0.06] rounded-lg w-3/4" />
-            <div className="h-4 bg-white/[0.06] rounded-lg w-1/2" />
-            <div className="h-4 bg-white/[0.06] rounded-lg w-5/6" />
+            <div className="h-4 w-3/4 rounded-lg bg-muted/50" />
+            <div className="h-4 w-1/2 rounded-lg bg-muted/50" />
+            <div className="h-4 w-5/6 rounded-lg bg-muted/50" />
           </div>
         ) : (
           children

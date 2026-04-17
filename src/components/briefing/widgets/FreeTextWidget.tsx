@@ -29,10 +29,10 @@ export default function FreeTextWidget({ content }: Props) {
           value={body}
           onChange={(e) => setBody(e.target.value)}
           rows={6}
-          className="w-full rounded-md border border-input bg-white/5 px-3 py-2 text-sm text-foreground"
+          className="w-full rounded-md border border-border bg-inset px-3 py-2 text-sm text-foreground outline-none"
         />
         <div className="flex gap-2">
-          <Button size="sm" onClick={() => setEditing(false)} className="bg-white/10 text-foreground">
+          <Button size="sm" variant="secondary" onClick={() => setEditing(false)}>
             Save
           </Button>
           <Button size="sm" variant="ghost" onClick={() => { setBody(content.body); setEditing(false); }}>

@@ -31,6 +31,7 @@ import { IS_PREVIEW_MODE } from "@/config/preview";
 import { useNotificationPanelOptional } from "@/components/dashboard/DashboardNotifications";
 import { DASHBOARD_CHROME_HEADER_ROW } from "@/lib/dashboardChrome";
 import { cn } from "@/lib/utils";
+import { BRIEFING_ROOM_PATH } from "@/lib/briefingRoutes";
 export type Conversation = {
     id: number;
     title: string;
@@ -171,12 +172,12 @@ export default function Sidebar({
                 {/* Nav — daily workflow order */}
                 <nav className="p-2.5 space-y-1 flex-1 overflow-y-auto" aria-label="Main">
                     <NavLink
-                        href="/dashboard"
+                        href={BRIEFING_ROOM_PATH}
                         collapsed={!showLabels}
                         onNavigate={navClose}
                         icon={<LayoutDashboard size={18} />}
                         label="Briefing Room"
-                        active={pathname === "/dashboard"}
+                        active={pathname === BRIEFING_ROOM_PATH || pathname === "/dashboard"}
                         navTag={IS_PREVIEW_MODE ? "sample" : undefined}
                     />
                     <NavLink

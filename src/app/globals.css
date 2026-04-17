@@ -8,21 +8,21 @@
    ========================================== */
 
 :root {
-    /* Surface Colors (Warm Dark Grays) */
-    --surface-base: #0C0C0C;
-    --surface-elevated: #141414;
-    --surface-card: #161616;
-    --surface-card-hover: #1a1a1a;
-    /* Nested fields, inputs, map chrome (aligned to former #08080c / #0a0a0f) */
-    --surface-sunken: #08080c;
-    /* Menus, dropdown panels (former #0c0c12) */
-    --surface-overlay: #0c0c12;
-    --surface-interactive: rgba(255, 255, 255, 0.06);
-    --surface-interactive-hover: rgba(255, 255, 255, 0.10);
-    --surface-interactive-active: rgba(255, 255, 255, 0.14);
+    /* Surface Colors (Warm Dark Grays) — dark-first, slightly lifted for a calmer room */
+    --surface-base: #101012;
+    --surface-elevated: #18181a;
+    --surface-card: #1b1b1e;
+    --surface-card-hover: #212124;
+    /* Nested fields, inputs, map chrome */
+    --surface-sunken: #0d0d11;
+    /* Menus, dropdown panels */
+    --surface-overlay: #131318;
+    --surface-interactive: rgba(255, 255, 255, 0.05);
+    --surface-interactive-hover: rgba(255, 255, 255, 0.085);
+    --surface-interactive-active: rgba(255, 255, 255, 0.12);
 
     /* Text Colors (Warm Off-White) */
-    --text-primary: #F5F5F5;
+    --text-primary: #eeeeee;
     --text-secondary: rgba(245, 245, 245, 0.64);
     /* Slightly higher contrast for small meta text (WCAG on dark surfaces). */
     --text-tertiary: rgba(245, 245, 245, 0.52);
@@ -36,9 +36,9 @@
     --chrome-icon-muted: #4a4540;
 
     /* Border Colors */
-    --border-subtle: rgba(255, 255, 255, 0.08);
-    --border-default: rgba(255, 255, 255, 0.12);
-    --border-strong: rgba(255, 255, 255, 0.20);
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-default: rgba(255, 255, 255, 0.10);
+    --border-strong: rgba(255, 255, 255, 0.17);
 
     /* Brand Colors */
     --brand-primary: #A0A0A0;
@@ -123,11 +123,11 @@
     --radius-2xl: 16px;
     --radius-full: 9999px;
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.25);
-    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.3);
-    --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.35);
+    /* Shadows — softer falloff, less harsh on dark surfaces */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.16);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.24);
+    --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.28);
 
     /* Transitions */
     --transition-fast: 150ms ease;
@@ -216,10 +216,10 @@
     --muted-amber-text: #a8a29b;
     --muted-amber-border: rgba(130, 125, 118, 0.22);
 
-    --surface-base: #0c0d0e;
-    --surface-card: #141517;
-    --surface-card-hover: #191b1d;
-    --surface-elevated: #16181a;
+    --surface-base: #111214;
+    --surface-card: #191b1d;
+    --surface-card-hover: #1e2023;
+    --surface-elevated: #1b1d1f;
 }
 
 @theme inline {

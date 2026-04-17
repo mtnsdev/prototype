@@ -150,29 +150,30 @@ export default function ProductDirectoryFilterBar({
   }, [sortOpen]);
 
   return (
-    <FilterBar>
+    <FilterBar className="mb-0 border-0 pb-0 space-y-3">
       <FilterBarPrimaryStack>
-        <div className="flex w-full min-w-0 items-center gap-2 md:gap-3">
-          <PageSearchField
-            className="min-w-0 w-auto flex-1"
-            value={searchQuery}
-            onChange={onSearchQueryChange}
-            placeholder="Search products…"
-            aria-label="Search products"
-          />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="min-w-0 flex-1 basis-[min(100%,20rem)]">
+            <PageSearchField
+              value={searchQuery}
+              onChange={onSearchQueryChange}
+              placeholder="Search products…"
+              aria-label="Search products"
+            />
+          </div>
           <Button
             type="button"
-            variant="ghost"
+            variant="toolbarAccent"
             size="sm"
-            className="shrink-0 text-muted-foreground hover:text-foreground"
+            className="shrink-0"
             onClick={onAddProduct}
-            title="Prefer saving from chat / external search. Manual add is for edge cases only."
+            title="Add a product. You can also save from chat or external search."
           >
             <Plus className="h-3.5 w-3.5" />
-            Add manually
+            Add product
           </Button>
         </div>
-        <FilterChipScrollRow>
+        <FilterChipScrollRow className="mx-0 px-0">
           <button
             type="button"
             onClick={onClearTypeFilters}

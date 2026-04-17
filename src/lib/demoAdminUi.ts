@@ -5,5 +5,5 @@ export const DEMO_ADMIN_MENU = {
 
 export const DEMO_ADMIN_SR = {
     prototypeAdminView:
-        "Sets your session role to admin or advisor (same as the directory role pill). Admin shows Knowledge Vault, product directory, and Briefing Room as an agency operator; advisor matches the default end-user experience.",
+        "Sets your session role to admin or advisor (sidebar menu or Briefing Room). Admin shows Knowledge Vault, product directory, and Briefing Room as an agency operator; advisor matches the default end-user experience.",
 } as const;

@@ -9,7 +9,7 @@ import { BRIEFING_USER_GRID_WIDGET_IDS, USER_GRID_WIDGET_META } from "@/lib/brie
 import type { BriefingWidget } from "@/types/briefing";
 import BriefingDashboardSkeleton from "./BriefingDashboardSkeleton";
 import BriefingGrid from "./BriefingGrid";
-import BriefingAgencyContentHub from "./agency-hub/BriefingAgencyContentHub";
+import BriefingRoomV1Section from "./v1/BriefingRoomV1Section";
 import {
   getMockUpcomingTripsContentAgency,
   getMockRecentActivityContentAgency,
@@ -25,7 +25,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import BriefingCatchUpDialog from "@/components/briefing/BriefingCatchUpDialog";
-import BriefingPublicationsStub from "@/components/briefing/BriefingPublicationsStub";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -184,7 +183,7 @@ export default function BriefingRoomPage({ desktopMode = false }: BriefingRoomPa
               role="status"
               aria-live="polite"
               aria-label={`Current date and time: ${dateTime}`}
-              className="shrink-0 rounded-full border border-border bg-card/85 px-4 py-2 text-xs font-medium tabular-nums text-muted-foreground shadow-sm backdrop-blur-sm"
+              className="shrink-0 self-end rounded-full border border-border bg-card/85 px-4 py-2 text-xs font-medium tabular-nums text-muted-foreground shadow-sm backdrop-blur-sm sm:ml-auto"
             >
               {dateTime}
             </p>
@@ -218,8 +217,7 @@ export default function BriefingRoomPage({ desktopMode = false }: BriefingRoomPa
       <div className="flex min-h-0 flex-1 overflow-auto">
         <div className="mx-auto max-w-[1600px] px-6 py-10 md:px-10 md:py-12">
           <BriefingCatchUpDialog open={catchUpOpen} onOpenChange={setCatchUpOpen} />
-          <BriefingPublicationsStub />
-          <BriefingAgencyContentHub canEditBriefing={canEditBriefing} publisherName={firstName} />
+          <BriefingRoomV1Section />
           {loadError && !loading ? (
             <div
               className="mt-8 rounded-2xl border border-border bg-card/90 p-6 shadow-sm backdrop-blur-sm"

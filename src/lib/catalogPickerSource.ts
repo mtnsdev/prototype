@@ -1,5 +1,28 @@
 import type { DirectoryProduct, DirectoryProductCategory } from "@/types/product-directory";
+import type { EditorProductSlot } from "@/data/destinations";
 import { MOCK_DIRECTORY_PRODUCTS } from "@/components/products/productDirectoryMock";
+
+/** Limits catalog search to categories that belong in this destination editor list. */
+export function editorProductSlotToCategories(slot: EditorProductSlot): DirectoryProductCategory[] {
+  switch (slot) {
+    case "dmc":
+      return ["dmc"];
+    case "restaurants":
+      return ["restaurant"];
+    case "hotels":
+      return ["hotel", "villa", "wellness"];
+    case "yachts":
+      return ["cruise", "transport", "experience"];
+    case "tourism":
+      return ["dmc", "experience"];
+    case "documents":
+      return [];
+    default: {
+      const _exhaustive: never = slot;
+      return _exhaustive;
+    }
+  }
+}
 
 export function filterCatalogByTypes(allowedTypes: DirectoryProductCategory[]): DirectoryProduct[] {
   if (allowedTypes.length === 0) return [...MOCK_DIRECTORY_PRODUCTS];

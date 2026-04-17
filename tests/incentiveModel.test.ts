@@ -1,14 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { derivePromotionKind, promotionDisplayPhase } from "../src/lib/promotionUi";
-import { validatePromotionForm } from "../src/lib/promotionValidation";
+import { deriveIncentiveKind, incentiveDisplayPhase } from "../src/lib/incentiveUi";
+import { validateIncentiveForm } from "../src/lib/incentiveValidation";
 import { buildPartnerProgramsFromRegistry } from "../src/lib/partnerProgramMerge";
 import { createPartnerProgramsSeedSnapshot } from "../src/lib/partnerProgramsSeed";
-import type { Promotion } from "../src/types/partner-programs";
+import type { Incentive } from "../src/types/partner-programs";
 
 const REF = new Date("2026-03-24T12:00:00.000Z");
 
-function basePromotion(over: Partial<Promotion> = {}): Promotion {
+function baseIncentive(over: Partial<Incentive> = {}): Incentive {
   const now = "2026-01-01T12:00:00.000Z";
   return {
     id: "p1",
@@ -34,10 +34,10 @@ function basePromotion(over: Partial<Promotion> = {}): Promotion {
   };
 }
 
-test("derivePromotionKind: volume metric wins", () => {
+test("deriveIncentiveKind: volume metric wins", () => {
   assert.equal(
-    derivePromotionKind(
-      basePromotion({
+    deriveIncentiveKind(
+      baseIncentive({
         volumeMetric: "room_nights",
         stacksWithBase: false,
         travelWindowStart: "2026-06-01T12:00:00.000Z",
@@ -47,14 +47,14 @@ test("derivePromotionKind: volume metric wins", () => {
   );
 });
 
-test("derivePromotionKind: bonus when stacking and no volume", () => {
-  assert.equal(derivePromotionKind(basePromotion({ stacksWithBase: true })), "bonus");
+test("deriveIncentiveKind: bonus when stacking and no volume", () => {
+  assert.equal(deriveIncentiveKind(baseIncentive({ stacksWithBase: true })), "bonus");
 });
 
-test("derivePromotionKind: seasonal when not stacking and travel set", () => {
+test("deriveIncentiveKind: seasonal when not stacking and travel set", () => {
   assert.equal(
-    derivePromotionKind(
-      basePromotion({
+    deriveIncentiveKind(
+      baseIncentive({
         stacksWithBase: false,
         travelWindowStart: "2026-06-01T12:00:00.000Z",
       })
@@ -63,10 +63,10 @@ test("derivePromotionKind: seasonal when not stacking and travel set", () => {
   );
 });
 
-test("derivePromotionKind: rate override when not stacking and booking-only", () => {
+test("deriveIncentiveKind: rate override when not stacking and booking-only", () => {
   assert.equal(
-    derivePromotionKind(
-      basePromotion({
+    deriveIncentiveKind(
+      baseIncentive({
         stacksWithBase: false,
         bookingWindowStart: "2026-03-01T12:00:00.000Z",
         bookingWindowEnd: "2026-06-30T12:00:00.000Z",
@@ -76,10 +76,10 @@ test("derivePromotionKind: rate override when not stacking and booking-only", ()
   );
 });
 
-test("promotionDisplayPhase: booking window active", () => {
+test("incentiveDisplayPhase: booking window active", () => {
   assert.equal(
-    promotionDisplayPhase(
-      basePromotion({
+    incentiveDisplayPhase(
+      baseIncentive({
         bookingWindowStart: "2026-03-01T12:00:00.000Z",
         bookingWindowEnd: "2026-12-31T12:00:00.000Z",
       }),
@@ -89,12 +89,12 @@ test("promotionDisplayPhase: booking window active", () => {
   );
 });
 
-test("promotionDisplayPhase: no windows is active", () => {
-  assert.equal(promotionDisplayPhase(basePromotion(), REF), "active");
+test("incentiveDisplayPhase: no windows is active", () => {
+  assert.equal(incentiveDisplayPhase(baseIncentive(), REF), "active");
 });
 
-test("validatePromotionForm: rejects inverted booking window", () => {
-  const msg = validatePromotionForm({
+test("validateIncentiveForm: rejects inverted booking window", () => {
+  const msg = validateIncentiveForm({
     bookingStart: "2026-06-30",
     bookingEnd: "2026-03-01",
     travelStart: "",
@@ -108,8 +108,8 @@ test("validatePromotionForm: rejects inverted booking window", () => {
   assert.ok(msg && msg.includes("Booking"));
 });
 
-test("validatePromotionForm: rejects specific scope with no products", () => {
-  const msg = validatePromotionForm({
+test("validateIncentiveForm: rejects specific scope with no products", () => {
+  const msg = validateIncentiveForm({
     bookingStart: "",
     bookingEnd: "",
     travelStart: "",
@@ -123,9 +123,9 @@ test("validatePromotionForm: rejects specific scope with no products", () => {
   assert.ok(msg && msg.includes("linked product"));
 });
 
-test("validatePromotionForm: accepts valid volume threshold", () => {
+test("validateIncentiveForm: accepts valid volume threshold", () => {
   assert.equal(
-    validatePromotionForm({
+    validateIncentiveForm({
       bookingStart: "",
       bookingEnd: "",
       travelStart: "",
@@ -140,10 +140,10 @@ test("validatePromotionForm: accepts valid volume threshold", () => {
   );
 });
 
-test("buildPartnerProgramsFromRegistry: prod_001 has merged promotions from seed", () => {
+test("buildPartnerProgramsFromRegistry: prod_001 has merged incentives from seed", () => {
   const snap = createPartnerProgramsSeedSnapshot();
   const rows = buildPartnerProgramsFromRegistry("prod_001", snap);
   const virtuoso = rows.find((r) => r.programId === "reg-virtuoso");
   assert.ok(virtuoso);
-  assert.ok((virtuoso!.activePromotions?.length ?? 0) >= 1);
+  assert.ok((virtuoso!.activeIncentives?.length ?? 0) >= 1);
 });

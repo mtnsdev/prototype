@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LayoutDashboard } from "lucide-react";
-import { ArrowLeft, Pencil, Trash2, Share2, Play, ChevronDown, Loader2 } from "lucide-react";
+import { ArrowLeft, Trash2, Share2, Play, ChevronDown, Loader2 } from "lucide-react";
 import type { VIC } from "@/types/vic";
 import { fetchVIC, getVICId, triggerAcuitySingle } from "@/lib/vic-api";
 import { FAKE_VICS } from "../fakeData";
@@ -12,6 +12,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useTeams } from "@/contexts/TeamsContext";
 import { canViewVIC, canEditVIC, canDeleteVIC, canShareVIC, canViewSensitiveFields } from "@/utils/vicPermissions";
 import { Button } from "@/components/ui/button";
+import { EditIconButton } from "@/components/ui/edit-icon-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -230,9 +231,7 @@ export default function VICDetailPage({ vicId }: Props) {
           </div>
           <div className="flex items-center gap-1">
             {canEdit && (
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditModalOpen(true)} title="Edit">
-                <Pencil size={16} className="text-muted-foreground" />
-              </Button>
+              <EditIconButton label="Edit" title="Edit" onClick={() => setEditModalOpen(true)} />
             )}
             {canShare && (
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShareModalOpen(true)} title="Share">

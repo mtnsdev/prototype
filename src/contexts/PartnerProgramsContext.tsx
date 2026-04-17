@@ -14,25 +14,56 @@ import type {
   PartnerProgramsSnapshot,
   ProductProgramLink,
   Program,
-  Promotion,
+  Incentive,
 } from "@/types/partner-programs";
 
 const STORAGE_KEY = "enable_partner_programs_v2";
 
-function stripLegacyPromotionFields(p: Record<string, unknown>): Record<string, unknown> {
+function stripLegacyIncentiveFields(p: Record<string, unknown>): Record<string, unknown> {
   const { type: _t, status: _s, ...rest } = p;
   return rest;
 }
 
-function normalizePromotionRecord(raw: Record<string, unknown>): Promotion {
-  const row = stripLegacyPromotionFields(raw);
+function normalizeIncentiveRecord(raw: Record<string, unknown>): Incentive {
+  const row = stripLegacyIncentiveFields(raw);
   const createdAt = String(row.createdAt ?? new Date().toISOString());
   const createdBy = String(row.createdBy ?? "unknown");
   const updatedAt =
     typeof row.updatedAt === "string" && row.updatedAt.trim() !== "" ? row.updatedAt : createdAt;
   const updatedBy =
     typeof row.updatedBy === "string" && row.updatedBy.trim() !== "" ? row.updatedBy : createdBy;
-  return { ...row, createdAt, createdBy, updatedAt, updatedBy } as unknown as Promotion;
+  return { ...row, createdAt, createdBy, updatedAt, updatedBy } as unknown as Incentive;
+}
+
+function normalizeProgramRecord(p: Program & { notes?: string | null }): Program {
+  const legacyNotes = p.notes;
+  const { notes: _n, ...rest } = p;
+  const customAmenities = Array.isArray(rest.customAmenities)
+    ? rest.customAmenities.filter((s) => typeof s === "string" && s.trim() !== "").map((s) => s.trim())
+    : [];
+  return {
+    ...rest,
+    customAmenities,
+    agencyTerms: rest.agencyTerms ?? (legacyNotes != null && legacyNotes !== "" ? legacyNotes : null),
+    agencyNegotiatedRate: rest.agencyNegotiatedRate ?? null,
+  };
+}
+
+function coerceSnapshot(parsed: Record<string, unknown>): PartnerProgramsSnapshot | null {
+  const programsRaw = parsed.programs;
+  const linksRaw = parsed.links;
+  if (!Array.isArray(programsRaw) || !Array.isArray(linksRaw)) return null;
+
+  const incentivesRaw = parsed.incentives ?? parsed.promotions;
+  if (!Array.isArray(incentivesRaw)) return null;
+
+  return {
+    programs: programsRaw.map((row) => normalizeProgramRecord(row as Program & { notes?: string | null })),
+    links: linksRaw as ProductProgramLink[],
+    incentives: incentivesRaw.map((pr) =>
+      normalizeIncentiveRecord(pr as unknown as Record<string, unknown>)
+    ),
+  };
 }
 
 function persistSnapshot(s: PartnerProgramsSnapshot) {
@@ -47,15 +78,9 @@ function loadSnapshot(): PartnerProgramsSnapshot {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw) as PartnerProgramsSnapshot;
-      if (parsed?.programs && parsed?.links && parsed?.promotions) {
-        return {
-          ...parsed,
-          promotions: parsed.promotions.map((pr) =>
-            normalizePromotionRecord(pr as unknown as Record<string, unknown>)
-          ),
-        };
-      }
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const coerced = coerceSnapshot(parsed);
+      if (coerced) return coerced;
     }
   } catch {
     /* ignore */
@@ -63,21 +88,16 @@ function loadSnapshot(): PartnerProgramsSnapshot {
   try {
     const legacy = localStorage.getItem("enable_partner_programs_v1");
     if (legacy) {
-      const parsed = JSON.parse(legacy) as PartnerProgramsSnapshot;
-      if (parsed?.programs && parsed?.links && parsed?.promotions) {
-        const migrated: PartnerProgramsSnapshot = {
-          ...parsed,
-          promotions: parsed.promotions.map((pr) =>
-            normalizePromotionRecord(pr as unknown as Record<string, unknown>)
-          ),
-        };
+      const parsed = JSON.parse(legacy) as Record<string, unknown>;
+      const coerced = coerceSnapshot(parsed);
+      if (coerced) {
         try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(coerced));
         } catch {
           /* ignore */
         }
         localStorage.removeItem("enable_partner_programs_v1");
-        return migrated;
+        return coerced;
       }
     }
   } catch {
@@ -94,8 +114,8 @@ export type PartnerProgramsContextValue = {
   removeProgram: (programId: string) => void;
   upsertLink: (link: ProductProgramLink) => void;
   removeLink: (linkId: string) => void;
-  upsertPromotion: (promotion: Promotion) => void;
-  removePromotion: (promotionId: string) => void;
+  upsertIncentive: (incentive: Incentive) => void;
+  removeIncentive: (incentiveId: string) => void;
   resetToSeed: () => void;
 };
 
@@ -136,7 +156,7 @@ export function PartnerProgramsProvider({ children }: { children: ReactNode }) {
           ...prev,
           programs: prev.programs.filter((p) => p.id !== programId),
           links: prev.links.filter((l) => l.programId !== programId),
-          promotions: prev.promotions.filter((pr) => pr.programId !== programId),
+          incentives: prev.incentives.filter((pr) => pr.programId !== programId),
         };
         persistSnapshot(next);
         return next;
@@ -176,15 +196,15 @@ export function PartnerProgramsProvider({ children }: { children: ReactNode }) {
     [bump]
   );
 
-  const upsertPromotion = useCallback(
-    (promotion: Promotion) => {
+  const upsertIncentive = useCallback(
+    (incentive: Incentive) => {
       setSnapshot((prev) => {
-        const idx = prev.promotions.findIndex((p) => p.id === promotion.id);
-        const promotions =
+        const idx = prev.incentives.findIndex((p) => p.id === incentive.id);
+        const incentives =
           idx >= 0
-            ? prev.promotions.map((p, i) => (i === idx ? promotion : p))
-            : [...prev.promotions, promotion];
-        const next: PartnerProgramsSnapshot = { ...prev, promotions };
+            ? prev.incentives.map((p, i) => (i === idx ? incentive : p))
+            : [...prev.incentives, incentive];
+        const next: PartnerProgramsSnapshot = { ...prev, incentives };
         persistSnapshot(next);
         return next;
       });
@@ -193,12 +213,12 @@ export function PartnerProgramsProvider({ children }: { children: ReactNode }) {
     [bump]
   );
 
-  const removePromotion = useCallback(
-    (promotionId: string) => {
+  const removeIncentive = useCallback(
+    (incentiveId: string) => {
       setSnapshot((prev) => {
         const next: PartnerProgramsSnapshot = {
           ...prev,
-          promotions: prev.promotions.filter((p) => p.id !== promotionId),
+          incentives: prev.incentives.filter((p) => p.id !== incentiveId),
         };
         persistSnapshot(next);
         return next;
@@ -223,8 +243,8 @@ export function PartnerProgramsProvider({ children }: { children: ReactNode }) {
       removeProgram,
       upsertLink,
       removeLink,
-      upsertPromotion,
-      removePromotion,
+      upsertIncentive,
+      removeIncentive,
       resetToSeed,
     }),
     [
@@ -234,8 +254,8 @@ export function PartnerProgramsProvider({ children }: { children: ReactNode }) {
       removeProgram,
       upsertLink,
       removeLink,
-      upsertPromotion,
-      removePromotion,
+      upsertIncentive,
+      removeIncentive,
       resetToSeed,
     ]
   );

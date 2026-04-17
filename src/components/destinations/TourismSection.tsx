@@ -31,7 +31,7 @@ export function TourismSection({ regions }: Props) {
                 key={`${r.name}-${l.label}-${l.url}-${idx}`}
                 href={l.url}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noreferrer"
                 className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-xs font-medium text-brand-cta transition-colors hover:border-brand-cta/40 hover:bg-muted"
               >
                 <Globe className="size-3.5 shrink-0" aria-hidden />

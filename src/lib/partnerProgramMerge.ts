@@ -2,9 +2,9 @@ import type {
   PartnerProgramsSnapshot,
   ProductProgramLink,
   Program,
-  Promotion,
+  Incentive,
 } from "@/types/partner-programs";
-import type { DirectoryPartnerProgram, DirectoryProduct, DirectoryProductPromotion } from "@/types/product-directory";
+import type { DirectoryPartnerProgram, DirectoryProduct, DirectoryProductIncentive } from "@/types/product-directory";
 import { AMENITY_LABELS } from "@/components/products/productDirectoryFilterConfig";
 import {
   directoryProductPartnerProgramsSyncPatch,
@@ -12,7 +12,7 @@ import {
   resolveProgramRegistryStatus,
 } from "@/components/products/productDirectoryCommission";
 import { PARTNER_PROGRAMS_REFERENCE_ISO } from "@/lib/partnerProgramsSeed";
-import { derivePromotionKind, promotionDisplayPhase } from "@/lib/promotionUi";
+import { deriveIncentiveKind, incentiveDisplayPhase } from "@/lib/incentiveUi";
 
 function refDate(): Date {
   return new Date(PARTNER_PROGRAMS_REFERENCE_ISO);
@@ -28,8 +28,8 @@ export function parseRateNumber(s: string | null | undefined): number | null {
 }
 
 /**
- * Partner Portal saves incentives on catalog `partnerPrograms`; registry merge would replace them entirely.
- * Re-attach portal-only rows (e.g. ids from `newPartnerPortalIncentive`) and overlay title/details when ids match.
+ * The Partner programs area saves incentives on catalog `partnerPrograms`; registry merge would replace them entirely.
+ * Re-attach programs-tab-only rows (e.g. ids from `newPartnerProgramsIncentive`) and overlay title/details when ids match.
  */
 function mergeCatalogPartnerProgramsWithRegistry(
   prev: DirectoryPartnerProgram[],
@@ -37,10 +37,10 @@ function mergeCatalogPartnerProgramsWithRegistry(
 ): DirectoryPartnerProgram[] {
   return fromRegistry.map((g) => {
     const match = prev.find((p) => programFilterId(p) === programFilterId(g));
-    if (!match?.activePromotions?.length) return g;
-    const regIds = new Set(g.activePromotions.map((x) => x.id));
-    const mergedList = g.activePromotions.map((rp) => {
-      const portalSame = match.activePromotions!.find((pp) => pp.id === rp.id);
+    if (!match?.activeIncentives?.length) return g;
+    const regIds = new Set(g.activeIncentives.map((x) => x.id));
+    const mergedList = g.activeIncentives.map((rp) => {
+      const portalSame = match.activeIncentives!.find((pp) => pp.id === rp.id);
       if (!portalSame) return rp;
       return {
         ...rp,
@@ -48,26 +48,32 @@ function mergeCatalogPartnerProgramsWithRegistry(
         title: portalSame.title?.trim() ? portalSame.title : rp.title,
       };
     });
-    const extras = match.activePromotions.filter((pp) => !regIds.has(pp.id));
-    if (extras.length === 0) return { ...g, activePromotions: mergedList };
-    return { ...g, activePromotions: [...mergedList, ...extras] };
+    const extras = match.activeIncentives.filter((pp) => !regIds.has(pp.id));
+    if (extras.length === 0) return { ...g, activeIncentives: mergedList };
+    return { ...g, activeIncentives: [...mergedList, ...extras] };
   });
 }
 
-function amenityLine(tags: import("@/types/product-directory").DirectoryAmenityTag[]): string {
-  return tags.map((t) => AMENITY_LABELS[t] ?? t).join(", ");
+function amenityLine(
+  tags: import("@/types/product-directory").DirectoryAmenityTag[],
+  custom: string[]
+): string {
+  const known = tags.map((t) => AMENITY_LABELS[t] ?? t).join(", ");
+  const extra = custom.filter(Boolean).join(", ");
+  if (known && extra) return `${known}, ${extra}`;
+  return known || extra;
 }
 
 function programById(programs: Program[], id: string): Program | undefined {
   return programs.find((p) => p.id === id);
 }
 
-function promotionAppliesToProduct(p: Promotion, productId: string): boolean {
+function incentiveAppliesToProduct(p: Incentive, productId: string): boolean {
   if (p.productIds === "all") return true;
   return p.productIds.includes(productId);
 }
 
-function isBookingWindowActive(p: Promotion, ref: Date): boolean {
+function isBookingWindowActive(p: Incentive, ref: Date): boolean {
   const hasBook =
     p.bookingWindowStart != null ||
     p.bookingWindowEnd != null ||
@@ -84,11 +90,11 @@ function isBookingWindowActive(p: Promotion, ref: Date): boolean {
   return tOk;
 }
 
-function toDirectoryPromotion(
-  p: Promotion,
+function toDirectoryIncentive(
+  p: Incentive,
   effectiveRate: number,
   _ref: Date
-): DirectoryProductPromotion {
+): DirectoryProductIncentive {
   return {
     id: p.id,
     effectiveRate,
@@ -145,12 +151,13 @@ export function buildPartnerProgramsFromRegistry(
 
     const base = resolveBaseCommission(program, link);
     const amenities = resolveAmenities(program, link);
-    const promos = snapshot.promotions.filter(
-      (p) => p.programId === program.id && promotionAppliesToProduct(p, productId)
+    const customAmenities = program.customAmenities ?? [];
+    const incentives = snapshot.incentives.filter(
+      (p) => p.programId === program.id && incentiveAppliesToProduct(p, productId)
     );
 
-    const activePromos = promos.filter(
-      (p) => promotionDisplayPhase(p, ref) === "active" && isBookingWindowActive(p, ref)
+    const activeIncentiveRows = incentives.filter(
+      (p) => incentiveDisplayPhase(p, ref) === "active" && isBookingWindowActive(p, ref)
     );
 
     let basePct = base.type === "percentage" ? base.rate : null;
@@ -158,11 +165,11 @@ export function buildPartnerProgramsFromRegistry(
 
     const overrideRates: number[] = [];
 
-    for (const p of activePromos) {
+    for (const p of activeIncentiveRows) {
       if (p.rateType === "flat") continue;
       const n = parseRateNumber(p.rateValue);
       if (n == null) continue;
-      const kind = derivePromotionKind(p);
+      const kind = deriveIncentiveKind(p);
       const isOverrideFamily =
         kind === "rate_override" || kind === "seasonal" || (kind === "volume_incentive" && !p.stacksWithBase);
       if (isOverrideFamily) {
@@ -176,14 +183,14 @@ export function buildPartnerProgramsFromRegistry(
       afterOverride = afterOverride == null ? bestOv : Math.max(afterOverride, bestOv);
     }
 
-    const dirPromos: DirectoryProductPromotion[] = [];
-    for (const p of activePromos) {
+    const dirIncentives: DirectoryProductIncentive[] = [];
+    for (const p of activeIncentiveRows) {
       const n = parseRateNumber(p.rateValue);
       if (n == null) continue;
-      const kind = derivePromotionKind(p);
+      const kind = deriveIncentiveKind(p);
 
       if (p.rateType === "flat") {
-        dirPromos.push(toDirectoryPromotion(p, n, ref));
+        dirIncentives.push(toDirectoryIncentive(p, n, ref));
         continue;
       }
 
@@ -193,7 +200,7 @@ export function buildPartnerProgramsFromRegistry(
         const root = afterOverride ?? basePct ?? 0;
         eff = root + n;
       }
-      dirPromos.push(toDirectoryPromotion(p, eff, ref));
+      dirIncentives.push(toDirectoryIncentive(p, eff, ref));
     }
 
     const contact =
@@ -208,12 +215,13 @@ export function buildPartnerProgramsFromRegistry(
       programId: program.id,
       programName: program.name,
       scope: "enable",
-      commissionRate: basePct ?? baseFlat,
+      /** Guaranteed base only — cards and aggregates must not fold incentives into this number (April 17 2026). */
+      commissionRate: base.type === "flat" ? baseFlat : basePct,
       commissionType: base.type === "flat" ? "flat" : "percentage",
       expiryDate: expiry,
       contact: contact || undefined,
-      activePromotions: dirPromos,
-      amenities: amenityLine(amenities),
+      activeIncentives: dirIncentives,
+      amenities: amenityLine(amenities, customAmenities),
       amenityTags: amenities,
       registryStatus: expiry ? resolveProgramRegistryStatus({ expiryDate: expiry } as DirectoryPartnerProgram) : "active",
       status: program.status === "paused" ? "inactive" : "active",

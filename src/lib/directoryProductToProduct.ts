@@ -81,7 +81,7 @@ export function directoryProductToProduct(p: DirectoryProduct): Product {
     commission_rate: rate ?? undefined,
     hero_image_url: p.imageUrl,
     gallery_urls: p.imageGalleryUrls,
-    price_range: priceTierToRange(p.priceTier),
+    price_range: priceTierToRange(p.priceTier ?? p.priceBands?.[0]),
     tags: p.tags,
   };
 }

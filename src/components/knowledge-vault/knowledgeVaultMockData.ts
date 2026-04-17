@@ -1177,6 +1177,98 @@ function getMockDocumentsRaw(): KnowledgeDocument[] {
       linked_products: [],
       linked_vics: [],
     },
+    ...buildGreeceDestinationVaultDocuments(),
+  ];
+}
+
+const PUBLIC_SAMPLE_PDF =
+  "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
+const PUBLIC_SAMPLE_DOCX =
+  "https://file-examples.com/wp-content/storage/2017/02/file_example_DOC_10.doc";
+const PUBLIC_SAMPLE_XLSX =
+  "https://file-examples.com/wp-content/storage/2017/02/file_example_XLS_10.xls";
+
+/** Linked from destination guide Documents section (`kvDocumentId`). */
+function buildGreeceDestinationVaultDocuments(): KnowledgeDocument[] {
+  const base = {
+    source_id: "src-gdrive-admin",
+    source_type: DataSourceType.GoogleDriveAdmin,
+    source_name: GSHARED,
+    data_layer: "agency" as const,
+    document_type: DocumentType.DestinationGuide,
+    ingestion_status: "indexed" as const,
+    ingested_at: d(3),
+    last_updated: d(3),
+    freshness: "fresh" as const,
+    quality_score: 90,
+    linked_products: [],
+    linked_vics: [],
+    tags: ["Destination Guides", "Greece", "destination:greece"],
+  };
+  return [
+    {
+      ...base,
+      id: "doc-kv-dest-gr-1",
+      title: "Greece — advisor commission cheat sheet",
+      file_type: "pdf",
+      file_size_kb: 420,
+      content_summary: "Advisor-facing commission ranges, DMC payment norms, and statement timing for Greece programs.",
+      url: PUBLIC_SAMPLE_PDF,
+    },
+    {
+      ...base,
+      id: "doc-kv-dest-gr-2",
+      title: "Island ferry timing guidelines",
+      file_type: "docx",
+      file_size_kb: 180,
+      content_summary: "Ferry connections, buffer times, and high-season booking windows for Cyclades routing.",
+      url: PUBLIC_SAMPLE_DOCX,
+    },
+    {
+      ...base,
+      id: "doc-kv-dest-gr-3",
+      title: "Peak season hotel release calendar",
+      file_type: "xlsx",
+      file_size_kb: 95,
+      content_summary: "Release and deposit milestones for key Greek island hotels — planning reference.",
+      url: PUBLIC_SAMPLE_XLSX,
+    },
+    {
+      ...base,
+      id: "doc-kv-dest-gr-4",
+      title: "GNTO marketing toolkit — Greece 2026",
+      file_type: "pdf",
+      file_size_kb: 2400,
+      content_summary: "Official GNTO assets and campaign themes for Greece leisure positioning.",
+      url: PUBLIC_SAMPLE_PDF,
+    },
+    {
+      ...base,
+      id: "doc-kv-dest-gr-5",
+      title: "Santorini & Mykonos vendor contacts",
+      file_type: "docx",
+      file_size_kb: 220,
+      content_summary: "Concierge and ground partner contacts for high-demand islands.",
+      url: PUBLIC_SAMPLE_DOCX,
+    },
+    {
+      ...base,
+      id: "doc-kv-dest-gr-6",
+      title: "Mainland driving times & tolls",
+      file_type: "pdf",
+      file_size_kb: 310,
+      content_summary: "Highway segments, toll payment methods, and sample drive times from Athens.",
+      url: PUBLIC_SAMPLE_PDF,
+    },
+    {
+      ...base,
+      id: "doc-kv-dest-gr-7",
+      title: "Yacht charter terms & insurance checklist",
+      file_type: "pdf",
+      file_size_kb: 560,
+      content_summary: "Charter contract checkpoints and insurance expectations for Aegean yacht programs.",
+      url: PUBLIC_SAMPLE_PDF,
+    },
   ];
 }
 
