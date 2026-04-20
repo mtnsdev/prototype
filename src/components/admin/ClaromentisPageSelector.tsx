@@ -80,12 +80,12 @@ export default function ClaromentisPageSelector({
             <div className="max-h-[200px] overflow-y-auto">
                 {loading ? (
                     <div className="flex items-center justify-center py-6">
-                        <Loader2 size={18} className="animate-spin text-muted-foreground/55" />
+                        <Loader2 size={18} className="animate-spin text-muted-foreground" />
                     </div>
                 ) : error ? (
                     <p className="text-compact text-[var(--color-error)] px-3 py-4">{error}</p>
                 ) : pages.length === 0 ? (
-                    <p className="text-compact text-muted-foreground/55 px-3 py-4 text-center">
+                    <p className="text-compact text-muted-foreground px-3 py-4 text-center">
                         {search ? "No pages match your search" : "No intranet pages found"}
                     </p>
                 ) : (

@@ -183,7 +183,7 @@ export function IncentiveEditorForm({
         />
       </div>
 
-      <div className="space-y-2 rounded-lg border border-border bg-white/[0.02] p-3">
+      <div className="space-y-2 rounded-lg border border-border bg-foreground/[0.03] p-3">
         <label className="flex items-center gap-2 text-xs">
           <input
             type="radio"

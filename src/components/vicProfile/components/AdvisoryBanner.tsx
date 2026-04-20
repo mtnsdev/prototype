@@ -30,7 +30,7 @@ export function AdvisoryBanner({
     return (
       <div
         className={cn(
-          "rounded-xl border border-border/40 bg-white/[0.02] px-4 py-3 text-sm flex items-center gap-2 text-muted-foreground/50",
+          "rounded-xl border border-border/40 bg-foreground/[0.03] px-4 py-3 text-sm flex items-center gap-2 text-muted-foreground/50",
           className
         )}
       >

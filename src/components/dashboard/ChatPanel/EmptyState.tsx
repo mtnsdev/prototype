@@ -7,9 +7,12 @@ import { EmptyChat } from "@/components/ui/empty-states";
 type EmptyStateProps = {
   displayName: string;
   onSuggestionClick: (suggestion: string) => void;
+  /** Overrides default prompts from constants when provided. */
+  suggestionChips?: string[];
 };
 
-export function EmptyState({ displayName, onSuggestionClick }: EmptyStateProps) {
+export function EmptyState({ displayName, onSuggestionClick, suggestionChips }: EmptyStateProps) {
+  const chips = suggestionChips?.length ? suggestionChips : SUGGESTION_CHIPS;
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-4">
       {/* Personalized greeting with logo */}
@@ -22,7 +25,7 @@ export function EmptyState({ displayName, onSuggestionClick }: EmptyStateProps) 
       <p className="text-muted-foreground/75 mb-2 max-w-md text-base leading-relaxed">
         Ask a question or choose a suggestion below
       </p>
-      <p className="mb-10 max-w-md text-sm leading-relaxed text-muted-foreground/55">
+      <p className="mb-10 max-w-md text-sm leading-relaxed text-muted-foreground">
         Tip: press{" "}
         <kbd className="rounded border border-input bg-white/[0.04] px-1.5 py-0.5 text-xs text-muted-foreground/75">
           ⌘K
@@ -33,7 +36,7 @@ export function EmptyState({ displayName, onSuggestionClick }: EmptyStateProps) 
       {/* Use the unified empty chat component with custom prompts from constants */}
       <div className="w-full max-w-2xl">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {SUGGESTION_CHIPS.map((suggestion, idx) => (
+          {chips.map((suggestion, idx) => (
             <button
               key={idx}
               onClick={() => onSuggestionClick(suggestion)}

@@ -41,7 +41,7 @@ export default function ItineraryKanbanView({ itineraries }: Props) {
               </div>
               <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2">
                 {colItems.length === 0 ? (
-                  <p className="text-xs text-center text-muted-foreground/55 py-8 px-2">
+                  <p className="text-xs text-center text-muted-foreground py-8 px-2">
                     No trips {col.label.toLowerCase()} yet
                   </p>
                 ) : (
@@ -69,7 +69,7 @@ export default function ItineraryKanbanView({ itineraries }: Props) {
                         <div className="p-2.5 pt-1">
                           <p className="text-sm font-semibold text-foreground line-clamp-2 leading-snug">{it.trip_name}</p>
                           <p className="text-xs text-muted-foreground/75 mt-1">{vicShort(it.primary_vic_name)}</p>
-                          <p className="text-xs text-muted-foreground/55 mt-0.5">
+                          <p className="text-xs text-muted-foreground mt-0.5">
                             {hasDates ? formatDateRange(it.trip_start_date, it.trip_end_date) : "No dates"}
                           </p>
                           <div className="flex flex-wrap gap-1 mt-1.5">

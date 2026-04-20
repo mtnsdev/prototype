@@ -10,6 +10,8 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/contexts/ToastContext";
 import { MOCK_TEAMS } from "@/lib/teamsMock";
 import { TEAM_EVERYONE_ID } from "@/types/teams";
+import { APP_PAGE_CONTENT_SHELL } from "@/lib/dashboardChrome";
+import { cn } from "@/lib/utils";
 
 type SourceRow = {
   id: string;
@@ -109,7 +111,8 @@ export default function SourcesSettingsPage() {
 
   return (
     <div className="h-full overflow-y-auto bg-background text-foreground">
-      <div className="max-w-2xl mx-auto p-6 space-y-6">
+      <div className={cn(APP_PAGE_CONTENT_SHELL, "py-6")}>
+      <div className="mx-auto w-full max-w-2xl space-y-6">
         <Link
           href="/dashboard/settings"
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-2"
@@ -133,7 +136,7 @@ export default function SourcesSettingsPage() {
           {sources.map((source) => (
             <div
               key={source.id}
-              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-xl"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-foreground/[0.03] border border-white/[0.04] rounded-xl"
             >
               <div className="min-w-0">
                 <span className="text-xs text-white block">{source.label}</span>
@@ -156,6 +159,7 @@ export default function SourcesSettingsPage() {
             </div>
           ))}
         </div>
+      </div>
       </div>
     </div>
   );

@@ -30,15 +30,10 @@ import PreviewBanner from "@/components/ui/PreviewBanner";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 import { useToast } from "@/contexts/ToastContext";
 import { AutomationBuilderModal } from "@/components/itineraries/CompetitorFeatureModals";
+import { AppPageHeroHeader } from "@/components/ui/app-page-hero-header";
+import { APP_PAGE_CONTENT_SHELL } from "@/lib/dashboardChrome";
 import { cn } from "@/lib/utils";
 import { listSurfaceClass } from "@/lib/list-ui";
-import {
-  DASHBOARD_LIST_PAGE_HEADER,
-  DASHBOARD_LIST_PAGE_HEADER_ACTIONS,
-  DASHBOARD_LIST_PAGE_HEADER_SUBTITLE,
-  DASHBOARD_LIST_PAGE_HEADER_TITLE,
-  DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK,
-} from "@/lib/dashboardChrome";
 
 type AutomationRecord = {
   id: string;
@@ -206,60 +201,59 @@ export default function AutomationsPage() {
   };
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-inset text-foreground">
-      <header className={DASHBOARD_LIST_PAGE_HEADER}>
-        <div className={DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK}>
-          <h1 className={DASHBOARD_LIST_PAGE_HEADER_TITLE}>Automations</h1>
-          <p className={DASHBOARD_LIST_PAGE_HEADER_SUBTITLE}>
-            Turn insights into repeatable workflows — triggers, actions, and clear next steps
-          </p>
-        </div>
-        <div className={DASHBOARD_LIST_PAGE_HEADER_ACTIONS}>
-          <Button
-            variant="toolbarAccent"
-            size="sm"
-            className="h-8 text-xs"
-            onClick={() => setBuilderOpen(true)}
-          >
-            <Zap size={14} className="shrink-0" />
-            Create automation
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 border-input px-2.5 text-xs text-foreground"
-                aria-label="More automation actions"
-              >
-                <MoreHorizontal size={16} className="shrink-0" aria-hidden />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[11rem]">
-              <DropdownMenuItem
-                onClick={() =>
-                  toast({
-                    title: "Run history",
-                    description: "Full execution logs will live here when backend wiring is ready.",
-                  })
-                }
-              >
-                View run history
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  toast({
-                    title: "Templates",
-                    description: "Automation templates are coming in a future iteration.",
-                  })
-                }
-              >
-                Browse templates
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </header>
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background text-foreground">
+      <AppPageHeroHeader
+        eyebrow="Workflows"
+        title="Automations"
+        subtitle="Turn insights into repeatable workflows — triggers, actions, and clear next steps"
+        toolbar={
+          <>
+            <Button
+              variant="toolbarAccent"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => setBuilderOpen(true)}
+            >
+              <Zap size={14} className="shrink-0" />
+              Create automation
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 border-input px-2.5 text-xs text-foreground"
+                  aria-label="More automation actions"
+                >
+                  <MoreHorizontal size={16} className="shrink-0" aria-hidden />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[11rem]">
+                <DropdownMenuItem
+                  onClick={() =>
+                    toast({
+                      title: "Run history",
+                      description: "Full execution logs will live here when backend wiring is ready.",
+                    })
+                  }
+                >
+                  View run history
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    toast({
+                      title: "Templates",
+                      description: "Automation templates are coming in a future iteration.",
+                    })
+                  }
+                >
+                  Browse templates
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        }
+      />
 
       {IS_PREVIEW_MODE && (
         <div className="shrink-0">
@@ -268,7 +262,7 @@ export default function AutomationsPage() {
       )}
 
       <div className="min-h-0 flex-1 overflow-auto">
-        <div className="mx-auto max-w-[960px] space-y-6 px-6 pb-8 pt-6">
+        <div className={cn(APP_PAGE_CONTENT_SHELL, "space-y-6 pb-8 pt-6")}>
           <div
             className={cn(
               listSurfaceClass,

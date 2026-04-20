@@ -16,9 +16,11 @@ type Props = {
   activeTab: VICTab;
   onTabChange?: (tab: VICTab) => void;
   className?: string;
+  /** `strip` = full-width toolbar row (default). `inline` = compact, for AppPageHeroHeader toolbar. */
+  variant?: "strip" | "inline";
 };
 
-export default function TabBar({ activeTab, onTabChange, className }: Props) {
+export default function TabBar({ activeTab, onTabChange, className, variant = "strip" }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -31,7 +33,12 @@ export default function TabBar({ activeTab, onTabChange, className }: Props) {
 
   return (
     <div
-      className={cn(APP_TOOLBAR_ROW, "justify-start pl-5 pr-[4.5rem] md:pl-6", className)}
+      className={cn(
+        variant === "inline"
+          ? "flex min-w-0 max-w-full items-center justify-start"
+          : cn(APP_TOOLBAR_ROW, "justify-start pl-5 pr-[4.5rem] md:pl-6"),
+        className
+      )}
       role="presentation"
     >
       <SegmentedControl<VICTab>

@@ -123,7 +123,7 @@ export default function TravelProfileModal({ vic, existingTypes, onClose, onSave
             </div>
             <div>
               <Label>Travel pace</Label>
-              <select value={pace} onChange={(e) => setPace(e.target.value)} className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground">
+              <select value={pace} onChange={(e) => setPace(e.target.value)} className="mt-1 w-full rounded-md border border-input bg-foreground/[0.05] px-3 py-2 text-sm text-foreground">
                 {PACE_OPTIONS.map((o) => <option key={o || "x"} value={o}>{o || "—"}</option>)}
               </select>
             </div>
@@ -133,7 +133,7 @@ export default function TravelProfileModal({ vic, existingTypes, onClose, onSave
             </div>
             <div>
               <Label>Budget range</Label>
-              <select value={budget} onChange={(e) => setBudget(e.target.value)} className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground">
+              <select value={budget} onChange={(e) => setBudget(e.target.value)} className="mt-1 w-full rounded-md border border-input bg-foreground/[0.05] px-3 py-2 text-sm text-foreground">
                 {BUDGET_OPTIONS.map((o) => <option key={o || "x"} value={o}>{o || "—"}</option>)}
               </select>
             </div>
@@ -143,13 +143,13 @@ export default function TravelProfileModal({ vic, existingTypes, onClose, onSave
             </div>
             <div>
               <Label>Cabin class</Label>
-              <select value={cabinClass} onChange={(e) => setCabinClass(e.target.value)} className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground">
+              <select value={cabinClass} onChange={(e) => setCabinClass(e.target.value)} className="mt-1 w-full rounded-md border border-input bg-foreground/[0.05] px-3 py-2 text-sm text-foreground">
                 {CABIN_OPTIONS.map((o) => <option key={o || "x"} value={o}>{o ? o.replace(/_/g, " ") : "—"}</option>)}
               </select>
             </div>
             <div>
               <Label>Seat preference</Label>
-              <select value={seatPreference} onChange={(e) => setSeatPreference(e.target.value)} className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground">
+              <select value={seatPreference} onChange={(e) => setSeatPreference(e.target.value)} className="mt-1 w-full rounded-md border border-input bg-foreground/[0.05] px-3 py-2 text-sm text-foreground">
                 {SEAT_OPTIONS.map((o) => <option key={o || "x"} value={o}>{o || "—"}</option>)}
               </select>
             </div>
@@ -159,11 +159,11 @@ export default function TravelProfileModal({ vic, existingTypes, onClose, onSave
             </div>
             <div>
               <Label>Accessibility needs</Label>
-              <textarea value={accessibility} onChange={(e) => setAccessibility(e.target.value)} rows={2} className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground" />
+              <textarea value={accessibility} onChange={(e) => setAccessibility(e.target.value)} rows={2} className="mt-1 w-full rounded-md border border-input bg-foreground/[0.05] px-3 py-2 text-sm text-foreground" />
             </div>
             <div>
               <Label>Special requirements</Label>
-              <textarea value={specialReq} onChange={(e) => setSpecialReq(e.target.value)} rows={2} className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground" />
+              <textarea value={specialReq} onChange={(e) => setSpecialReq(e.target.value)} rows={2} className="mt-1 w-full rounded-md border border-input bg-foreground/[0.05] px-3 py-2 text-sm text-foreground" />
             </div>
           </div>
         )}

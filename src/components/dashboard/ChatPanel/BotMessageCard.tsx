@@ -40,7 +40,7 @@ function KnowledgeCitationFooter({
                 e.stopPropagation();
                 onCitationClick(c.filename, c.page_number, c.pdf_path);
               }}
-              className="w-full text-left rounded-lg border border-border bg-[rgba(255,255,255,0.03)] px-3 py-2 hover:border-[rgba(174,133,80,0.35)] transition-colors"
+              className="w-full text-left rounded-lg border border-border bg-foreground/[0.04] px-3 py-2 hover:border-primary/35 transition-colors"
             >
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <ScopeBadge scope={c.kv_scope ?? TEAM_EVERYONE_ID} teams={teams} />
@@ -318,7 +318,7 @@ export function BotMessageCard({
               type="button"
               onClick={() => onSubmitFeedback(message.id!, { rating: 1 })}
               disabled={feedbackSubmitting === message.id}
-              className="inline-flex items-center justify-center p-2 rounded-lg bg-[rgba(255,255,255,0.06)] text-muted-foreground hover:bg-[rgba(255,255,255,0.1)] border border-transparent transition-colors"
+              className="inline-flex items-center justify-center p-2 rounded-lg bg-foreground/[0.07] text-muted-foreground hover:bg-foreground/[0.11] border border-transparent transition-colors"
               title="Thumbs up"
             >
               <ThumbsUp className="w-3.5 h-3.5" />
@@ -327,7 +327,7 @@ export function BotMessageCard({
               type="button"
               onClick={() => onSubmitFeedback(message.id!, { rating: -1 })}
               disabled={feedbackSubmitting === message.id}
-              className="inline-flex items-center justify-center p-2 rounded-lg bg-[rgba(255,255,255,0.06)] text-muted-foreground hover:bg-[rgba(255,255,255,0.1)] border border-transparent transition-colors"
+              className="inline-flex items-center justify-center p-2 rounded-lg bg-foreground/[0.07] text-muted-foreground hover:bg-foreground/[0.11] border border-transparent transition-colors"
               title="Thumbs down"
             >
               <ThumbsDown className="w-3.5 h-3.5" />
@@ -335,7 +335,7 @@ export function BotMessageCard({
             <button
               type="button"
               onClick={() => onOpenFeedbackComment(message.id!)}
-              className="inline-flex items-center justify-center p-2 rounded-lg bg-[rgba(255,255,255,0.06)] text-muted-foreground hover:bg-[rgba(255,255,255,0.1)] border border-transparent transition-colors"
+              className="inline-flex items-center justify-center p-2 rounded-lg bg-foreground/[0.07] text-muted-foreground hover:bg-foreground/[0.11] border border-transparent transition-colors"
               title="Add a comment"
             >
               <MessageSquare className="w-3.5 h-3.5" />

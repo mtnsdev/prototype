@@ -107,7 +107,7 @@ export default function ItineraryBuilderSidebar({
           <BudgetRow label="Experiences" value="€2,200" />
           <BudgetRow label="Transfers" value="€800" />
           <BudgetRow label="Dining" value="€1,500" />
-          <div className="my-2 h-px bg-[rgba(255,255,255,0.04)]" />
+          <div className="my-2 h-px bg-foreground/[0.05]" />
           <div className="flex items-center justify-between">
             <span className="text-sm text-foreground">Total estimate</span>
             <span className="text-base font-light text-foreground">€12,900</span>
@@ -131,7 +131,7 @@ export default function ItineraryBuilderSidebar({
               </div>
             ))
           )}
-          <div className="my-2 h-px bg-[rgba(255,255,255,0.04)]" />
+          <div className="my-2 h-px bg-foreground/[0.05]" />
           {advisoryFlatBonusTotal > 0 ? (
             <div className="flex items-center justify-between">
               <span className="text-xs text-amber-300">Advisory flat bonuses</span>
@@ -170,7 +170,7 @@ export default function ItineraryBuilderSidebar({
           onChange={(e) => onNotesChange(e.target.value)}
           placeholder="Add notes about this trip…"
           rows={4}
-          className="min-h-[80px] w-full resize-none rounded-lg border border-border bg-[rgba(255,255,255,0.02)] px-3 py-2 text-sm text-muted-foreground placeholder:text-muted-foreground/65 outline-none focus:border-[rgba(201,169,110,0.15)]"
+          className="min-h-[80px] w-full resize-none rounded-lg border border-border bg-foreground/[0.03] px-3 py-2 text-sm text-muted-foreground placeholder:text-muted-foreground/65 outline-none focus:border-[rgba(201,169,110,0.15)]"
         />
       </div>
     </aside>

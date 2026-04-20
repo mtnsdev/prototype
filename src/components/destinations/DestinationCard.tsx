@@ -47,7 +47,7 @@ export function DestinationCard({ summary, highlightQuery = "" }: Props) {
       prefetch={false}
       className={cn(
         "group relative flex h-full min-h-0 cursor-pointer flex-col overflow-hidden rounded-xl border transition-all",
-        "border-white/[0.04] bg-white/[0.02] hover:border-border hover:bg-white/[0.04]",
+        "border-white/[0.04] bg-foreground/[0.03] hover:border-border hover:bg-white/[0.04]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A96E]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       )}
     >
@@ -63,7 +63,7 @@ export function DestinationCard({ summary, highlightQuery = "" }: Props) {
         ) : (
           <div className={cn("h-full w-full bg-gradient-to-br", gradientForSlug(summary.slug))} aria-hidden />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#08080c]/85 via-[#08080c]/35 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/35 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 px-3 pb-2.5 pt-8">
           <p
             className={cn(

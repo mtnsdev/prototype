@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Shared skeleton primitives with shimmer animation
- * Uses design system colors: shimmer from bg-[rgba(255,255,255,0.04)] to bg-[rgba(255,255,255,0.08)]
+ * Uses design system colors: subtle foreground-tinted shimmer on light surfaces
  */
 
 // Shimmer animation keyframes
@@ -32,7 +32,7 @@ export function SkeletonLine({
   return (
     <div
       className={cn(
-        "h-4 rounded bg-gradient-to-r from-[rgba(255,255,255,0.04)] via-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.04)]",
+        "h-4 rounded bg-gradient-to-r from-foreground/[0.06] via-foreground/[0.1] to-foreground/[0.06]",
         "bg-[length:1000px_100%] animate-pulse",
         width,
         className
@@ -56,7 +56,7 @@ export function SkeletonCard({
   return (
     <div
       className={cn(
-        "rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] p-4",
+        "rounded-xl border border-border bg-muted/50 p-4",
         className
       )}
     >
@@ -64,7 +64,7 @@ export function SkeletonCard({
         <div
           className={cn(
             imageHeight,
-            "rounded-lg bg-gradient-to-r from-[rgba(255,255,255,0.04)] via-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.04)]",
+            "rounded-lg bg-gradient-to-r from-foreground/[0.06] via-foreground/[0.1] to-foreground/[0.06]",
             "bg-[length:1000px_100%] animate-pulse mb-4"
           )}
         />
@@ -91,7 +91,7 @@ export function SkeletonRow({
   return (
     <div
       className={cn(
-        "flex gap-4 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] p-4",
+        "flex gap-4 rounded-lg border border-border bg-muted/50 p-4",
         className
       )}
     >
@@ -118,7 +118,7 @@ export function SkeletonAvatar({
     <div
       className={cn(
         size,
-        "rounded-full bg-gradient-to-r from-[rgba(255,255,255,0.04)] via-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.04)]",
+        "rounded-full bg-gradient-to-r from-foreground/[0.06] via-foreground/[0.1] to-foreground/[0.06]",
         "bg-[length:1000px_100%] animate-pulse",
         className
       )}
@@ -133,7 +133,7 @@ export function VICCardSkeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] p-5",
+        "rounded-xl border border-border bg-muted/50 p-5",
         className
       )}
     >
@@ -163,11 +163,11 @@ export function ProductCardSkeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] overflow-hidden",
+        "rounded-xl border border-border bg-muted/50 overflow-hidden",
         className
       )}
     >
-      <div className="h-48 bg-gradient-to-r from-[rgba(255,255,255,0.04)] via-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.04)] bg-[length:1000px_100%] animate-pulse" />
+      <div className="h-48 bg-gradient-to-r from-foreground/[0.06] via-foreground/[0.1] to-foreground/[0.06] bg-[length:1000px_100%] animate-pulse" />
       <div className="p-4 space-y-3">
         <SkeletonLine width="w-3/4" />
         <div className="flex gap-2">
@@ -191,7 +191,7 @@ export function ItineraryCardSkeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] p-4",
+        "rounded-xl border border-border bg-muted/50 p-4",
         className
       )}
     >
@@ -203,7 +203,7 @@ export function ItineraryCardSkeleton({ className }: { className?: string }) {
         <SkeletonLine width="w-full" className="h-3" />
         <SkeletonLine width="w-3/4" className="h-3" />
       </div>
-      <div className="flex gap-2 pt-3 border-t border-[rgba(255,255,255,0.08)]">
+      <div className="flex gap-2 pt-3 border-t border-border">
         <SkeletonAvatar size="w-8 h-8" />
         <div className="flex-1 space-y-1">
           <SkeletonLine width="w-1/2" className="h-2" />
@@ -221,7 +221,7 @@ export function VICRowSkeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "flex items-center gap-4 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] p-3 px-4",
+        "flex items-center gap-4 rounded-lg border border-border bg-muted/50 p-3 px-4",
         className
       )}
     >
@@ -258,7 +258,7 @@ export function Spinner({
   return (
     <div
       className={cn(
-        "border-2 border-[rgba(255,255,255,0.12)] border-t-[rgba(255,255,255,0.28)] rounded-full animate-spin shrink-0",
+        "border-2 border-foreground/15 border-t-primary/50 rounded-full animate-spin shrink-0",
         sizeMap[size],
         className
       )}

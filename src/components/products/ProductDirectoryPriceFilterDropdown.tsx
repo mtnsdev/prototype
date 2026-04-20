@@ -80,7 +80,7 @@ export default function ProductDirectoryPriceFilterDropdown({ selectedPriceTiers
               placeholder="Search price tiers…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border-none bg-[rgba(255,255,255,0.03)] px-2 py-1.5 text-xs text-foreground placeholder-[#4A4540] outline-none"
+              className="w-full rounded-lg border-none bg-foreground/[0.04] px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 outline-none"
             />
           </div>
           {filteredOptions.map((tier) => {
@@ -89,7 +89,7 @@ export default function ProductDirectoryPriceFilterDropdown({ selectedPriceTiers
               <button
                 key={tier.id}
                 type="button"
-                className="flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+                className="flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-foreground/[0.05]"
                 onClick={() =>
                   onChange(
                     on ? selectedPriceTiers.filter((t) => t !== tier.id) : [...selectedPriceTiers, tier.id]

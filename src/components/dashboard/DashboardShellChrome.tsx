@@ -1,7 +1,8 @@
 "use client";
 
+import { useCallback } from "react";
 import Link from "next/link";
-import { Bell, Search } from "lucide-react";
+import { Bell, RotateCcw, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGlobalSearchOptional } from "@/contexts/GlobalSearchContext";
 import { useNotificationPanelOptional } from "@/components/dashboard/DashboardNotifications";
@@ -9,14 +10,22 @@ import { DASHBOARD_CHROME_HEADER_ROW } from "@/lib/dashboardChrome";
 import { Button } from "@/components/ui/button";
 import { IS_PREVIEW_MODE } from "@/config/preview";
 import { DirectoryRoleToggle } from "@/components/products/DirectoryRoleToggle";
+import { resetPrototypeClientStorage } from "@/lib/prototypeSessionReset";
+import { PostOnboardingIntegrationNudge } from "@/components/dashboard/PostOnboardingIntegrationNudge";
 
 export default function DashboardShellChrome() {
   const search = useGlobalSearchOptional();
   const notificationPanel = useNotificationPanelOptional();
   const unread = notificationPanel?.unreadCount ?? 0;
 
+  const handleRestartPrototype = useCallback(() => {
+    resetPrototypeClientStorage();
+    window.location.assign("/login");
+  }, []);
+
   return (
     <div className="shrink-0">
+      <PostOnboardingIntegrationNudge />
       <div
         className={cn(
           DASHBOARD_CHROME_HEADER_ROW,
@@ -39,6 +48,19 @@ export default function DashboardShellChrome() {
 
         <div className="flex shrink-0 items-center gap-2">
           <DirectoryRoleToggle className="shrink-0" />
+          {IS_PREVIEW_MODE ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 shrink-0 gap-1.5 border-border px-2.5 text-xs text-muted-foreground hover:text-foreground"
+              onClick={handleRestartPrototype}
+              title="Clear mock sign-in, onboarding progress, and demo flags — then sign in again"
+            >
+              <RotateCcw className="size-3.5 shrink-0 opacity-80" aria-hidden />
+              <span className="hidden min-[420px]:inline">Restart prototype</span>
+            </Button>
+          ) : null}
           <div className="flex shrink-0 items-center gap-0.5">
             <Button
               type="button"

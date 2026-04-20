@@ -471,7 +471,7 @@ export default function BulkTestPage() {
                             key={t.id}
                             variant="ghost"
                             onClick={() => setTab(t.id)}
-                            className={`gap-2 font-medium ${tab === t.id ? "bg-[rgba(255,255,255,0.08)] text-foreground" : "text-muted-foreground/75 hover:bg-[rgba(255,255,255,0.04)]"}`}
+                            className={`gap-2 font-medium ${tab === t.id ? "bg-foreground/[0.09] text-foreground" : "text-muted-foreground/75 hover:bg-foreground/[0.05]"}`}
                         >
                             <Icon size={16} />
                             {t.label}
@@ -484,7 +484,7 @@ export default function BulkTestPage() {
                 <div className="space-y-6">
                     {dashboardLoading ? (
                         <div className="flex items-center justify-center py-12">
-                            <Loader2 size={32} className="animate-spin text-muted-foreground/55" />
+                            <Loader2 size={32} className="animate-spin text-muted-foreground" />
                         </div>
                     ) : (
                         <>
@@ -580,7 +580,7 @@ export default function BulkTestPage() {
                                 onValueChange={setGeminiModel}
                                 disabled={running}
                             >
-                                <SelectTrigger className="w-[200px] bg-[rgba(255,255,255,0.06)] border-input text-foreground focus-visible:ring-amber-500/50">
+                                <SelectTrigger className="w-[200px] bg-foreground/[0.07] border-input text-foreground focus-visible:ring-amber-500/50">
                                     <SelectValue placeholder="Select model" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -611,7 +611,7 @@ export default function BulkTestPage() {
                         </Button>
                         {running && progress != null && progress.total_count > 0 && (
                             <div className="mt-4">
-                                <div className="h-2 rounded-full bg-[rgba(255,255,255,0.1)] overflow-hidden max-w-xs">
+                                <div className="h-2 rounded-full bg-foreground/[0.11] overflow-hidden max-w-xs">
                                     <div
                                         className="h-full bg-amber-500/60 transition-all duration-500"
                                         style={{
@@ -665,7 +665,7 @@ export default function BulkTestPage() {
                                                     {res.regression_detected ? (
                                                         <span className="text-[var(--color-warning)]">Yes</span>
                                                     ) : (
-                                                        <span className="text-muted-foreground/55">—</span>
+                                                        <span className="text-muted-foreground">—</span>
                                                     )}
                                                 </td>
                                                 <td className="p-3">
@@ -675,7 +675,7 @@ export default function BulkTestPage() {
                                                         size="icon"
                                                         onClick={() => setRunResultDetailId(res.id)}
                                                         title="More detail"
-                                                        className="bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border-0"
+                                                        className="bg-foreground/[0.09] hover:bg-foreground/[0.13] border-0"
                                                     >
                                                         <Eye size={18} />
                                                     </Button>
@@ -711,12 +711,12 @@ export default function BulkTestPage() {
                                         </div>
                                         <div>
                                             <div className="text-sm text-muted-foreground/75 mb-1">Generated answer</div>
-                                            <p className="text-foreground whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">{res.answer ?? "—"}</p>
+                                            <p className="text-foreground whitespace-pre-wrap bg-foreground/[0.05] rounded-lg p-3">{res.answer ?? "—"}</p>
                                         </div>
                                         {reasoning && (
                                             <div>
                                                 <div className="text-sm text-muted-foreground/75 mb-1">Reasoning</div>
-                                                <p className="text-muted-foreground whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">{reasoning}</p>
+                                                <p className="text-muted-foreground whitespace-pre-wrap bg-foreground/[0.05] rounded-lg p-3">{reasoning}</p>
                                             </div>
                                         )}
                                         <div className="flex flex-wrap gap-4 text-compact">
@@ -825,7 +825,7 @@ export default function BulkTestPage() {
                                     type="button"
                                     onClick={() => setRunsPage((p) => Math.max(1, p - 1))}
                                     disabled={runsPage <= 1}
-                                    className="px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.08)] text-foreground hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50 disabled:pointer-events-none text-compact"
+                                    className="px-3 py-1.5 rounded-lg bg-foreground/[0.09] text-foreground hover:bg-foreground/[0.13] disabled:opacity-50 disabled:pointer-events-none text-compact"
                                 >
                                     Previous
                                 </button>
@@ -833,7 +833,7 @@ export default function BulkTestPage() {
                                     type="button"
                                     onClick={() => setRunsPage((p) => p + 1)}
                                     disabled={runsPage * RUNS_PAGE_SIZE >= runsTotal}
-                                    className="px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.08)] text-foreground hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50 disabled:pointer-events-none text-compact"
+                                    className="px-3 py-1.5 rounded-lg bg-foreground/[0.09] text-foreground hover:bg-foreground/[0.13] disabled:opacity-50 disabled:pointer-events-none text-compact"
                                 >
                                     Next
                                 </button>
@@ -854,7 +854,7 @@ export default function BulkTestPage() {
                                     value={runA != null ? String(runA) : "__none__"}
                                     onValueChange={(v) => setRunA(v === "__none__" ? null : Number(v))}
                                 >
-                                    <SelectTrigger className="min-w-[200px] bg-[rgba(255,255,255,0.06)] border-input text-foreground focus-visible:ring-amber-500/50">
+                                    <SelectTrigger className="min-w-[200px] bg-foreground/[0.07] border-input text-foreground focus-visible:ring-amber-500/50">
                                         <SelectValue placeholder="Select run" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -874,7 +874,7 @@ export default function BulkTestPage() {
                                     value={runB != null ? String(runB) : "__none__"}
                                     onValueChange={(v) => setRunB(v === "__none__" ? null : Number(v))}
                                 >
-                                    <SelectTrigger className="min-w-[200px] bg-[rgba(255,255,255,0.06)] border-input text-foreground focus-visible:ring-amber-500/50">
+                                    <SelectTrigger className="min-w-[200px] bg-foreground/[0.07] border-input text-foreground focus-visible:ring-amber-500/50">
                                         <SelectValue placeholder="Select run" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -891,7 +891,7 @@ export default function BulkTestPage() {
                             <button
                                 onClick={loadCompare}
                                 disabled={compareLoading || runA == null || runB == null || runA === runB}
-                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[rgba(255,255,255,0.08)] text-foreground hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50"
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-foreground/[0.09] text-foreground hover:bg-foreground/[0.13] disabled:opacity-50"
                             >
                                 {compareLoading ? <Loader2 size={16} className="animate-spin" /> : <GitCompare size={16} />}
                                 Compare
@@ -942,7 +942,7 @@ export default function BulkTestPage() {
                                                         type="button"
                                                         onClick={() => setCompareDetailRow(i)}
                                                         title="More detail"
-                                                        className="inline-flex items-center justify-center p-2 rounded-lg bg-[rgba(255,255,255,0.08)] text-foreground hover:bg-[rgba(255,255,255,0.12)]"
+                                                        className="inline-flex items-center justify-center p-2 rounded-lg bg-foreground/[0.09] text-foreground hover:bg-foreground/[0.13]"
                                                     >
                                                         <Eye size={18} />
                                                     </button>
@@ -969,7 +969,7 @@ export default function BulkTestPage() {
                                 <div className="rounded-2xl bg-accent border border-input shadow-xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
                                     <div className="flex items-center justify-between p-4 border-b border-border">
                                         <h4 className="text-lg font-semibold text-foreground">Test detail</h4>
-                                        <button type="button" onClick={() => setCompareDetailRow(null)} className="p-1.5 rounded-lg text-muted-foreground hover:bg-[rgba(255,255,255,0.08)] hover:text-foreground">
+                                        <button type="button" onClick={() => setCompareDetailRow(null)} className="p-1.5 rounded-lg text-muted-foreground hover:bg-foreground/[0.09] hover:text-foreground">
                                             <X size={20} />
                                         </button>
                                     </div>
@@ -980,11 +980,11 @@ export default function BulkTestPage() {
                                         </div>
                                         <div>
                                             <div className="text-sm text-muted-foreground/75 mb-1">Expected / sample answer</div>
-                                            <p className="text-foreground whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">{row.expected_answer ?? "—"}</p>
+                                            <p className="text-foreground whitespace-pre-wrap bg-foreground/[0.05] rounded-lg p-3">{row.expected_answer ?? "—"}</p>
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="rounded-xl border border-border overflow-hidden">
-                                                <div className="px-3 py-2 bg-[rgba(255,255,255,0.06)] text-sm font-medium text-muted-foreground border-b border-border">
+                                                <div className="px-3 py-2 bg-foreground/[0.07] text-sm font-medium text-muted-foreground border-b border-border">
                                                     Run A {row.result_a != null && `· Score ${row.result_a.quality_score ?? "—"} · ${row.result_a.passed ? "Pass" : "Fail"}`}
                                                 </div>
                                                 <div className="p-3 space-y-3">
@@ -1004,7 +1004,7 @@ export default function BulkTestPage() {
                                                 </div>
                                             </div>
                                             <div className="rounded-xl border border-border overflow-hidden">
-                                                <div className="px-3 py-2 bg-[rgba(255,255,255,0.06)] text-sm font-medium text-muted-foreground border-b border-border">
+                                                <div className="px-3 py-2 bg-foreground/[0.07] text-sm font-medium text-muted-foreground border-b border-border">
                                                     Run B {row.result_b != null && `· Score ${row.result_b.quality_score ?? "—"} · ${row.result_b.passed ? "Pass" : "Fail"}`}
                                                 </div>
                                                 <div className="p-3 space-y-3">
@@ -1043,7 +1043,7 @@ export default function BulkTestPage() {
                         </div>
                         {chatMessagesLoading ? (
                             <div className="flex justify-center py-12">
-                                <Loader2 size={28} className="animate-spin text-muted-foreground/55" />
+                                <Loader2 size={28} className="animate-spin text-muted-foreground" />
                             </div>
                         ) : (
                             <>
@@ -1073,7 +1073,7 @@ export default function BulkTestPage() {
                                                 return (
                                                     <tr
                                                         key={pair.assistant_message_id}
-                                                        className={cn(listTbodyRowClass, "hover:bg-white/[0.02]")}
+                                                        className={cn(listTbodyRowClass, "hover:bg-foreground/[0.03]")}
                                                     >
                                                         <td className="p-3 text-foreground max-w-[220px]">
                                                             {truncate(pair.question, 80)}
@@ -1091,7 +1091,7 @@ export default function BulkTestPage() {
                                                                     <ThumbsDown size={14} /> {feedbackLabel}
                                                                 </span>
                                                             ) : (
-                                                                <span className="text-muted-foreground/55">—</span>
+                                                                <span className="text-muted-foreground">—</span>
                                                             )}
                                                         </td>
                                                         <td className="p-3">
@@ -1100,7 +1100,7 @@ export default function BulkTestPage() {
                                                             ) : pair.can_answer === false ? (
                                                                 <span className="text-red-400">No</span>
                                                             ) : (
-                                                                <span className="text-muted-foreground/55">—</span>
+                                                                <span className="text-muted-foreground">—</span>
                                                             )}
                                                         </td>
                                                         <td className="p-3 text-sm text-muted-foreground">
@@ -1141,7 +1141,7 @@ export default function BulkTestPage() {
                                                 type="button"
                                                 onClick={() => fetchChatMessages(chatMessagesPage - 1)}
                                                 disabled={chatMessagesPage <= 1}
-                                                className="px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.08)] text-foreground hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50 disabled:pointer-events-none text-compact"
+                                                className="px-3 py-1.5 rounded-lg bg-foreground/[0.09] text-foreground hover:bg-foreground/[0.13] disabled:opacity-50 disabled:pointer-events-none text-compact"
                                             >
                                                 Previous
                                             </button>
@@ -1149,7 +1149,7 @@ export default function BulkTestPage() {
                                                 type="button"
                                                 onClick={() => fetchChatMessages(chatMessagesPage + 1)}
                                                 disabled={chatMessagesPage * CHAT_MESSAGES_PAGE_SIZE >= chatMessagesTotal}
-                                                className="px-3 py-1.5 rounded-lg bg-[rgba(255,255,255,0.08)] text-foreground hover:bg-[rgba(255,255,255,0.12)] disabled:opacity-50 disabled:pointer-events-none text-compact"
+                                                className="px-3 py-1.5 rounded-lg bg-foreground/[0.09] text-foreground hover:bg-foreground/[0.13] disabled:opacity-50 disabled:pointer-events-none text-compact"
                                             >
                                                 Next
                                             </button>
@@ -1179,7 +1179,7 @@ export default function BulkTestPage() {
                                         <button
                                             type="button"
                                             onClick={() => setChatMessageDetailIndex(null)}
-                                            className="p-1.5 rounded-lg text-muted-foreground hover:bg-[rgba(255,255,255,0.08)] hover:text-foreground"
+                                            className="p-1.5 rounded-lg text-muted-foreground hover:bg-foreground/[0.09] hover:text-foreground"
                                         >
                                             <X size={20} />
                                         </button>
@@ -1191,7 +1191,7 @@ export default function BulkTestPage() {
                                         </div>
                                         <div>
                                             <div className="text-sm text-muted-foreground/75 mb-1">Answer</div>
-                                            <p className="text-foreground whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">
+                                            <p className="text-foreground whitespace-pre-wrap bg-foreground/[0.05] rounded-lg p-3">
                                                 {pair.answer}
                                             </p>
                                         </div>
@@ -1227,7 +1227,7 @@ export default function BulkTestPage() {
                                         {citations.length > 0 && (
                                             <div>
                                                 <div className="text-sm text-muted-foreground/75 mb-1">Citations</div>
-                                                <pre className="text-sm text-muted-foreground whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3 max-h-40 overflow-y-auto">
+                                                <pre className="text-sm text-muted-foreground whitespace-pre-wrap bg-foreground/[0.05] rounded-lg p-3 max-h-40 overflow-y-auto">
                                                     {JSON.stringify(citations, null, 2)}
                                                 </pre>
                                             </div>
@@ -1235,7 +1235,7 @@ export default function BulkTestPage() {
                                         {conflicts.length > 0 && (
                                             <div>
                                                 <div className="text-sm text-muted-foreground/75 mb-1">Conflicts</div>
-                                                <pre className="text-sm text-muted-foreground whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3 max-h-40 overflow-y-auto">
+                                                <pre className="text-sm text-muted-foreground whitespace-pre-wrap bg-foreground/[0.05] rounded-lg p-3 max-h-40 overflow-y-auto">
                                                     {JSON.stringify(conflicts, null, 2)}
                                                 </pre>
                                             </div>
@@ -1269,7 +1269,7 @@ export default function BulkTestPage() {
                                     {suggestions.map((s) => (
                                         <li
                                             key={s.sample_message_id}
-                                            className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-[rgba(255,255,255,0.03)] border border-border"
+                                            className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-foreground/[0.04] border border-border"
                                         >
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-base text-foreground truncate">{s.question_text}</p>
@@ -1301,7 +1301,7 @@ export default function BulkTestPage() {
                                     value={formQuestion}
                                     onChange={(e) => setFormQuestion(e.target.value)}
                                     placeholder="e.g. What is the policy on annual leave?"
-                                    className="w-full bg-[rgba(255,255,255,0.06)] border-input rounded-lg"
+                                    className="w-full bg-foreground/[0.07] border-input rounded-lg"
                                 />
                             </div>
                             <div>
@@ -1311,7 +1311,7 @@ export default function BulkTestPage() {
                                     onChange={(e) => setFormExpected(e.target.value)}
                                     placeholder="Optional: used by LLM to score the answer"
                                     rows={2}
-                                    className="w-full bg-[rgba(255,255,255,0.06)] border border-input rounded-lg px-3 py-2 text-base text-foreground"
+                                    className="w-full bg-foreground/[0.07] border border-input rounded-lg px-3 py-2 text-base text-foreground"
                                 />
                             </div>
                             <div>
@@ -1322,7 +1322,7 @@ export default function BulkTestPage() {
                                     max={10}
                                     value={formMinScore}
                                     onChange={(e) => setFormMinScore(Number(e.target.value))}
-                                    className="w-20 bg-[rgba(255,255,255,0.06)] border border-input rounded-lg px-3 py-2 text-base text-foreground"
+                                    className="w-20 bg-foreground/[0.07] border border-input rounded-lg px-3 py-2 text-base text-foreground"
                                 />
                             </div>
                             <div className="flex gap-2">
@@ -1342,7 +1342,7 @@ export default function BulkTestPage() {
                                             setFormExpected("");
                                             setFormMinScore(7);
                                         }}
-                                        className="bg-[rgba(255,255,255,0.06)] text-muted-foreground"
+                                        className="bg-foreground/[0.07] text-muted-foreground"
                                     >
                                         Cancel
                                     </Button>
@@ -1383,7 +1383,7 @@ export default function BulkTestPage() {
                                         const truncate = (s: string | null | undefined, max: number) =>
                                             s && s.length > max ? s.slice(0, max) + "…" : s ?? "—";
                                         return (
-                                            <tr key={q.id} className={cn(listTbodyRowClass, "hover:bg-white/[0.02]")}>
+                                            <tr key={q.id} className={cn(listTbodyRowClass, "hover:bg-foreground/[0.03]")}>
                                                 <td className="p-3 text-foreground max-w-[200px]">{truncate(q.question, 60)}</td>
                                                 <td className="p-3 text-muted-foreground max-w-[150px]" title={q.expected_answer ?? undefined}>
                                                     {truncate(q.expected_answer, 50)}
@@ -1400,7 +1400,7 @@ export default function BulkTestPage() {
                                                             <span className="text-red-400">No</span>
                                                         )
                                                     ) : (
-                                                        <span className="text-muted-foreground/55">—</span>
+                                                        <span className="text-muted-foreground">—</span>
                                                     )}
                                                 </td>
                                                 <td className="p-3 text-sm text-muted-foreground">
@@ -1462,7 +1462,7 @@ export default function BulkTestPage() {
                                 <div className="rounded-2xl bg-accent border border-input shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
                                     <div className="flex items-center justify-between p-4 border-b border-border">
                                         <h4 className="text-lg font-semibold text-foreground">Question details</h4>
-                                        <button type="button" onClick={() => setQuestionDetailId(null)} className="p-1.5 rounded-lg text-muted-foreground hover:bg-[rgba(255,255,255,0.08)] hover:text-foreground">
+                                        <button type="button" onClick={() => setQuestionDetailId(null)} className="p-1.5 rounded-lg text-muted-foreground hover:bg-foreground/[0.09] hover:text-foreground">
                                             <X size={20} />
                                         </button>
                                     </div>
@@ -1473,7 +1473,7 @@ export default function BulkTestPage() {
                                         </div>
                                         <div>
                                             <div className="text-sm text-muted-foreground/75 mb-1">Expected answer / criteria</div>
-                                            <p className="text-foreground whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">
+                                            <p className="text-foreground whitespace-pre-wrap bg-foreground/[0.05] rounded-lg p-3">
                                                 {q.expected_answer ?? "—"}
                                             </p>
                                         </div>
@@ -1489,14 +1489,14 @@ export default function BulkTestPage() {
                                         </div>
                                         <div>
                                             <div className="text-sm text-muted-foreground/75 mb-1">Latest generated answer {latestRunForQuestions && `(Run #${latestRunForQuestions.id})`}</div>
-                                            <p className="text-foreground whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">
+                                            <p className="text-foreground whitespace-pre-wrap bg-foreground/[0.05] rounded-lg p-3">
                                                 {latestResult?.answer ?? "— No run result yet —"}
                                             </p>
                                         </div>
                                         {reasoning && (
                                             <div>
                                                 <div className="text-sm text-muted-foreground/75 mb-1">Scoring reasoning</div>
-                                                <p className="text-muted-foreground whitespace-pre-wrap bg-[rgba(255,255,255,0.04)] rounded-lg p-3">{reasoning}</p>
+                                                <p className="text-muted-foreground whitespace-pre-wrap bg-foreground/[0.05] rounded-lg p-3">{reasoning}</p>
                                             </div>
                                         )}
                                         <div className="flex flex-wrap gap-4 text-compact pt-2 border-t border-border">
@@ -1539,7 +1539,7 @@ export default function BulkTestPage() {
                                         <button
                                             type="button"
                                             onClick={() => setDeleteQuestionId(null)}
-                                            className="px-4 py-2 rounded-lg bg-[rgba(255,255,255,0.08)] text-foreground hover:bg-[rgba(255,255,255,0.12)] text-base"
+                                            className="px-4 py-2 rounded-lg bg-foreground/[0.09] text-foreground hover:bg-foreground/[0.13] text-base"
                                         >
                                             Cancel
                                         </button>

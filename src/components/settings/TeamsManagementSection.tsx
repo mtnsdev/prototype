@@ -100,7 +100,7 @@ export default function TeamsManagementSection() {
   );
 
   return (
-    <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-6">
+    <div className="bg-foreground/[0.03] border border-white/[0.04] rounded-xl p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <Users className="w-5 h-5 text-blue-400 shrink-0" />
@@ -312,7 +312,7 @@ function TeamCard({
   onManageMembers: () => void;
 }) {
   return (
-    <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4">
+    <div className="bg-foreground/[0.03] border border-white/[0.04] rounded-xl p-4">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-sm text-white font-medium truncate">{team.name}</span>
@@ -327,7 +327,7 @@ function TeamCard({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="p-1 rounded-md hover:bg-white/[0.06] text-muted-foreground/70 hover:text-muted-foreground shrink-0"
+                className="p-1 rounded-md hover:bg-foreground/[0.06] text-muted-foreground/70 hover:text-muted-foreground shrink-0"
                 aria-label="Team actions"
               >
                 <MoreHorizontal className="w-3.5 h-3.5" />

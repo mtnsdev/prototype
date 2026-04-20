@@ -189,11 +189,11 @@ export function AnswerWithCitations({
 
     parts.push(
       <span key={`citation-group-${citationIndex++}`} className="inline-flex items-center gap-1 ml-1.5">
-        <span className="text-muted-foreground/55 text-xs">[</span>
+        <span className="text-muted-foreground text-xs">[</span>
         <span className="text-muted-foreground text-xs font-medium truncate max-w-30" title={filename}>
           {filename}
         </span>
-        <span className="text-muted-foreground/55 text-xs">:</span>
+        <span className="text-muted-foreground text-xs">:</span>
         {pageNumbers.map((pageNum, pageIdx) => (
           <React.Fragment key={`page-${pageIdx}`}>
             <button
@@ -207,7 +207,7 @@ export function AnswerWithCitations({
             {pageIdx < pageNumbers.length - 1 && <span className="text-[rgba(245,245,245,0.3)] text-xs mx-0.5">,</span>}
           </React.Fragment>
         ))}
-        <span className="text-muted-foreground/55 text-xs">]</span>
+        <span className="text-muted-foreground text-xs">]</span>
       </span>
     );
 

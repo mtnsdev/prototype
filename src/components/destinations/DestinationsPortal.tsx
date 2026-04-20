@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
+import { ProductCatalogSectionTabs } from "@/components/products/ProductCatalogSectionTabs";
+import {
+  hrefForCatalogTab,
+  type CatalogSegment,
+} from "@/components/products/productDirectoryCatalogSegments";
 import { useUser } from "@/contexts/UserContext";
 import { listDestinationSummaries } from "@/data/destinations";
 import {
@@ -12,10 +18,13 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { DestinationCard } from "./DestinationCard";
 import { AddDestinationDialog } from "./AddDestinationDialog";
 import { Button } from "@/components/ui/button";
+import { AppPageHeroHeader } from "@/components/ui/app-page-hero-header";
+import { APP_PAGE_CONTENT_SHELL } from "@/lib/dashboardChrome";
 import { PageSearchField } from "@/components/ui/page-search-field";
 import { cn } from "@/lib/utils";
 
 export function DestinationsPortal() {
+  const router = useRouter();
   const { user } = useUser();
   const { isAdmin } = usePermissions();
   const agencyId = user?.agency_id ?? null;
@@ -46,20 +55,20 @@ export function DestinationsPortal() {
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
       {isAdmin ? <AddDestinationDialog open={addOpen} onOpenChange={setAddOpen} /> : null}
-      <a
-        href="#destinations-portal-main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-card focus:px-3 focus:py-2 focus:text-sm focus:text-foreground focus:ring-2 focus:ring-brand-cta/40"
-      >
-        Skip to destination list
-      </a>
-
-      <main
-        className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-0"
-        id="destinations-portal-main"
-      >
-        <div className="space-y-4">
-          <div className="sticky top-0 z-10 -mx-6 border-b border-border bg-inset px-6 pb-3 pt-3">
-            <div className="flex flex-wrap items-center gap-2">
+      <AppPageHeroHeader
+        eyebrow="Catalog"
+        title="Destinations"
+        subtitle="Curated destination guides — DMCs, dining, hotels, and resources for your agency."
+        toolbarPlacement="with-title"
+        toolbar={
+          <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+            <div className="min-w-0 max-w-full overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <ProductCatalogSectionTabs
+                value="destinations"
+                onChange={(segment) => router.push(hrefForCatalogTab(segment))}
+              />
+            </div>
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:min-w-[min(100%,20rem)] sm:flex-1">
               <div className="min-w-0 flex-1 basis-[min(100%,20rem)]">
                 <PageSearchField
                   value={q}
@@ -82,7 +91,20 @@ export function DestinationsPortal() {
               ) : null}
             </div>
           </div>
+        }
+      />
+      <a
+        href="#destinations-portal-main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-card focus:px-3 focus:py-2 focus:text-sm focus:text-foreground focus:ring-2 focus:ring-brand-cta/40"
+      >
+        Skip to destination list
+      </a>
 
+      <main
+        className="min-h-0 flex-1 overflow-y-auto"
+        id="destinations-portal-main"
+      >
+        <div className={cn(APP_PAGE_CONTENT_SHELL, "space-y-4 py-6")}>
           {filtered.length > 0 ? (
             <div
               className={cn(

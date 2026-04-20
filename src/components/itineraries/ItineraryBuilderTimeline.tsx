@@ -113,7 +113,7 @@ function DayItemCard({
               <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground/65">{event.description}</p>
             )}
             {(event.source_product_name || event.source_product_id) && (
-              <div className="mt-2 flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-[rgba(255,255,255,0.015)] p-2 transition-colors hover:border-border">
+              <div className="mt-2 flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-foreground/[0.025] p-2 transition-colors hover:border-border">
                 <Building2 className="h-3 w-3 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">{event.source_product_name ?? "Linked product"}</span>
                 {formatProductCommission(event) && (
@@ -142,10 +142,10 @@ function DayItemCard({
             )}
           </div>
           <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100">
-            <button type="button" className="rounded p-1 hover:bg-[rgba(255,255,255,0.04)]" aria-label="Reorder">
+            <button type="button" className="rounded p-1 hover:bg-foreground/[0.05]" aria-label="Reorder">
               <GripVertical className="h-3 w-3 text-muted-foreground/65" />
             </button>
-            <button type="button" className="rounded p-1 hover:bg-[rgba(255,255,255,0.04)]" aria-label="More">
+            <button type="button" className="rounded p-1 hover:bg-foreground/[0.05]" aria-label="More">
               <MoreHorizontal className="h-3 w-3 text-muted-foreground/65" />
             </button>
           </div>
@@ -269,12 +269,12 @@ export default function ItineraryBuilderTimeline({
                             setPhase(null);
                           }
                         }}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-muted-foreground hover:bg-[rgba(255,255,255,0.02)]"
+                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-muted-foreground hover:bg-foreground/[0.03]"
                       >
                         <Ico className="h-3.5 w-3.5" /> {label}
                       </button>
                     ))}
-                    <div className="my-1 h-px bg-[rgba(255,255,255,0.04)]" />
+                    <div className="my-1 h-px bg-foreground/[0.05]" />
                     <button
                       type="button"
                       onClick={() => {
@@ -282,7 +282,7 @@ export default function ItineraryBuilderTimeline({
                         setOpenDayKey(null);
                         setPhase(null);
                       }}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-muted-foreground hover:bg-[rgba(255,255,255,0.02)]"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-muted-foreground hover:bg-foreground/[0.03]"
                     >
                       <StickyNote className="h-3.5 w-3.5" /> Note
                     </button>
@@ -309,7 +309,7 @@ export default function ItineraryBuilderTimeline({
                             key={p.id}
                             type="button"
                             onClick={() => selectProduct(p)}
-                            className="flex w-full items-center gap-3 rounded py-2 px-1 text-left transition-colors hover:bg-[rgba(255,255,255,0.02)]"
+                            className="flex w-full items-center gap-3 rounded py-2 px-1 text-left transition-colors hover:bg-foreground/[0.03]"
                           >
                             <span className="text-sm text-foreground">{p.name}</span>
                             <span className="text-2xs text-muted-foreground/65">{loc}</span>
@@ -345,7 +345,7 @@ export default function ItineraryBuilderTimeline({
       <button
         type="button"
         onClick={() => onToast("Add day — coming soon")}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 px-4 text-xs text-muted-foreground transition-colors hover:border-[rgba(255,255,255,0.10)] hover:text-muted-foreground"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 px-4 text-xs text-muted-foreground transition-colors hover:border-border-strong hover:text-muted-foreground"
       >
         <Plus className="h-3.5 w-3.5" />
         Add Day

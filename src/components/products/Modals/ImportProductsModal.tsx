@@ -145,7 +145,7 @@ export default function ImportProductsModal({ open, onClose, onImported }: Props
             onDragLeave={() => setDragOver(false)}
             onDrop={(e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; handleFile(f || null); }}
           >
-            <Upload className="mx-auto h-10 w-10 text-muted-foreground/55 mb-3" />
+            <Upload className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
             <p className="text-sm text-muted-foreground mb-2">Drag and drop a .csv file, or click to browse.</p>
             <input
               type="file"

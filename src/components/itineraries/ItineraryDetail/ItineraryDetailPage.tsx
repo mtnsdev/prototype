@@ -304,7 +304,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
 
   if (loading) {
     return (
-      <div className="h-full flex flex-col bg-inset overflow-hidden">
+      <div className="h-full flex flex-col bg-background overflow-hidden">
         <div className="shrink-0 h-10 px-4 border-b border-border flex items-center gap-3">
           <div className="h-8 w-8 rounded bg-white/10 animate-pulse" />
           <div className="h-5 w-48 bg-white/10 rounded animate-pulse" />
@@ -336,7 +336,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-inset overflow-hidden">
+    <div className="h-full flex flex-col bg-background overflow-hidden">
       <div className="shrink-0 flex flex-col">
         <div className={APP_DOCUMENT_HEAD}>
           <h1 className="text-lg font-semibold tracking-[-0.02em] text-foreground md:text-xl">
@@ -445,7 +445,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
         </div>
       </header>
 
-      <div className="shrink-0 px-4 py-3 border-b border-border relative bg-inset">
+      <div className="shrink-0 px-4 py-3 border-b border-border relative bg-background">
         <div className="w-full overflow-x-auto mb-2">
           <div className="flex items-center min-w-max px-1">
             {PIPELINE_STAGES.map((stage, i) => {
@@ -502,7 +502,7 @@ export default function ItineraryDetailPage({ itineraryId }: Props) {
               onChange={(e) => setPipelineNote(e.target.value)}
               placeholder="Add a note (optional)…"
               rows={3}
-              className="w-full bg-white/5 border border-input rounded-lg p-2 text-xs text-foreground/88 placeholder:text-muted-foreground/55 resize-none mb-2"
+              className="w-full bg-white/5 border border-input rounded-lg p-2 text-xs text-foreground/88 placeholder:text-muted-foreground resize-none mb-2"
             />
             <div className="flex justify-end gap-2">
               <button

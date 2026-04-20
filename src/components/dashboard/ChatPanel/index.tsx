@@ -26,6 +26,8 @@ export default function ChatPanel({
   assistantName = "Claire",
   assistantSubtitle = "Enable VICs AI",
   showDataAttribution = true,
+  starterSuggestionChips = null,
+  onStarterSuggestionsConsumed,
 }: ChatPanelProps) {
   const userContext = useUserOptional();
   const toast = useToast();
@@ -51,6 +53,7 @@ export default function ChatPanel({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
+  const starterSuggestionsConsumedRef = useRef(false);
   const [rightPanelMessageIndex, setRightPanelMessageIndex] = useState<number | null>(null);
   const [rightPanelMode, setRightPanelMode] = useState<"places" | "sources" | "knowledge" | null>(null);
   const [highlightedKbCitationNumber, setHighlightedKbCitationNumber] = useState<number | null>(null);
@@ -148,6 +151,10 @@ export default function ChatPanel({
   }, [conversationId, loadSession, refreshTrigger]);
 
   useEffect(() => {
+    starterSuggestionsConsumedRef.current = false;
+  }, [conversationId]);
+
+  useEffect(() => {
     setRightPanelMessageIndex(null);
     setRightPanelMode(null);
   }, [conversationId]);
@@ -205,6 +212,14 @@ export default function ChatPanel({
   async function send(messageText?: string) {
     const text = (messageText || input).trim();
     if (!text || loading) return;
+    if (
+      !starterSuggestionsConsumedRef.current &&
+      starterSuggestionChips &&
+      starterSuggestionChips.length > 0
+    ) {
+      starterSuggestionsConsumedRef.current = true;
+      onStarterSuggestionsConsumed?.();
+    }
     setInput("");
     let queryForApi = text;
     if (!destinationPrefixConsumedRef.current && destinationGuideContext) {
@@ -462,13 +477,17 @@ export default function ChatPanel({
             ) : null}
 
             {isEmptyState && (
-              <EmptyState displayName={displayName} onSuggestionClick={(s) => send(s)} />
+              <EmptyState
+                displayName={displayName}
+                onSuggestionClick={(s) => send(s)}
+                suggestionChips={starterSuggestionChips ?? undefined}
+              />
             )}
 
             {showConversationLoader && (
               <div className="flex items-center justify-center h-full">
                 <div className="flex flex-col items-center gap-3">
-                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground/55" />
+                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                   <span className="text-compact text-muted-foreground/75">Loading conversation…</span>
                 </div>
               </div>

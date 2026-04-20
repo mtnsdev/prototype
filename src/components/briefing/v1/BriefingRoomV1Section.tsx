@@ -441,7 +441,7 @@ function KvColumn({ items }: { items: BriefingV1KvHighlight[] }) {
 function BriefingV2PlaceholderCards() {
   return (
     <section aria-label="Coming soon" className="space-y-3">
-      <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/55">
+      <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
         Connect to unlock
       </h2>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

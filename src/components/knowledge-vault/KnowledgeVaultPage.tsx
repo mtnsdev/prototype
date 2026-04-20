@@ -59,13 +59,8 @@ import {
   type KvSortOption,
 } from "@/lib/knowledgeVaultSort";
 import { buildKnowledgeVaultSearchParams, parseKnowledgeVaultSearchParams } from "@/lib/knowledgeVaultUrl";
-import {
-  DASHBOARD_LIST_PAGE_HEADER,
-  DASHBOARD_LIST_PAGE_HEADER_ACTIONS,
-  DASHBOARD_LIST_PAGE_HEADER_SUBTITLE,
-  DASHBOARD_LIST_PAGE_HEADER_TITLE,
-  DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK,
-} from "@/lib/dashboardChrome";
+import { AppPageHeroHeader } from "@/components/ui/app-page-hero-header";
+import { APP_PAGE_CONTENT_SHELL } from "@/lib/dashboardChrome";
 import { TEAM_EVERYONE_ID } from "@/types/teams";
 
 const EMAIL_SOURCE_ID = "src-email";
@@ -662,7 +657,7 @@ export default function KnowledgeVaultPage() {
   const adminGovernanceFooter =
     isAdmin ? (
       <div className="mt-8 space-y-3 border-t border-border pt-6">
-        <details className="group rounded-xl border border-border bg-white/[0.02] px-4 py-3">
+        <details className="group rounded-xl border border-border bg-foreground/[0.03] px-4 py-3">
           <summary className="cursor-pointer text-xs font-medium text-muted-foreground/90 hover:text-foreground list-none flex items-center justify-between gap-2">
             <span>{KV_OFFBOARDING_PLAYBOOK.title}</span>
             <span className="text-2xs text-muted-foreground/70 group-open:hidden">Show</span>
@@ -674,7 +669,7 @@ export default function KnowledgeVaultPage() {
             ))}
           </ul>
         </details>
-        <details className="group rounded-xl border border-border bg-white/[0.02] px-4 py-3">
+        <details className="group rounded-xl border border-border bg-foreground/[0.03] px-4 py-3">
           <summary className="cursor-pointer text-xs font-medium text-muted-foreground/90 hover:text-foreground list-none flex items-center justify-between gap-2">
             <span>Access change log — vault &amp; email (this session)</span>
             <span className="text-2xs text-muted-foreground/70 group-open:hidden">Show</span>
@@ -706,97 +701,98 @@ export default function KnowledgeVaultPage() {
     ) : null;
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col bg-inset text-foreground">
-      <header className={DASHBOARD_LIST_PAGE_HEADER}>
-        <div className={DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK}>
-          <h1 className={DASHBOARD_LIST_PAGE_HEADER_TITLE}>Knowledge Vault</h1>
-          <p className={DASHBOARD_LIST_PAGE_HEADER_SUBTITLE}>
-            {vaultDocFiltersActive ? (
-              <>
-                {emailOnlyView ? (
-                  <>Email ingestion · </>
-                ) : null}
-                <span className="border-b border-dotted border-input cursor-help" title={VAULT_CATALOG_COUNT_TOOLTIP}>
-                  {listCount} documents
-                </span>
-                {emailOnlyView ? null : <> matching · </>}
-                {" "}
-                {connectedCount} sources · {lastSyncLabel}
-              </>
-            ) : (
-              <>
-                <span className="border-b border-dotted border-input cursor-help" title={VAULT_CATALOG_COUNT_TOOLTIP}>
-                  {listCount} documents
-                </span>
-                {" · "}
-                {connectedCount} sources · {lastSyncLabel}
-              </>
+    <div className="flex h-full min-h-0 flex-1 flex-col bg-background text-foreground">
+      <AppPageHeroHeader
+        eyebrow="Knowledge"
+        title="Knowledge Vault"
+        subtitle={
+          vaultDocFiltersActive ? (
+            <>
+              {emailOnlyView ? (
+                <>Email ingestion · </>
+              ) : null}
+              <span className="border-b border-dotted border-input cursor-help" title={VAULT_CATALOG_COUNT_TOOLTIP}>
+                {listCount} documents
+              </span>
+              {emailOnlyView ? null : <> matching · </>}
+              {" "}
+              {connectedCount} sources · {lastSyncLabel}
+            </>
+          ) : (
+            <>
+              <span className="border-b border-dotted border-input cursor-help" title={VAULT_CATALOG_COUNT_TOOLTIP}>
+                {listCount} documents
+              </span>
+              {" · "}
+              {connectedCount} sources · {lastSyncLabel}
+            </>
+          )
+        }
+        toolbar={
+          <>
+            {isAdmin && !emailOnlyView && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 border-input px-2.5 text-xs text-foreground"
+                onClick={() => {
+                  setSelectedDoc(null);
+                  setPermissionsOpen(true);
+                }}
+              >
+                <Settings2 size={13} className="mr-1 shrink-0" />
+                Manage Permissions
+              </Button>
             )}
-          </p>
-        </div>
-        <div className={DASHBOARD_LIST_PAGE_HEADER_ACTIONS}>
-          {isAdmin && !emailOnlyView && (
+            {isAdmin && !emailOnlyView && (
+              <label
+                className="flex h-8 cursor-pointer select-none items-center gap-2 shrink-0"
+                title="When enabled, your list includes other advisors’ private vault files for admin oversight. Your own private files are always shown. This does not change who can see what—only what you can browse as an admin."
+              >
+                <span className="sr-only">
+                  When enabled, include other advisors private vault files for admin oversight. Your private
+                  files are always visible. Does not change sharing permissions.
+                </span>
+                <div
+                  className={cn(
+                    "relative w-7 h-4 rounded-full transition-colors shrink-0",
+                    showAllPrivateDocs ? "bg-blue-500/20" : "bg-white/[0.06]"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "absolute top-0.5 w-3 h-3 rounded-full transition-transform",
+                      showAllPrivateDocs ? "translate-x-3.5 bg-blue-400" : "translate-x-0.5 bg-muted-foreground/40"
+                    )}
+                  />
+                </div>
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={showAllPrivateDocs}
+                  onChange={(e) => setShowAllPrivateDocs(e.target.checked)}
+                />
+                <span className="text-2xs text-muted-foreground">Show all</span>
+                {showAllPrivateDocs && <Shield className="w-3 h-3 text-muted-foreground/70 shrink-0" aria-hidden />}
+              </label>
+            )}
             <Button
               variant="outline"
               size="sm"
               className="h-8 border-input px-2.5 text-xs text-foreground"
-              onClick={() => {
-                setSelectedDoc(null);
-                setPermissionsOpen(true);
-              }}
+              onClick={load}
+              disabled={loading}
             >
-              <Settings2 size={13} className="mr-1 shrink-0" />
-              Manage Permissions
+              <RefreshCw size={13} className={loading ? "mr-1 shrink-0 animate-spin" : "mr-1 shrink-0"} />
+              Sync All
             </Button>
-          )}
-          {isAdmin && !emailOnlyView && (
-            <label
-              className="flex h-8 cursor-pointer select-none items-center gap-2 shrink-0"
-              title="When enabled, your list includes other advisors’ private vault files for admin oversight. Your own private files are always shown. This does not change who can see what—only what you can browse as an admin."
-            >
-              <span className="sr-only">
-                When enabled, include other advisors private vault files for admin oversight. Your private
-                files are always visible. Does not change sharing permissions.
-              </span>
-              <div
-                className={cn(
-                  "relative w-7 h-4 rounded-full transition-colors shrink-0",
-                  showAllPrivateDocs ? "bg-blue-500/20" : "bg-white/[0.06]"
-                )}
-              >
-                <div
-                  className={cn(
-                    "absolute top-0.5 w-3 h-3 rounded-full transition-transform",
-                    showAllPrivateDocs ? "translate-x-3.5 bg-blue-400" : "translate-x-0.5 bg-muted-foreground/40"
-                  )}
-                />
-              </div>
-              <input
-                type="checkbox"
-                className="sr-only"
-                checked={showAllPrivateDocs}
-                onChange={(e) => setShowAllPrivateDocs(e.target.checked)}
-              />
-              <span className="text-2xs text-muted-foreground">Show all</span>
-              {showAllPrivateDocs && <Shield className="w-3 h-3 text-muted-foreground/70 shrink-0" aria-hidden />}
-            </label>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 border-input px-2.5 text-xs text-foreground"
-            onClick={load}
-            disabled={loading}
-          >
-            <RefreshCw size={13} className={loading ? "mr-1 shrink-0 animate-spin" : "mr-1 shrink-0"} />
-            Sync All
-          </Button>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       <div className="flex min-h-0 flex-1">
-        <main className="flex-1 min-w-0 overflow-auto flex flex-col bg-inset">
-          <div className="p-4 space-y-4">
+        <main className="flex-1 min-w-0 overflow-auto flex flex-col bg-background">
+          <div className={cn(APP_PAGE_CONTENT_SHELL, "space-y-4 py-4")}>
             <DataSourceCards
               sources={sources}
               selectedSourceIds={selectedSourceIds}
@@ -841,7 +837,7 @@ export default function KnowledgeVaultPage() {
                         <DropdownMenuTrigger asChild>
                           <button
                             type="button"
-                            className="text-2xs px-3 py-1.5 rounded-lg bg-white/[0.04] text-muted-foreground/90 hover:text-white hover:bg-white/[0.06]"
+                            className="text-2xs px-3 py-1.5 rounded-lg bg-foreground/[0.05] text-muted-foreground/90 hover:text-foreground hover:bg-foreground/[0.06]"
                           >
                             {isAdmin ? "Share with…" : "Suggest sharing…"}
                           </button>
@@ -861,7 +857,7 @@ export default function KnowledgeVaultPage() {
                       {resolvedPolicies.canExportDocuments ? (
                         <button
                           type="button"
-                          className="text-2xs px-3 py-1.5 rounded-lg bg-white/[0.04] text-muted-foreground/90 hover:text-white hover:bg-white/[0.06]"
+                          className="text-2xs px-3 py-1.5 rounded-lg bg-foreground/[0.05] text-muted-foreground/90 hover:text-foreground hover:bg-foreground/[0.06]"
                           onClick={bulkDownload}
                         >
                           Download
@@ -870,7 +866,7 @@ export default function KnowledgeVaultPage() {
                       {isAdmin && (
                         <button
                           type="button"
-                          className="text-2xs px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.06]"
+                          className="text-2xs px-3 py-1.5 rounded-lg bg-foreground/[0.05] hover:bg-foreground/[0.06]"
                           style={{ color: "#A66B6B" }}
                           onClick={bulkDelete}
                         >
@@ -939,7 +935,7 @@ export default function KnowledgeVaultPage() {
                         type="button"
                         disabled={listPage <= 1}
                         onClick={() => setListPage((p) => Math.max(1, p - 1))}
-                        className="px-2 py-1 rounded-md bg-white/[0.04] text-muted-foreground/90 hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+                        className="px-2 py-1 rounded-md bg-foreground/[0.05] text-muted-foreground/90 hover:text-foreground disabled:opacity-30 disabled:pointer-events-none"
                       >
                         Prev
                       </button>
@@ -957,7 +953,7 @@ export default function KnowledgeVaultPage() {
                               "min-w-[2rem] px-2 py-1 rounded-md tabular-nums",
                               item === listPage
                                 ? "bg-white/15 text-white"
-                                : "bg-white/[0.04] text-muted-foreground/90 hover:text-white"
+                                : "bg-foreground/[0.05] text-muted-foreground/90 hover:text-foreground"
                             )}
                           >
                             {item}
@@ -968,7 +964,7 @@ export default function KnowledgeVaultPage() {
                         type="button"
                         disabled={listPage >= totalListPages}
                         onClick={() => setListPage((p) => Math.min(totalListPages, p + 1))}
-                        className="px-2 py-1 rounded-md bg-white/[0.04] text-muted-foreground/90 hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+                        className="px-2 py-1 rounded-md bg-foreground/[0.05] text-muted-foreground/90 hover:text-foreground disabled:opacity-30 disabled:pointer-events-none"
                       >
                         Next
                       </button>

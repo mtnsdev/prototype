@@ -31,6 +31,8 @@ import {
 } from "@/lib/vicListUrl";
 import { AppWindowHeader } from "@/components/ui/app-window-header";
 import { Button } from "@/components/ui/button";
+import { APP_PAGE_CONTENT_SHELL } from "@/lib/dashboardChrome";
+import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 
 const VIC_VIEW_KEY = "vic_view";
@@ -335,8 +337,9 @@ export default function VICPage() {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-inset">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background">
       <AppWindowHeader
+        eyebrow="Contacts"
         title="VICs"
         subtitle={
           activeTab === "mine"
@@ -355,9 +358,16 @@ export default function VICPage() {
             </Button>
           ) : null
         }
+        toolbar={<TabBar activeTab={activeTab} variant="inline" className="min-w-0" />}
+        toolbarPlacement="with-title"
       />
-      <TabBar activeTab={activeTab} className="shrink-0" />
-      <div className="relative z-10 shrink-0 px-4 pb-0 pt-3 md:px-6">
+      <div
+        className={cn(
+          APP_PAGE_CONTENT_SHELL,
+          "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+        )}
+      >
+        <div className="relative z-10 shrink-0 pb-0 pt-3">
         <VICToolbar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -411,9 +421,9 @@ export default function VICPage() {
           })
         }
         />
-      </div>
+        </div>
 
-      {selectedVicIds.size > 0 && (
+        {selectedVicIds.size > 0 ? (
         <BulkActionsBar
           count={selectedVicIds.size}
           canRunAcuity={canRunAcuity}
@@ -458,9 +468,9 @@ export default function VICPage() {
           }}
           onClearSelection={clearSelection}
         />
-      )}
+        ) : null}
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-auto px-4 pb-4 pt-0 md:px-6 md:pb-6">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto pb-4 pt-0 md:pb-6">
         {error && (
           <div className="rounded-lg bg-[var(--muted-error-bg)] border border-[var(--muted-error-border)] text-[var(--muted-error-text)] px-4 py-2 text-sm mb-4">
             {error}
@@ -533,6 +543,7 @@ export default function VICPage() {
             )}
           </>
         )}
+        </div>
       </div>
 
       {isAddEditModalOpen && (

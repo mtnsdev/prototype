@@ -55,7 +55,7 @@ export function DemoAdminSwitchRow({
                 className={cn(
                     "pointer-events-none relative h-5 w-9 shrink-0 overflow-hidden rounded-full transition-colors duration-200",
                     checked
-                        ? "bg-blue-500/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+                        ? "bg-blue-500/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]"
                         : "bg-foreground/[0.08] shadow-[inset_0_1px_2px_rgba(0,0,0,0.12)]"
                 )}
             >

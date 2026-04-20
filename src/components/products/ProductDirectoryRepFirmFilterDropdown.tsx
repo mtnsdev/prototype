@@ -82,7 +82,7 @@ export default function ProductDirectoryRepFirmFilterDropdown({
               ref={inputRef}
               type="text"
               placeholder="Search rep firms…"
-              className="w-full rounded-lg border-none bg-[rgba(255,255,255,0.03)] px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/55 focus:outline-none focus:ring-1 focus:ring-[#B07A5B]/40"
+              className="w-full rounded-lg border-none bg-foreground/[0.04] px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/35"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />

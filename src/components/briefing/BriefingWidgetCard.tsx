@@ -99,7 +99,7 @@ export default function BriefingWidgetCard({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 shrink-0 text-muted-foreground/55 hover:text-muted-foreground"
+              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-muted-foreground"
               onClick={() => onRefresh()}
               disabled={isLoading}
               title="Refresh"
@@ -109,7 +109,7 @@ export default function BriefingWidgetCard({
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground/55 hover:text-muted-foreground">
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-muted-foreground">
                 <MoreHorizontal size={16} />
               </Button>
             </DropdownMenuTrigger>

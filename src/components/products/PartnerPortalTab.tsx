@@ -148,7 +148,7 @@ function PartnerLinkedProductStripTile({
             No image
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#08080c]/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-foreground/55 via-transparent to-transparent" />
         <span
           className="absolute bottom-1.5 left-1.5 rounded-full border px-1.5 py-px text-[8px] backdrop-blur-sm"
           style={{
@@ -650,7 +650,7 @@ export function PartnerPortalTab({
               type="button"
               disabled={!programDraft?.name?.trim() || !editDialogDirty}
               onClick={saveProgramDraft}
-              className="bg-[#B07A5B] text-[#08080c] hover:bg-[#c08a6f] disabled:opacity-40"
+              className="bg-[#B07A5B] text-white hover:bg-[#c08a6f] disabled:opacity-40"
             >
               Save
             </Button>
@@ -679,7 +679,7 @@ export function PartnerPortalTab({
       </Dialog>
 
       {surface === "list" && filteredPrograms.length === 0 ? (
-        <div className="rounded-xl border border-border bg-white/[0.02] px-6 py-12 text-center">
+        <div className="rounded-xl border border-border bg-foreground/[0.03] px-6 py-12 text-center">
           <Award className="mx-auto mb-3 h-8 w-8 text-brand-cta/70" aria-hidden />
           <p className="text-compact font-medium text-foreground">No programs match</p>
           <p className="mt-1 text-xs text-muted-foreground">Try another search term or clear filters.</p>

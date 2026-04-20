@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Libre_Franklin } from "next/font/google";
+import { Fraunces, Geist_Mono, Libre_Franklin } from "next/font/google";
 import "./globals.css";
 
 const libreFranklin = Libre_Franklin({
   variable: "--font-app-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const fraunces = Fraunces({
+  variable: "--font-app-display",
   subsets: ["latin"],
   display: "swap",
 });
@@ -25,7 +31,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="min-h-dvh bg-background text-foreground">
-      <body className={`${libreFranklin.variable} ${geistMono.variable} min-h-dvh bg-background text-foreground antialiased`}>
+      <body
+        className={`${libreFranklin.variable} ${fraunces.variable} ${geistMono.variable} min-h-dvh bg-background text-foreground antialiased`}
+      >
         <a href="#main-content" className="skip-to-main">
           Skip to main content
         </a>

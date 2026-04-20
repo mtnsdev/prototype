@@ -29,6 +29,8 @@ import TravelProfileModal from "../Modals/TravelProfileModal";
 import AcuitySimulation from "../AcuitySimulation";
 import type { TravelProfile } from "@/types/vic";
 import ImageWithFallback from "@/components/ui/ImageWithFallback";
+import { APP_PAGE_CONTENT_SHELL } from "@/lib/dashboardChrome";
+import { cn } from "@/lib/utils";
 
 const VALID_TABS: DetailTabId[] = ["overview", "identity", "relationship", "preferences", "linked_entities", "sharing", "governance"];
 
@@ -145,8 +147,8 @@ export default function VICDetailPage({ vicId }: Props) {
 
   if (loading) {
     return (
-      <div className="h-full overflow-y-auto bg-inset">
-        <div className="max-w-3xl mx-auto p-6 space-y-6">
+      <div className="h-full overflow-y-auto bg-background">
+        <div className={cn(APP_PAGE_CONTENT_SHELL, "space-y-6 py-6")}>
           <div className="h-5 w-32 bg-white/10 rounded animate-pulse" />
           <div className="flex gap-4">
             <div className="h-9 w-48 bg-white/10 rounded animate-pulse" />
@@ -158,8 +160,8 @@ export default function VICDetailPage({ vicId }: Props) {
             ))}
           </div>
           <div className="space-y-4">
-            <div className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-4 h-40 animate-pulse" />
-            <div className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-4 h-24 animate-pulse" />
+            <div className="rounded-xl border border-border bg-foreground/[0.04] p-4 h-40 animate-pulse" />
+            <div className="rounded-xl border border-border bg-foreground/[0.04] p-4 h-24 animate-pulse" />
           </div>
         </div>
       </div>
@@ -214,8 +216,8 @@ export default function VICDetailPage({ vicId }: Props) {
   ].filter(Boolean);
 
   return (
-    <div className="h-full overflow-y-auto bg-inset">
-      <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <div className="h-full overflow-y-auto bg-background">
+      <div className={cn(APP_PAGE_CONTENT_SHELL, "space-y-6 py-6")}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-4 min-w-0">
             <ImageWithFallback fallbackType="avatar" alt={vic.full_name ?? "VIC"} name={vic.full_name ?? "?"} className="w-16 h-16 shrink-0" />

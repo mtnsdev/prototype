@@ -137,7 +137,7 @@ export default function ProductDirectoryCollectionPicker({
             <button
               type="button"
               onClick={onClose}
-              className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
+              className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
               aria-label="Close"
             >
               <X className="h-4 w-4" />
@@ -173,7 +173,7 @@ export default function ProductDirectoryCollectionPicker({
                 <button
                   type="button"
                   onClick={() => setCreateOpen(false)}
-                  className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
+                  className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
                   aria-label="Close create form"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -267,7 +267,7 @@ export default function ProductDirectoryCollectionPicker({
           )}
 
           {filtered.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border bg-white/[0.02] px-4 py-8 text-center">
+            <div className="rounded-xl border border-dashed border-border bg-foreground/[0.03] px-4 py-8 text-center">
               <p className="text-compact font-medium text-muted-foreground">
                 {collections.length === 0 && !searchTerm.trim()
                   ? "No collections yet"

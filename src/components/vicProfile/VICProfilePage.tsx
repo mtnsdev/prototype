@@ -59,7 +59,7 @@ export function VICProfilePage({ routeVicId }: Props) {
 
   if (loading) {
     return (
-      <div className="h-full overflow-y-auto bg-inset">
+      <div className="h-full overflow-y-auto bg-background">
         <div className="mx-auto max-w-5xl space-y-6 p-6">
           <div className="h-4 w-40 animate-pulse rounded bg-muted/50" />
           <div className="flex gap-4">
@@ -87,7 +87,7 @@ export function VICProfilePage({ routeVicId }: Props) {
   if (!bundle) {
     const demos = getAllPersonaBundles();
     return (
-      <div className="flex h-full items-center justify-center overflow-y-auto bg-inset p-6">
+      <div className="flex h-full items-center justify-center overflow-y-auto bg-background p-6">
         <div className="max-w-lg text-center">
           <h2 className="text-lg font-semibold text-foreground">No advisor profile seed for this VIC</h2>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -120,7 +120,7 @@ export function VICProfilePage({ routeVicId }: Props) {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-inset">
+    <div className="h-full overflow-y-auto bg-background">
       <div className="mx-auto max-w-5xl space-y-6 p-6">
         <Breadcrumbs
           items={[

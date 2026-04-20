@@ -1107,7 +1107,7 @@ export function ProductDirectoryDetailBody({
             variant="outline"
             size="sm"
             onClick={() => setEnableMasterDetailsOpen(true)}
-            className="h-8 gap-1.5 rounded-lg border-border bg-white/[0.02] text-xs text-foreground hover:bg-white/[0.05]"
+            className="h-8 gap-1.5 rounded-lg border-border bg-foreground/[0.03] text-xs text-foreground hover:bg-white/[0.05]"
           >
             <Pencil className="size-3.5 shrink-0" aria-hidden />
             Edit product details (Enable)
@@ -1544,7 +1544,7 @@ export function ProductDirectoryDetailBody({
       </div>
 
       {(isDMCProduct(product) || dmcOperationalDataPresent(product)) && (
-        <div className="relative z-10 mt-4 border-t border-[rgba(255,255,255,0.08)] pt-4">
+        <div className="relative z-10 mt-4 border-t border-border pt-4">
           <p className="mb-3 text-[12px] font-semibold uppercase tracking-wider text-[#D4A574]">
             DMC Operations
           </p>
@@ -1582,7 +1582,7 @@ export function ProductDirectoryDetailBody({
             {product.tags!.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-border bg-white/[0.02] px-2 py-0.5 text-[9px] lowercase text-muted-foreground"
+                className="rounded-full border border-border bg-foreground/[0.03] px-2 py-0.5 text-[9px] lowercase text-muted-foreground"
               >
                 {tag}
               </span>
@@ -1662,7 +1662,7 @@ export function ProductDirectoryDetailBody({
                 <div
                   key={program.id}
                   className={cn(
-                    "overflow-hidden rounded-xl border border-white/[0.05] bg-white/[0.02]",
+                    "overflow-hidden rounded-xl border border-white/[0.05] bg-foreground/[0.03]",
                     !active && "opacity-75"
                   )}
                 >
@@ -1687,7 +1687,7 @@ export function ProductDirectoryDetailBody({
                     </div>
                   </div>
                   {showCommissionPublic ? (
-                    <div className="border-b border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                    <div className="border-b border-white/[0.06] bg-foreground/[0.03] px-3 py-2">
                       <p className="text-[8px] font-medium uppercase tracking-wider text-[#B8976E]">
                         Guaranteed base rate
                       </p>
@@ -1706,7 +1706,7 @@ export function ProductDirectoryDetailBody({
                       </p>
                       <ul className="space-y-2 text-[9px] text-muted-foreground">
                         {program.activeIncentives!.map((pr) => (
-                          <li key={pr.id} className="space-y-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-2">
+                          <li key={pr.id} className="space-y-1 rounded-lg border border-white/[0.06] bg-foreground/[0.03] p-2">
                             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                               <span className="font-semibold text-brand-cta">
                                 {(pr.rateType ?? "percentage") === "flat"
@@ -1836,7 +1836,7 @@ export function ProductDirectoryDetailBody({
                           <div
                             key={advisory.id}
                             className={cn(
-                              "rounded-xl border border-white/[0.05] bg-white/[0.02] p-3",
+                              "rounded-xl border border-white/[0.05] bg-foreground/[0.03] p-3",
                               kind === "active" && "border-l-2 border-l-border",
                               kind === "upcoming" && "border-l-2 border-l-muted-foreground/40 border-dashed opacity-80",
                               kind === "expired" && "opacity-50"
@@ -2116,7 +2116,7 @@ export function ProductDirectoryDetailBody({
                 <div
                   key={link.id}
                   className={cn(
-                    "overflow-hidden rounded-xl border border-white/[0.05] bg-white/[0.02]",
+                    "overflow-hidden rounded-xl border border-white/[0.05] bg-foreground/[0.03]",
                     !active && "opacity-75"
                   )}
                 >
@@ -2302,7 +2302,7 @@ export function ProductDirectoryDetailBody({
                 return (
                 <div
                   key={c.id}
-                  className="flex items-start justify-between gap-2 rounded-lg border border-white/[0.05] bg-white/[0.02] px-2.5 py-2"
+                  className="flex items-start justify-between gap-2 rounded-lg border border-white/[0.05] bg-foreground/[0.03] px-2.5 py-2"
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -2372,7 +2372,7 @@ export function ProductDirectoryDetailBody({
             </div>
           )}
           {personalContactFormOpen && (
-            <div className="mt-2 space-y-1.5 rounded-xl border border-border bg-white/[0.02] p-2.5">
+            <div className="mt-2 space-y-1.5 rounded-xl border border-border bg-foreground/[0.03] p-2.5">
               <p className="text-[9px] uppercase tracking-wider text-muted-foreground">
                 {editingPersonalContactId ? "Edit contact" : "New contact"}
               </p>
@@ -2498,7 +2498,7 @@ export function ProductDirectoryDetailBody({
                 return (
                   <div
                     key={c.id}
-                    className="flex items-start justify-between gap-2 rounded-lg border border-white/[0.04] bg-white/[0.02] px-2.5 py-2"
+                    className="flex items-start justify-between gap-2 rounded-lg border border-white/[0.04] bg-foreground/[0.03] px-2.5 py-2"
                   >
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
@@ -2596,7 +2596,7 @@ export function ProductDirectoryDetailBody({
             </div>
           )}
           {agencyContactFormOpen && (
-            <div className="mt-2 space-y-1.5 rounded-xl border border-border bg-white/[0.02] p-2.5">
+            <div className="mt-2 space-y-1.5 rounded-xl border border-border bg-foreground/[0.03] p-2.5">
               <p className="text-[9px] uppercase tracking-wider text-muted-foreground">
                 {editingAgencyContactId ? "Edit contact" : "New contact"}
               </p>
@@ -2701,7 +2701,7 @@ export function ProductDirectoryDetailBody({
               personalNotes.map((note) => (
                 <div
                   key={note.id}
-                  className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-2.5"
+                  className="rounded-lg border border-white/[0.05] bg-foreground/[0.03] p-2.5"
                 >
                   {editingPersonalNoteId === note.id ? (
                     <>
@@ -3117,7 +3117,7 @@ export function ProductDirectoryDetailBody({
               "h-8 flex-1 rounded-lg text-xs font-medium",
               inlinePickerEnabled && panelCollectionOpen
                 ? "border-brand-cta/20 bg-brand-cta/10 text-brand-cta"
-                : "border-border bg-white/[0.03] hover:bg-white/[0.06]"
+                : "border-border bg-white/[0.03] hover:bg-foreground/[0.06]"
             )}
           >
             <Bookmark className="size-3.5" aria-hidden />
@@ -3136,7 +3136,7 @@ export function ProductDirectoryDetailBody({
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="w-80 rounded-2xl border border-border bg-popover p-5 shadow-2xl">
             <h3 className="mb-2 text-sm font-medium text-foreground">Suggest to agency?</h3>
-            <div className="mb-3 rounded-lg border border-border bg-[rgba(255,255,255,0.03)] p-2.5">
+            <div className="mb-3 rounded-lg border border-border bg-foreground/[0.04] p-2.5">
               <p className="line-clamp-3 text-xs italic text-muted-foreground">&quot;{upgradeConfirmText}&quot;</p>
             </div>
             <p className="mb-4 text-2xs leading-relaxed text-muted-foreground">
@@ -3146,7 +3146,7 @@ export function ProductDirectoryDetailBody({
               <Button type="button" variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setUpgradeConfirmOpen(false)}>
                 Cancel
               </Button>
-              <Button type="button" variant="cta" size="sm" className="h-8 text-xs text-[#08080c]" onClick={confirmUpgrade}>
+              <Button type="button" variant="cta" size="sm" className="h-8 text-xs text-primary-foreground" onClick={confirmUpgrade}>
                 Submit
               </Button>
             </div>
@@ -3253,7 +3253,7 @@ export function ProductDirectoryDetailBody({
               >
                 Cancel
               </Button>
-              <Button type="button" variant="cta" size="sm" className="h-8 text-xs text-[#08080c]" onClick={confirmContactUpgrade}>
+              <Button type="button" variant="cta" size="sm" className="h-8 text-xs text-primary-foreground" onClick={confirmContactUpgrade}>
                 Submit for Review
               </Button>
             </div>

@@ -1073,7 +1073,7 @@ function NotificationsShell() {
   }, [unreadCount]);
 
   return (
-    <div className="flex flex-col bg-inset">
+    <div className="flex flex-col bg-background">
       <p className="sr-only" aria-live="polite" aria-atomic="true">
         {announcement}
       </p>

@@ -44,7 +44,7 @@ import { CatalogSectionMultiPicker } from "@/components/destinations/editor/Cata
 import { applyDirectoryProductToDestination } from "@/lib/catalogProductMerge";
 
 const inputAreaClass =
-  "min-h-[88px] w-full rounded-md border border-input bg-inset px-3 py-2 text-sm text-foreground shadow-xs outline-none placeholder:text-muted-foreground/70 focus-visible:border-[rgba(255,255,255,0.25)] focus-visible:ring-[3px] focus-visible:ring-[rgba(255,255,255,0.1)]";
+  "min-h-[88px] w-full rounded-md border border-input bg-inset px-3 py-2 text-sm text-foreground shadow-xs outline-none placeholder:text-muted-foreground/70 focus-visible:border-primary/35 focus-visible:ring-[3px] focus-visible:ring-ring/30";
 
 const PALETTE: {
   id: "palette-catalog" | "palette-text" | "palette-files";

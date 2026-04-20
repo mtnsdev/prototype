@@ -157,7 +157,7 @@ export default function HistoryDrawer({
                     <div className="relative">
                         <Search
                             size={16}
-                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/55"
+                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
                         />
                         <Input
                             type="text"
@@ -188,16 +188,16 @@ export default function HistoryDrawer({
                         </div>
                     ) : showLoader ? (
                         <div className="flex flex-col items-center justify-center py-12">
-                            <Loader2 size={24} className="animate-spin text-muted-foreground/55" />
+                            <Loader2 size={24} className="animate-spin text-muted-foreground" />
                             <span className="text-compact text-muted-foreground/75 mt-3">Loading history…</span>
                         </div>
                     ) : conversations.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
-                            <div className="w-14 h-14 rounded-2xl bg-[rgba(255,255,255,0.04)] flex items-center justify-center mb-4">
-                                <MessageSquare size={24} className="text-muted-foreground/55" />
+                            <div className="w-14 h-14 rounded-2xl bg-foreground/[0.05] flex items-center justify-center mb-4">
+                                <MessageSquare size={24} className="text-muted-foreground" />
                             </div>
                             <p className="text-base text-muted-foreground/75">No conversations found</p>
-                            <p className="text-sm text-muted-foreground/55 mt-1">
+                            <p className="text-sm text-muted-foreground mt-1">
                                 {searchQuery ? "Try a different search term" : "Start a new chat to get started"}
                             </p>
                         </div>
@@ -262,7 +262,7 @@ export function ConversationGroup({
 }) {
     return (
         <div>
-            <h3 className="text-xs font-medium text-muted-foreground/55 uppercase tracking-wider mb-2 px-1">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 px-1">
                 {title}
             </h3>
             <div className="space-y-0.5">
@@ -300,7 +300,7 @@ export function ConversationGroup({
                             className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-[rgba(200,122,122,0.15)] h-auto w-auto"
                             title="Delete conversation"
                         >
-                            <Trash2 size={14} className="text-muted-foreground/55 hover:text-[var(--color-error)]" />
+                            <Trash2 size={14} className="text-muted-foreground hover:text-[var(--color-error)]" />
                         </Button>
                     </div>
                 ))}

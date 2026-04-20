@@ -3,7 +3,7 @@
  * This is the primary route for viewing complete product information.
  *
  * Related views:
- * - ProductDirectoryDetailPanel: A simpler sidebar summary view shown in the product directory.
+ * - ProductDirectoryDetailPanel: A simpler modal summary view shown in the product directory.
  *   The sidebar links to this page for full details.
  * - /dashboard/products/[id]/edit: Opens the edit modal from the detail page.
  */

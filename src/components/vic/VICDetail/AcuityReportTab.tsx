@@ -24,9 +24,9 @@ function DimensionBar({ label, low, high, value }: DimensionBarProps) {
   return (
     <div>
       <span className="mb-1.5 block text-2xs text-muted-foreground">{label}</span>
-      <div className="relative h-[4px] rounded-full bg-[rgba(255,255,255,0.04)]">
+      <div className="relative h-[4px] rounded-full bg-foreground/[0.05]">
         <div
-          className="absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#08080c] bg-brand-cta"
+          className="absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-foreground bg-brand-cta"
           style={{ left: `${clamped}%` }}
         />
       </div>
@@ -40,7 +40,7 @@ function DimensionBar({ label, low, high, value }: DimensionBarProps) {
 
 function MiniMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-border bg-[rgba(255,255,255,0.02)] p-3">
+    <div className="rounded-lg border border-border bg-foreground/[0.03] p-3">
       <span className="mb-1 block text-[9px] text-muted-foreground/65">{label}</span>
       <span className="text-lg font-light text-foreground">{value}</span>
     </div>
@@ -150,7 +150,7 @@ export default function AcuityReportTab({ vic, status, isRunning, onRun, onRefre
         </div>
         <h3 className="text-base font-light text-foreground">Analyzing {name}…</h3>
         <p className="mt-1 text-sm text-muted-foreground">Processing booking history, communications, and travel patterns</p>
-        <div className="mt-4 h-[2px] w-48 overflow-hidden rounded-full bg-[rgba(255,255,255,0.03)]">
+        <div className="mt-4 h-[2px] w-48 overflow-hidden rounded-full bg-foreground/[0.04]">
           <div className="h-full rounded-full bg-brand-cta animate-acuity-progress" />
         </div>
       </div>
@@ -374,7 +374,7 @@ export default function AcuityReportTab({ vic, status, isRunning, onRun, onRefre
           {travelHistory.map((trip, i) => (
             <div
               key={i}
-              className="flex cursor-pointer items-center gap-4 rounded-lg px-3 py-2 transition-colors hover:bg-[rgba(255,255,255,0.015)]"
+              className="flex cursor-pointer items-center gap-4 rounded-lg px-3 py-2 transition-colors hover:bg-foreground/[0.025]"
             >
               <span className="w-16 text-2xs text-muted-foreground/65">{trip.date}</span>
               <div className="min-w-0 flex-1">
@@ -382,7 +382,7 @@ export default function AcuityReportTab({ vic, status, isRunning, onRun, onRefre
                 <span className="block text-2xs text-muted-foreground">{trip.property}</span>
               </div>
               <span className="text-2xs text-muted-foreground">{trip.duration}</span>
-              <span className="rounded bg-[rgba(255,255,255,0.03)] px-1.5 py-0.5 text-[9px] text-muted-foreground/65">{trip.type}</span>
+              <span className="rounded bg-foreground/[0.04] px-1.5 py-0.5 text-[9px] text-muted-foreground/65">{trip.type}</span>
             </div>
           ))}
         </div>

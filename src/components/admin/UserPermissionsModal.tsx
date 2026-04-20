@@ -78,7 +78,7 @@ function PermissionTreeNode({
     return (
         <div>
             <div
-                className={`flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-[rgba(255,255,255,0.04)] cursor-pointer select-none`}
+                className={`flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-foreground/[0.05] cursor-pointer select-none`}
                 style={{ paddingLeft: `${8 + depth * 20}px` }}
                 onClick={() => hasChildren && setExpanded((e) => !e)}
             >
@@ -86,9 +86,9 @@ function PermissionTreeNode({
                 <span className="w-4 shrink-0">
                     {hasChildren ? (
                         expanded ? (
-                            <ChevronDown size={14} className="text-muted-foreground/55" />
+                            <ChevronDown size={14} className="text-muted-foreground" />
                         ) : (
-                            <ChevronRight size={14} className="text-muted-foreground/55" />
+                            <ChevronRight size={14} className="text-muted-foreground" />
                         )
                     ) : null}
                 </span>
@@ -221,7 +221,7 @@ export function UserPermissionsModal({
                                 </span>
                                 <span className="text-red-400">{deniedCount} denied</span>
                                 {syncedAt && (
-                                    <span className="text-muted-foreground/55">
+                                    <span className="text-muted-foreground">
                                         Last synced {syncedAt}
                                     </span>
                                 )}
@@ -269,7 +269,7 @@ export function UserPermissionsModal({
                 <div className="flex-1 overflow-y-auto p-4">
                     {isLoading ? (
                         <div className="flex items-center justify-center py-12">
-                            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground/55" />
+                            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                         </div>
                     ) : error ? (
                         <div className="py-8 text-center">
@@ -284,7 +284,7 @@ export function UserPermissionsModal({
                             <p className="text-base text-muted-foreground/75">
                                 No synced permissions yet
                             </p>
-                            <p className="text-sm text-muted-foreground/55 mt-1">
+                            <p className="text-sm text-muted-foreground mt-1">
                                 Click &quot;Sync Now&quot; to fetch this user&apos;s intranet access.
                             </p>
                         </div>

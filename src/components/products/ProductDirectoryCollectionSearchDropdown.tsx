@@ -84,7 +84,7 @@ export default function ProductDirectoryCollectionSearchDropdown({
       <button
         key={col.id}
         type="button"
-        className="flex w-full items-start justify-between gap-2 px-3 py-2 text-left transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+        className="flex w-full items-start justify-between gap-2 px-3 py-2 text-left transition-colors hover:bg-foreground/[0.05]"
         onClick={() => toggle(col.id)}
       >
         <div className="min-w-0 flex-1">
@@ -123,7 +123,7 @@ export default function ProductDirectoryCollectionSearchDropdown({
               ref={inputRef}
               type="text"
               placeholder="Search collections…"
-              className="w-full rounded-lg border-none bg-[rgba(255,255,255,0.03)] px-2 py-1.5 text-xs text-foreground placeholder-[#4A4540] focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/40"
+              className="w-full rounded-lg border-none bg-foreground/[0.04] px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary/35"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -132,7 +132,7 @@ export default function ProductDirectoryCollectionSearchDropdown({
             <button
               type="button"
               className={cn(
-                "flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-[rgba(255,255,255,0.04)]",
+                "flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-foreground/[0.05]",
                 selectedIds.length === 0 ? "text-foreground" : "text-muted-foreground"
               )}
               onClick={() => onChange([])}

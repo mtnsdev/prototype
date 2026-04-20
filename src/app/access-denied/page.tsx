@@ -70,7 +70,7 @@ function AccessDeniedContent() {
                 <div className="space-y-3">
                     <Link
                         href="/login"
-                        className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)] border border-input text-base font-medium text-foreground transition-colors"
+                        className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-foreground/[0.09] hover:bg-foreground/[0.13] border border-input text-base font-medium text-foreground transition-colors"
                     >
                         <ArrowLeft size={16} />
                         Back to Sign In
@@ -79,7 +79,7 @@ function AccessDeniedContent() {
                     {/* {reason !== "session_expired" && (
                         <a
                             href="mailto:admin@example.com"
-                            className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-transparent hover:bg-[rgba(255,255,255,0.04)] border border-border text-base font-medium text-muted-foreground transition-colors"
+                            className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-transparent hover:bg-foreground/[0.05] border border-border text-base font-medium text-muted-foreground transition-colors"
                         >
                             <Mail size={16} />
                             Contact Administrator

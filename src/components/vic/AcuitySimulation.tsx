@@ -414,7 +414,7 @@ export default function AcuitySimulation({
                 {insights.slice(0, insightCount / 2).map((insight, idx) => (
                   <div
                     key={idx}
-                    className="border border-border rounded-lg p-3 bg-[rgba(255,255,255,0.02)]"
+                    className="border border-border rounded-lg p-3 bg-foreground/[0.03]"
                     style={{
                       animation: `slide-in 0.4s ease-out ${idx * 0.1}s both`,
                     }}
@@ -428,7 +428,7 @@ export default function AcuitySimulation({
               </div>
 
               {/* Confidence badge */}
-              <div className="flex items-center gap-2 p-3 bg-[rgba(255,255,255,0.03)] rounded-lg">
+              <div className="flex items-center gap-2 p-3 bg-foreground/[0.04] rounded-lg">
                 <span className="text-xs font-medium text-muted-foreground">
                   Confidence:
                 </span>

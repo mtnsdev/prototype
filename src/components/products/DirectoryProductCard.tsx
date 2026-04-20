@@ -132,8 +132,8 @@ export default function DirectoryProductCard({
         "group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border transition-all",
         compact && "rounded-lg",
         bulkSelected
-          ? "border-[rgba(201,169,110,0.30)] ring-1 ring-[rgba(201,169,110,0.15)] bg-white/[0.02]"
-          : "border-white/[0.04] bg-white/[0.02] hover:border-border hover:bg-white/[0.04]"
+          ? "border-[rgba(201,169,110,0.30)] ring-1 ring-[rgba(201,169,110,0.15)] bg-foreground/[0.03]"
+          : "border-white/[0.04] bg-foreground/[0.03] hover:border-border hover:bg-white/[0.04]"
       )}
       onClick={() => {
         if (ignoreNextClickRef.current) {
@@ -159,7 +159,7 @@ export default function DirectoryProductCard({
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#08080c]/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-foreground/55 via-transparent to-transparent" />
 
         {bulkMode && onToggleBulkSelect && (
           <button
@@ -176,7 +176,7 @@ export default function DirectoryProductCard({
             )}
             aria-label={bulkSelected ? "Deselect" : "Select"}
           >
-            {bulkSelected ? <Check className="h-3 w-3 text-[#08080c]" strokeWidth={3} /> : null}
+            {bulkSelected ? <Check className="h-3 w-3 text-primary-foreground" strokeWidth={3} /> : null}
           </button>
         )}
 
@@ -219,7 +219,7 @@ export default function DirectoryProductCard({
             onAddToCollectionClick(e);
           }}
           className={cn(
-            "absolute flex items-center justify-center rounded-full bg-black/40 text-white/50 backdrop-blur-sm transition-all hover:bg-black/60 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A96E]/40",
+            "absolute flex items-center justify-center rounded-full bg-black/40 text-white/50 backdrop-blur-sm transition-all hover:bg-black/60 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
             compact ? "bottom-1 right-1 h-5 w-5" : "bottom-2 right-2 h-6 w-6",
             bookmarked ? "text-brand-cta opacity-100" : "opacity-0 group-hover:opacity-100"
           )}

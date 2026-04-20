@@ -12,6 +12,8 @@ import { useToast } from "@/contexts/ToastContext";
 import type { Team } from "@/types/teams";
 import { DEFAULT_TEAM_POLICIES, MOCK_TEAMS } from "@/lib/teamsMock";
 import { BRIEFING_ROOM_PATH } from "@/lib/briefingRoutes";
+import { APP_PAGE_CONTENT_SHELL } from "@/lib/dashboardChrome";
+import { cn } from "@/lib/utils";
 
 function cloneTeams(t: Team[]): Team[] {
   return t.map((x) => ({
@@ -84,7 +86,8 @@ export default function TeamsSettingsPage() {
 
   return (
     <div className="h-full overflow-y-auto bg-background text-foreground">
-      <div className="max-w-2xl mx-auto p-6 space-y-6">
+      <div className={cn(APP_PAGE_CONTENT_SHELL, "py-6")}>
+      <div className="mx-auto w-full max-w-2xl space-y-6">
         <Breadcrumbs
           items={[
             { label: "Dashboard", href: BRIEFING_ROOM_PATH },
@@ -116,7 +119,7 @@ export default function TeamsSettingsPage() {
           {teams.map((team) => (
             <div
               key={team.id}
-              className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4 flex items-center justify-between gap-4"
+              className="bg-foreground/[0.03] border border-white/[0.04] rounded-xl p-4 flex items-center justify-between gap-4"
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -164,6 +167,7 @@ export default function TeamsSettingsPage() {
           <Plus className="w-3 h-3" />
           Create team
         </button>
+      </div>
       </div>
     </div>
   );

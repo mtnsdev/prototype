@@ -96,7 +96,7 @@ export function ProductDetailLayers({ product }: Props) {
                     onChange={(e) =>
                       setAdvisorOverrides({ ...advisorOverrides, contact: e.target.value })
                     }
-                    className="w-full text-xs bg-white/[0.03] border border-border rounded-lg px-3 py-2 text-foreground/88 placeholder:text-muted-foreground/55 outline-none"
+                    className="w-full text-xs bg-white/[0.03] border border-border rounded-lg px-3 py-2 text-foreground/88 placeholder:text-muted-foreground outline-none"
                   />
                 </div>
                 <div>
@@ -109,7 +109,7 @@ export function ProductDetailLayers({ product }: Props) {
                     onChange={(e) =>
                       setAdvisorOverrides({ ...advisorOverrides, notes: e.target.value })
                     }
-                    className="w-full text-xs bg-white/[0.03] border border-border rounded-lg px-3 py-2 text-foreground/88 placeholder:text-muted-foreground/55 outline-none resize-none h-20 leading-relaxed"
+                    className="w-full text-xs bg-white/[0.03] border border-border rounded-lg px-3 py-2 text-foreground/88 placeholder:text-muted-foreground outline-none resize-none h-20 leading-relaxed"
                   />
                 </div>
                 <div>
@@ -194,7 +194,7 @@ export function ProductDetailLayers({ product }: Props) {
                     value={newAgencyNote}
                     onChange={(e) => setNewAgencyNote(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && submitAgencyNote()}
-                    className="flex-1 text-xs bg-white/[0.03] border border-border rounded-lg px-3 py-2 text-foreground/88 placeholder:text-muted-foreground/55 outline-none"
+                    className="flex-1 text-xs bg-white/[0.03] border border-border rounded-lg px-3 py-2 text-foreground/88 placeholder:text-muted-foreground outline-none"
                   />
                   <button
                     type="button"
@@ -357,7 +357,7 @@ function SuggestionModal({
               placeholder="Describe what should be changed and why…"
               value={details}
               onChange={(e) => setDetails(e.target.value)}
-              className="w-full text-xs bg-white/[0.03] border border-border rounded-lg px-3 py-2 text-foreground/88 placeholder:text-muted-foreground/55 outline-none resize-none h-20 leading-relaxed"
+              className="w-full text-xs bg-white/[0.03] border border-border rounded-lg px-3 py-2 text-foreground/88 placeholder:text-muted-foreground outline-none resize-none h-20 leading-relaxed"
             />
           </div>
           <div>

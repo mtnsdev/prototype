@@ -3,11 +3,11 @@ import { cn } from "@/lib/utils";
 
 /** Level 1 — page chrome (DashboardPageHeader, full-page titles). */
 export const typographyPageTitleClass =
-  "text-[1.25rem] font-light tracking-[0.02em] text-foreground leading-tight";
+  "text-xl font-light tracking-[0.02em] text-foreground leading-tight";
 
 /** Level 2 — sections within a page (cards, panels, settings blocks). */
 export const typographySectionTitleClass =
-  "text-base font-medium tracking-wide text-foreground leading-snug";
+  "text-lg font-medium tracking-wide text-foreground leading-snug";
 
 /** Level 3 — table column headers, dense list labels, filter group labels. */
 export const typographyListLabelClass =

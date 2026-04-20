@@ -169,7 +169,7 @@ export default function ProductDirectoryCommissionRangeDropdown({
                   onCommissionRangeChange(p.range);
                   onCommissionFilterActiveChange(true);
                 }}
-                className="rounded-md bg-white/[0.03] px-2 py-1 text-[9px] text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-muted-foreground"
+                className="rounded-md bg-white/[0.03] px-2 py-1 text-[9px] text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-muted-foreground"
               >
                 {p.label}
               </button>

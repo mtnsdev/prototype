@@ -145,7 +145,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     </Button>
                   </Link>
                 ) : (
-                  <span className="text-xs text-muted-foreground/55 shrink-0">Coming soon</span>
+                  <span className="text-xs text-muted-foreground shrink-0">Coming soon</span>
                 )}
               </div>
             ))}

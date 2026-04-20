@@ -80,4 +80,8 @@ export type ChatPanelProps = {
   assistantSubtitle?: string;
   /** Show scope / freshness strip (Claire trust layer). Default true. */
   showDataAttribution?: boolean;
+  /** When set (e.g. after onboarding), empty-state suggestion chips use these instead of defaults. */
+  starterSuggestionChips?: string[] | null;
+  /** Called once when the user sends their first message while starter chips are active. */
+  onStarterSuggestionsConsumed?: () => void;
 };

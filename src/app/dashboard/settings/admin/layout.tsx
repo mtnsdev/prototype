@@ -4,6 +4,8 @@ import { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Shield, Users, FolderLock, ArrowLeft, FlaskConical, Sparkles, Megaphone } from "lucide-react";
+import { APP_PAGE_CONTENT_SHELL } from "@/lib/dashboardChrome";
+import { cn } from "@/lib/utils";
 
 const ADMIN_NAV_ITEMS = [
     { href: "/dashboard/settings/admin/users", label: "Users", icon: Users },
@@ -18,7 +20,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
     return (
         <div className="h-full overflow-y-auto bg-background">
-            <div className="max-w-6xl mx-auto p-6">
+            <div className={cn(APP_PAGE_CONTENT_SHELL, "py-6")}>
                 {/* Header */}
                 <div className="mb-6">
                     <Link
@@ -40,7 +42,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 </div>
 
                 {/* Navigation Tabs */}
-                <div className="flex gap-1 mb-6 p-1 rounded-xl bg-[rgba(255,255,255,0.03)] border border-border">
+                <div className="flex gap-1 mb-6 p-1 rounded-xl bg-foreground/[0.04] border border-border">
                     {ADMIN_NAV_ITEMS.map((item) => {
                         const isActive =
                             item.href.startsWith("/admin")
@@ -55,8 +57,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                                 className={[
                                     "flex items-center gap-2 px-4 py-2.5 rounded-lg text-base font-medium transition-all",
                                     isActive
-                                        ? "bg-[rgba(255,255,255,0.08)] text-foreground"
-                                        : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-[rgba(255,255,255,0.04)]",
+                                        ? "bg-foreground/[0.09] text-foreground"
+                                        : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-foreground/[0.05]",
                                 ].join(" ")}
                             >
                                 <Icon size={16} />

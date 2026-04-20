@@ -140,7 +140,7 @@ function ListSortableHeader({
         aria-label={listSortableAriaLabel(column, active, asc)}
         className={cn(
           "group -mx-1 -my-0.5 inline-flex cursor-pointer items-center gap-1 rounded-md px-1.5 py-1 text-left text-muted-foreground transition-colors",
-          "hover:bg-white/[0.06] hover:text-foreground",
+          "hover:bg-foreground/[0.06] hover:text-foreground",
           "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
           active && "text-foreground"
         )}

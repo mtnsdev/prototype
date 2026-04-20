@@ -187,14 +187,14 @@ export default function GoogleDriveFolderPicker({ open, onClose, onSelect, mode 
                     {/* Root view: show My Drive + Shared Drives */}
                     {view === "root" && (
                         <div className="space-y-1 max-h-[320px] overflow-y-auto">
-                            <Button type="button" variant="ghost" onClick={enterMyDrive} className="w-full justify-start gap-3 px-3 py-2.5 rounded-xl hover:bg-[rgba(255,255,255,0.06)] font-normal h-auto">
+                            <Button type="button" variant="ghost" onClick={enterMyDrive} className="w-full justify-start gap-3 px-3 py-2.5 rounded-xl hover:bg-foreground/[0.07] font-normal h-auto">
                                 <HardDrive size={20} className="text-muted-foreground/75 shrink-0" />
                                 <span className="text-base text-foreground">My Drive</span>
                             </Button>
 
                             {sharedDrives.length > 0 && (
                                 <>
-                                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground/55 px-3 pt-3 pb-1">
+                                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground px-3 pt-3 pb-1">
                                         Shared Drives
                                     </p>
                                     {sharedDrives.map((sd) => (
@@ -202,7 +202,7 @@ export default function GoogleDriveFolderPicker({ open, onClose, onSelect, mode 
                                             key={sd.id}
                                             type="button"
                                             onClick={() => enterSharedDrive(sd)}
-                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[rgba(255,255,255,0.06)] text-left"
+                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-foreground/[0.07] text-left"
                                         >
                                             <Users size={20} className="text-muted-foreground/75 shrink-0" />
                                             <span className="text-base text-foreground truncate">{sd.name}</span>
@@ -228,7 +228,7 @@ export default function GoogleDriveFolderPicker({ open, onClose, onSelect, mode 
                                             type="button"
                                             variant="ghost"
                                             onClick={() => handleNavigate(f)}
-                                            className="w-full justify-start gap-3 px-3 py-2.5 rounded-xl hover:bg-[rgba(255,255,255,0.06)] font-normal h-auto"
+                                            className="w-full justify-start gap-3 px-3 py-2.5 rounded-xl hover:bg-foreground/[0.07] font-normal h-auto"
                                         >
                                             <FolderOpen size={20} className="text-muted-foreground/75 shrink-0" />
                                             <span className="text-base text-foreground truncate">{f.name}</span>

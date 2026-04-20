@@ -309,7 +309,7 @@ export function DataIngestionDemo({ onComplete, onSkip }: DataIngestionDemoProps
 
                   <div className="space-y-3">
                     {/* JC Chopin linking */}
-                    <div className="p-4 rounded-lg bg-white/[0.02] border border-white/10 space-y-2">
+                    <div className="p-4 rounded-lg bg-foreground/[0.03] border border-white/10 space-y-2">
                       <p className="text-sm text-foreground">
                         Linking JC Chopin →{" "}
                         <span className="text-[#AE8550] font-semibold">{counters.jcItineraries} itineraries</span>,{" "}
@@ -322,7 +322,7 @@ export function DataIngestionDemo({ onComplete, onSkip }: DataIngestionDemoProps
                     </div>
 
                     {/* Commission matching */}
-                    <div className="p-4 rounded-lg bg-white/[0.02] border border-white/10 space-y-2">
+                    <div className="p-4 rounded-lg bg-foreground/[0.03] border border-white/10 space-y-2">
                       <p className="text-sm text-foreground">
                         Commission data matched for{" "}
                         <span className="text-[#AE8550] font-semibold">{counters.commissionsMatched} programs</span>
@@ -334,7 +334,7 @@ export function DataIngestionDemo({ onComplete, onSkip }: DataIngestionDemoProps
                     </div>
 
                     {/* Conflict detection */}
-                    <div className="p-4 rounded-lg bg-white/[0.02] border border-white/10 space-y-2">
+                    <div className="p-4 rounded-lg bg-foreground/[0.03] border border-white/10 space-y-2">
                       <p className="text-sm text-foreground">
                         <span className="text-[#D4A574] font-semibold">{counters.conflictsDetected} conflicts</span> detected — ready for review
                       </p>
@@ -366,21 +366,21 @@ export function DataIngestionDemo({ onComplete, onSkip }: DataIngestionDemoProps
                   {/* Mini dashboard preview */}
                   <div className="grid grid-cols-3 gap-3">
                     {/* VIC Profiles card */}
-                    <div className="p-4 rounded-lg bg-white/[0.02] border border-white/10">
+                    <div className="p-4 rounded-lg bg-foreground/[0.03] border border-white/10">
                       <p className="text-xs text-muted-foreground/75 mb-2">VIC Profiles</p>
                       <p className="text-2xl font-semibold text-[#AE8550]">12</p>
                       <p className="text-xs text-muted-foreground/60 mt-1">Active records</p>
                     </div>
 
                     {/* Upcoming Trips card */}
-                    <div className="p-4 rounded-lg bg-white/[0.02] border border-white/10">
+                    <div className="p-4 rounded-lg bg-foreground/[0.03] border border-white/10">
                       <p className="text-xs text-muted-foreground/75 mb-2">Upcoming Trips</p>
                       <p className="text-2xl font-semibold text-[#7CB889]">3</p>
                       <p className="text-xs text-muted-foreground/60 mt-1">This month</p>
                     </div>
 
                     {/* Action Items card */}
-                    <div className="p-4 rounded-lg bg-white/[0.02] border border-white/10">
+                    <div className="p-4 rounded-lg bg-foreground/[0.03] border border-white/10">
                       <p className="text-xs text-muted-foreground/75 mb-2">Action Items</p>
                       <p className="text-2xl font-semibold text-[#D4A574]">4</p>
                       <p className="text-xs text-muted-foreground/60 mt-1">To review</p>

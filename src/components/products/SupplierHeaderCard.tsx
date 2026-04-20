@@ -26,7 +26,7 @@ export default function SupplierHeaderCard({ supplier, className }: Props) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-4 flex flex-wrap items-center gap-4",
+        "rounded-xl border border-border bg-foreground/[0.04] p-4 flex flex-wrap items-center gap-4",
         className
       )}
     >

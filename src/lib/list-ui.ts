@@ -13,12 +13,12 @@ export const listScrollClass = "overflow-x-auto";
 
 /** Default min-width for wide tables; pass a feature-specific min-w when needed. */
 export function listTableClass(minWidth?: string) {
-  return cn("w-full text-sm", minWidth);
+  return cn("w-full text-base", minWidth);
 }
 
 /** Header: hairline only, no tinted band. */
 export const listTheadRowClass =
-  "border-b border-border bg-transparent text-left text-xs font-medium text-muted-foreground";
+  "border-b border-border bg-transparent text-left text-sm font-medium text-muted-foreground";
 
 /** Standard header cell (sort buttons / labels). */
 export const listThClass = "px-3 py-3";
@@ -29,7 +29,7 @@ export const listThCheckboxClass = "w-10 px-3 py-3 pl-4";
 export const listTbodyRowClass =
   "border-b border-border/50 transition-colors hover:bg-muted/35";
 
-export const listTdClass = "px-3 py-3 align-middle text-sm";
+export const listTdClass = "px-3 py-3 align-middle text-compact";
 
 export const listTdCheckboxClass = "w-10 px-3 py-3 pl-4 align-middle";
 
@@ -37,7 +37,7 @@ export const listTdCheckboxClass = "w-10 px-3 py-3 pl-4 align-middle";
 export const listPrimaryTextClass = "font-medium text-foreground";
 
 /** Secondary metadata */
-export const listMutedCellClass = "text-sm text-muted-foreground";
+export const listMutedCellClass = "text-compact text-muted-foreground";
 
 /**
  * Card-style row (virtualized product directory, dense lists).

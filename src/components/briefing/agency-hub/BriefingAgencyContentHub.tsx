@@ -311,7 +311,7 @@ function BriefingAgencyUserViewWidgets({
                       <p className="mt-1.5 text-sm font-medium text-brand-cta">{item.bonus_display}</p>
                       <p className="text-2xs text-muted-foreground/70 mt-1.5">
                         {formatIncentiveEndLabel(item.valid_until)}
-                        <span className="text-muted-foreground/55">
+                        <span className="text-muted-foreground">
                           {" · "}
                           {daysLeft === 0 ? "Window closed" : `${daysLeft}d left`}
                         </span>
@@ -1006,7 +1006,7 @@ export default function BriefingAgencyContentHub({ canEditBriefing, publisherNam
                       <p className="mt-1.5 text-sm font-medium text-brand-cta">{item.bonus_display}</p>
                       <p className="text-2xs text-muted-foreground/70 mt-1.5">
                         {formatIncentiveEndLabel(item.valid_until)}
-                        <span className="text-muted-foreground/55">
+                        <span className="text-muted-foreground">
                           {" · "}
                           {daysLeft === 0 ? "Window closed" : `${daysLeft}d left`}
                         </span>

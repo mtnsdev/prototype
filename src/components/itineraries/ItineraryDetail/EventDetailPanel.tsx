@@ -66,7 +66,7 @@ export default function EventDetailPanel({
   const marginPct = vicPrice > 0 ? Math.round((margin / vicPrice) * 100) : 0;
 
   return (
-    <div className="w-full max-w-[400px] h-full flex flex-col bg-inset border-l border-border shadow-xl animate-in slide-in-from-right duration-200">
+    <div className="w-full max-w-[400px] h-full flex flex-col bg-background border-l border-border shadow-xl animate-in slide-in-from-right duration-200">
       <header className="shrink-0 flex items-center justify-between gap-2 p-4 border-b border-border">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-[rgba(245,245,245,0.9)] shrink-0">
@@ -108,7 +108,7 @@ export default function EventDetailPanel({
                 <span className="text-muted-foreground/75">Supplier</span>
                 <Link
                   href={`/dashboard/products/${event.source_product_id}`}
-                  className="text-xs text-muted-foreground hover:text-white inline-flex items-center gap-1"
+                  className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
                 >
                   {event.source_product_name}
                   <ExternalLink size={12} />
@@ -149,7 +149,7 @@ export default function EventDetailPanel({
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/75 mb-2">Linked product</h3>
             <Link
               href={`/dashboard/products/${event.source_product_id}`}
-              className="flex items-center gap-3 p-3 rounded-lg border border-border bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
+              className="flex items-center gap-3 p-3 rounded-lg border border-border bg-white/[0.03] hover:bg-foreground/[0.06] transition-colors"
             >
               <span className="w-10 h-10 rounded-lg shrink-0 flex items-center justify-center bg-muted-foreground/10 ring-1 ring-border/60 text-muted-foreground">
                 <Building2 size={18} aria-hidden />

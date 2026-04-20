@@ -56,7 +56,7 @@ export default function TagInput({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <div className="flex flex-wrap gap-2 p-2 rounded-md border border-input bg-[rgba(255,255,255,0.04)] min-h-[38px]">
+      <div className="flex flex-wrap gap-2 p-2 rounded-md border border-input bg-foreground/[0.05] min-h-[38px]">
         {value.map((tag, i) => (
           <span
             key={`${tag}-${i}`}

@@ -1,26 +1,26 @@
-/** Vogue × Palantir — luxury editorial + intelligence density (Tailwind-friendly hex/rgba). */
+/** Enable light nature palette — mirrors globals.css tokens for reference. */
 export const palette = {
   bg: {
-    base: "#08080c",
-    elevated: "#0c0c12",
-    surface: "#101018",
-    overlay: "#14141e",
+    base: "#eceae4",
+    elevated: "#f3f1eb",
+    surface: "#f7f6f2",
+    overlay: "#f7f6f2",
   },
   border: {
-    subtle: "rgba(255,255,255,0.03)",
-    default: "rgba(255,255,255,0.06)",
-    focus: "rgba(255,255,255,0.12)",
+    subtle: "rgba(40, 48, 42, 0.09)",
+    default: "rgba(40, 48, 42, 0.14)",
+    focus: "rgba(58, 125, 86, 0.4)",
   },
   text: {
-    primary: "#F5F0EB",
-    secondary: "#9B9590",
-    tertiary: "#6B6560",
-    disabled: "#4A4540",
+    primary: "#171512",
+    secondary: "#403c36",
+    tertiary: "#524c44",
+    disabled: "#8a8378",
   },
   accent: {
-    gold: "#C9A96E",
-    goldMuted: "rgba(201,169,110,0.15)",
-    goldSubtle: "rgba(201,169,110,0.08)",
+    gold: "#c4923a",
+    goldMuted: "rgba(196, 146, 58, 0.15)",
+    goldSubtle: "rgba(58, 125, 86, 0.1)",
   },
   status: {
     indexed: "#5B8A6E",

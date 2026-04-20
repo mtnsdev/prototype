@@ -271,7 +271,7 @@ export function PartnerProgramDetailView({
                       No image
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#08080c]/70 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-foreground/65 via-transparent to-transparent" />
                   <span
                     className="absolute bottom-2 left-2 rounded-full border px-2 py-px text-[9px] backdrop-blur-sm"
                     style={{ background: cat.bg, color: cat.color, borderColor: cat.border }}

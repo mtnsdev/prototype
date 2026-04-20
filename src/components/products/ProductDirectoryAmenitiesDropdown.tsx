@@ -190,7 +190,7 @@ export default function ProductDirectoryAmenitiesDropdown({
               ref={inputRef}
               type="text"
               placeholder="Search amenities…"
-              className="w-full rounded-lg border-none bg-[rgba(255,255,255,0.03)] px-2 py-1.5 text-xs text-foreground placeholder-[#4A4540] focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/40"
+              className="w-full rounded-lg border-none bg-foreground/[0.04] px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary/35"
               value={amenitySearch}
               onChange={(e) => setAmenitySearch(e.target.value)}
               onKeyDown={(e) => {
@@ -217,7 +217,7 @@ export default function ProductDirectoryAmenitiesDropdown({
           <div className="max-h-60 overflow-y-auto">
             {filteredGroups.map((group) => (
               <div key={group.label}>
-                <div className="bg-[rgba(255,255,255,0.02)] px-3 py-1.5">
+                <div className="bg-foreground/[0.03] px-3 py-1.5">
                   <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-muted-foreground/65">
                     {group.label}
                   </span>
@@ -231,8 +231,8 @@ export default function ProductDirectoryAmenitiesDropdown({
                         className={cn(
                           "flex cursor-pointer items-center justify-between gap-2 rounded-md border p-2 transition-colors",
                           on
-                            ? "border-[rgba(201,169,110,0.28)] bg-inset"
-                            : "border-border bg-inset hover:bg-[rgba(255,255,255,0.03)]",
+                            ? "border-primary/30 bg-inset"
+                            : "border-border bg-inset hover:bg-foreground/[0.04]",
                           "mx-2 mb-1.5 last:mb-0"
                         )}
                       >
@@ -260,7 +260,7 @@ export default function ProductDirectoryAmenitiesDropdown({
                     <button
                       key={id}
                       type="button"
-                      className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+                      className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
                       onClick={() => toggle(id)}
                     >
                       <span>{label}</span>
@@ -285,7 +285,7 @@ export default function ProductDirectoryAmenitiesDropdown({
 
           {onCustomChange && customSelected.length > 0 ? (
             <div className="border-t border-border">
-              <div className="bg-[rgba(255,255,255,0.02)] px-3 py-1.5">
+              <div className="bg-foreground/[0.03] px-3 py-1.5">
                 <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-muted-foreground/65">
                   Custom
                 </span>
@@ -297,8 +297,8 @@ export default function ProductDirectoryAmenitiesDropdown({
                   className={cn(
                     "flex w-full items-center justify-between gap-2 text-left transition-colors",
                     embedStyle === "partnerPanel"
-                      ? "mx-2 mb-1.5 rounded-md border border-[rgba(201,169,110,0.28)] bg-inset p-2 text-2xs text-foreground last:mb-0 hover:bg-[rgba(255,255,255,0.03)]"
-                      : "px-3 py-1.5 text-xs text-muted-foreground hover:bg-[rgba(255,255,255,0.04)]"
+                      ? "mx-2 mb-1.5 rounded-md border border-primary/30 bg-inset p-2 text-2xs text-foreground last:mb-0 hover:bg-foreground/[0.04]"
+                      : "px-3 py-1.5 text-xs text-muted-foreground hover:bg-foreground/[0.05]"
                   )}
                   onClick={() => removeCustom(c)}
                 >

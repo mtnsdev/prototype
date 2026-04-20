@@ -23,12 +23,9 @@ import {
   mergeItinerariesListIntoUrl,
   parseItinerariesSearchParams,
 } from "@/lib/itinerariesUrl";
-import {
-  DASHBOARD_LIST_PAGE_HEADER,
-  DASHBOARD_LIST_PAGE_HEADER_SUBTITLE,
-  DASHBOARD_LIST_PAGE_HEADER_TITLE,
-  DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK,
-} from "@/lib/dashboardChrome";
+import { AppPageHeroHeader } from "@/components/ui/app-page-hero-header";
+import { APP_PAGE_CONTENT_SHELL } from "@/lib/dashboardChrome";
+import { cn } from "@/lib/utils";
 import { PIPELINE_STAGE_LABEL_MAP, PIPELINE_STAGES } from "@/config/pipelineStages";
 import { ITINERARY_STATUS_BADGES } from "./statusConfig";
 
@@ -317,29 +314,42 @@ export default function ItinerariesPage() {
   const canViewFinancials_ = canViewFinancials(currentUser);
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-inset text-foreground">
-      <header className={DASHBOARD_LIST_PAGE_HEADER}>
-        <div className={DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK}>
-          <h1 className={DASHBOARD_LIST_PAGE_HEADER_TITLE}>Itineraries</h1>
-          <p className={DASHBOARD_LIST_PAGE_HEADER_SUBTITLE}>
-            {hasActiveFilters ? (
-              <>
-                <span>
-                  {totalCount} {totalCount === 1 ? "itinerary" : "itineraries"}
-                </span>
-                {" · "}
-                matching filters
-              </>
-            ) : (
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background text-foreground">
+      <AppPageHeroHeader
+        eyebrow="Travel"
+        title="Itineraries"
+        subtitle={
+          hasActiveFilters ? (
+            <>
               <span>
                 {totalCount} {totalCount === 1 ? "itinerary" : "itineraries"}
               </span>
-            )}
-          </p>
+              {" · "}
+              matching filters
+            </>
+          ) : (
+            <span>
+              {totalCount} {totalCount === 1 ? "itinerary" : "itineraries"}
+            </span>
+          )
+        }
+        toolbar={<ItineraryTabBar activeTab={activeTab} variant="inline" className="min-w-0" />}
+        toolbarPlacement="with-title"
+      />
+
+      {error && (
+        <div className="shrink-0 border-b border-[var(--muted-amber-border)] bg-[var(--muted-amber-bg)] px-4 py-2 text-sm text-[var(--muted-amber-text)]">
+          {error}
         </div>
-      </header>
-      <ItineraryTabBar activeTab={activeTab} />
-      <div className="relative z-10 shrink-0 px-6 pb-0 pt-4">
+      )}
+
+      <div
+        className={cn(
+          APP_PAGE_CONTENT_SHELL,
+          "flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden"
+        )}
+      >
+      <div className="relative z-10 shrink-0 pb-0 pt-4">
         <ItineraryToolbar
         activeTab={activeTab}
         searchQuery={searchQuery}
@@ -380,7 +390,7 @@ export default function ItinerariesPage() {
         dateTo !== "" ||
         pipelineFilter != null ||
         upcomingTrips) && (
-        <div className="mb-3 flex shrink-0 flex-wrap gap-1.5 px-6">
+        <div className="mb-3 flex shrink-0 flex-wrap gap-1.5">
           {searchQuery.trim() ? (
             <button type="button" className={chipBtn} onClick={() => setSearchQuery("")} aria-label="Clear search">
               &quot;{searchQuery.trim().slice(0, 24)}
@@ -444,7 +454,7 @@ export default function ItinerariesPage() {
       )}
 
       {upcomingTrips && (
-        <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-lg border border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.06)] px-3 py-2 text-xs text-brand-cta mx-6">
+        <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-lg border border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.06)] px-3 py-2 text-xs text-brand-cta">
           <span>Showing upcoming trips: Committed, Preparing, Final Review, or Traveling.</span>
           <button type="button" onClick={() => setUpcomingTrips(false)} className="font-medium text-[#E8D5B5] hover:text-foreground">
             Clear
@@ -452,15 +462,9 @@ export default function ItinerariesPage() {
         </div>
       )}
 
-      {error && (
-        <div className="shrink-0 px-4 py-2 text-sm text-[var(--muted-amber-text)] bg-[var(--muted-amber-bg)] border-b border-[var(--muted-amber-border)]">
-          {error}
-        </div>
-      )}
-
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {(isEmpty || noResults) && (
-          <div className="flex min-h-0 flex-1 flex-col overflow-auto px-4 pb-4 pt-0 md:px-6 md:pb-6">
+          <div className="flex min-h-0 flex-1 flex-col overflow-auto pb-4 pt-0">
             <ItinerariesEmptyState
               hasNoItineraries={isEmpty}
               tab={activeTab}
@@ -473,12 +477,12 @@ export default function ItinerariesPage() {
         {!isEmpty && !noResults && (
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             {viewMode === "board" && (
-              <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-4 pt-0 md:px-6 md:pb-6">
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden pb-4 pt-0">
                 <ItineraryKanbanView itineraries={itineraries} />
               </div>
             )}
             {viewMode === "list" && (
-            <div className="flex min-h-0 flex-1 overflow-auto px-4 pb-4 pt-0 md:px-6 md:pb-6">
+            <div className="flex min-h-0 flex-1 overflow-auto pb-4 pt-0">
               <ItineraryListView
                 itineraries={itineraries}
                 isLoading={isLoading}
@@ -509,7 +513,7 @@ export default function ItinerariesPage() {
             </div>
             )}
             {viewMode === "cards" && (
-            <div className="flex min-h-0 flex-1 overflow-auto px-4 pb-4 pt-0 md:px-6 md:pb-6">
+            <div className="flex min-h-0 flex-1 overflow-auto pb-4 pt-0">
               <ItineraryCardView
                 itineraries={itineraries}
                 isLoading={isLoading}
@@ -541,6 +545,7 @@ export default function ItinerariesPage() {
             )}
           </div>
         )}
+      </div>
       </div>
 
       <CreateItineraryModal

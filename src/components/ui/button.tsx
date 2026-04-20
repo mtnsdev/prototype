@@ -5,30 +5,30 @@ import { Slot } from "radix-ui"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-[3px] focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border border-transparent",
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-base font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-[3px] focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 border border-transparent",
   {
     variants: {
       variant: {
         default:
-          "bg-[rgba(255,255,255,0.12)] text-foreground border-input hover:bg-[rgba(255,255,255,0.16)]",
+          "border border-border bg-muted/90 text-foreground hover:bg-muted",
         cta:
-          "bg-primary text-primary-foreground shadow-sm hover:brightness-110 focus-visible:ring-ring",
+          "bg-primary text-primary-foreground shadow-sm hover:brightness-[1.03] focus-visible:ring-ring",
         destructive:
-          "bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30 focus-visible:ring-red-500/40",
+          "border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/15 focus-visible:ring-destructive/35",
         outline:
-          "border border-input bg-background/40 text-foreground hover:bg-accent hover:border-border-strong",
+          "border border-input bg-card text-foreground hover:bg-accent hover:border-border-strong",
         secondary:
-          "bg-[rgba(255,255,255,0.1)] text-foreground border-input hover:bg-[rgba(255,255,255,0.14)]",
+          "border border-transparent bg-secondary text-foreground hover:bg-foreground/[0.08]",
         ghost:
-          "text-muted-foreground hover:bg-[rgba(255,255,255,0.06)] hover:text-foreground",
-        link: "text-foreground underline-offset-4 hover:underline hover:text-white",
+          "text-muted-foreground hover:bg-accent hover:text-foreground",
+        link: "text-primary underline-offset-4 hover:underline hover:text-foreground",
         /** Primary row actions next to search (Add…, New collection, etc.) */
         toolbarAccent:
-          "gap-1.5 border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] px-2.5 text-xs text-brand-cta hover:border-[rgba(201,169,110,0.28)] hover:bg-[rgba(201,169,110,0.12)] has-[>svg]:px-2.5",
+          "gap-1.5 border-primary/25 bg-primary/10 px-2.5 text-sm text-primary hover:border-primary/35 hover:bg-primary/15 has-[>svg]:px-2.5",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
+        xs: "h-7 gap-1 rounded-md px-2.5 text-sm has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
         sm: "h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
         icon: "size-9",

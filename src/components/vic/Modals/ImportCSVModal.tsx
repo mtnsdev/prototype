@@ -211,7 +211,7 @@ export default function ImportCSVModal({ onClose, onImported }: Props) {
               onClick={() => step > s.id && setStep(s.id)}
               className={cn(
                 "rounded-full w-8 h-8 flex items-center justify-center text-xs font-medium transition-colors",
-                step === s.id ? "bg-[#F5F5F5] text-[#08080c]" : step > s.id ? "bg-white/20 text-foreground" : "bg-white/10 text-muted-foreground/75"
+                step === s.id ? "bg-muted text-foreground" : step > s.id ? "bg-primary/15 text-foreground" : "bg-foreground/[0.06] text-muted-foreground/75"
               )}
             >
               {s.id}
@@ -229,7 +229,7 @@ export default function ImportCSVModal({ onClose, onImported }: Props) {
           {step === 1 && (
             <div className="space-y-3">
               <div
-                className="border-2 border-dashed border-[rgba(255,255,255,0.2)] rounded-lg p-8 text-center cursor-pointer hover:border-[rgba(255,255,255,0.3)] transition-colors"
+                className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary/35 transition-colors"
                 onClick={() => document.getElementById("vic-csv-input")?.click()}
               >
                 <input
@@ -264,7 +264,7 @@ export default function ImportCSVModal({ onClose, onImported }: Props) {
                     <select
                       value={columnMap[key] ?? (key === "full_name" ? headers[0] ?? "" : "")}
                       onChange={(e) => setMapping(key, e.target.value)}
-                      className="flex-1 rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
+                      className="flex-1 rounded-md border border-input bg-foreground/[0.05] px-3 py-2 text-sm text-foreground"
                     >
                       <option value="">—</option>
                       {headers.map((h) => (
@@ -319,7 +319,7 @@ export default function ImportCSVModal({ onClose, onImported }: Props) {
                 <select
                   value={duplicateMode}
                   onChange={(e) => setDuplicateMode(e.target.value as typeof duplicateMode)}
-                  className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
+                  className="mt-1 w-full rounded-md border border-input bg-foreground/[0.05] px-3 py-2 text-sm text-foreground"
                 >
                   {DUPLICATE_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
@@ -331,7 +331,7 @@ export default function ImportCSVModal({ onClose, onImported }: Props) {
                 <select
                   value={defaultRelationshipStatus}
                   onChange={(e) => setDefaultRelationshipStatus(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
+                  className="mt-1 w-full rounded-md border border-input bg-foreground/[0.05] px-3 py-2 text-sm text-foreground"
                 >
                   {DEFAULT_STATUS_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>

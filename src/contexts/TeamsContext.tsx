@@ -33,7 +33,8 @@ type TeamsContextValue = {
   teams: Team[];
   agencyUsers: AgencyUser[];
   getMemberInitials: (memberId: string) => string;
-  createTeam: (name: string, memberIds: string[]) => void;
+  /** Returns the new team id, or null if nothing was created. */
+  createTeam: (name: string, memberIds: string[]) => string | null;
   renameTeam: (id: string, name: string) => void;
   deleteTeam: (id: string) => void;
   toggleTeamMember: (teamId: string, userId: string) => void;
@@ -44,10 +45,10 @@ const TeamsContext = createContext<TeamsContextValue | null>(null);
 export function TeamsProvider({ children }: { children: ReactNode }) {
   const [teams, setTeams] = useState<Team[]>(() => cloneTeams(INITIAL_MOCK_TEAMS));
 
-  const createTeam = useCallback((name: string, memberIds: string[]) => {
+  const createTeam = useCallback((name: string, memberIds: string[]): string | null => {
     const trimmed = name.trim();
-    if (!trimmed || memberIds.length === 0) return;
-    const id = `team-${Date.now()}`;
+    if (!trimmed || memberIds.length === 0) return null;
+    const id = `team-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
     setTeams((prev) => [
       ...prev,
       {
@@ -60,6 +61,7 @@ export function TeamsProvider({ children }: { children: ReactNode }) {
         createdAt: new Date().toISOString().slice(0, 10),
       },
     ]);
+    return id;
   }, []);
 
   const renameTeam = useCallback((id: string, name: string) => {

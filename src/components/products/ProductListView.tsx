@@ -119,7 +119,7 @@ export default function ProductListView({
                   <button
                     type="button"
                     onClick={() => handleSort(col.key)}
-                    className="rounded-md hover:bg-white/[0.06] hover:text-foreground"
+                    className="rounded-md hover:bg-foreground/[0.06] hover:text-foreground"
                   >
                     {col.label}{" "}
                     {sortBy === (col.key === "location" ? "city" : col.key) && (sortOrder === "asc" ? "↑" : "↓")}

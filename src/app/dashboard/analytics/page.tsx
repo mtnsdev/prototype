@@ -38,13 +38,8 @@ import {
   listMutedCellClass,
   listPrimaryTextClass,
 } from "@/lib/list-ui";
-import {
-  DASHBOARD_LIST_PAGE_HEADER,
-  DASHBOARD_LIST_PAGE_HEADER_ACTIONS,
-  DASHBOARD_LIST_PAGE_HEADER_SUBTITLE,
-  DASHBOARD_LIST_PAGE_HEADER_TITLE,
-  DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK,
-} from "@/lib/dashboardChrome";
+import { AppPageHeroHeader } from "@/components/ui/app-page-hero-header";
+import { APP_PAGE_CONTENT_SHELL } from "@/lib/dashboardChrome";
 
 // Mock data with realistic seasonal patterns
 const MONTHLY_REVENUE_12M = [
@@ -91,7 +86,7 @@ const PIPELINE_DATA = [
   { stage: "Won", count: 2, color: "rgba(201, 169, 110, 1)" },
 ];
 
-const cardClass = "rounded-xl border border-border bg-white/[0.02] p-5 md:p-6";
+const cardClass = "rounded-xl border border-border bg-foreground/[0.03] p-5 md:p-6";
 
 function AnalyticsKpiAttributionBanner() {
   const userContext = useUserOptional();
@@ -274,65 +269,64 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-inset text-foreground">
-      <header className={DASHBOARD_LIST_PAGE_HEADER}>
-        <div className={DASHBOARD_LIST_PAGE_HEADER_TITLE_STACK}>
-          <h1 className={DASHBOARD_LIST_PAGE_HEADER_TITLE}>Analytics</h1>
-          <p className={DASHBOARD_LIST_PAGE_HEADER_SUBTITLE}>
-            Key metrics, revenue trends, and VIC performance
-          </p>
-        </div>
-        <div className={DASHBOARD_LIST_PAGE_HEADER_ACTIONS}>
-          <Select value={range} onValueChange={setRange}>
-            <SelectTrigger
-              className={cn(
-                directoryFilterSelectTriggerClass,
-                "h-8 w-[min(100%,180px)] text-xs"
-              )}
-            >
-              <SelectValue placeholder="Period" />
-            </SelectTrigger>
-            <SelectContent className={directoryFilterSelectContentClass}>
-              <SelectItem className={directoryFilterSelectItemClass} value="30days">
-                Last 30 days
-              </SelectItem>
-              <SelectItem className={directoryFilterSelectItemClass} value="90days">
-                Last 90 days
-              </SelectItem>
-              <SelectItem className={directoryFilterSelectItemClass} value="ytd">
-                Year to date
-              </SelectItem>
-              <SelectItem className={directoryFilterSelectItemClass} value="12months">
-                Last 12 months
-              </SelectItem>
-              <SelectItem className={directoryFilterSelectItemClass} value="alltime">
-                All time
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 border-input px-2.5 text-xs text-foreground"
-                aria-label="More actions"
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background text-foreground">
+      <AppPageHeroHeader
+        eyebrow="Insights"
+        title="Analytics"
+        subtitle="Key metrics, revenue trends, and VIC performance"
+        toolbar={
+          <>
+            <Select value={range} onValueChange={setRange}>
+              <SelectTrigger
+                className={cn(
+                  directoryFilterSelectTriggerClass,
+                  "h-8 w-[min(100%,180px)] text-xs"
+                )}
               >
-                <MoreHorizontal size={16} className="shrink-0" aria-hidden />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[10rem]">
-              <DropdownMenuItem onClick={handleExport} className="gap-2">
-                <Download size={14} className="shrink-0 opacity-80" aria-hidden />
-                Export CSV
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </header>
+                <SelectValue placeholder="Period" />
+              </SelectTrigger>
+              <SelectContent className={directoryFilterSelectContentClass}>
+                <SelectItem className={directoryFilterSelectItemClass} value="30days">
+                  Last 30 days
+                </SelectItem>
+                <SelectItem className={directoryFilterSelectItemClass} value="90days">
+                  Last 90 days
+                </SelectItem>
+                <SelectItem className={directoryFilterSelectItemClass} value="ytd">
+                  Year to date
+                </SelectItem>
+                <SelectItem className={directoryFilterSelectItemClass} value="12months">
+                  Last 12 months
+                </SelectItem>
+                <SelectItem className={directoryFilterSelectItemClass} value="alltime">
+                  All time
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 border-input px-2.5 text-xs text-foreground"
+                  aria-label="More actions"
+                >
+                  <MoreHorizontal size={16} className="shrink-0" aria-hidden />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[10rem]">
+                <DropdownMenuItem onClick={handleExport} className="gap-2">
+                  <Download size={14} className="shrink-0 opacity-80" aria-hidden />
+                  Export CSV
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        }
+      />
 
       <div className="min-h-0 flex-1 overflow-auto">
-        <div className="px-6 pb-8 pt-6 space-y-6 max-w-[1600px]">
+        <div className={cn(APP_PAGE_CONTENT_SHELL, "space-y-6 pb-8 pt-6")}>
           <AnalyticsKpiAttributionBanner />
           {/* KPI Row */}
           <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">

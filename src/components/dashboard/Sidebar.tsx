@@ -96,7 +96,7 @@ export default function Sidebar({
                 >
                     {isDrawer ? (
                         <div className="flex items-center gap-2.5 min-w-0 pr-8">
-                            <div className="h-8 w-8 shrink-0 rounded-md bg-white/5 flex items-center justify-center border border-input">
+                            <div className="h-8 w-8 shrink-0 rounded-md bg-foreground/[0.05] flex items-center justify-center border border-input">
                                 <Image
                                     src="/TL_logo.svg"
                                     alt="Travel Lustre Logo"
@@ -114,7 +114,7 @@ export default function Sidebar({
                         </div>
                     ) : !showLabels ? (
                         <>
-                            <div className="h-8 w-8 shrink-0 rounded-md bg-white/5 flex items-center justify-center border border-input">
+                            <div className="h-8 w-8 shrink-0 rounded-md bg-foreground/[0.05] flex items-center justify-center border border-input">
                                 <Image
                                     src="/TL_logo.svg"
                                     alt="Travel Lustre Logo"
@@ -128,7 +128,7 @@ export default function Sidebar({
                                 variant="ghost"
                                 size="icon"
                                 onClick={onToggle}
-                                className="h-8 w-8 shrink-0 rounded-md hover:bg-white/8 text-white/60 hover:text-white/90"
+                                className="h-8 w-8 shrink-0 rounded-md hover:bg-foreground/[0.07] text-muted-foreground hover:text-foreground"
                                 aria-label="Expand sidebar"
                             >
                                 <PanelLeftOpen size={16} />
@@ -137,7 +137,7 @@ export default function Sidebar({
                     ) : (
                         <>
                             <div className="flex items-center gap-2.5 min-w-0">
-                                <div className="h-8 w-8 shrink-0 rounded-md bg-white/5 flex items-center justify-center border border-input">
+                                <div className="h-8 w-8 shrink-0 rounded-md bg-foreground/[0.05] flex items-center justify-center border border-input">
                                     <Image
                                         src="/TL_logo.svg"
                                         alt="Travel Lustre Logo"
@@ -159,7 +159,7 @@ export default function Sidebar({
                                     variant="ghost"
                                     size="icon"
                                     onClick={onToggle}
-                                    className="h-8 w-8 shrink-0 rounded-md hover:bg-white/8 text-white/60 hover:text-white/90"
+                                    className="h-8 w-8 shrink-0 rounded-md hover:bg-foreground/[0.07] text-muted-foreground hover:text-foreground"
                                     aria-label="Collapse sidebar"
                                 >
                                     <PanelLeftClose size={16} />
@@ -286,15 +286,15 @@ export default function Sidebar({
                         <PopoverTrigger asChild>
                             <Button
                                 variant="ghost"
-                                className="group w-full rounded-lg border border-transparent bg-white/4 p-2.5 text-left font-normal h-auto justify-start gap-2.5 hover:border-white/8 hover:bg-white/8"
+                                className="group w-full rounded-lg border border-transparent bg-foreground/[0.04] p-2.5 text-left font-normal h-auto justify-start gap-2.5 hover:border-border hover:bg-foreground/[0.07]"
                                 title="User menu"
                                 aria-label="User menu"
                             >
                                 {showLabels ? (
                                     <div className="flex w-full items-center justify-between">
                                         <div className="flex min-w-0 items-center gap-2.5">
-                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10">
-                                                <User size={14} className="text-white/60" aria-hidden />
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground/[0.09]">
+                                                <User size={14} className="text-muted-foreground" aria-hidden />
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="text-xs text-muted-foreground/75">Signed in</p>
@@ -307,7 +307,7 @@ export default function Sidebar({
                                         </div>
                                         <ChevronRight
                                             size={14}
-                                            className="shrink-0 text-muted-foreground/55 transition-colors group-hover:text-muted-foreground group-data-[state=open]:rotate-90"
+                                            className="shrink-0 text-muted-foreground transition-colors group-hover:text-muted-foreground group-data-[state=open]:rotate-90"
                                             aria-hidden
                                         />
                                     </div>
@@ -315,7 +315,7 @@ export default function Sidebar({
                                     <div className="flex w-full justify-center">
                                         <User
                                             size={16}
-                                            className="text-muted-foreground/55 group-hover:text-muted-foreground"
+                                            className="text-muted-foreground group-hover:text-muted-foreground"
                                             aria-hidden
                                         />
                                     </div>
@@ -331,7 +331,7 @@ export default function Sidebar({
                             <Link
                                 href="/dashboard/settings"
                                 onClick={() => navClose?.()}
-                                className="flex items-center gap-2.5 px-3 py-2.5 text-compact text-muted-foreground transition-colors hover:bg-white/8 hover:text-foreground"
+                                className="flex items-center gap-2.5 px-3 py-2.5 text-compact text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
                             >
                                 <Settings size={14} className="text-muted-foreground/75" aria-hidden />
                                 <span>Settings</span>
@@ -352,7 +352,7 @@ export default function Sidebar({
                                 onClick={() => {
                                     handleSignOut();
                                 }}
-                                className="h-auto w-full justify-start gap-2.5 rounded-none px-3 py-2.5 text-compact font-normal text-muted-foreground hover:bg-white/8 hover:text-foreground"
+                                className="h-auto w-full justify-start gap-2.5 rounded-none px-3 py-2.5 text-compact font-normal text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
                             >
                                 <LogOut size={14} className="text-muted-foreground/75" aria-hidden />
                                 <span>Sign out</span>
@@ -442,8 +442,8 @@ function NavLink({
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-compact",
                 "transition-all duration-150 ease-out",
                 active
-                    ? "bg-white/[0.06] text-white font-medium"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/[0.03]",
+                    ? "bg-foreground/[0.08] text-foreground font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-foreground/[0.04]",
             ].join(" ")}
         >
             <span
@@ -491,7 +491,7 @@ function NavLink({
                     {navTag && <NavTag variant={navTag} />}
                     {badge && !navTag && (
                         <span
-                            className="shrink-0 ml-auto rounded-md px-2 py-0.5 text-xs font-normal text-muted-foreground/55 bg-white/[0.05] border border-border"
+                            className="shrink-0 ml-auto rounded-md px-2 py-0.5 text-xs font-normal text-muted-foreground bg-foreground/[0.05] border border-border"
                             title="This feature is not fully implemented yet"
                         >
                             {badge}
@@ -525,7 +525,7 @@ function IntegrationItem({
             variant="ghost"
             onClick={isClickable ? onClick : undefined}
             disabled={!isClickable}
-            className={`w-full justify-between py-1.5 px-2 rounded-md text-sm font-normal h-auto ${isClickable ? "cursor-pointer hover:bg-white/6" : "cursor-default"} ${active ? "bg-white/8" : ""}`}
+            className={`w-full justify-between py-1.5 px-2 rounded-md text-sm font-normal h-auto ${isClickable ? "cursor-pointer hover:bg-foreground/[0.05]" : "cursor-default"} ${active ? "bg-foreground/[0.07]" : ""}`}
         >
             <span className={status === "active" ? "text-muted-foreground" : "text-muted-foreground/75"}>
                 {name}
@@ -541,7 +541,7 @@ function IntegrationItem({
                     </span>
                 )
             ) : (
-                <span className="text-2xs text-muted-foreground/55">
+                <span className="text-2xs text-muted-foreground">
                     Coming soon
                 </span>
             )}

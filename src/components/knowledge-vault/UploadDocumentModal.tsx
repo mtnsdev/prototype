@@ -96,7 +96,7 @@ export default function UploadDocumentModal({ open, onClose, onUploaded }: Props
             onDrop={onDrop}
             className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center hover:border-white/30 transition-colors"
           >
-            <Upload size={40} className="mx-auto text-muted-foreground/55 mb-4" />
+            <Upload size={40} className="mx-auto text-muted-foreground mb-4" />
             <p className="text-foreground font-medium">Drop files here or click to browse</p>
             <p className="text-xs text-muted-foreground/75 mt-1">
               PDF, DOCX, XLSX, CSV, HTML, TXT, images

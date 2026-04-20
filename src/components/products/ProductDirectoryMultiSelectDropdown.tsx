@@ -81,7 +81,7 @@ export default function ProductDirectoryMultiSelectDropdown({
             return (
               <span
                 key={v}
-                className="inline-flex items-center gap-0.5 rounded-md border border-border bg-[rgba(255,255,255,0.04)] px-1.5 py-0.5 text-[9px] text-muted-foreground"
+                className="inline-flex items-center gap-0.5 rounded-md border border-border bg-foreground/[0.05] px-1.5 py-0.5 text-[9px] text-muted-foreground"
               >
                 <span className="max-w-[100px] truncate">{label}</span>
                 <button
@@ -114,7 +114,7 @@ export default function ProductDirectoryMultiSelectDropdown({
                 type="button"
                 role="option"
                 aria-selected={isOn}
-                className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+                className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
                 onClick={() => toggle(opt.value)}
               >
                 <span className="truncate pr-2">{opt.label}</span>
@@ -125,7 +125,7 @@ export default function ProductDirectoryMultiSelectDropdown({
           {footerAction && (
             <button
               type="button"
-              className="w-full border-t border-border px-3 py-2 text-left text-xs text-brand-cta transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+              className="w-full border-t border-border px-3 py-2 text-left text-xs text-brand-cta transition-colors hover:bg-foreground/[0.05]"
               onClick={() => {
                 setOpen(false);
                 footerAction.onClick();

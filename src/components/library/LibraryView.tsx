@@ -480,7 +480,7 @@ function DriveLibraryContent({
                         onChange={setSearchQuery}
                     />
                     {isSearchMode && (
-                        <p className="text-xs text-muted-foreground/55 mt-2">
+                        <p className="text-xs text-muted-foreground mt-2">
                             {filteredFiles.length} result{filteredFiles.length !== 1 ? "s" : ""}
                         </p>
                     )}
@@ -495,7 +495,7 @@ function DriveLibraryContent({
                     ) : showLoading && files.length === 0 ? (
                         <div className="px-5 py-10 text-center">
                             <div className="flex flex-col items-center gap-3">
-                                <Loader2 size={24} className="animate-spin text-muted-foreground/55" />
+                                <Loader2 size={24} className="animate-spin text-muted-foreground" />
                                 <span className="text-compact text-muted-foreground/75">Loading files…</span>
                             </div>
                         </div>
@@ -504,7 +504,7 @@ function DriveLibraryContent({
                             <div className="flex flex-col items-center gap-2">
                                 <Cloud size={32} className="text-[rgba(245,245,245,0.2)]" />
                                 <span className="text-base text-muted-foreground/75">No available files</span>
-                                <span className="text-sm text-muted-foreground/55">
+                                <span className="text-sm text-muted-foreground">
                                     {connectionType === "agency"
                                         ? "No folders have been shared with you yet. Contact your admin for access."
                                         : "Files will appear here after syncing your Google Drive folder."}
@@ -519,7 +519,7 @@ function DriveLibraryContent({
                                     <div className="flex flex-col items-center gap-2">
                                         <Search size={32} className="text-[rgba(245,245,245,0.2)]" />
                                         <span className="text-base text-muted-foreground/75">No results found</span>
-                                        <span className="text-sm text-muted-foreground/55">
+                                        <span className="text-sm text-muted-foreground">
                                             Try a different search term
                                         </span>
                                     </div>
@@ -545,7 +545,7 @@ function DriveLibraryContent({
                                                 {file.filename || "Untitled"}
                                             </p>
                                             {file.drive_path && (
-                                                <p className="text-xs text-muted-foreground/55 mt-0.5 truncate">
+                                                <p className="text-xs text-muted-foreground mt-0.5 truncate">
                                                     {file.drive_path}
                                                 </p>
                                             )}
@@ -1204,7 +1204,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                             value={searchQuery}
                             onChange={setSearchQuery}
                         />
-                        <p className="text-xs text-muted-foreground/55 mt-2">
+                        <p className="text-xs text-muted-foreground mt-2">
                             {searchQuery.trim().length < 2
                                 ? "Type at least 2 characters to search all documents and folders."
                                 : `Searching documents and pages${searchDocuments.length + searchPages.length > 0 ? ` • ${searchDocuments.length} document(s), ${searchPages.length} page(s)` : searchTotal !== null ? ` • ${searchTotal} document(s)` : ""}`}
@@ -1222,7 +1222,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                 ) : showSearchLoader && searchDocuments.length === 0 && searchPages.length === 0 ? (
                                     <div className="px-5 py-10 text-center">
                                         <div className="flex flex-col items-center gap-3">
-                                            <Loader2 size={24} className="animate-spin text-muted-foreground/55" />
+                                            <Loader2 size={24} className="animate-spin text-muted-foreground" />
                                             <span className="text-compact text-muted-foreground/75">Searching…</span>
                                         </div>
                                     </div>
@@ -1231,7 +1231,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                         <div className="flex flex-col items-center gap-2">
                                             <Search size={32} className="text-[rgba(245,245,245,0.2)]" />
                                             <span className="text-base text-muted-foreground/75">No results found</span>
-                                            <span className="text-sm text-muted-foreground/55">Try a different search term</span>
+                                            <span className="text-sm text-muted-foreground">Try a different search term</span>
                                         </div>
                                     </div>
                                 ) : (
@@ -1245,7 +1245,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                     "flex-1 px-4 py-3 text-compact font-medium transition-colors",
                                                     rootViewTab === "documents"
                                                         ? "text-[#7AA3C8] border-b-2 border-[#7AA3C8] bg-[rgba(122,163,200,0.06)]"
-                                                        : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-[rgba(255,255,255,0.03)]",
+                                                        : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-foreground/[0.04]",
                                                 ].join(" ")}
                                             >
                                                 Documents ({searchDocuments.length}{searchTotal != null && searchTotal > searchDocuments.length ? ` of ${searchTotal}` : ""})
@@ -1257,7 +1257,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                     "flex-1 px-4 py-3 text-compact font-medium transition-colors",
                                                     rootViewTab === "pages"
                                                         ? "text-[#9CA3AF] border-b-2 border-[#9CA3AF] bg-[rgba(156,163,175,0.06)]"
-                                                        : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-[rgba(255,255,255,0.03)]",
+                                                        : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-foreground/[0.04]",
                                                 ].join(" ")}
                                             >
                                                 Pages ({searchPages.length})
@@ -1268,7 +1268,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                             {rootViewTab === "documents" ? (
                                                 <>
                                                     {searchDocuments.length === 0 ? (
-                                                        <div className="px-5 py-8 text-center text-sm text-muted-foreground/55">No documents match your search.</div>
+                                                        <div className="px-5 py-8 text-center text-sm text-muted-foreground">No documents match your search.</div>
                                                     ) : (
                                                         <>
                                                             {searchDocuments.map((item) => (
@@ -1287,7 +1287,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                                         className={[
                                                                             "inline-flex items-center gap-2 px-4 py-2 rounded-lg",
                                                                             "text-sm font-medium",
-                                                                            "bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)]",
+                                                                            "bg-foreground/[0.06] hover:bg-foreground/[0.09]",
                                                                             "border border-input hover:border-border-strong",
                                                                             "text-muted-foreground hover:text-foreground",
                                                                             "transition-all duration-150",
@@ -1311,7 +1311,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                             ) : (
                                                 <>
                                                     {searchPages.length === 0 ? (
-                                                        <div className="px-5 py-8 text-center text-sm text-muted-foreground/55">No pages match your search.</div>
+                                                        <div className="px-5 py-8 text-center text-sm text-muted-foreground">No pages match your search.</div>
                                                     ) : (
                                                         searchPages.map((page) => (
                                                             <SearchResultItem
@@ -1337,7 +1337,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                     "flex-1 px-4 py-3 text-compact font-medium transition-colors",
                                                     rootViewTab === "documents"
                                                         ? "text-[#7AA3C8] border-b-2 border-[#7AA3C8] bg-[rgba(122,163,200,0.06)]"
-                                                        : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-[rgba(255,255,255,0.03)]",
+                                                        : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-foreground/[0.04]",
                                                 ].join(" ")}
                                             >
                                                 Documents ({accordionRootDisplay.length})
@@ -1349,7 +1349,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                     "flex-1 px-4 py-3 text-compact font-medium transition-colors",
                                                     rootViewTab === "pages"
                                                         ? "text-[#9CA3AF] border-b-2 border-[#9CA3AF] bg-[rgba(156,163,175,0.06)]"
-                                                        : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-[rgba(255,255,255,0.03)]",
+                                                        : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-foreground/[0.04]",
                                                 ].join(" ")}
                                             >
                                                 Pages ({pagesItems.length}{pagesHasMore ? "+" : ""})
@@ -1360,7 +1360,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                 <>
                                                     {accordionRootLoading && accordionRootDisplay.length === 0 ? (
                                                         <div className="px-5 py-10 text-center">
-                                                            <Loader2 size={24} className="animate-spin text-muted-foreground/55 mx-auto" />
+                                                            <Loader2 size={24} className="animate-spin text-muted-foreground mx-auto" />
                                                             <span className="text-compact text-muted-foreground/75 block mt-3">Loading documents…</span>
                                                         </div>
                                                     ) : accordionRootDisplay.length === 0 ? (
@@ -1386,7 +1386,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                 <>
                                                     {pagesLoading && pagesItems.length === 0 ? (
                                                         <div className="px-5 py-10 text-center">
-                                                            <Loader2 size={24} className="animate-spin text-muted-foreground/55 mx-auto" />
+                                                            <Loader2 size={24} className="animate-spin text-muted-foreground mx-auto" />
                                                             <span className="text-compact text-muted-foreground/75 block mt-3">Loading pages…</span>
                                                         </div>
                                                     ) : pagesItems.length === 0 ? (
@@ -1433,7 +1433,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                                         type="button"
                                                                         onClick={loadMorePages}
                                                                         disabled={pagesLoading}
-                                                                        className="w-full max-w-xs py-2 rounded-lg text-sm text-muted-foreground/75 bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-border disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
+                                                                        className="w-full max-w-xs py-2 rounded-lg text-sm text-muted-foreground/75 bg-foreground/[0.05] hover:bg-foreground/[0.09] border border-border disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
                                                                     >
                                                                         {pagesLoading ? <Loader2 size={12} className="animate-spin" /> : null}
                                                                         Load more
@@ -1537,7 +1537,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                     </div>
                                 ))}
                                 {navigationMode === "documents" && rootId !== undefined && (
-                                    <span className="text-sm text-muted-foreground/55">
+                                    <span className="text-sm text-muted-foreground">
                                         {" "} • Folder {rootId}
                                     </span>
                                 )}
@@ -1564,7 +1564,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                             value={searchQuery}
                             onChange={setSearchQuery}
                         />
-                        <p className="text-xs text-muted-foreground/55 mt-2">
+                        <p className="text-xs text-muted-foreground mt-2">
                             {searchQuery.trim().length < 2
                                 ? "Type at least 2 characters to search all documents and folders."
                                 : `Searching documents and pages${searchDocuments.length + searchPages.length > 0 ? ` • ${searchDocuments.length} document(s), ${searchPages.length} page(s)` : searchTotal !== null ? ` • ${searchTotal} document(s)` : ""}`
@@ -1602,7 +1602,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                             ) : pagesLoading ? (
                                 <div className="px-5 py-10 text-center">
                                     <div className="flex flex-col items-center gap-3">
-                                        <Loader2 size={24} className="animate-spin text-muted-foreground/55" />
+                                        <Loader2 size={24} className="animate-spin text-muted-foreground" />
                                         <span className="text-compact text-muted-foreground/75">Loading pages…</span>
                                     </div>
                                 </div>
@@ -1611,7 +1611,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                     <div className="flex flex-col items-center gap-2">
                                         <FileText size={32} className="text-[rgba(245,245,245,0.2)]" />
                                         <span className="text-base text-muted-foreground/75">No pages available</span>
-                                        <span className="text-sm text-muted-foreground/55">Pages will appear here when uploaded to S3</span>
+                                        <span className="text-sm text-muted-foreground">Pages will appear here when uploaded to S3</span>
                                     </div>
                                 </div>
                             ) : (
@@ -1625,13 +1625,13 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                             ].join(" ")}
                                         >
                                             <div className="w-5 flex items-center justify-center">
-                                                <FileText size={16} className="text-muted-foreground/55" />
+                                                <FileText size={16} className="text-muted-foreground" />
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="text-compact text-foreground truncate">
                                                     {page.name}
                                                 </div>
-                                                <div className="text-xs text-muted-foreground/55 mt-0.5">
+                                                <div className="text-xs text-muted-foreground mt-0.5">
                                                     {(page.size / 1024).toFixed(1)} KB • {new Date(page.last_modified).toLocaleDateString()}
                                                 </div>
                                             </div>
@@ -1660,7 +1660,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                 type="button"
                                                 onClick={loadMorePages}
                                                 disabled={pagesLoading}
-                                                className="w-full py-2 rounded-xl text-compact text-muted-foreground bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.08)] border border-border transition-all duration-150 disabled:opacity-50 flex items-center justify-center gap-2"
+                                                className="w-full py-2 rounded-xl text-compact text-muted-foreground bg-foreground/[0.05] hover:bg-foreground/[0.09] border border-border transition-all duration-150 disabled:opacity-50 flex items-center justify-center gap-2"
                                             >
                                                 {pagesLoading ? <Loader2 size={14} className="animate-spin" /> : null}
                                                 Load more
@@ -1680,7 +1680,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                             ) : showSearchLoader && searchDocuments.length === 0 && searchPages.length === 0 ? (
                                 <div className="px-5 py-10 text-center">
                                     <div className="flex flex-col items-center gap-3">
-                                        <Loader2 size={24} className="animate-spin text-muted-foreground/55" />
+                                        <Loader2 size={24} className="animate-spin text-muted-foreground" />
                                         <span className="text-compact text-muted-foreground/75">Searching…</span>
                                     </div>
                                 </div>
@@ -1689,7 +1689,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                     <div className="flex flex-col items-center gap-2">
                                         <Search size={32} className="text-[rgba(245,245,245,0.2)]" />
                                         <span className="text-base text-muted-foreground/75">No results found</span>
-                                        <span className="text-sm text-muted-foreground/55">Try a different search term</span>
+                                        <span className="text-sm text-muted-foreground">Try a different search term</span>
                                     </div>
                                 </div>
                             ) : (
@@ -1703,7 +1703,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                 "flex-1 px-4 py-3 text-compact font-medium transition-colors",
                                                 rootViewTab === "documents"
                                                     ? "text-[#7AA3C8] border-b-2 border-[#7AA3C8] bg-[rgba(122,163,200,0.06)]"
-                                                    : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-[rgba(255,255,255,0.03)]",
+                                                    : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-foreground/[0.04]",
                                             ].join(" ")}
                                         >
                                             Documents ({searchDocuments.length}{searchTotal != null && searchTotal > searchDocuments.length ? ` of ${searchTotal}` : ""})
@@ -1715,7 +1715,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                 "flex-1 px-4 py-3 text-compact font-medium transition-colors",
                                                 rootViewTab === "pages"
                                                     ? "text-[#9CA3AF] border-b-2 border-[#9CA3AF] bg-[rgba(156,163,175,0.06)]"
-                                                    : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-[rgba(255,255,255,0.03)]",
+                                                    : "text-muted-foreground/75 hover:text-muted-foreground hover:bg-foreground/[0.04]",
                                             ].join(" ")}
                                         >
                                             Pages ({searchPages.length})
@@ -1726,7 +1726,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                         {rootViewTab === "documents" ? (
                                             <>
                                                 {searchDocuments.length === 0 ? (
-                                                    <div className="px-5 py-8 text-center text-sm text-muted-foreground/55">No documents match your search.</div>
+                                                    <div className="px-5 py-8 text-center text-sm text-muted-foreground">No documents match your search.</div>
                                                 ) : (
                                                     <>
                                                         {searchDocuments.map((item) => (
@@ -1745,7 +1745,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                                                     className={[
                                                                         "inline-flex items-center gap-2 px-4 py-2 rounded-lg",
                                                                         "text-sm font-medium",
-                                                                        "bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.08)]",
+                                                                        "bg-foreground/[0.06] hover:bg-foreground/[0.09]",
                                                                         "border border-input hover:border-border-strong",
                                                                         "text-muted-foreground hover:text-foreground",
                                                                         "transition-all duration-150",
@@ -1769,7 +1769,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                         ) : (
                                             <>
                                                 {searchPages.length === 0 ? (
-                                                    <div className="px-5 py-8 text-center text-sm text-muted-foreground/55">No pages match your search.</div>
+                                                    <div className="px-5 py-8 text-center text-sm text-muted-foreground">No pages match your search.</div>
                                                 ) : (
                                                     searchPages.map((page) => (
                                                         <SearchResultItem
@@ -1796,7 +1796,7 @@ function IntranetLibraryContent({ initialRootId }: { initialRootId?: number }) {
                                 <div className="px-5 py-10 text-center">
                                     {showRootLoading ? (
                                         <div className="flex flex-col items-center gap-3">
-                                            <Loader2 size={24} className="animate-spin text-muted-foreground/55" />
+                                            <Loader2 size={24} className="animate-spin text-muted-foreground" />
                                             <span className="text-compact text-muted-foreground/75">Loading items…</span>
                                         </div>
                                     ) : (

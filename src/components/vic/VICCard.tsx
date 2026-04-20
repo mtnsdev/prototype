@@ -57,7 +57,7 @@ export default function VICCard({ vic, onEdit, onDelete, onShare, canEdit, canDe
   const isBasic = viewLevel === "basic";
 
   return (
-    <div className="relative rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-4 flex flex-col gap-3 hover:border-input transition-colors min-h-[140px]">
+    <div className="relative rounded-xl border border-border bg-foreground/[0.04] p-4 flex flex-col gap-3 hover:border-input transition-colors min-h-[140px]">
       <DemoBadge />
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">

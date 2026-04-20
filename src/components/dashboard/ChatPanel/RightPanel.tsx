@@ -72,7 +72,7 @@ export function RightPanel({
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 p-2 rounded-lg text-muted-foreground hover:bg-[rgba(255,255,255,0.08)] hover:text-foreground transition-colors"
+            className="shrink-0 p-2 rounded-lg text-muted-foreground hover:bg-foreground/[0.09] hover:text-foreground transition-colors"
             aria-label="Close panel"
           >
             <X className="w-4 h-4" />
@@ -103,7 +103,7 @@ export function RightPanel({
                     ].join(" ")}
                   >
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 shrink-0 rounded bg-[rgba(255,255,255,0.08)] flex items-center justify-center">
+                      <div className="w-8 h-8 shrink-0 rounded bg-foreground/[0.09] flex items-center justify-center">
                         <FileText className="w-4 h-4 text-muted-foreground/75" aria-hidden />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -150,7 +150,7 @@ export function RightPanel({
                         height={32}
                       />
                     ) : (
-                      <div className="w-8 h-8 shrink-0 rounded bg-[rgba(255,255,255,0.08)] flex items-center justify-center">
+                      <div className="w-8 h-8 shrink-0 rounded bg-foreground/[0.09] flex items-center justify-center">
                         <Globe className="w-4 h-4 text-muted-foreground/75" aria-hidden />
                       </div>
                     )}

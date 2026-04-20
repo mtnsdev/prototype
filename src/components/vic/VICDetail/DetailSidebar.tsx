@@ -65,7 +65,7 @@ export default function DetailSidebar({ vic, className, onShowTravelProfiles }: 
   return (
     <aside
       className={cn(
-        "rounded-xl border border-border bg-[rgba(255,255,255,0.03)] overflow-hidden",
+        "rounded-xl border border-border bg-foreground/[0.04] overflow-hidden",
         "lg:min-w-[240px] lg:max-w-[280px] lg:shrink-0",
         className
       )}
@@ -146,7 +146,7 @@ export default function DetailSidebar({ vic, className, onShowTravelProfiles }: 
             <ul className="space-y-2 text-xs text-muted-foreground">
               {recentActivity.map((e, i) => (
                 <li key={i} className="flex gap-1.5">
-                  <Calendar size={12} className="shrink-0 mt-0.5 text-muted-foreground/55" />
+                  <Calendar size={12} className="shrink-0 mt-0.5 text-muted-foreground" />
                   <span>{e.change ?? "Updated"} — {e.by} · {e.at ? formatDate(e.at) ?? e.at : ""}</span>
                 </li>
               ))}

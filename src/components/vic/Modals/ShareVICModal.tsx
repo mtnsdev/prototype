@@ -164,7 +164,7 @@ export default function ShareVICModal({ vic, onClose, onSaved }: Props) {
               <select
                 value={addAdvisorId}
                 onChange={(e) => setAddAdvisorId(e.target.value)}
-                className="rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground min-w-[140px]"
+                className="rounded-md border border-input bg-foreground/[0.05] px-3 py-2 text-sm text-foreground min-w-[140px]"
               >
                 <option value="">Select advisor</option>
                 {MOCK_ADVISORS.filter((a) => !sharedWith.some((s) => s.advisor_id === a.id)).map((a) => (
@@ -176,7 +176,7 @@ export default function ShareVICModal({ vic, onClose, onSaved }: Props) {
               <select
                 value={addAccessLevel}
                 onChange={(e) => setAddAccessLevel(e.target.value as "view" | "edit")}
-                className="rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
+                className="rounded-md border border-input bg-foreground/[0.05] px-3 py-2 text-sm text-foreground"
               >
                 <option value="view">View</option>
                 <option value="edit">Edit</option>
@@ -222,7 +222,7 @@ export default function ShareVICModal({ vic, onClose, onSaved }: Props) {
               <select
                 value={addTeamId}
                 onChange={(e) => setAddTeamId(e.target.value)}
-                className="rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground min-w-[160px]"
+                className="rounded-md border border-input bg-foreground/[0.05] px-3 py-2 text-sm text-foreground min-w-[160px]"
               >
                 <option value="">Select team</option>
                 {teamOptions.filter((t) => !teamIdsInUse.has(t.id)).map((t) => (
@@ -234,7 +234,7 @@ export default function ShareVICModal({ vic, onClose, onSaved }: Props) {
               <select
                 value={addTeamAccessLevel}
                 onChange={(e) => setAddTeamAccessLevel(e.target.value as "view" | "edit")}
-                className="rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
+                className="rounded-md border border-input bg-foreground/[0.05] px-3 py-2 text-sm text-foreground"
               >
                 <option value="view">View</option>
                 <option value="edit">Edit</option>

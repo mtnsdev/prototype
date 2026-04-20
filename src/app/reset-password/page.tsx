@@ -101,7 +101,7 @@ function ResetPasswordContent() {
                   "w-full px-4 py-3 rounded-xl text-base",
                   "bg-background text-foreground placeholder-[rgba(245,245,245,0.3)]",
                   "border border-input hover:border-border-strong",
-                  "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
+                  "focus:outline-none focus:border-primary/35 focus:ring-1 focus:ring-ring/25",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                   "transition-all duration-150",
                 ].join(" ")}
@@ -128,7 +128,7 @@ function ResetPasswordContent() {
                   "w-full px-4 py-3 rounded-xl text-base",
                   "bg-background text-foreground placeholder-[rgba(245,245,245,0.3)]",
                   "border border-input hover:border-border-strong",
-                  "focus:outline-none focus:border-[rgba(255,255,255,0.25)] focus:ring-1 focus:ring-[rgba(255,255,255,0.1)]",
+                  "focus:outline-none focus:border-primary/35 focus:ring-1 focus:ring-ring/25",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                   "transition-all duration-150",
                 ].join(" ")}

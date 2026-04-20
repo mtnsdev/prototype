@@ -36,7 +36,7 @@ export default function BulkActionsBar({
   const [statusOpen, setStatusOpen] = useState(false);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-2 bg-[rgba(255,255,255,0.04)] border-b border-border">
+    <div className="flex flex-wrap items-center justify-between gap-4 py-2 bg-foreground/[0.05] border-b border-border">
       <span className="text-sm text-muted-foreground">
         {count} VIC{count !== 1 ? "s" : ""} selected
       </span>

@@ -6,7 +6,7 @@
  * 1. DirectoryProduct (directory view) — sidebar preview in product directory
  *    Routed via: /dashboard/products/[id] when viewing a DirectoryProduct
  *    Features: Focused summary, collection management, quick actions
- *    Related: ProductDirectoryDetailPanel is a simpler sidebar variant of this view
+ *    Related: ProductDirectoryDetailPanel is a simpler modal preview variant of this view
  *
  * 2. Product (standard product) — full comprehensive view with all metadata
  *    Routed via: /dashboard/products/[id] when viewing a standard Product
@@ -16,7 +16,7 @@
  * Architecture pattern:
  * - This page is the CANONICAL detail view (not a modal, not sidebar)
  * - ProductDirectoryDetailPanel is intentionally SIMPLER — use it as a preview/summary
- * - To view from sidebar: ProductDirectoryDetailPanel has a "View full detail →" link
+ * - From the directory modal: ProductDirectoryDetailPanel has a "View full detail →" link
  * - To edit: Click Edit button on this page, which opens AddProductModal
  */
 
@@ -632,7 +632,7 @@ export default function ProductDetailPage({ productId }: Props) {
               {product.tags!.map((t) => (
                 <span
                   key={t}
-                  className="rounded-full border border-border bg-white/[0.02] px-2 py-0.5 text-[9px] lowercase text-muted-foreground"
+                  className="rounded-full border border-border bg-foreground/[0.03] px-2 py-0.5 text-[9px] lowercase text-muted-foreground"
                 >
                   {t}
                 </span>

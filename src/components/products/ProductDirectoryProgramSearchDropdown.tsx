@@ -75,7 +75,7 @@ export default function ProductDirectoryProgramSearchDropdown({ selectedProgramI
               ref={inputRef}
               type="text"
               placeholder="Search programs…"
-              className="w-full rounded-lg border-none bg-[rgba(255,255,255,0.03)] px-2 py-1.5 text-xs text-foreground placeholder-[#4A4540] focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/40"
+              className="w-full rounded-lg border-none bg-foreground/[0.04] px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary/35"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -87,7 +87,7 @@ export default function ProductDirectoryProgramSearchDropdown({ selectedProgramI
                 <button
                   key={program.id}
                   type="button"
-                  className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+                  className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
                   onClick={() =>
                     onChange(
                       on ? selectedProgramIds.filter((id) => id !== program.id) : [...selectedProgramIds, program.id]

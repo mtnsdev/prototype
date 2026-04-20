@@ -7,15 +7,15 @@ import { cn } from "@/lib/utils";
 export const catalogSearchFieldWrapperClass =
   "flex h-8 min-h-8 w-full min-w-0 items-center gap-2 rounded-xl border border-border bg-white/[0.03] px-3";
 
-const catalogSearchInputClass =
-  "min-w-0 flex-1 h-full bg-transparent text-sm leading-tight text-foreground placeholder-[#4A4540] outline-none";
+export const catalogSearchInputClass =
+  "min-w-0 flex-1 h-full bg-transparent text-sm leading-tight text-foreground placeholder:text-muted-foreground/60 outline-none";
 
 /** Inline / panel search (e.g. attach picker) — one step denser than primary */
 const compactSearchWrapperClass =
   "flex h-7 min-h-7 w-full min-w-0 items-center gap-1.5 rounded-lg border border-border bg-white/[0.03] px-2.5";
 
 const compactSearchInputClass =
-  "min-w-0 flex-1 h-full bg-transparent text-xs leading-tight text-foreground placeholder-[#4A4540] outline-none";
+  "min-w-0 flex-1 h-full bg-transparent text-xs leading-tight text-foreground placeholder:text-muted-foreground/60 outline-none";
 
 /** Shadcn SelectTrigger — use with cn(catalogSelectTriggerClass, "w-[…]") */
 export const catalogSelectTriggerClass =

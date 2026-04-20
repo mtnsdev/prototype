@@ -379,7 +379,7 @@ export default function UsersPage() {
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 <div className="flex items-center gap-3 flex-1 w-full sm:w-auto">
                     <div className="relative flex-1 sm:max-w-xs">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/55" />
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             type="text"
                             placeholder="Search users…"
@@ -394,7 +394,7 @@ export default function UsersPage() {
                         value={roleFilter ?? "__all__"}
                         onValueChange={(v) => setRoleFilter(v === "__all__" ? null : v)}
                     >
-                        <SelectTrigger className="w-[140px] rounded-xl bg-card border-border text-base text-foreground focus:border-[rgba(255,255,255,0.2)]">
+                        <SelectTrigger className="w-[140px] rounded-xl bg-card border-border text-base text-foreground focus:border-border">
                             <SelectValue placeholder="All Roles" />
                         </SelectTrigger>
                         <SelectContent>
@@ -409,7 +409,7 @@ export default function UsersPage() {
                         value={statusFilter ?? "__all__"}
                         onValueChange={(v) => setStatusFilter(v === "__all__" ? null : v)}
                     >
-                        <SelectTrigger className="w-[140px] rounded-xl bg-card border-border text-base text-foreground focus:border-[rgba(255,255,255,0.2)]">
+                        <SelectTrigger className="w-[140px] rounded-xl bg-card border-border text-base text-foreground focus:border-border">
                             <SelectValue placeholder="All Status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -431,7 +431,7 @@ export default function UsersPage() {
             <div className="rounded-2xl bg-card border border-border overflow-hidden">
                 {isLoading ? (
                     <div className="flex items-center justify-center py-12">
-                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground/55" />
+                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                     </div>
                 ) : error ? (
                     <div className="p-6 text-center">
@@ -461,7 +461,7 @@ export default function UsersPage() {
                                 const StatusIcon = statusStyle.icon;
 
                                 return (
-                                    <TableRow key={user.id} className="border-b border-border hover:bg-[rgba(255,255,255,0.02)]">
+                                    <TableRow key={user.id} className="border-b border-border hover:bg-foreground/[0.03]">
                                         <TableCell className="px-5 py-4">
                                             <div>
                                                 <p className="text-base font-medium text-foreground">{user.username}</p>
@@ -672,7 +672,7 @@ function InviteUserModal({
                             Role
                         </Label>
                         <Select value={role} onValueChange={setRole}>
-                            <SelectTrigger className="w-full rounded-xl bg-background border-border text-base text-foreground focus:border-[rgba(255,255,255,0.2)]">
+                            <SelectTrigger className="w-full rounded-xl bg-background border-border text-base text-foreground focus:border-border">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -722,7 +722,7 @@ function InviteUserModal({
                             )}
 
                             {password && (
-                                <p className="text-sm text-muted-foreground/55">
+                                <p className="text-sm text-muted-foreground">
                                     Password must be at least 8 characters with at least one letter and one number.
                                 </p>
                             )}
@@ -833,7 +833,7 @@ function EditUserModal({
                             Role
                         </Label>
                         <Select value={role} onValueChange={setRole}>
-                            <SelectTrigger className="w-full rounded-xl bg-background border-border text-base text-foreground focus:border-[rgba(255,255,255,0.2)]">
+                            <SelectTrigger className="w-full rounded-xl bg-background border-border text-base text-foreground focus:border-border">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -848,7 +848,7 @@ function EditUserModal({
                             Status
                         </Label>
                         <Select value={status} onValueChange={setStatus}>
-                            <SelectTrigger className="w-full rounded-xl bg-background border-border text-base text-foreground focus:border-[rgba(255,255,255,0.2)]">
+                            <SelectTrigger className="w-full rounded-xl bg-background border-border text-base text-foreground focus:border-border">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -917,7 +917,7 @@ function EditUserModal({
                                 <p className="text-compact text-[var(--color-error)]">{passwordError}</p>
                             )}
                             
-                            <p className="text-sm text-muted-foreground/55">
+                            <p className="text-sm text-muted-foreground">
                                 Password must be at least 8 characters with at least one letter and one number.
                             </p>
                             

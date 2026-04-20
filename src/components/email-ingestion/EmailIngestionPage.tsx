@@ -168,7 +168,7 @@ export default function EmailIngestionPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3 shrink-0">
-          <div className="flex items-center gap-2 bg-white/[0.02] rounded-lg px-4 py-2 border border-white/[0.04]">
+          <div className="flex items-center gap-2 bg-foreground/[0.03] rounded-lg px-4 py-2 border border-white/[0.04]">
             <Mail className="w-4 h-4 text-sky-400 shrink-0" />
             <code className="text-sm text-foreground/88 truncate max-w-[min(100vw-8rem,22rem)]">
               {AGENCY_EMAIL_INGEST_ADDRESS}
@@ -188,15 +188,15 @@ export default function EmailIngestionPage() {
         <div className="px-6 py-6 max-w-[1200px]">
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4">
+            <div className="bg-foreground/[0.03] border border-white/[0.04] rounded-xl p-4">
               <span className="text-2xs text-muted-foreground uppercase tracking-wider">Total Emails</span>
               <div className="text-2xl font-semibold text-white mt-1">{TOTAL_EMAILS_DEMO}</div>
             </div>
-            <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4">
+            <div className="bg-foreground/[0.03] border border-white/[0.04] rounded-xl p-4">
               <span className="text-2xs text-muted-foreground uppercase tracking-wider">Unprocessed</span>
               <div className="text-2xl font-semibold text-[var(--color-warning)] mt-1">{unprocessedCount}</div>
             </div>
-            <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4">
+            <div className="bg-foreground/[0.03] border border-white/[0.04] rounded-xl p-4">
               <span className="text-2xs text-muted-foreground uppercase tracking-wider">Attachments Indexed</span>
               <div className="text-2xl font-semibold text-emerald-400 mt-1">{ATTACHMENTS_INDEXED_DEMO}</div>
             </div>
@@ -381,7 +381,7 @@ function EmailDetailBody({
     <>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-medium text-white">Email Details</h2>
-        <button type="button" onClick={onClose} className="p-1 rounded-lg hover:bg-white/[0.06]" aria-label="Close">
+        <button type="button" onClick={onClose} className="p-1 rounded-lg hover:bg-foreground/[0.06]" aria-label="Close">
           <X className="w-4 h-4 text-muted-foreground/90" />
         </button>
       </div>
@@ -439,7 +439,7 @@ function EmailDetailBody({
           <button
             type="button"
             onClick={onShowAddTag}
-            className="text-2xs text-muted-foreground/70 hover:text-muted-foreground bg-white/[0.02] border border-dashed border-border px-2 py-0.5 rounded"
+            className="text-2xs text-muted-foreground/70 hover:text-muted-foreground bg-foreground/[0.03] border border-dashed border-border px-2 py-0.5 rounded"
           >
             + Add tag
           </button>
@@ -477,7 +477,7 @@ function EmailDetailBody({
 
       <div className="mb-6">
         <span className="text-2xs text-muted-foreground/70 uppercase tracking-wider">Email Body</span>
-        <div className="mt-2 bg-white/[0.02] border border-white/[0.04] rounded-xl p-4 text-sm text-foreground/88 leading-relaxed whitespace-pre-wrap">
+        <div className="mt-2 bg-foreground/[0.03] border border-white/[0.04] rounded-xl p-4 text-sm text-foreground/88 leading-relaxed whitespace-pre-wrap">
           {email.bodyText}
         </div>
       </div>
@@ -491,7 +491,7 @@ function EmailDetailBody({
             {email.attachments.map((att) => (
               <div
                 key={att.id}
-                className="flex items-center gap-3 bg-white/[0.02] border border-white/[0.04] rounded-lg p-3 hover:bg-white/[0.03] cursor-default"
+                className="flex items-center gap-3 bg-foreground/[0.03] border border-white/[0.04] rounded-lg p-3 hover:bg-white/[0.03] cursor-default"
               >
                 <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
                 <div className="flex-1 min-w-0">

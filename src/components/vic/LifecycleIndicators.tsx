@@ -58,7 +58,7 @@ export default function LifecycleIndicators({ vic, className = "" }: Props) {
     }>
       {passportWarn && <AlertCircle size={12} className="text-[var(--color-warning)] shrink-0" aria-label="Passport expiry warning" />}
       {birthdaySoon && <Cake size={12} className="text-muted-foreground shrink-0" aria-label="Birthday soon" />}
-      {inactive && <Clock size={12} className="text-muted-foreground/55 shrink-0" aria-label="Inactive" />}
+      {inactive && <Clock size={12} className="text-muted-foreground shrink-0" aria-label="Inactive" />}
     </span>
   );
 }

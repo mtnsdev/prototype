@@ -118,7 +118,7 @@ export default function AcuitySettingsSection() {
             onChange={(e) => setSettings((s) => ({ ...s, requester_focus: e.target.value }))}
             placeholder="e.g. dining preferences and activity interests for personalising guest stays"
             rows={2}
-            className="mt-1 w-full rounded-md border border-input bg-[rgba(255,255,255,0.04)] px-3 py-2 text-sm text-foreground"
+            className="mt-1 w-full rounded-md border border-input bg-foreground/[0.05] px-3 py-2 text-sm text-foreground"
           />
         </div>
 

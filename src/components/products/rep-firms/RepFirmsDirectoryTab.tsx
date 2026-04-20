@@ -173,7 +173,7 @@ function RepFirmSingleSelectDropdown({
               ref={inputRef}
               type="text"
               placeholder={searchPlaceholder}
-              className="w-full rounded-lg border-none bg-[rgba(255,255,255,0.03)] px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/55 focus:outline-none focus:ring-1 focus:ring-[#B07A5B]/40"
+              className="w-full rounded-lg border-none bg-foreground/[0.04] px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/35"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -443,7 +443,7 @@ function RepFirmLinkedProductStripTile({
             No image
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#08080c]/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-foreground/55 via-transparent to-transparent" />
         <span
           className="absolute bottom-1.5 left-1.5 rounded-full border px-1.5 py-px text-[8px] backdrop-blur-sm"
           style={{
@@ -2278,7 +2278,7 @@ export function ProductDirectoryRepFirmsTab({
                     type="button"
                     disabled={!editForm.name.trim() || !isRepFirmEditDirty()}
                     onClick={saveDialog}
-                    className="bg-[#B07A5B] text-[#08080c] hover:bg-[#c08a6f] disabled:opacity-40"
+                    className="bg-[#B07A5B] text-white hover:bg-[#c08a6f] disabled:opacity-40"
                   >
                     Save
                   </Button>
@@ -2290,7 +2290,7 @@ export function ProductDirectoryRepFirmsTab({
 
       {!showRepFirmEditor ? (
       filteredRepFirms.length === 0 ? (
-        <div className="rounded-xl border border-border bg-white/[0.02] px-6 py-12 text-center">
+        <div className="rounded-xl border border-border bg-foreground/[0.03] px-6 py-12 text-center">
           <Users className="mx-auto mb-3 h-8 w-8 text-[#B07A5B]/70" />
           <p className="text-compact font-medium text-foreground">No rep firms match</p>
           <p className="mt-1 text-xs text-muted-foreground">Try another search term.</p>
@@ -2444,11 +2444,11 @@ export function ProductDirectoryRepFirmsTab({
       </Dialog>
 
       {!showRepFirmEditor && suggestions.length > 0 ? (
-        <div className="rounded-xl border border-border bg-white/[0.02] p-3">
+        <div className="rounded-xl border border-border bg-foreground/[0.03] p-3">
           <p className="mb-2 text-xs font-medium text-foreground">Pending suggestions</p>
           <div className="space-y-1.5">
             {suggestions.map((s) => (
-              <div key={s.id} className="rounded-lg border border-white/[0.04] bg-white/[0.02] px-2.5 py-2">
+              <div key={s.id} className="rounded-lg border border-white/[0.04] bg-foreground/[0.03] px-2.5 py-2">
                 <p className="text-2xs text-foreground">{s.repFirmName || "General suggestion"}</p>
                 <p className="mt-0.5 text-2xs text-muted-foreground">{s.note}</p>
                 <p className="mt-1 text-[9px] text-muted-foreground">

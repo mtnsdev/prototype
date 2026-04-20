@@ -160,7 +160,7 @@ function DayEventsDropZone({
       ref={setNodeRef}
       className={cn(
         "min-h-10 space-y-2 rounded-lg border border-transparent transition-colors",
-        isOver && "border-dashed border-border bg-white/[0.02]"
+        isOver && "border-dashed border-border bg-foreground/[0.03]"
       )}
     >
       {children}
@@ -209,7 +209,7 @@ function SortableEventRow({
       {dndEnabled ? (
         <button
           type="button"
-          className="mt-3 shrink-0 cursor-grab rounded-md border border-border/60 bg-white/[0.03] p-1 text-muted-foreground hover:bg-white/[0.06] active:cursor-grabbing"
+          className="mt-3 shrink-0 cursor-grab rounded-md border border-border/60 bg-white/[0.03] p-1 text-muted-foreground hover:bg-foreground/[0.06] active:cursor-grabbing"
           {...listeners}
           {...attributes}
           aria-label="Drag to reorder or move to another day"
@@ -330,7 +330,7 @@ export default function ItineraryTimeline({
         </div>
       )}
       {days.length === 0 ? (
-        <div className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-8 text-center">
+        <div className="rounded-xl border border-border bg-foreground/[0.04] p-8 text-center">
           <p className="text-sm text-muted-foreground">No days yet. Add days to build your timeline.</p>
           {canEdit && (
             <p className="mt-2 text-xs text-muted-foreground/75">Use Add day below, or open Split view with the catalog.</p>
@@ -345,7 +345,7 @@ export default function ItineraryTimeline({
             return (
               <div
                 key={day.day_number}
-                className="overflow-hidden rounded-xl border border-border bg-[rgba(255,255,255,0.03)]"
+                className="overflow-hidden rounded-xl border border-border bg-foreground/[0.04]"
               >
                 <button
                   type="button"
@@ -365,7 +365,7 @@ export default function ItineraryTimeline({
                   {day.title && (
                     <span className="truncate text-sm text-muted-foreground"> — {day.title}</span>
                   )}
-                  <span className="ml-auto text-xs text-muted-foreground/55">
+                  <span className="ml-auto text-xs text-muted-foreground">
                     {eventCount} event{eventCount !== 1 ? "s" : ""}
                   </span>
                 </button>
@@ -407,7 +407,7 @@ export default function ItineraryTimeline({
                       </Button>
                     )}
                     {day.notes && (
-                      <div className="mt-2 rounded-lg border border-border bg-[rgba(255,255,255,0.04)] p-2">
+                      <div className="mt-2 rounded-lg border border-border bg-foreground/[0.05] p-2">
                         <p className="text-xs text-muted-foreground">{day.notes}</p>
                       </div>
                     )}

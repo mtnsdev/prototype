@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useChatContext } from "@/contexts/ChatContext";
 import ChatPanel from "@/components/dashboard/ChatPanel";
+import { peekStarterChipsForChat, clearStarterChipsForChat } from "@/lib/onboardingState";
 import HistoryDrawer from "@/components/dashboard/HistoryDrawer";
 import type { Conversation } from "@/components/dashboard/Sidebar";
 import { groupConversationsByDate } from "@/components/dashboard/claireConversationsUtils";
@@ -25,6 +26,13 @@ export default function ClaireHubPage() {
         triggerRefresh,
         startNewClaireConversation,
     } = useChatContext();
+
+    const [starterChips, setStarterChips] = useState<string[] | null>(null);
+
+    useEffect(() => {
+        const p = peekStarterChipsForChat();
+        if (p?.length) setStarterChips(p);
+    }, []);
 
     const [hubTab, setHubTab] = useState<HubTab>("chat");
     const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -188,6 +196,11 @@ export default function ClaireHubPage() {
                         onBackToHome={startNewClaireConversation}
                         assistantName="Claire"
                         assistantSubtitle="Enable VICs AI"
+                        starterSuggestionChips={starterChips}
+                        onStarterSuggestionsConsumed={() => {
+                            clearStarterChipsForChat();
+                            setStarterChips(null);
+                        }}
                     />
                 </div>
             ) : (
@@ -196,7 +209,7 @@ export default function ClaireHubPage() {
                         <div className="relative max-w-md">
                             <Search
                                 size={16}
-                                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/55"
+                                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
                             />
                             <Input
                                 type="text"

@@ -134,7 +134,7 @@ export function LinkDetailCard({
 
   if (compact) {
     return (
-      <div className="rounded-xl border border-white/[0.12] bg-white/[0.02] p-3 text-xs">
+      <div className="rounded-xl border border-white/[0.12] bg-foreground/[0.03] p-3 text-xs">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="font-medium text-foreground">{productName}</p>
@@ -171,7 +171,7 @@ export function LinkDetailCard({
   return (
     <div
       className={cn(
-        "rounded-xl border border-white/[0.12] bg-white/[0.02] p-3 text-xs",
+        "rounded-xl border border-white/[0.12] bg-foreground/[0.03] p-3 text-xs",
         expiring && "bg-[rgba(180,130,130,0.12)]"
       )}
     >
@@ -561,7 +561,7 @@ export function PartnerProgramEditorContent({
 
       <div id={PP_EDITOR_SECTION_IDS.terms} className="space-y-4">
         <PartnerProgramEditorSectionHeading>Terms, amenities &amp; contacts</PartnerProgramEditorSectionHeading>
-        <label className="flex items-start gap-2 rounded-lg border border-white/[0.12] bg-white/[0.02] p-3">
+        <label className="flex items-start gap-2 rounded-lg border border-white/[0.12] bg-foreground/[0.03] p-3">
           <input
             type="checkbox"
             checked={programDraft.hasPropertyLevelOverrides}

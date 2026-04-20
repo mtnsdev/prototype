@@ -79,7 +79,7 @@ export default function AcuitySection({ vic, onUpdate }: Props) {
       />
 
       {acuityStatus === "not_run" && (
-        <section id="acuity" className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-5">
+        <section id="acuity" className="rounded-xl border border-border bg-foreground/[0.04] p-5">
           <h3 className="text-sm font-semibold text-foreground mb-3">Acuity Intelligence Profile</h3>
           <p className="text-sm text-muted-foreground mb-4">
             No intelligence profile yet. Run Acuity to generate a detailed profile for this VIC.
@@ -91,7 +91,7 @@ export default function AcuitySection({ vic, onUpdate }: Props) {
       )}
 
       {acuityStatus === "running" && (
-        <section id="acuity" className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-5">
+        <section id="acuity" className="rounded-xl border border-border bg-foreground/[0.04] p-5">
           <h3 className="text-sm font-semibold text-foreground mb-3">Acuity Intelligence Profile</h3>
           <div className="animate-pulse space-y-2">
             <div className="h-4 bg-white/10 rounded w-3/4" />
@@ -103,7 +103,7 @@ export default function AcuitySection({ vic, onUpdate }: Props) {
       )}
 
       {acuityStatus === "failed" && (
-        <section id="acuity" className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-5">
+        <section id="acuity" className="rounded-xl border border-border bg-foreground/[0.04] p-5">
           <h3 className="text-sm font-semibold text-foreground mb-3">Acuity Intelligence Profile</h3>
           <p className="text-sm text-[var(--muted-error-text)] mb-4">Acuity failed for this VIC.</p>
           <Button onClick={handleRun} disabled={loading}>
@@ -113,7 +113,7 @@ export default function AcuitySection({ vic, onUpdate }: Props) {
       )}
 
       {acuityStatus === "complete" && (
-        <section id="acuity" className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-5">
+        <section id="acuity" className="rounded-xl border border-border bg-foreground/[0.04] p-5">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-semibold text-foreground">Acuity Intelligence Profile</h3>

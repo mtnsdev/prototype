@@ -7,7 +7,7 @@ function WidgetSkeleton({ className }: { className?: string }) {
     <div
       className={cn(
         "flex animate-pulse flex-col overflow-hidden rounded-2xl border border-border bg-card",
-        "shadow-[inset_0_1px_0_0_rgba(255,255,255,0.055),0_1px_2px_rgba(0,0,0,0.22)]",
+        "shadow-[inset_0_1px_0_0_rgba(255,255,255,0.85),0_1px_3px_rgba(28,26,22,0.07)]",
         className,
       )}
     >

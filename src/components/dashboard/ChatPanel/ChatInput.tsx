@@ -44,7 +44,7 @@ export function ChatInput({
     <div className="shrink-0 p-4 bg-background">
       <div className="max-w-4xl mx-auto" ref={toolsMenuRef}>
         <div className="flex gap-3 items-center">
-          <div className="chat-input-bar flex-1 flex items-center gap-2 rounded-xl bg-card border border-input pl-1.5 pr-1 py-1 focus-within:border-[rgba(174,133,80,0.5)] transition-colors relative">
+          <div className="chat-input-bar flex-1 flex items-center gap-2 rounded-xl bg-card border border-input pl-1.5 pr-1 py-1 focus-within:border-primary/45 transition-colors relative">
             <button
               type="button"
               aria-label="Add tools"
@@ -53,14 +53,16 @@ export function ChatInput({
               onClick={() => setToolsMenuOpen((v) => !v)}
               className={[
                 "flex items-center justify-center h-8 w-8 rounded-lg shrink-0 transition-colors",
-                toolsMenuOpen ? "bg-[rgba(255,255,255,0.12)] text-foreground" : "text-muted-foreground hover:bg-[rgba(255,255,255,0.08)] hover:text-[rgba(245,245,245,0.9)]",
+                toolsMenuOpen
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground",
               ].join(" ")}
             >
               <Plus size={18} strokeWidth={2.25} />
             </button>
             {toolsMenuOpen && (
               <div
-                className="absolute left-0 bottom-full mb-2 z-50 min-w-[220px] rounded-xl bg-accent border border-input shadow-xl py-1.5"
+                className="absolute left-0 bottom-full mb-2 z-50 min-w-[220px] rounded-xl bg-popover border border-input shadow-xl py-1.5"
                 role="menu"
                 aria-label="Tools"
               >
@@ -73,12 +75,12 @@ export function ChatInput({
                     if (!externalSearchMode) setSearchPlacesMode(false);
                     setToolsMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-compact text-[rgba(245,245,245,0.9)] hover:bg-[rgba(255,255,255,0.08)] transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-compact text-foreground hover:bg-foreground/[0.05] transition-colors"
                 >
                   <div
                     className={[
                       "flex items-center justify-center h-8 w-8 rounded-lg shrink-0",
-                      externalSearchMode ? "bg-[rgba(174,133,80,0.25)] text-[#AE8550]" : "bg-[rgba(255,255,255,0.08)] text-muted-foreground",
+                      externalSearchMode ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
                     ].join(" ")}
                   >
                     <Globe size={16} />
@@ -87,7 +89,7 @@ export function ChatInput({
                     <span className="font-medium">Search web</span>
                     <p className="text-xs text-muted-foreground/75 mt-0.5">Include external web search</p>
                   </div>
-                  {externalSearchMode && <span className="ml-auto text-[#AE8550]" aria-hidden>✓</span>}
+                  {externalSearchMode && <span className="ml-auto text-primary" aria-hidden>✓</span>}
                 </button>
                 <button
                   type="button"
@@ -98,12 +100,12 @@ export function ChatInput({
                     if (!searchPlacesMode) setExternalSearchMode(false);
                     setToolsMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-compact text-[rgba(245,245,245,0.9)] hover:bg-[rgba(255,255,255,0.08)] transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-compact text-foreground hover:bg-foreground/[0.05] transition-colors"
                 >
                   <div
                     className={[
                       "flex items-center justify-center h-8 w-8 rounded-lg shrink-0",
-                      searchPlacesMode ? "bg-[rgba(174,133,80,0.25)] text-[#AE8550]" : "bg-[rgba(255,255,255,0.08)] text-muted-foreground",
+                      searchPlacesMode ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
                     ].join(" ")}
                   >
                     <MapPin size={16} />
@@ -116,8 +118,8 @@ export function ChatInput({
                     className={cn(
                       "ml-auto flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors",
                       searchPlacesMode
-                        ? "border-brand-cta bg-brand-cta text-[#08080c]"
-                        : "border-[rgba(255,255,255,0.18)] bg-muted"
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-muted"
                     )}
                     aria-hidden
                   >
@@ -132,7 +134,7 @@ export function ChatInput({
                 aria-label="Search web on (click to turn off)"
                 title="Search web on — click to turn off"
                 onClick={() => setExternalSearchMode(false)}
-                className="group/ws flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-[rgba(174,133,80,0.2)] text-[#AE8550] hover:bg-[rgba(174,133,80,0.3)] transition-colors relative"
+                className="group/ws flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-primary/15 text-primary hover:bg-primary/25 transition-colors relative"
               >
                 <Globe size={16} className="opacity-100 group-hover/ws:opacity-0 transition-opacity" aria-hidden />
                 <X size={14} className="absolute inset-0 m-auto opacity-0 group-hover/ws:opacity-100 transition-opacity pointer-events-none" aria-hidden />
@@ -144,7 +146,7 @@ export function ChatInput({
                 aria-label="Search Google Places on (click to turn off)"
                 title="Search Google Places on — click to turn off"
                 onClick={() => setSearchPlacesMode(false)}
-                className="group/pl flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-[rgba(174,133,80,0.2)] text-[#AE8550] hover:bg-[rgba(174,133,80,0.3)] transition-colors relative"
+                className="group/pl flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-primary/15 text-primary hover:bg-primary/25 transition-colors relative"
               >
                 <MapPin size={16} className="opacity-100 group-hover/pl:opacity-0 transition-opacity" aria-hidden />
                 <X size={14} className="absolute inset-0 m-auto opacity-0 group-hover/pl:opacity-100 transition-opacity pointer-events-none" aria-hidden />
@@ -156,7 +158,7 @@ export function ChatInput({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => (e.key === "Enter" && !e.shiftKey ? onSend() : null)}
               placeholder="Ask Enable a question…"
-              className="flex-1 min-w-0 rounded-lg border-0 bg-transparent px-2 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/75"
+              className="flex-1 min-w-0 rounded-lg border-0 bg-transparent px-2 py-2.5 text-base text-foreground placeholder:text-muted-foreground"
             />
           </div>
           <Button
@@ -164,7 +166,7 @@ export function ChatInput({
             size="icon"
             onClick={() => onSend()}
             disabled={loading || !input.trim()}
-            className="h-11 w-11 rounded-xl bg-brand-chat-user hover:bg-[#C4975E] text-white border-0 shrink-0"
+            className="h-11 w-11 rounded-xl bg-brand-chat-user hover:brightness-105 text-primary-foreground border-0 shrink-0"
           >
             <Send size={18} />
           </Button>

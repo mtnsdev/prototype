@@ -22,6 +22,8 @@ import { Label } from "@/components/ui/label";
 import { useUser } from "@/contexts/UserContext";
 import { isWorkspaceStaff } from "@/lib/workspaceRoles";
 import { BRIEFING_ROOM_PATH } from "@/lib/briefingRoutes";
+import { APP_PAGE_CONTENT_SHELL } from "@/lib/dashboardChrome";
+import { cn } from "@/lib/utils";
 
 type UserProfile = {
     email: string;
@@ -164,7 +166,7 @@ export default function SettingsPage() {
         return (
             <div className="h-full flex items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground/55" />
+                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                     <span className="text-compact text-muted-foreground/75">Loading settings…</span>
                 </div>
             </div>
@@ -173,7 +175,8 @@ export default function SettingsPage() {
 
     return (
         <div className="h-full overflow-y-auto bg-background">
-            <div className="max-w-2xl mx-auto p-6 space-y-6">
+            <div className={cn(APP_PAGE_CONTENT_SHELL, "py-6")}>
+            <div className="mx-auto w-full max-w-2xl space-y-6">
                 {/* Page Header */}
                 <div className="mb-8">
                     <h1 className="text-2xl font-semibold text-foreground tracking-tight">Settings</h1>
@@ -192,8 +195,8 @@ export default function SettingsPage() {
                     <div className="p-5 space-y-5">
                         {/* Email */}
                         <div className="flex items-start gap-4">
-                            <div className="w-10 h-10 rounded-lg bg-[rgba(255,255,255,0.04)] flex items-center justify-center shrink-0">
-                                <Mail size={18} className="text-muted-foreground/55" />
+                            <div className="w-10 h-10 rounded-lg bg-foreground/[0.05] flex items-center justify-center shrink-0">
+                                <Mail size={18} className="text-muted-foreground" />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <Label className="text-sm text-muted-foreground/75 uppercase tracking-wider">
@@ -207,8 +210,8 @@ export default function SettingsPage() {
 
                         {/* Username */}
                         <div className="flex items-start gap-4">
-                            <div className="w-10 h-10 rounded-lg bg-[rgba(255,255,255,0.04)] flex items-center justify-center shrink-0">
-                                <AtSign size={18} className="text-muted-foreground/55" />
+                            <div className="w-10 h-10 rounded-lg bg-foreground/[0.05] flex items-center justify-center shrink-0">
+                                <AtSign size={18} className="text-muted-foreground" />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <Label className="text-sm text-muted-foreground/75 uppercase tracking-wider">
@@ -283,7 +286,7 @@ export default function SettingsPage() {
                             <p className="text-compact text-green-400">Password changed successfully. Redirecting to login…</p>
                         )}
                         
-                        <p className="text-sm text-muted-foreground/55">
+                        <p className="text-sm text-muted-foreground">
                             Password must be at least 8 characters with at least one letter and one number.
                         </p>
                         
@@ -358,7 +361,7 @@ export default function SettingsPage() {
                             className={[
                                 "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl",
                                 "text-base font-medium",
-                                "bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.12)]",
+                                "bg-foreground/[0.09] hover:bg-foreground/[0.13]",
                                 "border border-input",
                                 "text-foreground",
                                 "transition-all duration-150",
@@ -435,6 +438,7 @@ export default function SettingsPage() {
                         </div>
                     </section>
                 )}
+            </div>
             </div>
         </div>
     );

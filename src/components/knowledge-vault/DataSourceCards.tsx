@@ -171,7 +171,7 @@ export default function DataSourceCards({
         onClick={onConnectSource}
         className={cn(
           "shrink-0 w-[180px] rounded-xl border border-dashed p-3 text-left transition-colors",
-          "border-[rgba(255,255,255,0.2)] bg-white/[0.02] hover:bg-white/[0.06]",
+          "border-border bg-foreground/[0.03] hover:bg-foreground/[0.06]",
           "text-muted-foreground"
         )}
       >

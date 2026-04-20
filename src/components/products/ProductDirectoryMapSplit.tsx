@@ -160,7 +160,7 @@ export default function ProductDirectoryMapSplit({
                     data-directory-product-id={product.id}
                     onClick={() => onSelectProduct(product.id)}
                     className={cn(
-                      "w-full border-b border-l-2 border-b-[rgba(255,255,255,0.03)] border-l-transparent px-2 py-1.5 text-left transition-colors hover:bg-[rgba(255,255,255,0.02)]",
+                      "w-full border-b border-l-2 border-b-border/60 border-l-transparent px-2 py-1.5 text-left transition-colors hover:bg-foreground/[0.03]",
                       selected && "border-l-[#C9A96E] bg-[rgba(201,169,110,0.06)]",
                       missingPin && !selected && "opacity-[0.72]"
                     )}
@@ -213,7 +213,7 @@ export default function ProductDirectoryMapSplit({
         role="separator"
         aria-orientation="vertical"
         aria-label="Resize list and map"
-        className="group relative w-1.5 shrink-0 cursor-col-resize bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(201,169,110,0.15)]"
+        className="group relative w-1.5 shrink-0 cursor-col-resize bg-foreground/[0.05] hover:bg-[rgba(201,169,110,0.15)]"
         onMouseDown={(e) => {
           e.preventDefault();
           dragRef.current = true;
@@ -267,7 +267,7 @@ export default function ProductDirectoryMapSplit({
                 <button
                   key={p.id}
                   type="button"
-                  className="w-full rounded-md px-1.5 py-1 text-left text-2xs text-muted-foreground hover:bg-[rgba(255,255,255,0.04)] hover:text-foreground"
+                  className="w-full rounded-md px-1.5 py-1 text-left text-2xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
                   onClick={() => {
                     onSelectProduct(p.id);
                     onClusterClose();

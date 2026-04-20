@@ -30,7 +30,7 @@ import { canViewFinancials } from "@/utils/itineraryPermissions";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-border bg-[rgba(255,255,255,0.03)] p-4">
+    <div className="rounded-xl border border-border bg-foreground/[0.04] p-4">
       <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/75 mb-3">{title}</h3>
       <div className="text-sm text-[rgba(245,245,245,0.85)]">{children}</div>
     </div>
@@ -68,7 +68,7 @@ function TravelProfilesInline({
                 ? "bg-blue-500/15 text-blue-400 border border-blue-500/30"
                 : hasProfile(type)
                   ? "bg-white/5 text-foreground/88 border border-input hover:border-white/20"
-                  : "bg-white/[0.02] text-muted-foreground/70 border border-white/5 hover:border-input"
+                  : "bg-foreground/[0.03] text-muted-foreground/70 border border-white/5 hover:border-input"
             )}
           >
             {profileTypeIcon(type)} {capitalize(type)}
@@ -151,7 +151,7 @@ function TravelProfilesInline({
           )}
         </div>
       ) : (
-        <div className="bg-white/[0.02] rounded-xl p-4 border border-dashed border-input text-center">
+        <div className="bg-foreground/[0.03] rounded-xl p-4 border border-dashed border-input text-center">
           <p className="text-xs text-muted-foreground">No {capitalize(activeProfileType)} profile yet</p>
           {onAddTravelProfile && (
             <button
@@ -191,7 +191,7 @@ function Row({
   const showEmpty = emptyLabel != null;
   const isEmpty = value == null || value === "";
   if (isEmpty && !showEmpty) return null;
-  const emptyClass = emptyLabel === "Not set" ? "text-muted-foreground/70 italic" : "text-muted-foreground/55";
+  const emptyClass = emptyLabel === "Not set" ? "text-muted-foreground/70 italic" : "text-muted-foreground";
   const display = isEmpty ? (showEmpty ? <span className={emptyClass}>{emptyLabel}</span> : null) : value;
   if (display == null) return null;
   return (
@@ -1075,7 +1075,7 @@ export default function DetailTabContent({
                 const product = MOCK_DIRECTORY_PRODUCTS.find((p) => p.id === link.productId);
                 const stars = Math.max(0, Math.min(5, product?.starRating ?? 0));
                 return (
-                  <Link key={link.productId} href={`/dashboard/products?selected=${link.productId}`} className="flex items-center gap-2 rounded-lg border border-border bg-[rgba(255,255,255,0.03)] p-2 text-sm hover:bg-white/[0.04]">
+                  <Link key={link.productId} href={`/dashboard/products?selected=${link.productId}`} className="flex items-center gap-2 rounded-lg border border-border bg-foreground/[0.04] p-2 text-sm hover:bg-white/[0.04]">
                     {product?.imageUrl ? (
                       <img src={product.imageUrl} alt={product.name} className="h-6 w-6 shrink-0 rounded object-cover" />
                     ) : (
@@ -1123,7 +1123,7 @@ export default function DetailTabContent({
                   return `${month} ${s.getUTCDate()}–${e.getUTCDate()}, ${year}`;
                 })();
                 return (
-                  <Link key={it.id} href={`/dashboard/itineraries?selected=${it.id}`} className="block rounded-lg border border-border bg-[rgba(255,255,255,0.03)] p-3 text-sm hover:bg-white/[0.04]">
+                  <Link key={it.id} href={`/dashboard/itineraries?selected=${it.id}`} className="block rounded-lg border border-border bg-foreground/[0.04] p-3 text-sm hover:bg-white/[0.04]">
                     <p className="font-medium text-foreground">{it.trip_name ?? it.id}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {prettyDate} · {eventCount} events

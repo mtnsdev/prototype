@@ -57,7 +57,7 @@ export default function ProductDirectoryCommissionDropdown({
                 key={b.id}
                 type="button"
                 className={cn(
-                  "w-full px-3 py-2 text-left text-xs transition-colors hover:bg-[rgba(255,255,255,0.04)]",
+                  "w-full px-3 py-2 text-left text-xs transition-colors hover:bg-foreground/[0.05]",
                   selected ? "text-brand-cta" : "text-muted-foreground"
                 )}
                 onClick={() => {

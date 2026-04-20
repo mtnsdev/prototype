@@ -63,7 +63,7 @@ export default function ProductCard({
 
   if (compact) {
     return (
-      <div className={cn("rounded-lg border border-border bg-[rgba(255,255,255,0.03)] p-3 flex items-center gap-3", accent)}>
+      <div className={cn("rounded-lg border border-border bg-foreground/[0.04] p-3 flex items-center gap-3", accent)}>
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-foreground">
           <Icon size={18} />
         </div>
@@ -79,7 +79,7 @@ export default function ProductCard({
   }
 
   return (
-    <div className={cn("relative rounded-xl border border-border bg-[rgba(255,255,255,0.03)] overflow-hidden flex flex-col min-h-[200px] hover:border-[rgba(255,255,255,0.14)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 transition-all duration-200", accent)}>
+    <div className={cn("relative rounded-xl border border-border bg-foreground/[0.04] overflow-hidden flex flex-col min-h-[200px] hover:border-foreground/15 hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 transition-all duration-200", accent)}>
       <DemoBadge />
       <div className="relative aspect-video w-full overflow-hidden rounded-t-xl bg-muted">
         <ImageWithFallback
@@ -138,7 +138,7 @@ export default function ProductCard({
             </span>
           )}
           {product.partnership_tier && product.partnership_tier !== "none" && (
-            <span className="text-xs px-1.5 py-0.5 rounded border border-[rgba(255,255,255,0.2)] text-muted-foreground">
+            <span className="text-xs px-1.5 py-0.5 rounded border border-border text-muted-foreground">
               {PARTNERSHIP_TIER_LABELS[product.partnership_tier]}
             </span>
           )}

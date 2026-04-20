@@ -95,14 +95,14 @@ export default function ProductDirectoryLocationDropdown({ selectedCountries, on
               ref={inputRef}
               type="text"
               placeholder="Search countries…"
-              className="w-full rounded-lg border-none bg-[rgba(255,255,255,0.03)] px-2 py-1.5 text-xs text-foreground placeholder-[#4A4540] focus:outline-none focus:ring-1 focus:ring-[#C9A96E]/40"
+              className="w-full rounded-lg border-none bg-foreground/[0.04] px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary/35"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           {filteredGroups.map((group) => (
             <div key={group.region}>
-              <div className="flex items-center justify-between bg-[rgba(255,255,255,0.02)] px-3 py-1.5">
+              <div className="flex items-center justify-between bg-foreground/[0.03] px-3 py-1.5">
                 <span className="text-[9px] font-medium uppercase tracking-[0.08em] text-muted-foreground/65">
                   {group.region}
                 </span>
@@ -120,7 +120,7 @@ export default function ProductDirectoryLocationDropdown({ selectedCountries, on
                   <button
                     key={country}
                     type="button"
-                    className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+                    className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
                     onClick={() => toggleCountry(country)}
                   >
                     <span>{country}</span>

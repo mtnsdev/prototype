@@ -7,7 +7,8 @@ import { Bookmark, Building2, LayoutGrid, Search, Trash2, Users } from "lucide-r
 import { ProductCatalogSectionTabs } from "@/components/products/ProductCatalogSectionTabs";
 import type { CatalogSegment, ProductDirectoryMainTab } from "@/components/products/productDirectoryCatalogSegments";
 import { cn } from "@/lib/utils";
-import { APP_TOOLBAR_ROW } from "@/lib/dashboardChrome";
+import { AppPageHeroHeader } from "@/components/ui/app-page-hero-header";
+import { APP_PAGE_CONTENT_SHELL, APP_TOOLBAR_ROW } from "@/lib/dashboardChrome";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/contexts/ToastContext";
 import { MOCK_TEAMS } from "@/lib/teamsMock";
@@ -45,7 +46,6 @@ import {
   AGENCY_PROGRAM_OPTIONS,
   AMENITY_LABELS,
   compareProductsByRegistryCommission,
-  DIRECTORY_TIER_FILTER_UI,
   type DirectoryProductSortOption,
   DEFAULT_DIRECTORY_PRODUCT_SORT,
 } from "./productDirectoryFilterConfig";
@@ -224,7 +224,7 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
           return (
             <div
               key={product.id}
-              className="overflow-hidden rounded-xl border border-white/[0.04] bg-white/[0.02]"
+              className="overflow-hidden rounded-xl border border-white/[0.04] bg-foreground/[0.03]"
             >
               <img
                 src={product.imageUrl}
@@ -314,7 +314,7 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
                       <span
                         className="h-1.5 w-1.5 rounded-full"
                         style={{
-                          background: product.hasTeamData ? "rgba(140,160,180,0.60)" : "rgba(255,255,255,0.06)",
+                          background: product.hasTeamData ? "rgba(140,160,180,0.60)" : "rgba(28,26,22,0.06)",
                         }}
                       />
                       <span className="text-[9px] text-muted-foreground">Team data</span>
@@ -323,7 +323,7 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
                       <span
                         className="h-1.5 w-1.5 rounded-full"
                         style={{
-                          background: product.hasAdvisorNotes ? "rgba(160,140,180,0.60)" : "rgba(255,255,255,0.06)",
+                          background: product.hasAdvisorNotes ? "rgba(160,140,180,0.60)" : "rgba(28,26,22,0.06)",
                         }}
                       />
                       <span className="text-[9px] text-muted-foreground">My notes</span>
@@ -334,7 +334,7 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
                 <button
                   type="button"
                   onClick={() => onViewFullDetails(product)}
-                  className="w-full rounded-lg bg-white/[0.03] py-1.5 text-2xs text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
+                  className="w-full rounded-lg bg-white/[0.03] py-1.5 text-2xs text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
                 >
                   View full details
                 </button>
@@ -485,48 +485,24 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
   const [bulkSuggestionNote, setBulkSuggestionNote] = useState("");
   const [compareMode, setCompareMode] = useState(false);
   const browseScrollRef = useRef<HTMLDivElement>(null);
+  /** Shared scroll container for `AppPageHeroHeader` collapse (non-embed); same node as `browseScrollRef` for list virtualization. */
+  const [scrollRoot, setScrollRoot] = useState<HTMLElement | null>(null);
+
+  const assignBrowseScrollEl = useCallback(
+    (el: HTMLDivElement | null) => {
+      browseScrollRef.current = el;
+      if (!embedMode) setScrollRoot(el);
+    },
+    [embedMode]
+  );
 
   const dismissDirectoryOverlays = useCallback(() => {
     setDetailProductId(null);
     setPickerProductId(null);
   }, []);
 
-  const catalogChromeRef = useRef<HTMLDivElement>(null);
-  /** Viewport Y where product preview scrim starts — below segment tabs + optional browse filters. */
-  const [detailBackdropTopPx, setDetailBackdropTopPx] = useState(140);
-
   const [mainTab, setMainTab] = useState<ProductDirectoryMainTab>("browse");
 
-  const measureCatalogChromeBottom = useCallback(() => {
-    const el = catalogChromeRef.current;
-    if (!el) return;
-    const bottom = Math.ceil(el.getBoundingClientRect().bottom);
-    if (bottom < 8) return;
-    setDetailBackdropTopPx(bottom);
-  }, []);
-
-  useLayoutEffect(() => {
-    const el = catalogChromeRef.current;
-    if (!el) return;
-    measureCatalogChromeBottom();
-    const ro = new ResizeObserver(() => measureCatalogChromeBottom());
-    ro.observe(el);
-    window.addEventListener("resize", measureCatalogChromeBottom);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", measureCatalogChromeBottom);
-    };
-  }, [mainTab, embedMode, measureCatalogChromeBottom]);
-
-  /** Panel portals to document.body — re-measure after paint so `top` clears catalog tabs. */
-  useLayoutEffect(() => {
-    if (!detailProductId) return;
-    measureCatalogChromeBottom();
-    const id = requestAnimationFrame(() => {
-      requestAnimationFrame(() => measureCatalogChromeBottom());
-    });
-    return () => cancelAnimationFrame(id);
-  }, [detailProductId, measureCatalogChromeBottom]);
   useEffect(() => {
     if (!embedMode) return;
     setMainTab("browse");
@@ -876,8 +852,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     return hints[0] ?? null;
   }, [filteredProducts.length, viewProducts, filterInput, canViewCommissions]);
 
-  const clearAllFilters = useCallback(() => {
-    setSearchQuery("");
+  const clearFacetFilters = useCallback(() => {
     setActiveTypeFilters([]);
     setLocationCountries([]);
     setCollectionFilter([]);
@@ -891,8 +866,13 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     setSelectedTiers([]);
     setSelectedPriceTiers([]);
     setSortByCommission(false);
-    setSortBy(DEFAULT_DIRECTORY_PRODUCT_SORT);
   }, []);
+
+  const clearAllFilters = useCallback(() => {
+    setSearchQuery("");
+    clearFacetFilters();
+    setSortBy(DEFAULT_DIRECTORY_PRODUCT_SORT);
+  }, [clearFacetFilters]);
 
   const sortedProducts = useMemo(() => {
     const list = [...filteredProducts];
@@ -1627,49 +1607,16 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
       }
     : null;
 
-  return (
-    <div className="flex h-full min-h-0 flex-1 flex-col bg-inset text-foreground">
-      <div ref={catalogChromeRef} className="shrink-0">
-      {embedMode ? (
-        <div
-          className={cn(
-            APP_TOOLBAR_ROW,
-            "relative z-50 flex flex-wrap items-center justify-between gap-3 bg-card/25"
-          )}
-        >
-          <p className="min-w-0 text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">Catalog</span>
-            {" · "}
-            {sortedProducts.length} product{sortedProducts.length !== 1 ? "s" : ""} · split view
-          </p>
-          <Link
-            href="/dashboard/products"
-            className="shrink-0 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Full catalog →
-          </Link>
-        </div>
-      ) : (
-        <div
-          className={cn(
-            APP_TOOLBAR_ROW,
-            "relative z-50 min-w-0 flex flex-wrap items-center gap-3 px-6"
-          )}
-        >
-          <div className="min-w-0 max-w-full flex-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <ProductCatalogSectionTabs
-              value={mainTab}
-              onChange={trySelectCatalogSegment}
-              showPartnerPortal
-            />
-          </div>
-        </div>
-      )}
+  const catalogEditorLocksOuterScroll =
+    (mainTab === "partner-programs" && partnerProgramEditorOpen) ||
+    (mainTab === "rep-firms" && repFirmEditorOpen);
 
-      {mainTab === "browse" ? (
+  const browseFilterStrip =
+    mainTab === "browse" ? (
       <div
         className={cn(
-          "relative z-50 shrink-0 border-b border-border bg-inset px-6 py-3",
+          "relative z-50 shrink-0 border-b border-border bg-background py-3",
+          !embedMode && APP_PAGE_CONTENT_SHELL,
           embedMode && "px-3 py-2"
         )}
       >
@@ -1715,165 +1662,9 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
         bulkMode={bulkMode}
         bulkSelectedCount={selectedProductIds.size}
         onBulkModeToggle={handleBulkToggle}
+        onClearFacetFilters={clearFacetFilters}
+        onClearAllFilters={clearAllFilters}
       />
-
-      {(locationCountries.length > 0 ||
-        selectedProgramIds.length > 0 ||
-        selectedRepFirmIds.length > 0 ||
-        selectedAmenities.length > 0 ||
-        (canViewCommissions && commissionFilterActive) ||
-        hasActiveIncentive ||
-        hasPlannedOpening ||
-        selectedTiers.length > 0 ||
-        selectedPriceTiers.length > 0 ||
-        activeTypeFilters.length > 0 ||
-        collectionFilter.length > 0 ||
-        debouncedSearch.trim()) && (
-        <div className="mb-3 flex flex-wrap gap-1.5">
-          {debouncedSearch.trim() ? (
-            <button
-              type="button"
-              onClick={() => setSearchQuery("")}
-              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-muted-foreground transition-colors hover:bg-white/[0.06]"
-            >
-              &quot;{debouncedSearch.slice(0, 24)}
-              {debouncedSearch.length > 24 ? "…" : ""}&quot;
-              <span className="text-muted-foreground">✕</span>
-            </button>
-          ) : null}
-          {activeTypeFilters.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => setActiveTypeFilters([])}
-              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-muted-foreground transition-colors hover:bg-white/[0.06]"
-            >
-              {activeTypeFilters.map((id) => directoryCategoryLabel(id)).join(", ")}
-              <span className="text-muted-foreground">✕</span>
-            </button>
-          ) : null}
-          {locationCountries.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => setLocationCountries([])}
-              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-muted-foreground transition-colors hover:bg-white/[0.06]"
-            >
-              {locationCountries.slice(0, 2).join(", ")}
-              {locationCountries.length > 2 ? ` +${locationCountries.length - 2}` : ""}
-              <span className="text-muted-foreground">✕</span>
-            </button>
-          ) : null}
-          {collectionFilter.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => setCollectionFilter([])}
-              className="flex items-center gap-1 rounded-full bg-[rgba(201,169,110,0.06)] px-2 py-0.5 text-[9px] text-[#B8976E] transition-colors hover:bg-[rgba(201,169,110,0.10)]"
-            >
-              {collectionFilter.length === 1
-                ? availableCollections.find((c) => c.id === collectionFilter[0])?.name ?? "Collection"
-                : `${collectionFilter.length} collections`}
-              <span className="text-muted-foreground">✕</span>
-            </button>
-          ) : null}
-          {selectedProgramIds.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => setSelectedProgramIds([])}
-              className="flex items-center gap-1 rounded-full bg-[rgba(201,169,110,0.06)] px-2 py-0.5 text-[9px] text-[#B8976E] transition-colors hover:bg-[rgba(201,169,110,0.10)]"
-            >
-              {AGENCY_PROGRAM_OPTIONS.filter((p) => selectedProgramIds.includes(p.id))
-                .map((p) => p.name)
-                .join(", ")}
-              <span className="text-muted-foreground">✕</span>
-            </button>
-          ) : null}
-          {selectedAmenities.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => setSelectedAmenities([])}
-              className="flex items-center gap-1 rounded-full bg-[rgba(91,138,110,0.06)] px-2 py-0.5 text-[9px] text-[#5B8A6E] transition-colors hover:bg-[rgba(91,138,110,0.10)]"
-            >
-              {selectedAmenities.map((b) => AMENITY_LABELS[b]).join(", ")}
-              <span className="text-muted-foreground">✕</span>
-            </button>
-          ) : null}
-          {canViewCommissions && commissionFilterActive ? (
-            <button
-              type="button"
-              onClick={() => {
-                setCommissionFilterActive(false);
-                setCommissionRange([0, 25]);
-              }}
-              className="flex items-center gap-1 rounded-full bg-[rgba(184,151,110,0.06)] px-2 py-0.5 text-[9px] text-[#B8976E] transition-colors hover:bg-[rgba(184,151,110,0.10)]"
-            >
-              {commissionRange[0]}%–{commissionRange[1]}%
-              <span className="text-muted-foreground">✕</span>
-            </button>
-          ) : null}
-          {hasActiveIncentive ? (
-            <button
-              type="button"
-              onClick={() => setHasActiveIncentive(false)}
-              className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[9px] text-amber-400 transition-colors hover:bg-amber-500/20"
-            >
-              Active incentives
-              <span className="text-muted-foreground">✕</span>
-            </button>
-          ) : null}
-          {hasPlannedOpening ? (
-            <button
-              type="button"
-              onClick={() => setHasPlannedOpening(false)}
-              className="flex items-center gap-1 rounded-full bg-[rgba(201,169,110,0.10)] px-2 py-0.5 text-[9px] text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.14)]"
-            >
-              Planned opening
-              <span className="text-muted-foreground">✕</span>
-            </button>
-          ) : null}
-          {selectedRepFirmIds.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => setSelectedRepFirmIds([])}
-              className="flex max-w-[min(100%,280px)] items-center gap-1 truncate rounded-full bg-[rgba(176,122,91,0.12)] px-2 py-0.5 text-[9px] text-[#B07A5B] transition-colors hover:bg-[rgba(176,122,91,0.18)]"
-            >
-              <span className="min-w-0 truncate">
-                {selectedRepFirmIds
-                  .map((id) => repFirms.find((f) => f.id === id)?.name ?? id)
-                  .slice(0, 3)
-                  .join(", ")}
-                {selectedRepFirmIds.length > 3 ? ` +${selectedRepFirmIds.length - 3}` : ""}
-              </span>
-              <span className="shrink-0 text-muted-foreground">✕</span>
-            </button>
-          ) : null}
-          {selectedTiers.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => setSelectedTiers([])}
-              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-muted-foreground transition-colors hover:bg-white/[0.06]"
-            >
-              {selectedTiers.map((t) => DIRECTORY_TIER_FILTER_UI.find((x) => x.id === t)?.label ?? t).join(", ")}
-              <span className="text-muted-foreground">✕</span>
-            </button>
-          ) : null}
-          {selectedPriceTiers.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => setSelectedPriceTiers([])}
-              className="flex items-center gap-1 rounded-full bg-[rgba(201,169,110,0.06)] px-2 py-0.5 text-[9px] text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.10)]"
-            >
-              {selectedPriceTiers.join(" ")}
-              <span className="text-muted-foreground">✕</span>
-            </button>
-          ) : null}
-          <button
-            type="button"
-            onClick={clearAllFilters}
-            className="px-1.5 text-[9px] text-muted-foreground transition-colors hover:text-muted-foreground"
-          >
-            Clear all
-          </button>
-        </div>
-      )}
 
       {headerCollection && activeCollectionMeta && (
         <div className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-popover p-3 sm:flex-row sm:items-start sm:justify-between">
@@ -1983,266 +1774,333 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
       )}
 
       </div>
-      ) : null}
-      </div>
-
-      <div
-        ref={browseScrollRef}
-        className={cn(
-          "relative z-0 min-h-0 flex-1 px-6 pb-6",
-          ((mainTab === "partner-programs" && partnerProgramEditorOpen) ||
-            (mainTab === "rep-firms" && repFirmEditorOpen))
-            ? "flex flex-col overflow-hidden"
-            : "overflow-y-auto",
-          mainTab === "browse" ? "pt-4" : "pt-0"
-        )}
-      >
-        <div
-          className={cn(
-            "min-h-0",
-            mainTab !== "collections" && "pointer-events-none hidden"
-          )}
-          aria-hidden={mainTab !== "collections"}
-        >
-          <ProductDirectoryCollectionsTab
-            collections={availableCollections}
-            products={products}
-            teams={MOCK_TEAMS}
-            isAdmin={isAdmin}
-            canDeleteCollection={canDeleteCollection}
-            onShareCollectionWithTeam={handleShareCollectionWithTeam}
-            onDeleteCollection={handleDeleteCollection}
-            onOpenCollection={(id) => {
-              setCollectionFilter([id]);
-              trySetMainTab("browse");
-            }}
-            onNewCollection={() => openCreateCollectionModal("general")}
-          />
-        </div>
-        <div
-          className={cn(
-            "min-h-0",
-            mainTab === "rep-firms" &&
-              repFirmEditorOpen &&
-              "flex h-full min-h-0 flex-1 flex-col overflow-hidden",
-            mainTab !== "rep-firms" && "pointer-events-none hidden"
-          )}
-          aria-hidden={mainTab !== "rep-firms"}
-        >
-          <ProductDirectoryRepFirmsTab
-            key={repFirmsMountKey}
-            repTabVisible={mainTab === "rep-firms"}
-            onEditorSurfaceChange={setRepFirmEditorOpen}
-            repFirms={repFirms}
-            products={products}
-            teams={MOCK_TEAMS}
-            isAdmin={isAdmin}
-            editorDisplayName={editorDisplayName}
-            canViewCommissions={canViewCommissions}
-            externalSearchCollectionId={DIRECTORY_EXTERNAL_COLLECTION_ID}
-            getExternalSearchTooltip={externalSearchTooltipForProduct}
-            onSaveRepFirm={(id, patch) => {
-              if (!isAdmin) return;
-              setRepFirms((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
-            }}
-            onAddRepFirm={(firm) => {
-              if (!isAdmin) return;
-              setRepFirms((prev) => [firm, ...prev]);
-            }}
-            onRemoveRepFirm={(id) => {
-              if (!isAdmin) return;
-              setRepFirms((prev) => prev.filter((f) => f.id !== id));
-              setProducts((prev) =>
-                prev.map((p) => {
-                  const nextLinks = (p.repFirmLinks ?? []).filter((l) => l.repFirmId !== id);
-                  if (nextLinks.length === (p.repFirmLinks ?? []).length) return p;
-                  return { ...p, repFirmLinks: nextLinks, repFirmCount: nextLinks.length };
-                })
-              );
-            }}
-            onSelectProduct={(id) => {
-              trySetMainTab("browse");
-              setDetailProductId(id);
-            }}
-            onOpenCollectionPicker={(id) => {
-              trySetMainTab("browse");
-              setPickerProductId(id);
-            }}
-            onBrowseByRepFirm={(repFirmId) => {
-              setSelectedRepFirmIds([repFirmId]);
-              trySetMainTab("browse");
-            }}
-            onSyncRepFirmProductLinks={syncRepFirmProductLinks}
-            onDirtyChange={setRepFirmsDirty}
-          />
-        </div>
-        <div
-          className={cn(
-            "min-h-0",
-            mainTab === "partner-programs" &&
-              partnerProgramEditorOpen &&
-              "flex min-h-0 flex-1 flex-col overflow-hidden",
-            mainTab !== "partner-programs" && "pointer-events-none hidden"
-          )}
-          aria-hidden={mainTab !== "partner-programs"}
-        >
-          <PartnerPortalTab
-            key={partnerProgramsMountKey}
-            isAdmin={isAdmin}
-            canViewCommissions={canViewCommissions}
-            partnerTabVisible={mainTab === "partner-programs"}
-            onEditorSurfaceChange={setPartnerProgramEditorOpen}
-            onDirtyChange={setPartnerProgramsDirty}
-            catalogProducts={viewProducts}
-            onSelectProduct={(id) => {
-              trySetMainTab("browse");
-              setDetailProductId(id);
-            }}
-            onBrowseByProgram={(programId) => {
-              setSelectedProgramIds([programId]);
-              trySetMainTab("browse");
-            }}
-          />
-        </div>
-        <div
-          className={cn(
-            "min-h-0",
-            mainTab !== "browse" && "pointer-events-none hidden"
-          )}
-          aria-hidden={mainTab !== "browse"}
-        >
-          {compareMode && compareProducts.length >= 2 ? (
-            <ProductDirectoryCompareView
-              products={compareProducts}
-              canViewCommissions={canViewCommissions}
-              onClose={clearSelection}
-              onViewFullDetails={(p) => {
-                clearSelection();
-                setDetailProductId(p.id);
-              }}
-            />
-          ) : (
-            <>
-          {viewMode === "grid" && (
-            <div
-              className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 view-transition-active"
-            >
-              {userLoading
-                ? Array.from({ length: 6 }).map((_, i) => (
-                    <ProductCardSkeleton key={i} />
-                  ))
-                : sortedProducts.map((product) => (
-                <DirectoryProductCard
-                  key={product.id}
-                  product={product}
-                  showRepFirmLinks={false}
-                  canViewCommissions={canViewCommissions}
-                  bookmarked={isBookmarked(product)}
-                  onProductClick={() => {
-                    if (bulkMode) {
-                      toggleProductSelection(product.id);
-                      return;
-                    }
-                    setDetailProductId(product.id);
+    ) : null;
+  const directoryTabPanels = (
+    <>
+                  <div
+                    className={cn(
+                      "min-h-0",
+                      mainTab !== "collections" && "pointer-events-none hidden"
+                    )}
+                    aria-hidden={mainTab !== "collections"}
+                  >
+                <ProductDirectoryCollectionsTab
+                  collections={availableCollections}
+                  products={products}
+                  teams={MOCK_TEAMS}
+                  isAdmin={isAdmin}
+                  canDeleteCollection={canDeleteCollection}
+                  onShareCollectionWithTeam={handleShareCollectionWithTeam}
+                  onDeleteCollection={handleDeleteCollection}
+                  onOpenCollection={(id) => {
+                    setCollectionFilter([id]);
+                    trySetMainTab("browse");
                   }}
-                  onAddToCollectionClick={() => setPickerProductId(product.id)}
-                  showRemoveFromCollection={showRemoveOnCards}
-                  onRemoveFromCollection={
-                    showRemoveOnCards ? () => removeProductFromFilteredCollection(product.id) : undefined
-                  }
-                  bulkMode={bulkMode}
-                  bulkSelected={selectedProductIds.has(product.id)}
-                  onToggleBulkSelect={() => toggleProductSelection(product.id)}
-                  onEnterBulkMode={(id) => {
-                    setBulkMode(true);
-                    setSelectedProductIds(new Set([id]));
-                  }}
-                  showSavedFromSearch={product.collectionIds.includes(DIRECTORY_EXTERNAL_COLLECTION_ID)}
-                  savedFromSearchTitle={externalSearchTooltipForProduct(product.id)}
+                  onNewCollection={() => openCreateCollectionModal("general")}
                 />
-              ))}
-            </div>
-          )}
+              </div>
+              <div
+                className={cn(
+                  "min-h-0",
+                  mainTab === "rep-firms" &&
+                    repFirmEditorOpen &&
+                    "flex h-full min-h-0 flex-1 flex-col overflow-hidden",
+                  mainTab !== "rep-firms" && "pointer-events-none hidden"
+                )}
+                aria-hidden={mainTab !== "rep-firms"}
+              >
+                <ProductDirectoryRepFirmsTab
+                  key={repFirmsMountKey}
+                  repTabVisible={mainTab === "rep-firms"}
+                  onEditorSurfaceChange={setRepFirmEditorOpen}
+                  repFirms={repFirms}
+                  products={products}
+                  teams={MOCK_TEAMS}
+                  isAdmin={isAdmin}
+                  editorDisplayName={editorDisplayName}
+                  canViewCommissions={canViewCommissions}
+                  externalSearchCollectionId={DIRECTORY_EXTERNAL_COLLECTION_ID}
+                  getExternalSearchTooltip={externalSearchTooltipForProduct}
+                  onSaveRepFirm={(id, patch) => {
+                    if (!isAdmin) return;
+                    setRepFirms((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
+                  }}
+                  onAddRepFirm={(firm) => {
+                    if (!isAdmin) return;
+                    setRepFirms((prev) => [firm, ...prev]);
+                  }}
+                  onRemoveRepFirm={(id) => {
+                    if (!isAdmin) return;
+                    setRepFirms((prev) => prev.filter((f) => f.id !== id));
+                    setProducts((prev) =>
+                      prev.map((p) => {
+                        const nextLinks = (p.repFirmLinks ?? []).filter((l) => l.repFirmId !== id);
+                        if (nextLinks.length === (p.repFirmLinks ?? []).length) return p;
+                        return { ...p, repFirmLinks: nextLinks, repFirmCount: nextLinks.length };
+                      })
+                    );
+                  }}
+                  onSelectProduct={(id) => {
+                    trySetMainTab("browse");
+                    setDetailProductId(id);
+                  }}
+                  onOpenCollectionPicker={(id) => {
+                    trySetMainTab("browse");
+                    setPickerProductId(id);
+                  }}
+                  onBrowseByRepFirm={(repFirmId) => {
+                    setSelectedRepFirmIds([repFirmId]);
+                    trySetMainTab("browse");
+                  }}
+                  onSyncRepFirmProductLinks={syncRepFirmProductLinks}
+                  onDirtyChange={setRepFirmsDirty}
+                />
+              </div>
+              <div
+                className={cn(
+                  "min-h-0",
+                  mainTab === "partner-programs" &&
+                    partnerProgramEditorOpen &&
+                    "flex min-h-0 flex-1 flex-col overflow-hidden",
+                  mainTab !== "partner-programs" && "pointer-events-none hidden"
+                )}
+                aria-hidden={mainTab !== "partner-programs"}
+              >
+                <PartnerPortalTab
+                  key={partnerProgramsMountKey}
+                  isAdmin={isAdmin}
+                  canViewCommissions={canViewCommissions}
+                  partnerTabVisible={mainTab === "partner-programs"}
+                  onEditorSurfaceChange={setPartnerProgramEditorOpen}
+                  onDirtyChange={setPartnerProgramsDirty}
+                  catalogProducts={viewProducts}
+                  onSelectProduct={(id) => {
+                    trySetMainTab("browse");
+                    setDetailProductId(id);
+                  }}
+                  onBrowseByProgram={(programId) => {
+                    setSelectedProgramIds([programId]);
+                    trySetMainTab("browse");
+                  }}
+                />
+              </div>
+              <div
+                className={cn(
+                  "min-h-0",
+                  mainTab !== "browse" && "pointer-events-none hidden"
+                )}
+                aria-hidden={mainTab !== "browse"}
+              >
+                {compareMode && compareProducts.length >= 2 ? (
+                  <ProductDirectoryCompareView
+                    products={compareProducts}
+                    canViewCommissions={canViewCommissions}
+                    onClose={clearSelection}
+                    onViewFullDetails={(p) => {
+                      clearSelection();
+                      setDetailProductId(p.id);
+                    }}
+                  />
+                ) : (
+                  <>
+                {viewMode === "grid" && (
+                  <div
+                    className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 view-transition-active"
+                  >
+                    {userLoading
+                      ? Array.from({ length: 6 }).map((_, i) => (
+                          <ProductCardSkeleton key={i} />
+                        ))
+                      : sortedProducts.map((product) => (
+                      <DirectoryProductCard
+                        key={product.id}
+                        product={product}
+                        showRepFirmLinks={false}
+                        canViewCommissions={canViewCommissions}
+                        bookmarked={isBookmarked(product)}
+                        onProductClick={() => {
+                          if (bulkMode) {
+                            toggleProductSelection(product.id);
+                            return;
+                          }
+                          setDetailProductId(product.id);
+                        }}
+                        onAddToCollectionClick={() => setPickerProductId(product.id)}
+                        showRemoveFromCollection={showRemoveOnCards}
+                        onRemoveFromCollection={
+                          showRemoveOnCards ? () => removeProductFromFilteredCollection(product.id) : undefined
+                        }
+                        bulkMode={bulkMode}
+                        bulkSelected={selectedProductIds.has(product.id)}
+                        onToggleBulkSelect={() => toggleProductSelection(product.id)}
+                        onEnterBulkMode={(id) => {
+                          setBulkMode(true);
+                          setSelectedProductIds(new Set([id]));
+                        }}
+                        showSavedFromSearch={product.collectionIds.includes(DIRECTORY_EXTERNAL_COLLECTION_ID)}
+                        savedFromSearchTitle={externalSearchTooltipForProduct(product.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+      
+                {viewMode === "list" && (
+                  <DirectoryProductListView
+                    products={sortedProducts}
+                    showRepFirmSummary={false}
+                    canViewCommissions={canViewCommissions}
+                    isBookmarked={isBookmarked}
+                    onRowClick={(p) => {
+                      if (bulkMode) {
+                        toggleProductSelection(p.id);
+                        return;
+                      }
+                      setDetailProductId(p.id);
+                    }}
+                    onAddToCollectionClick={(p) => setPickerProductId(p.id)}
+                    showRemoveFromCollection={showRemoveOnCards}
+                    onRemoveFromFilteredCollection={
+                      showRemoveOnCards ? removeProductFromFilteredCollection : undefined
+                    }
+                    bulkMode={bulkMode}
+                    bulkSelectedIds={selectedProductIds}
+                    onToggleBulkSelect={toggleProductSelection}
+                    onEnterBulkMode={(id) => {
+                      setBulkMode(true);
+                      setSelectedProductIds(new Set([id]));
+                    }}
+                    externalSearchCollectionId={DIRECTORY_EXTERNAL_COLLECTION_ID}
+                    externalSearchTooltip={externalSearchTooltipForProduct}
+                    scrollToProductId={detailProductId}
+                    scrollParentRef={browseScrollRef}
+                  />
+                )}
+      
+                {viewMode === "map" && (
+                  <ProductDirectoryMapSplit
+                    products={sortedProducts}
+                    selectedId={detailProductId}
+                    clusterProducts={mapCluster}
+                    canViewCommissions={canViewCommissions}
+                    onSelectProduct={handleMapSelect}
+                    onClusterOpen={setMapCluster}
+                    onClusterClose={() => setMapCluster(null)}
+                    externalSearchCollectionId={DIRECTORY_EXTERNAL_COLLECTION_ID}
+                    externalSearchTooltip={externalSearchTooltipForProduct}
+                  />
+                )}
+      
+                {sortedProducts.length === 0 && (
+                  <div className="rounded-xl border border-border bg-foreground/[0.03] p-8 text-center">
+                    <Search className="mx-auto mb-3 h-6 w-6 text-muted-foreground/65" aria-hidden />
+                    <p className="mb-1 text-compact font-medium text-foreground">No products match</p>
+                    <p className="mb-4 text-xs text-muted-foreground">Your current filters are too narrow.</p>
+                    {emptyStateHint ? (
+                      <button
+                        type="button"
+                        onClick={emptyStateHint.onClear}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.12)] bg-[rgba(201,169,110,0.06)] px-3 py-1.5 text-xs text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.10)]"
+                      >
+                        {`Remove ${emptyStateHint.label} filter → ${emptyStateHint.count} result${emptyStateHint.count === 1 ? "" : "s"}`}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={clearAllFilters}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.06]"
+                      >
+                        Clear all filters
+                      </button>
+                    )}
+                  </div>
+                )}
+                  </>
+                )}
+              </div>
+    </>
+  );
 
-          {viewMode === "list" && (
-            <DirectoryProductListView
-              products={sortedProducts}
-              showRepFirmSummary={false}
-              canViewCommissions={canViewCommissions}
-              isBookmarked={isBookmarked}
-              onRowClick={(p) => {
-                if (bulkMode) {
-                  toggleProductSelection(p.id);
-                  return;
-                }
-                setDetailProductId(p.id);
-              }}
-              onAddToCollectionClick={(p) => setPickerProductId(p.id)}
-              showRemoveFromCollection={showRemoveOnCards}
-              onRemoveFromFilteredCollection={
-                showRemoveOnCards ? removeProductFromFilteredCollection : undefined
-              }
-              bulkMode={bulkMode}
-              bulkSelectedIds={selectedProductIds}
-              onToggleBulkSelect={toggleProductSelection}
-              onEnterBulkMode={(id) => {
-                setBulkMode(true);
-                setSelectedProductIds(new Set([id]));
-              }}
-              externalSearchCollectionId={DIRECTORY_EXTERNAL_COLLECTION_ID}
-              externalSearchTooltip={externalSearchTooltipForProduct}
-              scrollToProductId={detailProductId}
-              scrollParentRef={browseScrollRef}
-            />
-          )}
-
-          {viewMode === "map" && (
-            <ProductDirectoryMapSplit
-              products={sortedProducts}
-              selectedId={detailProductId}
-              clusterProducts={mapCluster}
-              canViewCommissions={canViewCommissions}
-              onSelectProduct={handleMapSelect}
-              onClusterOpen={setMapCluster}
-              onClusterClose={() => setMapCluster(null)}
-              externalSearchCollectionId={DIRECTORY_EXTERNAL_COLLECTION_ID}
-              externalSearchTooltip={externalSearchTooltipForProduct}
-            />
-          )}
-
-          {sortedProducts.length === 0 && (
-            <div className="rounded-xl border border-border bg-white/[0.02] p-8 text-center">
-              <Search className="mx-auto mb-3 h-6 w-6 text-muted-foreground/65" aria-hidden />
-              <p className="mb-1 text-compact font-medium text-foreground">No products match</p>
-              <p className="mb-4 text-xs text-muted-foreground">Your current filters are too narrow.</p>
-              {emptyStateHint ? (
-                <button
-                  type="button"
-                  onClick={emptyStateHint.onClear}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.12)] bg-[rgba(201,169,110,0.06)] px-3 py-1.5 text-xs text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.10)]"
-                >
-                  {`Remove ${emptyStateHint.label} filter → ${emptyStateHint.count} result${emptyStateHint.count === 1 ? "" : "s"}`}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={clearAllFilters}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-white/[0.06]"
-                >
-                  Clear all filters
-                </button>
+  return (
+    <div className="flex h-full min-h-0 flex-1 flex-col bg-background text-foreground">
+      {embedMode ? (
+        <>
+          <div className="shrink-0">
+            <div
+              className={cn(
+                APP_TOOLBAR_ROW,
+                "relative z-50 flex flex-wrap items-center justify-between gap-3 bg-card/25"
               )}
+            >
+              <p className="min-w-0 text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">Catalog</span>
+                {" · "}
+                {sortedProducts.length} product{sortedProducts.length !== 1 ? "s" : ""} · split view
+              </p>
+              <Link
+                href="/dashboard/products"
+                className="shrink-0 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Full catalog →
+              </Link>
             </div>
+            {browseFilterStrip}
+          </div>
+          <div
+            ref={assignBrowseScrollEl}
+            className={cn(
+              "relative z-0 min-h-0 flex-1 pb-6",
+              APP_PAGE_CONTENT_SHELL,
+              catalogEditorLocksOuterScroll ? "flex flex-col overflow-hidden" : "overflow-y-auto",
+              mainTab === "browse" ? "pt-4" : "pt-0"
+            )}
+          >
+            {directoryTabPanels}
+          </div>
+        </>
+      ) : (
+        <div
+          ref={assignBrowseScrollEl}
+          className={cn(
+            "relative z-0 flex min-h-0 flex-1 flex-col overflow-x-hidden pb-6",
+            catalogEditorLocksOuterScroll ? "overflow-hidden" : "overflow-y-auto"
           )}
-            </>
-          )}
+        >
+          <div className="shrink-0">
+            <AppPageHeroHeader
+              scrollRoot={scrollRoot}
+              collapseOnScroll
+              eyebrow="Catalog"
+              title="Product directory"
+              subtitle="Browse hotels, experiences, DMCs, and partner programs—incentives, tiers, collections, and map view."
+              toolbarPlacement="with-title"
+              toolbar={
+                <div className="min-w-0 max-w-full flex-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <ProductCatalogSectionTabs
+                    value={mainTab}
+                    onChange={trySelectCatalogSegment}
+                    showPartnerPortal
+                  />
+                </div>
+              }
+            />
+            {browseFilterStrip}
+          </div>
+          <div
+            className={cn(
+              "min-h-0 flex flex-1 flex-col",
+              APP_PAGE_CONTENT_SHELL,
+              catalogEditorLocksOuterScroll && "overflow-hidden",
+              mainTab === "browse" ? "pt-4" : "pt-0"
+            )}
+          >
+            {directoryTabPanels}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Slide-in detail: 7-block layout + layer mock data in ProductDirectoryDetailBody */}
+      {/* Product summary modal */}
       {detailProduct && (
         <ProductDirectoryDetailPanel
-          backdropTopPx={detailBackdropTopPx}
           product={detailProduct}
           canViewCommissions={canViewCommissions}
           isAdmin={isAdmin}
@@ -2523,7 +2381,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
               }
               setSelectedProductIds(new Set(filteredProductIds));
             }}
-            className="rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
+            className="rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
           >
             {areAllFilteredSelected ? "Clear filtered" : `Select all filtered (${filteredProductIds.length})`}
           </button>
@@ -2555,7 +2413,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
               "flex items-center gap-1.5 rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-xs text-muted-foreground transition-colors disabled:opacity-30",
               selectedProductIds.size >= 2 &&
                 selectedProductIds.size <= 4 &&
-                "hover:bg-white/[0.06] hover:text-foreground"
+                "hover:bg-foreground/[0.06] hover:text-foreground"
             )}
           >
             <LayoutGrid className="h-3.5 w-3.5" />
@@ -2636,7 +2494,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
               </button>
               <button
                 type="button"
-                className="rounded-lg bg-brand-cta px-3 py-1.5 text-xs font-medium text-[#08080c]"
+                className="rounded-lg bg-brand-cta px-3 py-1.5 text-xs font-medium text-primary-foreground"
                 onClick={submitCreateCollectionModal}
               >
                 Create

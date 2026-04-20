@@ -95,7 +95,7 @@ export default function VICListView({
                   <button
                     type="button"
                     onClick={() => handleSort(col.key)}
-                    className="rounded-md hover:bg-white/[0.06] hover:text-foreground"
+                    className="rounded-md hover:bg-foreground/[0.06] hover:text-foreground"
                   >
                     {col.label} {sortBy === sortKey(col.key) ? (sortOrder === "asc" ? "↑" : "↓") : ""}
                   </button>

@@ -1,35 +1,48 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { cn } from "@/lib/utils";
 import {
-  APP_WINDOW_TITLE_BAR,
-  APP_WINDOW_TITLE_STACK,
-  APP_WINDOW_TITLE,
-  APP_WINDOW_SUBTITLE,
-  APP_WINDOW_ACTIONS,
-} from "@/lib/dashboardChrome";
+  AppPageHeroHeader,
+  type AppPageHeroToolbarPlacement,
+} from "@/components/ui/app-page-hero-header";
 
 type Props = {
   title: ReactNode;
   subtitle?: ReactNode;
+  eyebrow?: ReactNode;
   actions?: ReactNode;
+  belowSubtitle?: ReactNode;
+  toolbar?: ReactNode;
+  toolbarPlacement?: AppPageHeroToolbarPlacement;
+  scrollRoot?: HTMLElement | null;
+  collapseOnScroll?: boolean;
   className?: string;
 };
 
-/**
- * Standard window title row: document title + optional subtitle + trailing actions.
- */
-export function AppWindowHeader({ title, subtitle, actions, className }: Props) {
+export function AppWindowHeader({
+  title,
+  subtitle,
+  eyebrow,
+  actions,
+  belowSubtitle,
+  toolbar,
+  toolbarPlacement,
+  scrollRoot,
+  collapseOnScroll,
+  className,
+}: Props) {
   return (
-    <header className={cn(APP_WINDOW_TITLE_BAR, className)}>
-      <div className={APP_WINDOW_TITLE_STACK}>
-        <div className={APP_WINDOW_TITLE}>{title}</div>
-        {subtitle != null && subtitle !== "" ? (
-          <div className={APP_WINDOW_SUBTITLE}>{subtitle}</div>
-        ) : null}
-      </div>
-      {actions ? <div className={APP_WINDOW_ACTIONS}>{actions}</div> : null}
-    </header>
+    <AppPageHeroHeader
+      eyebrow={eyebrow}
+      title={title}
+      subtitle={subtitle}
+      aside={actions}
+      belowSubtitle={belowSubtitle}
+      toolbar={toolbar}
+      toolbarPlacement={toolbarPlacement}
+      scrollRoot={scrollRoot}
+      collapseOnScroll={collapseOnScroll}
+      className={className}
+    />
   );
 }

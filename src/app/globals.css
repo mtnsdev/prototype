@@ -8,112 +8,106 @@
    ========================================== */
 
 :root {
-    /* Surface Colors (Warm Dark Grays) — dark-first, slightly lifted for a calmer room */
-    --surface-base: #101012;
-    --surface-elevated: #18181a;
-    --surface-card: #1b1b1e;
-    --surface-card-hover: #212124;
+    /* Surfaces — briefing-aligned paper & linen (single global palette) */
+    --surface-base: #eceae4;
+    --surface-elevated: #f3f1eb;
+    --surface-card: #f7f6f2;
+    --surface-card-hover: #efede6;
     /* Nested fields, inputs, map chrome */
-    --surface-sunken: #0d0d11;
+    --surface-sunken: #e0ddd4;
     /* Menus, dropdown panels */
-    --surface-overlay: #131318;
-    --surface-interactive: rgba(255, 255, 255, 0.05);
-    --surface-interactive-hover: rgba(255, 255, 255, 0.085);
-    --surface-interactive-active: rgba(255, 255, 255, 0.12);
+    --surface-overlay: #f7f6f2;
+    --surface-interactive: rgba(45, 90, 68, 0.07);
+    --surface-interactive-hover: rgba(45, 90, 68, 0.11);
+    --surface-interactive-active: rgba(45, 90, 68, 0.15);
 
-    /* Text Colors (Warm Off-White) */
-    --text-primary: #eeeeee;
-    --text-secondary: rgba(245, 245, 245, 0.64);
-    /* Slightly higher contrast for small meta text (WCAG on dark surfaces). */
-    --text-tertiary: rgba(245, 245, 245, 0.52);
-    --text-quaternary: rgba(245, 245, 245, 0.28);
-    --text-disabled: rgba(245, 245, 245, 0.24);
-    /* Dense UI one step below base (tables, form labels) */
-    --text-compact: 13px;
-    /* Muted chrome (toolbar / meta) */
-    --chrome-label: #9b9590;
-    --chrome-icon: #6b6560;
-    --chrome-icon-muted: #4a4540;
+    /* Text — warm ink on paper (AA: secondary/tertiary tuned vs --surface-base / --surface-card) */
+    --text-primary: #171512;
+    --text-secondary: #403c36;
+    --text-tertiary: #524c44;
+    --text-quaternary: #656058;
+    --text-disabled: #8a8378;
+    --text-compact: 14px;
+    --chrome-label: #4a453d;
+    --chrome-icon: #5c564c;
+    --chrome-icon-muted: #6e675c;
 
-    /* Border Colors */
-    --border-subtle: rgba(255, 255, 255, 0.06);
-    --border-default: rgba(255, 255, 255, 0.10);
-    --border-strong: rgba(255, 255, 255, 0.17);
+    /* Borders — soft botanical shadow */
+    --border-subtle: rgba(40, 48, 42, 0.09);
+    --border-default: rgba(40, 48, 42, 0.14);
+    --border-strong: rgba(40, 48, 42, 0.22);
 
-    /* Brand Colors */
-    --brand-primary: #A0A0A0;
-    --brand-accent: #E8E8E8;
-    /* Primary in-app CTAs (warm gold, aligns with accent usage in nav) */
-    --brand-cta: #c9a96e;
-    --brand-cta-hover: #d4b57e;
-    --brand-cta-foreground: #0c0c0c;
-    /* Chat user bubble accent */
-    --brand-chat-user: #ae8550;
+    /* Brand — fern & honey (nature) */
+    --brand-primary: #2f5d45;
+    --brand-accent: #c4923a;
+    --brand-cta: #3a7d56;
+    --brand-cta-hover: #326b4a;
+    --brand-cta-foreground: #f9fbf8;
+    --brand-chat-user: #4f8f6a;
 
-    /* Semantic Colors (muted, elegant) */
-    --color-success: #7CB889;
-    --color-success-muted: rgba(124, 184, 137, 0.12);
-    --color-warning: #D4A574;
-    --color-warning-muted: rgba(212, 165, 116, 0.12);
-    --color-error: #C87A7A;
-    --color-error-muted: rgba(200, 122, 122, 0.12);
-    --color-info: #7AA3C8;
-    --color-info-muted: rgba(122, 163, 200, 0.12);
+    /* Semantic — desaturated stone/slate (no traffic-light gamut; briefing palette = default) */
+    --color-success: #5a6d66;
+    --color-success-muted: rgba(90, 109, 102, 0.14);
+    --color-warning: #7a6f62;
+    --color-warning-muted: rgba(122, 111, 98, 0.12);
+    --color-error: #6e5a5e;
+    --color-error-muted: rgba(110, 90, 94, 0.12);
+    --color-info: #5a6f80;
+    --color-info-muted: rgba(90, 111, 128, 0.12);
 
-    /* Muted accent palette (low saturation, elegant) */
-    --muted-success-bg: rgba(148, 163, 148, 0.14);
-    --muted-success-text: #94A394;
-    --muted-success-border: rgba(148, 163, 148, 0.25);
-    --muted-warning-bg: rgba(180, 170, 150, 0.14);
-    --muted-warning-text: #B4AA96;
-    --muted-warning-border: rgba(180, 170, 150, 0.25);
-    --muted-error-bg: rgba(170, 140, 140, 0.14);
-    --muted-error-text: #AA8C8C;
-    --muted-error-border: rgba(170, 140, 140, 0.25);
-    --muted-info-bg: rgba(140, 155, 175, 0.14);
-    --muted-info-text: #8C9BAF;
-    --muted-info-border: rgba(140, 155, 175, 0.25);
-    --muted-accent-bg: rgba(155, 150, 170, 0.12);
-    --muted-accent-text: #9B96AA;
-    --muted-accent-border: rgba(155, 150, 170, 0.22);
-    /* Preview / sample data — soft orange (not gold) */
-    --muted-amber-bg: rgba(200, 130, 80, 0.18);
-    --muted-amber-text: #C88260;
-    --muted-amber-border: rgba(200, 130, 80, 0.32);
+    --muted-success-bg: rgba(90, 109, 102, 0.09);
+    --muted-success-text: #3d4f49;
+    --muted-success-border: rgba(90, 109, 102, 0.2);
+    --muted-warning-bg: rgba(122, 111, 98, 0.09);
+    --muted-warning-text: #5a5246;
+    --muted-warning-border: rgba(122, 111, 98, 0.18);
+    --muted-error-bg: rgba(110, 90, 94, 0.08);
+    --muted-error-text: #4a3f42;
+    --muted-error-border: rgba(110, 90, 94, 0.18);
+    --muted-info-bg: rgba(90, 111, 128, 0.08);
+    --muted-info-text: #3d4d5c;
+    --muted-info-border: rgba(90, 111, 128, 0.18);
+    --muted-accent-bg: rgba(105, 98, 115, 0.08);
+    --muted-accent-text: #4a4452;
+    --muted-accent-border: rgba(105, 98, 115, 0.16);
+    --muted-amber-bg: rgba(130, 118, 95, 0.09);
+    --muted-amber-text: #5e543c;
+    --muted-amber-border: rgba(130, 118, 95, 0.18);
 
-    /* Spacing (4px grid) */
+    /* Spacing (4px grid, generous rhythm) */
     --space-0: 0;
     --space-1: 4px;
     --space-2: 8px;
     --space-3: 12px;
-    --space-4: 16px;
-    --space-5: 20px;
-    --space-6: 24px;
-    --space-7: 32px;
-    --space-8: 48px;
-    --space-9: 64px;
+    --space-4: 20px;
+    --space-5: 24px;
+    --space-6: 28px;
+    --space-7: 36px;
+    --space-8: 52px;
+    --space-9: 72px;
 
     /* Typography */
     --font-sans: 'Libre Franklin', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-display: 'Fraunces', 'Georgia', 'Times New Roman', serif;
     --font-mono: 'SF Mono', Monaco, 'Cascadia Code', monospace;
 
-    /* Font Sizes */
-    --text-2xs: 10px;
-    --text-xs: 11px;
-    --text-sm: 12px;
-    --text-base: 14px;
-    --text-md: 14px;
-    --text-lg: 16px;
-    --text-xl: 20px;
-    --text-2xl: 24px;
-    --text-3xl: 32px;
+    /* Font Sizes — stepped up for readability (targets WCAG AA with paired contrast tokens) */
+    --text-2xs: 11px;
+    --text-xs: 12px;
+    --text-sm: 13px;
+    --text-base: 16px;
+    --text-md: 16px;
+    --text-lg: 18px;
+    --text-xl: 22px;
+    --text-2xl: 28px;
+    --text-3xl: 36px;
 
     /* Line Heights */
     --leading-none: 1;
-    --leading-tight: 1.2;
-    --leading-snug: 1.3;
-    --leading-normal: 1.45;
-    --leading-relaxed: 1.55;
+    --leading-tight: 1.22;
+    --leading-snug: 1.32;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.58;
 
     /* Border Radius */
     --radius-sm: 4px;
@@ -123,18 +117,18 @@
     --radius-2xl: 16px;
     --radius-full: 9999px;
 
-    /* Shadows — softer falloff, less harsh on dark surfaces */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.16);
-    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.2);
-    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.24);
-    --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.28);
+    /* Shadows — soft lift on light surfaces */
+    --shadow-sm: 0 1px 2px rgba(28, 26, 22, 0.06);
+    --shadow-md: 0 4px 14px rgba(28, 26, 22, 0.08);
+    --shadow-lg: 0 10px 28px rgba(28, 26, 22, 0.1);
+    --shadow-xl: 0 20px 44px rgba(28, 26, 22, 0.12);
 
     /* Transitions */
     --transition-fast: 150ms ease;
     --transition-normal: 200ms ease;
     --transition-slow: 300ms ease;
 
-    /* shadcn semantic tokens → Enable dark UI (single public vocabulary) */
+    /* shadcn semantic tokens (single public vocabulary) */
     --radius: 0.625rem;
 
     --background: var(--surface-base);
@@ -149,7 +143,7 @@
     --primary: var(--brand-cta);
     --primary-foreground: var(--brand-cta-foreground);
 
-    --secondary: rgba(255, 255, 255, 0.08);
+    --secondary: rgba(28, 26, 22, 0.06);
     --secondary-foreground: var(--text-primary);
 
     --muted: var(--surface-elevated);
@@ -162,64 +156,24 @@
 
     --border: var(--border-subtle);
     --input: var(--border-default);
-    --ring: rgba(201, 169, 110, 0.45);
+    --ring: rgba(58, 125, 86, 0.4);
 
-    /* Inset fields (inputs on cards) */
     --inset: var(--surface-sunken);
 
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
+    --chart-1: oklch(0.52 0.12 150);
+    --chart-2: oklch(0.55 0.11 230);
+    --chart-3: oklch(0.62 0.13 55);
+    --chart-4: oklch(0.58 0.09 175);
+    --chart-5: oklch(0.5 0.08 300);
 
-    --sidebar: var(--surface-base);
+    --sidebar: var(--surface-elevated);
     --sidebar-foreground: var(--text-primary);
     --sidebar-primary: var(--brand-cta);
     --sidebar-primary-foreground: var(--brand-cta-foreground);
     --sidebar-accent: var(--surface-interactive);
     --sidebar-accent-foreground: var(--text-primary);
     --sidebar-border: var(--border-subtle);
-    --sidebar-ring: rgba(201, 169, 110, 0.45);
-}
-
-/*
- * Briefing dashboard — cool stone & slate only (scoped). No traffic-light red/yellow/green.
- * "Positive" uses blue-gray stone; attention uses taupe & dusk mauve — still legible, not gamified.
- */
-.briefing-nature {
-    --color-success: #7a8690;
-    --color-success-muted: rgba(122, 134, 144, 0.14);
-    --color-info: #6e7f8c;
-    --color-info-muted: rgba(110, 127, 140, 0.14);
-    --color-warning: #8f8983;
-    --color-warning-muted: rgba(143, 137, 131, 0.12);
-    --color-error: #756a72;
-    --color-error-muted: rgba(117, 106, 114, 0.14);
-
-    --muted-success-bg: rgba(122, 134, 144, 0.1);
-    --muted-success-text: #9aa3ab;
-    --muted-success-border: rgba(122, 134, 144, 0.26);
-    --muted-warning-bg: rgba(143, 137, 131, 0.1);
-    --muted-warning-text: #ada8a3;
-    --muted-warning-border: rgba(143, 137, 131, 0.24);
-    --muted-error-bg: rgba(117, 106, 114, 0.1);
-    --muted-error-text: #9b9198;
-    --muted-error-border: rgba(117, 106, 114, 0.26);
-    --muted-info-bg: rgba(110, 127, 140, 0.1);
-    --muted-info-text: #95a2ad;
-    --muted-info-border: rgba(110, 127, 140, 0.26);
-    --muted-accent-bg: rgba(115, 108, 125, 0.11);
-    --muted-accent-text: #9b94a8;
-    --muted-accent-border: rgba(115, 108, 125, 0.22);
-    --muted-amber-bg: rgba(130, 125, 118, 0.11);
-    --muted-amber-text: #a8a29b;
-    --muted-amber-border: rgba(130, 125, 118, 0.22);
-
-    --surface-base: #111214;
-    --surface-card: #191b1d;
-    --surface-card-hover: #1e2023;
-    --surface-elevated: #1b1d1f;
+    --sidebar-ring: rgba(58, 125, 86, 0.4);
 }
 
 @theme inline {
@@ -253,6 +207,7 @@
     --color-foreground: var(--foreground);
     /* Avoid self-reference var(--font-sans) here — Tailwind v4 can hang resolving it. */
     --font-sans: 'Libre Franklin', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-display: 'Fraunces', 'Georgia', 'Times New Roman', serif;
     --font-mono: 'SF Mono', Monaco, 'Cascadia Code', monospace;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
@@ -292,15 +247,15 @@
     --radius-4xl: calc(var(--radius) + 16px);
 
     /* Typography: Tailwind names (values mirror :root --text-* / --text-compact) */
-    --text-2xs: 10px;
-    --text-xs: 11px;
-    --text-sm: 12px;
-    --text-compact: 13px;
-    --text-base: 14px;
-    --text-lg: 16px;
-    --text-xl: 20px;
-    --text-2xl: 24px;
-    --text-3xl: 32px;
+    --text-2xs: 11px;
+    --text-xs: 12px;
+    --text-sm: 13px;
+    --text-compact: 14px;
+    --text-base: 16px;
+    --text-lg: 18px;
+    --text-xl: 22px;
+    --text-2xl: 28px;
+    --text-3xl: 36px;
 }
 
 /* ==========================================
@@ -312,6 +267,7 @@
 }
 
 html {
+    color-scheme: light;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -326,6 +282,18 @@ body {
     font-family: var(--font-app-sans), var(--font-sans);
     font-size: var(--text-base);
     line-height: var(--leading-normal);
+}
+
+h1,
+h2,
+h3 {
+    font-family: var(--font-app-display), var(--font-display), Georgia, serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.font-display {
+    font-family: var(--font-app-display), var(--font-display), Georgia, serif;
 }
 
 /* Keyboard: skip to main landmark */
@@ -359,7 +327,7 @@ body {
     box-shadow: var(--shadow-lg);
 }
 .skip-to-main:focus-visible {
-    box-shadow: var(--shadow-lg), 0 0 0 3px rgba(201, 169, 110, 0.35);
+    box-shadow: var(--shadow-lg), 0 0 0 3px rgba(58, 125, 86, 0.35);
 }
 
 /* ==========================================
@@ -376,18 +344,18 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(28, 26, 22, 0.14);
     border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(28, 26, 22, 0.22);
 }
 
 /* Firefox */
 * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+    scrollbar-color: rgba(28, 26, 22, 0.16) transparent;
 }
 
 /* ==========================================
@@ -395,7 +363,7 @@ body {
    ========================================== */
 
 :focus-visible {
-    outline: 2px solid rgba(255, 255, 255, 0.4);
+    outline: 2px solid rgba(58, 125, 86, 0.45);
     outline-offset: 2px;
 }
 
@@ -414,7 +382,7 @@ input.chat-input-no-focus-outline:focus-visible,
    ========================================== */
 
 ::selection {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(58, 125, 86, 0.18);
     color: var(--text-primary);
 }
 
@@ -509,8 +477,7 @@ input.chat-input-no-focus-outline:focus-visible,
 /* Reduced motion: handle per animation (e.g. .animate-briefing-fade-in, .animate-card-slide-in).
    Avoid a global * transition override — it flattens focus/hover feedback and fights component rings. */
 
-/* Theme is single-source: shadcn semantic vars are set on :root above (Enable palette).
-   Do not add a `.dark` class on <html> — a second theme block would override brand/CTA tokens. */
+/* Theme is single-source: shadcn semantic vars are set on :root (Enable light nature palette). */
 
 @layer base {
   * {
@@ -521,7 +488,7 @@ input.chat-input-no-focus-outline:focus-visible,
   }
 }
 
-/* Dark surfaces: native checkboxes default to a light box — use custom styling */
+/* Custom checkboxes — class name retained for compatibility (checkbox-on-dark) */
 @layer components {
   .checkbox-on-dark {
     flex-shrink: 0;
@@ -529,26 +496,25 @@ input.chat-input-no-focus-outline:focus-visible,
     width: 1rem;
     height: 1rem;
     border-radius: 0.25rem;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    background-color: var(--surface-sunken);
-    color-scheme: dark;
+    border: 1px solid var(--border-default);
+    background-color: var(--inset);
+    color-scheme: light;
     appearance: none;
     -webkit-appearance: none;
     transition: border-color 0.15s ease, background-color 0.15s ease;
   }
   .checkbox-on-dark:checked {
-    border-color: #c9a96e;
-    background-color: #c9a96e;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2308080c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8 7 11.5 12.5 4.5'/%3E%3C/svg%3E");
+    border-color: var(--brand-cta);
+    background-color: var(--brand-cta);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23f9fbf8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8 7 11.5 12.5 4.5'/%3E%3C/svg%3E");
     background-size: 10px 10px;
     background-position: center;
     background-repeat: no-repeat;
   }
-  /* Partial “select all” (header checkbox indeterminate) — avoid browser default light fill */
   .checkbox-on-dark:indeterminate {
-    border-color: rgba(201, 169, 110, 0.75);
-    background-color: var(--surface-sunken);
-    background-image: linear-gradient(#c9a96e, #c9a96e);
+    border-color: color-mix(in oklab, var(--brand-cta) 75%, var(--border-default));
+    background-color: var(--inset);
+    background-image: linear-gradient(var(--brand-cta), var(--brand-cta));
     background-size: 8px 2px;
     background-position: center;
     background-repeat: no-repeat;
@@ -558,7 +524,7 @@ input.chat-input-no-focus-outline:focus-visible,
   }
   .checkbox-on-dark:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px rgba(201, 169, 110, 0.45);
+    box-shadow: 0 0 0 2px rgba(58, 125, 86, 0.4);
   }
   .checkbox-on-dark:disabled {
     cursor: not-allowed;
@@ -572,8 +538,6 @@ input.chat-input-no-focus-outline:focus-visible,
   .checkbox-on-dark-sm:checked {
     background-size: 9px 9px;
   }
-
-  /* Layout rhythm — prefer these over one-off page wrappers */
 }
 
 /* ==========================================

@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { ChatProvider, useChatContext } from "@/contexts/ChatContext";
 import { UserProvider } from "@/contexts/UserContext";
 import { ToastProvider } from "@/contexts/ToastContext";
@@ -18,8 +19,12 @@ import AssistantPanel from "@/components/dashboard/AssistantPanel";
 import WorkspaceDock from "@/components/dashboard/WorkspaceDock";
 import MobileWorkspaceNav from "@/components/dashboard/MobileWorkspaceNav";
 import HistoryDrawer from "@/components/dashboard/HistoryDrawer";
+import { OnboardingDashboardGuard } from "@/components/dashboard/OnboardingDashboardGuard";
+import { cn } from "@/lib/utils";
 
 function DashboardChrome({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isOnboarding = pathname?.startsWith("/dashboard/onboarding") ?? false;
   const {
     isHistoryOpen,
     closeHistory,
@@ -40,18 +45,23 @@ function DashboardChrome({ children }: { children: React.ReactNode }) {
       />
       <AssistantPanel />
       <div className="min-h-screen bg-background text-foreground">
-        <MobileWorkspaceNav />
+        {!isOnboarding ? <MobileWorkspaceNav /> : null}
         <div className="flex h-screen flex-col">
           <main
             id="main-content"
             tabIndex={-1}
-            className="flex min-h-0 min-w-0 flex-1 flex-col pb-[5.5rem] outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background md:pb-[5.25rem]"
+            className={cn(
+              "flex min-h-0 min-w-0 flex-1 flex-col outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              isOnboarding
+                ? "pb-0"
+                : "pb-[5.5rem] md:pb-[5.25rem]"
+            )}
           >
             <DashboardShellChrome />
             <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
             <GlobalCommandPalette />
           </main>
-          <WorkspaceDock />
+          {!isOnboarding ? <WorkspaceDock /> : null}
         </div>
         <div className="md:hidden">
           <ReportIssueLauncher />
@@ -64,6 +74,7 @@ function DashboardChrome({ children }: { children: React.ReactNode }) {
 export default function DashboardFrame({ children }: { children: React.ReactNode }) {
   return (
     <UserProvider>
+      <OnboardingDashboardGuard>
       <PartnerProgramsProvider>
       <ProductDirectoryCatalogProvider>
         <TeamsProvider>
@@ -85,6 +96,7 @@ export default function DashboardFrame({ children }: { children: React.ReactNode
         </TeamsProvider>
       </ProductDirectoryCatalogProvider>
       </PartnerProgramsProvider>
+      </OnboardingDashboardGuard>
     </UserProvider>
   );
 }

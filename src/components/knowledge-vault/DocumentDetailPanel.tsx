@@ -546,7 +546,7 @@ function DetailBody({
                   <button
                     type="button"
                     onClick={() => setShowAddTag(true)}
-                    className="text-2xs text-muted-foreground/70 hover:text-muted-foreground bg-white/[0.02] border border-dashed border-border px-2 py-0.5 rounded"
+                    className="text-2xs text-muted-foreground/70 hover:text-muted-foreground bg-foreground/[0.03] border border-dashed border-border px-2 py-0.5 rounded"
                   >
                     + Add tag
                   </button>

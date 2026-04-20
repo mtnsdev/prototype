@@ -24,6 +24,8 @@ import { useToast } from "@/contexts/ToastContext";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import type { DriveStatus } from "@/types/google-drive";
 import { BRIEFING_ROOM_PATH } from "@/lib/briefingRoutes";
+import { APP_PAGE_CONTENT_SHELL } from "@/lib/dashboardChrome";
+import { cn } from "@/lib/utils";
 
 const OAUTH_POPUP_WIDTH = 600;
 const OAUTH_POPUP_HEIGHT = 700;
@@ -228,10 +230,10 @@ function DriveConnectionCard({
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                             <h2 className="text-base font-semibold text-foreground">{label}</h2>
-                            <CardIcon size={14} className="text-muted-foreground/55" />
+                            <CardIcon size={14} className="text-muted-foreground" />
                         </div>
                         {connectionType === "agency" && (
-                            <p className="text-xs text-muted-foreground/55 mt-0.5">
+                            <p className="text-xs text-muted-foreground mt-0.5">
                                 Shared with all workspace users
                             </p>
                         )}
@@ -457,7 +459,7 @@ function ClaromentisConnectionCard() {
                 </div>
                 <div className="flex-1 min-w-0">
                     <h2 className="text-base font-semibold text-foreground">Intranet account</h2>
-                    <p className="text-xs text-muted-foreground/55 mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                         Connect your personal intranet account for search and browsing
                     </p>
                 </div>
@@ -493,7 +495,7 @@ function ClaromentisConnectionCard() {
                             Signed in as <span className="text-foreground font-medium">{status?.claromentis_username}</span>
                         </p>
                         {status?.last_connected_at && (
-                            <p className="text-sm text-muted-foreground/55">
+                            <p className="text-sm text-muted-foreground">
                                 Connected {formatTime(status.last_connected_at)}
                             </p>
                         )}
@@ -526,7 +528,7 @@ function ClaromentisConnectionCard() {
                                 onChange={(e) => setUsername(e.target.value)}
                                 required
                                 autoComplete="username"
-                                className="rounded-xl bg-[rgba(255,255,255,0.05)] border-input"
+                                className="rounded-xl bg-foreground/[0.06] border-input"
                             />
                             <Input
                                 type="password"
@@ -535,7 +537,7 @@ function ClaromentisConnectionCard() {
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
                                 autoComplete="current-password"
-                                className="rounded-xl bg-[rgba(255,255,255,0.05)] border-input"
+                                className="rounded-xl bg-foreground/[0.06] border-input"
                             />
                             <Input
                                 type="url"
@@ -543,7 +545,7 @@ function ClaromentisConnectionCard() {
                                 value={baseUrl}
                                 onChange={(e) => setBaseUrl(e.target.value)}
                                 autoComplete="off"
-                                className="rounded-xl bg-[rgba(255,255,255,0.05)] border-input"
+                                className="rounded-xl bg-foreground/[0.06] border-input"
                             />
                         </div>
                         <Button type="submit" disabled={submitting} className="gap-2">
@@ -567,7 +569,7 @@ function EmailForwardingCard() {
     const address = `${agencySlug}@ingest.enable.travel`;
 
     return (
-        <div className="bg-white/[0.02] border border-border rounded-[20px] p-5">
+        <div className="bg-foreground/[0.03] border border-border rounded-[20px] p-5">
             <div className="flex items-center gap-2 mb-3">
                 <Mail className="w-4 h-4 text-sky-400" />
                 <span className="text-xs font-semibold tracking-wider text-muted-foreground/90 uppercase">
@@ -612,7 +614,8 @@ export default function IntegrationsPage() {
 
     return (
         <div className="h-full overflow-y-auto bg-background">
-            <div className="max-w-2xl mx-auto p-6 space-y-6">
+            <div className={cn(APP_PAGE_CONTENT_SHELL, "py-6")}>
+            <div className="mx-auto w-full max-w-2xl space-y-6">
                 <div className="mb-8">
                     <Breadcrumbs
                         items={[
@@ -642,6 +645,7 @@ export default function IntegrationsPage() {
                 {isAdmin && (
                     <DriveConnectionCard connectionType="agency" />
                 )}
+            </div>
             </div>
         </div>
     );

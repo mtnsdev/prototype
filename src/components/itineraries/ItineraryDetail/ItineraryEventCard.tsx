@@ -96,7 +96,7 @@ export default function ItineraryEventCard({
       onClick={onEventClick}
       onKeyDown={onEventClick ? (e) => e.key === "Enter" && onEventClick() : undefined}
       className={cn(
-        "rounded-lg border border-border bg-[rgba(255,255,255,0.03)] p-3 flex items-start gap-3",
+        "rounded-lg border border-border bg-foreground/[0.04] p-3 flex items-start gap-3",
         leftBorderClass,
         event.status === "cancelled" && "line-through opacity-80",
         onEventClick && "cursor-pointer hover:bg-white/[0.04] transition-colors"
@@ -125,7 +125,7 @@ export default function ItineraryEventCard({
               e.stopPropagation();
               router.push(`/dashboard/products?selected=${event.source_product_id}`);
             }}
-            className="mt-1 flex items-center gap-2 rounded-md border border-border/50 bg-white/[0.02] px-2 py-1 text-left text-[10px] hover:bg-white/[0.04]"
+            className="mt-1 flex items-center gap-2 rounded-md border border-border/50 bg-foreground/[0.03] px-2 py-1 text-left text-[10px] hover:bg-white/[0.04]"
           >
             <SourceIcon className="h-3 w-3 text-brand-cta" aria-hidden />
             <span className="text-foreground">{event.source_product_name ?? "Product"}</span>

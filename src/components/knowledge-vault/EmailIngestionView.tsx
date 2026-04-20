@@ -210,7 +210,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
               tabIndex={0}
               onClick={() => openEmail(entry)}
               onKeyDown={(ev) => ev.key === "Enter" && openEmail(entry)}
-              className="flex items-center gap-4 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] cursor-pointer transition-colors"
+              className="flex items-center gap-4 p-3 rounded-xl bg-foreground/[0.03] border border-white/[0.04] hover:bg-white/[0.04] cursor-pointer transition-colors"
             >
               <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0">
                 {entry.attachments.length > 0 ? (
@@ -254,7 +254,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
 
       {(emailForPanel || attachmentPanel) && (
         <>
-        <aside className="hidden md:flex w-[380px] shrink-0 flex-col border-l border-border bg-inset overflow-hidden">
+        <aside className="hidden md:flex w-[380px] shrink-0 flex-col border-l border-border bg-background overflow-hidden">
           <div className="shrink-0 flex items-center justify-between p-3 border-b border-border">
             <span className="text-xs font-medium text-muted-foreground/90">Details</span>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPanel(null)}>
@@ -366,7 +366,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                   <span className="text-2xs text-muted-foreground/70 uppercase tracking-wider mb-2 block">
                     Email Content
                   </span>
-                  <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4 max-h-48 overflow-y-auto">
+                  <div className="bg-foreground/[0.03] border border-white/[0.04] rounded-xl p-4 max-h-48 overflow-y-auto">
                     <p className="text-xs text-foreground/88 leading-relaxed whitespace-pre-wrap">
                       {emailForPanel.bodyText}
                     </p>
@@ -382,7 +382,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                       {emailForPanel.attachments.map((att) => (
                         <div
                           key={att.id}
-                          className="flex items-center gap-3 p-3 bg-white/[0.02] border border-white/[0.04] rounded-xl hover:bg-white/[0.04] transition-colors"
+                          className="flex items-center gap-3 p-3 bg-foreground/[0.03] border border-white/[0.04] rounded-xl hover:bg-white/[0.04] transition-colors"
                         >
                           <button
                             type="button"
@@ -564,7 +564,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                   </div>
                 </div>
 
-                <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4 text-center">
+                <div className="bg-foreground/[0.03] border border-white/[0.04] rounded-xl p-4 text-center">
                   {attachmentPanel.attachment.mimeType === "application/pdf" ? (
                     <div className="text-xs text-muted-foreground">
                       <FileText className="w-8 h-8 text-muted-foreground/70 mx-auto mb-2" />
@@ -644,7 +644,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                 </div>
                 <div>
                   <span className="text-2xs text-muted-foreground/70 uppercase tracking-wider">Email Content</span>
-                  <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4 mt-2 max-h-64 overflow-y-auto">
+                  <div className="bg-foreground/[0.03] border border-white/[0.04] rounded-xl p-4 mt-2 max-h-64 overflow-y-auto">
                     <p className="text-xs text-foreground/88 leading-relaxed whitespace-pre-wrap">
                       {emailForPanel.bodyText}
                     </p>
@@ -681,7 +681,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                   </div>
                   <h2 className="text-lg font-semibold text-white">{attachmentPanel.attachment.filename}</h2>
                 </div>
-                <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4 text-center text-xs text-muted-foreground">
+                <div className="bg-foreground/[0.03] border border-white/[0.04] rounded-xl p-4 text-center text-xs text-muted-foreground">
                   Preview / download — see desktop for full controls.
                 </div>
               </>

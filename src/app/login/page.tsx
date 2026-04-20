@@ -14,6 +14,14 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { isAuthBypassEnabled } from "@/lib/authBypass";
+import { MOCK_PROTOTYPE_USERS } from "@/contexts/UserContext";
+import type { User } from "@/contexts/UserContext";
+import {
+    POST_ONBOARDING_CHAT_PATH,
+    shouldShowOnboarding,
+    storePostOnboardingRedirect,
+} from "@/lib/onboardingState";
+import { resetPrototypeClientStorage } from "@/lib/prototypeSessionReset";
 
 declare global {
     interface Window {
@@ -76,6 +84,24 @@ function LoginContent() {
 
     useEffect(() => {
         if (!isAuthBypassEnabled()) return;
+
+        let effective: User | null = null;
+        try {
+            const stored = localStorage.getItem("user_data");
+            effective = stored ? (JSON.parse(stored) as User) : null;
+        } catch {
+            effective = null;
+        }
+        if (!effective) {
+            effective = { ...MOCK_PROTOTYPE_USERS.admin };
+        }
+
+        if (shouldShowOnboarding(effective)) {
+            storePostOnboardingRedirect(POST_ONBOARDING_CHAT_PATH);
+            router.replace("/dashboard/onboarding");
+            return;
+        }
+
         const target = redirectUrl.startsWith("/") ? redirectUrl : "/dashboard/products";
         router.replace(target);
     }, [router, redirectUrl]);
@@ -83,6 +109,11 @@ function LoginContent() {
     const setAuthCookie = useCallback((token: string) => {
         const secure = window.location.protocol === "https:" ? "; Secure" : "";
         document.cookie = `auth_token=${encodeURIComponent(token)}; Path=/; SameSite=Lax${secure}`;
+    }, []);
+
+    const handleRestartPrototype = useCallback(() => {
+        resetPrototypeClientStorage();
+        window.location.assign("/login");
     }, []);
 
     const handleGoogleCallback = useCallback(
@@ -112,6 +143,11 @@ function LoginContent() {
                 localStorage.setItem("user_data", JSON.stringify(data.user));
                 setAuthCookie(data.token.access_token);
 
+                if (shouldShowOnboarding(data.user)) {
+                    storePostOnboardingRedirect(POST_ONBOARDING_CHAT_PATH);
+                    router.push("/dashboard/onboarding");
+                    return;
+                }
                 router.push(redirectUrl);
             } catch (err) {
                 setError(err instanceof Error ? err.message : "Google sign-in failed");
@@ -184,6 +220,12 @@ function LoginContent() {
 
             if (data.user?.must_change_password) {
                 setShowForceChangeModal(true);
+                return;
+            }
+
+            if (shouldShowOnboarding(data.user)) {
+                storePostOnboardingRedirect(POST_ONBOARDING_CHAT_PATH);
+                router.push("/dashboard/onboarding");
                 return;
             }
 
@@ -383,7 +425,7 @@ function LoginContent() {
                             <div className="w-full border-t border-border"></div>
                         </div>
                         <div className="relative flex justify-center text-sm">
-                            <span className="px-4 bg-card text-muted-foreground/55">
+                            <span className="px-4 bg-card text-muted-foreground">
                                 or continue with
                             </span>
                         </div>
@@ -398,14 +440,14 @@ function LoginContent() {
                             type="button"
                             disabled
                             variant="outline"
-                            className="w-full py-3 bg-[rgba(255,255,255,0.04)] border-border text-muted-foreground/55 cursor-not-allowed"
+                            className="w-full py-3 bg-foreground/[0.05] border-border text-muted-foreground cursor-not-allowed"
                         >
                             Google Sign-In not configured
                         </Button>
                     )}
                 </div>
 
-                <p className="text-center text-muted-foreground/55 text-compact mt-6">
+                <p className="text-center text-muted-foreground text-compact mt-6">
                     Don&apos;t have an account?{" "}
                     <a
                         href="#"
@@ -414,6 +456,22 @@ function LoginContent() {
                         Contact admin
                     </a>
                 </p>
+
+                <div className="mt-8 rounded-2xl border border-border/70 bg-card/30 p-4">
+                    <p className="text-xs font-medium text-muted-foreground">Prototype</p>
+                    <p className="mt-1 text-xs text-muted-foreground/80 leading-relaxed">
+                        Clear this browser&apos;s mock sign-in, onboarding progress, and demo flags — then start
+                        again from sign in.
+                    </p>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="mt-3 w-full border-border text-foreground"
+                        onClick={handleRestartPrototype}
+                    >
+                        Restart prototype session
+                    </Button>
+                </div>
             </div>
 
             <Dialog open={showForgotModal} onOpenChange={setShowForgotModal}>
@@ -532,7 +590,7 @@ function LoginContent() {
                             />
                         </div>
 
-                        <p className="text-sm text-muted-foreground/55">
+                        <p className="text-sm text-muted-foreground">
                             Must be at least 8 characters with at least one letter and one number.
                         </p>
 

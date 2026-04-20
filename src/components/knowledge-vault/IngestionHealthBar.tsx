@@ -87,7 +87,7 @@ export default function IngestionHealthBar({
                 {s.indexed_document_count != null ? `${s.indexed_document_count} / ${s.document_count}` : s.document_count}{" "}
                 indexed
               </span>
-              <span className="text-muted-foreground/55">|</span>
+              <span className="text-muted-foreground">|</span>
               <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden min-w-[60px]">
                 {s.status === "disconnected" ? (
                   <div className="h-full w-0" />

@@ -112,7 +112,7 @@ export function ProductDirectoryCollectionsTab({
 
   if (collections.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-white/[0.02] px-6 py-12 text-center">
+      <div className="rounded-xl border border-border bg-foreground/[0.03] px-6 py-12 text-center">
         <p className="text-sm font-medium text-foreground">No collections yet</p>
         <p className="mt-1 text-2xs text-muted-foreground">Create a collection to organise products, or ask your admin.</p>
         <Button type="button" variant="toolbarAccent" size="sm" className="mt-4" onClick={onNewCollection}>
@@ -146,7 +146,7 @@ export function ProductDirectoryCollectionsTab({
         </Button>
       </div>
       {filteredCollections.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-input bg-white/[0.02] px-6 py-12 text-center">
+        <div className="rounded-2xl border border-dashed border-input bg-foreground/[0.03] px-6 py-12 text-center">
           <p className="text-compact font-medium text-foreground">No collections match your search</p>
           <p className="mt-1 text-xs text-muted-foreground">Try another term, or clear the filter.</p>
           <button
@@ -192,7 +192,7 @@ export function ProductDirectoryCollectionsTab({
                   ? Array.from({ length: placeholders }).map((_, i) => (
                       <div
                         key={`empty-${i}`}
-                        className="flex min-h-0 min-w-0 items-center justify-center bg-white/[0.04] text-[8px] text-muted-foreground/55"
+                        className="flex min-h-0 min-w-0 items-center justify-center bg-white/[0.04] text-2xs text-muted-foreground"
                       >
                         Empty
                       </div>
@@ -456,10 +456,10 @@ function partnerProgramCardDomId(programKey: string) {
 }
 
 const PARTNER_PROGRAMS_FORM_INPUT_CLASS =
-  "h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]";
+  "h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/45 focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]";
 
 const PARTNER_PROGRAMS_FORM_TEXTAREA_CLASS =
-  "w-full resize-none rounded-lg border border-white/[0.14] bg-inset px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]";
+  "w-full resize-none rounded-lg border border-white/[0.14] bg-inset px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary/45 focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]";
 
 type PartnerProgramAddFormState = {
   programName: string;
@@ -791,7 +791,7 @@ export function ProductDirectoryPartnerProgramsTab({
     <div className="space-y-6">
       {discardDialogEl}
       {!isAdmin && (
-        <p className="inline-flex w-fit max-w-full items-center gap-2 rounded-lg border border-border bg-white/[0.02] px-3 py-2 text-xs text-muted-foreground">
+        <p className="inline-flex w-fit max-w-full items-center gap-2 rounded-lg border border-border bg-foreground/[0.03] px-3 py-2 text-xs text-muted-foreground">
           <Lock className="h-3.5 w-3.5 shrink-0 text-[#5C5852]" aria-hidden />
           View only — commission details are hidden. Ask an admin to edit programs.
         </p>
@@ -1064,7 +1064,7 @@ export function ProductDirectoryPartnerProgramsTab({
       ) : null}
 
       {rows.length === 0 && !showAddProgramForm ? (
-        <div className="rounded-xl border border-border bg-white/[0.02] px-6 py-12 text-center">
+        <div className="rounded-xl border border-border bg-foreground/[0.03] px-6 py-12 text-center">
           <Award className="mx-auto mb-3 h-8 w-8 text-muted-foreground/65" aria-hidden />
           <p className="text-compact font-medium text-foreground">No partner programs yet</p>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -1076,7 +1076,7 @@ export function ProductDirectoryPartnerProgramsTab({
       ) : null}
 
       {rows.length > 0 && filteredRows.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-input bg-white/[0.02] px-6 py-12 text-center">
+        <div className="rounded-2xl border border-dashed border-input bg-foreground/[0.03] px-6 py-12 text-center">
           <p className="text-compact font-medium text-foreground">No programs match</p>
           <p className="mt-1 text-xs text-muted-foreground">
             Try another search, or adjust the expiry filter to see more programs.
@@ -1155,7 +1155,7 @@ export function ProductDirectoryPartnerProgramsTab({
             className={cn(
               "scroll-mt-4 overflow-hidden rounded-2xl border bg-popover transition-all duration-200",
               isEditing
-                ? "border-[rgba(201,169,110,0.28)] shadow-xl shadow-black/50 ring-1 ring-[rgba(201,169,110,0.14)]"
+                ? "border-primary/30 shadow-xl shadow-black/50 ring-1 ring-[rgba(201,169,110,0.14)]"
                 : "border-border hover:border-white/[0.10] hover:shadow-lg hover:shadow-black/25"
             )}
           >
@@ -1178,7 +1178,7 @@ export function ProductDirectoryPartnerProgramsTab({
                       </span>
                     ) : null}
                     {display.registryStatus ? (
-                      <span className="rounded-full border border-border px-2 py-0.5 text-[8px] font-medium capitalize text-muted-foreground">
+                      <span className="rounded-full border border-border px-2 py-0.5 text-2xs font-medium capitalize text-muted-foreground">
                         {display.registryStatus.replace(/-/g, " ")}
                       </span>
                     ) : null}
@@ -1188,7 +1188,7 @@ export function ProductDirectoryPartnerProgramsTab({
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-2xs text-muted-foreground">
                     {display.scope === "enable" ? (
-                      <span className="rounded bg-[rgba(91,138,110,0.12)] px-1.5 py-0.5 text-[8px] text-[#5B8A6E]">
+                      <span className="rounded bg-[rgba(91,138,110,0.12)] px-1.5 py-0.5 text-2xs text-[#5B8A6E]">
                         Enable
                       </span>
                     ) : display.scope ? (
@@ -1219,7 +1219,7 @@ export function ProductDirectoryPartnerProgramsTab({
                       <span className="text-muted-foreground">· {display.contact}</span>
                     ) : null}
                     {hasProductVariance ? (
-                      <span className="text-[8px] font-normal normal-case tracking-normal text-muted-foreground">
+                      <span className="text-2xs font-normal normal-case tracking-normal text-muted-foreground">
                         · terms vary by product
                       </span>
                     ) : null}
@@ -1272,7 +1272,7 @@ export function ProductDirectoryPartnerProgramsTab({
                           className={cn(
                             "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
                             hasUnsaved
-                              ? "bg-brand-cta text-[#08080c] shadow-sm hover:bg-[#d4b47e]"
+                              ? "bg-brand-cta text-primary-foreground shadow-sm hover:brightness-105"
                               : "cursor-not-allowed bg-white/[0.04] text-muted-foreground/65 opacity-50"
                           )}
                           onClick={() => {
@@ -1316,7 +1316,7 @@ export function ProductDirectoryPartnerProgramsTab({
                           [key]: { ...prev[key], programName: e.target.value, name: e.target.value },
                         }))
                       }
-                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
+                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/45 focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
                     />
                   </label>
                   <label className="block">
@@ -1332,7 +1332,7 @@ export function ProductDirectoryPartnerProgramsTab({
                           [key]: { ...prev[key], commissionRate: e.target.value === "" ? null : Number(e.target.value) },
                         }))
                       }
-                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
+                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/45 focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
                     />
                   </label>
                   <label className="block">
@@ -1345,7 +1345,7 @@ export function ProductDirectoryPartnerProgramsTab({
                           [key]: { ...prev[key], status: e.target.value as "active" | "inactive" },
                         }))
                       }
-                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
+                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/45 focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
                     >
                       <option value="active">Active</option>
                       <option value="inactive">Inactive</option>
@@ -1361,7 +1361,7 @@ export function ProductDirectoryPartnerProgramsTab({
                           [key]: { ...prev[key], scope: e.target.value === "enable" ? "enable" : e.target.value },
                         }))
                       }
-                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
+                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/45 focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
                     >
                       <option value="enable">Enable</option>
                       {teams.map((t) => (
@@ -1382,7 +1382,7 @@ export function ProductDirectoryPartnerProgramsTab({
                           [key]: { ...prev[key], expiryDate: e.target.value ? `${e.target.value}T12:00:00.000Z` : null },
                         }))
                       }
-                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
+                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/45 focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
                     />
                   </label>
                   <label className="block">
@@ -1392,7 +1392,7 @@ export function ProductDirectoryPartnerProgramsTab({
                       onChange={(e) =>
                         setDrafts((prev) => ({ ...prev, [key]: { ...prev[key], contact: e.target.value } }))
                       }
-                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
+                      className="h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-primary/45 focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
                     />
                   </label>
                   <div className="block sm:col-span-2">
@@ -1423,7 +1423,7 @@ export function ProductDirectoryPartnerProgramsTab({
                         setDrafts((prev) => ({ ...prev, [key]: { ...prev[key], amenities: e.target.value } }))
                       }
                       placeholder="Optional free text — not used for structured filters"
-                      className="w-full resize-none rounded-lg border border-white/[0.14] bg-inset px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-[rgba(201,169,110,0.45)] focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
+                      className="w-full resize-none rounded-lg border border-white/[0.14] bg-inset px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary/45 focus:ring-1 focus:ring-[rgba(201,169,110,0.28)]"
                     />
                   </label>
                   </div>
@@ -2071,7 +2071,7 @@ export function ProductDirectoryPartnerProgramsTab({
                     {/* Fixed 118×76 image box — img fills edge-to-edge, no letterboxing */}
                     <div className="relative h-[76px] w-full shrink-0 overflow-hidden bg-[#14141c]">
                       {brokenProductImages[p.id] ? (
-                        <div className="flex h-full w-full items-center justify-center bg-[#1a1a22] px-1 text-center text-[8px] font-medium leading-tight text-muted-foreground/65">
+                        <div className="flex h-full w-full items-center justify-center bg-[#1a1a22] px-1 text-center text-2xs font-medium leading-tight text-muted-foreground/65">
                           Image unavailable
                         </div>
                       ) : (
@@ -2085,17 +2085,17 @@ export function ProductDirectoryPartnerProgramsTab({
                               setBrokenProductImages((prev) => (prev[p.id] ? prev : { ...prev, [p.id]: true }))
                             }
                           />
-                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#08080c]/70 via-transparent to-transparent opacity-80" />
+                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-foreground/65 via-transparent to-transparent opacity-80" />
                         </>
                       )}
                     </div>
                     <div className="flex min-h-0 flex-1 flex-col gap-0.5 p-2 pt-1.5">
                       <p className="line-clamp-2 text-2xs font-medium leading-snug text-foreground">{p.name}</p>
                       {placeLine ? (
-                        <p className="line-clamp-1 text-[8px] leading-tight text-muted-foreground">{placeLine}</p>
+                        <p className="line-clamp-1 text-2xs leading-tight text-muted-foreground">{placeLine}</p>
                       ) : null}
                       <div className="mt-auto flex flex-wrap items-center gap-x-1 gap-y-0.5">
-                        <span className="text-[8px] text-muted-foreground">{directoryProductTypeShortLabel(p)}</span>
+                        <span className="text-2xs text-muted-foreground">{directoryProductTypeShortLabel(p)}</span>
                         {matchingAdvisory ? (
                           <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] text-amber-400">
                             <Flame className="h-2 w-2" aria-hidden />

@@ -152,7 +152,7 @@ export function AddDestinationDialog({ open, onOpenChange }: Props) {
                 maxLength={8000}
                 className={cn(
                   "min-h-[96px] w-full resize-y rounded-md border border-input bg-inset px-3 py-2 text-sm text-foreground shadow-xs outline-none placeholder:text-muted-foreground/70",
-                  "focus-visible:border-[rgba(255,255,255,0.25)] focus-visible:ring-[3px] focus-visible:ring-[rgba(255,255,255,0.1)]"
+                  "focus-visible:border-primary/35 focus-visible:ring-[3px] focus-visible:ring-ring/30"
                 )}
               />
             </div>
