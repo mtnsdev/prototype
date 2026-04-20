@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enable — Business Value Case</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0C0B09;
+    --bg-elevated: #14130F;
+    --bg-surface: #1A1810;
+    --border: rgba(200,190,170,0.08);
+    --border-strong: rgba(200,190,170,0.14);
+    --amber: #B09A72;
+    --amber-dim: rgba(176,154,114,0.45);
+    --amber-glow: rgba(176,154,114,0.07);
+    --cream: #DDD5C4;
+    --cream-dim: rgba(221,213,196,0.55);
+    --text: #B8B0A2;
+    --text-dim: #7A7468;
+    --text-faint: #4A4640;
+    --white: #EDE7DB;
+    --sage: #7D8B76;
+    --slate: #8E9AAE;
+    --clay: #A67B6B;
+    --sand: #B8A88E;
+    --serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  }
+  html { scroll-snap-type: y mandatory; scroll-behavior: smooth; overflow-x: hidden; }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; line-height: 1.6; }
+  ::selection { background: var(--amber); color: var(--bg); }
+  .s { min-height: 100vh; min-height: 100dvh; scroll-snap-align: start; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+  .s-inner { width: 100%; max-width: 1200px; padding: 80px 60px; position: relative; z-index: 2; }
+  .ed-xl { font-family: var(--serif); font-size: clamp(2.4rem, 5vw, 4.2rem); font-weight: 400; letter-spacing: -0.015em; line-height: 1.1; color: var(--white); }
+  .ed-lg { font-family: var(--serif); font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 400; letter-spacing: -0.01em; line-height: 1.2; color: var(--white); }
+  .ed-md { font-family: var(--serif); font-size: clamp(1.2rem, 1.8vw, 1.5rem); font-weight: 400; line-height: 1.35; color: var(--white); }
+  .ed-italic { font-style: italic; color: var(--amber); }
+  .sans-body { font-family: var(--sans); font-size: 0.95rem; font-weight: 400; line-height: 1.75; color: var(--text); }
+  .sans-sm { font-family: var(--sans); font-size: 0.82rem; font-weight: 400; line-height: 1.7; color: var(--text-dim); }
+  .mono { font-family: var(--mono); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
+  .rv { opacity: 0; transform: translateY(30px); transition: opacity 0.9s cubic-bezier(0.16,1,0.3,1), transform 0.9s cubic-bezier(0.16,1,0.3,1); }
+  .rv.v { opacity: 1; transform: translateY(0); }
+  .rv.d1 { transition-delay: 0.12s; }
+  .rv.d2 { transition-delay: 0.24s; }
+  .rv.d3 { transition-delay: 0.36s; }
+  .rv.d4 { transition-delay: 0.48s; }
+  .nav { position: fixed; right: 32px; top: 50%; transform: translateY(-50%); z-index: 100; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px 0; }
+  .nav-label { font-family: var(--mono); font-size: 0.55rem; letter-spacing: 0.1em; text-transform: uppercase; color: transparent; transition: color 0.3s ease; white-space: nowrap; }
+  .nav-item:hover .nav-label { color: var(--text-dim); }
+  .nav-item.active .nav-label { color: var(--amber-dim); }
+  .nav-tick { width: 16px; height: 1px; background: var(--text-faint); transition: all 0.3s ease; flex-shrink: 0; }
+  .nav-item:hover .nav-tick { background: var(--text-dim); width: 24px; }
+  .nav-item.active .nav-tick { background: var(--amber); width: 32px; height: 2px; }
+  .hero-issue { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 64px; }
+  .hero-wordmark { font-family: var(--serif); font-size: clamp(5rem, 14vw, 12rem); font-weight: 400; letter-spacing: 0.15em; text-indent: 0.15em; color: var(--cream); line-height: 0.85; margin-bottom: 36px; position: relative; }
+  .hero-wordmark::after { content: ''; display: block; width: 48px; height: 1px; background: var(--amber); margin: 40px auto 0; }
+  .hero-tagline { font-family: var(--serif); font-size: clamp(1rem, 1.8vw, 1.35rem); font-weight: 400; font-style: italic; color: var(--text-dim); margin-top: 32px; letter-spacing: 0.02em; }
+  .hero-meta { position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 24px; }
+  .hero-meta span { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-faint); }
+  .hero-meta-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-faint); }
+  .rule-v { width: 1px; background: var(--border-strong); align-self: stretch; }
+  .prop-grid { display: grid; grid-template-columns: 1fr 1px 1fr; gap: 0 48px; margin-top: 56px; }
+  .ed-split { display: grid; grid-template-columns: 5fr 4fr; gap: 72px; align-items: start; }
+  .ed-split.reverse { grid-template-columns: 4fr 5fr; }
+  .pillars-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 56px; border-top: 1px solid var(--border-strong); border-bottom: 1px solid var(--border-strong); }
+  .pillar-col { padding: 36px 28px; border-right: 1px solid var(--border); position: relative; transition: background 0.3s; }
+  .pillar-col:last-child { border-right: none; }
+  .pillar-col:hover { background: var(--bg-elevated); }
+  .pillar-col .pillar-num { font-family: var(--serif); font-size: 3.5rem; font-weight: 400; line-height: 1; color: var(--text-faint); margin-bottom: 16px; transition: color 0.3s; }
+  .pillar-col:hover .pillar-num { color: var(--amber); }
+  .pillar-col h3 { font-family: var(--serif); font-size: 1.15rem; font-weight: 600; color: var(--white); margin-bottom: 12px; line-height: 1.3; }
+  .pillar-col p { font-family: var(--sans); font-size: 0.82rem; color: var(--text-dim); line-height: 1.65; }
+  .pillar-metric-row { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .pillar-metric-val { font-family: var(--mono); font-size: 0.95rem; font-weight: 600; color: var(--amber); margin-bottom: 2px; }
+  .pillar-metric-note { font-family: var(--mono); font-size: 0.6rem; color: var(--text-faint); letter-spacing: 0.04em; }
+  .data-stack { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--border); }
+  .data-row { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--border); }
+  .data-row:last-child { border-bottom: none; }
+  .data-cell { padding: 20px 24px; }
+  .data-cell + .data-cell { border-left: 1px solid var(--border); }
+  .data-cell .mono { margin-bottom: 6px; display: block; }
+  .data-val { font-family: var(--mono); font-size: 1.5rem; font-weight: 600; color: var(--white); line-height: 1.2; }
+  .data-note { font-family: var(--sans); font-size: 0.72rem; color: var(--text-faint); margin-top: 4px; line-height: 1.5; }
+  .pull-quote { padding: 32px 0; margin: 32px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .pull-quote p { font-family: var(--serif); font-size: clamp(1.1rem, 1.6vw, 1.4rem); font-style: italic; color: var(--cream-dim); line-height: 1.5; }
+  .pull-quote .attr { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); margin-top: 16px; display: block; }
+  .rel-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; border: 1px solid var(--border); margin-top: 56px; }
+  .rel-item { padding: 32px 24px; border-right: 1px solid var(--border); transition: background 0.3s; position: relative; }
+  .rel-item:last-child { border-right: none; }
+  .rel-item:hover { background: var(--bg-elevated); }
+  .rel-item::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--amber); transform: scaleX(0); transition: transform 0.3s; transform-origin: left; }
+  .rel-item:hover::before { transform: scaleX(1); }
+  .rel-glyph { font-family: var(--serif); font-size: 1.8rem; color: var(--text-faint); margin-bottom: 16px; display: block; line-height: 1; transition: color 0.3s; }
+  .rel-item:hover .rel-glyph { color: var(--amber); }
+  .rel-item h4 { font-family: var(--sans); font-size: 0.78rem; font-weight: 600; color: var(--white); margin-bottom: 8px; }
+  .rel-item p { font-size: 0.72rem; color: var(--text-dim); line-height: 1.6; }
+  .rel-tool-name { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.08em; color: var(--amber); margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); display: block; }
+  .markets-split { display: grid; grid-template-columns: 1fr 1px 1fr; gap: 0 56px; margin-top: 56px; }
+  .market-col h3 { font-family: var(--serif); font-size: 1.6rem; font-weight: 500; margin-bottom: 8px; color: var(--white); }
+  .market-col .market-type { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 24px; display: block; }
+  .market-pitch-box { padding: 24px; margin-bottom: 24px; border-left: 2px solid var(--amber); background: var(--amber-glow); }
+  .market-pitch-box.cool { border-left-color: var(--slate); background: rgba(139,154,168,0.05); }
+  .market-pitch-box p { font-family: var(--serif); font-size: 1rem; font-style: italic; color: var(--cream); line-height: 1.6; }
+  .market-list { list-style: none; padding: 0; }
+  .market-list li { font-size: 0.85rem; color: var(--text-dim); padding: 8px 0; border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: baseline; }
+  .market-list li:last-child { border-bottom: none; }
+  .market-list li::before { content: '\2014'; color: var(--text-faint); flex-shrink: 0; }
+  .gravity-timeline { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; margin-top: 56px; border: 1px solid var(--border); }
+  .grav-phase { padding: 40px 32px; border-right: 1px solid var(--border); }
+  .grav-phase:last-child { border-right: none; }
+  .grav-phase .grav-label { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 20px; display: block; }
+  .grav-circle { width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--amber-dim); margin-bottom: 24px; }
+  .grav-phase:nth-child(2) .grav-circle { width: 72px; height: 72px; background: var(--amber-glow); }
+  .grav-phase:nth-child(3) .grav-circle { width: 96px; height: 96px; background: var(--amber-glow); border-color: var(--amber); box-shadow: 0 0 40px var(--amber-glow); }
+  .grav-phase h4 { font-family: var(--serif); font-size: 1.2rem; color: var(--white); margin-bottom: 12px; }
+  .grav-phase p { font-size: 0.82rem; color: var(--text-dim); line-height: 1.65; }
+  .road-table { margin-top: 48px; border-top: 1px solid var(--border-strong); }
+  .road-row { display: grid; grid-template-columns: 120px 1fr 1fr; border-bottom: 1px solid var(--border); transition: background 0.3s; }
+  .road-row:hover { background: var(--bg-elevated); }
+  .road-cell { padding: 24px 20px; border-right: 1px solid var(--border); }
+  .road-cell:last-child { border-right: none; }
+  .road-phase { font-family: var(--mono); font-size: 0.65rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+  .road-live { color: var(--amber); }
+  .road-row h4 { font-family: var(--serif); font-size: 1rem; color: var(--white); margin-bottom: 6px; }
+  .pills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .pill { font-family: var(--mono); font-size: 0.55rem; letter-spacing: 0.06em; padding: 2px 8px; border: 1px solid var(--border); color: var(--text-dim); }
+  .pill.g { border-color: var(--amber-dim); color: var(--amber); }
+  /* Compound Roadmap */
+  .compound-stack { display: flex; flex-direction: column; gap: 0; margin-top: 56px; }
+  .compound-phase { padding: 36px 40px; border: 1px solid var(--border); border-bottom: none; position: relative; padding-left: 44px; transition: background 0.4s; }
+  .compound-phase:last-child { border-bottom: 1px solid var(--border); }
+  .compound-phase:hover { background: var(--bg-elevated); }
+  .compound-phase::before { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 3px; transition: background 0.3s; }
+  .compound-phase.cp-live::before { background: var(--amber); }
+  .compound-phase.cp-1b::before { background: var(--sage); }
+  .compound-phase.cp-2::before { background: var(--slate); }
+  .compound-phase.cp-3::before { background: var(--clay); }
+  .compound-phase.cp-4::before { background: var(--text-faint); }
+  .cp-label { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+  .cp-label .cp-status { padding: 1px 6px; font-size: 0.5rem; border: 1px solid var(--amber-dim); color: var(--amber); letter-spacing: 0.08em; }
+  .compound-phase h4 { font-family: var(--serif); font-size: 1.15rem; color: var(--white); margin-bottom: 14px; line-height: 1.3; }
+  .cp-shift { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--border); margin-bottom: 14px; }
+  .cp-before, .cp-after { padding: 14px 18px; }
+  .cp-before { border-right: 1px solid var(--border); }
+  .cp-before .mono, .cp-after .mono { margin-bottom: 4px; display: block; font-size: 0.6rem; }
+  .cp-before p, .cp-after p { font-size: 0.78rem; color: var(--text-dim); line-height: 1.6; }
+  .cp-after p { color: var(--cream-dim); }
+  .cp-link { font-family: var(--serif); font-size: 0.82rem; font-style: italic; color: var(--amber-dim); line-height: 1.55; }
+  .cp-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+  @media (max-width: 900px) {
+    .cp-shift { grid-template-columns: 1fr; }
+    .cp-before { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+  .diff-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 48px; border: 1px solid var(--border); }
+  .diff-card { padding: 36px 28px; border-right: 1px solid var(--border); }
+  .diff-card:last-child { border-right: none; }
+  .diff-card .diff-label { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sand); margin-bottom: 12px; display: block; }
+  .diff-card h4 { font-family: var(--serif); font-size: 1.1rem; color: var(--white); margin-bottom: 10px; }
+  .diff-card p { font-size: 0.82rem; color: var(--text-dim); line-height: 1.65; }
+  .diff-card .alt { font-family: var(--serif); font-style: italic; color: var(--cream); font-size: 0.92rem; margin-top: 16px; }
+  .tam-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 56px; border: 1px solid var(--border); }
+  .tam-cell { padding: 48px 32px; border-right: 1px solid var(--border); text-align: center; }
+  .tam-cell:last-child { border-right: none; }
+  .tam-cell .tam-label { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 16px; display: block; }
+  .tam-cell .tam-val { font-family: var(--mono); font-size: 2.8rem; font-weight: 600; color: var(--white); line-height: 1; }
+  .tam-cell .tam-note { font-family: var(--sans); font-size: 0.78rem; color: var(--text-dim); margin-top: 12px; line-height: 1.55; }
+  .tam-cell.active { background: var(--amber-glow); }
+  .tam-cell.active .tam-val { color: var(--amber); }
+  .pricing-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: 48px; border: 1px solid var(--border); }
+  .pricing-col { padding: 40px 36px; border-right: 1px solid var(--border); }
+  .pricing-col:last-child { border-right: none; }
+  .pricing-col .pricing-tier { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--sand); margin-bottom: 8px; display: block; }
+  .pricing-col h3 { font-family: var(--serif); font-size: 1.6rem; color: var(--white); margin-bottom: 6px; }
+  .pricing-col .pricing-formula { font-family: var(--mono); font-size: 0.85rem; color: var(--amber); margin-bottom: 20px; display: block; }
+  .pricing-col .pricing-example { font-size: 0.78rem; color: var(--text-faint); line-height: 1.6; padding-top: 16px; border-top: 1px solid var(--border); }
+  .pricing-col ul { list-style: none; padding: 0; }
+  .pricing-col li { font-size: 0.85rem; color: var(--text-dim); padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .pricing-col li:last-child { border-bottom: none; }
+  .unit-econ { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 32px; border: 1px solid var(--border); }
+  .unit-econ-cell { padding: 28px 24px; border-right: 1px solid var(--border); text-align: center; }
+  .unit-econ-cell:last-child { border-right: none; }
+  .unit-econ-cell .mono { margin-bottom: 8px; display: block; }
+  .unit-econ-cell .data-val { font-size: 1.3rem; }
+  .s-label { position: absolute; top: 40px; left: 60px; font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-faint); z-index: 3; }
+  .s-count { position: absolute; bottom: 40px; right: 60px; font-family: var(--serif); font-size: 6rem; font-weight: 400; color: var(--border); line-height: 1; z-index: 1; pointer-events: none; }
+  .insight-box { margin-top: 40px; padding: 32px; border: 1px solid var(--border); background: var(--bg-elevated); }
+  .insight-box .ed-md { margin-bottom: 12px; }
+  .cycle-ring { margin-top: 48px; display: flex; flex-direction: column; align-items: center; gap: 48px; }
+  .cycle-svg { width: 100%; max-width: 620px; }
+  .cycle-svg text { font-family: var(--sans); }
+  .cycle-callouts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border: 1px solid var(--border); width: 100%; }
+  .cycle-callout { padding: 24px 20px; border-right: 1px solid var(--border); }
+  .cycle-callout:last-child { border-right: none; }
+  .cycle-callout-label { font-family: var(--mono); font-size: 0.55rem; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
+  .cycle-callout h4 { font-family: var(--serif); font-size: 0.95rem; color: var(--white); margin-bottom: 8px; line-height: 1.3; }
+  .cycle-callout p { font-size: 0.75rem; color: var(--text-dim); line-height: 1.6; }
+  .cycle-highlight { background: rgba(166,139,91,0.06); }
+  .vic-timeline { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0; margin-top: 56px; border: 1px solid var(--border); }
+  .vic-phase { padding: 28px 20px; border-right: 1px solid var(--border); position: relative; transition: background 0.3s; }
+  .vic-phase:last-child { border-right: none; }
+  .vic-phase:hover { background: var(--bg-elevated); }
+  .vic-phase::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--amber); transform: scaleX(0); transition: transform 0.3s; transform-origin: left; }
+  .vic-phase:hover::before { transform: scaleX(1); }
+  .vic-num { font-family: var(--mono); font-size: 0.6rem; color: var(--text-faint); letter-spacing: 0.1em; margin-bottom: 12px; display: block; }
+  .vic-phase h4 { font-family: var(--serif); font-size: 0.95rem; color: var(--white); margin-bottom: 8px; line-height: 1.3; }
+  .vic-phase p { font-size: 0.72rem; color: var(--text-dim); line-height: 1.6; }
+  .vic-enable { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 0.68rem; color: var(--amber); line-height: 1.5; }
+  .moat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 48px; }
+  .moat-card { border: 1px solid var(--border); padding: 40px 36px; position: relative; }
+  .moat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--amber); }
+  .moat-card h3 { font-family: var(--serif); font-size: 1.3rem; color: var(--white); margin-bottom: 16px; }
+  .moat-card p { font-size: 0.88rem; color: var(--text-dim); line-height: 1.7; }
+  .moat-card .moat-detail { margin-top: 16px; font-size: 0.78rem; color: var(--text-faint); line-height: 1.6; }
+  @media (max-width: 900px) {
+    .s-inner { padding: 60px 32px; }
+    .pillars-row { grid-template-columns: repeat(2, 1fr); }
+    .pillars-row .pillar-col:nth-child(2) { border-right: none; }
+    .ed-split, .ed-split.reverse { grid-template-columns: 1fr; gap: 40px; }
+    .rel-strip { grid-template-columns: repeat(3, 1fr); }
+    .rel-item:nth-child(3) { border-right: none; }
+    .markets-split { grid-template-columns: 1fr; gap: 40px; }
+    .markets-split .rule-v { display: none; }
+    .gravity-timeline { grid-template-columns: 1fr; }
+    .grav-phase { border-right: none; border-bottom: 1px solid var(--border); }
+    .diff-grid { grid-template-columns: 1fr; }
+    .vic-timeline { grid-template-columns: repeat(3, 1fr); }
+    .vic-phase:nth-child(3) { border-right: none; }
+    .moat-grid { grid-template-columns: 1fr; }
+    .tam-grid { grid-template-columns: 1fr; }
+    .tam-cell { border-right: none; border-bottom: 1px solid var(--border); }
+    .tam-cell:last-child { border-bottom: none; }
+    .pricing-cols { grid-template-columns: 1fr; }
+    .pricing-col { border-right: none; border-bottom: 1px solid var(--border); }
+    .pricing-col:last-child { border-bottom: none; }
+    .unit-econ { grid-template-columns: 1fr; }
+    .unit-econ-cell { border-right: none; border-bottom: 1px solid var(--border); }
+    .unit-econ-cell:last-child { border-bottom: none; }
+    .cycle-callouts { grid-template-columns: 1fr 1fr; }
+    .cycle-callout:nth-child(2) { border-right: none; }
+    .cycle-callout:nth-child(1), .cycle-callout:nth-child(2) { border-bottom: 1px solid var(--border); }
+    .diff-card { border-right: none; border-bottom: 1px solid var(--border); }
+    .diff-card:last-child { border-bottom: none; }
+    .road-row { grid-template-columns: 80px 1fr; }
+    .road-cell:last-child { grid-column: 1 / -1; border-right: none; border-top: 1px solid var(--border); }
+    .nav { display: none; }
+    .s-label { left: 32px; top: 24px; }
+    .s-count { display: none; }
+    .prop-grid { grid-template-columns: 1fr; gap: 32px; }
+    .prop-grid .rule-v { display: none; }
+  }
+  @media (max-width: 600px) {
+    .s-inner { padding: 48px 20px; }
+    .pillars-row, .rel-strip { grid-template-columns: 1fr; }
+    .pillar-col, .rel-item { border-right: none; border-bottom: 1px solid var(--border); }
+    .pillar-col:last-child, .rel-item:last-child { border-bottom: none; }
+  }
+</style>
+</head>
+<body>
+<nav class="nav" id="nav">
+  <div class="nav-item active" data-i="0"><span class="nav-label">Enable</span><div class="nav-tick"></div></div>
+  <div class="nav-item" data-i="1"><span class="nav-label">Proposition</span><div class="nav-tick"></div></div>
+  <div class="nav-item" data-i="2"><span class="nav-label">Four Pillars</span><div class="nav-tick"></div></div>
+  <div class="nav-item" data-i="3"><span class="nav-label">Simplification</span><div class="nav-tick"></div></div>
+  <div class="nav-item" data-i="4"><span class="nav-label">Revenue Uplift</span><div class="nav-tick"></div></div>
+  <div class="nav-item" data-i="5"><span class="nav-label">Commission</span><div class="nav-tick"></div></div>
+  <div class="nav-item" data-i="6"><span class="nav-label">Opportunities</span><div class="nav-tick"></div></div>
+  <div class="nav-item" data-i="7"><span class="nav-label">Sales Cycle</span><div class="nav-tick"></div></div>
+  <div class="nav-item" data-i="8"><span class="nav-label">VIC Lifecycle</span><div class="nav-tick"></div></div>
+  <div class="nav-item" data-i="9"><span class="nav-label">Integration</span><div class="nav-tick"></div></div>
+  <div class="nav-item" data-i="10"><span class="nav-label">Market Segments</span><div class="nav-tick"></div></div>
+  <div class="nav-item" data-i="11"><span class="nav-label">Market Size</span><div class="nav-tick"></div></div>
+  <div class="nav-item" data-i="12"><span class="nav-label">Platform Expansion</span><div class="nav-tick"></div></div>
+  <div class="nav-item" data-i="13"><span class="nav-label">Roadmap</span><div class="nav-tick"></div></div>
+  <div class="nav-item" data-i="14"><span class="nav-label">Business Model</span><div class="nav-tick"></div></div>
+  <div class="nav-item" data-i="15"><span class="nav-label">Defensibility</span><div class="nav-tick"></div></div>
+  <div class="nav-item" data-i="16"><span class="nav-label">Privacy</span><div class="nav-tick"></div></div>
+  <div class="nav-item" data-i="17"><span class="nav-label">Differentiation</span><div class="nav-tick"></div></div>
+</nav>
+<!-- 0 · HERO -->
+<section class="s" id="s0">
+  <div class="s-inner" style="text-align:center;">
+    <div class="rv hero-issue">Business Value Case</div>
+    <div class="rv d1 hero-wordmark">Enable</div>
+    <div class="rv d2 hero-tagline">The intelligence layer for luxury travel advisors</div>
+  </div>
+  <div class="hero-meta">
+    <span>Confidential</span>
+    <div class="hero-meta-dot"></div>
+    <span>March 2026</span>
+    <div class="hero-meta-dot"></div>
+    <span>V5.0</span>
+  </div>
+</section>
+<!-- 1 · PROPOSITION -->
+<section class="s" id="s1">
+  <span class="s-label">01 &mdash; The Proposition</span>
+  <div class="s-inner">
+    <h2 class="rv ed-xl">An intelligence layer that<br>makes existing workflows<br><em class="ed-italic">smarter</em> &mdash; and consolidates<br>them over time.</h2>
+    <div class="prop-grid rv d2" style="margin-top:56px;">
+      <div>
+        <p class="sans-body">Enable sits across the advisor&rsquo;s existing toolkit &mdash; delivering better decisions, faster research, and higher-value bookings from day one. As adoption deepens and platform intelligence compounds, redundant tools are naturally displaced.</p>
+        <p class="sans-body" style="margin-top:16px;">The adoption model is deliberate: additive value on first use, consolidation as a consequence of sustained engagement &mdash; not a prerequisite for it.</p>
+      </div>
+      <div class="rule-v"></div>
+      <div>
+        <p class="sans-sm">Mid-size luxury agency baseline: <strong style="color:var(--cream)">20&ndash;40 independent advisors</strong>, average booking values of $20K&ndash;$40K, commission rates of 10&ndash;16%.</p>
+        <p class="sans-sm" style="margin-top:16px;">All figures are conservative and reference production data from early partner deployments.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- 2 · FOUR PILLARS -->
+<section class="s" id="s2">
+  <span class="s-label">02 &mdash; Value Framework</span>
+  <div class="s-inner">
+    <h2 class="rv ed-xl">Four pillars<br>of <em class="ed-italic">value</em></h2>
+    <p class="rv d1 sans-body" style="margin-top:16px;max-width:560px;">Every capability in Enable maps to one or more of these pillars. Together, they represent the complete business case for agency adoption.</p>
+    <div class="pillars-row rv d2">
+      <div class="pillar-col">
+        <div class="pillar-num">01</div>
+        <h3>Simplification</h3>
+        <p>Consolidate fragmented knowledge and tools into a single intelligent platform. Lower software costs, reduced complexity, one starting point for every workflow.</p>
+        <div class="pillar-metric-row">
+          <div class="pillar-metric-val">$4K&ndash;$6K / advisor / yr</div>
+          <div class="pillar-metric-note">Subscription savings &middot; Phase 1&rarr;2</div>
+        </div>
+      </div>
+      <div class="pillar-col">
+        <div class="pillar-num">02</div>
+        <h3>Revenue Uplift</h3>
+        <p>Shift 15&ndash;20% of advisor time from research and admin back to client-facing activity. More selling time converts directly to more bookings and higher commission income.</p>
+        <div class="pillar-metric-row">
+          <div class="pillar-metric-val">$15K&ndash;$30K / advisor / yr</div>
+          <div class="pillar-metric-note">Revenue uplift &middot; Phase 1&rarr;3</div>
+        </div>
+      </div>
+      <div class="pillar-col">
+        <div class="pillar-num">03</div>
+        <h3>Commission &amp; Amenity Optimisation</h3>
+        <p>Surface optimal commission rates, promotional windows, and amenity packages at the point of decision. Eliminate the information gap that leaves money on the table.</p>
+        <div class="pillar-metric-row">
+          <div class="pillar-metric-val">$6K&ndash;$11K / advisor / yr</div>
+          <div class="pillar-metric-note">Recovered commission &middot; Phase 1b&rarr;3</div>
+        </div>
+      </div>
+      <div class="pillar-col">
+        <div class="pillar-num">04</div>
+        <h3>Opportunity Management</h3>
+        <p>Proactive alerts for promotional windows, VIC milestones, seasonal triggers, and cross-sell signals. Systematic capture of time-sensitive revenue moments.</p>
+        <div class="pillar-metric-row">
+          <div class="pillar-metric-val">Compounds across all pillars</div>
+          <div class="pillar-metric-note">Revenue multiplier &middot; Phase 2&rarr;4</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- 3 · PILLAR 1 -->
+<section class="s" id="s3">
+  <span class="s-label">03 &mdash; Pillar One</span>
+  <span class="s-count">01</span>
+  <div class="s-inner">
+    <div class="ed-split">
+      <div>
+        <div class="rv mono" style="color:var(--amber);">Simplification</div>
+        <h2 class="rv d1 ed-xl" style="margin-top:12px;">Advisors use 20&ndash;30%<br>of each tool.</h2>
+        <p class="rv d2 sans-body" style="margin-top:20px;">Advisors pay for four to six tools but rely on a small fraction of each. Enable targets those high-value functions and connects them through an intelligence layer that no incumbent provides &mdash; turning fragmented point solutions into a unified decision surface.</p>
+        <div class="rv d3 pull-quote">
+          <p>&ldquo;8&ndash;10 core functions across 4&ndash;6 tools. One platform that does those brilliantly, connected by intelligence.&rdquo;</p>
+          <span class="attr">Core design principle</span>
+        </div>
+      </div>
+      <div>
+        <div class="data-stack rv d2">
+          <div class="data-row">
+            <div class="data-cell">
+              <span class="mono">Current Stack</span>
+              <div class="data-val" style="color:var(--amber);">4&ndash;6 tools</div>
+              <div class="data-note">Knowledge base, itinerary builder, CRM, file storage, misc utilities</div>
+            </div>
+            <div class="data-cell">
+              <span class="mono">Feature Utilisation</span>
+              <div class="data-val">20&ndash;30%</div>
+              <div class="data-note">Per tool. The remainder is unused overhead.</div>
+            </div>
+          </div>
+          <div class="data-row">
+            <div class="data-cell">
+              <span class="mono">Enable &middot; Essentials</span>
+              <div class="data-val" style="color:var(--sage);">$12,900 /yr</div>
+              <div class="data-note">30 advisors &middot; $125/mo + $30/seat</div>
+            </div>
+            <div class="data-cell">
+              <span class="mono">Enable &middot; Professional</span>
+              <div class="data-val" style="color:var(--sage);">$23,460 /yr</div>
+              <div class="data-note">30 advisors &middot; $249/mo + $55/seat</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- 4 · PILLAR 2 -->
+<section class="s" id="s4">
+  <span class="s-label">04 &mdash; Pillar Two</span>
+  <span class="s-count">02</span>
+  <div class="s-inner">
+    <div class="ed-split reverse">
+      <div>
+        <div class="data-stack rv">
+          <div class="data-row">
+            <div class="data-cell" style="grid-column:1/-1;">
+              <span class="mono">Annual Commission Income</span>
+              <div class="data-val" style="color:var(--slate);font-size:2rem;">$100K&ndash;$150K</div>
+              <div class="data-note">Per advisor &middot; $2&ndash;2.5M bookings &times; 10&ndash;16% commission</div>
+            </div>
+          </div>
+          <div class="data-row">
+            <div class="data-cell">
+              <span class="mono">Research + Admin</span>
+              <div class="data-val">50&ndash;60%</div>
+              <div class="data-note">Of working hours. Document searches, rate comparison, payment reconciliation.</div>
+            </div>
+            <div class="data-cell">
+              <span class="mono">Time Recovered</span>
+              <div class="data-val" style="color:var(--sage);">15&ndash;20%</div>
+              <div class="data-note">Redirected from admin to client-facing activity.</div>
+            </div>
+          </div>
+          <div class="data-row">
+            <div class="data-cell" style="grid-column:1/-1;">
+              <span class="mono">Revenue Upside</span>
+              <div class="data-val" style="color:var(--amber);font-size:2rem;">$15K&ndash;$30K / advisor / year</div>
+              <div class="data-note">Conservative estimate. Even at half realisation: $8K&ndash;$15K incremental uplift per advisor.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="rv mono" style="color:var(--slate);">Revenue Uplift</div>
+        <h2 class="rv d1 ed-xl" style="margin-top:12px;">More selling time,<br>more bookings.</h2>
+        <p class="rv d2 sans-body" style="margin-top:20px;">Luxury travel advisors currently spend 50&ndash;60% of their working hours on research and administration. Enable compresses that overhead, shifting 15&ndash;20 percentage points back to client-facing work &mdash; time that converts directly to bookings and commission revenue.</p>
+        <div class="rv d3 pull-quote">
+          <p>&ldquo;An advisor spending 50% of their time selling moves to 65&ndash;70%. That&rsquo;s not an efficiency gain &mdash; it&rsquo;s a revenue event.&rdquo;</p>
+          <span class="attr">Revenue thesis</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- 5 · PILLAR 3 -->
+<section class="s" id="s5">
+  <span class="s-label">05 &mdash; Pillar Three</span>
+  <span class="s-count">03</span>
+  <div class="s-inner">
+    <div class="ed-split">
+      <div>
+        <div class="rv mono" style="color:var(--sage);">Commission &amp; Amenity Optimisation</div>
+        <h2 class="rv d1 ed-xl" style="margin-top:12px;">The money left<br>on the table.</h2>
+        <p class="rv d2 sans-body" style="margin-top:20px;">Every product decision requires simultaneous optimisation of commission rate and client amenity quality. Enable is the only platform that surfaces both variables together across all available supplier programs, in real time.</p>
+        <p class="rv d3 sans-sm" style="margin-top:16px;">Industry data shows advisors typically default to 3&ndash;4 familiar programs. Promotional windows are missed. Amenity stacking is suboptimal. The compounding effect across bookings, advisors, and months represents significant unrealised revenue.</p>
+      </div>
+      <div>
+        <div class="data-stack rv d2">
+          <div class="data-row">
+            <div class="data-cell" style="grid-column:1/-1;">
+              <span class="mono">Estimated Missed Commission (Agency-Wide)</span>
+              <div class="data-val" style="color:var(--amber);font-size:2rem;">$180K&ndash;$360K / year</div>
+              <div class="data-note">30 advisors &times; 50 bookings &times; $20K avg &times; 12% commission &times; 5&ndash;10% optimisation gap</div>
+            </div>
+          </div>
+          <div class="data-row">
+            <div class="data-cell">
+              <span class="mono">Manual Comparison</span>
+              <div class="data-val">30&ndash;60 min</div>
+              <div class="data-note">Per multi-property comparison across programs</div>
+            </div>
+            <div class="data-cell">
+              <span class="mono">With Enable</span>
+              <div class="data-val" style="color:var(--sage);">Seconds</div>
+              <div class="data-note">All programs, promotions, amenities &mdash; unified answer</div>
+            </div>
+          </div>
+        </div>
+        <p class="rv d3 sans-sm" style="margin-top:20px;">Recovering half the optimisation gap represents $90K&ndash;$180K in additional annual commission per agency &mdash; a clear multiple of the Enable subscription cost.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- 6 · PILLAR 4 -->
+<section class="s" id="s6">
+  <span class="s-label">06 &mdash; Pillar Four</span>
+  <span class="s-count">04</span>
+  <div class="s-inner">
+    <div class="ed-split reverse">
+      <div class="rv">
+        <div class="data-stack">
+          <div class="data-row" style="border-bottom:none;">
+            <div class="data-cell" style="grid-column:1/-1;border-right:none;">
+              <span class="mono" style="color:var(--amber);">The Briefing Room</span>
+              <p class="sans-body" style="margin-top:12px;">A personalised intelligence summary for each advisor: the five highest-value actions for the coming week, with context and reasoning. An <strong style="color:var(--cream)">opportunity engine</strong> powered by the intersection of client data, supplier promotions, and market timing.</p>
+              <div style="margin-top:20px;display:flex;flex-direction:column;gap:12px;">
+                <div><span class="mono" style="color:var(--text-faint);display:block;margin-bottom:2px;">Promotional Windows</span><span class="sans-sm">Time-limited supplier incentives, systematically surfaced</span></div>
+                <div><span class="mono" style="color:var(--text-faint);display:block;margin-bottom:2px;">VIC Milestones</span><span class="sans-sm">Birthdays, anniversaries, recurring travel patterns</span></div>
+                <div><span class="mono" style="color:var(--text-faint);display:block;margin-bottom:2px;">Seasonal Triggers</span><span class="sans-sm">Wave season, school holidays, demand cycles</span></div>
+                <div><span class="mono" style="color:var(--text-faint);display:block;margin-bottom:2px;">Cross-Sell Signals</span><span class="sans-sm">Transfers, dining, experiences to complete the booking</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="rv mono" style="color:var(--clay);">Opportunity Management</div>
+        <h2 class="rv d1 ed-xl" style="margin-top:12px;">The right client,<br>at the right moment.</h2>
+        <p class="rv d2 sans-body" style="margin-top:20px;">High-net-worth clients act on well-timed advisor recommendations. When Enable surfaces the right product at the right moment, advisors close higher-value bookings with minimal friction &mdash; because the outreach feels like service, not sales. Revenue uplift compounds across all four pillars.</p>
+        <div class="rv d3 pull-quote">
+          <p>&ldquo;A client profile, matched to a timing window, matched to an optimal product. Enable creates that intersection automatically.&rdquo;</p>
+          <span class="attr">Opportunity engine</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- 7 · SALES CYCLE -->
+<section class="s" style="background:var(--bg-surface);" id="s7">
+  <span class="s-label">07 &mdash; Sales Cycle</span>
+  <div class="s-inner">
+    <h2 class="rv ed-xl">Where Enable creates value<br>in the <em class="ed-italic">advisor workflow</em></h2>
+    <p class="rv d1 sans-body" style="margin-top:16px;max-width:600px;">Mapped to the actual 11-stage luxury travel sales cycle. A continuous loop &mdash; every trip ending feeds intelligence into the next one beginning.</p>
+    <div class="cycle-ring rv d2">
+      <svg class="cycle-svg" viewBox="0 0 700 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Circle ring -->
+        <circle cx="350" cy="260" r="180" stroke="rgba(255,255,255,0.06)" stroke-width="1.5" fill="none"/>
+        <!-- Group arcs (thicker, colored) -->
+        <!-- Acquire arc: stage 1→3 -->
+        <path d="M 350 80 A 180 180 0 0 1 523 191" stroke="#8E9AAE" stroke-width="3" fill="none" opacity="0.5"/>
+        <!-- Design arc: stage 3→6 -->
+        <path d="M 523 191 A 180 180 0 0 1 403 452" stroke="#B09A72" stroke-width="3" fill="none" opacity="0.5"/>
+        <!-- Deliver arc: stage 6→10 -->
+        <path d="M 403 452 A 180 180 0 0 1 177 191" stroke="#7D8B76" stroke-width="3" fill="none" opacity="0.5"/>
+        <!-- Return arc: stage 10→1 -->
+        <path d="M 177 191 A 180 180 0 0 1 350 80" stroke="#A67B6B" stroke-width="3" fill="none" opacity="0.5"/>
+        <!-- Clockwise arrow at top -->
+        <path d="M 358 78 L 350 68 L 346 80" stroke="#A67B6B" stroke-width="1.5" fill="none" opacity="0.6"/>
+        <!-- Group labels (outside ring) -->
+        <text x="490" y="120" fill="#8E9AAE" font-size="9" letter-spacing="0.12em" opacity="0.7" style="text-transform:uppercase;font-family:JetBrains Mono,monospace;">ACQUIRE</text>
+        <text x="560" y="350" fill="#B09A72" font-size="9" letter-spacing="0.12em" opacity="0.7" style="text-transform:uppercase;font-family:JetBrains Mono,monospace;">DESIGN</text>
+        <text x="72" y="350" fill="#7D8B76" font-size="9" letter-spacing="0.12em" opacity="0.7" style="text-transform:uppercase;font-family:JetBrains Mono,monospace;">DELIVER</text>
+        <text x="195" y="120" fill="#A67B6B" font-size="9" letter-spacing="0.12em" opacity="0.7" style="text-transform:uppercase;font-family:JetBrains Mono,monospace;">RETURN</text>
+        <!-- Stage nodes -->
+        <!-- 1. Lead (top) -->
+        <circle cx="350" cy="80" r="16" fill="rgba(142,154,174,0.12)" stroke="#8E9AAE" stroke-width="1"/>
+        <text x="350" y="84" text-anchor="middle" fill="#8E9AAE" font-size="10" font-weight="600">1</text>
+        <text x="350" y="54" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-size="11" font-weight="500">Lead</text>
+        <!-- 2. Outreach -->
+        <circle cx="453" cy="110" r="16" fill="rgba(142,154,174,0.12)" stroke="#8E9AAE" stroke-width="1"/>
+        <text x="453" y="114" text-anchor="middle" fill="#8E9AAE" font-size="10" font-weight="600">2</text>
+        <text x="478" y="104" text-anchor="start" fill="rgba(255,255,255,0.85)" font-size="11" font-weight="500">Outreach</text>
+        <!-- 3. Discovery -->
+        <circle cx="523" cy="191" r="16" fill="rgba(142,154,174,0.12)" stroke="#8E9AAE" stroke-width="1"/>
+        <text x="523" y="195" text-anchor="middle" fill="#8E9AAE" font-size="10" font-weight="600">3</text>
+        <text x="548" y="195" text-anchor="start" fill="rgba(255,255,255,0.85)" font-size="11" font-weight="500">Discovery</text>
+        <!-- 4. Proposal (HIGHLIGHTED) -->
+        <circle cx="538" cy="297" r="22" fill="rgba(176,154,114,0.15)" stroke="#B09A72" stroke-width="2"/>
+        <text x="538" y="301" text-anchor="middle" fill="#B09A72" font-size="11" font-weight="700">4</text>
+        <text x="568" y="293" text-anchor="start" fill="#B09A72" font-size="12" font-weight="600">Proposal</text>
+        <text x="568" y="308" text-anchor="start" fill="rgba(176,154,114,0.6)" font-size="8.5" style="font-style:italic;font-family:Playfair Display,serif;">Highest value</text>
+        <!-- 5. Presentation -->
+        <circle cx="494" cy="395" r="16" fill="rgba(176,154,114,0.12)" stroke="#B09A72" stroke-width="1"/>
+        <text x="494" y="399" text-anchor="middle" fill="#B09A72" font-size="10" font-weight="600">5</text>
+        <text x="519" y="399" text-anchor="start" fill="rgba(255,255,255,0.85)" font-size="11" font-weight="500">Presentation</text>
+        <!-- 6. Decision -->
+        <circle cx="403" cy="452" r="16" fill="rgba(176,154,114,0.12)" stroke="#B09A72" stroke-width="1"/>
+        <text x="403" y="456" text-anchor="middle" fill="#B09A72" font-size="10" font-weight="600">6</text>
+        <text x="403" y="480" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-size="11" font-weight="500">Decision</text>
+        <!-- 7. Booking -->
+        <circle cx="297" cy="452" r="16" fill="rgba(125,139,118,0.12)" stroke="#7D8B76" stroke-width="1"/>
+        <text x="297" y="456" text-anchor="middle" fill="#7D8B76" font-size="10" font-weight="600">7</text>
+        <text x="297" y="480" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-size="11" font-weight="500">Booking</text>
+        <!-- 8. Partner Prep -->
+        <circle cx="206" cy="395" r="16" fill="rgba(125,139,118,0.12)" stroke="#7D8B76" stroke-width="1"/>
+        <text x="206" y="399" text-anchor="middle" fill="#7D8B76" font-size="10" font-weight="600">8</text>
+        <text x="181" y="399" text-anchor="end" fill="rgba(255,255,255,0.85)" font-size="11" font-weight="500">Partner Prep</text>
+        <!-- 9. Pre-Travel -->
+        <circle cx="162" cy="297" r="16" fill="rgba(125,139,118,0.12)" stroke="#7D8B76" stroke-width="1"/>
+        <text x="162" y="301" text-anchor="middle" fill="#7D8B76" font-size="10" font-weight="600">9</text>
+        <text x="137" y="301" text-anchor="end" fill="rgba(255,255,255,0.85)" font-size="11" font-weight="500">Pre-Travel</text>
+        <!-- 10. During -->
+        <circle cx="177" cy="191" r="16" fill="rgba(125,139,118,0.12)" stroke="#7D8B76" stroke-width="1"/>
+        <text x="177" y="195" text-anchor="middle" fill="#7D8B76" font-size="10" font-weight="600">10</text>
+        <text x="152" y="195" text-anchor="end" fill="rgba(255,255,255,0.85)" font-size="11" font-weight="500">During</text>
+        <!-- 11. Post-Travel -->
+        <circle cx="247" cy="110" r="16" fill="rgba(166,123,107,0.12)" stroke="#A67B6B" stroke-width="1"/>
+        <text x="247" y="114" text-anchor="middle" fill="#A67B6B" font-size="10" font-weight="600">11</text>
+        <text x="222" y="104" text-anchor="end" fill="rgba(255,255,255,0.85)" font-size="11" font-weight="500">Post-Travel</text>
+        <!-- Center text -->
+        <text x="350" y="248" text-anchor="middle" fill="rgba(255,255,255,0.12)" font-size="11" letter-spacing="0.15em" style="text-transform:uppercase;font-family:JetBrains Mono,monospace;">11 STAGES</text>
+        <text x="350" y="272" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="16" style="font-family:Playfair Display,serif;font-style:italic;">Sales Cycle</text>
+      </svg>
+      <div class="cycle-callouts">
+        <div class="cycle-callout">
+          <span class="cycle-callout-label" style="color:#8E9AAE;">Acquire &middot; 1&ndash;3</span>
+          <h4>Client intelligence starts here</h4>
+          <p>VIC profile initiated from first interaction. Preferences captured in real time during discovery. Every new relationship begins building an asset.</p>
+        </div>
+        <div class="cycle-callout">
+          <span class="cycle-callout-label" style="color:#B09A72;">Design &middot; 4&ndash;6</span>
+          <h4>Highest-value intervention</h4>
+          <p>Curated product directory with community-built intelligence. Optimal commission and amenity combinations surfaced in seconds. Trip design intelligence accelerates the proposal&ndash;to&ndash;decision loop.</p>
+        </div>
+        <div class="cycle-callout">
+          <span class="cycle-callout-label" style="color:#7D8B76;">Deliver &middot; 7&ndash;10</span>
+          <h4>Automation replaces admin</h4>
+          <p>Commission tracking initiates at booking. VIP communications auto-generated from profile. Pre-travel checklists, partner confirmations, and DMC intelligence &mdash; all automated.</p>
+        </div>
+        <div class="cycle-callout">
+          <span class="cycle-callout-label" style="color:#A67B6B;">Return &middot; 11 &rarr; 1</span>
+          <h4>The loop that compounds</h4>
+          <p>Post-trip feedback enriches the VIC profile. Commission flags overdue payments. Every completed trip makes the next one faster, smarter, and more profitable.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- 8 · VIC LIFECYCLE -->
+<section class="s" id="s8">
+  <span class="s-label">08 &mdash; VIC Lifecycle</span>
+  <div class="s-inner">
+    <h2 class="rv ed-xl">The client relationship<br>as an <em class="ed-italic">intelligence cycle</em></h2>
+    <p class="rv d1 sans-body" style="margin-top:16px;max-width:640px;">Each VIC (Very Important Client) relationship follows a lifecycle. Enable captures intelligence at every stage and feeds it forward &mdash; transforming isolated transactions into a compounding knowledge asset.</p>
+    <div class="vic-timeline rv d2">
+      <div class="vic-phase">
+        <span class="vic-num">01</span>
+        <h4>Acquisition</h4>
+        <p>New client enters through referral or network. Preferences unknown. Advisor relies on discovery call.</p>
+        <div class="vic-enable">Enable captures preferences from first interaction. Profile begins building automatically.</div>
+      </div>
+      <div class="vic-phase">
+        <span class="vic-num">02</span>
+        <h4>First Booking</h4>
+        <p>Initial trip planned. Advisor learning client style, budget range, travel patterns.</p>
+        <div class="vic-enable">Booking data, itinerary choices, and destination preferences feed the VIC profile. Commission baseline established.</div>
+      </div>
+      <div class="vic-phase">
+        <span class="vic-num">03</span>
+        <h4>Relationship Building</h4>
+        <p>Post-trip feedback. Advisor refines understanding. Client trust deepens.</p>
+        <div class="vic-enable">DMC ratings, property reviews, and satisfaction signals enrich the intelligence layer. Enable learns what worked.</div>
+      </div>
+      <div class="vic-phase">
+        <span class="vic-num">04</span>
+        <h4>Repeat &amp; Expand</h4>
+        <p>Second and third bookings. Client explores new destinations. Budget often increases with trust.</p>
+        <div class="vic-enable">Pattern recognition activates. Enable identifies preferred property tiers, seasonal preferences, and upsell opportunities.</div>
+      </div>
+      <div class="vic-phase">
+        <span class="vic-num">05</span>
+        <h4>Proactive Engagement</h4>
+        <p>Advisor reaches out with ideas before the client asks. Relationship shifts from reactive to advisory.</p>
+        <div class="vic-enable">Briefing Room triggers: anniversaries, recurring patterns, promotional windows matched to known preferences. Opportunity Management at full power.</div>
+      </div>
+      <div class="vic-phase">
+        <span class="vic-num">06</span>
+        <h4>Lifetime Value</h4>
+        <p>Multi-year relationship. Client refers others. Advisor manages a growing portfolio of connected VICs.</p>
+        <div class="vic-enable">Full VIC intelligence compounds. Referral networks mapped. Commission optimised across the portfolio, not just individual bookings.</div>
+      </div>
+    </div>
+    <div class="rv d3 pull-quote" style="margin-top:40px;">
+      <p>&ldquo;The intelligence Enable captures on the first booking makes the tenth booking dramatically more valuable &mdash; for the advisor, the client, and the platform.&rdquo;</p>
+      <span class="attr">Compounding network effect</span>
+    </div>
+  </div>
+</section>
+<!-- 9 · INTEGRATION STRATEGY -->
+<section class="s" style="background:var(--bg-surface);" id="s9">
+  <span class="s-label">09 &mdash; Integration Strategy</span>
+  <div class="s-inner">
+    <h2 class="rv ed-xl">Five integration models,<br>not a <em class="ed-italic">binary</em> choice.</h2>
+    <p class="rv d1 sans-body" style="margin-top:16px;max-width:560px;">Enable maintains a deliberate, differentiated relationship with each tool category in the advisor ecosystem.</p>
+    <div class="rel-strip rv d2">
+      <div class="rel-item">
+        <span class="rel-glyph">&bull;</span>
+        <h4>Replace</h4>
+        <p>Enable fully displaces the incumbent tool.</p>
+        <span class="rel-tool-name">Knowledge bases</span>
+      </div>
+      <div class="rel-item">
+        <span class="rel-glyph">&#9684;</span>
+        <h4>Absorb</h4>
+        <p>Functionality migrates to Enable incrementally. The tool becomes vestigial.</p>
+        <span class="rel-tool-name">CRM systems</span>
+      </div>
+      <div class="rel-item">
+        <span class="rel-glyph">&#9678;</span>
+        <h4>Augment</h4>
+        <p>Enable reads from and writes intelligence back. The tool remains as the execution layer.</p>
+        <span class="rel-tool-name">Itinerary builders</span>
+      </div>
+      <div class="rel-item">
+        <span class="rel-glyph">&darr;</span>
+        <h4>Ingest</h4>
+        <p>Enable consumes outputs as data. No direct platform interaction.</p>
+        <span class="rel-tool-name">Transcription</span>
+      </div>
+      <div class="rel-item">
+        <span class="rel-glyph">&middot;</span>
+        <h4>Coexist</h4>
+        <p>Separate function. No integration required.</p>
+        <span class="rel-tool-name">Design &middot; Email</span>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- 10 · MARKET SEGMENTS -->
+<section class="s" id="s10">
+  <span class="s-label">10 &mdash; Market Segments</span>
+  <div class="s-inner">
+    <h2 class="rv ed-xl">Two segments,<br>two <em class="ed-italic">entry points</em>.</h2>
+    <p class="rv d1 sans-body" style="margin-top:16px;max-width:560px;">Enable&rsquo;s value proposition adapts to the technology maturity of each customer segment.</p>
+    <div class="markets-split rv d2">
+      <div class="market-col">
+        <span class="market-type" style="color:var(--amber);">Established Agencies</span>
+        <h3>Intelligence layer</h3>
+        <div class="market-pitch-box">
+          <p>&ldquo;Enable connects your existing tools, makes your advisors measurably faster, and consolidates redundant software over time.&rdquo;</p>
+        </div>
+        <ul class="market-list">
+          <li>Existing CRM, itinerary builder, and knowledge base in place</li>
+          <li>Core friction: fragmentation, information silos, tool switching costs</li>
+          <li>Enable layers on top, absorbing functions incrementally</li>
+          <li>In production with early partner agencies</li>
+        </ul>
+      </div>
+      <div class="rule-v"></div>
+      <div class="market-col">
+        <span class="market-type" style="color:var(--slate);">Independent Advisors</span>
+        <h3>Complete platform</h3>
+        <div class="market-pitch-box cool">
+          <p>&ldquo;Knowledge base, client intelligence, and commission tracking in one place. No additional tools required.&rdquo;</p>
+        </div>
+        <ul class="market-list">
+          <li>Minimal existing tooling &mdash; email, phone, perhaps one builder</li>
+          <li>Core friction: no system of record, knowledge trapped in memory</li>
+          <li>Enable is the entire stack from day one</li>
+          <li>Lowest friction onboarding, highest relative value delivery</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- 11 · MARKET SIZE -->
+<section class="s" style="background:var(--bg-surface);" id="s11">
+  <span class="s-label">11 &mdash; Market Size</span>
+  <div class="s-inner">
+    <h2 class="rv ed-xl">A fragmented market<br>with <em class="ed-italic">no incumbent</em></h2>
+    <p class="rv d1 sans-body" style="margin-top:16px;max-width:600px;">Luxury travel advisory has no dominant technology platform. The market is large, growing, and underserved by software built for mass-market tourism.</p>
+    <div class="tam-grid rv d2">
+      <div class="tam-cell">
+        <span class="tam-label">TAM</span>
+        <div class="tam-val">$2.4B</div>
+        <p class="tam-note">Global luxury travel technology spend. Advisors, agencies, consortia, and DMCs across North America, Europe, APAC.</p>
+      </div>
+      <div class="tam-cell">
+        <span class="tam-label">SAM</span>
+        <div class="tam-val">$680M</div>
+        <p class="tam-note">English-speaking luxury advisory market. ~45,000 independent advisors and ~3,200 specialist agencies in US, UK, Canada, Australia.</p>
+      </div>
+      <div class="tam-cell active">
+        <span class="tam-label">SOM &middot; Year 3</span>
+        <div class="tam-val">$18M</div>
+        <p class="tam-note">500 agencies and 6,000 advisor seats at blended $250/seat/month. Achievable through consortia partnerships and direct acquisition.</p>
+      </div>
+    </div>
+    <div class="insight-box rv d3">
+      <p class="ed-md">The <em class="ed-italic">consortia multiplier</em></p>
+      <p class="sans-body">Luxury travel is organised around consortia &mdash; Virtuoso, Travel Leaders, Signature &mdash; each representing hundreds of agencies. A single consortia partnership unlocks an entire distribution channel. Enable&rsquo;s integration-first architecture is designed for exactly this: one technical onboarding, hundreds of agency deployments.</p>
+    </div>
+  </div>
+</section>
+<!-- 12 · PLATFORM EXPANSION -->
+<section class="s" id="s12">
+  <span class="s-label">12 &mdash; Platform Expansion</span>
+  <div class="s-inner">
+    <h2 class="rv ed-xl">CRM displacement<br>through <em class="ed-italic">gravitational pull</em></h2>
+    <p class="rv d1 sans-body" style="margin-top:16px;max-width:640px;">Enable&rsquo;s expansion into CRM territory is incremental, not confrontational. As the platform captures richer client and booking intelligence, legacy CRM usage naturally contracts.</p>
+    <div class="gravity-timeline rv d2">
+      <div class="grav-phase">
+        <span class="grav-label">Launch</span>
+        <div class="grav-circle"></div>
+        <h4>Parallel operation</h4>
+        <p>Enable serves as the knowledge and intelligence layer. CRM retains client records and billing. Advisors use both.</p>
+      </div>
+      <div class="grav-phase">
+        <span class="grav-label">12 Months</span>
+        <div class="grav-circle"></div>
+        <h4>Enable becomes primary</h4>
+        <p>Client preferences, booking context, and relationship intelligence are richer in Enable. CRM narrows to billing and invoicing.</p>
+      </div>
+      <div class="grav-phase">
+        <span class="grav-label">24 Months</span>
+        <div class="grav-circle"></div>
+        <h4>CRM is vestigial</h4>
+        <p>Advisors operate primarily in Enable. Financial operations hand off to dedicated accounting tools (Xero, Stripe). Legacy CRM is cancelled or minimal.</p>
+      </div>
+    </div>
+    <p class="rv d3 sans-sm" style="margin-top:32px;max-width:600px;">Enable captures the entire advisor workflow except financial settlement, which integrates with best-in-class accounting platforms. This avoids the cost and complexity of building invoicing while owning the data that matters.</p>
+  </div>
+</section>
+<!-- 13 · ROADMAP -->
+<section class="s" id="s13">
+  <span class="s-label">13 &mdash; Roadmap</span>
+  <div class="s-inner">
+    <h2 class="rv ed-xl">How value<br><em class="ed-italic">compounds</em></h2>
+    <p class="rv d1 sans-body" style="margin-top:16px;max-width:600px;">Each phase builds on the intelligence accumulated before it. Later capabilities are only possible because earlier ones exist. The sequence is deliberate &mdash; not a feature backlog, but a compounding engine.</p>
+    <div class="compound-stack rv d2">
+      <!-- Phase 1 -->
+      <div class="compound-phase cp-live">
+        <div class="cp-label"><span>Phase 1</span><span class="cp-status">Live</span></div>
+        <h4>Ask Enable &middot; Knowledge Vault</h4>
+        <div class="cp-shift">
+          <div class="cp-before">
+            <span class="mono">Before</span>
+            <p>Advisor searches across 4&ndash;6 tools, spends 30&ndash;60 minutes piecing together a single answer about programs, amenities, or supplier details.</p>
+          </div>
+          <div class="cp-after">
+            <span class="mono" style="color:var(--amber);">After</span>
+            <p>One question, one answer, with sources &mdash; in seconds. Partner program details that advisors consistently miss are surfaced automatically.</p>
+          </div>
+        </div>
+        <div class="cp-foot">
+          <div class="pills"><span class="pill g">Simplification</span></div>
+          <span class="sans-sm" style="color:var(--text-faint);font-size:0.7rem;">Foundation &mdash; every subsequent phase queries this layer.</span>
+        </div>
+      </div>
+      <!-- Phase 1b -->
+      <div class="compound-phase cp-1b">
+        <div class="cp-label"><span>Phase 1b</span></div>
+        <h4>Product Directory &amp; Curated Collections &middot; Email Capture</h4>
+        <div class="cp-shift">
+          <div class="cp-before">
+            <span class="mono">Before</span>
+            <p>Advisor defaults to 3&ndash;4 familiar programs. Commission comparison takes 30&ndash;60 minutes per multi-property booking. Client history is scattered across email threads, memory, and disconnected notes.</p>
+          </div>
+          <div class="cp-after">
+            <span class="mono" style="color:var(--sage);">After</span>
+            <p>Every hotel, experience, and DMC searchable with commission rates, amenity packages, and community-validated quality signals. Client communication history feeds the intelligence layer automatically &mdash; building the data foundation for what comes next.</p>
+          </div>
+        </div>
+        <p class="cp-link">Compounds because the Product Directory is only as powerful as the knowledge layer underneath it. Ask Enable&rsquo;s intelligence makes every product search contextual, not just categorical.</p>
+        <div class="cp-foot">
+          <div class="pills"><span class="pill">Simplification</span><span class="pill">Commission</span></div>
+        </div>
+      </div>
+      <!-- Phase 2 -->
+      <div class="compound-phase cp-2">
+        <div class="cp-label"><span>Phase 2</span></div>
+        <h4>VIC Profiles &middot; Opportunity Pipeline &middot; Trip Design Intelligence &middot; Data Integrations</h4>
+        <div class="cp-shift">
+          <div class="cp-before">
+            <span class="mono">Before</span>
+            <p>Advisor reaches out to clients reactively &mdash; when the client calls, or when the advisor happens to remember a preference or anniversary. Revenue is left to chance and memory.</p>
+          </div>
+          <div class="cp-after">
+            <span class="mono" style="color:var(--slate);">After</span>
+            <p>Monday morning opens with a Briefing Room &mdash; the five highest-value actions for the week, with reasoning. The advisor initiates conversations because Enable identified the right client, the right moment, and the right product. Itinerary ingest and document extraction pipelines deepen the intelligence layer as integrations become available.</p>
+          </div>
+        </div>
+        <p class="cp-link">Compounds because VIC profiles require the client data that Phase 1b&rsquo;s email capture built. The Opportunity Pipeline only works because the Product Directory gives every recommendation a concrete, bookable answer. Trip Design Intelligence applies everything accumulated &mdash; product knowledge, client preferences, supplier data &mdash; to active trip planning.</p>
+        <div class="cp-foot">
+          <div class="pills"><span class="pill">Revenue</span><span class="pill">Commission</span><span class="pill">Opportunity</span></div>
+          <span class="sans-sm" style="color:var(--text-faint);font-size:0.7rem;">Enable becomes the primary advisor environment.</span>
+        </div>
+      </div>
+      <!-- Phase 3 -->
+      <div class="compound-phase cp-3">
+        <div class="cp-label"><span>Phase 3</span></div>
+        <h4>Advisor Automation &middot; Commission Automation &middot; Output</h4>
+        <div class="cp-shift">
+          <div class="cp-before">
+            <span class="mono">Before</span>
+            <p>Advisor spends hours formatting proposals, manually tracking commission payments across programs, chasing overdue invoices 30&ndash;90 days post-travel.</p>
+          </div>
+          <div class="cp-after">
+            <span class="mono" style="color:var(--clay);">After</span>
+            <p>Proposals generated from accumulated trip design intelligence. Commission tracked automatically from booking to payment. Deadline management and booking QA run without human oversight. The advisor&rsquo;s administrative overhead approaches zero.</p>
+          </div>
+        </div>
+        <p class="cp-link">Compounds because output quality depends entirely on the product, client, and supplier intelligence built in Phases 1&ndash;2. Enable generates proposals worth sending because it knows the client, knows the product, and knows the optimal booking path. CRM functionality is fully absorbed &mdash; not replaced, but made unnecessary.</p>
+        <div class="cp-foot">
+          <div class="pills"><span class="pill">All four pillars</span></div>
+          <span class="sans-sm" style="color:var(--text-faint);font-size:0.7rem;">Maximum revenue-per-advisor shift.</span>
+        </div>
+      </div>
+      <!-- Phase 4 -->
+      <div class="compound-phase cp-4">
+        <div class="cp-label"><span>Phase 4</span></div>
+        <h4>Proactive Intelligence &middot; Client Portal</h4>
+        <p class="sans-body" style="margin-bottom:14px;">Enable suggests the next trip to the right client at the right time &mdash; before the advisor asks, before the client asks. The Client Portal closes the loop: clients engage directly with their travel history and preferences, feeding richer data back into the intelligence layer. Every interaction makes the next one more valuable.</p>
+        <p class="cp-link">Compounds because the entire intelligence stack &mdash; knowledge, product, client, supplier, booking &mdash; is now deep enough to generate proactive, high-confidence recommendations. The advisor operates as a portfolio manager, not a reactive service provider.</p>
+        <div class="cp-foot">
+          <div class="pills"><span class="pill">Compounding</span></div>
+          <span class="sans-sm" style="color:var(--text-faint);font-size:0.7rem;">The complete advisor operating system.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- 14 · PRICING & BUSINESS MODEL -->
+<section class="s" id="s14">
+  <span class="s-label">14 &mdash; Business Model</span>
+  <div class="s-inner">
+    <h2 class="rv ed-xl">Platform fee<br>plus <em class="ed-italic">per-seat expansion</em></h2>
+    <p class="rv d1 sans-body" style="margin-top:16px;max-width:600px;">Hybrid pricing anchors agency commitment with a platform fee and scales revenue linearly with advisor adoption. Two tiers &mdash; calibrated during early partnerships to the value delivered at each phase.</p>
+    <div class="compound-stack rv d2" style="margin-top:40px;">
+      <div class="compound-phase cp-live">
+        <span class="cp-label">Structure</span>
+        <h4>Monthly platform fee + per-advisor seat charge</h4>
+        <p class="sans-sm" style="color:var(--text-dim);line-height:1.7;">Agencies pay a base fee for platform access, plus a per-seat charge that scales with team size. The entry tier delivers immediate value through knowledge intelligence and commission surfacing. The full tier unlocks all four value pillars as they ship &mdash; VIC profiles, opportunity management, and automation.</p>
+      </div>
+      <div class="compound-phase cp-1b">
+        <span class="cp-label">Expansion</span>
+        <h4>Two growth dimensions compound together</h4>
+        <p class="sans-sm" style="color:var(--text-dim);line-height:1.7;">Agencies expand in two directions: more advisors adopt the platform (seat growth), and the agency upgrades to the full tier as intelligence features ship (tier upgrade). Both motions reinforce each other &mdash; more seats generate more intelligence, which makes the full tier more valuable, which justifies more seats.</p>
+      </div>
+      <div class="compound-phase cp-2">
+        <span class="cp-label">Unit economics</span>
+        <h4>Software margins, not services margins</h4>
+        <p class="sans-sm" style="color:var(--text-dim);line-height:1.7;">AI inference is the primary variable cost. No professional services dependency, no implementation consultants. The cost to serve the 30th advisor is nearly identical to the first.</p>
+      </div>
+    </div>
+    <div class="unit-econ rv d3">
+      <div class="unit-econ-cell">
+        <span class="mono">NRR target</span>
+        <div class="data-val" style="color:var(--amber);">&gt;120%</div>
+        <p class="data-note" style="margin-top:8px;">Seat growth + tier upgrades. Agencies start light, expand headcount, upgrade as capabilities ship.</p>
+      </div>
+      <div class="unit-econ-cell">
+        <span class="mono">Gross margin target</span>
+        <div class="data-val" style="color:var(--sage);">&gt;80%</div>
+        <p class="data-note" style="margin-top:8px;">Software delivery with AI inference costs. Scales with infrastructure, not headcount.</p>
+      </div>
+      <div class="unit-econ-cell">
+        <span class="mono">Value-to-cost</span>
+        <div class="data-val" style="color:var(--slate);">Multiples,<br>not percentages</div>
+        <p class="data-note" style="margin-top:8px;">Commission recovery alone represents a clear multiple of subscription cost &mdash; before factoring time savings or revenue uplift.</p>
+      </div>
+    </div>
+    <div class="insight-box rv d4" style="margin-top:32px;">
+      <p class="ed-md">The <em class="ed-italic">Enable Data Layer</em> &mdash; future revenue</p>
+      <p class="sans-body">As platform intelligence compounds, Enable builds a proprietary luxury travel data layer: anonymised booking patterns, supplier performance benchmarks, destination trends, and commission structures aggregated across the advisor network. This data becomes licensable to consortia, tourism boards, hotel groups, and DMC networks &mdash; a second revenue stream that emerges naturally from platform operation.</p>
+    </div>
+  </div>
+</section>
+<!-- 15 · DEFENSIBILITY -->
+<section class="s" style="background:var(--bg-surface);" id="s15">
+  <span class="s-label">15 &mdash; Defensibility</span>
+  <div class="s-inner">
+    <h2 class="rv ed-xl">Three data moats,<br><em class="ed-italic">compounding daily</em></h2>
+    <p class="rv d1 sans-body" style="margin-top:16px;max-width:600px;">Enable&rsquo;s competitive advantage is not feature depth &mdash; it is data that no competitor can replicate. Three proprietary intelligence assets compound with every advisor interaction.</p>
+    <div class="moat-grid rv d2">
+      <div class="moat-card">
+        <h3>Conversational intelligence corpus</h3>
+        <p>Every advisor team call, supplier meeting, and strategy session captured through Fireflies integration. This is not generic training data &mdash; it is months of real advisor conversations revealing actual booking patterns, client objection handling, supplier negotiation tactics, and product knowledge transfer.</p>
+        <p class="moat-detail">Zero cold start. The corpus exists before Enable launches. Every week of operation adds structured intelligence that no new entrant can approximate. Competitors would need years of embedded access to replicate what Enable inherits on day one.</p>
+      </div>
+      <div class="moat-card">
+        <h3>DMC &amp; supplier intelligence</h3>
+        <p>The most trusted knowledge in luxury travel is the least documented: which DMC handles high-net-worth ground logistics in Patagonia, which concierge at The Brando actually delivers, which operators have capacity during peak. This intelligence lives in advisor memory and private networks.</p>
+        <p class="moat-detail">Enable captures this through structured ingestion from advisor workflows &mdash; email forwards, trip debriefs, supplier evaluations. Each data point is tagged, attributed, and searchable. A network effect emerges: every advisor who contributes raises the intelligence floor for the entire platform.</p>
+      </div>
+      <div class="moat-card" style="grid-column: 1 / -1;">
+        <h3>The Enable Data Layer</h3>
+        <p>As the platform aggregates product intelligence, supplier evaluations, commission structures, and booking patterns across hundreds of agencies, Enable builds a proprietary luxury travel data layer &mdash; structured, anonymised industry intelligence that no individual agency could assemble alone.</p>
+        <p class="moat-detail">This data layer becomes a strategic asset beyond the SaaS subscription: packaged industry benchmarks, destination intelligence, supplier performance indices, and trend analysis that Enable can license back to the ecosystem &mdash; consortia, tourism boards, hotel groups, and DMC networks. The platform that powers advisor workflows also becomes the definitive intelligence source for the luxury travel industry.</p>
+      </div>
+    </div>
+    <div class="insight-box rv d3">
+      <p class="ed-md">The <em class="ed-italic">defensibility equation</em></p>
+      <p class="sans-body">Feature parity is achievable. Data parity is not. Enable&rsquo;s moat widens with every conversation captured, every supplier evaluated, every client preference recorded. The cost of replication increases daily while the value to each advisor increases with network scale.</p>
+    </div>
+  </div>
+</section>
+<!-- 16 · PRIVACY BY DESIGN -->
+<section class="s" id="s16">
+  <span class="s-label">16 &mdash; Privacy by Design</span>
+  <div class="s-inner">
+    <h2 class="rv ed-xl">Client data as<br><em class="ed-italic">sacred trust</em></h2>
+    <p class="rv d1 sans-body" style="margin-top:16px;max-width:600px;">Luxury travel clients expect absolute discretion. Enable&rsquo;s architecture treats privacy not as a compliance checkbox but as a core product principle.</p>
+    <div class="pillars-row rv d2" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="pillar-col">
+        <div class="pillar-num">01</div>
+        <h3>Advisor-scoped by default</h3>
+        <p>VIC profiles are visible only to the advisor who owns the relationship. No cross-advisor data leakage. Client intelligence stays within the trust boundary of the existing relationship.</p>
+      </div>
+      <div class="pillar-col">
+        <div class="pillar-num">02</div>
+        <h3>Full audit trails</h3>
+        <p>Every data access, search query, and profile view is logged. Agency principals have complete visibility into who accessed what client data and when &mdash; essential for UHNW client management.</p>
+      </div>
+      <div class="pillar-col">
+        <div class="pillar-num">03</div>
+        <h3>Governed sharing</h3>
+        <p>When collaboration is required &mdash; handoffs, team bookings, specialist referrals &mdash; sharing is explicit, permissioned, and revocable. Advisors control exactly which information crosses relationship boundaries.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- 17 · DIFFERENTIATION -->
+<section class="s" style="background:var(--bg-surface);" id="s17">
+  <span class="s-label">17 &mdash; Differentiation</span>
+  <div class="s-inner">
+    <h2 class="rv ed-xl">Market positioning<br>&amp; <em class="ed-italic">differentiation</em></h2>
+    <div class="diff-grid rv d2">
+      <div class="diff-card">
+        <span class="diff-label">Positioning</span>
+        <h4>Intelligence layer, not all-in-one</h4>
+        <p>The luxury travel software market is saturated with &ldquo;all-in-one&rdquo; promises that erode trust on contact. Enable is the intelligence layer that makes advisors measurably more productive &mdash; a fundamentally different value proposition with lower adoption friction.</p>
+        <p class="alt">&ldquo;The intelligence layer that connects your work.&rdquo;</p>
+      </div>
+      <div class="diff-card">
+        <span class="diff-label">Value framing</span>
+        <h4>Revenue generation, not cost saving</h4>
+        <p>Shifting advisor selling time from 50% to 65&ndash;70% is not an efficiency gain &mdash; it is a revenue event, directly measurable in bookings closed and commission earned per quarter.</p>
+        <p class="alt">&ldquo;20% more time with clients. Measurably more bookings.&rdquo;</p>
+      </div>
+      <div class="diff-card">
+        <span class="diff-label">Trust model</span>
+        <h4>Curated intelligence, not AI recommendations</h4>
+        <p>Luxury advisors trust colleagues, established industry lists, and specific tastemakers &mdash; not algorithmic suggestions. Enable surfaces trusted-source intelligence at the point of decision, respecting the advisor&rsquo;s judgment and expertise.</p>
+        <p class="alt">&ldquo;We surface what your trusted sources say, when you need it.&rdquo;</p>
+      </div>
+    </div>
+    <div class="insight-box rv d3">
+      <p class="ed-md">The <em class="ed-italic">value perception gap</em></p>
+      <p class="sans-body">Advisors disproportionately invest in itinerary presentation &mdash; hours spent on formatting and design. But client satisfaction data tells a different story: retention and referrals are driven by relationship quality, on-the-ground execution, and the intelligence behind product selection. Enable is architected around the factors that actually drive client lifetime value.</p>
+    </div>
+  </div>
+</section>
+<script>
+  const obs = new IntersectionObserver(es => {
+    es.forEach(e => { if (e.isIntersecting) e.target.classList.add('v'); });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.rv').forEach(el => obs.observe(el));
+  const secs = document.querySelectorAll('.s');
+  const navItems = document.querySelectorAll('.nav-item');
+  const secObs = new IntersectionObserver(es => {
+    es.forEach(e => {
+      if (e.isIntersecting) {
+        const i = [...secs].indexOf(e.target);
+        navItems.forEach(n => n.classList.remove('active'));
+        if (navItems[i]) navItems[i].classList.add('active');
+      }
+    });
+  }, { threshold: 0.45 });
+  secs.forEach(s => secObs.observe(s));
+  navItems.forEach(n => {
+    n.addEventListener('click', () => {
+      secs[parseInt(n.dataset.i)]?.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+</script>
+</body>
+</html>
