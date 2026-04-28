@@ -22,6 +22,8 @@ export type DestinationDocument = {
 export type DMCPartner = {
   /** Catalog product id when this DMC exists in the Product Directory (single source of truth for ops fields). */
   productId?: string;
+  /** Set when `productId` is set but the product no longer exists in the tenant catalog. */
+  catalogUnavailable?: boolean;
   name: string;
   preferred: boolean;
   reppedBy?: string;
@@ -59,6 +61,7 @@ export type DMCPartner = {
 export type Restaurant = {
   /** Catalog Dining product id — name/url render from catalog in production. */
   productId?: string;
+  catalogUnavailable?: boolean;
   name: string;
   url?: string;
   note?: string;
@@ -71,6 +74,7 @@ export type Restaurant = {
 export type Hotel = {
   /** Catalog Accommodation product id. */
   productId?: string;
+  catalogUnavailable?: boolean;
   name: string;
   contact?: string;
   /** Rep firm line from catalog (prototype: plain string). */
@@ -86,6 +90,7 @@ export type Hotel = {
 
 export type YachtCompany = {
   productId?: string;
+  catalogUnavailable?: boolean;
   name: string;
   /** Fallback single line (prototype). Prefer structured fields when set. */
   contact: string;
@@ -104,6 +109,9 @@ export type TourismRegion = {
   links: { label: string; url: string }[];
   /** Tourism board or regional office contact line. */
   contact?: string;
+  /** When set, counted toward map coverage gate alongside catalog products. */
+  latitude?: number;
+  longitude?: number;
 };
 
 export type DestinationTripReport = {
@@ -116,6 +124,8 @@ export type DestinationTripReport = {
   content: string;
   helpfulCount: number;
   createdAt: string;
+  latitude?: number;
+  longitude?: number;
 };
 
 /** Keys for legacy bundled destinations → virtual sections (until first-class `DestinationSection` rows exist). */
@@ -985,12 +995,16 @@ const GREECE: Destination = {
         { label: "Visit Greece", url: "https://www.visitgreece.gr/" },
         { label: "GNTO", url: "https://www.gnto.gov.gr/" },
       ],
+      latitude: 37.9838,
+      longitude: 23.7275,
     },
     {
       name: "Cyclades",
       description: "Island hopping, ferries, and regional highlights.",
       contact: "Cyclades Prefecture tourism · info@cyclades.example.com",
       links: [{ label: "Cyclades tourism", url: "https://example.com/cyclades" }],
+      latitude: 37.1,
+      longitude: 25.37,
     },
   ],
   documents: [
@@ -1018,6 +1032,8 @@ const GREECE: Destination = {
         "**Just back** — Santorini ferries were smooth mid-week. Advise clients to book sunset tables 30+ days ahead in Oia. Aegean Elite reconfirmed drivers within 2 hours when winds shifted our hydrofoil.",
       helpfulCount: 14,
       createdAt: "2026-03-18T10:00:00.000Z",
+      latitude: 36.3932,
+      longitude: 25.4615,
     },
     {
       id: stableDestinationUuid("greece-trip-report-alex-2025"),
@@ -1030,6 +1046,8 @@ const GREECE: Destination = {
         "Crete driving times are underestimated in most PDFs — pad 25% for mountain routes. Peskesi still a standout for foodie clients.",
       helpfulCount: 9,
       createdAt: "2025-09-15T14:20:00.000Z",
+      latitude: 35.3387,
+      longitude: 25.1442,
     },
   ],
 };

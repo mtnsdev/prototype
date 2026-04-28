@@ -32,7 +32,7 @@ export function QuickCopyButton({
       await copyRichTextToClipboard(plain, html);
       toast({ title: "Copied!", tone: "success" });
       logDestinationEvent(
-        "copy_clicked",
+        "destination_quick_copy",
         { destination: destinationSlug ?? "", item: itemId ?? "" },
         undefined,
       );

@@ -1,10 +1,9 @@
 export type DestinationAnalyticsEventName =
-  | "destination_viewed"
-  | "section_expanded"
-  | "item_clicked"
-  | "copy_clicked"
-  | "endorsement_toggled"
-  | "trip_report_helpful"
-  | "trip_report_submitted"
+  | "destination_view"
+  | "destination_section_nav"
+  | "destination_product_open"
+  | "destination_quick_copy"
+  | "destination_deep_link_open"
   | "map_toggled"
-  | "deep_link_opened";
+  | "trip_report_helpful"
+  | "trip_report_submitted";

@@ -26,6 +26,12 @@ export function countDestinationGeoItems(destination: Destination): GeoCount {
       bump(h.latitude, h.longitude);
     }
   }
+  for (const r of destination.tripReports ?? []) {
+    bump(r.latitude, r.longitude);
+  }
+  for (const t of destination.tourismRegions ?? []) {
+    bump(t.latitude, t.longitude);
+  }
 
   return { total, withCoords };
 }

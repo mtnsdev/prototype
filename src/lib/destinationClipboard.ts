@@ -9,34 +9,16 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+/** v1: copy name only; expand to full contact block when integrations land. */
 export function formatPartnerContactBlock(partner: DMCPartner): { plain: string; html: string } {
-  const lines: string[] = [partner.name];
-  if (partner.reppedBy) lines.push(partner.reppedBy);
-  if (partner.keyContact) lines.push(partner.keyContact);
-  if (partner.generalRequests) lines.push(`General: ${partner.generalRequests}`);
-  if (partner.afterHours) lines.push(`After hours: ${partner.afterHours}`);
-  if (partner.website) lines.push(partner.website);
-  const plain = lines.join("\n");
-  const html = [
-    `<p><strong>${escapeHtml(partner.name)}</strong></p>`,
-    ...lines.slice(1).map((l) => `<p>${escapeHtml(l)}</p>`),
-  ].join("");
+  const plain = partner.name;
+  const html = `<p><strong>${escapeHtml(partner.name)}</strong></p>`;
   return { plain, html };
 }
 
 export function formatContactRowBlock(c: DestinationContactRow): { plain: string; html: string } {
-  const lines: string[] = [c.name];
-  if (c.organization) lines.push(c.organization);
-  if (c.role) lines.push(c.role);
-  if (c.description) lines.push(c.description);
-  if (c.email) lines.push(c.email);
-  if (c.phone) lines.push(c.phone);
-  if (c.website) lines.push(c.website);
-  const plain = lines.join("\n");
-  const html = `<p><strong>${escapeHtml(c.name)}</strong></p>${lines
-    .slice(1)
-    .map((l) => `<p>${escapeHtml(l)}</p>`)
-    .join("")}`;
+  const plain = c.name;
+  const html = `<p><strong>${escapeHtml(c.name)}</strong></p>`;
   return { plain, html };
 }
 

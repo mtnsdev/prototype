@@ -30,9 +30,7 @@ function vaultSearchHref(doc: DestinationDocument, destinationSlug: string) {
 
 export function DocumentsSection({ documents, destinationSlug, sectionId }: Props) {
   if (documents.length === 0) {
-    return (
-      <p className={cn("text-sm", destMuted)}>No documents linked yet. Check the Knowledge Vault for updates.</p>
-    );
+    return <p className={cn("text-sm", destMuted)}>Content coming soon.</p>;
   }
 
   return (

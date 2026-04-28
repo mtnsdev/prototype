@@ -11,8 +11,6 @@ import { loadPublishedDestination, publishDestination } from "@/lib/destinationL
 import { safeParseDestination } from "@/lib/destinationEditorSchema";
 import { Button } from "@/components/ui/button";
 import { DestinationDetailView } from "@/components/destinations/DestinationDetailView";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { BuildEditorProvider, BuildGuideCanvas, BuildPaletteToolbar } from "./DestinationEditorForms";
 
 export function DestinationEditorPage({ canonical }: { canonical: Destination }) {
@@ -31,8 +29,6 @@ export function DestinationEditorPage({ canonical }: { canonical: Destination })
     return JSON.stringify({ ...d, editorWorkspace: ensureEditorWorkspace(d) });
   });
 
-  const workspace = useMemo(() => ensureEditorWorkspace(draft), [draft]);
-
   const dirty = useMemo(() => JSON.stringify(draft) !== savedSnapshot, [draft, savedSnapshot]);
 
   useEffect(() => {
@@ -50,14 +46,6 @@ export function DestinationEditorPage({ canonical }: { canonical: Destination })
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [dirty]);
-
-  const setGuideLabel = useCallback((label: string) => {
-    setDraft((d) => {
-      const w = structuredClone(ensureEditorWorkspace(d));
-      w.guideLabel = label;
-      return { ...d, editorWorkspace: w };
-    });
-  }, []);
 
   const handleSave = useCallback(() => {
     const normalized = { ...draft, slug, editorWorkspace: ensureEditorWorkspace(draft) };
@@ -98,17 +86,6 @@ export function DestinationEditorPage({ canonical }: { canonical: Destination })
 
   const sectionStructureEditor = (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="guide-tab-label" className="text-sm text-muted-foreground">
-          Sidebar tab label (optional)
-        </Label>
-        <Input
-          id="guide-tab-label"
-          value={workspace.guideLabel ?? ""}
-          onChange={(e) => setGuideLabel(e.target.value)}
-          placeholder='Defaults to "Guide"'
-        />
-      </div>
       <BuildPaletteToolbar />
       <BuildGuideCanvas />
     </div>

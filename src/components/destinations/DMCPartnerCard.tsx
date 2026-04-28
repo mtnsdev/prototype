@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { ChevronRight, ExternalLink, Leaf, Star } from "lucide-react";
 import type { DMCPartner } from "@/data/destinations";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,7 @@ import { QuickCopyButton } from "@/components/destinations/shared/QuickCopyButto
 import { EndorsementBadge } from "@/components/destinations/shared/EndorsementBadge";
 import { FreshnessIndicator } from "@/components/destinations/shared/FreshnessIndicator";
 import { formatPartnerContactBlock } from "@/lib/destinationClipboard";
+import { logDestinationEvent } from "@/lib/destinationAnalytics";
 
 type Props = {
   partner: DMCPartner;
@@ -49,9 +50,17 @@ function PillRow({ label, values }: { label: string; values?: string[] }) {
 }
 
 export function DMCPartnerCard({ partner, defaultOpen = false, itemId, destinationSlug }: Props) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(false);
   const panelId = useId();
   const { plain, html } = formatPartnerContactBlock(partner);
+
+  useEffect(() => {
+    if (!defaultOpen) return;
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      setOpen(true);
+    }
+  }, [defaultOpen]);
 
   return (
     <div
@@ -61,6 +70,11 @@ export function DMCPartnerCard({ partner, defaultOpen = false, itemId, destinati
         partner.preferred && "border-brand-cta/25",
       )}
     >
+      {partner.catalogUnavailable ? (
+        <p className="border-b border-border bg-muted/40 px-4 py-2 text-xs text-muted-foreground">
+          Unavailable — this product is no longer in the catalog.
+        </p>
+      ) : null}
       <div className="flex items-start gap-1">
         <button
           type="button"
@@ -121,6 +135,13 @@ export function DMCPartnerCard({ partner, defaultOpen = false, itemId, destinati
                     href={partner.website}
                     target="_blank"
                     rel="noreferrer"
+                    onClick={() =>
+                      logDestinationEvent("destination_product_open", {
+                        destination: destinationSlug,
+                        product_id: partner.productId ?? "",
+                        surface: "dmc_website",
+                      })
+                    }
                     className="inline-flex items-center gap-1 text-sm text-brand-cta underline-offset-4 hover:underline"
                   >
                     {partner.website.replace(/^https?:\/\//, "")}

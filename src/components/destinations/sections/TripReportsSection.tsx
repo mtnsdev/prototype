@@ -6,9 +6,10 @@ import { TripReportCard } from "@/components/destinations/sections/TripReportCar
 
 type Props = {
   reports: DestinationTripReport[];
+  destinationSlug: string;
 };
 
-export function TripReportsSection({ reports }: Props) {
+export function TripReportsSection({ reports, destinationSlug }: Props) {
   const sorted = useMemo(
     () =>
       [...reports].sort((a, b) => {
@@ -21,13 +22,13 @@ export function TripReportsSection({ reports }: Props) {
   );
 
   if (sorted.length === 0) {
-    return <p className="text-sm text-muted-foreground">No trip reports yet.</p>;
+    return <p className="text-sm text-muted-foreground">Content coming soon.</p>;
   }
 
   return (
     <div className="space-y-4">
       {sorted.map((r) => (
-        <TripReportCard key={r.id} report={r} />
+        <TripReportCard key={r.id} report={r} destinationSlug={destinationSlug} />
       ))}
     </div>
   );

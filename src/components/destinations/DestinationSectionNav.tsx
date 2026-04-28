@@ -87,6 +87,7 @@ export function DestinationSectionNav({ className, items, activeId, onChange, va
               role="tab"
               aria-selected={isActive}
               tabIndex={isActive ? 0 : -1}
+              title={!isVertical ? `${label} · ${count} items` : undefined}
               onClick={() => onChange(id)}
               className={cn(
                 "relative flex min-w-0 items-center gap-2 rounded-lg text-left transition-colors",
@@ -97,20 +98,24 @@ export function DestinationSectionNav({ className, items, activeId, onChange, va
               )}
             >
               <SectionGlyph iconKey={iconKey} className={isVertical ? "" : "size-3.5"} />
-              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className={cn("text-xs font-medium sm:text-sm", !isVertical && "whitespace-nowrap")}>
-                  {label}
+              {isVertical ? (
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className={cn("text-xs font-medium sm:text-sm")}>{label}</span>
+                  <span
+                    className={cn(
+                      "tabular-nums text-[10px]",
+                      isActive ? "text-muted-foreground" : "text-muted-foreground/70",
+                    )}
+                    aria-hidden
+                  >
+                    {count} items
+                  </span>
                 </span>
-                <span
-                  className={cn(
-                    "tabular-nums text-[10px]",
-                    isActive ? "text-muted-foreground" : "text-muted-foreground/70",
-                  )}
-                  aria-hidden
-                >
-                  {count} items
+              ) : (
+                <span className="sr-only">
+                  {label}, {count} items
                 </span>
-              </span>
+              )}
               {!isVertical && isActive ? (
                 <span
                   className="pointer-events-none absolute inset-x-1 bottom-0 h-[2px] rounded-full bg-brand-cta sm:inset-x-2"

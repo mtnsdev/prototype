@@ -8,6 +8,7 @@ import { destMuted } from "./destinationStyles";
 import { stableItemId } from "@/lib/stableDestinationIds";
 import { EndorsementBadge } from "@/components/destinations/shared/EndorsementBadge";
 import { FreshnessIndicator } from "@/components/destinations/shared/FreshnessIndicator";
+import { logDestinationEvent } from "@/lib/destinationAnalytics";
 
 type Props = {
   byRegion: Record<string, Restaurant[]>;
@@ -25,9 +26,7 @@ export function RestaurantSection({ byRegion, destinationSlug, sectionId }: Prop
   }, [regions]);
 
   if (regions.length === 0) {
-    return (
-      <p className={cn("text-sm", destMuted)}>No restaurant listings yet for this destination.</p>
-    );
+    return <p className={cn("text-sm", destMuted)}>Content coming soon.</p>;
   }
 
   const list = byRegion[active] ?? [];
@@ -81,6 +80,13 @@ export function RestaurantSection({ byRegion, destinationSlug, sectionId }: Prop
                       href={item.url}
                       target="_blank"
                       rel="noreferrer"
+                      onClick={() =>
+                        logDestinationEvent("destination_product_open", {
+                          destination: destinationSlug,
+                          product_id: item.productId ?? "",
+                          surface: "restaurant_link",
+                        })
+                      }
                       className="inline-flex items-center gap-1 font-medium text-foreground underline-offset-4 hover:text-brand-cta hover:underline"
                     >
                       {item.name}
@@ -89,6 +95,11 @@ export function RestaurantSection({ byRegion, destinationSlug, sectionId }: Prop
                   ) : (
                     <span className="font-medium text-foreground">{item.name}</span>
                   )}
+                  {item.catalogUnavailable ? (
+                    <span className="rounded border border-border bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      Unavailable
+                    </span>
+                  ) : null}
                   <FreshnessIndicator tone={item.freshnessTone} />
                   {item.endorsementCount != null && item.endorsementCount > 0 ? (
                     <EndorsementBadge count={item.endorsementCount} />

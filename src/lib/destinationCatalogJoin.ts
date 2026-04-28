@@ -17,7 +17,9 @@ export function mergeDestinationWithCatalog(destination: Destination, products: 
   const dmcPartners = destination.dmcPartners.map((d) => {
     if (!d.productId) return d;
     const p = byId.get(d.productId);
-    return p ? mergeDirectoryProductIntoDmc(d, p) : d;
+    return p
+      ? mergeDirectoryProductIntoDmc({ ...d, catalogUnavailable: undefined }, p)
+      : { ...d, catalogUnavailable: true };
   });
 
   const restaurants: Destination["restaurants"] = {};
@@ -25,7 +27,9 @@ export function mergeDestinationWithCatalog(destination: Destination, products: 
     restaurants[region] = list.map((r) => {
       if (!r.productId) return r;
       const p = byId.get(r.productId);
-      return p ? mergeDirectoryProductIntoRestaurant(r, p) : r;
+      return p
+        ? mergeDirectoryProductIntoRestaurant({ ...r, catalogUnavailable: undefined }, p)
+        : { ...r, catalogUnavailable: true };
     });
   }
 
@@ -34,14 +38,18 @@ export function mergeDestinationWithCatalog(destination: Destination, products: 
     hotels[group] = list.map((h) => {
       if (!h.productId) return h;
       const p = byId.get(h.productId);
-      return p ? mergeDirectoryProductIntoHotel(h, p) : h;
+      return p
+        ? mergeDirectoryProductIntoHotel({ ...h, catalogUnavailable: undefined }, p)
+        : { ...h, catalogUnavailable: true };
     });
   }
 
   const yachtCompanies = destination.yachtCompanies?.map((y) => {
     if (!y.productId) return y;
     const p = byId.get(y.productId);
-    return p ? mergeDirectoryProductIntoYacht(y, p) : y;
+    return p
+      ? mergeDirectoryProductIntoYacht({ ...y, catalogUnavailable: undefined }, p)
+      : { ...y, catalogUnavailable: true };
   });
 
   return {

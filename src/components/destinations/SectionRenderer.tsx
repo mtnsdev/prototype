@@ -13,9 +13,18 @@ type Props = {
   destinationSlug: string;
 };
 
+function countGrouped<T>(rec: Record<string, T[]>): number {
+  return Object.values(rec).reduce((n, list) => n + list.length, 0);
+}
+
+const comingSoon = <p className="text-sm text-muted-foreground">Content coming soon.</p>;
+
 export function SectionRenderer({ section, destinationSlug }: Props) {
   switch (section.sectionType) {
     case "partner_cards":
+      if (section.partners.length === 0) {
+        return comingSoon;
+      }
       return (
         <PartnerCardsSection
           partners={section.partners}
@@ -25,6 +34,9 @@ export function SectionRenderer({ section, destinationSlug }: Props) {
       );
     case "product_list":
       if (section.groupingStyle === "pills") {
+        if (countGrouped(section.restaurants) === 0) {
+          return comingSoon;
+        }
         return (
           <ProductListSection
             groupingStyle="pills"
@@ -33,6 +45,9 @@ export function SectionRenderer({ section, destinationSlug }: Props) {
             sectionId={section.id}
           />
         );
+      }
+      if (countGrouped(section.hotels) === 0) {
+        return comingSoon;
       }
       return (
         <ProductListSection
@@ -43,8 +58,14 @@ export function SectionRenderer({ section, destinationSlug }: Props) {
         />
       );
     case "contact_list":
+      if (section.contacts.length === 0) {
+        return comingSoon;
+      }
       return <ContactListSection contacts={section.contacts} destinationSlug={destinationSlug} />;
     case "document_list":
+      if (section.documents.length === 0) {
+        return comingSoon;
+      }
       return (
         <DocumentListSection
           documents={section.documents}
@@ -53,9 +74,15 @@ export function SectionRenderer({ section, destinationSlug }: Props) {
         />
       );
     case "rich_text":
+      if (!section.text.trim()) {
+        return comingSoon;
+      }
       return <RichTextSection text={section.text} />;
     case "trip_reports":
-      return <TripReportsSection reports={section.reports} />;
+      if (section.reports.length === 0) {
+        return comingSoon;
+      }
+      return <TripReportsSection reports={section.reports} destinationSlug={destinationSlug} />;
     default: {
       const _exhaustive: never = section;
       return _exhaustive;

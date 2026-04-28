@@ -138,13 +138,13 @@ export function DestinationDetailView({
     if (typeof window === "undefined") return;
     const h = window.location.hash;
     if (h) {
-      logDestinationEvent("deep_link_opened", { destination: displayDestination.slug, source: "hash" });
+      logDestinationEvent("destination_deep_link_open", { destination: displayDestination.slug, source: "hash" });
     }
   }, [displayDestination.slug]);
 
   useEffect(() => {
     logDestinationEvent(
-      "destination_viewed",
+      "destination_view",
       { destination: displayDestination.slug },
       user?.id != null ? String(user.id) : undefined,
     );
@@ -162,6 +162,10 @@ export function DestinationDetailView({
 
   const setSection = useCallback(
     (id: string) => {
+      logDestinationEvent("destination_section_nav", {
+        destination: displayDestination.slug,
+        section_id: id,
+      });
       const p = new URLSearchParams(searchParams.toString());
       p.delete("section");
       const qs = p.toString();
@@ -170,7 +174,7 @@ export function DestinationDetailView({
       window.history.replaceState(null, "", `${base}${nextHash}`);
       setClientHash(nextHash);
     },
-    [pathname, searchParams],
+    [pathname, searchParams, displayDestination.slug],
   );
 
   const onMapToggle = useCallback(
@@ -302,7 +306,7 @@ export function DestinationDetailView({
                 id="destination-section-structure-heading"
                 className="text-sm font-semibold text-foreground"
               >
-                Page sections
+                Guide editor
               </h2>
               <div className="mt-3">{sectionStructureEditor}</div>
             </section>

@@ -14,7 +14,7 @@ type Props = {
 
 export function ContactListSection({ contacts, destinationSlug }: Props) {
   if (contacts.length === 0) {
-    return <p className={cn("text-sm", destMuted)}>No contacts listed yet.</p>;
+    return <p className={cn("text-sm", destMuted)}>Content coming soon.</p>;
   }
 
   return (

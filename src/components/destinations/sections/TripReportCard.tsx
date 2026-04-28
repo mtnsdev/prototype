@@ -5,12 +5,14 @@ import { ThumbsUp } from "lucide-react";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import type { DestinationTripReport } from "@/data/destinations";
+import { logDestinationEvent } from "@/lib/destinationAnalytics";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { destCardClass, destMuted } from "@/components/destinations/destinationStyles";
 
 type Props = {
   report: DestinationTripReport;
+  destinationSlug: string;
 };
 
 function formatRange(start: string, end: string): string {
@@ -20,7 +22,7 @@ function formatRange(start: string, end: string): string {
   return `${a.toLocaleDateString(undefined, opts)}–${b.toLocaleDateString(undefined, opts)}`;
 }
 
-export function TripReportCard({ report }: Props) {
+export function TripReportCard({ report, destinationSlug }: Props) {
   const [voted, setVoted] = useState(false);
 
   return (
@@ -65,6 +67,13 @@ export function TripReportCard({ report }: Props) {
             <Link
               key={pr.productId}
               href={`/dashboard/products/${pr.productId}`}
+              onClick={() =>
+                logDestinationEvent("destination_product_open", {
+                  destination: destinationSlug,
+                  product_id: pr.productId,
+                  surface: "trip_report_tag",
+                })
+              }
               className="rounded-full border border-brand-cta/30 bg-brand-cta/10 px-2.5 py-0.5 text-[10px] font-medium text-brand-cta hover:bg-brand-cta/15"
             >
               {pr.label}
@@ -81,7 +90,18 @@ export function TripReportCard({ report }: Props) {
           variant={voted ? "toolbarAccent" : "outline"}
           size="sm"
           className="gap-1.5"
-          onClick={() => setVoted((v) => !v)}
+          onClick={() => {
+            setVoted((was) => {
+              const next = !was;
+              if (next) {
+                logDestinationEvent("trip_report_helpful", {
+                  destination: destinationSlug,
+                  report_id: report.id,
+                });
+              }
+              return next;
+            });
+          }}
         >
           <ThumbsUp className="size-3.5" aria-hidden />
           Helpful · <span className="tabular-nums">{report.helpfulCount + (voted ? 1 : 0)}</span>

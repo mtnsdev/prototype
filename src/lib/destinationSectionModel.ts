@@ -50,6 +50,8 @@ type SectionBase = {
 export type VirtualPartnerCardsSection = SectionBase & {
   sectionType: "partner_cards";
   partners: DMCPartner[];
+  /** Disambiguates map pins / deep-link section ids when multiple partner card blocks exist. */
+  partnerCardsKind?: "dmc" | "yachts";
 };
 
 export type VirtualProductListPillsSection = SectionBase & {
@@ -104,6 +106,7 @@ function countRestaurants(r: Record<string, Restaurant[]>) {
 function yachtToPartner(y: YachtCompany): DMCPartner {
   return {
     productId: y.productId,
+    catalogUnavailable: y.catalogUnavailable,
     name: y.name,
     preferred: false,
     reppedBy: y.destinations,
@@ -185,6 +188,7 @@ export function buildVirtualSectionsFromDestination(destination: Destination): V
               title,
               iconKey,
               sectionType: "partner_cards",
+              partnerCardsKind: "dmc",
               sortOrder: sortOrder++,
               count: cat.dmcPartners.length,
               partners: cat.dmcPartners,
@@ -235,6 +239,7 @@ export function buildVirtualSectionsFromDestination(destination: Destination): V
               title,
               iconKey,
               sectionType: "partner_cards",
+              partnerCardsKind: "yachts",
               sortOrder: sortOrder++,
               count: yachts.length,
               partners: yachts.map(yachtToPartner),

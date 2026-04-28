@@ -8,6 +8,7 @@ import { destCardClass, destCardRowHover, destMuted, destMuted2 } from "./destin
 import { stableItemId } from "@/lib/stableDestinationIds";
 import { EndorsementBadge } from "@/components/destinations/shared/EndorsementBadge";
 import { FreshnessIndicator } from "@/components/destinations/shared/FreshnessIndicator";
+import { logDestinationEvent } from "@/lib/destinationAnalytics";
 
 type Props = {
   byGroup: Record<string, Hotel[]>;
@@ -22,9 +23,7 @@ export function HotelSection({ byGroup, destinationSlug, sectionId }: Props) {
   );
 
   if (groups.length === 0) {
-    return (
-      <p className={cn("text-sm", destMuted)}>No hotel listings yet for this destination.</p>
-    );
+    return <p className={cn("text-sm", destMuted)}>Content coming soon.</p>;
   }
 
   return (
@@ -71,6 +70,13 @@ export function HotelSection({ byGroup, destinationSlug, sectionId }: Props) {
                                 href={h.url}
                                 target="_blank"
                                 rel="noreferrer"
+                                onClick={() =>
+                                  logDestinationEvent("destination_product_open", {
+                                    destination: destinationSlug,
+                                    product_id: h.productId ?? "",
+                                    surface: "hotel_link",
+                                  })
+                                }
                                 className="inline-flex items-center gap-1 font-medium text-foreground hover:text-brand-cta"
                               >
                                 {h.name}
@@ -79,6 +85,11 @@ export function HotelSection({ byGroup, destinationSlug, sectionId }: Props) {
                             ) : (
                               <span className="font-medium text-foreground">{h.name}</span>
                             )}
+                            {h.catalogUnavailable ? (
+                              <span className="rounded border border-border bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                Unavailable
+                              </span>
+                            ) : null}
                             <FreshnessIndicator tone={h.freshnessTone} />
                             {h.endorsementCount != null && h.endorsementCount > 0 ? (
                               <EndorsementBadge count={h.endorsementCount} />
