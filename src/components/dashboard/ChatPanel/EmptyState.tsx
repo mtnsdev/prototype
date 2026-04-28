@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { SUGGESTION_CHIPS } from "./constants";
-import { EmptyChat } from "@/components/ui/empty-states";
+import { ONBOARDING_STARTER_CHIPS_STORAGE_KEY } from "@/lib/onboardingStarters";
 
 type EmptyStateProps = {
   displayName: string;
@@ -12,7 +13,24 @@ type EmptyStateProps = {
 };
 
 export function EmptyState({ displayName, onSuggestionClick, suggestionChips }: EmptyStateProps) {
-  const chips = suggestionChips?.length ? suggestionChips : SUGGESTION_CHIPS;
+  const [chips, setChips] = useState<string[]>(
+    suggestionChips?.length ? suggestionChips : SUGGESTION_CHIPS
+  );
+
+  useEffect(() => {
+    if (suggestionChips?.length) return;
+    try {
+      const raw = sessionStorage.getItem(ONBOARDING_STARTER_CHIPS_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as unknown;
+      if (Array.isArray(parsed) && parsed.every((x) => typeof x === "string") && parsed.length > 0) {
+        setChips(parsed);
+        sessionStorage.removeItem(ONBOARDING_STARTER_CHIPS_STORAGE_KEY);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [suggestionChips]);
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-4">
       {/* Personalized greeting with logo */}

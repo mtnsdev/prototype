@@ -159,7 +159,7 @@ export type DestinationEditorTabSettings = {
 export type EditorProductSlot = "dmc" | "restaurants" | "hotels" | "yachts" | "tourism" | "documents";
 
 /**
- * One block inside a tab — any combination of products (catalog), text, and/or attached documents.
+ * One guide section — authors add text, catalog rows, and/or file attachments as needed; flags turn on when content exists.
  */
 export type EditorTabSection = {
   id: string;
@@ -1130,12 +1130,150 @@ const JAPAN: Destination = {
   documents: [{ name: "JR pass quick reference", type: "pdf" }],
 };
 
+/** Skeleton hub — multi-country; sub-regions organize countries (spec: Africa example). */
+const AFRICA: Destination = {
+  slug: "africa",
+  name: "Africa",
+  tagline: "Safari, cities, and coastlines — curated coverage growing.",
+  heroImage: heroImageUrlForDestination("africa"),
+  description:
+    "Multi-country hub for safari and city programs. Sub-regions organize South Africa, Kenya, Botswana, and more — expand with Claromentis parity.",
+  subRegions: ["South Africa", "Kenya", "Botswana", "Tanzania"],
+  dmcPartners: [
+    {
+      productId: "cat-dmc-af-001",
+      name: "Exeter Safari Collection",
+      preferred: true,
+      reppedBy: "Safari desk",
+      website: "https://example.com/exeter-safari",
+      keyContact: "Sarah M. · safaris@example.com",
+      generalRequests: "safari.ops@example.com",
+      specializations: ["Safari", "Family travel", "Photography"],
+      languages: ["English", "Afrikaans"],
+      proposalTurnaround: "48 hours",
+      minimumBooking: "$2,500 per booking",
+    },
+    {
+      productId: "cat-dmc-af-002",
+      name: "Giltedge Africa",
+      preferred: false,
+      website: "https://example.com/giltedge",
+      keyContact: "team@giltedge.example.com",
+      specializations: ["Luxury safari", "Cape Town"],
+      languages: ["English"],
+    },
+  ],
+  restaurants: {
+    "Cape Town": [
+      { productId: "cat-rest-af-001", name: "Test Kitchen", note: "Woodstock · book early" },
+    ],
+    Nairobi: [{ productId: "cat-rest-af-002", name: "Carnivore", note: "Classic grill" }],
+  },
+  hotels: {
+    "South Africa": [
+      {
+        productId: "cat-hotel-af-001",
+        name: "Singita Lebombo",
+        url: "https://example.com/singita",
+        note: "Kruger",
+        repFirm: "EU consortium",
+      },
+    ],
+    Kenya: [
+      {
+        productId: "cat-hotel-af-002",
+        name: "Giraffe Manor",
+        url: "https://example.com/giraffe",
+        note: "Nairobi",
+      },
+    ],
+  },
+  tourismRegions: [
+    {
+      name: "South Africa Tourism",
+      description: "Trade marketing & toolkit",
+      links: [{ label: "South Africa Tourism", url: "https://www.southafrica.net/" }],
+      contact: "trade@southafrica.example.com",
+    },
+    {
+      name: "Kenya Tourism Board",
+      links: [{ label: "Magical Kenya", url: "https://www.magicalkenya.com/" }],
+    },
+  ],
+  documents: [
+    { name: "East Africa visa & eTA checklist", type: "pdf" },
+    { name: "Safari packing & tipping guide", type: "pdf" },
+  ],
+};
+
+/** Skeleton hub — multi-island; sub-regions organize islands (spec: Caribbean example). */
+const CARIBBEAN: Destination = {
+  slug: "caribbean",
+  name: "Caribbean",
+  tagline: "Island hopping — DMCs, dining, and yacht partners.",
+  heroImage: heroImageUrlForDestination("caribbean"),
+  description:
+    "Multi-island overview. Sub-regions handle individual islands — expand with island-by-island dining and hotel curation.",
+  subRegions: ["Anguilla", "Antigua", "Aruba", "St. Barth", "Turks & Caicos"],
+  dmcPartners: [
+    {
+      productId: "cat-dmc-cb-001",
+      name: "Hummingbird Travel",
+      preferred: true,
+      website: "https://example.com/hummingbird",
+      keyContact: "charters@hummingbird.example.com",
+      specializations: ["Yachts", "Island transfers"],
+      languages: ["English", "French"],
+    },
+    {
+      productId: "cat-dmc-cb-002",
+      name: "Caribbean Excursionist",
+      preferred: false,
+      website: "https://example.com/excursionist",
+      keyContact: "hello@excursionist.example.com",
+    },
+  ],
+  restaurants: {
+    Anguilla: [{ productId: "cat-rest-cb-001", name: "Blanchards", note: "Meads Bay" }],
+    "St. Barth": [{ productId: "cat-rest-cb-002", name: "Bonito", note: "Gustavia harbor" }],
+    Aruba: [{ productId: "cat-rest-cb-003", name: "Passions on the Beach", note: "Eagle Beach" }],
+  },
+  hotels: {
+    "Grand Cayman": [
+      {
+        productId: "cat-hotel-cb-001",
+        name: "Ritz-Carlton Grand Cayman",
+        url: "https://example.com/ritz-gc",
+        note: "Seven Mile Beach",
+      },
+    ],
+    "St Lucia": [
+      {
+        productId: "cat-hotel-cb-002",
+        name: "Jade Mountain",
+        url: "https://example.com/jade",
+        note: "Pitons views",
+      },
+    ],
+  },
+  tourismRegions: [
+    {
+      name: "Barbados Tourism",
+      links: [{ label: "Visit Barbados", url: "https://www.visitbarbados.org/" }],
+    },
+    {
+      name: "Anguilla Tourist Board",
+      links: [{ label: "I Love Anguilla", url: "https://www.ivisitanguilla.com/" }],
+    },
+  ],
+  documents: [{ name: "Caribbean island-hopping primer", type: "pdf" }],
+};
+
 /**
  * Canonical Claromentis-parity destination portals (stub until curated).
  * Slugs are stable — do not rename once published.
  */
 const OTHER_META: { slug: string; name: string; tagline: string }[] = [
-  { slug: "africa", name: "Africa", tagline: "Safari, cities, and coastlines — content coming soon." },
   { slug: "antarctica", name: "Antarctica", tagline: "Expedition planning — content coming soon." },
   { slug: "arctic", name: "Arctic", tagline: "Polar journeys — content coming soon." },
   { slug: "argentina", name: "Argentina", tagline: "Patagonia to Buenos Aires." },
@@ -1146,7 +1284,6 @@ const OTHER_META: { slug: string; name: string; tagline: string }[] = [
   { slug: "bhutan", name: "Bhutan", tagline: "Himalayan kingdom journeys." },
   { slug: "brazil", name: "Brazil", tagline: "Amazon to Rio." },
   { slug: "canada", name: "Canada", tagline: "Rockies, cities, and Maritimes." },
-  { slug: "caribbean", name: "Caribbean", tagline: "Island hopping overview." },
   { slug: "chile", name: "Chile", tagline: "Atacama to Patagonia." },
   { slug: "colombia", name: "Colombia", tagline: "Cities and coffee country." },
   { slug: "costa-rica", name: "Costa Rica", tagline: "Rainforest & coast." },
@@ -1185,7 +1322,7 @@ function buildStub(m: { slug: string; name: string; tagline: string }): Destinat
 const STUBS = OTHER_META.map(buildStub);
 
 const BY_SLUG: Record<string, Destination> = Object.fromEntries(
-  [GREECE, ITALY, FRANCE, JAPAN, ...STUBS].map((d) => [d.slug, d]),
+  [GREECE, ITALY, FRANCE, JAPAN, AFRICA, CARIBBEAN, ...STUBS].map((d) => [d.slug, d]),
 );
 
 export function listDestinationSlugs(): string[] {

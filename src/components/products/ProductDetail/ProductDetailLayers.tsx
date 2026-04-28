@@ -1,17 +1,15 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { Award, Lock, Users } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Award, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/contexts/ToastContext";
-import { useUser } from "@/contexts/UserContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ScopeBadge } from "@/components/ui/ScopeBadge";
 import { MOCK_TEAMS } from "@/lib/teamsMock";
 import type { Product } from "@/types/product";
 import {
   getProductLayerMock,
-  type AgencyNoteMock,
   type AdvisorLayerMock,
   type PartnerProgramMock,
 } from "./productLayerMock";
@@ -21,34 +19,15 @@ type Props = {
 };
 
 export function ProductDetailLayers({ product }: Props) {
-  const { user } = useUser();
   const { isAdmin } = usePermissions();
   const toast = useToast();
 
   const mock = useMemo(() => getProductLayerMock(product.id), [product.id]);
   const [advisorOverrides, setAdvisorOverrides] = useState<AdvisorLayerMock>(mock.advisorDefaults);
-  const [agencyNotes, setAgencyNotes] = useState<AgencyNoteMock[]>(mock.agencyNotes);
-  const [newAgencyNote, setNewAgencyNote] = useState("");
   const [showSuggestionModal, setShowSuggestionModal] = useState(false);
   const [suggestionReason, setSuggestionReason] = useState("Star rating is inaccurate");
   const [suggestionDetails, setSuggestionDetails] = useState("");
   const [suggestionScope, setSuggestionScope] = useState<"agency" | "enable">("agency");
-
-  const submitAgencyNote = useCallback(() => {
-    const t = newAgencyNote.trim();
-    if (!t) return;
-    const author = user?.username ?? user?.email ?? "You";
-    setAgencyNotes((prev) => [
-      {
-        id: `an-${Date.now()}`,
-        content: t,
-        author,
-        timeAgo: "Just now",
-      },
-      ...prev,
-    ]);
-    setNewAgencyNote("");
-  }, [newAgencyNote, user?.username, user?.email]);
 
   const ownership = product.data_ownership_level ?? "Enable";
   const showLockBanner = !isAdmin && ownership !== "Advisor";
@@ -60,7 +39,7 @@ export function ProductDetailLayers({ product }: Props) {
         <div className="flex items-center gap-1.5 text-2xs text-muted-foreground/70 mb-3">
           <Lock className="w-3 h-3 shrink-0" />
           <span>
-            Team record — view only. You can add personal notes or suggest changes.
+            Team record — view only. You can suggest changes.
           </span>
         </div>
       )}
@@ -142,75 +121,12 @@ export function ProductDetailLayers({ product }: Props) {
                   </div>
                 </div>
             </div>
-
-            <div className="my-4 flex items-center gap-2">
-              <div className="h-px flex-1 bg-white/[0.06]" />
-              <span className="text-[8px] uppercase tracking-widest text-muted-foreground/70">Agency / Team Notes</span>
-              <div className="h-px flex-1 bg-white/[0.06]" />
-            </div>
-
-              <div className="space-y-3 rounded-xl border border-blue-500/10 bg-blue-500/[0.03] p-3">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Users className="w-3 h-3 text-blue-400/50" />
-                  <span className="text-2xs text-blue-400/60">Visible to all team members</span>
-                </div>
-                <div className="space-y-2">
-                  {agencyNotes.map((note) => (
-                    <div
-                      key={note.id}
-                      className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.04]"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-xs text-foreground/88 leading-relaxed flex-1">
-                          {note.content}
-                        </p>
-                        {isAdmin && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              toast({ title: "Suggestion review — coming in v2", tone: "success" })
-                            }
-                            className="text-2xs text-[var(--color-warning)]/80 shrink-0 hover:text-[var(--color-warning)]"
-                          >
-                            Pin
-                          </button>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-2xs text-muted-foreground">{note.author}</span>
-                        <span className="text-2xs text-muted-foreground/70">·</span>
-                        <span className="text-2xs text-muted-foreground/70">{note.timeAgo}</span>
-                        {note.pinned && (
-                          <span className="text-2xs text-amber-500/80 ml-1">· Pinned</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Add a note for the team…"
-                    value={newAgencyNote}
-                    onChange={(e) => setNewAgencyNote(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && submitAgencyNote()}
-                    className="flex-1 text-xs bg-white/[0.03] border border-border rounded-lg px-3 py-2 text-foreground/88 placeholder:text-muted-foreground outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={submitAgencyNote}
-                    className="text-xs text-blue-400 hover:text-blue-300 px-3"
-                  >
-                    Post
-                  </button>
-                </div>
-                {!isAdmin && (
-                  <p className="text-2xs text-muted-foreground/70 italic">
-                    Team-level fields (description, star rating, etc.) can only be changed by an
-                    admin. You can suggest a change below.
-                  </p>
-                )}
-              </div>
+            {!isAdmin && (
+              <p className="mt-3 text-2xs text-muted-foreground/70 italic">
+                Team-level fields (description, star rating, etc.) can only be changed by an admin.
+                You can suggest a change below.
+              </p>
+            )}
       </div>
 
       {/* Partner Programs */}

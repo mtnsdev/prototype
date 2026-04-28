@@ -15,7 +15,7 @@ const SOURCE_META: Record<string, { icon: typeof Database; label: string; color:
   acuity:   { icon: Sparkles,  label: "Acuity AI",      color: "text-amber-400" },
   email:    { icon: Mail,      label: "Email extract",  color: "text-cyan-400" },
   tripsuite:{ icon: Ship,      label: "TripSuite",      color: "text-rose-400" },
-  import:   { icon: Database,  label: "CSV import",     color: "text-gray-400" },
+  import:   { icon: Database,  label: "CSV import",     color: "text-muted-foreground" },
 };
 
 function ConfidenceBadge({ confidence }: { confidence?: number }) {

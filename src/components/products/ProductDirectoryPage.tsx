@@ -7,8 +7,7 @@ import { Bookmark, Building2, LayoutGrid, Search, Trash2, Users } from "lucide-r
 import { ProductCatalogSectionTabs } from "@/components/products/ProductCatalogSectionTabs";
 import type { CatalogSegment, ProductDirectoryMainTab } from "@/components/products/productDirectoryCatalogSegments";
 import { cn } from "@/lib/utils";
-import { AppPageHeroHeader } from "@/components/ui/app-page-hero-header";
-import { APP_PAGE_CONTENT_SHELL, APP_TOOLBAR_ROW } from "@/lib/dashboardChrome";
+import { APP_PAGE_CONTENT_MAX, APP_PAGE_CONTENT_PAD_X, APP_TOOLBAR_ROW } from "@/lib/dashboardChrome";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/contexts/ToastContext";
 import { MOCK_TEAMS } from "@/lib/teamsMock";
@@ -16,6 +15,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import type {
   DirectoryAmenityTag,
   DirectoryCollectionOption,
+  DirectoryCollectionShareRequest,
   DirectoryExternalSearchMeta,
   DirectoryProduct,
   DirectoryProductCategory,
@@ -46,6 +46,7 @@ import {
   AGENCY_PROGRAM_OPTIONS,
   AMENITY_LABELS,
   compareProductsByRegistryCommission,
+  DIRECTORY_TIER_FILTER_UI,
   type DirectoryProductSortOption,
   DEFAULT_DIRECTORY_PRODUCT_SORT,
 } from "./productDirectoryFilterConfig";
@@ -224,7 +225,7 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
           return (
             <div
               key={product.id}
-              className="overflow-hidden rounded-xl border border-white/[0.04] bg-foreground/[0.03]"
+              className="overflow-hidden rounded-xl border border-white/[0.04] bg-white/[0.02]"
             >
               <img
                 src={product.imageUrl}
@@ -314,7 +315,7 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
                       <span
                         className="h-1.5 w-1.5 rounded-full"
                         style={{
-                          background: product.hasTeamData ? "rgba(140,160,180,0.60)" : "rgba(28,26,22,0.06)",
+                          background: product.hasTeamData ? "rgba(140,160,180,0.60)" : "rgba(255,255,255,0.06)",
                         }}
                       />
                       <span className="text-[9px] text-muted-foreground">Team data</span>
@@ -323,7 +324,7 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
                       <span
                         className="h-1.5 w-1.5 rounded-full"
                         style={{
-                          background: product.hasAdvisorNotes ? "rgba(160,140,180,0.60)" : "rgba(28,26,22,0.06)",
+                          background: product.hasAdvisorNotes ? "rgba(160,140,180,0.60)" : "rgba(255,255,255,0.06)",
                         }}
                       />
                       <span className="text-[9px] text-muted-foreground">My notes</span>
@@ -334,7 +335,7 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
                 <button
                   type="button"
                   onClick={() => onViewFullDetails(product)}
-                  className="w-full rounded-lg bg-white/[0.03] py-1.5 text-2xs text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+                  className="w-full rounded-lg bg-white/[0.03] py-1.5 text-2xs text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
                 >
                   View full details
                 </button>
@@ -393,6 +394,8 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     () => cloneMockDirectoryCatalogForAdvisor("1", DIRECTORY_SEED_NAME).collections
   );
 
+  const [collectionShareRequests, setCollectionShareRequests] = useState<DirectoryCollectionShareRequest[]>([]);
+
   const [externalSearchMeta, setExternalSearchMeta] = useState<Record<string, DirectoryExternalSearchMeta>>({});
 
   useEffect(() => {
@@ -403,6 +406,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     setProducts(r.products);
     setDirectoryCollections(r.directoryCollections);
     setExternalSearchMeta(r.externalSearchMeta);
+    setCollectionShareRequests(r.collectionShareRequests);
   }, [userLoading, user?.id, user?.username, user?.email, catalogRevision]);
 
   /** `?resetCatalog=1` — clears local catalog storage and reloads demo products (no DevTools). */
@@ -485,16 +489,6 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
   const [bulkSuggestionNote, setBulkSuggestionNote] = useState("");
   const [compareMode, setCompareMode] = useState(false);
   const browseScrollRef = useRef<HTMLDivElement>(null);
-  /** Shared scroll container for `AppPageHeroHeader` collapse (non-embed); same node as `browseScrollRef` for list virtualization. */
-  const [scrollRoot, setScrollRoot] = useState<HTMLElement | null>(null);
-
-  const assignBrowseScrollEl = useCallback(
-    (el: HTMLDivElement | null) => {
-      browseScrollRef.current = el;
-      if (!embedMode) setScrollRoot(el);
-    },
-    [embedMode]
-  );
 
   const dismissDirectoryOverlays = useCallback(() => {
     setDetailProductId(null);
@@ -502,7 +496,6 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
   }, []);
 
   const [mainTab, setMainTab] = useState<ProductDirectoryMainTab>("browse");
-
   useEffect(() => {
     if (!embedMode) return;
     setMainTab("browse");
@@ -525,6 +518,14 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
   const [createCollectionDescription, setCreateCollectionDescription] = useState("");
   const [createCollectionScope, setCreateCollectionScope] = useState<"private" | "team">("private");
   const [createCollectionTeamId, setCreateCollectionTeamId] = useState("");
+  const [shareRequestModalCollectionId, setShareRequestModalCollectionId] = useState<string | null>(null);
+  const [shareReqTeamId, setShareReqTeamId] = useState("");
+  const [shareReqName, setShareReqName] = useState("");
+  const [shareReqDesc, setShareReqDesc] = useState("");
+  const [shareReviewModalRequestId, setShareReviewModalRequestId] = useState<string | null>(null);
+  const [shareRevTeamId, setShareRevTeamId] = useState("");
+  const [shareRevName, setShareRevName] = useState("");
+  const [shareRevDesc, setShareRevDesc] = useState("");
   const [repFirms, setRepFirms] = useState<RepFirm[]>(() => {
     const loaded = loadRepFirmsFromStorage();
     if (loaded && loaded.length > 0) return cloneRepFirmsForState(loaded);
@@ -533,10 +534,10 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
 
   useEffect(() => {
     const t = setTimeout(() => {
-      persistDirectorySnapshot(products, directoryCollections, externalSearchMeta);
+      persistDirectorySnapshot(products, directoryCollections, externalSearchMeta, collectionShareRequests);
     }, 500);
     return () => clearTimeout(t);
-  }, [products, directoryCollections, externalSearchMeta]);
+  }, [products, directoryCollections, externalSearchMeta, collectionShareRequests]);
 
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -743,6 +744,8 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     [uid]
   );
 
+  const shareApprovalTeamOptions = useMemo(() => MOCK_TEAMS.filter((t) => !t.isDefault), []);
+
   const repFirmFilterOptions = useMemo(
     () => repFirms.map((f) => ({ id: f.id, name: f.name })),
     [repFirms]
@@ -768,8 +771,28 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
       activeCollectionMeta.ownerId === uid);
   /** System collections cannot be renamed or have metadata edited in the browse header. */
   const canEditActiveCollectionMetadata = canEditActiveCollection && !activeCollectionMeta?.isSystem;
-  const canShareActiveCollection =
-    isAdmin && activeCollectionMeta != null && !activeCollectionMeta.isSystem;
+
+  const pendingShareForActiveCollection = useMemo(() => {
+    if (!activeCollectionMeta) return undefined;
+    return collectionShareRequests.find(
+      (r) => r.collectionId === activeCollectionMeta.id && r.status === "pending"
+    );
+  }, [activeCollectionMeta, collectionShareRequests]);
+
+  const canRequestShareActiveCollection =
+    !isAdmin &&
+    activeCollectionMeta != null &&
+    !activeCollectionMeta.isSystem &&
+    activeCollectionMeta.scope === "private" &&
+    activeCollectionMeta.ownerId === uid &&
+    !pendingShareForActiveCollection &&
+    shareApprovalTeamOptions.length > 0;
+
+  const canReviewShareActiveCollection =
+    isAdmin &&
+    activeCollectionMeta != null &&
+    !activeCollectionMeta.isSystem &&
+    pendingShareForActiveCollection != null;
 
   const filterInput: DirectoryPageFilterInput = useMemo(
     () => ({
@@ -984,6 +1007,23 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     if (!q) return repFirms;
     return repFirms.filter((firm) => firm.name.toLowerCase().includes(q));
   }, [repFirms, bulkRepFirmSearch]);
+
+  const bulkSuggestionSelectedProgramNames = useMemo(() => {
+    if (bulkProgramTargetIds.length === 0) return "";
+    return bulkProgramTargetIds
+      .map((id) => partnerProgramTargets.find((p) => p.id === id)?.name)
+      .filter((n): n is string => Boolean(n?.trim()))
+      .join(", ");
+  }, [bulkProgramTargetIds, partnerProgramTargets]);
+
+  const bulkSuggestionSelectedRepFirmNames = useMemo(() => {
+    if (bulkRepFirmTargetIds.length === 0) return "";
+    return bulkRepFirmTargetIds
+      .map((id) => repFirms.find((f) => f.id === id)?.name)
+      .filter((n): n is string => Boolean(n?.trim()))
+      .join(", ");
+  }, [bulkRepFirmTargetIds, repFirms]);
+
   const hiddenSelectedCount = selectedProductIds.size - filteredProductIds.filter((id) => selectedProductIds.has(id)).length;
 
   const openBulkSuggestion = useCallback(
@@ -1290,24 +1330,207 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     [isAdmin, uid]
   );
 
-  const handleShareCollectionWithTeam = useCallback(
-    (collectionId: string, teamId: string) => {
-      const team = MOCK_TEAMS.find((t) => t.id === teamId);
-      setDirectoryCollections((prev) =>
-        prev.map((c) =>
-          c.id === collectionId
-            ? { ...c, scope: "team" as const, teamId, teamName: team?.name ?? "Team" }
+  const submitCollectionShareRequest = useCallback(
+    (input: {
+      collectionId: string;
+      proposedTeamId: string;
+      proposedName: string;
+      proposedDescription?: string;
+    }) => {
+      if (
+        collectionShareRequests.some(
+          (r) => r.collectionId === input.collectionId && r.status === "pending"
+        )
+      ) {
+        toast({ title: "A share request is already pending for this list", tone: "destructive" });
+        return;
+      }
+      const name = input.proposedName.trim();
+      if (!name || !input.proposedTeamId) {
+        toast({ title: "Team and title are required", tone: "destructive" });
+        return;
+      }
+      const row: DirectoryCollectionShareRequest = {
+        id: `shr_${Date.now()}`,
+        collectionId: input.collectionId,
+        requestedById: uid,
+        requestedByName: editorDisplayName,
+        proposedTeamId: input.proposedTeamId,
+        proposedName: name,
+        proposedDescription: input.proposedDescription?.trim() || undefined,
+        requestedAt: new Date().toISOString(),
+        status: "pending",
+      };
+      setCollectionShareRequests((prev) => [...prev, row]);
+      toast({
+        title: "Share request sent",
+        description: "An admin will review and can edit the details before publishing.",
+        tone: "success",
+      });
+      setShareRequestModalCollectionId(null);
+    },
+    [collectionShareRequests, editorDisplayName, toast, uid]
+  );
+
+  const approveCollectionShareRequest = useCallback(
+    (input: {
+      requestId: string;
+      finalTeamId: string;
+      finalName: string;
+      finalDescription?: string;
+    }) => {
+      const req = collectionShareRequests.find((r) => r.id === input.requestId);
+      if (!req || req.status !== "pending") return;
+      const team = MOCK_TEAMS.find((t) => t.id === input.finalTeamId);
+      const finalName = input.finalName.trim();
+      if (!finalName || !input.finalTeamId) {
+        toast({ title: "Team and title are required", tone: "destructive" });
+        return;
+      }
+      const finalDesc = input.finalDescription?.trim() || undefined;
+      const now = new Date().toISOString();
+
+      setDirectoryCollections((prevCols) => {
+        const nextCols = prevCols.map((c) =>
+          c.id === req.collectionId
+            ? {
+                ...c,
+                scope: "team" as const,
+                teamId: input.finalTeamId,
+                teamName: team?.name ?? "Team",
+                name: finalName,
+                description: finalDesc,
+              }
             : c
+        );
+        setProducts((prevProducts) =>
+          prevProducts.map((p) => {
+            if (!p.collectionIds.includes(req.collectionId)) return p;
+            return {
+              ...p,
+              collections: buildDirectoryCollectionRefs(p.collectionIds, nextCols),
+              collectionCount: p.collectionIds.length,
+            };
+          })
+        );
+        return nextCols;
+      });
+
+      setCollectionShareRequests((prev) =>
+        prev.map((r) =>
+          r.id === input.requestId
+            ? {
+                ...r,
+                status: "approved" as const,
+                resolvedAt: now,
+                resolvedById: uid,
+                resolvedByName: editorDisplayName,
+              }
+            : r
         )
       );
-      toast({ title: `Shared with ${team?.name ?? "team"} (demo)`, tone: "success" });
+      toast({ title: `Published “${finalName}” to ${team?.name ?? "team"}`, tone: "success" });
+      setShareReviewModalRequestId(null);
     },
-    [toast]
+    [collectionShareRequests, editorDisplayName, toast, uid]
   );
+
+  const rejectCollectionShareRequest = useCallback(
+    (requestId: string) => {
+      const now = new Date().toISOString();
+      setCollectionShareRequests((prev) =>
+        prev.map((r) =>
+          r.id === requestId
+            ? {
+                ...r,
+                status: "rejected" as const,
+                resolvedAt: now,
+                resolvedById: uid,
+                resolvedByName: editorDisplayName,
+              }
+            : r
+        )
+      );
+      toast({ title: "Share request rejected", tone: "success" });
+      setShareReviewModalRequestId((open) => (open === requestId ? null : open));
+    },
+    [editorDisplayName, toast, uid]
+  );
+
+  useEffect(() => {
+    if (!shareRequestModalCollectionId) return;
+    const col = directoryCollections.find((c) => c.id === shareRequestModalCollectionId);
+    if (!col) return;
+    setShareReqTeamId(shareApprovalTeamOptions[0]?.id ?? "");
+    setShareReqName(col.name);
+    setShareReqDesc(col.description ?? "");
+  }, [shareRequestModalCollectionId, directoryCollections, shareApprovalTeamOptions]);
+
+  useEffect(() => {
+    if (!shareReviewModalRequestId) return;
+    const req = collectionShareRequests.find((r) => r.id === shareReviewModalRequestId);
+    if (!req || req.status !== "pending") return;
+    setShareRevTeamId(req.proposedTeamId);
+    setShareRevName(req.proposedName);
+    setShareRevDesc(req.proposedDescription ?? "");
+  }, [shareReviewModalRequestId, collectionShareRequests]);
+
+  const submitShareRequestModal = useCallback(() => {
+    if (!shareRequestModalCollectionId) return;
+    const name = shareReqName.trim();
+    if (!name) {
+      toast({ title: "Title is required", tone: "destructive" });
+      return;
+    }
+    if (!shareReqTeamId) {
+      toast({ title: "Choose a team", tone: "destructive" });
+      return;
+    }
+    submitCollectionShareRequest({
+      collectionId: shareRequestModalCollectionId,
+      proposedTeamId: shareReqTeamId,
+      proposedName: name,
+      proposedDescription: shareReqDesc.trim() || undefined,
+    });
+  }, [
+    shareRequestModalCollectionId,
+    shareReqDesc,
+    shareReqName,
+    shareReqTeamId,
+    submitCollectionShareRequest,
+    toast,
+  ]);
+
+  const submitReviewShareModal = useCallback(() => {
+    if (!shareReviewModalRequestId) return;
+    const name = shareRevName.trim();
+    if (!name) {
+      toast({ title: "Title is required", tone: "destructive" });
+      return;
+    }
+    if (!shareRevTeamId) {
+      toast({ title: "Choose a team", tone: "destructive" });
+      return;
+    }
+    approveCollectionShareRequest({
+      requestId: shareReviewModalRequestId,
+      finalTeamId: shareRevTeamId,
+      finalName: name,
+      finalDescription: shareRevDesc.trim() || undefined,
+    });
+  }, [
+    approveCollectionShareRequest,
+    shareRevDesc,
+    shareRevName,
+    shareRevTeamId,
+    shareReviewModalRequestId,
+    toast,
+  ]);
 
   const handleDeleteCollection = useCallback(
     (collectionId: string) => {
       setDirectoryCollections((prev) => prev.filter((c) => c.id !== collectionId));
+      setCollectionShareRequests((prev) => prev.filter((r) => r.collectionId !== collectionId));
       setProducts((prev) =>
         prev.map((p) => {
           if (!p.collectionIds.includes(collectionId)) return p;
@@ -1349,6 +1572,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
 
   const createDirectoryCollection = useCallback(
     (input: NewDirectoryCollectionInput): string => {
+      if (!isAdmin && input.scope === "team") return "";
       const trimmed = input.name.trim();
       if (!trimmed) return "";
       if (input.scope === "team" && !input.teamId) return "";
@@ -1371,7 +1595,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
       toast({ title: `Created “${newCol.name}”`, tone: "success" });
       return id;
     },
-    [uid, user, pickerProductId, products, toast]
+    [isAdmin, uid, user, pickerProductId, products, toast]
   );
 
   const openCreateCollectionModal = useCallback(
@@ -1392,7 +1616,8 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
       toast({ title: "Collection name is required", tone: "destructive" });
       return;
     }
-    if (createCollectionScope === "team" && !createCollectionTeamId) {
+    const effectiveScope: "private" | "team" = isAdmin ? createCollectionScope : "private";
+    if (effectiveScope === "team" && !createCollectionTeamId) {
       toast({ title: "Pick a team", tone: "destructive" });
       return;
     }
@@ -1400,8 +1625,8 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     const input: NewDirectoryCollectionInput = {
       name,
       description: createCollectionDescription.trim() || undefined,
-      scope: createCollectionScope,
-      teamId: createCollectionScope === "team" ? createCollectionTeamId : null,
+      scope: effectiveScope,
+      teamId: effectiveScope === "team" ? createCollectionTeamId : null,
     };
 
     const id = createDirectoryCollection(input);
@@ -1453,6 +1678,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     createCollectionTeamId,
     createDirectoryCollection,
     directoryCollections,
+    isAdmin,
     selectedProductIds,
     toast,
     uid,
@@ -1607,17 +1833,50 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
       }
     : null;
 
-  const catalogEditorLocksOuterScroll =
-    (mainTab === "partner-programs" && partnerProgramEditorOpen) ||
-    (mainTab === "rep-firms" && repFirmEditorOpen);
+  return (
+    <div className="flex h-full min-h-0 flex-1 flex-col bg-inset text-foreground">
+      <div className="shrink-0">
+      {embedMode ? (
+        <div
+          className={cn(
+            APP_TOOLBAR_ROW,
+            "relative z-50 flex flex-wrap items-center justify-between gap-3 bg-card/25"
+          )}
+        >
+          <p className="min-w-0 text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">Catalog</span>
+            {" · "}
+            {sortedProducts.length} product{sortedProducts.length !== 1 ? "s" : ""} · split view
+          </p>
+          <Link
+            href="/dashboard/products"
+            className="shrink-0 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Full catalog →
+          </Link>
+        </div>
+      ) : (
+        <div
+          className={cn(
+            APP_TOOLBAR_ROW,
+            "relative z-50 min-w-0 flex flex-wrap items-center gap-3 px-6"
+          )}
+        >
+          <div className="min-w-0 max-w-full flex-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <ProductCatalogSectionTabs
+              value={mainTab}
+              onChange={trySelectCatalogSegment}
+              showPartnerPortal
+            />
+          </div>
+        </div>
+      )}
 
-  const browseFilterStrip =
-    mainTab === "browse" ? (
+      {mainTab === "browse" ? (
       <div
         className={cn(
-          "relative z-50 shrink-0 border-b border-border bg-background py-3",
-          !embedMode && APP_PAGE_CONTENT_SHELL,
-          embedMode && "px-3 py-2"
+          "relative z-50 shrink-0 border-b border-border bg-inset py-3",
+          embedMode ? "px-3 py-2" : cn(APP_PAGE_CONTENT_MAX, APP_PAGE_CONTENT_PAD_X)
         )}
       >
         <ProductDirectoryFilterBar
@@ -1665,6 +1924,164 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
         onClearFacetFilters={clearFacetFilters}
         onClearAllFilters={clearAllFilters}
       />
+
+      {(locationCountries.length > 0 ||
+        selectedProgramIds.length > 0 ||
+        selectedRepFirmIds.length > 0 ||
+        selectedAmenities.length > 0 ||
+        (canViewCommissions && commissionFilterActive) ||
+        hasActiveIncentive ||
+        hasPlannedOpening ||
+        selectedTiers.length > 0 ||
+        selectedPriceTiers.length > 0 ||
+        activeTypeFilters.length > 0 ||
+        collectionFilter.length > 0 ||
+        debouncedSearch.trim()) && (
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {debouncedSearch.trim() ? (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-muted-foreground transition-colors hover:bg-white/[0.06]"
+            >
+              &quot;{debouncedSearch.slice(0, 24)}
+              {debouncedSearch.length > 24 ? "…" : ""}&quot;
+              <span className="text-muted-foreground">✕</span>
+            </button>
+          ) : null}
+          {activeTypeFilters.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setActiveTypeFilters([])}
+              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-muted-foreground transition-colors hover:bg-white/[0.06]"
+            >
+              {activeTypeFilters.map((id) => directoryCategoryLabel(id)).join(", ")}
+              <span className="text-muted-foreground">✕</span>
+            </button>
+          ) : null}
+          {locationCountries.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setLocationCountries([])}
+              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-muted-foreground transition-colors hover:bg-white/[0.06]"
+            >
+              {locationCountries.slice(0, 2).join(", ")}
+              {locationCountries.length > 2 ? ` +${locationCountries.length - 2}` : ""}
+              <span className="text-muted-foreground">✕</span>
+            </button>
+          ) : null}
+          {collectionFilter.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setCollectionFilter([])}
+              className="flex items-center gap-1 rounded-full bg-[rgba(201,169,110,0.06)] px-2 py-0.5 text-[9px] text-[#B8976E] transition-colors hover:bg-[rgba(201,169,110,0.10)]"
+            >
+              {collectionFilter.length === 1
+                ? availableCollections.find((c) => c.id === collectionFilter[0])?.name ?? "Collection"
+                : `${collectionFilter.length} collections`}
+              <span className="text-muted-foreground">✕</span>
+            </button>
+          ) : null}
+          {selectedProgramIds.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setSelectedProgramIds([])}
+              className="flex items-center gap-1 rounded-full bg-[rgba(201,169,110,0.06)] px-2 py-0.5 text-[9px] text-[#B8976E] transition-colors hover:bg-[rgba(201,169,110,0.10)]"
+            >
+              {AGENCY_PROGRAM_OPTIONS.filter((p) => selectedProgramIds.includes(p.id))
+                .map((p) => p.name)
+                .join(", ")}
+              <span className="text-muted-foreground">✕</span>
+            </button>
+          ) : null}
+          {selectedAmenities.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setSelectedAmenities([])}
+              className="flex items-center gap-1 rounded-full bg-[rgba(91,138,110,0.06)] px-2 py-0.5 text-[9px] text-[#5B8A6E] transition-colors hover:bg-[rgba(91,138,110,0.10)]"
+            >
+              {selectedAmenities.map((b) => AMENITY_LABELS[b]).join(", ")}
+              <span className="text-muted-foreground">✕</span>
+            </button>
+          ) : null}
+          {canViewCommissions && commissionFilterActive ? (
+            <button
+              type="button"
+              onClick={() => {
+                setCommissionFilterActive(false);
+                setCommissionRange([0, 25]);
+              }}
+              className="flex items-center gap-1 rounded-full bg-[rgba(184,151,110,0.06)] px-2 py-0.5 text-[9px] text-[#B8976E] transition-colors hover:bg-[rgba(184,151,110,0.10)]"
+            >
+              {commissionRange[0]}%–{commissionRange[1]}%
+              <span className="text-muted-foreground">✕</span>
+            </button>
+          ) : null}
+          {hasActiveIncentive ? (
+            <button
+              type="button"
+              onClick={() => setHasActiveIncentive(false)}
+              className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[9px] text-amber-400 transition-colors hover:bg-amber-500/20"
+            >
+              Active incentives
+              <span className="text-muted-foreground">✕</span>
+            </button>
+          ) : null}
+          {hasPlannedOpening ? (
+            <button
+              type="button"
+              onClick={() => setHasPlannedOpening(false)}
+              className="flex items-center gap-1 rounded-full bg-[rgba(201,169,110,0.10)] px-2 py-0.5 text-[9px] text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.14)]"
+            >
+              Planned opening
+              <span className="text-muted-foreground">✕</span>
+            </button>
+          ) : null}
+          {selectedRepFirmIds.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setSelectedRepFirmIds([])}
+              className="flex max-w-[min(100%,280px)] items-center gap-1 truncate rounded-full bg-[rgba(176,122,91,0.12)] px-2 py-0.5 text-[9px] text-[#B07A5B] transition-colors hover:bg-[rgba(176,122,91,0.18)]"
+            >
+              <span className="min-w-0 truncate">
+                {selectedRepFirmIds
+                  .map((id) => repFirms.find((f) => f.id === id)?.name ?? id)
+                  .slice(0, 3)
+                  .join(", ")}
+                {selectedRepFirmIds.length > 3 ? ` +${selectedRepFirmIds.length - 3}` : ""}
+              </span>
+              <span className="shrink-0 text-muted-foreground">✕</span>
+            </button>
+          ) : null}
+          {selectedTiers.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setSelectedTiers([])}
+              className="flex items-center gap-1 rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] text-muted-foreground transition-colors hover:bg-white/[0.06]"
+            >
+              {selectedTiers.map((t) => DIRECTORY_TIER_FILTER_UI.find((x) => x.id === t)?.label ?? t).join(", ")}
+              <span className="text-muted-foreground">✕</span>
+            </button>
+          ) : null}
+          {selectedPriceTiers.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setSelectedPriceTiers([])}
+              className="flex items-center gap-1 rounded-full bg-[rgba(201,169,110,0.06)] px-2 py-0.5 text-[9px] text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.10)]"
+            >
+              {selectedPriceTiers.join(" ")}
+              <span className="text-muted-foreground">✕</span>
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={clearAllFilters}
+            className="px-1.5 text-[9px] text-muted-foreground transition-colors hover:text-muted-foreground"
+          >
+            Clear all
+          </button>
+        </div>
+      )}
 
       {headerCollection && activeCollectionMeta && (
         <div className="mb-4 flex flex-col gap-3 rounded-xl border border-border bg-popover p-3 sm:flex-row sm:items-start sm:justify-between">
@@ -1759,346 +2176,293 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
                   Edit
                 </button>
               )}
-              {canShareActiveCollection && (
+              {canRequestShareActiveCollection && activeCollectionMeta ? (
                 <button
                   type="button"
                   className="text-2xs text-brand-cta transition-colors hover:text-[#D4B383]"
-                  onClick={() => toast({ title: "Share with team (demo)", tone: "success" })}
+                  onClick={() => setShareRequestModalCollectionId(activeCollectionMeta.id)}
                 >
-                  Share with…
+                  Request to share…
                 </button>
-              )}
+              ) : null}
+              {canReviewShareActiveCollection && pendingShareForActiveCollection ? (
+                <button
+                  type="button"
+                  className="text-2xs text-brand-cta transition-colors hover:text-[#D4B383]"
+                  onClick={() => setShareReviewModalRequestId(pendingShareForActiveCollection.id)}
+                >
+                  Review share request
+                </button>
+              ) : null}
             </div>
           )}
         </div>
       )}
 
       </div>
-    ) : null;
-  const directoryTabPanels = (
-    <>
-                  <div
-                    className={cn(
-                      "min-h-0",
-                      mainTab !== "collections" && "pointer-events-none hidden"
-                    )}
-                    aria-hidden={mainTab !== "collections"}
-                  >
-                <ProductDirectoryCollectionsTab
-                  collections={availableCollections}
-                  products={products}
-                  teams={MOCK_TEAMS}
-                  isAdmin={isAdmin}
-                  canDeleteCollection={canDeleteCollection}
-                  onShareCollectionWithTeam={handleShareCollectionWithTeam}
-                  onDeleteCollection={handleDeleteCollection}
-                  onOpenCollection={(id) => {
-                    setCollectionFilter([id]);
-                    trySetMainTab("browse");
-                  }}
-                  onNewCollection={() => openCreateCollectionModal("general")}
-                />
-              </div>
-              <div
-                className={cn(
-                  "min-h-0",
-                  mainTab === "rep-firms" &&
-                    repFirmEditorOpen &&
-                    "flex h-full min-h-0 flex-1 flex-col overflow-hidden",
-                  mainTab !== "rep-firms" && "pointer-events-none hidden"
-                )}
-                aria-hidden={mainTab !== "rep-firms"}
-              >
-                <ProductDirectoryRepFirmsTab
-                  key={repFirmsMountKey}
-                  repTabVisible={mainTab === "rep-firms"}
-                  onEditorSurfaceChange={setRepFirmEditorOpen}
-                  repFirms={repFirms}
-                  products={products}
-                  teams={MOCK_TEAMS}
-                  isAdmin={isAdmin}
-                  editorDisplayName={editorDisplayName}
-                  canViewCommissions={canViewCommissions}
-                  externalSearchCollectionId={DIRECTORY_EXTERNAL_COLLECTION_ID}
-                  getExternalSearchTooltip={externalSearchTooltipForProduct}
-                  onSaveRepFirm={(id, patch) => {
-                    if (!isAdmin) return;
-                    setRepFirms((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
-                  }}
-                  onAddRepFirm={(firm) => {
-                    if (!isAdmin) return;
-                    setRepFirms((prev) => [firm, ...prev]);
-                  }}
-                  onRemoveRepFirm={(id) => {
-                    if (!isAdmin) return;
-                    setRepFirms((prev) => prev.filter((f) => f.id !== id));
-                    setProducts((prev) =>
-                      prev.map((p) => {
-                        const nextLinks = (p.repFirmLinks ?? []).filter((l) => l.repFirmId !== id);
-                        if (nextLinks.length === (p.repFirmLinks ?? []).length) return p;
-                        return { ...p, repFirmLinks: nextLinks, repFirmCount: nextLinks.length };
-                      })
-                    );
-                  }}
-                  onSelectProduct={(id) => {
-                    trySetMainTab("browse");
-                    setDetailProductId(id);
-                  }}
-                  onOpenCollectionPicker={(id) => {
-                    trySetMainTab("browse");
-                    setPickerProductId(id);
-                  }}
-                  onBrowseByRepFirm={(repFirmId) => {
-                    setSelectedRepFirmIds([repFirmId]);
-                    trySetMainTab("browse");
-                  }}
-                  onSyncRepFirmProductLinks={syncRepFirmProductLinks}
-                  onDirtyChange={setRepFirmsDirty}
-                />
-              </div>
-              <div
-                className={cn(
-                  "min-h-0",
-                  mainTab === "partner-programs" &&
-                    partnerProgramEditorOpen &&
-                    "flex min-h-0 flex-1 flex-col overflow-hidden",
-                  mainTab !== "partner-programs" && "pointer-events-none hidden"
-                )}
-                aria-hidden={mainTab !== "partner-programs"}
-              >
-                <PartnerPortalTab
-                  key={partnerProgramsMountKey}
-                  isAdmin={isAdmin}
-                  canViewCommissions={canViewCommissions}
-                  partnerTabVisible={mainTab === "partner-programs"}
-                  onEditorSurfaceChange={setPartnerProgramEditorOpen}
-                  onDirtyChange={setPartnerProgramsDirty}
-                  catalogProducts={viewProducts}
-                  onSelectProduct={(id) => {
-                    trySetMainTab("browse");
-                    setDetailProductId(id);
-                  }}
-                  onBrowseByProgram={(programId) => {
-                    setSelectedProgramIds([programId]);
-                    trySetMainTab("browse");
-                  }}
-                />
-              </div>
-              <div
-                className={cn(
-                  "min-h-0",
-                  mainTab !== "browse" && "pointer-events-none hidden"
-                )}
-                aria-hidden={mainTab !== "browse"}
-              >
-                {compareMode && compareProducts.length >= 2 ? (
-                  <ProductDirectoryCompareView
-                    products={compareProducts}
-                    canViewCommissions={canViewCommissions}
-                    onClose={clearSelection}
-                    onViewFullDetails={(p) => {
-                      clearSelection();
-                      setDetailProductId(p.id);
-                    }}
-                  />
-                ) : (
-                  <>
-                {viewMode === "grid" && (
-                  <div
-                    className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 view-transition-active"
-                  >
-                    {userLoading
-                      ? Array.from({ length: 6 }).map((_, i) => (
-                          <ProductCardSkeleton key={i} />
-                        ))
-                      : sortedProducts.map((product) => (
-                      <DirectoryProductCard
-                        key={product.id}
-                        product={product}
-                        showRepFirmLinks={false}
-                        canViewCommissions={canViewCommissions}
-                        bookmarked={isBookmarked(product)}
-                        onProductClick={() => {
-                          if (bulkMode) {
-                            toggleProductSelection(product.id);
-                            return;
-                          }
-                          setDetailProductId(product.id);
-                        }}
-                        onAddToCollectionClick={() => setPickerProductId(product.id)}
-                        showRemoveFromCollection={showRemoveOnCards}
-                        onRemoveFromCollection={
-                          showRemoveOnCards ? () => removeProductFromFilteredCollection(product.id) : undefined
-                        }
-                        bulkMode={bulkMode}
-                        bulkSelected={selectedProductIds.has(product.id)}
-                        onToggleBulkSelect={() => toggleProductSelection(product.id)}
-                        onEnterBulkMode={(id) => {
-                          setBulkMode(true);
-                          setSelectedProductIds(new Set([id]));
-                        }}
-                        showSavedFromSearch={product.collectionIds.includes(DIRECTORY_EXTERNAL_COLLECTION_ID)}
-                        savedFromSearchTitle={externalSearchTooltipForProduct(product.id)}
-                      />
-                    ))}
-                  </div>
-                )}
-      
-                {viewMode === "list" && (
-                  <DirectoryProductListView
-                    products={sortedProducts}
-                    showRepFirmSummary={false}
-                    canViewCommissions={canViewCommissions}
-                    isBookmarked={isBookmarked}
-                    onRowClick={(p) => {
-                      if (bulkMode) {
-                        toggleProductSelection(p.id);
-                        return;
-                      }
-                      setDetailProductId(p.id);
-                    }}
-                    onAddToCollectionClick={(p) => setPickerProductId(p.id)}
-                    showRemoveFromCollection={showRemoveOnCards}
-                    onRemoveFromFilteredCollection={
-                      showRemoveOnCards ? removeProductFromFilteredCollection : undefined
-                    }
-                    bulkMode={bulkMode}
-                    bulkSelectedIds={selectedProductIds}
-                    onToggleBulkSelect={toggleProductSelection}
-                    onEnterBulkMode={(id) => {
-                      setBulkMode(true);
-                      setSelectedProductIds(new Set([id]));
-                    }}
-                    externalSearchCollectionId={DIRECTORY_EXTERNAL_COLLECTION_ID}
-                    externalSearchTooltip={externalSearchTooltipForProduct}
-                    scrollToProductId={detailProductId}
-                    scrollParentRef={browseScrollRef}
-                  />
-                )}
-      
-                {viewMode === "map" && (
-                  <ProductDirectoryMapSplit
-                    products={sortedProducts}
-                    selectedId={detailProductId}
-                    clusterProducts={mapCluster}
-                    canViewCommissions={canViewCommissions}
-                    onSelectProduct={handleMapSelect}
-                    onClusterOpen={setMapCluster}
-                    onClusterClose={() => setMapCluster(null)}
-                    externalSearchCollectionId={DIRECTORY_EXTERNAL_COLLECTION_ID}
-                    externalSearchTooltip={externalSearchTooltipForProduct}
-                  />
-                )}
-      
-                {sortedProducts.length === 0 && (
-                  <div className="rounded-xl border border-border bg-foreground/[0.03] p-8 text-center">
-                    <Search className="mx-auto mb-3 h-6 w-6 text-muted-foreground/65" aria-hidden />
-                    <p className="mb-1 text-compact font-medium text-foreground">No products match</p>
-                    <p className="mb-4 text-xs text-muted-foreground">Your current filters are too narrow.</p>
-                    {emptyStateHint ? (
-                      <button
-                        type="button"
-                        onClick={emptyStateHint.onClear}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.12)] bg-[rgba(201,169,110,0.06)] px-3 py-1.5 text-xs text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.10)]"
-                      >
-                        {`Remove ${emptyStateHint.label} filter → ${emptyStateHint.count} result${emptyStateHint.count === 1 ? "" : "s"}`}
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={clearAllFilters}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.06]"
-                      >
-                        Clear all filters
-                      </button>
-                    )}
-                  </div>
-                )}
-                  </>
-                )}
-              </div>
-    </>
-  );
+      ) : null}
+      </div>
 
-  return (
-    <div className="flex h-full min-h-0 flex-1 flex-col bg-background text-foreground">
-      {embedMode ? (
-        <>
-          <div className="shrink-0">
-            <div
-              className={cn(
-                APP_TOOLBAR_ROW,
-                "relative z-50 flex flex-wrap items-center justify-between gap-3 bg-card/25"
-              )}
-            >
-              <p className="min-w-0 text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">Catalog</span>
-                {" · "}
-                {sortedProducts.length} product{sortedProducts.length !== 1 ? "s" : ""} · split view
-              </p>
-              <Link
-                href="/dashboard/products"
-                className="shrink-0 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Full catalog →
-              </Link>
-            </div>
-            {browseFilterStrip}
-          </div>
-          <div
-            ref={assignBrowseScrollEl}
-            className={cn(
-              "relative z-0 min-h-0 flex-1 pb-6",
-              APP_PAGE_CONTENT_SHELL,
-              catalogEditorLocksOuterScroll ? "flex flex-col overflow-hidden" : "overflow-y-auto",
-              mainTab === "browse" ? "pt-4" : "pt-0"
-            )}
-          >
-            {directoryTabPanels}
-          </div>
-        </>
-      ) : (
+      <div
+        ref={browseScrollRef}
+        className={cn(
+          "relative z-0 min-h-0 flex-1 pb-6",
+          APP_PAGE_CONTENT_MAX,
+          APP_PAGE_CONTENT_PAD_X,
+          ((mainTab === "partner-programs" && partnerProgramEditorOpen) ||
+            (mainTab === "rep-firms" && repFirmEditorOpen))
+            ? "flex flex-col overflow-hidden"
+            : "overflow-y-auto",
+          mainTab === "browse" ? "pt-4" : "pt-0"
+        )}
+      >
         <div
-          ref={assignBrowseScrollEl}
           className={cn(
-            "relative z-0 flex min-h-0 flex-1 flex-col overflow-x-hidden pb-6",
-            catalogEditorLocksOuterScroll ? "overflow-hidden" : "overflow-y-auto"
+            "min-h-0",
+            mainTab !== "collections" && "pointer-events-none hidden"
           )}
+          aria-hidden={mainTab !== "collections"}
         >
-          <div className="shrink-0">
-            <AppPageHeroHeader
-              scrollRoot={scrollRoot}
-              collapseOnScroll
-              eyebrow="Catalog"
-              title="Product directory"
-              subtitle="Browse hotels, experiences, DMCs, and partner programs—incentives, tiers, collections, and map view."
-              toolbarPlacement="with-title"
-              toolbar={
-                <div className="min-w-0 max-w-full flex-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  <ProductCatalogSectionTabs
-                    value={mainTab}
-                    onChange={trySelectCatalogSegment}
-                    showPartnerPortal
-                  />
-                </div>
-              }
-            />
-            {browseFilterStrip}
-          </div>
-          <div
-            className={cn(
-              "min-h-0 flex flex-1 flex-col",
-              APP_PAGE_CONTENT_SHELL,
-              catalogEditorLocksOuterScroll && "overflow-hidden",
-              mainTab === "browse" ? "pt-4" : "pt-0"
-            )}
-          >
-            {directoryTabPanels}
-          </div>
+          <ProductDirectoryCollectionsTab
+            collections={availableCollections}
+            products={products}
+            teams={MOCK_TEAMS}
+            isAdmin={isAdmin}
+            currentUserId={uid}
+            shareRequests={collectionShareRequests}
+            canDeleteCollection={canDeleteCollection}
+            onDeleteCollection={handleDeleteCollection}
+            onOpenCollection={(id) => {
+              setCollectionFilter([id]);
+              trySetMainTab("browse");
+            }}
+            onNewCollection={() => openCreateCollectionModal("general")}
+            onOpenRequestShareModal={(collectionId) => setShareRequestModalCollectionId(collectionId)}
+            onOpenReviewShareModal={(requestId) => setShareReviewModalRequestId(requestId)}
+            onRejectShareRequest={rejectCollectionShareRequest}
+          />
         </div>
-      )}
+        <div
+          className={cn(
+            "min-h-0",
+            mainTab === "rep-firms" &&
+              repFirmEditorOpen &&
+              "flex h-full min-h-0 flex-1 flex-col overflow-hidden",
+            mainTab !== "rep-firms" && "pointer-events-none hidden"
+          )}
+          aria-hidden={mainTab !== "rep-firms"}
+        >
+          <ProductDirectoryRepFirmsTab
+            key={repFirmsMountKey}
+            repTabVisible={mainTab === "rep-firms"}
+            onEditorSurfaceChange={setRepFirmEditorOpen}
+            repFirms={repFirms}
+            products={products}
+            teams={MOCK_TEAMS}
+            isAdmin={isAdmin}
+            editorDisplayName={editorDisplayName}
+            canViewCommissions={canViewCommissions}
+            externalSearchCollectionId={DIRECTORY_EXTERNAL_COLLECTION_ID}
+            getExternalSearchTooltip={externalSearchTooltipForProduct}
+            onSaveRepFirm={(id, patch) => {
+              if (!isAdmin) return;
+              setRepFirms((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
+            }}
+            onAddRepFirm={(firm) => {
+              if (!isAdmin) return;
+              setRepFirms((prev) => [firm, ...prev]);
+            }}
+            onRemoveRepFirm={(id) => {
+              if (!isAdmin) return;
+              setRepFirms((prev) => prev.filter((f) => f.id !== id));
+              setProducts((prev) =>
+                prev.map((p) => {
+                  const nextLinks = (p.repFirmLinks ?? []).filter((l) => l.repFirmId !== id);
+                  if (nextLinks.length === (p.repFirmLinks ?? []).length) return p;
+                  return { ...p, repFirmLinks: nextLinks, repFirmCount: nextLinks.length };
+                })
+              );
+            }}
+            onSelectProduct={(id) => {
+              trySetMainTab("browse");
+              setDetailProductId(id);
+            }}
+            onOpenCollectionPicker={(id) => {
+              trySetMainTab("browse");
+              setPickerProductId(id);
+            }}
+            onBrowseByRepFirm={(repFirmId) => {
+              setSelectedRepFirmIds([repFirmId]);
+              trySetMainTab("browse");
+            }}
+            onSyncRepFirmProductLinks={syncRepFirmProductLinks}
+            onDirtyChange={setRepFirmsDirty}
+          />
+        </div>
+        <div
+          className={cn(
+            "min-h-0",
+            mainTab === "partner-programs" &&
+              partnerProgramEditorOpen &&
+              "flex min-h-0 flex-1 flex-col overflow-hidden",
+            mainTab !== "partner-programs" && "pointer-events-none hidden"
+          )}
+          aria-hidden={mainTab !== "partner-programs"}
+        >
+          <PartnerPortalTab
+            key={partnerProgramsMountKey}
+            isAdmin={isAdmin}
+            canViewCommissions={canViewCommissions}
+            partnerTabVisible={mainTab === "partner-programs"}
+            onEditorSurfaceChange={setPartnerProgramEditorOpen}
+            onDirtyChange={setPartnerProgramsDirty}
+            catalogProducts={viewProducts}
+            onSelectProduct={(id) => {
+              trySetMainTab("browse");
+              setDetailProductId(id);
+            }}
+            onBrowseByProgram={(programId) => {
+              setSelectedProgramIds([programId]);
+              trySetMainTab("browse");
+            }}
+          />
+        </div>
+        <div
+          className={cn(
+            "min-h-0",
+            mainTab !== "browse" && "pointer-events-none hidden"
+          )}
+          aria-hidden={mainTab !== "browse"}
+        >
+          {compareMode && compareProducts.length >= 2 ? (
+            <ProductDirectoryCompareView
+              products={compareProducts}
+              canViewCommissions={canViewCommissions}
+              onClose={clearSelection}
+              onViewFullDetails={(p) => {
+                clearSelection();
+                setDetailProductId(p.id);
+              }}
+            />
+          ) : (
+            <>
+          {viewMode === "grid" && (
+            <div
+              className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 view-transition-active"
+            >
+              {userLoading
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <ProductCardSkeleton key={i} />
+                  ))
+                : sortedProducts.map((product) => (
+                <DirectoryProductCard
+                  key={product.id}
+                  product={product}
+                  showRepFirmLinks={false}
+                  canViewCommissions={canViewCommissions}
+                  bookmarked={isBookmarked(product)}
+                  onProductClick={() => {
+                    if (bulkMode) {
+                      toggleProductSelection(product.id);
+                      return;
+                    }
+                    setDetailProductId(product.id);
+                  }}
+                  onAddToCollectionClick={() => setPickerProductId(product.id)}
+                  showRemoveFromCollection={showRemoveOnCards}
+                  onRemoveFromCollection={
+                    showRemoveOnCards ? () => removeProductFromFilteredCollection(product.id) : undefined
+                  }
+                  bulkMode={bulkMode}
+                  bulkSelected={selectedProductIds.has(product.id)}
+                  onToggleBulkSelect={() => toggleProductSelection(product.id)}
+                  onEnterBulkMode={(id) => {
+                    setBulkMode(true);
+                    setSelectedProductIds(new Set([id]));
+                  }}
+                  showSavedFromSearch={product.collectionIds.includes(DIRECTORY_EXTERNAL_COLLECTION_ID)}
+                  savedFromSearchTitle={externalSearchTooltipForProduct(product.id)}
+                />
+              ))}
+            </div>
+          )}
 
-      {/* Product summary modal */}
+          {viewMode === "list" && (
+            <DirectoryProductListView
+              products={sortedProducts}
+              showRepFirmSummary={false}
+              canViewCommissions={canViewCommissions}
+              isBookmarked={isBookmarked}
+              onRowClick={(p) => {
+                if (bulkMode) {
+                  toggleProductSelection(p.id);
+                  return;
+                }
+                setDetailProductId(p.id);
+              }}
+              onAddToCollectionClick={(p) => setPickerProductId(p.id)}
+              showRemoveFromCollection={showRemoveOnCards}
+              onRemoveFromFilteredCollection={
+                showRemoveOnCards ? removeProductFromFilteredCollection : undefined
+              }
+              bulkMode={bulkMode}
+              bulkSelectedIds={selectedProductIds}
+              onToggleBulkSelect={toggleProductSelection}
+              onEnterBulkMode={(id) => {
+                setBulkMode(true);
+                setSelectedProductIds(new Set([id]));
+              }}
+              externalSearchCollectionId={DIRECTORY_EXTERNAL_COLLECTION_ID}
+              externalSearchTooltip={externalSearchTooltipForProduct}
+              scrollToProductId={detailProductId}
+              scrollParentRef={browseScrollRef}
+            />
+          )}
+
+          {viewMode === "map" && (
+            <ProductDirectoryMapSplit
+              products={sortedProducts}
+              selectedId={detailProductId}
+              clusterProducts={mapCluster}
+              canViewCommissions={canViewCommissions}
+              onSelectProduct={handleMapSelect}
+              onClusterOpen={setMapCluster}
+              onClusterClose={() => setMapCluster(null)}
+              externalSearchCollectionId={DIRECTORY_EXTERNAL_COLLECTION_ID}
+              externalSearchTooltip={externalSearchTooltipForProduct}
+            />
+          )}
+
+          {sortedProducts.length === 0 && (
+            <div className="rounded-xl border border-border bg-white/[0.02] p-8 text-center">
+              <Search className="mx-auto mb-3 h-6 w-6 text-muted-foreground/65" aria-hidden />
+              <p className="mb-1 text-compact font-medium text-foreground">No products match</p>
+              <p className="mb-4 text-xs text-muted-foreground">Your current filters are too narrow.</p>
+              {emptyStateHint ? (
+                <button
+                  type="button"
+                  onClick={emptyStateHint.onClear}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.12)] bg-[rgba(201,169,110,0.06)] px-3 py-1.5 text-xs text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.10)]"
+                >
+                  {`Remove ${emptyStateHint.label} filter → ${emptyStateHint.count} result${emptyStateHint.count === 1 ? "" : "s"}`}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={clearAllFilters}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-white/[0.06]"
+                >
+                  Clear all filters
+                </button>
+              )}
+            </div>
+          )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Slide-in detail: 7-block layout + layer mock data in ProductDirectoryDetailBody */}
       {detailProduct && (
         <ProductDirectoryDetailPanel
           product={detailProduct}
@@ -2128,7 +2492,8 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
           initialSelectedIds={pickerProduct.collectionIds}
           onClose={() => setPickerProductId(null)}
           onSave={(ids) => savePicker(pickerProduct.id, ids)}
-            onCreateCollection={createDirectoryCollection}
+          onCreateCollection={createDirectoryCollection}
+          allowTeamScope={isAdmin}
         />
       )}
 
@@ -2232,7 +2597,9 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
 
       {bulkProgramOpen && (
         <div className="fixed bottom-20 left-1/2 z-[50] w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl border border-border bg-popover p-3 shadow-2xl">
-          <p className="text-[9px] uppercase tracking-wider text-muted-foreground/65">Add to partner programs…</p>
+          <p className="text-[9px] uppercase tracking-wider text-muted-foreground/65">
+            {isAdmin ? "Add to partner programs…" : "Suggest partner programs…"}
+          </p>
           <input
             value={bulkProgramSearch}
             onChange={(e) => setBulkProgramSearch(e.target.value)}
@@ -2276,7 +2643,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
               className="rounded-lg border border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] px-2.5 py-1 text-xs text-brand-cta"
               onClick={applyBulkPartnerPrograms}
             >
-              Apply
+              {isAdmin ? "Apply" : "Review & submit"}
             </button>
           </div>
         </div>
@@ -2284,7 +2651,9 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
 
       {bulkRepFirmOpen && (
         <div className="fixed bottom-20 left-1/2 z-[50] w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl border border-border bg-popover p-3 shadow-2xl">
-          <p className="text-[9px] uppercase tracking-wider text-muted-foreground/65">Add to rep firms…</p>
+          <p className="text-[9px] uppercase tracking-wider text-muted-foreground/65">
+            {isAdmin ? "Add to rep firms…" : "Suggest rep firm links…"}
+          </p>
           <input
             value={bulkRepFirmSearch}
             onChange={(e) => setBulkRepFirmSearch(e.target.value)}
@@ -2321,7 +2690,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
               className="rounded-lg border border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] px-2.5 py-1 text-xs text-brand-cta"
               onClick={applyBulkRepFirms}
             >
-              Apply
+              {isAdmin ? "Apply" : "Review & submit"}
             </button>
           </div>
         </div>
@@ -2356,7 +2725,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
             className="flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.08)] px-3 py-1.5 text-xs text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.12)]"
           >
             <Building2 className="h-3.5 w-3.5" />
-            Add Partner Program
+            {isAdmin ? "Add Partner Program" : "Suggest partner programs"}
           </button>
           <button
             type="button"
@@ -2370,7 +2739,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
             className="flex items-center gap-1.5 rounded-lg border border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.08)] px-3 py-1.5 text-xs text-brand-cta transition-colors hover:bg-[rgba(201,169,110,0.12)]"
           >
             <Users className="h-3.5 w-3.5" />
-            Add Rep Firm
+            {isAdmin ? "Add Rep Firm" : "Suggest rep firm links"}
           </button>
           <button
             type="button"
@@ -2381,7 +2750,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
               }
               setSelectedProductIds(new Set(filteredProductIds));
             }}
-            className="rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+            className="rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
           >
             {areAllFilteredSelected ? "Clear filtered" : `Select all filtered (${filteredProductIds.length})`}
           </button>
@@ -2413,7 +2782,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
               "flex items-center gap-1.5 rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-xs text-muted-foreground transition-colors disabled:opacity-30",
               selectedProductIds.size >= 2 &&
                 selectedProductIds.size <= 4 &&
-                "hover:bg-foreground/[0.06] hover:text-foreground"
+                "hover:bg-white/[0.06] hover:text-foreground"
             )}
           >
             <LayoutGrid className="h-3.5 w-3.5" />
@@ -2444,7 +2813,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
                 placeholder="Description (optional)"
                 className="w-full resize-none rounded-lg border border-border bg-inset px-3 py-2 text-sm text-foreground outline-none"
               />
-              <div className="flex gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setCreateCollectionScope("private")}
@@ -2457,20 +2826,24 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
                 >
                   Private
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setCreateCollectionScope("team")}
-                  className={cn(
-                    "rounded-lg border px-3 py-1.5 text-xs",
-                    createCollectionScope === "team"
-                      ? "border-brand-cta bg-[rgba(201,169,110,0.12)] text-foreground"
-                      : "border-border text-muted-foreground"
-                  )}
-                >
-                  Team
-                </button>
+                {isAdmin ? (
+                  <button
+                    type="button"
+                    onClick={() => setCreateCollectionScope("team")}
+                    className={cn(
+                      "rounded-lg border px-3 py-1.5 text-xs",
+                      createCollectionScope === "team"
+                        ? "border-brand-cta bg-[rgba(201,169,110,0.12)] text-foreground"
+                        : "border-border text-muted-foreground"
+                    )}
+                  >
+                    Team
+                  </button>
+                ) : (
+                  <span className="text-2xs text-muted-foreground">Team lists require admin approval from the Collections tab.</span>
+                )}
               </div>
-              {createCollectionScope === "team" ? (
+              {isAdmin && createCollectionScope === "team" ? (
                 <select
                   value={createCollectionTeamId}
                   onChange={(e) => setCreateCollectionTeamId(e.target.value)}
@@ -2494,7 +2867,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
               </button>
               <button
                 type="button"
-                className="rounded-lg bg-brand-cta px-3 py-1.5 text-xs font-medium text-primary-foreground"
+                className="rounded-lg bg-brand-cta px-3 py-1.5 text-xs font-medium text-[#08080c]"
                 onClick={submitCreateCollectionModal}
               >
                 Create
@@ -2531,7 +2904,29 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
           </DialogHeader>
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground">
-              Action: {bulkSuggestionAction === "rep-firm" ? "Add to rep firms" : "Add to partner programs"} on {selectedProductIds.size} selected products.
+              {bulkSuggestionAction === "rep-firm" ? (
+                <>
+                  Request rep firm links on {selectedProductIds.size} selected product
+                  {selectedProductIds.size === 1 ? "" : "s"}.
+                  {bulkSuggestionSelectedRepFirmNames ? (
+                    <>
+                      {" "}
+                      <span className="text-foreground">Firms:</span> {bulkSuggestionSelectedRepFirmNames}
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  Request partner programs on {selectedProductIds.size} selected product
+                  {selectedProductIds.size === 1 ? "" : "s"}.
+                  {bulkSuggestionSelectedProgramNames ? (
+                    <>
+                      {" "}
+                      <span className="text-foreground">Programs:</span> {bulkSuggestionSelectedProgramNames}
+                    </>
+                  ) : null}
+                </>
+              )}
             </p>
             <textarea
               value={bulkSuggestionNote}
@@ -2557,6 +2952,8 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
                   tone: "success",
                 });
                 setBulkSuggestionOpen(false);
+                setBulkProgramTargetIds([]);
+                setBulkRepFirmTargetIds([]);
                 clearSelection();
               }}
             >
@@ -2586,6 +2983,132 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
             <Button type="button" variant="destructive" onClick={confirmLeavePartnerTab}>
               Discard and leave
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={shareRequestModalCollectionId != null}
+        onOpenChange={(open) => {
+          if (!open) setShareRequestModalCollectionId(null);
+        }}
+      >
+        <DialogContent className="border-border bg-background sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Request to share with team</DialogTitle>
+            <DialogDescription>
+              Your admin will review. Suggest a team, title, and description — they may edit before publishing.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-1">
+            <label className="block">
+              <span className="mb-1 block text-2xs text-muted-foreground">Team</span>
+              <select
+                value={shareReqTeamId}
+                onChange={(e) => setShareReqTeamId(e.target.value)}
+                className="w-full rounded-lg border border-border bg-inset px-3 py-2 text-sm text-foreground outline-none"
+              >
+                {shareApprovalTeamOptions.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-2xs text-muted-foreground">Title</span>
+              <input
+                value={shareReqName}
+                onChange={(e) => setShareReqName(e.target.value)}
+                className="w-full rounded-lg border border-border bg-inset px-3 py-2 text-sm text-foreground outline-none"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-2xs text-muted-foreground">Description (optional)</span>
+              <textarea
+                value={shareReqDesc}
+                onChange={(e) => setShareReqDesc(e.target.value)}
+                rows={2}
+                className="w-full resize-none rounded-lg border border-border bg-inset px-3 py-2 text-sm text-foreground outline-none"
+              />
+            </label>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={() => setShareRequestModalCollectionId(null)}>
+              Cancel
+            </Button>
+            <Button type="button" variant="toolbarAccent" onClick={submitShareRequestModal}>
+              Submit request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={shareReviewModalRequestId != null}
+        onOpenChange={(open) => {
+          if (!open) setShareReviewModalRequestId(null);
+        }}
+      >
+        <DialogContent className="border-border bg-background sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Approve share to team</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Edit the published title, description, or team if needed, then approve.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-1">
+            <label className="block">
+              <span className="mb-1 block text-2xs text-muted-foreground">Team</span>
+              <select
+                value={shareRevTeamId}
+                onChange={(e) => setShareRevTeamId(e.target.value)}
+                className="w-full rounded-lg border border-border bg-inset px-3 py-2 text-sm text-foreground outline-none"
+              >
+                {shareApprovalTeamOptions.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-2xs text-muted-foreground">Title</span>
+              <input
+                value={shareRevName}
+                onChange={(e) => setShareRevName(e.target.value)}
+                className="w-full rounded-lg border border-border bg-inset px-3 py-2 text-sm text-foreground outline-none"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-2xs text-muted-foreground">Description (optional)</span>
+              <textarea
+                value={shareRevDesc}
+                onChange={(e) => setShareRevDesc(e.target.value)}
+                rows={2}
+                className="w-full resize-none rounded-lg border border-border bg-inset px-3 py-2 text-sm text-foreground outline-none"
+              />
+            </label>
+          </div>
+          <DialogFooter className="flex flex-wrap gap-2 sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              className="text-destructive hover:text-destructive"
+              onClick={() => {
+                if (shareReviewModalRequestId) rejectCollectionShareRequest(shareReviewModalRequestId);
+              }}
+            >
+              Reject
+            </Button>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => setShareReviewModalRequestId(null)}>
+                Cancel
+              </Button>
+              <Button type="button" variant="toolbarAccent" onClick={submitReviewShareModal}>
+                Approve & publish
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

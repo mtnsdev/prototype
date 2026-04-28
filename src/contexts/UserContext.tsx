@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useMemo } from "react";
 import { AUTH_BYPASS_TOKEN, isAuthBypassEnabled } from "@/lib/authBypass";
+import { setWorkspaceFirstAdminOnboardingDone } from "@/lib/onboardingWorkspace";
+import type { OnboardingStatus, OnboardingStepId } from "@/types/onboarding";
 
 export type User = {
     id: number;
@@ -13,6 +15,9 @@ export type User = {
     has_password?: boolean;
     /** When false, hides commission surfaces (prototype team policy). Default: visible. */
     canViewCommissions?: boolean;
+    /** First-run wizard; omitted on legacy stored users → migrated to `completed`. */
+    onboarding_status?: OnboardingStatus;
+    last_onboarding_step?: OnboardingStepId | null;
 };
 
 /** Prototype personas — optional seed when no user is logged in. */
@@ -24,6 +29,8 @@ export const MOCK_PROTOTYPE_USERS = {
         role: "admin",
         status: "active",
         agency_id: "tl-demo",
+        onboarding_status: "not_started",
+        last_onboarding_step: "welcome",
     },
     advisor: {
         id: 2,
@@ -32,6 +39,8 @@ export const MOCK_PROTOTYPE_USERS = {
         role: "advisor",
         status: "active",
         agency_id: "tl-demo",
+        onboarding_status: "not_started",
+        last_onboarding_step: "welcome",
     },
 } as const satisfies Record<string, User>;
 
@@ -48,6 +57,10 @@ type UserContextType = {
     prototypeAdminView: boolean;
     /** Sets `user.role` to admin or advisor (persists with `user_data`). No-op if `user` is null. */
     setPrototypeAdminView: (value: boolean) => void;
+    /** Persists `last_onboarding_step` and sets status to `in_progress` when appropriate. */
+    setOnboardingStep: (step: OnboardingStepId) => void;
+    /** Marks onboarding finished; optionally records first-admin workspace completion (Path A). */
+    completeOnboarding: (options?: { markFirstAdminWorkspace?: boolean }) => void;
 };
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -98,6 +111,17 @@ function migrateStoredUserRole(parsed: User | null): User | null {
     }
 }
 
+/** Legacy installs: no onboarding fields → treat as already completed so we do not block existing users. */
+function migrateOnboardingFields(parsed: User | null): User | null {
+    if (!parsed) return null;
+    if (parsed.onboarding_status != null) return parsed;
+    return {
+        ...parsed,
+        onboarding_status: "completed",
+        last_onboarding_step: null,
+    };
+}
+
 export function UserProvider({ children }: { children: ReactNode }) {
     const [user, setUserState] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -107,8 +131,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
             const stored = localStorage.getItem(USER_STORAGE_KEY);
             let parsed: User | null = stored ? JSON.parse(stored) : null;
             const roleBefore = parsed?.role;
+            const needsOnboardingBackfill =
+                parsed != null && parsed.onboarding_status === undefined;
             parsed = migrateStoredUserRole(parsed);
+            parsed = migrateOnboardingFields(parsed);
             if (parsed && roleBefore !== parsed.role) {
+                localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(parsed));
+            }
+            if (parsed && needsOnboardingBackfill) {
+                localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(parsed));
+            }
+            if (parsed && parsed.onboarding_status === "completed" && parsed.last_onboarding_step != null) {
+                const { last_onboarding_step: _drop, ...rest } = parsed;
+                parsed = { ...rest, last_onboarding_step: null };
                 localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(parsed));
             }
             try {
@@ -119,7 +154,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             clearLegacyPrototypeKeys();
 
             if (!parsed && isAuthBypassEnabled()) {
-                parsed = { ...MOCK_PROTOTYPE_USERS.admin };
+                parsed = { ...MOCK_PROTOTYPE_USERS.admin } as User;
                 localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(parsed));
                 localStorage.setItem("auth_token", AUTH_BYPASS_TOKEN);
                 const secure =
@@ -191,6 +226,43 @@ export function UserProvider({ children }: { children: ReactNode }) {
         return "there";
     }, [user]);
 
+    const setOnboardingStep = useCallback((step: OnboardingStepId) => {
+        setUserState((prev) => {
+            if (!prev) return null;
+            const next: User = {
+                ...prev,
+                onboarding_status: "in_progress",
+                last_onboarding_step: step,
+            };
+            try {
+                localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(next));
+            } catch {
+                /* ignore */
+            }
+            return next;
+        });
+    }, []);
+
+    const completeOnboarding = useCallback((options?: { markFirstAdminWorkspace?: boolean }) => {
+        setUserState((prev) => {
+            if (!prev) return null;
+            if (options?.markFirstAdminWorkspace && prev.agency_id) {
+                setWorkspaceFirstAdminOnboardingDone(prev.agency_id);
+            }
+            const next: User = {
+                ...prev,
+                onboarding_status: "completed",
+                last_onboarding_step: null,
+            };
+            try {
+                localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(next));
+            } catch {
+                /* ignore */
+            }
+            return next;
+        });
+    }, []);
+
     return (
         <UserContext.Provider
             value={{
@@ -201,6 +273,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 getFirstName,
                 prototypeAdminView,
                 setPrototypeAdminView,
+                setOnboardingStep,
+                completeOnboarding,
             }}
         >
             {children}

@@ -167,20 +167,6 @@ export interface DirectoryProductCollectionRef {
   scope: "private" | "mirrors_source" | string;
 }
 
-export interface DirectoryAgencyNote {
-  id: string;
-  authorName: string;
-  /** Optional stable id for permissions / attribution. */
-  authorId?: string;
-  text: string;
-  createdAt: string;
-  /** Submitted from personal notes; awaiting admin approval. */
-  pendingUpgrade?: boolean;
-  upgradedById?: string;
-  upgradedByName?: string;
-  pinned?: boolean;
-}
-
 export interface DirectoryProduct {
   id: string;
   name: string;
@@ -301,3 +287,21 @@ export type NewDirectoryCollectionInput = {
   /** Required when `scope` is `"team"` */
   teamId: string | null;
 };
+
+/** Advisor requests sharing a private collection with a team; admin approves with optional edits. */
+export type DirectoryCollectionShareRequestStatus = "pending" | "approved" | "rejected";
+
+export interface DirectoryCollectionShareRequest {
+  id: string;
+  collectionId: string;
+  requestedById: string;
+  requestedByName: string;
+  proposedTeamId: string;
+  proposedName: string;
+  proposedDescription?: string;
+  requestedAt: string;
+  status: DirectoryCollectionShareRequestStatus;
+  resolvedAt?: string;
+  resolvedById?: string;
+  resolvedByName?: string;
+}

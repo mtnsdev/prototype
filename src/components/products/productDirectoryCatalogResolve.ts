@@ -1,5 +1,6 @@
 import type {
   DirectoryCollectionOption,
+  DirectoryCollectionShareRequest,
   DirectoryExternalSearchMeta,
   DirectoryProduct,
 } from "@/types/product-directory";
@@ -8,6 +9,7 @@ import { cloneMockDirectoryCatalogForAdvisor } from "./productDirectoryMock";
 import {
   cloneDirectoryCollectionsForState,
   cloneDirectoryProductsForState,
+  cloneShareRequestsForState,
   loadPersistedDirectory,
 } from "./productDirectoryPersistence";
 
@@ -34,12 +36,18 @@ export function resolveAdvisorCatalogFromStorage(
   products: DirectoryProduct[];
   directoryCollections: DirectoryCollectionOption[];
   externalSearchMeta: Record<string, DirectoryExternalSearchMeta>;
+  collectionShareRequests: DirectoryCollectionShareRequest[];
 } {
   const persisted = loadPersistedDirectory();
   const meta =
     persisted.externalSearchMeta && typeof persisted.externalSearchMeta === "object"
       ? { ...persisted.externalSearchMeta }
       : {};
+
+  const shareFromDisk =
+    persisted.collectionShareRequests && persisted.collectionShareRequests.length > 0
+      ? cloneShareRequestsForState(persisted.collectionShareRequests)
+      : [];
 
   const seeded = cloneMockDirectoryCatalogForAdvisor(advisorUid, advisorDisplayName);
 
@@ -55,6 +63,7 @@ export function resolveAdvisorCatalogFromStorage(
               ? cloneDirectoryCollectionsForState(persisted.directoryCollections)
               : seeded.collections,
           externalSearchMeta: meta,
+          collectionShareRequests: shareFromDisk,
         };
       }
       return {
@@ -64,12 +73,14 @@ export function resolveAdvisorCatalogFromStorage(
             ? cloneDirectoryCollectionsForState(persisted.directoryCollections)
             : seeded.collections,
         externalSearchMeta: meta,
+        collectionShareRequests: shareFromDisk,
       };
     } catch {
       return {
         products: withDestinationCatalogOverlay(seeded.products),
         directoryCollections: seeded.collections,
         externalSearchMeta: meta,
+        collectionShareRequests: shareFromDisk,
       };
     }
   }
@@ -78,5 +89,6 @@ export function resolveAdvisorCatalogFromStorage(
     products: withDestinationCatalogOverlay(seeded.products),
     directoryCollections: seeded.collections,
     externalSearchMeta: meta,
+    collectionShareRequests: shareFromDisk,
   };
 }

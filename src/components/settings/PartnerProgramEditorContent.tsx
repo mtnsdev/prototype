@@ -29,6 +29,7 @@ import type {
   PartnerProgramType,
   ProductProgramLink,
   Program,
+  ProgramStatus,
 } from "@/types/partner-programs";
 
 const REF = new Date(PARTNER_PROGRAMS_REFERENCE_ISO);
@@ -46,6 +47,14 @@ export const COMMISSION_KIND_OPTIONS: { id: CommissionKind; label: string }[] = 
   { id: "flat", label: "Flat" },
   { id: "tiered", label: "Tiered" },
   { id: "variable", label: "Variable" },
+];
+
+const PROGRAM_STATUS_OPTIONS: { id: ProgramStatus; label: string }[] = [
+  { id: "active", label: "Active" },
+  { id: "expiring", label: "Expiring" },
+  { id: "expired", label: "Expired" },
+  { id: "paused", label: "Paused" },
+  { id: "archived", label: "Archived" },
 ];
 
 /** Sentinel anchor when there are no linked products — program-wide incentives only. */
@@ -522,8 +531,8 @@ export function PartnerProgramEditorContent({
     <div className="space-y-6" key={programDraft.id}>
       <div id={PP_EDITOR_SECTION_IDS.basics}>
         <PartnerProgramEditorSectionHeading>Program details</PartnerProgramEditorSectionHeading>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block sm:col-span-2">
+        <div className="space-y-3">
+          <label className="block min-w-0">
             <span className="mb-1 block text-2xs font-medium text-muted-foreground">Program name</span>
             <Input
               defaultValue={programDraft.name}
@@ -531,31 +540,72 @@ export function PartnerProgramEditorContent({
               className={PP_EDITOR_INPUT_CLASS}
             />
           </label>
-          <label className="block min-w-0 sm:col-span-1">
-            <span className="mb-1 block text-2xs font-medium text-muted-foreground">Rate</span>
-            <Input
-              defaultValue={programDraft.commissionRate}
-              placeholder='e.g. "10%", "12.5%", "€150 flat"'
-              onBlur={(e) =>
-                patchProgramDraft({ commissionRate: e.target.value.trim() || programDraft.commissionRate })
-              }
-              className={PP_EDITOR_INPUT_CLASS}
-            />
-          </label>
-          <label className="block min-w-0 sm:col-span-1">
-            <span className="mb-1 block text-2xs font-medium text-muted-foreground">Commission type</span>
-            <select
-              className={PP_EDITOR_SELECT_CLASS}
-              value={programDraft.commissionType}
-              onChange={(e) => patchProgramDraft({ commissionType: e.target.value as CommissionKind })}
-            >
-              {COMMISSION_KIND_OPTIONS.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="grid gap-3 md:grid-cols-3">
+            <label className="block min-w-0">
+              <span className="mb-1 block text-2xs font-medium text-muted-foreground">Network</span>
+              <Input
+                defaultValue={programDraft.network ?? ""}
+                placeholder="e.g. consortium or chain name"
+                onBlur={(e) => patchProgramDraft({ network: e.target.value.trim() || null })}
+                className={PP_EDITOR_INPUT_CLASS}
+              />
+            </label>
+            <label className="block min-w-0">
+              <span className="mb-1 block text-2xs font-medium text-muted-foreground">Program type</span>
+              <select
+                className={PP_EDITOR_SELECT_CLASS}
+                value={programDraft.type}
+                onChange={(e) => patchProgramDraft({ type: e.target.value as PartnerProgramType })}
+              >
+                {PROGRAM_TYPE_OPTIONS.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block min-w-0">
+              <span className="mb-1 block text-2xs font-medium text-muted-foreground">Status</span>
+              <select
+                className={PP_EDITOR_SELECT_CLASS}
+                value={programDraft.status}
+                onChange={(e) => patchProgramDraft({ status: e.target.value as ProgramStatus })}
+              >
+                {PROGRAM_STATUS_OPTIONS.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block min-w-0">
+              <span className="mb-1 block text-2xs font-medium text-muted-foreground">Rate</span>
+              <Input
+                defaultValue={programDraft.commissionRate}
+                placeholder='e.g. "10%", "12.5%", "€150 flat"'
+                onBlur={(e) =>
+                  patchProgramDraft({ commissionRate: e.target.value.trim() || programDraft.commissionRate })
+                }
+                className={PP_EDITOR_INPUT_CLASS}
+              />
+            </label>
+            <label className="block min-w-0">
+              <span className="mb-1 block text-2xs font-medium text-muted-foreground">Commission type</span>
+              <select
+                className={PP_EDITOR_SELECT_CLASS}
+                value={programDraft.commissionType}
+                onChange={(e) => patchProgramDraft({ commissionType: e.target.value as CommissionKind })}
+              >
+                {COMMISSION_KIND_OPTIONS.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
       </div>
 
@@ -606,8 +656,8 @@ export function PartnerProgramEditorContent({
         <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70">
           Agency contact (program)
         </p>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <label className="block">
+        <div className="grid gap-3 md:grid-cols-3">
+          <label className="block min-w-0">
             <span className="mb-1 block text-2xs font-medium text-muted-foreground">Name</span>
             <Input
               defaultValue={programDraft.agencyContact.name ?? ""}
@@ -622,7 +672,7 @@ export function PartnerProgramEditorContent({
               className={PP_EDITOR_INPUT_CLASS}
             />
           </label>
-          <label className="block">
+          <label className="block min-w-0">
             <span className="mb-1 block text-2xs font-medium text-muted-foreground">Email</span>
             <Input
               defaultValue={programDraft.agencyContact.email ?? ""}
@@ -637,7 +687,7 @@ export function PartnerProgramEditorContent({
               className={PP_EDITOR_INPUT_CLASS}
             />
           </label>
-          <label className="block">
+          <label className="block min-w-0">
             <span className="mb-1 block text-2xs font-medium text-muted-foreground">Phone</span>
             <Input
               defaultValue={programDraft.agencyContact.phone ?? ""}
@@ -655,7 +705,7 @@ export function PartnerProgramEditorContent({
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block">
+          <label className="block min-w-0">
             <span className="mb-1 block text-2xs font-medium text-muted-foreground">Agreement start</span>
             <Input
               type="date"
@@ -667,7 +717,7 @@ export function PartnerProgramEditorContent({
               className={PP_EDITOR_INPUT_CLASS}
             />
           </label>
-          <label className="block">
+          <label className="block min-w-0">
             <span className="mb-1 block text-2xs font-medium text-muted-foreground">Renewal / expiry</span>
             <Input
               type="date"

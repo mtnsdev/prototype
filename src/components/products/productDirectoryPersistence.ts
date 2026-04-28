@@ -1,5 +1,6 @@
 import type {
   DirectoryCollectionOption,
+  DirectoryCollectionShareRequest,
   DirectoryExternalSearchMeta,
   DirectoryProduct,
 } from "@/types/product-directory";
@@ -9,7 +10,7 @@ import { cloneRepFirmRecord, migrateRepFirmList } from "@/lib/repFirmMigrate";
 
 /** localStorage key for the advisor directory snapshot — used for cross-tab `storage` sync. */
 export const DIRECTORY_CATALOG_LOCAL_STORAGE_KEY = "enable-product-directory-v1";
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 /** Exported so you can clear stuck prototype data in DevTools → Application → Local Storage. */
 export const REP_FIRMS_LOCAL_STORAGE_KEY = "enable-rep-firms-registry-v1";
@@ -86,6 +87,8 @@ export type PersistedDirectoryPayload = {
   directoryCollections: DirectoryCollectionOption[];
   /** Optional overlay for “saved from search” tooltips (chat / external search). */
   externalSearchMeta?: Record<string, DirectoryExternalSearchMeta>;
+  /** Pending / resolved share-with-team requests (advisor → admin approval). */
+  collectionShareRequests?: DirectoryCollectionShareRequest[];
   savedAt: string;
 };
 
@@ -93,40 +96,49 @@ export function loadPersistedDirectory(): {
   products: DirectoryProduct[] | null;
   directoryCollections: DirectoryCollectionOption[] | null;
   externalSearchMeta: Record<string, DirectoryExternalSearchMeta> | null;
+  collectionShareRequests: DirectoryCollectionShareRequest[] | null;
 } {
   if (typeof window === "undefined") {
-    return { products: null, directoryCollections: null, externalSearchMeta: null };
+    return { products: null, directoryCollections: null, externalSearchMeta: null, collectionShareRequests: null };
   }
   try {
     const raw = localStorage.getItem(DIRECTORY_CATALOG_LOCAL_STORAGE_KEY);
-    if (!raw) return { products: null, directoryCollections: null, externalSearchMeta: null };
+    if (!raw) return { products: null, directoryCollections: null, externalSearchMeta: null, collectionShareRequests: null };
     const data = JSON.parse(raw) as Partial<PersistedDirectoryPayload>;
     const v = data.v;
-    if ((v !== SCHEMA_VERSION && v !== 1 && v !== 2) || !Array.isArray(data.products)) {
-      return { products: null, directoryCollections: null, externalSearchMeta: null };
+    const versionOk = v === 1 || v === 2 || v === 3 || v === SCHEMA_VERSION;
+    if (!versionOk || !Array.isArray(data.products)) {
+      return { products: null, directoryCollections: null, externalSearchMeta: null, collectionShareRequests: null };
     }
     const meta =
-      (v === 2 || v === SCHEMA_VERSION) && data.externalSearchMeta && typeof data.externalSearchMeta === "object"
+      (v === 2 || v === 3 || v === SCHEMA_VERSION) && data.externalSearchMeta && typeof data.externalSearchMeta === "object"
         ? (data.externalSearchMeta as Record<string, DirectoryExternalSearchMeta>)
         : {};
     const productsRaw = data.products as unknown[];
     const products = productsRaw.map((row) => migrateDirectoryProductJson(row));
+    const shareRaw = data.collectionShareRequests;
+    const collectionShareRequests =
+      Array.isArray(shareRaw) && shareRaw.length > 0
+        ? (shareRaw as DirectoryCollectionShareRequest[]).map((r) => ({ ...r }))
+        : null;
     return {
       products,
       directoryCollections: Array.isArray(data.directoryCollections)
         ? (data.directoryCollections as DirectoryCollectionOption[])
         : null,
       externalSearchMeta: meta,
+      collectionShareRequests,
     };
   } catch {
-    return { products: null, directoryCollections: null, externalSearchMeta: null };
+    return { products: null, directoryCollections: null, externalSearchMeta: null, collectionShareRequests: null };
   }
 }
 
 export function persistDirectorySnapshot(
   products: DirectoryProduct[],
   directoryCollections: DirectoryCollectionOption[],
-  externalSearchMeta?: Record<string, DirectoryExternalSearchMeta>
+  externalSearchMeta?: Record<string, DirectoryExternalSearchMeta>,
+  collectionShareRequests?: DirectoryCollectionShareRequest[]
 ): void {
   try {
     const payload: PersistedDirectoryPayload = {
@@ -134,6 +146,8 @@ export function persistDirectorySnapshot(
       products,
       directoryCollections,
       externalSearchMeta: externalSearchMeta && Object.keys(externalSearchMeta).length > 0 ? externalSearchMeta : undefined,
+      collectionShareRequests:
+        collectionShareRequests && collectionShareRequests.length > 0 ? collectionShareRequests : undefined,
       savedAt: new Date().toISOString(),
     };
     localStorage.setItem(DIRECTORY_CATALOG_LOCAL_STORAGE_KEY, JSON.stringify(payload));
@@ -173,4 +187,10 @@ export function cloneDirectoryCollectionsForState(collections: DirectoryCollecti
     ...c,
     productIds: c.productIds ? [...c.productIds] : undefined,
   }));
+}
+
+export function cloneShareRequestsForState(
+  rows: DirectoryCollectionShareRequest[]
+): DirectoryCollectionShareRequest[] {
+  return rows.map((r) => ({ ...r }));
 }

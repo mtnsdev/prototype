@@ -791,7 +791,3 @@ export function getBriefingHubNewsSeed(): NewsAlertItem[] {
 export function getBriefingHubIncentiveSeed(): CommissionAlertItem[] {
   return getMockCommissionAlertContent().items.map((i) => ({ ...i }));
 }
-
-export function getBriefingHubAgencyNoteSeed(): string {
-  return getMockFreeTextContent().body;
-}

@@ -1,6 +1,6 @@
 import type { CommissionAlertItem, NewsAlertItem } from "@/types/briefing";
 
-export type HubTab = "notes" | "alerts" | "announcements" | "incentives";
+export type HubTab = "alerts" | "announcements" | "incentives";
 
 export type HubAnnouncement = {
   id: string;
@@ -13,7 +13,6 @@ export type HubAnnouncement = {
 };
 
 export const HUB_TABS: { id: HubTab; label: string; hint: string }[] = [
-  { id: "notes", label: "Agency notes", hint: "Pinned for everyone" },
   { id: "alerts", label: "News & alerts", hint: "Industry & partner news" },
   { id: "announcements", label: "Announcements", hint: "Team updates" },
   { id: "incentives", label: "Partner incentives", hint: "Offers & bonuses" },

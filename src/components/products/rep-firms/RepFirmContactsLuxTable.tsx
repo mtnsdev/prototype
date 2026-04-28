@@ -35,7 +35,7 @@ function RepFirmContactEmailCell({
   };
 
   if (emails.length === 0) {
-    return <span className={cn("text-muted-foreground", compact ? "text-[10px]" : "text-sm")}>—</span>;
+    return <span className={cn("text-muted-foreground", compact ? "text-inherit" : "text-sm")}>—</span>;
   }
 
   return (
@@ -47,7 +47,7 @@ function RepFirmContactEmailCell({
             href={`mailto:${email}`}
             className={cn(
               "w-full min-w-0 break-words [overflow-wrap:anywhere] text-[#B07A5B] underline-offset-2 hover:underline",
-              compact ? "text-[10px]" : "text-2xs"
+              compact ? "text-inherit" : "text-2xs"
             )}
           >
             {email}
@@ -116,7 +116,7 @@ export function RepFirmContactsLuxReadonlyTable({
           <p
             className={cn(
               "font-semibold text-foreground",
-              compact ? "text-[11px]" : "text-xs"
+              compact ? "text-[9px]" : "text-xs"
             )}
           >
             {h}
@@ -124,51 +124,71 @@ export function RepFirmContactsLuxReadonlyTable({
         </div>
       ) : null}
       <div className={cn("min-w-0 max-w-full overflow-x-auto overscroll-x-contain", compact ? "-mx-0.5" : "")}>
-        <table className={listTableClass(compact ? "min-w-[520px]" : "min-w-[560px]")}>
-          <thead className={listTheadRowClass}>
+        <table
+          className={cn(
+            "w-full",
+            compact
+              ? "min-w-[520px] [&_a]:text-inherit"
+              : listTableClass("min-w-[560px]")
+          )}
+        >
+          <thead className={cn(listTheadRowClass, compact && "text-[9px] leading-tight")}>
             <tr>
-              <th className={cn(listThClass, compact && "py-2 text-[10px]")}>Name</th>
-              <th className={cn(listThClass, compact && "py-2 text-[10px]")}>Title</th>
-              <th className={cn(listThClass, compact && "py-2 text-[10px]")}>Phone</th>
-              <th className={cn(listThClass, "min-w-[12rem] w-[30%]", compact && "py-2 text-[10px]")}>Email</th>
+              <th className={cn(listThClass, compact ? "max-w-[9rem] py-1.5" : "max-w-[16rem]")}>Name</th>
+              <th className={cn(listThClass, compact && "py-1.5")}>Title</th>
+              <th className={cn(listThClass, compact ? "max-w-[9rem] py-1.5" : "max-w-[16rem]")}>Phone</th>
+              <th className={cn(listThClass, "min-w-[12rem] w-[30%]", compact && "py-1.5")}>Email</th>
             </tr>
           </thead>
           <tbody>
-            {visible.map((c, i) => (
+            {visible.map((c, i) => {
+              const phones = phonesForRepFirmContact(c);
+              return (
               <tr key={`${c.name}-${i}`} className={listTbodyRowClass}>
                 <td
                   className={cn(
                     listTdClass,
-                    compact ? "py-2 text-[10px] font-medium" : "font-medium text-foreground"
+                    "min-w-0",
+                    compact ? "max-w-[9rem] py-1.5 text-[9px] leading-tight font-medium" : "max-w-[16rem] font-medium text-foreground"
                   )}
                 >
-                  {c.name || "—"}
+                  <span className="block truncate">{c.name || "—"}</span>
                 </td>
-                <td className={cn(listTdClass, compact ? "py-2 text-[10px] text-muted-foreground" : "text-muted-foreground")}>
+                <td
+                  className={cn(
+                    listTdClass,
+                    compact ? "py-1.5 text-[9px] leading-tight text-muted-foreground" : "text-muted-foreground"
+                  )}
+                >
                   {c.title?.trim() || "—"}
                 </td>
                 <td
                   className={cn(
                     listTdClass,
-                    "tabular-nums",
-                    compact ? "py-2 text-[10px] text-muted-foreground" : "text-muted-foreground"
+                    "min-w-0 tabular-nums",
+                    compact
+                      ? "max-w-[9rem] py-1.5 text-[9px] leading-tight text-muted-foreground"
+                      : "max-w-[16rem] text-muted-foreground"
                   )}
                 >
-                  {phonesForRepFirmContact(c).length > 0 ? (
-                    <div className="flex flex-col gap-0.5">
-                      {phonesForRepFirmContact(c).map((phone, pi) => (
-                        <span key={`${c.name}-ph-${pi}`}>{phone}</span>
-                      ))}
-                    </div>
+                  {phones.length > 0 ? (
+                    <span className="block truncate">{phones.join(" · ")}</span>
                   ) : (
                     "—"
                   )}
                 </td>
-                <td className={cn(listTdClass, "min-w-[12rem] w-[30%] align-top", compact && "py-2")}>
+                <td
+                  className={cn(
+                    listTdClass,
+                    "min-w-[12rem] w-[30%] align-top",
+                    compact && "py-1.5 text-[9px] leading-tight"
+                  )}
+                >
                   <RepFirmContactEmailCell contact={c} compact={compact} />
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -178,7 +198,7 @@ export function RepFirmContactsLuxReadonlyTable({
           onClick={() => setShowAll(true)}
           className={cn(
             "mt-2 text-left text-muted-foreground underline-offset-2 hover:text-foreground hover:underline",
-            compact ? "text-[10px]" : "text-2xs"
+            compact ? "text-[9px]" : "text-2xs"
           )}
         >
           Show {hidden} additional contact{hidden !== 1 ? "s" : ""}

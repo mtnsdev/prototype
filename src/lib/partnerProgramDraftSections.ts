@@ -10,6 +10,9 @@ export const PP_EDITOR_SECTION_IDS = {
 function basicsEqual(a: Program, b: Program): boolean {
   return (
     a.name === b.name &&
+    a.network === b.network &&
+    a.type === b.type &&
+    a.status === b.status &&
     a.commissionRate === b.commissionRate &&
     a.commissionType === b.commissionType
   );

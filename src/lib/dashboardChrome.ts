@@ -44,6 +44,12 @@ export const APP_PAGE_CONTENT_PAD_X = "px-6 md:px-10";
 /** Combined body shell: centered max width + standard horizontal padding (use for tables, grids, and stacked sections under the hero). */
 export const APP_PAGE_CONTENT_SHELL = `${APP_PAGE_CONTENT_MAX} ${APP_PAGE_CONTENT_PAD_X}`;
 
+/**
+ * Cancels horizontal padding from `APP_PAGE_CONTENT_PAD_X` so a child (e.g. sticky toolbar)
+ * can span the full content column width.
+ */
+export const APP_PAGE_CONTENT_BLEED_X = "-mx-6 px-6 md:-mx-10 md:px-10";
+
 /** Briefing-style hero header: soft tint behind title row. */
 export const APP_PAGE_HERO_GLOW =
   "pointer-events-none absolute inset-0 bg-gradient-to-b from-[var(--muted-info-bg)] to-transparent opacity-90";

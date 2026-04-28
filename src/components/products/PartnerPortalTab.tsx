@@ -34,6 +34,7 @@ import {
 import { useToast } from "@/contexts/ToastContext";
 import { getPartnerProgramDraftDirtySummary } from "@/lib/partnerProgramDraftSections";
 import { EditIconButton } from "@/components/ui/edit-icon-button";
+import { APP_PAGE_CONTENT_BLEED_X } from "@/lib/dashboardChrome";
 import { cn } from "@/lib/utils";
 import { partnerPortalProgramDomId } from "@/lib/partnerPortalData";
 import { PARTNER_PROGRAMS_REFERENCE_ISO } from "@/lib/partnerProgramsSeed";
@@ -490,7 +491,12 @@ export function PartnerPortalTab({
       ) : null}
 
       {surface === "list" ? (
-      <div className="sticky top-0 z-20 -mx-6 space-y-3 border-b border-border bg-inset px-6 pb-3 pt-3">
+      <div
+        className={cn(
+          APP_PAGE_CONTENT_BLEED_X,
+          "sticky top-0 z-20 space-y-3 border-b border-border bg-inset pb-3 pt-3"
+        )}
+      >
         <div className="flex flex-wrap items-center gap-2">
           <div className="min-w-0 flex-1 basis-[min(100%,20rem)]">
             <PageSearchField

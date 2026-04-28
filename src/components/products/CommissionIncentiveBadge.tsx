@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { cn } from "@/lib/utils";
 import type { CommissionIncentive } from "@/types/commission-incentive";
 
 interface CommissionIncentiveBadgeProps {
@@ -31,8 +32,8 @@ export const CommissionIncentiveBadge: React.FC<
         inline-flex items-center gap-2
         ${padding}
         rounded-md
-        bg-slate-900 border border-slate-700
-        ${isExpiringSoon ? "border-orange-500/50 bg-slate-800" : ""}
+        border border-border bg-card
+        ${isExpiringSoon ? "border-orange-500/50 bg-muted" : ""}
       `}
       title={`${incentive.title} — ${incentive.terms_summary}`}
     >
@@ -41,7 +42,7 @@ export const CommissionIncentiveBadge: React.FC<
 
       {/* Incentive title and bonus */}
       <div className={`flex flex-col gap-0.5 ${textSize}`}>
-        <span className="font-semibold text-slate-50 leading-tight">
+        <span className="font-semibold leading-tight text-foreground">
           {incentive.title}
         </span>
 
@@ -62,14 +63,14 @@ export const CommissionIncentiveBadge: React.FC<
       {showDaysRemaining && incentive.days_remaining && (
         <div className={`ml-auto text-right ${textSize}`}>
           <span
-            className={`
-              font-semibold
-              ${isExpiringSoon ? "text-orange-400" : "text-slate-400"}
-            `}
+            className={cn(
+              "font-semibold",
+              isExpiringSoon ? "text-orange-400" : "text-muted-foreground",
+            )}
           >
             {incentive.days_remaining}d
           </span>
-          <span className="text-slate-500 block text-xs">left</span>
+          <span className="block text-xs text-muted-foreground">left</span>
         </div>
       )}
 

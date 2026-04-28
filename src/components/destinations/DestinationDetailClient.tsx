@@ -47,14 +47,19 @@ export function DestinationDetailClient({ canonical }: Props) {
       destination={destination}
       headerAside={
         isAdmin ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" variant="outline" size="sm" asChild className="gap-1.5">
-              <Link href={`/dashboard/products/destinations/${slug}/edit`}>
-                <Pencil className="size-3.5" aria-hidden />
-                Edit destination
-              </Link>
-            </Button>
-          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            className="size-9 rounded-full border border-border/60 bg-background/80 text-foreground shadow-md backdrop-blur-md hover:bg-background"
+            asChild
+            title="Edit destination"
+          >
+            <Link href={`/dashboard/products/destinations/${slug}/edit`}>
+              <Pencil className="size-4" aria-hidden />
+              <span className="sr-only">Edit destination</span>
+            </Link>
+          </Button>
         ) : null
       }
     />

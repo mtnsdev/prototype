@@ -233,7 +233,6 @@ export interface ProductsPageState {
 // ─── Product Directory (`/dashboard/products` unified view) ────────────────
 export type {
   DirectoryAgencyContact,
-  DirectoryAgencyNote,
   DirectoryAmenityTag,
   DirectoryCollectionOption,
   DirectoryPartnerProgram,

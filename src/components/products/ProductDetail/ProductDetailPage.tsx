@@ -251,6 +251,7 @@ export default function ProductDetailPage({ productId }: Props) {
   const createDirectoryCollectionDetail = useCallback(
     (input: NewDirectoryCollectionInput): string => {
       if (!directoryProduct) return "";
+      if (!isAdmin && input.scope === "team") return "";
       const trimmed = input.name.trim();
       if (!trimmed) return "";
       if (input.scope === "team" && !input.teamId) return "";
@@ -302,7 +303,7 @@ export default function ProductDetailPage({ productId }: Props) {
       toast({ title: `Created “${newCol.name}”`, tone: "success" });
       return id;
     },
-    [directoryProduct, uid, user, toast, patchPersistedDirectory]
+    [directoryProduct, isAdmin, uid, user, toast, patchPersistedDirectory]
   );
 
   const handleQuickAddDirectoryCollection = useCallback(
@@ -449,6 +450,7 @@ export default function ProductDetailPage({ productId }: Props) {
             onClose={() => setPickerOpen(false)}
             onSave={saveDirectoryCollections}
             onCreateCollection={createDirectoryCollectionDetail}
+            allowTeamScope={isAdmin}
           />
         )}
       </div>
@@ -487,15 +489,15 @@ export default function ProductDetailPage({ productId }: Props) {
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background">
-      <div className="relative h-[240px] w-full shrink-0 overflow-hidden bg-zinc-900">
+      <div className="relative aspect-[2/1] min-h-[220px] w-full max-h-[min(42vh,420px)] shrink-0 overflow-hidden bg-zinc-900 sm:min-h-[260px] sm:max-h-[min(45vh,460px)]">
         <ImageWithFallback
           fallbackType="product"
           src={product.hero_image_url}
           alt={product.name}
           productCategory={product.category as ProductCategory}
-          className="h-full w-full object-cover opacity-95"
+          className="h-full w-full object-cover object-center opacity-95"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0C0C0C] via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0C0C0C]/90 via-[#0C0C0C]/15 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-4">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-xl font-semibold text-white drop-shadow-sm">{product.name}</h1>

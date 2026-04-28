@@ -12,7 +12,6 @@ import {
   Contact,
   ExternalLink,
   Lock,
-  Pin,
   Pencil,
   Plus,
   Search,
@@ -26,7 +25,6 @@ import {
 } from "lucide-react";
 import type {
   DirectoryAgencyContact,
-  DirectoryAgencyNote,
   DirectoryCollectionOption,
   DirectoryPartnerProgram,
   DirectoryProduct,
@@ -197,19 +195,6 @@ function normalizeGalleryUrlList(urls: string[]): string[] {
   return urls.map((u) => u.trim()).filter(Boolean);
 }
 
-function agencyMocksToDirectoryNotes(
-  mocks: { id: string; content: string; author: string; timeAgo: string; pinned?: boolean }[]
-): DirectoryAgencyNote[] {
-  return mocks.map((n) => ({
-    id: n.id,
-    authorName: n.author,
-    authorId: `mock-${n.id}`,
-    text: n.content,
-    createdAt: new Date().toISOString(),
-    pinned: n.pinned,
-  }));
-}
-
 function TeamScopedFieldNotice({ show }: { show: boolean }) {
   if (!show) return null;
   return (
@@ -336,12 +321,6 @@ export function ProductDirectoryDetailBody({
   const [pcPhones, setPcPhones] = useState<string[]>(() => defaultChannelFormRows().phones);
   const [pcNote, setPcNote] = useState("");
 
-  const [agencyNotes, setAgencyNotes] = useState<DirectoryAgencyNote[]>([]);
-  const [newAgencyNote, setNewAgencyNote] = useState("");
-  const [editingAgencyNoteId, setEditingAgencyNoteId] = useState<string | null>(null);
-  const [editAgencyNoteDraft, setEditAgencyNoteDraft] = useState("");
-  const [upgradeConfirmOpen, setUpgradeConfirmOpen] = useState(false);
-  const [upgradeConfirmText, setUpgradeConfirmText] = useState("");
   const [contactUpgradeOpen, setContactUpgradeOpen] = useState(false);
   const [contactUpgradeTarget, setContactUpgradeTarget] = useState<{
     name: string;
@@ -542,14 +521,11 @@ export function ProductDirectoryDetailBody({
     setPanelCollectionSearch("");
     setShowRepFirmEditor(false);
     setLocalRepFirmLinks([]);
-    setEditingAgencyNoteId(null);
     setEditingPersonalNoteId(null);
     setEditingAgencyContactId(null);
     setEditingPersonalContactId(null);
     setPersonalContactFormOpen(false);
     setAgencyContactFormOpen(false);
-    setUpgradeConfirmOpen(false);
-    setUpgradeConfirmText("");
     setContactUpgradeOpen(false);
     setContactUpgradeTarget(null);
     setEnableMasterDetailsOpen(false);
@@ -590,7 +566,6 @@ export function ProductDirectoryDetailBody({
           ]
         : []
     );
-    setAgencyNotes(agencyMocksToDirectoryNotes(detailMock.agencyNotes));
   }, [detailMock, product.id, currentUserId, user?.email, user?.username]);
 
   useEffect(() => {
@@ -598,71 +573,15 @@ export function ProductDirectoryDetailBody({
   }, [product.id, product.agencyContacts]);
 
   useEffect(() => {
-    if (!upgradeConfirmOpen && !contactUpgradeOpen) return;
+    if (!contactUpgradeOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-      if (upgradeConfirmOpen) {
-        setUpgradeConfirmOpen(false);
-        setUpgradeConfirmText("");
-      }
-      if (contactUpgradeOpen) {
-        setContactUpgradeOpen(false);
-        setContactUpgradeTarget(null);
-      }
+      setContactUpgradeOpen(false);
+      setContactUpgradeTarget(null);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [upgradeConfirmOpen, contactUpgradeOpen]);
-
-  const postAgencyNote = () => {
-    const t = newAgencyNote.trim();
-    if (!t) return;
-    const displayName = user?.username ?? user?.email ?? "You";
-    setAgencyNotes((prev) => [
-      {
-        id: `n_${Date.now()}`,
-        authorName: displayName,
-        authorId: currentUserId,
-        text: t,
-        createdAt: new Date().toISOString(),
-      },
-      ...prev,
-    ]);
-    setNewAgencyNote("");
-    toast("Note posted");
-  };
-
-  const toggleAgencyNotePin = (noteId: string) => {
-    if (!isAdmin) return;
-    setAgencyNotes((prev) =>
-      prev.map((n) => (n.id === noteId ? { ...n, pinned: !n.pinned } : n))
-    );
-    toast("Note updated");
-  };
-
-  const deleteAgencyNote = (id: string) => {
-    setAgencyNotes((prev) => prev.filter((n) => n.id !== id));
-    if (editingAgencyNoteId === id) {
-      setEditingAgencyNoteId(null);
-      setEditAgencyNoteDraft("");
-    }
-    toast("Note removed");
-  };
-
-  const canEditAgencyNote = (n: DirectoryAgencyNote) =>
-    !n.pendingUpgrade && (isAdmin || n.authorId === currentUserId);
-
-  const saveAgencyNoteEdit = () => {
-    if (!editingAgencyNoteId) return;
-    const t = editAgencyNoteDraft.trim();
-    if (!t) return;
-    setAgencyNotes((prev) =>
-      prev.map((n) => (n.id === editingAgencyNoteId ? { ...n, text: t } : n))
-    );
-    setEditingAgencyNoteId(null);
-    setEditAgencyNoteDraft("");
-    toast("Note updated");
-  };
+  }, [contactUpgradeOpen]);
 
   const addPersonalNote = () => {
     const t = newPersonalNote.trim();
@@ -776,43 +695,6 @@ export function ProductDirectoryDetailBody({
     setNewAgencyContactPhones(ph.length ? ph : [""]);
     setNewAgencyContactNote(c.note ?? "");
     setAgencyContactFormOpen(true);
-  };
-
-  const requestUpgradeToAgency = (noteText: string) => {
-    setUpgradeConfirmText(noteText);
-    setUpgradeConfirmOpen(true);
-  };
-
-  const confirmUpgrade = () => {
-    const t = upgradeConfirmText.trim();
-    if (!t) return;
-    const displayName = user?.username ?? user?.email ?? "You";
-    setAgencyNotes((prev) => [
-      {
-        id: `an-upgrade-${Date.now()}`,
-        authorName: displayName,
-        authorId: currentUserId,
-        text: t,
-        createdAt: new Date().toISOString(),
-        pendingUpgrade: true,
-        upgradedById: currentUserId,
-        upgradedByName: displayName,
-      },
-      ...prev,
-    ]);
-    setUpgradeConfirmOpen(false);
-    setUpgradeConfirmText("");
-    toast("Note submitted for review");
-  };
-
-  const approveUpgrade = (noteId: string) => {
-    setAgencyNotes((prev) => prev.map((n) => (n.id === noteId ? { ...n, pendingUpgrade: false } : n)));
-    toast("Note approved — now visible to agency");
-  };
-
-  const rejectUpgrade = (noteId: string) => {
-    setAgencyNotes((prev) => prev.filter((n) => n.id !== noteId));
-    toast("Note rejected");
   };
 
   const requestContactUpgrade = (contact: DirectoryAgencyContact) => {
@@ -1021,19 +903,19 @@ export function ProductDirectoryDetailBody({
   return (
     <div className="flex min-h-0 min-w-0 w-full max-w-full flex-col pb-0">
       {/* Block 1 — Hero + Identity */}
-      <div className="relative h-[200px] w-full shrink-0 overflow-hidden bg-popover">
+      <div className="relative aspect-[2/1] min-h-[220px] w-full max-h-[min(42vh,400px)] shrink-0 overflow-hidden bg-popover sm:min-h-[260px] sm:max-h-[min(45vh,440px)]">
         {product.imageUrl ? (
           <img
             src={product.imageUrl}
             alt={product.name}
-            className="h-full w-full object-cover opacity-90"
+            className="h-full w-full object-cover object-center opacity-95"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center">
+          <div className="flex h-full min-h-[220px] w-full items-center justify-center">
             <Building2 className="h-12 w-12 text-white/10" aria-hidden />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/25 to-transparent" />
         {showClose && onClose && (
           <Button
             type="button"
@@ -2689,11 +2571,6 @@ export function ProductDirectoryDetailBody({
               Private
             </span>
           </div>
-          <p className="mb-3 text-2xs leading-relaxed text-muted-foreground/70">
-            Visible only to you. Use <span className="text-muted-foreground">Suggest to agency</span> when a note
-            should become shared — an admin approves it before it appears in agency notes.
-          </p>
-
           <div className="mb-3 space-y-2">
             {personalNotes.length === 0 ? (
               <p className="py-1 text-center text-2xs text-muted-foreground/65">None yet</p>
@@ -2756,16 +2633,6 @@ export function ProductDirectoryDetailBody({
                         >
                           Delete
                         </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="xs"
-                          onClick={() => requestUpgradeToAgency(note.text)}
-                          className="ml-auto h-6 text-[9px] text-muted-foreground hover:text-brand-cta"
-                        >
-                          <Share2 className="size-3" aria-hidden />
-                          Suggest to agency
-                        </Button>
                       </div>
                     </>
                   )}
@@ -2793,174 +2660,6 @@ export function ProductDirectoryDetailBody({
             </Button>
           </div>
 
-        </div>
-
-        <div className="my-4 flex items-center gap-3">
-          <div className="h-px flex-1 bg-white/[0.04]" />
-          <span className="text-[9px] uppercase tracking-wider text-muted-foreground/65">Agency</span>
-          <div className="h-px flex-1 bg-white/[0.04]" />
-        </div>
-
-        <div className="rounded-xl border border-[rgba(140,160,180,0.10)] bg-[rgba(140,160,180,0.03)] p-3">
-          <p className="mb-2 text-2xs leading-relaxed text-muted-foreground/70">
-            Agency notes are visible to your team.
-          </p>
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <Users className="h-3 w-3 shrink-0" style={{ color: "rgba(140,160,180,0.50)" }} aria-hidden />
-            <span className="text-[11px] font-medium text-foreground">Agency notes</span>
-            <TeamScopedFieldNotice show={!isAdmin} />
-            {agencyNotes.length > 0 ? (
-              <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-muted-foreground">
-                {agencyNotes.length}
-              </span>
-            ) : null}
-          </div>
-
-          <div className="mb-3 space-y-2">
-            {agencyNotes.length === 0 ? (
-              <p className="py-2 text-center text-2xs text-muted-foreground/65">None yet</p>
-            ) : (
-              agencyNotes.map((note) => (
-                <div
-                  key={note.id}
-                  className="rounded-xl border border-white/[0.04] bg-white/[0.03] p-3"
-                >
-                  {note.pendingUpgrade && (
-                    <div className="mb-1.5 flex flex-wrap items-center gap-1 text-[9px] text-brand-cta">
-                      <Clock className="h-3 w-3 shrink-0" />
-                      <span>
-                        Pending approval — suggested by{" "}
-                        {note.upgradedByName || note.authorName || "advisor"}
-                      </span>
-                      {isAdmin && (
-                        <div className="ml-auto flex gap-2">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="xs"
-                            className="h-6 text-[#5B8A6E] hover:text-[#6DA07E]"
-                            onClick={() => approveUpgrade(note.id)}
-                          >
-                            Approve
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="xs"
-                            className="h-6 text-[#A66B6B] hover:text-[#BA7E7E]"
-                            onClick={() => rejectUpgrade(note.id)}
-                          >
-                            Reject
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {editingAgencyNoteId === note.id && canEditAgencyNote(note) && !note.pendingUpgrade ? (
-                    <>
-                      <textarea
-                        value={editAgencyNoteDraft}
-                        onChange={(e) => setEditAgencyNoteDraft(e.target.value)}
-                        rows={3}
-                        className="w-full resize-none rounded-lg border border-border bg-white/[0.03] px-2 py-1.5 text-xs text-[#C8C0B8] outline-none"
-                      />
-                      <div className="mt-2 flex gap-2">
-                        <Button type="button" variant="secondary" size="xs" onClick={saveAgencyNoteEdit} className="h-7 text-[#5B8A6E]">
-                          Save
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="xs"
-                          onClick={() => {
-                            setEditingAgencyNoteId(null);
-                            setEditAgencyNoteDraft("");
-                          }}
-                          className="h-7 text-muted-foreground"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-xs leading-relaxed text-[#C8C0B8]">{note.text}</p>
-                      <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <span className="text-2xs font-medium text-muted-foreground">{note.authorName}</span>
-                        <span className="text-2xs text-muted-foreground/65">·</span>
-                        <span className="text-2xs text-muted-foreground/65" title={formatIsoDateStable(note.createdAt)}>
-                          {relativeTime(note.createdAt)} ({formatIsoDateStable(note.createdAt)})
-                        </span>
-                        {note.pinned ? (
-                          <span className="ml-auto text-[9px] text-amber-500/60">Pinned</span>
-                        ) : null}
-                      </div>
-                      {canEditAgencyNote(note) && !note.pendingUpgrade ? (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {isAdmin ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="xs"
-                              className="h-6 text-[9px] text-muted-foreground/65 hover:text-brand-cta"
-                              onClick={() => toggleAgencyNotePin(note.id)}
-                            >
-                              <Pin className="size-3" aria-hidden />
-                              {note.pinned ? "Unpin" : "Pin"}
-                            </Button>
-                          ) : null}
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="xs"
-                            className="h-6 text-[9px] text-muted-foreground/65 hover:text-brand-cta"
-                            onClick={() => {
-                              setEditingAgencyNoteId(note.id);
-                              setEditAgencyNoteDraft(note.text);
-                            }}
-                          >
-                            <Pencil className="size-3" aria-hidden />
-                            Edit
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="xs"
-                            className="h-6 text-[9px] text-muted-foreground/65 hover:text-brand-cta"
-                            onClick={() => deleteAgencyNote(note.id)}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      ) : null}
-                    </>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={newAgencyNote}
-              onChange={(e) => setNewAgencyNote(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") postAgencyNote();
-              }}
-              placeholder="Post to agency…"
-              className="flex-1 rounded-lg border border-border bg-white/[0.03] px-3 py-2 text-xs text-[#C8C0B8] outline-none placeholder:text-muted-foreground/65"
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="xs"
-              onClick={postAgencyNote}
-              className="self-center h-7 text-[rgba(140,160,180,0.75)] hover:text-[rgba(140,160,180,0.95)]"
-            >
-              Post
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -3131,28 +2830,6 @@ export function ProductDirectoryDetailBody({
           </Button>
         </div>
       </div>
-
-      {upgradeConfirmOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-80 rounded-2xl border border-border bg-popover p-5 shadow-2xl">
-            <h3 className="mb-2 text-sm font-medium text-foreground">Suggest to agency?</h3>
-            <div className="mb-3 rounded-lg border border-border bg-foreground/[0.04] p-2.5">
-              <p className="line-clamp-3 text-xs italic text-muted-foreground">&quot;{upgradeConfirmText}&quot;</p>
-            </div>
-            <p className="mb-4 text-2xs leading-relaxed text-muted-foreground">
-              Needs admin approval. Your private note is unchanged.
-            </p>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setUpgradeConfirmOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="button" variant="cta" size="sm" className="h-8 text-xs text-primary-foreground" onClick={confirmUpgrade}>
-                Submit
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <Dialog open={repFirmSuggestOpen} onOpenChange={setRepFirmSuggestOpen}>
         <DialogContent className="border-border bg-popover sm:max-w-md">

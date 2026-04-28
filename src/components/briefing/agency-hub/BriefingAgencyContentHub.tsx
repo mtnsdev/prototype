@@ -1,7 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Building2,
   Pin,
@@ -9,8 +8,6 @@ import {
   Megaphone,
   Bell,
   Plus,
-  Eye,
-  FileEdit,
   Gift,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,11 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/contexts/ToastContext";
 import type { CommissionAlertItem, NewsAlertItem } from "@/types/briefing";
-import {
-  getBriefingHubAgencyNoteSeed,
-  getBriefingHubIncentiveSeed,
-  getBriefingHubNewsSeed,
-} from "../briefingMockData";
+import { getBriefingHubIncentiveSeed, getBriefingHubNewsSeed } from "../briefingMockData";
 import { BRIEFING_PANEL_SURFACE } from "@/lib/briefingSurface";
 import { cn } from "@/lib/utils";
 import { useBriefingAgencyHubLayout } from "@/hooks/useBriefingAgencyHubLayout";
@@ -56,7 +49,6 @@ import {
   alertTimeAgo,
   severityBorder,
   incentiveBorder,
-  formatSavedAt,
   calendarDaysFromTodayToDate,
   toValidUntilIso,
   wholeDaysRemainingUntil,
@@ -64,69 +56,7 @@ import {
   formatIncentiveEndLabel,
 } from "./core";
 
-const NOTE_LINK_CLASS =
-  "font-medium break-words text-[var(--color-info)] underline underline-offset-2 decoration-[var(--color-info)]/35 transition-colors [overflow-wrap:anywhere] hover:text-foreground hover:decoration-foreground/40";
-
-/** Inline [label](https://…) and bare https:// URLs open in a new tab. */
-function parseInlineWithLinks(text: string, keyPrefix: string): ReactNode[] {
-  const nodes: ReactNode[] = [];
-  let last = 0;
-  const re = /\[(.+?)\]\((https?:\/\/[^)\s]+)\)|(https?:\/\/[^\s]+)/g;
-  let m: RegExpExecArray | null;
-  let n = 0;
-  while ((m = re.exec(text)) !== null) {
-    if (m.index > last) {
-      nodes.push(text.slice(last, m.index));
-    }
-    const href = (m[2] || m[3] || "").trim();
-    const label = (m[1] || href).trim();
-    if (href) {
-      nodes.push(
-        <a
-          key={`${keyPrefix}-a-${n++}`}
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={NOTE_LINK_CLASS}
-        >
-          {label}
-        </a>,
-      );
-    }
-    last = re.lastIndex;
-  }
-  if (last < text.length) {
-    nodes.push(text.slice(last));
-  }
-  return nodes.length > 0 ? nodes : [text];
-}
-
-function simpleAgencyNoteMarkdown(text: string): ReactNode {
-  const lines = text.split("\n");
-  return lines.map((line, i) => {
-    const isHeading =
-      line.startsWith("**") && line.endsWith("**") && line.length >= 4 && !line.slice(2, -2).includes("**");
-    if (isHeading) {
-      const inner = line.slice(2, -2);
-      return (
-        <p key={i} className="font-semibold text-foreground mb-1.5 tracking-tight">
-          {parseInlineWithLinks(inner, `nh-${i}`)}
-        </p>
-      );
-    }
-    if (line.trim() === "") {
-      return <div key={i} className="h-2" />;
-    }
-    return (
-      <p key={i} className="text-sm text-muted-foreground leading-relaxed mb-1">
-        {parseInlineWithLinks(line, `nl-${i}`)}
-      </p>
-    );
-  });
-}
-
 type AgencyUserViewProps = {
-  publishedNote: string;
   sortedAlerts: NewsAlertItem[];
   sortedAnnouncements: HubAnnouncement[];
   incentives: CommissionAlertItem[];
@@ -147,7 +77,6 @@ function orderedHubIdsForColumn(
 
 /** User (advisor): same agency content as admin hub; each person can arrange visibility, columns, and size. */
 function BriefingAgencyUserViewWidgets({
-  publishedNote,
   sortedAlerts,
   sortedAnnouncements,
   incentives,
@@ -176,27 +105,6 @@ function BriefingAgencyUserViewWidgets({
   const renderHubBlock = (id: AgencyHubUserWidgetId, staggerIndex: number) => {
     const density: WidgetCardDensity = hubLayout[id].size;
     switch (id) {
-      case "hub-notes":
-        return (
-          <AppleWidgetCard
-            key={id}
-            accent="gray"
-            staggerIndex={staggerIndex}
-            icon={<Pin className="size-5 text-primary/90" aria-hidden />}
-            title="Agency notes"
-            density={density}
-            rightElement={mergeWidgetHeaderRight(
-              <span className="text-2xs font-medium uppercase tracking-wide text-muted-foreground/70">
-                Pinned
-              </span>,
-              hubPopover(id),
-            )}
-          >
-            <div className="min-h-[120px] rounded-xl border border-border bg-muted/15 p-4">
-              {simpleAgencyNoteMarkdown(publishedNote)}
-            </div>
-          </AppleWidgetCard>
-        );
       case "hub-alerts":
         return (
           <AppleWidgetCard
@@ -399,12 +307,7 @@ export default function BriefingAgencyContentHub({ canEditBriefing, publisherNam
     resetToDefaults: resetHubLayout,
     isLoading: hubLayoutLoading,
   } = useBriefingAgencyHubLayout();
-  const [tab, setTab] = useState<HubTab>("notes");
-
-  const [publishedNote, setPublishedNote] = useState(getBriefingHubAgencyNoteSeed);
-  const [draftNote, setDraftNote] = useState(getBriefingHubAgencyNoteSeed);
-  const [noteSavedAt, setNoteSavedAt] = useState<Date | null>(null);
-  const noteDirty = draftNote !== publishedNote;
+  const [tab, setTab] = useState<HubTab>("alerts");
 
   const [alerts, setAlerts] = useState<NewsAlertItem[]>(() => getBriefingHubNewsSeed());
 
@@ -498,17 +401,6 @@ export default function BriefingAgencyContentHub({ canEditBriefing, publisherNam
     setIncEditing(item);
     setIncDialogOpen(true);
   };
-
-  const savePublishedNote = useCallback(() => {
-    setPublishedNote(draftNote);
-    setNoteSavedAt(new Date());
-    showToast("Agency note published to the team");
-  }, [draftNote, showToast]);
-
-  const discardNoteDraft = useCallback(() => {
-    setDraftNote(publishedNote);
-    showToast("Draft discarded");
-  }, [publishedNote, showToast]);
 
   const submitNews = () => {
     if (!newsForm.headline.trim() || !newsForm.summary.trim()) return;
@@ -654,7 +546,6 @@ export default function BriefingAgencyContentHub({ canEditBriefing, publisherNam
 
   const tabCounts = useMemo(
     () => ({
-      notes: 1,
       alerts: alerts.length,
       announcements: announcements.length,
       incentives: incentives.length,
@@ -665,7 +556,6 @@ export default function BriefingAgencyContentHub({ canEditBriefing, publisherNam
   if (!canEditBriefing) {
     return (
       <BriefingAgencyUserViewWidgets
-        publishedNote={publishedNote}
         sortedAlerts={sortedAlerts}
         sortedAnnouncements={sortedAnnouncements}
         incentives={incentives}
@@ -697,7 +587,7 @@ export default function BriefingAgencyContentHub({ canEditBriefing, publisherNam
                 </div>
                 <CardDescription className="text-muted-foreground text-sm leading-relaxed max-w-2xl">
                   {canEditBriefing
-                    ? "Set what your advisors see first: one pinned note, news and alerts, team announcements, and partner incentives. Add, edit, or remove anything—your team sees updates as soon as you publish."
+                    ? "Curate news and alerts, team announcements, and partner incentives. Add, edit, or remove anything—your team sees updates as soon as you publish."
                     : "Your agency’s shared briefing."}
                 </CardDescription>
               </div>
@@ -734,100 +624,18 @@ export default function BriefingAgencyContentHub({ canEditBriefing, publisherNam
                       tab === t.id ? "bg-muted/50 text-foreground" : "bg-muted/25 text-muted-foreground",
                     )}
                   >
-                    {t.id === "notes" ? "—" : tabCounts[t.id]}
+                    {tabCounts[t.id]}
                   </span>
                 </span>
-                <span className="text-2xs text-muted-foreground/80">{t.hint}</span>
+                {t.hint ? (
+                  <span className="text-2xs text-muted-foreground/80">{t.hint}</span>
+                ) : null}
               </button>
             ))}
           </div>
         </CardHeader>
 
         <CardContent className="px-6 py-7 md:px-8">
-          {tab === "notes" && (
-            <div
-              id="hub-panel-notes"
-              role="tabpanel"
-              aria-labelledby="hub-tab-notes"
-              className="space-y-4"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Pin className="size-3.5 shrink-0 text-primary/85" aria-hidden />
-                  <span className="font-medium text-foreground/90">Pinned agency note</span>
-                  <span className="text-muted-foreground/60">·</span>
-                  <span>Visible to all advisors</span>
-                </div>
-                {canEditBriefing && noteSavedAt && (
-                  <span className="text-2xs text-muted-foreground/70">
-                    Last published {formatSavedAt(noteSavedAt)}
-                  </span>
-                )}
-              </div>
-
-              {canEditBriefing ? (
-                <div className="grid gap-6 lg:grid-cols-2">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      <FileEdit className="size-3.5" aria-hidden />
-                      Edit
-                    </div>
-                    <Label htmlFor="agency-note-draft" className="sr-only">
-                      Agency note draft
-                    </Label>
-                    <textarea
-                      id="agency-note-draft"
-                      value={draftNote}
-                      onChange={(e) => setDraftNote(e.target.value)}
-                      rows={14}
-                      className="w-full rounded-xl border border-input bg-background px-3 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 resize-y min-h-[220px] leading-relaxed shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      placeholder="Weekly priorities, deadlines, FAMs, ops reminders, links to resources…"
-                      spellCheck
-                    />
-                    {noteDirty && (
-                      <p className="text-xs text-muted-foreground" role="status">
-                        Unpublished changes — advisors still see the last published version until you save.
-                      </p>
-                    )}
-                    <div className="flex flex-wrap gap-2">
-                      <Button type="button" size="sm" onClick={savePublishedNote} disabled={!noteDirty}>
-                        Publish to team
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={discardNoteDraft}
-                        disabled={!noteDirty}
-                      >
-                        Discard draft
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      <Eye className="size-3.5" aria-hidden />
-                      Preview (published)
-                    </div>
-                    <div className="min-h-[220px] rounded-xl border border-border bg-inset p-4 shadow-inner">
-                      {simpleAgencyNoteMarkdown(publishedNote)}
-                    </div>
-                    <p className="text-2xs text-muted-foreground/65 leading-relaxed">
-                      **Heading** on its own line. Paste <code className="text-2xs text-foreground/80">https://…</code>{" "}
-                      or use{" "}
-                      <code className="text-2xs text-foreground/80">[label](https://…)</code> for links. Blank lines
-                      add space.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-xl border border-border bg-gradient-to-b from-muted/25 to-transparent p-5 shadow-sm">
-                  {simpleAgencyNoteMarkdown(publishedNote)}
-                </div>
-              )}
-            </div>
-          )}
-
           {tab === "alerts" && (
             <div
               id="hub-panel-alerts"

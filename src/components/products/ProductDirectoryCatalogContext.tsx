@@ -67,10 +67,8 @@ export function ProductDirectoryCatalogProvider({ children }: { children: ReactN
       if (userLoading || !user) return false;
       const advisorUid = String(user.id);
       const advisorName = user.username?.trim() || user.email?.split("@")[0] || "You";
-      const { products, directoryCollections, externalSearchMeta } = resolveAdvisorCatalogFromStorage(
-        advisorUid,
-        advisorName
-      );
+      const { products, directoryCollections, externalSearchMeta, collectionShareRequests } =
+        resolveAdvisorCatalogFromStorage(advisorUid, advisorName);
       const result = applyAddProductToExternalSearch({
         productId,
         advisorUserId: advisorUid,
@@ -88,7 +86,7 @@ export function ProductDirectoryCatalogProvider({ children }: { children: ReactN
           sourceConversation: options?.sourceConversationId,
         },
       };
-      persistDirectorySnapshot(result.nextProducts, result.nextCollections, nextMeta);
+      persistDirectorySnapshot(result.nextProducts, result.nextCollections, nextMeta, collectionShareRequests);
       setCatalogRevision((r) => r + 1);
       return true;
     },
@@ -105,16 +103,14 @@ export function ProductDirectoryCatalogProvider({ children }: { children: ReactN
       if (userLoading || !user) return false;
       const advisorUid = String(user.id);
       const advisorName = user.username?.trim() || user.email?.split("@")[0] || "You";
-      const { products, directoryCollections, externalSearchMeta } = resolveAdvisorCatalogFromStorage(
-        advisorUid,
-        advisorName
-      );
+      const { products, directoryCollections, externalSearchMeta, collectionShareRequests } =
+        resolveAdvisorCatalogFromStorage(advisorUid, advisorName);
       const nextProducts = mergeDirectoryProductPatchInCatalog(products, productId, patch);
       if (!nextProducts) return false;
       const cols = options?.replaceCollections
         ? cloneDirectoryCollectionsForState(options.replaceCollections)
         : directoryCollections;
-      persistDirectorySnapshot(nextProducts, cols, externalSearchMeta);
+      persistDirectorySnapshot(nextProducts, cols, externalSearchMeta, collectionShareRequests);
       setCatalogRevision((r) => r + 1);
       return true;
     },

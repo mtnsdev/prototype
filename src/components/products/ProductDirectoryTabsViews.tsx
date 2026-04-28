@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Award, Check, ChevronDown, Flame, Lock, Plus, Share2, Trash2 } from "lucide-react";
+import { Award, Check, Flame, Lock, Plus, Send, Trash2 } from "lucide-react";
 import type {
   DirectoryAmenityTag,
   DirectoryCollectionOption,
+  DirectoryCollectionShareRequest,
   DirectoryPartnerProgram,
   DirectoryProduct,
   DirectoryProductIncentive,
@@ -14,6 +15,7 @@ import { directoryProductTypeShortLabel } from "@/components/products/directoryP
 import ProductDirectoryAmenitiesDropdown from "./ProductDirectoryAmenitiesDropdown";
 import { AMENITY_LABELS } from "./productDirectoryFilterConfig";
 import type { Team } from "@/types/teams";
+import { APP_PAGE_CONTENT_BLEED_X } from "@/lib/dashboardChrome";
 import { cn } from "@/lib/utils";
 import { ScopeBadge } from "@/components/ui/ScopeBadge";
 import { TEAM_EVERYONE_ID } from "@/types/teams";
@@ -38,12 +40,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/contexts/ToastContext";
 
 type PartnerProgramsProductOverrideRow = {
@@ -72,25 +68,48 @@ type CollectionsTabProps = {
   products: DirectoryProduct[];
   teams: Team[];
   isAdmin: boolean;
+  currentUserId: string;
+  shareRequests: DirectoryCollectionShareRequest[];
   canDeleteCollection: (c: DirectoryCollectionOption) => boolean;
-  onShareCollectionWithTeam: (collectionId: string, teamId: string) => void;
   onDeleteCollection: (collectionId: string) => void;
   onOpenCollection: (collectionId: string) => void;
   onNewCollection: () => void;
+  onOpenRequestShareModal: (collectionId: string) => void;
+  onOpenReviewShareModal: (requestId: string) => void;
+  onRejectShareRequest: (requestId: string) => void;
 };
+
+function pendingShareForCollection(
+  colId: string,
+  shareRequests: DirectoryCollectionShareRequest[]
+): DirectoryCollectionShareRequest | undefined {
+  return shareRequests.find((r) => r.collectionId === colId && r.status === "pending");
+}
 
 export function ProductDirectoryCollectionsTab({
   collections,
   products,
   teams,
   isAdmin,
+  currentUserId,
+  shareRequests,
   canDeleteCollection,
-  onShareCollectionWithTeam,
   onDeleteCollection,
   onOpenCollection,
   onNewCollection,
+  onOpenRequestShareModal,
+  onOpenReviewShareModal,
+  onRejectShareRequest,
 }: CollectionsTabProps) {
   const [collectionSearchQuery, setCollectionSearchQuery] = useState("");
+
+  const shareTeamOptions = useMemo(() => teams.filter((t) => !t.isDefault), [teams]);
+
+  const pendingRequests = useMemo(
+    () => shareRequests.filter((r) => r.status === "pending"),
+    [shareRequests]
+  );
+
   const filteredCollections = useMemo(() => {
     const q = collectionSearchQuery.trim().toLowerCase();
     if (!q) return collections;
@@ -114,7 +133,9 @@ export function ProductDirectoryCollectionsTab({
     return (
       <div className="rounded-xl border border-border bg-foreground/[0.03] px-6 py-12 text-center">
         <p className="text-sm font-medium text-foreground">No collections yet</p>
-        <p className="mt-1 text-2xs text-muted-foreground">Create a collection to organise products, or ask your admin.</p>
+        <p className="mt-1 text-2xs text-muted-foreground">
+          Create a private collection to organise products. To share with your team, submit a request for admin approval.
+        </p>
         <Button type="button" variant="toolbarAccent" size="sm" className="mt-4" onClick={onNewCollection}>
           <Plus className="h-3.5 w-3.5" />
           Add collection
@@ -124,8 +145,61 @@ export function ProductDirectoryCollectionsTab({
   }
 
   return (
-    <div className="space-y-6 pt-3">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="space-y-6">
+      {isAdmin && pendingRequests.length > 0 ? (
+        <div className="rounded-xl border border-border bg-card px-4 py-3">
+          <p className="text-xs font-semibold text-foreground">Pending share approvals ({pendingRequests.length})</p>
+          <p className="mt-0.5 text-2xs text-muted-foreground">
+            Advisors asked to publish a private list to a team. Review and edit details before approving.
+          </p>
+          <ul className="mt-3 space-y-2">
+            {pendingRequests.map((req) => {
+              const col = collections.find((c) => c.id === req.collectionId);
+              const teamLabel = teams.find((t) => t.id === req.proposedTeamId)?.name ?? req.proposedTeamId;
+              return (
+                <li
+                  key={req.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 text-2xs"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-foreground">{req.proposedName}</p>
+                    <p className="mt-0.5 text-muted-foreground">
+                      {col ? `List “${col.name}”` : "Collection"} · Team: {teamLabel} · {req.requestedByName}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-1.5">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-2xs"
+                      onClick={() => onRejectShareRequest(req.id)}
+                    >
+                      Reject
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="toolbarAccent"
+                      size="sm"
+                      className="h-7 text-2xs"
+                      onClick={() => onOpenReviewShareModal(req.id)}
+                    >
+                      Review
+                    </Button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
+
+      <div
+        className={cn(
+          APP_PAGE_CONTENT_BLEED_X,
+          "sticky top-0 z-20 flex flex-wrap items-center gap-2 border-b border-border bg-inset pb-3 pt-3"
+        )}
+      >
         <div className="min-w-0 flex-1 basis-[min(100%,20rem)]">
           <PageSearchField
             value={collectionSearchQuery}
@@ -146,128 +220,141 @@ export function ProductDirectoryCollectionsTab({
         </Button>
       </div>
       {filteredCollections.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-input bg-foreground/[0.03] px-6 py-12 text-center">
+        <div className="rounded-xl border border-dashed border-border bg-foreground/[0.03] px-6 py-12 text-center">
           <p className="text-compact font-medium text-foreground">No collections match your search</p>
           <p className="mt-1 text-xs text-muted-foreground">Try another term, or clear the filter.</p>
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
+            className="mt-4"
             onClick={() => setCollectionSearchQuery("")}
-            className="mt-4 text-xs font-semibold text-brand-cta transition-colors hover:text-[#d4b47e]"
           >
             Clear search
-          </button>
+          </Button>
         </div>
       ) : (
         <div className={gridClass}>
-      {orderedFilteredCollections.map((col) => {
-        const members = productsInDirectoryCollection(col, products);
-        const preview = members.slice(0, 4);
-        const placeholders = 4 - preview.length;
-        const shareTargets = teams.filter((t) => !t.isDefault);
-        const showShare = isAdmin && !col.isSystem;
-        const showDelete = canDeleteCollection(col);
+          {orderedFilteredCollections.map((col) => {
+            const members = productsInDirectoryCollection(col, products);
+            const preview = members.slice(0, 4);
+            const placeholders = 4 - preview.length;
+            const pendingReq = pendingShareForCollection(col.id, shareRequests);
+            const showDelete = canDeleteCollection(col);
+            const showAdvisorRequest =
+              !isAdmin &&
+              !col.isSystem &&
+              col.scope === "private" &&
+              col.ownerId === currentUserId &&
+              !pendingReq;
+            const showAdvisorPending = !isAdmin && Boolean(pendingReq);
+            const showAdminReview = isAdmin && Boolean(pendingReq) && !col.isSystem;
+            const showCardActions = showDelete || showAdvisorRequest || showAdminReview;
 
-        return (
-          <div
-            key={col.id}
-            className="group relative overflow-hidden rounded-xl border border-border bg-popover text-left transition-colors hover:border-brand-cta/20 hover:bg-[#101018]"
-          >
-            <button
-              type="button"
-              onClick={() => onOpenCollection(col.id)}
-              className="w-full text-left"
-            >
-              <div className="grid aspect-square grid-cols-2 grid-rows-2 gap-px bg-inset p-px">
-                {preview.map((p) => (
-                  <div key={p.id} className="relative min-h-0 min-w-0 overflow-hidden bg-[#14141c]">
-                    <img
-                      src={p.imageUrl}
-                      alt=""
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                ))}
-                {placeholders > 0
-                  ? Array.from({ length: placeholders }).map((_, i) => (
-                      <div
-                        key={`empty-${i}`}
-                        className="flex min-h-0 min-w-0 items-center justify-center bg-white/[0.04] text-2xs text-muted-foreground"
-                      >
-                        Empty
-                      </div>
-                    ))
-                  : null}
-              </div>
-              <div className="p-2">
-                <div className="min-w-0">
-                  <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                    <p className="min-w-0 truncate text-xs font-medium text-foreground">{col.name}</p>
-                    {col.isSystem ? (
-                      <span className="shrink-0 text-[9px] text-muted-foreground bg-white/[0.03] border border-white/[0.04] px-1.5 py-0.5 rounded">
-                        Auto
-                      </span>
-                    ) : null}
-                  </div>
-                  {col.description ? (
-                    <p className="mt-0.5 line-clamp-2 text-[9px] leading-snug text-muted-foreground">{col.description}</p>
-                  ) : null}
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                    <span className="text-[9px] text-muted-foreground">
-                      {members.length} product{members.length !== 1 ? "s" : ""}
-                    </span>
-                    <ScopeBadge scope={collectionScopeForBadge(col)} teams={teams} />
-                  </div>
-                </div>
-              </div>
-            </button>
-            {(showShare || showDelete) && (
+            return (
               <div
-                className="absolute right-1.5 top-1.5 z-[1] flex items-center gap-0.5"
-                onClick={(e) => e.stopPropagation()}
+                key={col.id}
+                className="group relative overflow-hidden rounded-xl border border-border bg-popover text-left transition-colors hover:border-brand-cta/20 hover:bg-[#101018]"
               >
-                {showShare && shareTargets.length > 0 ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => onOpenCollection(col.id)}
+                  className="w-full text-left"
+                >
+                  <div className="grid aspect-square grid-cols-2 grid-rows-2 gap-px bg-inset p-px">
+                    {preview.map((p) => (
+                      <div key={p.id} className="relative min-h-0 min-w-0 overflow-hidden bg-[#14141c]">
+                        <img
+                          src={p.imageUrl}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    ))}
+                    {placeholders > 0
+                      ? Array.from({ length: placeholders }).map((_, i) => (
+                          <div
+                            key={`empty-${i}`}
+                            className="flex min-h-0 min-w-0 items-center justify-center bg-white/[0.04] text-[8px] text-muted-foreground/55"
+                          >
+                            Empty
+                          </div>
+                        ))
+                      : null}
+                  </div>
+                  <div className="p-2">
+                    <div className="min-w-0">
+                      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                        <p className="min-w-0 truncate text-xs font-medium text-foreground">{col.name}</p>
+                        {col.isSystem ? (
+                          <span className="shrink-0 rounded border border-white/[0.04] bg-white/[0.03] px-1.5 py-0.5 text-[9px] text-muted-foreground">
+                            Auto
+                          </span>
+                        ) : null}
+                        {showAdvisorPending ? (
+                          <span className="shrink-0 rounded border border-brand-cta/25 bg-brand-cta/10 px-1.5 py-0.5 text-[8px] text-brand-cta">
+                            Pending approval
+                          </span>
+                        ) : null}
+                      </div>
+                      {col.description ? (
+                        <p className="mt-0.5 line-clamp-2 text-[9px] leading-snug text-muted-foreground">{col.description}</p>
+                      ) : null}
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <span className="text-[9px] text-muted-foreground">
+                          {members.length} product{members.length !== 1 ? "s" : ""}
+                        </span>
+                        <ScopeBadge scope={collectionScopeForBadge(col)} teams={teams} />
+                      </div>
+                    </div>
+                  </div>
+                </button>
+                {showCardActions ? (
+                  <div
+                    className="absolute right-1.5 top-1.5 z-[1] flex items-center gap-0.5"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {showAdminReview && shareTeamOptions.length > 0 ? (
+                      <button
+                        type="button"
+                        className="inline-flex h-7 items-center gap-0.5 rounded-md border border-border bg-popover/95 px-1.5 text-[9px] font-medium text-brand-cta shadow-sm backdrop-blur-sm hover:bg-white/[0.04]"
+                        title="Review share request"
+                        onClick={() => {
+                          const r = pendingShareForCollection(col.id, shareRequests);
+                          if (r) onOpenReviewShareModal(r.id);
+                        }}
+                      >
+                        Review
+                      </button>
+                    ) : null}
+                    {showAdvisorRequest && shareTeamOptions.length > 0 ? (
                       <button
                         type="button"
                         className="inline-flex h-7 items-center gap-0.5 rounded-md border border-border bg-popover/95 px-1.5 text-[9px] font-medium text-muted-foreground shadow-sm backdrop-blur-sm hover:text-foreground"
-                        title="Share with team"
+                        title="Request to share with team"
+                        onClick={() => onOpenRequestShareModal(col.id)}
                       >
-                        <Share2 className="h-3 w-3 shrink-0 opacity-80" aria-hidden />
-                        <span className="hidden sm:inline">Share</span>
-                        <ChevronDown className="h-2.5 w-2.5 shrink-0 opacity-60" aria-hidden />
+                        <Send className="h-3 w-3 shrink-0 opacity-80" aria-hidden />
+                        <span className="hidden sm:inline">Request share</span>
                       </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="min-w-[10rem]">
-                      {shareTargets.map((t) => (
-                        <DropdownMenuItem
-                          key={t.id}
-                          className="text-xs"
-                          onClick={() => onShareCollectionWithTeam(col.id, t.id)}
-                        >
-                          {t.name}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : null}
-                {showDelete ? (
-                  <button
-                    type="button"
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-popover/95 text-muted-foreground shadow-sm backdrop-blur-sm hover:text-[#A66B6B]"
-                    title="Delete collection"
-                    aria-label={`Delete collection ${col.name}`}
-                    onClick={() => onDeleteCollection(col.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                    ) : null}
+                    {showDelete ? (
+                      <button
+                        type="button"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-popover/95 text-muted-foreground shadow-sm backdrop-blur-sm hover:text-[#A66B6B]"
+                        title="Delete collection"
+                        aria-label={`Delete collection ${col.name}`}
+                        onClick={() => onDeleteCollection(col.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
-            )}
-          </div>
-        );
-      })}
+            );
+          })}
         </div>
       )}
     </div>

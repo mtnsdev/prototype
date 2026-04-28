@@ -64,6 +64,7 @@ import {
   listTheadRowClass,
   listTbodyRowClass,
 } from "@/lib/list-ui";
+import { APP_PAGE_CONTENT_BLEED_X } from "@/lib/dashboardChrome";
 
 const REP_FIRM_INPUT_CLASS =
   "h-9 w-full rounded-lg border border-white/[0.14] bg-inset px-3 text-sm text-foreground outline-none transition-colors focus:border-[rgba(176,122,91,0.45)] focus:ring-1 focus:ring-[rgba(176,122,91,0.28)]";
@@ -1365,7 +1366,12 @@ export function ProductDirectoryRepFirmsTab({
       )}
     >
       {!showRepFirmEditor ? (
-      <div className="sticky top-0 z-20 -mx-6 space-y-3 border-b border-border bg-inset px-6 pb-3 pt-3">
+      <div
+        className={cn(
+          APP_PAGE_CONTENT_BLEED_X,
+          "sticky top-0 z-20 space-y-3 border-b border-border bg-inset pb-3 pt-3"
+        )}
+      >
         <div className="flex flex-wrap items-center gap-2">
           <div className="min-w-0 flex-1 basis-[min(100%,20rem)]">
             <PageSearchField
@@ -1483,7 +1489,7 @@ export function ProductDirectoryRepFirmsTab({
                   <div id={REP_FIRM_EDITOR_SECTION_IDS.firm}>
                     <RepFirmEditorSectionHeading>Firm details</RepFirmEditorSectionHeading>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <label className="block sm:col-span-2">
+                      <label className="block min-w-0 sm:col-span-2">
                         <span className="mb-1 block text-2xs font-medium text-muted-foreground">Firm name</span>
                         <input
                           value={editForm.name}
@@ -1505,7 +1511,7 @@ export function ProductDirectoryRepFirmsTab({
                           onChange={(next) => setEditForm((prev) => (prev ? { ...prev, specialty: next } : prev))}
                         />
                       </div>
-                      <label className="block sm:col-span-2">
+                      <label className="block min-w-0">
                         <span className="mb-1 block text-2xs font-medium text-muted-foreground">
                           Regions covered (comma-separated)
                         </span>
@@ -1518,7 +1524,7 @@ export function ProductDirectoryRepFirmsTab({
                           className={REP_FIRM_INPUT_CLASS}
                         />
                       </label>
-                      <label className="block sm:col-span-2">
+                      <label className="block min-w-0">
                         <span className="mb-1 block text-2xs font-medium text-muted-foreground">
                           Main phone number
                         </span>
@@ -1531,7 +1537,7 @@ export function ProductDirectoryRepFirmsTab({
                           autoComplete="tel"
                         />
                       </label>
-                      <label className="block sm:col-span-2">
+                      <label className="block min-w-0 sm:col-span-2">
                         <span className="mb-1 block text-2xs font-medium text-muted-foreground">
                           HQ address (city and country can be included in this line)
                         </span>
@@ -1545,7 +1551,7 @@ export function ProductDirectoryRepFirmsTab({
                           autoComplete="street-address"
                         />
                       </label>
-                      <label className="block sm:col-span-2">
+                      <label className="block min-w-0 sm:col-span-2">
                         <span className="mb-1 block text-2xs font-medium text-muted-foreground">Logo image URL</span>
                         <input
                           value={editForm.logoUrl}
@@ -1556,7 +1562,7 @@ export function ProductDirectoryRepFirmsTab({
                           className={REP_FIRM_INPUT_CLASS}
                         />
                       </label>
-                      <label className="block sm:col-span-2">
+                      <label className="block min-w-0 sm:col-span-2">
                         <span className="mb-1 block text-2xs font-medium text-muted-foreground">Internal notes</span>
                         <textarea
                           value={editForm.notes}

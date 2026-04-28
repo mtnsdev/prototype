@@ -254,11 +254,12 @@ export function createEditorSectionFromPreset(
         productSlot: catalogSlot,
       };
     case "full":
+      /** Flexible block: author turns on text, catalog, and/or files by adding content — nothing fixed upfront. */
       return {
         id,
-        includeProducts: true,
-        includeText: true,
-        includeDocuments: true,
+        includeProducts: false,
+        includeText: false,
+        includeDocuments: false,
         productSlot: catalogSlot,
       };
   }

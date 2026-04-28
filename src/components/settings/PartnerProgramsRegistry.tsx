@@ -94,7 +94,7 @@ function statusBadgeClass(s: ProgramStatus | "all"): string {
 }
 
 type PartnerProgramsRegistryProps = {
-  /** When true, registry is embedded in Product Directory → Partner Portal (no Settings back-nav). */
+  /** When true, registry is embedded in Product Directory → Partner Programs (no Settings back-nav). */
   embeddedInCatalog?: boolean;
   /** When true, hide back links (e.g. full editor opened from a dialog). */
   embeddedInModal?: boolean;

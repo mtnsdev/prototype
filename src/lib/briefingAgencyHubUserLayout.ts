@@ -1,16 +1,11 @@
 /**
- * Per-user **agency briefing** layout (notes, news, announcements, incentives).
+ * Per-user **agency briefing** layout (news, announcements, incentives).
  * Content is authored by admins; this only controls how each user arranges those blocks.
  */
 
-export const BRIEFING_AGENCY_HUB_USER_STORAGE_KEY = "briefing_agency_hub_user_layout_v1";
+export const BRIEFING_AGENCY_HUB_USER_STORAGE_KEY = "briefing_agency_hub_user_layout_v2";
 
-export const AGENCY_HUB_USER_WIDGET_IDS = [
-    "hub-notes",
-    "hub-alerts",
-    "hub-announcements",
-    "hub-incentives",
-] as const;
+export const AGENCY_HUB_USER_WIDGET_IDS = ["hub-alerts", "hub-announcements", "hub-incentives"] as const;
 
 export type AgencyHubUserWidgetId = (typeof AGENCY_HUB_USER_WIDGET_IDS)[number];
 
@@ -24,10 +19,6 @@ export const AGENCY_HUB_USER_WIDGET_META: Record<
     AgencyHubUserWidgetId,
     { label: string; description: string }
 > = {
-    "hub-notes": {
-        label: "Agency notes",
-        description: "Pinned message from your agency.",
-    },
     "hub-alerts": {
         label: "News & alerts",
         description: "Industry and partner news with severity.",
@@ -44,7 +35,6 @@ export const AGENCY_HUB_USER_WIDGET_META: Record<
 
 export function defaultAgencyHubUserLayout(): Record<AgencyHubUserWidgetId, AgencyHubUserWidgetLayout> {
     return {
-        "hub-notes": { visible: true, column: "left", size: "default" },
         "hub-alerts": { visible: true, column: "left", size: "default" },
         "hub-announcements": { visible: true, column: "right", size: "default" },
         "hub-incentives": { visible: true, column: "right", size: "default" },

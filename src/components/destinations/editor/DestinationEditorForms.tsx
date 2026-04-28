@@ -22,7 +22,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { FileStack, FileText, GripVertical, Package, Trash2 } from "lucide-react";
+import { GripVertical, Plus, Trash2 } from "lucide-react";
 import {
   type Destination,
   type DestinationDocument,
@@ -38,24 +38,37 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { CatalogSectionMultiPicker } from "@/components/destinations/editor/CatalogProductPicker";
 import { applyDirectoryProductToDestination } from "@/lib/catalogProductMerge";
 
+const PRODUCT_SLOT_OPTIONS: { value: EditorProductSlot; label: string }[] = [
+  { value: "dmc", label: "DMC partners" },
+  { value: "restaurants", label: "Restaurants" },
+  { value: "hotels", label: "Hotels" },
+  { value: "yachts", label: "Yachts" },
+  { value: "tourism", label: "Tourism" },
+  { value: "documents", label: "Documents (library)" },
+];
+
 const inputAreaClass =
   "min-h-[88px] w-full rounded-md border border-input bg-inset px-3 py-2 text-sm text-foreground shadow-xs outline-none placeholder:text-muted-foreground/70 focus-visible:border-primary/35 focus-visible:ring-[3px] focus-visible:ring-ring/30";
 
+/** One flexible section: optional text, catalog picks, and file attachments — no fixed template. */
 const PALETTE: {
-  id: "palette-catalog" | "palette-text" | "palette-files";
+  id: "palette-section";
   label: string;
   preset: EditorSectionPresetId;
-  Icon: typeof Package;
-}[] = [
-  { id: "palette-catalog", label: "Catalog", preset: "catalog", Icon: Package },
-  { id: "palette-text", label: "Text", preset: "text", Icon: FileText },
-  { id: "palette-files", label: "Files", preset: "documents", Icon: FileStack },
-];
+  Icon: typeof Plus;
+}[] = [{ id: "palette-section", label: "Section", preset: "full", Icon: Plus }];
 
 function insertId(index: number) {
   return `insert-${index}` as const;
@@ -64,15 +77,6 @@ function insertId(index: number) {
 function palettePresetFromActiveId(activeId: string): EditorSectionPresetId | null {
   const row = PALETTE.find((p) => p.id === activeId);
   return row?.preset ?? null;
-}
-
-function sectionBlockKind(sec: EditorTabSection): "catalog" | "text" | "files" | "mixed" {
-  const n = [sec.includeProducts, sec.includeText, sec.includeDocuments].filter(Boolean).length;
-  if (n > 1) return "mixed";
-  if (sec.includeProducts) return "catalog";
-  if (sec.includeText) return "text";
-  if (sec.includeDocuments) return "files";
-  return "mixed";
 }
 
 function PaletteBlock({
@@ -263,8 +267,6 @@ function SortableEditorSection({
     transition,
   };
 
-  const kind = sectionBlockKind(sec);
-
   return (
     <div ref={setNodeRef} style={style} className={cn(isDragging && "z-10")}>
       <Card
@@ -318,54 +320,98 @@ function SortableEditorSection({
           </Button>
         </CardHeader>
 
-        <CardContent className="space-y-4 px-3 py-4 sm:px-4">
-          {(kind === "catalog" || kind === "mixed") && sec.includeProducts ? (
-            <div className="space-y-3 rounded-lg border border-border/60 bg-background/50 p-3">
-              <CatalogSectionMultiPicker
-                onAddProducts={(products) => {
-                  setDraft((d0) => {
-                    let d = d0;
-                    let lastSlot: EditorProductSlot | undefined;
-                    for (const product of products) {
-                      const { destination, slot } = applyDirectoryProductToDestination(d, product);
-                      d = destination;
-                      lastSlot = slot;
-                    }
-                    const w = structuredClone(ensureEditorWorkspace(d));
-                    const cur = w.sections[si];
-                    if (cur && lastSlot) {
-                      w.sections[si] = { ...cur, productSlot: lastSlot };
-                    }
-                    return { ...d, editorWorkspace: w };
-                  });
-                }}
-              />
-            </div>
-          ) : null}
-
-          {(kind === "text" || kind === "mixed") && sec.includeText ? (
-            <div className="space-y-1.5">
-              <Label htmlFor={`sec-txt-${sec.id}`} className="text-xs text-muted-foreground">
-                Text
-              </Label>
-              <textarea
-                id={`sec-txt-${sec.id}`}
-                className={inputAreaClass}
-                rows={5}
-                value={sec.textBody ?? ""}
-                onChange={(e) => patchSection(si, { textBody: e.target.value })}
+        <CardContent className="space-y-5 px-3 py-4 sm:px-4">
+          <div className="space-y-1.5">
+            <Label htmlFor={`sec-txt-${sec.id}`} className="text-xs font-medium text-foreground">
+              Text
+            </Label>
+            <p className="text-2xs text-muted-foreground">Optional — add narrative, tips, or positioning copy.</p>
+            <textarea
+              id={`sec-txt-${sec.id}`}
+              className={inputAreaClass}
+              rows={5}
+              value={sec.textBody ?? ""}
+              onChange={(e) => {
+                const v = e.target.value;
+                patchSection(si, {
+                  textBody: v,
+                  includeText: v.trim().length > 0,
+                });
+              }}
             />
           </div>
-        ) : null}
 
-          {(kind === "files" || kind === "mixed") && sec.includeDocuments ? (
+          <div className="space-y-3 rounded-lg border border-border/60 bg-background/50 p-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-foreground">Catalog</Label>
+              <p className="text-2xs text-muted-foreground">
+                Search the product directory — items merge into this destination and surface in the advisor guide when
+                this block lists them.
+              </p>
+              <div className="space-y-1.5">
+                <Label htmlFor={`sec-slot-${sec.id}`} className="text-2xs text-muted-foreground">
+                  Primary list for this block
+                </Label>
+                <Select
+                  value={sec.productSlot ?? DEFAULT_NEW_SECTION_PRODUCT_SLOT}
+                  onValueChange={(value) => patchSection(si, { productSlot: value as EditorProductSlot })}
+                >
+                  <SelectTrigger id={`sec-slot-${sec.id}`} className="h-9 w-full max-w-md text-sm">
+                    <SelectValue placeholder="Choose list" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRODUCT_SLOT_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <CatalogSectionMultiPicker
+              onAddProducts={(products) => {
+                setDraft((d0) => {
+                  let d = d0;
+                  let lastSlot: EditorProductSlot | undefined;
+                  for (const product of products) {
+                    const { destination, slot } = applyDirectoryProductToDestination(d, product);
+                    d = destination;
+                    lastSlot = slot;
+                  }
+                  const w = structuredClone(ensureEditorWorkspace(d));
+                  const cur = w.sections[si];
+                  if (cur) {
+                    w.sections[si] = {
+                      ...cur,
+                      includeProducts: true,
+                      ...(lastSlot ? { productSlot: lastSlot } : {}),
+                    };
+                  }
+                  return { ...d, editorWorkspace: w };
+                });
+              }}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-foreground">Attachments</Label>
+            <p className="text-2xs text-muted-foreground">
+              Choose which uploaded destination files appear with this section (add files to the destination first).
+            </p>
             <SectionDocumentPicker
               documents={draft.documents}
               value={sec.documentIndices}
-              onChange={(documentIndices) => patchSection(si, { documentIndices })}
+              onChange={(documentIndices) => {
+                const nDocs = draft.documents.length;
+                const hasSelection = (() => {
+                  if (documentIndices === undefined) return nDocs > 0;
+                  return documentIndices.length > 0;
+                })();
+                patchSection(si, { documentIndices, includeDocuments: hasSelection });
+              }}
             />
-          ) : null}
-
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -519,10 +565,8 @@ export function BuildPaletteToolbar() {
   const { appendPreset } = useBuildEditor();
   return (
     <div className="space-y-2">
-      <p className="text-2xs leading-snug text-muted-foreground">
-        Drag into the guide below, or press Enter on a control to add.
-      </p>
-      <div className="flex flex-row flex-wrap gap-2" role="toolbar" aria-label="Section blocks">
+      <p className="text-2xs text-muted-foreground">Add a block, then set text, directory picks, and files as needed.</p>
+      <div className="flex flex-row flex-wrap gap-2" role="toolbar" aria-label="Add section">
         {PALETTE.map((item) => (
           <PaletteBlock
             key={item.id}
@@ -544,11 +588,10 @@ export function BuildGuideCanvas() {
 
   return (
     <div className="rounded-xl border border-border/70 bg-background/30 p-2 sm:p-3">
-      <p className="mb-2 px-1 text-2xs font-medium uppercase tracking-wide text-muted-foreground">Guide</p>
       <InsertDropSlot index={0} paletteDragging={paletteDragging} />
       {ws.sections.length === 0 ? (
         <p className="px-2 py-4 text-center text-sm text-muted-foreground">
-          Drop Catalog, Text, or Files on the dashed line to add a section.
+          Use <span className="font-medium text-foreground">Section</span> above or drop on a line to add a block.
         </p>
       ) : null}
       <SortableContext items={sectionIds} strategy={verticalListSortingStrategy}>
@@ -570,54 +613,3 @@ export function BuildGuideCanvas() {
   );
 }
 
-export function EditorOverview({
-  draft,
-  setDraft,
-}: {
-  draft: Destination;
-  setDraft: Dispatch<SetStateAction<Destination>>;
-}) {
-  return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="dest-name">Destination name</Label>
-        <Input
-          id="dest-name"
-          value={draft.name}
-          onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-          autoComplete="off"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="dest-tagline">Tagline</Label>
-        <Input
-          id="dest-tagline"
-          value={draft.tagline}
-          onChange={(e) => setDraft((d) => ({ ...d, tagline: e.target.value }))}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="dest-hero">Hero image URL</Label>
-        <Input
-          id="dest-hero"
-          type="url"
-          inputMode="url"
-          placeholder="https://…"
-          value={draft.heroImage}
-          onChange={(e) => setDraft((d) => ({ ...d, heroImage: e.target.value }))}
-          autoComplete="off"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="dest-desc">Description</Label>
-        <textarea
-          id="dest-desc"
-          className={inputAreaClass}
-          value={draft.description}
-          onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
-          rows={4}
-        />
-      </div>
-    </div>
-  );
-}

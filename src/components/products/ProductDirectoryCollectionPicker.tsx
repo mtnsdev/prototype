@@ -21,6 +21,8 @@ type Props = {
   onSave: (selectedCollectionIds: string[]) => void;
   /** Returns new collection id, or empty string on validation failure. */
   onCreateCollection: (input: NewDirectoryCollectionInput) => string;
+  /** When false, new lists are private only; team sharing goes through admin approval from the directory. */
+  allowTeamScope?: boolean;
 };
 
 export default function ProductDirectoryCollectionPicker({
@@ -31,6 +33,7 @@ export default function ProductDirectoryCollectionPicker({
   onClose,
   onSave,
   onCreateCollection,
+  allowTeamScope = true,
 }: Props) {
   const { user } = useUser();
   const uid = user ? String(user.id) : "1";
@@ -85,13 +88,14 @@ export default function ProductDirectoryCollectionPicker({
   const submitCreate = () => {
     const name = newName.trim();
     if (!name) return;
-    if (newScope === "team" && !newTeamId) return;
+    const scope: "private" | "team" = allowTeamScope ? newScope : "private";
+    if (scope === "team" && !newTeamId) return;
 
     const input: NewDirectoryCollectionInput = {
       name,
       description: newDesc.trim() || undefined,
-      scope: newScope,
-      teamId: newScope === "team" ? newTeamId : null,
+      scope,
+      teamId: scope === "team" ? newTeamId : null,
     };
     const id = onCreateCollection(input);
     if (id) {
@@ -213,21 +217,27 @@ export default function ProductDirectoryCollectionPicker({
                   >
                     Private
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setNewScope("team")}
-                    className={cn(
-                      "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
-                      newScope === "team"
-                        ? "border-brand-cta bg-[rgba(201,169,110,0.12)] text-foreground"
-                        : "border-border text-muted-foreground hover:border-white/[0.12]"
-                    )}
-                  >
-                    Team
-                  </button>
+                  {allowTeamScope ? (
+                    <button
+                      type="button"
+                      onClick={() => setNewScope("team")}
+                      className={cn(
+                        "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
+                        newScope === "team"
+                          ? "border-brand-cta bg-[rgba(201,169,110,0.12)] text-foreground"
+                          : "border-border text-muted-foreground hover:border-white/[0.12]"
+                      )}
+                    >
+                      Team
+                    </button>
+                  ) : (
+                    <p className="self-center text-2xs text-muted-foreground">
+                      Team sharing is approved by an admin from Collections.
+                    </p>
+                  )}
                 </div>
               </div>
-              {newScope === "team" ? (
+              {allowTeamScope && newScope === "team" ? (
                 <label className="block">
                   <span className="mb-1 block text-2xs text-muted-foreground">Team</span>
                   <select
