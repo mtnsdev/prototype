@@ -48,7 +48,7 @@ export function ProductDetailLayers({ product }: Props) {
         <button
           type="button"
           onClick={() => setShowSuggestionModal(true)}
-          className="text-2xs text-blue-400/70 hover:text-blue-400 underline decoration-blue-400/20 mb-4 block text-left"
+          className="text-2xs text-[var(--muted-info-text)]/80 hover:text-[var(--muted-info-text)] underline decoration-[var(--muted-info-border)]/50 mb-4 block text-left"
         >
           Suggest a change
         </button>
@@ -180,7 +180,7 @@ function PartnerProgramsSection({ programs }: { programs: PartnerProgramMock[] }
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-medium text-white">{program.name}</span>
                   {program.scope === "enable" ? (
-                    <span className="text-2xs px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">
+                    <span className="text-2xs px-1.5 py-0.5 rounded border border-[var(--muted-success-border)] bg-[var(--muted-success-bg)] text-[var(--muted-success-text)]">
                       Enable
                     </span>
                   ) : (
@@ -285,7 +285,7 @@ function SuggestionModal({
                 className={cn(
                   "text-2xs px-3 py-1 rounded-full border",
                   scope === "agency"
-                    ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                    ? "border-[var(--muted-info-border)] bg-[var(--muted-info-bg)] text-[var(--muted-info-text)]"
                     : "bg-white/5 text-muted-foreground border-border"
                 )}
               >
@@ -297,7 +297,7 @@ function SuggestionModal({
                 className={cn(
                   "text-2xs px-3 py-1 rounded-full border",
                   scope === "enable"
-                    ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                    ? "border-[var(--muted-info-border)] bg-[var(--muted-info-bg)] text-[var(--muted-info-text)]"
                     : "bg-white/5 text-muted-foreground border-border"
                 )}
               >
@@ -317,7 +317,7 @@ function SuggestionModal({
           <button
             type="button"
             onClick={onSubmit}
-            className="text-xs text-blue-400 bg-blue-500/10 hover:bg-blue-500/15 border border-blue-500/20 px-3 py-1.5 rounded-lg font-medium"
+            className="text-xs text-[var(--muted-info-text)] bg-[var(--muted-info-bg)] hover:bg-[var(--muted-info-bg)]/80 border border-[var(--muted-info-border)] px-3 py-1.5 rounded-lg font-medium"
           >
             Submit Suggestion
           </button>

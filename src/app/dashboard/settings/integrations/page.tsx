@@ -241,17 +241,17 @@ function DriveConnectionCard({
                     {driveStatus?.connected && (
                         <span className="ml-auto">
                             {driveStatus.sync_status === "running" ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-sm font-medium bg-amber-500/15 text-[var(--color-warning)] border border-amber-500/25">
+                                <span className="inline-flex items-center gap-1 rounded-md border border-[var(--muted-warning-border)] bg-[var(--muted-warning-bg)] px-2 py-0.5 text-sm font-medium text-[var(--muted-warning-text)]">
                                     <Loader2 size={12} className="animate-spin" />
                                     Syncing…
                                 </span>
                             ) : driveStatus.sync_status === "failed" || driveStatus.status === "token_expired" ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-sm font-medium bg-red-500/15 text-red-400 border border-red-500/25">
+                                <span className="inline-flex items-center gap-1 rounded-md border border-[var(--muted-error-border)] bg-[var(--muted-error-bg)] px-2 py-0.5 text-sm font-medium text-[var(--muted-error-text)]">
                                     <AlertCircle size={12} />
                                     Error
                                 </span>
                             ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-sm font-medium bg-green-500/15 text-green-400 border border-green-500/25">
+                                <span className="inline-flex items-center gap-1 rounded-md border border-[var(--muted-success-border)] bg-[var(--muted-success-bg)] px-2 py-0.5 text-sm font-medium text-[var(--muted-success-text)]">
                                     <CheckCircle size={12} />
                                     Connected
                                 </span>
@@ -263,7 +263,7 @@ function DriveConnectionCard({
                 {/* Body */}
                 <div className="p-5 space-y-4">
                     {error && (
-                        <div className="rounded-lg bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)] px-3 py-2 text-compact text-[var(--color-error)]">
+                        <div className="rounded-lg border border-[var(--muted-error-border)] bg-[var(--muted-error-bg)] px-3 py-2 text-compact text-[var(--muted-error-text)]">
                             {error}
                         </div>
                     )}
@@ -302,7 +302,7 @@ function DriveConnectionCard({
                                     <FolderOpen size={16} />
                                     Change folder
                                 </Button>
-                                <Button variant="destructive" onClick={handleDisconnect} className="gap-2 bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border-[rgba(200,122,122,0.2)] text-[var(--color-error)]">
+                                <Button variant="destructive" onClick={handleDisconnect} className="gap-2 border border-[var(--muted-error-border)] bg-[var(--muted-error-bg)] text-[var(--muted-error-text)] hover:bg-[var(--muted-error-bg)]/80">
                                     <LogOut size={16} />
                                     Disconnect
                                 </Button>
@@ -464,12 +464,12 @@ function ClaromentisConnectionCard() {
                     </p>
                 </div>
                 {isConnected && (
-                    <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-sm font-medium bg-green-500/15 text-green-400 border border-green-500/25">
+                    <span className="ml-auto inline-flex items-center gap-1 rounded-md border border-[var(--muted-success-border)] bg-[var(--muted-success-bg)] px-2 py-0.5 text-sm font-medium text-[var(--muted-success-text)]">
                         <CheckCircle size={12} /> Connected
                     </span>
                 )}
                 {isError && (
-                    <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-sm font-medium bg-red-500/15 text-red-400 border border-red-500/25">
+                    <span className="ml-auto inline-flex items-center gap-1 rounded-md border border-[var(--muted-error-border)] bg-[var(--muted-error-bg)] px-2 py-0.5 text-sm font-medium text-[var(--muted-error-text)]">
                         <AlertCircle size={12} /> Error
                     </span>
                 )}
@@ -478,13 +478,13 @@ function ClaromentisConnectionCard() {
             {/* Body */}
             <div className="p-5 space-y-4">
                 {error && (
-                    <div className="rounded-lg bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)] px-3 py-2 text-compact text-[var(--color-error)]">
+                    <div className="rounded-lg border border-[var(--muted-error-border)] bg-[var(--muted-error-bg)] px-3 py-2 text-compact text-[var(--muted-error-text)]">
                         {error}
                     </div>
                 )}
 
                 {isError && status?.last_error && (
-                    <div className="rounded-lg bg-[rgba(200,122,122,0.08)] border border-[rgba(200,122,122,0.2)] px-3 py-2 text-compact text-[var(--color-error)]">
+                    <div className="rounded-lg border border-[var(--muted-error-border)] bg-[var(--muted-error-bg)] px-3 py-2 text-compact text-[var(--muted-error-text)]">
                         {status.last_error} — re-enter your credentials below to reconnect.
                     </div>
                 )}
@@ -510,7 +510,7 @@ function ClaromentisConnectionCard() {
                                 {syncing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                                 Sync now
                             </Button>
-                            <Button variant="destructive" onClick={handleDisconnect} className="gap-2 bg-[rgba(200,122,122,0.12)] hover:bg-[rgba(200,122,122,0.18)] border-[rgba(200,122,122,0.2)] text-[var(--color-error)]">
+                            <Button variant="destructive" onClick={handleDisconnect} className="gap-2 border border-[var(--muted-error-border)] bg-[var(--muted-error-bg)] text-[var(--muted-error-text)] hover:bg-[var(--muted-error-bg)]/80">
                                 <LogOut size={16} />
                                 Disconnect
                             </Button>
@@ -571,7 +571,7 @@ function EmailForwardingCard() {
     return (
         <div className="bg-foreground/[0.03] border border-border rounded-[20px] p-5">
             <div className="flex items-center gap-2 mb-3">
-                <Mail className="w-4 h-4 text-sky-400" />
+                <Mail className="h-4 w-4 text-[var(--muted-info-text)]" />
                 <span className="text-xs font-semibold tracking-wider text-muted-foreground/90 uppercase">
                     Email Forwarding
                 </span>
@@ -583,7 +583,7 @@ function EmailForwardingCard() {
             </p>
 
             <div className="flex items-center gap-2 bg-white/[0.03] border border-white/[0.04] rounded-xl px-4 py-3">
-                <code className="text-sm text-sky-400 flex-1 font-mono break-all">{address}</code>
+                <code className="flex-1 break-all font-mono text-sm text-[var(--muted-info-text)]">{address}</code>
                 <button
                     type="button"
                     onClick={() => {

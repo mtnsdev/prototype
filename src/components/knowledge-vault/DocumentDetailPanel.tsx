@@ -336,7 +336,7 @@ function DetailBody({
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="text-2xs text-blue-400/50 hover:text-blue-400/70 mt-0.5 text-left"
+                      className="mt-0.5 text-left text-2xs text-[var(--muted-info-text)]/70 hover:text-[var(--muted-info-text)]"
                     >
                       Suggest sharing…
                     </button>
@@ -345,7 +345,7 @@ function DetailBody({
                     {teams.map((team) => (
                       <DropdownMenuItem
                         key={team.id}
-                        className="text-xs text-muted-foreground/90 focus:text-white"
+                        className="text-xs text-muted-foreground/90 focus:text-foreground"
                         onClick={() => onSuggestShareWithTeam?.(team.id, team.name)}
                       >
                         {team.name}
@@ -356,20 +356,20 @@ function DetailBody({
               )}
             </div>
             {doc.requires_access_review && isAdmin && offboardingRulesApplyToDocument(doc) ? (
-              <div className="flex items-start gap-1.5 rounded-lg border border-rose-500/25 bg-rose-500/[0.08] px-3 py-2 text-2xs text-rose-100/90">
-                <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-rose-400/90" aria-hidden />
+              <div className="flex items-start gap-1.5 rounded-lg border border-[var(--muted-error-border)] bg-[var(--muted-error-bg)] px-3 py-2 text-2xs text-[var(--muted-error-text)]/95">
+                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--muted-error-text)]" aria-hidden />
                 <span>
-                  Flagged for <span className="font-medium text-rose-50">access review</span> (e.g. widened or leaver-tied
+                  Flagged for <span className="font-medium text-[var(--muted-error-text)]">access review</span> (e.g. widened or leaver-tied
                   content). Confirm with legal/comms before treating as fully trusted in search and RAG; clear the flag in
                   your source system when review is complete.
                 </span>
               </div>
             ) : null}
             {ownerDeparted && isPrivateDoc && isAdmin ? (
-              <div className="flex items-start gap-1.5 rounded-lg border border-sky-500/25 bg-sky-500/[0.08] px-3 py-2 text-2xs text-sky-100/90">
-                <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5 text-sky-400/90" aria-hidden />
+              <div className="flex items-start gap-1.5 rounded-lg border border-[var(--muted-info-border)] bg-[var(--muted-info-bg)] px-3 py-2 text-2xs text-[var(--muted-info-text)]/95">
+                <Shield className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--muted-info-text)]" aria-hidden />
                 <span>
-                  Private to <span className="font-medium text-sky-50">{formerContributorLabel}</span>, who no longer has an
+                  Private to <span className="font-medium text-[var(--muted-info-text)]">{formerContributorLabel}</span>, who no longer has an
                   account. Retention, export, reassign, or removal follows your org policy — use access below to control who
                   can use this in Enable now.
                   {doc.departed_at ? (
@@ -386,14 +386,14 @@ function DetailBody({
                 className={cn(
                   "flex items-start gap-1.5 rounded-lg border px-3 py-2 text-2xs",
                   isAdmin
-                    ? "border-violet-500/25 bg-violet-500/[0.08] text-violet-100/90"
+                    ? "border-[var(--muted-accent-border)] bg-[var(--muted-accent-bg)] text-[var(--muted-accent-text)]/95"
                     : "border-input bg-white/[0.04] text-muted-foreground/90"
                 )}
               >
                 <Info
                   className={cn(
                     "w-3.5 h-3.5 shrink-0 mt-0.5",
-                    isAdmin ? "text-violet-400/90" : "text-muted-foreground"
+                    isAdmin ? "text-[var(--muted-accent-text)]" : "text-muted-foreground"
                   )}
                   aria-hidden
                 />
@@ -401,7 +401,7 @@ function DetailBody({
                   {isAdmin ? (
                     <>
                       Originally contributed by{" "}
-                      <span className="font-medium text-violet-50">{formerContributorLabel}</span>, who no longer has an
+                      <span className="font-medium text-[var(--muted-accent-text)]">{formerContributorLabel}</span>, who no longer has an
                       account. The file stays available under the access above; you can change or revoke it.
                     </>
                   ) : (
@@ -418,10 +418,10 @@ function DetailBody({
               </div>
             ) : null}
             {widenedFromPersonal && isOwner && !oversightPrivate && !ownerDeparted ? (
-              <div className="flex items-start gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/[0.07] px-3 py-2 text-2xs text-amber-100/90">
-                <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[var(--color-warning)]/90" aria-hidden />
+              <div className="flex items-start gap-1.5 rounded-lg border border-[var(--muted-warning-border)] bg-[var(--muted-warning-bg)] px-3 py-2 text-2xs text-[var(--muted-warning-text)]/95">
+                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--muted-warning-text)]" aria-hidden />
                 <span>
-                  This was private to you; access is now <span className="font-medium text-amber-50">{widenedAccessLabel}</span>.
+                  This was private to you; access is now <span className="font-medium text-[var(--muted-warning-text)]">{widenedAccessLabel}</span>.
                   Others with that access can open it.
                 </span>
               </div>

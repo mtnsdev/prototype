@@ -10,6 +10,32 @@ import type {
   EditorWorkspacePersisted,
   EditorWorkspaceTab,
 } from "@/data/destinations";
+
+/** Catalog list slots already claimed by another workspace row — at most one row per list type. */
+export function workspaceProductSlotsUsedByOtherRows(
+  sections: EditorTabSection[],
+  excludeIndex: number,
+): Set<EditorProductSlot> {
+  const used = new Set<EditorProductSlot>();
+  for (let i = 0; i < sections.length; i++) {
+    if (i === excludeIndex) continue;
+    const s = sections[i];
+    if (s?.includeProducts && s.productSlot) used.add(s.productSlot);
+  }
+  return used;
+}
+
+export function editorProductSlotLabel(slot: EditorProductSlot): string {
+  const m: Record<EditorProductSlot, string> = {
+    dmc: "DMC partners",
+    restaurants: "Restaurants",
+    hotels: "Hotels",
+    yachts: "Yacht charters",
+    tourism: "Tourism",
+    documents: "Documents",
+  };
+  return m[slot] ?? slot;
+}
 import { DESTINATION_EDITOR_TAB_IDS } from "@/data/destinations";
 import { resolveDestinationSectionPresentation } from "@/lib/destinationSectionPresentation";
 
@@ -72,7 +98,7 @@ function tabIdToDefaultSlot(tabId: DestinationEditorTabId): EditorProductSlot | 
     case "tourism":
       return "tourism";
     case "documents":
-      return "documents";
+      return undefined;
     default:
       return undefined;
   }
@@ -104,13 +130,12 @@ function migrateLegacyTabToSection(
       return {
         ...base,
         includeDocuments: true,
-        productSlot: "documents",
       };
     }
     return {
       ...base,
       includeProducts: true,
-      productSlot: "documents",
+      productSlot: "dmc",
     };
   }
 
@@ -174,7 +199,11 @@ export function ensureEditorWorkspace(destination: Destination): EditorWorkspace
 
   if (ew && "sections" in ew && Array.isArray(ew.sections)) {
     return {
-      sections: ew.sections.map((s) => ({ ...s })),
+      sections: ew.sections.map((s) => {
+        const copy = { ...s };
+        if (copy.productSlot === "documents") delete copy.productSlot;
+        return copy;
+      }),
       guideLabel: ew.guideLabel?.trim() || undefined,
     };
   }
@@ -231,10 +260,11 @@ export function createEditorSectionFromPreset(
         productSlot: catalogSlot,
       };
     case "text":
+      /** Narrative lives on {@link Destination.description} only — empty structural row. */
       return {
         id,
         includeProducts: false,
-        includeText: true,
+        includeText: false,
         includeDocuments: false,
       };
     case "documents":
@@ -243,13 +273,12 @@ export function createEditorSectionFromPreset(
         includeProducts: false,
         includeText: false,
         includeDocuments: true,
-        productSlot: "documents",
       };
     case "catalog_text":
       return {
         id,
         includeProducts: true,
-        includeText: true,
+        includeText: false,
         includeDocuments: false,
         productSlot: catalogSlot,
       };
@@ -267,6 +296,21 @@ export function createEditorSectionFromPreset(
 
 export function defaultEditorSection(): EditorTabSection {
   return createEditorSectionFromPreset("catalog");
+}
+
+/**
+ * Simple blank section — just a title and empty canvas.
+ * Author adds products, text, or files freely after creation.
+ */
+export function createBlankSection(heading?: string, navIconKey?: string): EditorTabSection {
+  return {
+    id: newEditorSectionId(),
+    heading: heading?.trim() || undefined,
+    navIconKey: navIconKey || "Layers",
+    includeProducts: false,
+    includeText: false,
+    includeDocuments: false,
+  };
 }
 
 function isFixedTabId(id: string): id is DestinationEditorTabId {

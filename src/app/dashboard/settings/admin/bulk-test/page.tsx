@@ -489,9 +489,9 @@ export default function BulkTestPage() {
                     ) : (
                         <>
                             {dashboard?.divergence_alert && (
-                                <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-4 flex items-center gap-2">
-                                    <AlertTriangle size={20} className="text-[var(--color-warning)] shrink-0" />
-                                    <span className="text-base text-amber-200">{dashboard.divergence_alert}</span>
+                                <div className="rounded-xl border border-[var(--muted-warning-border)] bg-[var(--muted-warning-bg)] p-4 flex items-center gap-2">
+                                    <AlertTriangle size={20} className="text-[var(--muted-warning-text)] shrink-0" />
+                                    <span className="text-base text-[var(--muted-warning-text)]">{dashboard.divergence_alert}</span>
                                 </div>
                             )}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -506,9 +506,9 @@ export default function BulkTestPage() {
                                                 )}
                                             </p>
                                             <p>
-                                                <span className="text-green-400">{dashboard.latest_run.summary?.passed ?? 0} passed</span>
+                                                <span className="text-[var(--muted-success-text)]">{dashboard.latest_run.summary?.passed ?? 0} passed</span>
                                                 {" / "}
-                                                <span className="text-red-400">{dashboard.latest_run.summary?.failed ?? 0} failed</span>
+                                                <span className="text-[var(--muted-error-text)]">{dashboard.latest_run.summary?.failed ?? 0} failed</span>
                                             </p>
                                             {dashboard.latest_run.summary?.avg_score != null && (
                                                 <p className="text-muted-foreground">Average score: {dashboard.latest_run.summary.avg_score}/10</p>
@@ -558,8 +558,8 @@ export default function BulkTestPage() {
             )}
 
             {error && (
-                <div className="rounded-xl bg-[rgba(200,122,122,0.1)] border border-[rgba(200,122,122,0.3)] p-4 flex items-center gap-2">
-                    <AlertTriangle size={18} className="text-red-400" />
+                <div className="rounded-xl border border-[var(--muted-error-border)] bg-[var(--muted-error-bg)] p-4 flex items-center gap-2">
+                    <AlertTriangle size={18} className="text-[var(--muted-error-text)]" />
                     <span className="text-base text-[var(--color-error)]">{error}</span>
                 </div>
             )}
@@ -580,7 +580,7 @@ export default function BulkTestPage() {
                                 onValueChange={setGeminiModel}
                                 disabled={running}
                             >
-                                <SelectTrigger className="w-[200px] bg-foreground/[0.07] border-input text-foreground focus-visible:ring-amber-500/50">
+                                <SelectTrigger className="w-[200px] bg-foreground/[0.07] border-input text-foreground focus-visible:ring-[var(--muted-warning-border)]/60">
                                     <SelectValue placeholder="Select model" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -595,7 +595,7 @@ export default function BulkTestPage() {
                         <Button
                             onClick={startRun}
                             disabled={running || questions.filter((q) => q.is_active).length === 0}
-                            className="gap-2 bg-amber-500/20 text-[var(--color-warning)] border-amber-500/30 hover:bg-amber-500/30"
+                            className="gap-2 border border-[var(--muted-warning-border)] bg-[var(--muted-warning-bg)] text-[var(--muted-warning-text)] hover:bg-[var(--muted-warning-bg)]/80"
                         >
                             {running ? (
                                 <>
@@ -613,7 +613,7 @@ export default function BulkTestPage() {
                             <div className="mt-4">
                                 <div className="h-2 rounded-full bg-foreground/[0.11] overflow-hidden max-w-xs">
                                     <div
-                                        className="h-full bg-amber-500/60 transition-all duration-500"
+                                        className="h-full bg-[var(--muted-warning-text)]/50 transition-all duration-500"
                                         style={{
                                             width: `${(progress.completed_count / progress.total_count) * 100}%`,
                                         }}
@@ -652,11 +652,11 @@ export default function BulkTestPage() {
                                                 <td className="p-3">{res.quality_score ?? "—"}</td>
                                                 <td className="p-3">
                                                     {res.passed ? (
-                                                        <span className="inline-flex items-center gap-1 text-green-400">
+                                                        <span className="inline-flex items-center gap-1 text-[var(--muted-success-text)]">
                                                             <CheckCircle2 size={14} /> Pass
                                                         </span>
                                                     ) : (
-                                                        <span className="inline-flex items-center gap-1 text-red-400">
+                                                        <span className="inline-flex items-center gap-1 text-[var(--muted-error-text)]">
                                                             <XCircle size={14} /> Fail
                                                         </span>
                                                     )}
@@ -721,7 +721,7 @@ export default function BulkTestPage() {
                                         )}
                                         <div className="flex flex-wrap gap-4 text-compact">
                                             <span className="text-muted-foreground">Score: <span className="text-foreground">{res.quality_score ?? "—"}</span></span>
-                                            <span className="text-muted-foreground">Status: {res.passed ? <span className="text-green-400">Pass</span> : <span className="text-red-400">Fail</span>}</span>
+                                            <span className="text-muted-foreground">Status: {res.passed ? <span className="text-[var(--muted-success-text)]">Pass</span> : <span className="text-[var(--muted-error-text)]">Fail</span>}</span>
                                             {res.regression_detected && res.previous_score != null && (
                                                 <span className="text-[var(--color-warning)]">Regression (previous score: {res.previous_score})</span>
                                             )}
@@ -793,9 +793,9 @@ export default function BulkTestPage() {
                                             <span
                                                 className={
                                                     run.status === "completed"
-                                                        ? "text-green-400"
+                                                        ? "text-[var(--muted-success-text)]"
                                                         : run.status === "failed"
-                                                          ? "text-red-400"
+                                                          ? "text-[var(--muted-error-text)]"
                                                           : "text-muted-foreground"
                                                 }
                                             >
@@ -854,7 +854,7 @@ export default function BulkTestPage() {
                                     value={runA != null ? String(runA) : "__none__"}
                                     onValueChange={(v) => setRunA(v === "__none__" ? null : Number(v))}
                                 >
-                                    <SelectTrigger className="min-w-[200px] bg-foreground/[0.07] border-input text-foreground focus-visible:ring-amber-500/50">
+                                    <SelectTrigger className="min-w-[200px] bg-foreground/[0.07] border-input text-foreground focus-visible:ring-[var(--muted-warning-border)]/60">
                                         <SelectValue placeholder="Select run" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -874,7 +874,7 @@ export default function BulkTestPage() {
                                     value={runB != null ? String(runB) : "__none__"}
                                     onValueChange={(v) => setRunB(v === "__none__" ? null : Number(v))}
                                 >
-                                    <SelectTrigger className="min-w-[200px] bg-foreground/[0.07] border-input text-foreground focus-visible:ring-amber-500/50">
+                                    <SelectTrigger className="min-w-[200px] bg-foreground/[0.07] border-input text-foreground focus-visible:ring-[var(--muted-warning-border)]/60">
                                         <SelectValue placeholder="Select run" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -1083,11 +1083,11 @@ export default function BulkTestPage() {
                                                         </td>
                                                         <td className="p-3">
                                                             {pair.feedback_rating === 1 ? (
-                                                                <span className="text-green-400 inline-flex items-center gap-1">
+                                                                <span className="text-[var(--muted-success-text)] inline-flex items-center gap-1">
                                                                     <ThumbsUp size={14} /> {feedbackLabel}
                                                                 </span>
                                                             ) : pair.feedback_rating === -1 ? (
-                                                                <span className="text-red-400 inline-flex items-center gap-1">
+                                                                <span className="text-[var(--muted-error-text)] inline-flex items-center gap-1">
                                                                     <ThumbsDown size={14} /> {feedbackLabel}
                                                                 </span>
                                                             ) : (
@@ -1096,9 +1096,9 @@ export default function BulkTestPage() {
                                                         </td>
                                                         <td className="p-3">
                                                             {pair.can_answer === true ? (
-                                                                <span className="text-green-400">Yes</span>
+                                                                <span className="text-[var(--muted-success-text)]">Yes</span>
                                                             ) : pair.can_answer === false ? (
-                                                                <span className="text-red-400">No</span>
+                                                                <span className="text-[var(--muted-error-text)]">No</span>
                                                             ) : (
                                                                 <span className="text-muted-foreground">—</span>
                                                             )}
@@ -1199,12 +1199,12 @@ export default function BulkTestPage() {
                                             <div className="text-sm text-muted-foreground/75 mb-1">Feedback</div>
                                             <p className="text-foreground">
                                                 {pair.feedback_rating === 1 && (
-                                                    <span className="text-green-400 inline-flex items-center gap-1">
+                                                    <span className="text-[var(--muted-success-text)] inline-flex items-center gap-1">
                                                         <ThumbsUp size={16} /> Thumbs up
                                                     </span>
                                                 )}
                                                 {pair.feedback_rating === -1 && (
-                                                    <span className="text-red-400 inline-flex items-center gap-1">
+                                                    <span className="text-[var(--muted-error-text)] inline-flex items-center gap-1">
                                                         <ThumbsDown size={16} /> Thumbs down
                                                     </span>
                                                 )}
@@ -1280,7 +1280,7 @@ export default function BulkTestPage() {
                                             <button
                                                 onClick={() => addFromFeedback(s.sample_message_id)}
                                                 disabled={addingFromFeedback === s.sample_message_id}
-                                                className="shrink-0 px-3 py-1.5 rounded-lg bg-amber-500/20 text-[var(--color-warning)] border border-amber-500/30 hover:bg-amber-500/30 disabled:opacity-50 text-compact"
+                                                className="shrink-0 rounded-lg border border-[var(--muted-warning-border)] bg-[var(--muted-warning-bg)] px-3 py-1.5 text-compact text-[var(--muted-warning-text)] hover:bg-[var(--muted-warning-bg)]/80 disabled:opacity-50"
                                             >
                                                 {addingFromFeedback === s.sample_message_id ? "Adding…" : "Add to bulk test"}
                                             </button>
@@ -1329,7 +1329,7 @@ export default function BulkTestPage() {
                                 <Button
                                     onClick={saveQuestion}
                                     disabled={saving || !formQuestion.trim()}
-                                    className="bg-amber-500/20 text-[var(--color-warning)] border-amber-500/30 hover:bg-amber-500/30"
+                                    className="border border-[var(--muted-warning-border)] bg-[var(--muted-warning-bg)] text-[var(--muted-warning-text)] hover:bg-[var(--muted-warning-bg)]/80"
                                 >
                                     {saving ? "Saving…" : editingId != null ? "Update" : "Add"}
                                 </Button>
@@ -1395,9 +1395,9 @@ export default function BulkTestPage() {
                                                 <td className="p-3">
                                                     {latestResult != null ? (
                                                         latestResult.passed ? (
-                                                            <span className="text-green-400">Yes</span>
+                                                            <span className="text-[var(--muted-success-text)]">Yes</span>
                                                         ) : (
-                                                            <span className="text-red-400">No</span>
+                                                            <span className="text-[var(--muted-error-text)]">No</span>
                                                         )
                                                     ) : (
                                                         <span className="text-muted-foreground">—</span>
@@ -1429,7 +1429,7 @@ export default function BulkTestPage() {
                                                     </button>
                                                     <button
                                                         onClick={() => setDeleteQuestionId(q.id)}
-                                                        className="text-red-400 hover:underline text-compact"
+                                                        className="text-[var(--muted-error-text)] hover:underline text-compact"
                                                     >
                                                         Delete
                                                     </button>
@@ -1505,7 +1505,7 @@ export default function BulkTestPage() {
                                             {latestResult != null && (
                                                 <>
                                                     <span className="text-muted-foreground">Latest score: <span className="text-foreground">{latestResult.quality_score ?? "—"}/10</span></span>
-                                                    <span className="text-muted-foreground">Pass: {latestResult.passed ? <span className="text-green-400">Yes</span> : <span className="text-red-400">No</span>}</span>
+                                                    <span className="text-muted-foreground">Pass: {latestResult.passed ? <span className="text-[var(--muted-success-text)]">Yes</span> : <span className="text-[var(--muted-error-text)]">No</span>}</span>
                                                     {latestResult.regression_detected && latestResult.previous_score != null && (
                                                         <span className="text-[var(--color-warning)]">Regression (previous: {latestResult.previous_score})</span>
                                                     )}
@@ -1549,7 +1549,7 @@ export default function BulkTestPage() {
                                                 const ok = await deleteQuestion(deleteQuestionId);
                                                 if (ok) setDeleteQuestionId(null);
                                             }}
-                                            className="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 text-base"
+                                            className="rounded-lg border border-[var(--muted-error-border)] bg-[var(--muted-error-bg)] px-4 py-2 text-base text-[var(--muted-error-text)] hover:bg-[var(--muted-error-bg)]/80"
                                         >
                                             Delete
                                         </button>

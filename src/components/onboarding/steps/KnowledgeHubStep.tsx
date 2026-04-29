@@ -1,26 +1,21 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type { ComponentType, ReactNode } from "react";
 import {
   Building2,
   Cloud,
   FolderOpen,
-  Sparkles,
+  Mail,
   AlertTriangle,
   Check,
   Loader2,
+  Folder,
+  HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useUser } from "@/contexts/UserContext";
 import { useTeams } from "@/contexts/TeamsContext";
 import { TEAM_EVERYONE_ID } from "@/types/teams";
@@ -34,19 +29,116 @@ import { cn } from "@/lib/utils";
 
 type KnowledgeHubStepProps = {
   path: OnboardingPath;
+  agencyName: string;
+  adminUserName: string;
+  adminUserEmail: string;
   onContinue: (snapshot: HubSnapshot) => void;
+  registerAdvance?: (fn: () => void) => void;
 };
 
-type ModalState =
-  | { kind: "closed" }
-  | { kind: "intranet_admin"; step: "url" | "creds" | "success" }
-  | { kind: "intranet_user"; step: "creds" | "success" }
-  | { kind: "shared_admin"; step: "oauth" | "sync" | "success" }
-  | { kind: "personal"; step: "oauth" | "sync" | "success" };
+type CardKey = "intranet" | "shared" | "personal" | "email";
+type DriveStep = "idle" | "authorizing" | "picking" | "syncing";
+type Status = "connected" | "not_connected" | "admin_managed" | "skipped";
 
 const MOCK_STATS = { docs: 42, pages: 18, sharedDocs: 156, personalDocs: 48 };
 
-export function KnowledgeHubStep({ path, onContinue }: KnowledgeHubStepProps) {
+type IntranetErrorKind = "bad_url" | "bad_creds" | "sso_only" | "server";
+const INTRANET_ERROR_COPY: Record<IntranetErrorKind, string> = {
+  bad_url: "We couldn't reach that URL. Double-check the address and try again.",
+  bad_creds:
+    "Those credentials didn't work. They should be the same ones you use to log into your intranet.",
+  sso_only:
+    "Your intranet looks like it uses single sign-on. Ask IT for an app-password or service account.",
+  server: "Our system is temporarily busy. Please wait a moment and try again.",
+};
+
+// ── Refined dot+text status indicator (replaces the heavier pill) ────────
+function StatusDot({ status }: { status: Status }) {
+  const map: Record<
+    Status,
+    { label: string; dot: string; text: string; bg: string; border: string }
+  > = {
+    connected: {
+      label: "Connected",
+      dot: "bg-primary",
+      text: "text-primary",
+      bg: "bg-primary/10",
+      border: "border-primary/25",
+    },
+    not_connected: {
+      label: "Not connected",
+      dot: "bg-muted-foreground/40",
+      text: "text-muted-foreground",
+      bg: "bg-muted/40",
+      border: "border-border/60",
+    },
+    admin_managed: {
+      label: "Admin-managed",
+      dot: "bg-muted-foreground/40",
+      text: "text-muted-foreground",
+      bg: "bg-muted/40",
+      border: "border-border/60",
+    },
+    skipped: {
+      label: "Skipped",
+      dot: "bg-amber-500/70",
+      text: "text-amber-700 dark:text-amber-400",
+      bg: "bg-amber-500/10",
+      border: "border-amber-500/30",
+    },
+  };
+  const { label, dot, text, bg, border } = map[status];
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium tracking-wide",
+        text,
+        bg,
+        border
+      )}
+    >
+      <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", dot)} aria-hidden />
+      {label}
+    </span>
+  );
+}
+
+function HelpHint({ id, label, body }: { id: string; label: string; body: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative inline-flex">
+      <button
+        type="button"
+        aria-label={`What is ${label}?`}
+        aria-expanded={open}
+        aria-controls={`${id}-tip`}
+        onClick={() => setOpen((v) => !v)}
+        onBlur={() => setOpen(false)}
+        className="text-muted-foreground hover:text-foreground"
+      >
+        <HelpCircle className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
+      </button>
+      {open && (
+        <span
+          id={`${id}-tip`}
+          role="tooltip"
+          className="absolute left-1/2 top-full z-30 mt-2 w-64 -translate-x-1/2 rounded-lg border border-border/60 bg-popover px-3 py-2 text-xs leading-relaxed text-popover-foreground shadow-lg"
+        >
+          {body}
+        </span>
+      )}
+    </span>
+  );
+}
+
+export function KnowledgeHubStep({
+  path,
+  agencyName,
+  adminUserName,
+  adminUserEmail,
+  onContinue,
+  registerAdvance,
+}: KnowledgeHubStepProps) {
   const { user } = useUser();
   const { teams, agencyUsers } = useTeams();
   const { status: personalDrive, refetch: refetchPersonal } = useGoogleDriveStatus("personal");
@@ -54,24 +146,90 @@ export function KnowledgeHubStep({ path, onContinue }: KnowledgeHubStepProps) {
   const { status: claromentis, refetch: refetchClaromentis } = useClaromentisStatus();
 
   const [snapshot, setSnapshot] = useState<HubSnapshot>(() => emptyHubSnapshot());
-  const [modal, setModal] = useState<ModalState>({ kind: "closed" });
-  const [busy, setBusy] = useState(false);
+  /** Dev affordances (Simulate error / Simulate timeout) are hidden unless `?dev=1`
+   *  is in the URL — keeps the onboarding clean for real users. */
+  const showDevTools = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return new URLSearchParams(window.location.search).get("dev") === "1";
+    } catch {
+      return false;
+    }
+  }, []);
+  const enableInboxAddress = useMemo(() => {
+    const slug = (user?.email || "you@youragency.com")
+      .split("@")[0]
+      .replace(/[^a-z0-9.]/gi, "")
+      .toLowerCase();
+    return `${slug || "you"}@inbox.enablevic.com`;
+  }, [user?.email]);
+  const [busy, setBusy] = useState<CardKey | null>(null);
+
+
   const [intranetUrlDraft, setIntranetUrlDraft] = useState("");
   const [intranetUserDraft, setIntranetUserDraft] = useState("");
   const [intranetPassDraft, setIntranetPassDraft] = useState("");
-  const [oauthBlockedHint, setOauthBlockedHint] = useState(false);
+  const [forwardingDraft, setForwardingDraft] = useState("");
+
+  const [sharedStep, setSharedStep] = useState<DriveStep>("idle");
+  const [personalStep, setPersonalStep] = useState<DriveStep>("idle");
+  const [sharedPopupBlocked, setSharedPopupBlocked] = useState(false);
+  const [personalPopupBlocked, setPersonalPopupBlocked] = useState(false);
+
+
+  const [pulseKey, setPulseKey] = useState<CardKey | null>(null);
+  /** Timed-out cards: surface 'Taking longer than expected. Skip for now?'. */
+  const [timeoutKey, setTimeoutKey] = useState<CardKey | null>(null);
+  const timeoutTimers = useRef<Record<CardKey, number | undefined>>({
+    intranet: undefined,
+    shared: undefined,
+    personal: undefined,
+    email: undefined,
+  });
+
+  /** Start a timeout countdown — fires the "taking too long" UI after `ms`. */
+  const startTimeout = useCallback((key: CardKey, ms: number) => {
+    if (timeoutTimers.current[key]) {
+      window.clearTimeout(timeoutTimers.current[key]);
+    }
+    timeoutTimers.current[key] = window.setTimeout(() => {
+      setTimeoutKey(key);
+    }, ms);
+  }, []);
+
+  const clearTimeoutFor = useCallback((key: CardKey) => {
+    if (timeoutTimers.current[key]) {
+      window.clearTimeout(timeoutTimers.current[key]);
+      timeoutTimers.current[key] = undefined;
+    }
+    setTimeoutKey((cur) => (cur === key ? null : cur));
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    const timers = timeoutTimers.current;
+    return () => {
+      (Object.values(timers) as Array<number | undefined>).forEach((t) => {
+        if (t) window.clearTimeout(t);
+      });
+    };
+  }, []);
+  const triggerPulse = (k: CardKey) => {
+    setPulseKey(k);
+    window.setTimeout(() => setPulseKey((cur) => (cur === k ? null : cur)), 1000);
+  };
 
   const clarActive = claromentis?.status === "active";
   const tenantUrlFromApi = claromentis?.claromentis_base_url ?? null;
-
   const tenantUrl = snapshot.tenantIntranetUrl ?? tenantUrlFromApi;
-  const intranetConnected = clarActive || snapshot.intranetConnected;
 
+  const intranetConnected = clarActive || snapshot.intranetConnected;
   const agencyConnected = agencyDrive?.connected || snapshot.sharedDriveConnected;
   const personalConnected = personalDrive?.connected || snapshot.personalConnected;
 
   const staff = user ? isWorkspaceStaff(user) : false;
   const isPathA = path === "A";
+  const isAdvisor = path === "B";
 
   const assignedTeamNames = useMemo(() => {
     const nonEveryone = teams.filter((t) => t.id !== TEAM_EVERYONE_ID);
@@ -90,93 +248,151 @@ export function KnowledgeHubStep({ path, onContinue }: KnowledgeHubStepProps) {
     };
   }, [teams, agencyUsers]);
 
-  const hubFooterMessage = useMemo(() => {
-    const sharedOk = isPathA ? agencyConnected || snapshot.skippedShared : agencyConnected;
-    const intranetOk = intranetConnected || snapshot.skippedIntranet;
-    const personalOk = personalConnected || snapshot.skippedPersonal;
-    if (intranetOk && sharedOk && personalOk) {
-      return "You're fully set up. EnableVIC can draw on all your knowledge sources.";
+  const validateIntranet = useCallback(
+    async (urlInput: string): Promise<IntranetErrorKind | null> => {
+      setBusy("intranet");
+      startTimeout("intranet", 10000); // 10s validation timeout per ticket
+      // Simulate slow validation if URL contains "slow" — will trip the timeout
+      const slow = urlInput.toLowerCase().includes("slow");
+      await new Promise((r) => setTimeout(r, slow ? 12000 : 600));
+      clearTimeoutFor("intranet");
+      setBusy(null);
+      const u = urlInput.trim().toLowerCase();
+      if (u && !u.startsWith("http")) return "bad_url";
+      if (u.includes("sso")) return "sso_only";
+      if (u.includes("fail")) return "server";
+      return null;
+    },
+    [startTimeout, clearTimeoutFor]
+  );
+
+  const saveIntranetAdmin = async () => {
+    if (!intranetUrlDraft.trim() || !intranetUserDraft.trim() || !intranetPassDraft) return;
+    const err = await validateIntranet(intranetUrlDraft);
+    if (err) {
+      setSnapshot((s) => ({ ...s, intranetError: INTRANET_ERROR_COPY[err] }));
+      return;
     }
-    if (!intranetConnected && !agencyConnected && !personalConnected && !snapshot.skippedIntranet) {
-      return "EnableVIC is ready with its built-in intelligence. Connect your sources to make it dramatically more useful.";
-    }
-    return "EnableVIC works best with all sources connected. You can connect more anytime in Settings.";
-  }, [
-    intranetConnected,
-    agencyConnected,
-    personalConnected,
-    snapshot.skippedIntranet,
-    snapshot.skippedShared,
-    snapshot.skippedPersonal,
-    isPathA,
-  ]);
-
-  const runValidation = useCallback(async () => {
-    setBusy(true);
-    await new Promise((r) => setTimeout(r, 700));
-    setBusy(false);
-  }, []);
-
-  const closeModal = () => {
-    setModal({ kind: "closed" });
-    setOauthBlockedHint(false);
-  };
-
-  useEffect(() => {
-    if (modal.kind !== "personal" || modal.step !== "sync") return;
-    const t = window.setTimeout(() => setModal({ kind: "personal", step: "success" }), 900);
-    return () => clearTimeout(t);
-  }, [modal]);
-
-  const finishIntranetAdminSuccess = () => {
     setSnapshot((s) => ({
       ...s,
-      tenantIntranetUrl: intranetUrlDraft || s.tenantIntranetUrl || "https://intranet.example.com",
+      tenantIntranetUrl: intranetUrlDraft.trim(),
       intranetConnected: true,
       intranetDocs: MOCK_STATS.docs,
       intranetPages: MOCK_STATS.pages,
+      intranetConnectedAs: intranetUserDraft.trim(),
+      intranetError: "",
+      skippedIntranet: false,
     }));
     void refetchClaromentis();
-    closeModal();
+    triggerPulse("intranet");
   };
 
-  const finishIntranetUserSuccess = () => {
+  const saveIntranetAdvisor = async () => {
+    if (!intranetUserDraft.trim() || !intranetPassDraft) return;
+    const err = await validateIntranet("");
+    if (err) {
+      setSnapshot((s) => ({ ...s, intranetError: INTRANET_ERROR_COPY[err] }));
+      return;
+    }
     setSnapshot((s) => ({
       ...s,
       intranetConnected: true,
       intranetDocs: MOCK_STATS.docs,
       intranetPages: MOCK_STATS.pages,
+      intranetConnectedAs: intranetUserDraft.trim(),
+      intranetError: "",
+      skippedIntranet: false,
     }));
     void refetchClaromentis();
-    closeModal();
+    triggerPulse("intranet");
   };
 
-  const finishSharedSuccess = (folder: string) => {
+  const driveOwnerLabel = adminUserName || adminUserEmail || "Workspace admin";
+  const personalOwnerLabel = user?.username || user?.email || "You";
+
+  const startSharedAuth = () => {
+    setSharedPopupBlocked(false);
+    setSharedStep("authorizing");
+    startTimeout("shared", 30000); // 30s OAuth timeout per ticket
+    window.setTimeout(() => {
+      clearTimeoutFor("shared");
+      setSharedStep("picking");
+    }, 1200);
+  };
+  const cancelSharedAuth = () => setSharedStep("idle");
+  const pickSharedFolder = (folder: string) => {
+    setSharedStep("syncing");
+    window.setTimeout(() => {
+      setSnapshot((s) => ({
+        ...s,
+        sharedDriveConnected: true,
+        sharedDocs: MOCK_STATS.sharedDocs,
+        sharedFolderName: folder,
+        sharedConnectedAs: driveOwnerLabel,
+        skippedShared: false,
+      }));
+      void refetchAgency();
+      setSharedStep("idle");
+      triggerPulse("shared");
+    }, 900);
+  };
+
+  const startPersonalAuth = () => {
+    setPersonalPopupBlocked(false);
+    setPersonalStep("authorizing");
+    startTimeout("personal", 30000);
+    window.setTimeout(() => {
+      clearTimeoutFor("personal");
+      setPersonalStep("picking");
+    }, 1200);
+  };
+  const cancelPersonalAuth = () => setPersonalStep("idle");
+  const pickPersonalFolder = (folder: string) => {
+    setPersonalStep("syncing");
+    window.setTimeout(() => {
+      setSnapshot((s) => ({
+        ...s,
+        personalConnected: true,
+        personalDocs: MOCK_STATS.personalDocs,
+        personalFolderName: folder,
+        personalConnectedAs: personalOwnerLabel,
+        skippedPersonal: false,
+      }));
+      void refetchPersonal();
+      setPersonalStep("idle");
+      triggerPulse("personal");
+    }, 900);
+  };
+
+  const saveForwarding = async () => {
+    if (!forwardingDraft.trim()) return;
+    setBusy("email");
+    await new Promise((r) => setTimeout(r, 400));
+    setBusy(null);
     setSnapshot((s) => ({
       ...s,
-      sharedDriveConnected: true,
-      sharedDocs: MOCK_STATS.sharedDocs,
-      sharedFolderName: folder,
+      emailForwardingConfigured: true,
+      emailForwardingAddress: forwardingDraft.trim(),
+      skippedEmailForwarding: false,
     }));
-    void refetchAgency();
-    closeModal();
   };
 
-  const finishPersonalSuccess = (folder: string) => {
-    setSnapshot((s) => ({
-      ...s,
-      personalConnected: true,
-      personalDocs: MOCK_STATS.personalDocs,
-      personalFolderName: folder,
-    }));
-    void refetchPersonal();
-    closeModal();
+  const skipCard = (key: CardKey) => {
+    setSnapshot((s) => {
+      switch (key) {
+        case "intranet":
+          return { ...s, skippedIntranet: true };
+        case "shared":
+          return { ...s, skippedShared: true };
+        case "personal":
+          return { ...s, skippedPersonal: true };
+        case "email":
+          return { ...s, skippedEmailForwarding: true };
+      }
+    });
   };
 
-  const hubPrimaryCta =
-    path === "A" ? "Continue to team setup" : path === "B" ? "Start using EnableVIC" : "Start using EnableVIC";
-
-  const handleHubContinue = () => {
+  const handleHubContinue = useCallback(() => {
     onContinue({
       ...snapshot,
       tenantIntranetUrl: snapshot.tenantIntranetUrl ?? tenantUrlFromApi,
@@ -187,155 +403,351 @@ export function KnowledgeHubStep({ path, onContinue }: KnowledgeHubStepProps) {
       sharedDocs: snapshot.sharedDocs || MOCK_STATS.sharedDocs,
       personalConnected: personalDrive?.connected ?? snapshot.personalConnected,
     });
-  };
+  }, [
+    onContinue,
+    snapshot,
+    tenantUrlFromApi,
+    clarActive,
+    agencyDrive?.connected,
+    personalDrive?.connected,
+  ]);
+
+  useEffect(() => {
+    registerAdvance?.(() => handleHubContinue());
+  }, [registerAdvance, handleHubContinue]);
+
+  const intranetStatus: Status = intranetConnected
+    ? "connected"
+    : snapshot.skippedIntranet
+    ? "skipped"
+    : "not_connected";
+  const sharedStatus: Status = isPathA
+    ? agencyConnected
+      ? "connected"
+      : snapshot.skippedShared
+      ? "skipped"
+      : "not_connected"
+    : agencyConnected
+    ? "connected"
+    : "admin_managed";
+  const personalStatus: Status = personalConnected
+    ? "connected"
+    : snapshot.skippedPersonal
+    ? "skipped"
+    : "not_connected";
+  const hubPrimaryCta = path === "A" ? "Continue to team setup" : "Start using Enable";
 
   return (
     <div className="flex flex-1 flex-col pb-8">
-      <div className="mb-6 text-center md:text-left">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+      <div className="mb-10 text-center md:text-left">
+        <p className="font-display mb-3 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          Step 2 · Connect your sources
+        </p>
+        <h1 className="font-display text-3xl font-medium tracking-tight text-foreground md:text-4xl">
           Knowledge Hub
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground md:text-base">
-          Connect your sources — the hub updates live as you go.
+        <p className="mt-3 max-w-xl text-sm text-muted-foreground md:text-base">
+          {isPathA
+            ? `Connect ${agencyName}'s knowledge sources. Fill in details inline — Enable will index and confirm each one.`
+            : `Connect what you'll bring to ${agencyName} on Enable. Fill in details inline — we'll confirm each connection.`}
         </p>
       </div>
 
-      <div className="grid gap-4">
-        {/* Intranet */}
+      <div className="grid gap-5">
+        {/* ── Agency intranet ───────────────────────────────────────────── */}
         <SourceCard
           icon={Building2}
           title="Agency intranet"
-          variant={
-            intranetConnected ? "ok" : snapshot.skippedIntranet && !intranetConnected ? "warn" : "neutral"
+          status={intranetStatus}
+          pulsing={pulseKey === "intranet"}
+          help={{
+            id: "intranet",
+            label: "agency intranet",
+            body:
+              "Your agency's internal site (Claromentis or similar) — training materials, supplier guides, commission tables, destination briefs.",
+          }}
+          summary={
+            isPathA
+              ? intranetConnected
+                ? `${MOCK_STATS.docs} documents · ${MOCK_STATS.pages} pages indexed`
+                : "Your agency's internal site."
+              : intranetConnected
+              ? `${MOCK_STATS.docs} documents · ${MOCK_STATS.pages} pages available through your teams`
+              : tenantUrl
+              ? `Sign in to access ${agencyName}'s intranet.`
+              : "Your admin hasn't set up the intranet yet."
           }
-          body={
-            isPathA ? (
-              <p className="text-sm text-muted-foreground">
-                Set up your agency&apos;s intranet so EnableVIC can access training materials, supplier guides,
-                and internal knowledge.
-              </p>
-            ) : tenantUrl || clarActive ? (
-              <p className="text-sm text-muted-foreground">
-                Your agency&apos;s intranet — {MOCK_STATS.docs} documents, {MOCK_STATS.pages} pages available
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Your admin hasn&apos;t set up the intranet yet.
-              </p>
-            )
+          connectedAs={
+            intranetConnected && snapshot.intranetConnectedAs
+              ? `Connected as ${snapshot.intranetConnectedAs}`
+              : undefined
           }
-          footer={
-            isPathA ? (
-              <Button
-                type="button"
-                size="sm"
-                variant={intranetConnected ? "outline" : "default"}
-                onClick={() =>
-                  setModal({
-                    kind: "intranet_admin",
-                    step: snapshot.tenantIntranetUrl ? "creds" : "url",
-                  })
-                }
-              >
-                {intranetConnected ? "Connected" : "Set up intranet"}
-              </Button>
-            ) : tenantUrl || clarActive ? (
-              <Button
-                type="button"
-                size="sm"
-                variant={intranetConnected ? "outline" : "default"}
-                onClick={() => setModal({ kind: "intranet_user", step: "creds" })}
-                disabled={!tenantUrl && !clarActive}
-              >
-                {intranetConnected ? "Connected" : "Connect your account"}
-              </Button>
-            ) : (
-              <span className="text-xs text-muted-foreground">Waiting for admin</span>
-            )
-          }
-        />
+          canEdit={isPathA || (!!tenantUrl && !intranetConnected)}
+          alwaysExpanded
+        >
+          {snapshot.intranetError && <ErrorBanner message={snapshot.intranetError} />}
+          {timeoutKey === "intranet" && (
+            <TimeoutBanner
+              onRetry={() => clearTimeoutFor("intranet")}
+              onSkip={() => {
+                clearTimeoutFor("intranet");
+                skipCard("intranet");
+              }}
+            />
+          )}
 
-        {/* Shared Drive */}
+          {isPathA && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="intranet-url">Intranet URL</Label>
+                <Input
+                  id="intranet-url"
+                  placeholder="https://yourcompany.yourintranet.com"
+                  value={intranetUrlDraft}
+                  onChange={(e) => setIntranetUrlDraft(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="intranet-user-admin" className="text-xs">Username</Label>
+                  <Input
+                    id="intranet-user-admin"
+                    value={intranetUserDraft}
+                    onChange={(e) => setIntranetUserDraft(e.target.value)}
+                    autoComplete="username"
+                    className="h-9"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="intranet-pass-admin" className="text-xs">Password</Label>
+                  <Input
+                    id="intranet-pass-admin"
+                    type="password"
+                    value={intranetPassDraft}
+                    onChange={(e) => setIntranetPassDraft(e.target.value)}
+                    autoComplete="current-password"
+                    className="h-9"
+                  />
+                </div>
+              </div>
+              <CardActions
+                onSkip={() => skipCard("intranet")}
+                onSave={saveIntranetAdmin}
+                busy={busy === "intranet"}
+                saveLabel={intranetConnected ? "Update" : "Connect"}
+                onSimulateError={
+                  showDevTools
+                    ? () =>
+                        setSnapshot((s) => ({
+                          ...s,
+                          intranetError: INTRANET_ERROR_COPY.bad_creds,
+                        }))
+                    : undefined
+                }
+                onSimulateTimeout={
+                  showDevTools ? () => setTimeoutKey("intranet") : undefined
+                }
+              />
+            </div>
+          )}
+
+          {!isPathA && tenantUrl && (
+            <div className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                Same credentials you use to log into your intranet.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="intranet-user-adv">Username</Label>
+                  <Input
+                    id="intranet-user-adv"
+                    value={intranetUserDraft}
+                    onChange={(e) => setIntranetUserDraft(e.target.value)}
+                    autoComplete="username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="intranet-pass-adv">Password</Label>
+                  <Input
+                    id="intranet-pass-adv"
+                    type="password"
+                    value={intranetPassDraft}
+                    onChange={(e) => setIntranetPassDraft(e.target.value)}
+                    autoComplete="current-password"
+                  />
+                </div>
+              </div>
+              <CardActions
+                onSkip={() => skipCard("intranet")}
+                onSave={saveIntranetAdvisor}
+                busy={busy === "intranet"}
+                saveLabel="Connect"
+              />
+            </div>
+          )}
+        </SourceCard>
+        
+
+        {/* ── Shared Google Drive ───────────────────────────────────────── */}
         <SourceCard
           icon={Cloud}
           title="Shared Google Drive"
-          variant={
-            agencyConnected ? "ok" : snapshot.skippedShared ? "warn" : "neutral"
+          status={sharedStatus}
+          pulsing={pulseKey === "shared"}
+          help={{
+            id: "shared",
+            label: "shared Google Drive",
+            body:
+              "A Drive folder you share with your whole team — agency-wide rate sheets, supplier brochures, destination briefs.",
+          }}
+          summary={
+            staff && isPathA
+              ? agencyConnected
+                ? `${snapshot.sharedFolderName || "Agency knowledge"} · ${MOCK_STATS.sharedDocs} files indexed`
+                : "A Drive folder shared with your team."
+              : agencyConnected
+              ? `${snapshot.sharedFolderName || "Agency knowledge"} · ${MOCK_STATS.sharedDocs} files indexed`
+              : "Your admin hasn't connected a shared Drive yet."
           }
-          body={
-            staff && isPathA ? (
-              <p className="text-sm text-muted-foreground">
-                Documents in the selected folder are available to your whole team.
-              </p>
-            ) : agencyConnected ? (
-              <p className="text-sm text-muted-foreground">
-                Connected by Demo Admin — {snapshot.sharedFolderName || "Agency knowledge"} —{" "}
-                {MOCK_STATS.sharedDocs} files indexed
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Your admin hasn&apos;t connected shared Google Drive yet.
-              </p>
-            )
+          connectedAs={
+            agencyConnected && snapshot.sharedConnectedAs
+              ? `Authorized by ${snapshot.sharedConnectedAs} (Google)`
+              : undefined
           }
-          footer={
-            staff && isPathA ? (
-              <Button
-                type="button"
-                size="sm"
-                variant={agencyConnected ? "outline" : "default"}
-                onClick={() => setModal({ kind: "shared_admin", step: "oauth" })}
-              >
-                {agencyConnected ? "Connected" : "Connect shared Drive"}
-              </Button>
-            ) : (
-              <span className="text-xs text-muted-foreground">Admin-managed</span>
-            )
-          }
-        />
+          canEdit={staff && isPathA}
+          alwaysExpanded
+        >
+          <DriveConnectFlow
+            step={sharedStep}
+            connected={agencyConnected}
+            connectedFolder={snapshot.sharedFolderName || "Agency knowledge"}
+            popupBlocked={sharedPopupBlocked}
+            audience="shared"
+            timedOut={timeoutKey === "shared"}
+            onStart={startSharedAuth}
+            onCancel={cancelSharedAuth}
+            onPick={pickSharedFolder}
+            onSimulatePopupBlocked={() => setSharedPopupBlocked(true)}
+            onSimulateTimeout={() => setTimeoutKey("shared")}
+            onTimeoutRetry={() => clearTimeoutFor("shared")}
+            onTimeoutSkip={() => {
+              clearTimeoutFor("shared");
+              setSharedStep("idle");
+              skipCard("shared");
+            }}
+            onSkip={() => skipCard("shared")}
+          />
+        </SourceCard>
 
-        {/* Personal Drive */}
+        {/* ── Personal Google Drive ─────────────────────────────────────── */}
         <SourceCard
           icon={FolderOpen}
           title="Personal Google Drive"
-          variant={personalConnected ? "ok" : snapshot.skippedPersonal ? "warn" : "neutral"}
-          body={
-            <p className="text-sm text-muted-foreground">
-              Connect your personal Drive so EnableVIC can reference your own files — client notes, trip
-              research, rate sheets. Only you can see this content.
-            </p>
+          status={personalStatus}
+          pulsing={pulseKey === "personal"}
+          help={{
+            id: "personal",
+            label: "personal Google Drive",
+            body:
+              "Your own Drive folder — only you see this content. For your client roster, trip notes, personal research.",
+          }}
+          summary={
+            personalConnected
+              ? `${snapshot.personalFolderName || "My research"} · ${MOCK_STATS.personalDocs} files synced`
+              : "A Drive folder only you can see."
           }
-          footer={
+          connectedAs={
+            personalConnected && snapshot.personalConnectedAs
+              ? `Authorized as ${snapshot.personalConnectedAs} (Google)`
+              : undefined
+          }
+          canEdit
+          alwaysExpanded
+        >
+          <DriveConnectFlow
+            step={personalStep}
+            connected={personalConnected}
+            connectedFolder={snapshot.personalFolderName || "My research"}
+            popupBlocked={personalPopupBlocked}
+            audience="personal"
+            timedOut={timeoutKey === "personal"}
+            onStart={startPersonalAuth}
+            onCancel={cancelPersonalAuth}
+            onPick={pickPersonalFolder}
+            onSimulatePopupBlocked={() => setPersonalPopupBlocked(true)}
+            onSimulateTimeout={() => setTimeoutKey("personal")}
+            onTimeoutRetry={() => clearTimeoutFor("personal")}
+            onTimeoutSkip={() => {
+              clearTimeoutFor("personal");
+              setPersonalStep("idle");
+              skipCard("personal");
+            }}
+            onSkip={() => skipCard("personal")}
+          />
+        </SourceCard>
+        
+
+        {/* ── Email forwarding ──────────────────────────────────────────── */}
+        <SourceCard
+          icon={Mail}
+          title="Email forwarding"
+          status="connected"
+          help={{
+            id: "email",
+            label: "email forwarding",
+            body:
+              "We've provisioned a private Enable inbox. Forward supplier emails (or set an auto-forward rule) and Enable parses, files, and indexes them next to your other sources.",
+          }}
+          summary={`Inbox · ${enableInboxAddress}`}
+          connectedAs={
+            snapshot.emailForwardingAddress
+              ? `Forwarding from ${snapshot.emailForwardingAddress}`
+              : undefined
+          }
+          canEdit
+          alwaysExpanded
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Label htmlFor="forward-from" className="shrink-0 text-xs text-muted-foreground sm:w-32">
+              Forward from
+            </Label>
+            <Input
+              id="forward-from"
+              placeholder="you@youragency.com"
+              type="email"
+              value={forwardingDraft}
+              onChange={(e) => setForwardingDraft(e.target.value)}
+              className="h-9 flex-1"
+            />
             <Button
               type="button"
               size="sm"
-              variant={personalConnected ? "outline" : "default"}
-              onClick={() => setModal({ kind: "personal", step: "oauth" })}
+              variant="outline"
+              onClick={saveForwarding}
+              disabled={busy === "email" || !forwardingDraft.trim()}
+              className="h-7 px-2.5 text-xs sm:shrink-0"
             >
-              {personalConnected ? "Connected" : "Connect personal Drive"}
+              {busy === "email" ? (
+                <>
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" strokeWidth={1.5} aria-hidden />
+                  <span role="status" aria-live="polite">Saving…</span>
+                </>
+              ) : snapshot.emailForwardingAddress ? (
+                "Update"
+              ) : (
+                "Save"
+              )}
             </Button>
-          }
-        />
-
-        {/* Intelligence */}
-        <SourceCard
-          icon={Sparkles}
-          title="EnableVIC Intelligence"
-          variant="intel"
-          body={
-            <p className="text-sm text-muted-foreground">
-              Always on — curated hotel data, DMC partner content, verified destination knowledge.
-            </p>
-          }
-          footer={<span className="text-xs font-medium text-primary">Always on</span>}
-        />
+          </div>
+        </SourceCard>
       </div>
 
-      <p className="mt-6 text-sm text-muted-foreground">{hubFooterMessage}</p>
-
-      {path === "B" && (
-        <div className="mt-8 rounded-2xl border border-border bg-card/40 p-4">
-          <p className="text-sm font-medium text-foreground">Team membership</p>
+      {isAdvisor && (
+        <div className="mt-10 rounded-2xl border border-border/40 bg-card/20 p-5 md:p-6">
+          <p className="font-display text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            Team membership
+          </p>
           {assignedTeamNames.length > 0 ? (
             <p className="mt-2 text-sm text-muted-foreground">
               You&apos;re part of{" "}
@@ -354,356 +766,349 @@ export function KnowledgeHubStep({ path, onContinue }: KnowledgeHubStepProps) {
       )}
 
       {path === "C" && (
-        <div className="mt-8 rounded-2xl border border-border bg-card/40 p-4">
-          <p className="text-sm font-medium text-foreground">Workspace status</p>
-          <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">
+        <div className="mt-10 rounded-2xl border border-border/40 bg-card/20 p-5 md:p-6">
+          <p className="font-display text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            Workspace status
+          </p>
+          <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
             <li>
-              Teams: {workspaceSummary.teamCount} ({workspaceSummary.teamNames.slice(0, 4).join(", ")}
-              {workspaceSummary.teamNames.length > 4 ? "…" : ""}) — {workspaceSummary.memberTotal} members
-              total
+              {workspaceSummary.teamCount} team{workspaceSummary.teamCount === 1 ? "" : "s"}
+              {workspaceSummary.teamNames.length > 0 ? ` (${workspaceSummary.teamNames.slice(0, 4).join(", ")}${workspaceSummary.teamNames.length > 4 ? "…" : ""})` : ""} · {workspaceSummary.memberTotal} members
             </li>
             <li>
-              Users: {workspaceSummary.invited} invited, {workspaceSummary.active} active in this prototype
+              {workspaceSummary.invited} invited · {workspaceSummary.active} active
             </li>
             <li>You have admin access. Manage workspace settings anytime in Settings.</li>
           </ul>
         </div>
       )}
 
-      <div className="mt-10 flex flex-wrap items-center justify-end gap-3">
-        <Button type="button" variant="ghost" className="text-muted-foreground" onClick={handleHubContinue}>
+      <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-9 text-sm text-muted-foreground"
+          onClick={handleHubContinue}
+        >
           Skip for now
         </Button>
-        <Button type="button" size="lg" onClick={handleHubContinue}>
+        <Button
+          type="button"
+          size="sm"
+          className="h-9 px-4 text-sm"
+          onClick={handleHubContinue}
+          data-onboarding-primary
+        >
           {hubPrimaryCta}
         </Button>
       </div>
+    </div>
+  );
+}
 
-      {/* Intranet admin modal */}
-      <Dialog
-        open={modal.kind === "intranet_admin"}
-        onOpenChange={(o) => !o && closeModal()}
-      >
-        <DialogContent className="bg-background sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Set up your intranet</DialogTitle>
-          </DialogHeader>
-          {modal.kind === "intranet_admin" && modal.step === "url" && (
+// ── Sub-components ──────────────────────────────────────────────────────
+function CardActions({
+  onSkip,
+  onSave,
+  busy,
+  saveLabel,
+  onSimulateError,
+  onSimulateTimeout,
+}: {
+  onSkip: () => void;
+  onSave: () => void;
+  busy: boolean;
+  saveLabel: string;
+  onSimulateError?: () => void;
+  onSimulateTimeout?: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-1">
+      <div className="flex items-center gap-0.5">
+        {onSimulateError && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onSimulateError}
+            disabled={busy}
+            className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+          >
+            Simulate error
+          </Button>
+        )}
+        {onSimulateTimeout && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onSimulateTimeout}
+            disabled={busy}
+            className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+          >
+            Simulate timeout
+          </Button>
+        )}
+      </div>
+      <div className="flex items-center gap-1">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={onSkip}
+          disabled={busy}
+          className="h-7 px-2 text-xs"
+        >
+          Set up later
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          onClick={onSave}
+          disabled={busy}
+          className="h-7 px-2.5 text-xs"
+        >
+          {busy ? (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="intranet-url">Intranet URL</Label>
-                <Input
-                  id="intranet-url"
-                  placeholder="https://yourcompany.yourintranet.com"
-                  value={intranetUrlDraft}
-                  onChange={(e) => setIntranetUrlDraft(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  This is the URL your team uses. Set it once — all users inherit it.
-                </p>
-              </div>
-              <DialogFooter className="gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setSnapshot((s) => ({ ...s, skippedIntranet: true }));
-                    closeModal();
-                  }}
-                >
-                  Set up later
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    setSnapshot((s) => ({
-                      ...s,
-                      tenantIntranetUrl: intranetUrlDraft || s.tenantIntranetUrl,
-                    }));
-                    setModal({ kind: "intranet_admin", step: "creds" });
-                  }}
-                >
-                  Continue
-                </Button>
-              </DialogFooter>
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" strokeWidth={1.5} aria-hidden />
+              <span role="status" aria-live="polite">Checking…</span>
             </>
+          ) : (
+            saveLabel
           )}
-          {modal.kind === "intranet_admin" && modal.step === "creds" && (
-            <>
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label htmlFor="in-user">Username</Label>
-                  <Input
-                    id="in-user"
-                    value={intranetUserDraft}
-                    onChange={(e) => setIntranetUserDraft(e.target.value)}
-                    disabled={busy}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="in-pass">Password</Label>
-                  <Input
-                    id="in-pass"
-                    type="password"
-                    value={intranetPassDraft}
-                    onChange={(e) => setIntranetPassDraft(e.target.value)}
-                    disabled={busy}
-                  />
-                </div>
-                <details className="text-xs text-muted-foreground">
-                  <summary className="cursor-pointer text-foreground/80">Don&apos;t know your credentials?</summary>
-                  <p className="mt-1">
-                    Use the same login you use for your intranet in the browser. Contact your IT admin if you
-                    use SSO.
-                  </p>
-                </details>
-              </div>
-              <DialogFooter className="gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setSnapshot((s) => ({ ...s, skippedIntranet: true }));
-                    closeModal();
-                  }}
-                >
-                  Set up later
-                </Button>
-                <Button
-                  type="button"
-                  disabled={busy}
-                  onClick={async () => {
-                    await runValidation();
-                    setModal({ kind: "intranet_admin", step: "success" });
-                  }}
-                >
-                  {busy ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Checking…
-                    </>
-                  ) : (
-                    "Connect"
-                  )}
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-          {modal.kind === "intranet_admin" && modal.step === "success" && (
-            <>
-              <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/20 p-4">
-                <Check className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">Indexed</p>
-                  <p className="text-sm text-muted-foreground">
-                    {MOCK_STATS.docs} documents indexed (PDF, DOCX, TXT, HTML, MD). Rate sheets, supplier
-                    brochures, destination guides. You have access to all {MOCK_STATS.pages} pages as an
-                    admin.
-                  </p>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="button" onClick={finishIntranetAdminSuccess}>
-                  Done
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+        </Button>
+      </div>
+    </div>
+  );
+}
 
-      {/* Intranet user modal */}
-      <Dialog open={modal.kind === "intranet_user"} onOpenChange={(o) => !o && closeModal()}>
-        <DialogContent className="bg-background sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Connect your intranet account</DialogTitle>
-          </DialogHeader>
-          {modal.kind === "intranet_user" && modal.step === "creds" && (
-            <>
-              <p className="text-sm text-muted-foreground">
-                Same credentials you use to log into your intranet. The workspace URL is already configured.
-              </p>
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label htmlFor="iu">Username</Label>
-                  <Input id="iu" value={intranetUserDraft} onChange={(e) => setIntranetUserDraft(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ip">Password</Label>
-                  <Input
-                    id="ip"
-                    type="password"
-                    value={intranetPassDraft}
-                    onChange={(e) => setIntranetPassDraft(e.target.value)}
-                  />
-                </div>
-                <details className="text-xs text-muted-foreground">
-                  <summary className="cursor-pointer text-foreground/80">Don&apos;t know your credentials?</summary>
-                  <p className="mt-1">Ask your admin or IT for intranet login details.</p>
-                </details>
-              </div>
-              <DialogFooter className="gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setSnapshot((s) => ({ ...s, skippedIntranet: true }));
-                    closeModal();
-                  }}
-                >
-                  Set up later
-                </Button>
-                <Button
-                  type="button"
-                  onClick={async () => {
-                    await runValidation();
-                    setModal({ kind: "intranet_user", step: "success" });
-                  }}
-                >
-                  Connect
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-          {modal.kind === "intranet_user" && modal.step === "success" && (
-            <>
-              <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/20 p-4">
-                <Check className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                <p className="text-sm text-muted-foreground">
-                  Connected — {MOCK_STATS.docs} documents, {MOCK_STATS.pages} pages through your teams.
-                </p>
-              </div>
-              <DialogFooter>
-                <Button type="button" onClick={finishIntranetUserSuccess}>
-                  Done
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+function ErrorBanner({ message }: { message: string }) {
+  return (
+    <div
+      role="alert"
+      className="mb-4 flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+    >
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden />
+      <span>{message}</span>
+    </div>
+  );
+}
 
-      {/* Shared drive admin */}
-      <Dialog open={modal.kind === "shared_admin"} onOpenChange={(o) => !o && closeModal()}>
-        <DialogContent className="bg-background sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Connect shared Google Drive</DialogTitle>
-          </DialogHeader>
-          {modal.kind === "shared_admin" && modal.step === "oauth" && (
-            <>
-              <p className="text-sm text-muted-foreground">
-                You&apos;ll authorize Google and pick a folder. Documents in that folder will be available to
-                your whole team.
-              </p>
-              {oauthBlockedHint && (
-                <p className="text-sm text-destructive">
-                  Your browser blocked the authorization window. Please allow popups and try again.
-                </p>
-              )}
-              <DialogFooter className="gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setSnapshot((s) => ({ ...s, skippedShared: true }));
-                    closeModal();
-                  }}
-                >
-                  Set up later
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    setModal({ kind: "shared_admin", step: "sync" });
-                    setTimeout(() => setModal({ kind: "shared_admin", step: "success" }), 1200);
-                  }}
-                >
-                  Continue with Google
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-          {modal.kind === "shared_admin" && modal.step === "sync" && (
-            <div className="flex items-center gap-3 py-6">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Waiting for authorization…</p>
-            </div>
-          )}
-          {modal.kind === "shared_admin" && modal.step === "success" && (
-            <>
-              <div className="space-y-3">
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div className="h-full w-3/5 animate-pulse rounded-full bg-primary" />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Syncing {MOCK_STATS.sharedDocs} documents from Agency knowledge (PDF, DOCX, TXT, HTML, MD are
-                  searchable). You can finish now — sync continues in the background.
-                </p>
-              </div>
-              <DialogFooter>
-                <Button type="button" onClick={() => finishSharedSuccess("Agency knowledge")}>
-                  Done
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
 
-      {/* Personal drive */}
-      <Dialog open={modal.kind === "personal"} onOpenChange={(o) => !o && closeModal()}>
-        <DialogContent className="bg-background sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Connect personal Google Drive</DialogTitle>
-          </DialogHeader>
-          {modal.kind === "personal" && modal.step === "oauth" && (
-            <>
-              <p className="text-sm text-muted-foreground">
-                Only you can see documents from this folder. Great for client notes and trip research.
-              </p>
-              <DialogFooter className="gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setSnapshot((s) => ({ ...s, skippedPersonal: true }));
-                    closeModal();
-                  }}
-                >
-                  Set up later
-                </Button>
-                <Button type="button" onClick={() => setModal({ kind: "personal", step: "sync" })}>
-                  Continue with Google
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-          {modal.kind === "personal" && modal.step === "sync" && (
-            <div className="space-y-3 py-2">
-              <div className="flex items-center gap-3">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Waiting for authorization…</p>
-              </div>
-              <Button type="button" variant="outline" size="sm" onClick={() => setOauthBlockedHint(true)}>
-                Simulate popup blocked
-              </Button>
-            </div>
-          )}
-          {modal.kind === "personal" && modal.step === "success" && (
-            <>
-              <p className="text-sm text-muted-foreground">
-                Syncing {MOCK_STATS.personalDocs} documents from My research. Done is available immediately.
-              </p>
-              <DialogFooter>
-                <Button type="button" onClick={() => finishPersonalSuccess("My research")}>
-                  Done
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+// ── TimeoutBanner ───────────────────────────────────────────────────────
+function TimeoutBanner({
+  onSkip,
+  onRetry,
+}: {
+  onSkip: () => void;
+  onRetry: () => void;
+}) {
+  return (
+    <div
+      role="alert"
+      className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-sm"
+    >
+      <div className="flex items-start gap-2">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-500" strokeWidth={1.5} aria-hidden />
+        <span className="text-foreground">
+          Taking longer than expected. Skip for now?
+        </span>
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <Button type="button" variant="ghost" size="sm" onClick={onRetry} className="h-7 px-2 text-xs">
+          Retry
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={onSkip} className="h-7 px-2.5 text-xs">
+          Skip for now
+        </Button>
+      </div>
+    </div>
+  );
+}
 
+const SHARED_FOLDERS = [
+  { name: "Agency knowledge", count: 156 },
+  { name: "Supplier rate sheets", count: 84 },
+  { name: "Client trip files", count: 412 },
+];
+const PERSONAL_FOLDERS = [
+  { name: "My research", count: 48 },
+  { name: "Trip notes", count: 31 },
+  { name: "Client correspondence", count: 73 },
+];
+
+function DriveConnectFlow({
+  step,
+  connected,
+  connectedFolder,
+  popupBlocked,
+  audience,
+  timedOut,
+  onStart,
+  onCancel,
+  onPick,
+  onSimulatePopupBlocked,
+  onSimulateTimeout,
+  onTimeoutRetry,
+  onTimeoutSkip,
+  onSkip,
+}: {
+  step: DriveStep;
+  connected: boolean;
+  connectedFolder: string;
+  popupBlocked: boolean;
+  audience: "shared" | "personal";
+  timedOut?: boolean;
+  onStart: () => void;
+  onCancel: () => void;
+  onPick: (folder: string) => void;
+  onSimulatePopupBlocked: () => void;
+  onSimulateTimeout?: () => void;
+  onTimeoutRetry?: () => void;
+  onTimeoutSkip?: () => void;
+  onSkip: () => void;
+}) {
+  const folders = audience === "shared" ? SHARED_FOLDERS : PERSONAL_FOLDERS;
+  // introCopy removed — buttons communicate the action directly
+
+  if (connected && step === "idle") {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-start gap-2 text-sm text-muted-foreground">
+          <Check className="mt-0.5 h-4 w-4 text-primary" strokeWidth={1.5} aria-hidden />
+          <span>
+            Connected — syncing <span className="font-medium text-foreground">{connectedFolder}</span>.
+            Pick a different folder anytime.
+          </span>
+        </div>
+        <div className="flex justify-end">
+          <Button type="button" variant="outline" size="sm" onClick={onStart} className="h-7 px-2.5 text-xs">
+            Change folder
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "idle") {
+    return (
+      <div className="flex items-center justify-end gap-1">
+        <Button type="button" variant="ghost" size="sm" onClick={onSkip} className="h-7 px-2 text-xs">
+          Set up later
+        </Button>
+        <Button type="button" size="sm" onClick={onStart} className="h-7 px-2.5 text-xs">
+          Continue with Google
+        </Button>
+      </div>
+    );
+  }
+
+  if (step === "authorizing") {
+    return (
+      <div className="space-y-3">
+        {timedOut && onTimeoutRetry && onTimeoutSkip && (
+          <TimeoutBanner onRetry={onTimeoutRetry} onSkip={onTimeoutSkip} />
+        )}
+        <div className="flex items-center gap-3 rounded-xl border border-dashed border-border/60 bg-card/30 p-4">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" strokeWidth={1.5} aria-hidden />
+          <div role="status" aria-live="polite">
+            <p className="text-sm font-medium text-foreground">Waiting for Google authorization…</p>
+            <p className="text-xs text-muted-foreground">
+              Complete the sign-in in the popup. We won&apos;t touch any folder you don&apos;t pick.
+            </p>
+          </div>
+        </div>
+        {popupBlocked && (
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+          >
+            <AlertTriangle className="mt-0.5 h-4 w-4" strokeWidth={1.5} aria-hidden />
+            <span>Your browser blocked the authorization window. Please allow popups and try again.</span>
+          </div>
+        )}
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onSimulatePopupBlocked}
+            className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+          >
+            Simulate popup blocked
+          </Button>
+          {onSimulateTimeout && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onSimulateTimeout}
+              className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              Simulate timeout
+            </Button>
+          )}
+          <Button type="button" variant="ghost" size="sm" onClick={onCancel} className="h-7 px-2 text-xs">
+            Cancel
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "picking") {
+    return (
+      <div className="space-y-3">
+        <div>
+          <p className="text-sm font-medium text-foreground">Pick a folder to sync</p>
+          <p className="text-xs text-muted-foreground">
+            We&apos;ll index PDF, DOCX, TXT, HTML and MD files. You can change this later in Settings.
+          </p>
+        </div>
+        <ul role="listbox" aria-label="Drive folders" className="divide-y divide-border/40 overflow-hidden rounded-xl border border-border/40 bg-card/30">
+          {folders.map((f) => (
+            <li key={f.name} role="option" aria-selected={false}>
+              <button
+                type="button"
+                onClick={() => onPick(f.name)}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/30"
+              >
+                <Folder className="h-4 w-4 text-foreground/60" strokeWidth={1.5} aria-hidden />
+                <span className="flex-1 text-sm text-foreground">{f.name}</span>
+                <span className="text-xs text-muted-foreground">{f.count} files</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="flex items-center justify-end gap-2">
+          <Button type="button" variant="ghost" size="sm" onClick={onCancel} className="h-7 px-2 text-xs">Cancel</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // syncing
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3 rounded-xl border border-border/40 bg-card/30 p-4">
+        <Loader2 className="h-5 w-5 animate-spin text-primary" strokeWidth={1.5} aria-hidden />
+        <div className="min-w-0 flex-1" role="status" aria-live="polite">
+          <p className="text-sm font-medium text-foreground">Syncing your folder…</p>
+          <div
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={66}
+            className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted/60"
+          >
+            <div className="h-full w-2/3 animate-pulse rounded-full bg-primary" />
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            You can keep going — sync continues in the background.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -711,40 +1116,77 @@ export function KnowledgeHubStep({ path, onContinue }: KnowledgeHubStepProps) {
 function SourceCard({
   icon: Icon,
   title,
-  body,
-  footer,
-  variant,
+  summary,
+  status,
+  canEdit,
+  pulsing,
+  connectedAs,
+  help,
+  alwaysExpanded,
+  children,
 }: {
-  icon: ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string; strokeWidth?: number }>;
   title: string;
-  body: ReactNode;
-  footer: ReactNode;
-  variant: "ok" | "warn" | "neutral" | "intel";
+  summary: ReactNode | null;
+  status: Status;
+  canEdit: boolean;
+  pulsing?: boolean;
+  connectedAs?: string;
+  help?: { id: string; label: string; body: string };
+  alwaysExpanded?: boolean;
+  children?: ReactNode;
 }) {
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!pulsing || !wrapRef.current) return;
+    const el = wrapRef.current;
+    el.style.transition = "border-color 600ms ease-out, background-color 600ms ease-out";
+    return () => {
+      el.style.transition = "";
+    };
+  }, [pulsing]);
+
+
+
+  const headerInner = (
+    <div className="flex items-start gap-3 px-4 py-2.5 md:px-5 md:py-2.5">
+      <Icon
+        className="mt-0.5 h-[18px] w-[18px] shrink-0 text-foreground/70"
+        strokeWidth={1.5}
+      />
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h2 className="font-display min-w-0 flex-1 text-lg font-medium tracking-tight text-foreground">
+            {title}
+          </h2>
+          {help && <HelpHint id={help.id} label={help.label} body={help.body} />}
+          <StatusDot status={status} />
+        </div>
+        {summary ? (
+          <p className="mt-1 text-sm text-muted-foreground">{summary}</p>
+        ) : null}
+        {connectedAs && (
+          <p className="mt-1 text-xs text-muted-foreground/70">{connectedAs}</p>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div
+      ref={wrapRef}
       className={cn(
-        "rounded-2xl border p-4 transition-colors md:p-5",
-        variant === "ok" && "border-border bg-card/60",
-        variant === "warn" && "border-amber-500/40 bg-card/40",
-        variant === "neutral" && "border-border bg-card/30",
-        variant === "intel" && "border-border bg-card/50"
+        "rounded-2xl transition-colors duration-300",
+        status === "connected" && "border border-border/60 bg-card/40",
+        status === "skipped" && "border border-amber-500/30 bg-card/20",
+        (status === "not_connected" || status === "admin_managed") && "border border-border/30 bg-card/15"
       )}
     >
-      <div className="flex gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted/50">
-          <Icon className="h-5 w-5 text-foreground/80" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-base font-semibold text-foreground">{title}</h2>
-            {variant === "warn" && <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" aria-hidden />}
-            {variant === "ok" && <Check className="h-4 w-4 text-primary" aria-hidden />}
-          </div>
-          <div className="mt-2">{body}</div>
-          <div className="mt-3">{footer}</div>
-        </div>
-      </div>
+      {headerInner}
+      {canEdit && alwaysExpanded && (
+        <div className="border-t border-border/40 px-4 pb-3 pt-2.5 md:px-5">{children}</div>
+      )}
     </div>
   );
 }

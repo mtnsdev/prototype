@@ -138,7 +138,7 @@ export function ProductSearchPanel({
         </Select>
 
         {error && (
-          <div className="text-sm text-red-400 bg-red-500/10 rounded p-2">
+          <div className="text-sm text-[var(--muted-error-text)] bg-[var(--muted-error-bg)] border border-[var(--muted-error-border)] rounded-md p-2">
             {error}
           </div>
         )}
@@ -186,7 +186,7 @@ export function ProductSearchPanel({
                       {product.category}
                     </span>
                     {product.commission_rate != null && (
-                      <span className="text-xs font-semibold text-emerald-400">
+                      <span className="text-xs font-semibold text-[var(--muted-success-text)]">
                         {product.commission_rate.toFixed(1)}%
                       </span>
                     )}

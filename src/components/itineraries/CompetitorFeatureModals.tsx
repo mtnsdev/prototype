@@ -152,14 +152,14 @@ export function GuestPortalPreviewModal({
   if (!isMonaco) {
     return (
       <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70">
-        <div className="w-full max-w-md rounded-xl border border-border bg-white p-6 text-neutral-900">
+        <div className="w-full max-w-md rounded-xl border border-border bg-background p-6 text-foreground">
           <div className="flex justify-between">
-            <h2 className="font-semibold">Guest Portal</h2>
-            <button type="button" onClick={onClose} className="text-neutral-500">
+            <h2 className="font-semibold text-foreground">Guest Portal</h2>
+            <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground">
               <X size={20} />
             </button>
           </div>
-          <p className="mt-4 text-neutral-600">Guest Portal — coming soon for this itinerary.</p>
+          <p className="mt-4 text-muted-foreground">Guest Portal — coming soon for this itinerary.</p>
           <Button className="mt-4" onClick={onClose}>
             Close
           </Button>
@@ -170,30 +170,30 @@ export function GuestPortalPreviewModal({
   const dep = itinerary.trip_start_date ? new Date(itinerary.trip_start_date).getTime() : 0;
   const daysUntil = dep ? Math.max(0, Math.ceil((dep - Date.now()) / 86400000)) : 0;
   return (
-    <div className="fixed inset-0 z-[60] overflow-auto bg-white">
-      <div className="sticky top-0 flex justify-between items-center px-6 py-4 border-b border-neutral-200 bg-white">
-        <h2 className="text-lg font-semibold text-neutral-900">Guest Portal Preview</h2>
+    <div className="fixed inset-0 z-[60] overflow-auto bg-background">
+      <div className="sticky top-0 flex justify-between items-center px-6 py-4 border-b border-border bg-card">
+        <h2 className="text-lg font-semibold text-foreground">Guest Portal Preview</h2>
         <Button variant="ghost" size="icon" onClick={onClose}>
           <X size={20} />
         </Button>
       </div>
-      <div className="max-w-2xl mx-auto px-6 py-8 text-neutral-900">
-        <div className="rounded-xl border border-neutral-200 bg-neutral-50 mb-8 p-5">
-          <h1 className="text-xl font-semibold text-neutral-900">{itinerary.trip_name}</h1>
-          <p className="text-neutral-600 text-sm mt-1">{formatDateRange(itinerary.trip_start_date, itinerary.trip_end_date)}</p>
-          <p className="text-neutral-500 text-sm mt-2">{daysUntil} days until departure</p>
+      <div className="max-w-2xl mx-auto px-6 py-8 text-foreground">
+        <div className="rounded-xl border border-border bg-muted/30 mb-8 p-5">
+          <h1 className="text-xl font-semibold text-foreground">{itinerary.trip_name}</h1>
+          <p className="text-muted-foreground text-sm mt-1">{formatDateRange(itinerary.trip_start_date, itinerary.trip_end_date)}</p>
+          <p className="text-muted-foreground/90 text-sm mt-2">{daysUntil} days until departure</p>
         </div>
         <div className="flex flex-wrap gap-2 mb-8">
           {["Itin.", "Pack", "Docs", "Info", "Chat"].map((t) => (
-            <span key={t} className="px-3 py-1.5 rounded-lg border border-neutral-200 text-sm text-neutral-600">
+            <span key={t} className="px-3 py-1.5 rounded-lg border border-border text-sm text-muted-foreground">
               {t}
             </span>
           ))}
         </div>
         <section className="mb-8">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-neutral-500 mb-2">Packing suggestions</h3>
-          <p className="text-sm text-neutral-600 mb-2">Based on Monaco in May:</p>
-          <ul className="list-disc list-inside text-sm text-neutral-700 space-y-1">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-2">Packing suggestions</h3>
+          <p className="text-sm text-muted-foreground mb-2">Based on Monaco in May:</p>
+          <ul className="list-disc list-inside text-sm text-foreground/90 space-y-1">
             <li>Light formal wear for F1 events</li>
             <li>Smart casual for restaurant dinners</li>
             <li>Sun protection (avg 24°C in May)</li>
@@ -201,8 +201,8 @@ export function GuestPortalPreviewModal({
           </ul>
         </section>
         <section className="mb-8">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-neutral-500 mb-2">Travel documents</h3>
-          <ul className="text-sm text-neutral-700 space-y-1">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-2">Travel documents</h3>
+          <ul className="text-sm text-foreground/90 space-y-1">
             <li>☑ Passport (valid until 2029)</li>
             <li>☐ Travel insurance — not yet uploaded</li>
             <li>☑ F1 VIP Suite tickets — confirmed</li>
@@ -210,13 +210,13 @@ export function GuestPortalPreviewModal({
           </ul>
         </section>
         <section className="mb-8">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-neutral-500 mb-2">Destination info</h3>
-          <p className="text-sm text-neutral-700">Currency: Euro (€) · Language: French · Emergency: 112 · CET (UTC+1) · Tipping 5–10%</p>
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-2">Destination info</h3>
+          <p className="text-sm text-foreground/90">Currency: Euro (€) · Language: French · Emergency: 112 · CET (UTC+1) · Tipping 5–10%</p>
         </section>
         <section>
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-neutral-500 mb-2">Message your advisor</h3>
-          <p className="text-sm text-neutral-800">Marie Limousis · TravelLustre</p>
-          <p className="text-sm text-neutral-500">marie@travellustre.com</p>
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-2">Message your advisor</h3>
+          <p className="text-sm text-foreground">Marie Limousis · TravelLustre</p>
+          <p className="text-sm text-muted-foreground">marie@travellustre.com</p>
           <Button variant="outline" className="mt-2" onClick={() => showToast("Send Message to advisor — available in the next release")}>
             Send Message
           </Button>

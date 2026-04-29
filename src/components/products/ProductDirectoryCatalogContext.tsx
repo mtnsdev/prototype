@@ -15,6 +15,7 @@ import { applyAddProductToExternalSearch } from "./productDirectoryExternalSearc
 import { mergeDirectoryProductPatchInCatalog } from "@/lib/directoryProductMerge";
 import {
   cloneDirectoryCollectionsForState,
+  cloneDirectoryProductsForState,
   clearPersistedDirectory,
   DIRECTORY_CATALOG_LOCAL_STORAGE_KEY,
   persistDirectorySnapshot,
@@ -43,6 +44,8 @@ type ProductDirectoryCatalogContextValue = {
     patch: Partial<DirectoryProduct>,
     options?: { replaceCollections?: DirectoryCollectionOption[] }
   ) => boolean;
+  /** Appends a new product to the persisted catalog snapshot (same storage as directory browse). */
+  appendPersistedProduct: (product: DirectoryProduct) => boolean;
 };
 
 const ProductDirectoryCatalogContext = createContext<ProductDirectoryCatalogContextValue | null>(null);
@@ -117,14 +120,31 @@ export function ProductDirectoryCatalogProvider({ children }: { children: ReactN
     [user, userLoading]
   );
 
+  const appendPersistedProduct = useCallback(
+    (product: DirectoryProduct) => {
+      if (userLoading || !user) return false;
+      const advisorUid = String(user.id);
+      const advisorName = user.username?.trim() || user.email?.split("@")[0] || "You";
+      const { products, directoryCollections, externalSearchMeta, collectionShareRequests } =
+        resolveAdvisorCatalogFromStorage(advisorUid, advisorName);
+      if (products.some((p) => p.id === product.id)) return false;
+      const nextProducts = cloneDirectoryProductsForState([...products, product]);
+      persistDirectorySnapshot(nextProducts, directoryCollections, externalSearchMeta, collectionShareRequests);
+      setCatalogRevision((r) => r + 1);
+      return true;
+    },
+    [user, userLoading]
+  );
+
   const value = useMemo(
     () => ({
       catalogRevision,
       clearPersistedCatalogSnapshot,
       addProductToExternalSearch,
       patchPersistedDirectory,
+      appendPersistedProduct,
     }),
-    [catalogRevision, clearPersistedCatalogSnapshot, addProductToExternalSearch, patchPersistedDirectory]
+    [catalogRevision, clearPersistedCatalogSnapshot, addProductToExternalSearch, patchPersistedDirectory, appendPersistedProduct]
   );
 
   return (

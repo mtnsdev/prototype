@@ -96,9 +96,9 @@ export function AddDestinationDialog({ open, onOpenChange }: Props) {
         return;
       }
       registerCustomDestinationSlug(slug);
-      toast({ title: "Destination created", description: "Opening the editor…", tone: "success" });
+      toast({ title: "Destination created", description: "Opening your guide…", tone: "success" });
       handleOpenChange(false);
-      router.push(`/dashboard/products/destinations/${slug}/edit`);
+      router.push(`/dashboard/products/destinations/${slug}`);
     } finally {
       setSubmitting(false);
     }

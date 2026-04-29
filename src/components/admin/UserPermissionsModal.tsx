@@ -97,7 +97,7 @@ function PermissionTreeNode({
                 {isFolder ? (
                     <Folder size={14} className="text-[var(--color-warning)] shrink-0" />
                 ) : (
-                    <FileText size={14} className="text-blue-400 shrink-0" />
+                    <FileText size={14} className="text-[var(--muted-info-text)] shrink-0" />
                 )}
 
                 {/* Label */}
@@ -107,12 +107,12 @@ function PermissionTreeNode({
 
                 {/* can_view badge */}
                 {item.can_view ? (
-                    <span className="flex items-center gap-1 text-xs text-emerald-400 shrink-0">
+                    <span className="flex items-center gap-1 text-xs text-[var(--muted-success-text)] shrink-0">
                         <CheckCircle2 size={12} />
                         Allowed
                     </span>
                 ) : (
-                    <span className="flex items-center gap-1 text-xs text-red-400 shrink-0">
+                    <span className="flex items-center gap-1 text-xs text-[var(--muted-error-text)] shrink-0">
                         <XCircle size={12} />
                         Denied
                     </span>
@@ -216,10 +216,8 @@ export function UserPermissionsModal({
                     <div className="flex items-center gap-4 text-sm">
                         {data && (
                             <>
-                                <span className="text-emerald-400">
-                                    {allowedCount} allowed
-                                </span>
-                                <span className="text-red-400">{deniedCount} denied</span>
+                                <span className="text-[var(--muted-success-text)]">{allowedCount} allowed</span>
+                                <span className="text-[var(--muted-error-text)]">{deniedCount} denied</span>
                                 {syncedAt && (
                                     <span className="text-muted-foreground">
                                         Last synced {syncedAt}

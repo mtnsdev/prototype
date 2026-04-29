@@ -4,7 +4,7 @@ import type {
   DestinationLegacySectionKey,
   EditorProductSlot,
   EditorTabSection,
-  DestinationTripReport,
+  // DestinationTripReport, // removed — trip reports moved to v2
   DMCPartner,
   Hotel,
   Restaurant,
@@ -15,16 +15,33 @@ import { mergeLegacyEditorTabLabels, resolveAdvisorNavIcon, resolveAdvisorNavTit
 import { ensureEditorWorkspace } from "@/lib/destinationEditorTabs";
 import { getDestinationCatalogBundles } from "@/lib/destinationUnifiedCatalog";
 import { stableItemId, stableSectionId } from "@/lib/stableDestinationIds";
-import { resolveDestinationSectionPresentation } from "@/lib/destinationSectionPresentation";
 
 /** Mirrors production `DestinationSection.sectionType` — drives `SectionRenderer`. */
 export type DestinationSectionKind =
-  | "partner_cards"
   | "product_list"
   | "contact_list"
   | "document_list"
-  | "rich_text"
-  | "trip_reports";
+  | "rich_text";
+
+/** Unified product row used by all product list sections (DMCs, restaurants, hotels, yachts). */
+export type ProductListItem = {
+  productId?: string;
+  catalogUnavailable?: boolean;
+  name: string;
+  url?: string;
+  /** Sub-region tags — rendered as small chips on each row. An item can have multiple. */
+  tags?: string[];
+  /** Short category/cuisine/type pill shown beside the name. */
+  pill?: string;
+  /** One-line metadata (key contact, rep firm, etc.). */
+  meta?: string;
+  /** Description or note. */
+  note?: string;
+  latitude?: number;
+  longitude?: number;
+  /** Original product slot for map pin disambiguation. */
+  productKind: "dmc" | "restaurant" | "hotel" | "yacht";
+};
 
 export type DestinationContactRow = {
   id: string;
@@ -39,31 +56,31 @@ export type DestinationContactRow = {
   subRegion?: string;
 };
 
+/** Which slice of a workspace row this virtual nav section represents (for admin ghost actions). */
+export type VirtualSectionWorkspaceSlice =
+  | "dmc"
+  | "restaurants"
+  | "hotels"
+  | "yachts"
+  | "tourism"
+  | "text"
+  | "documents";
+
+export type VirtualSectionEditorRef = { kind: "workspace"; workspaceIndex: number; slice: VirtualSectionWorkspaceSlice };
+
 type SectionBase = {
   id: string;
   title: string;
   iconKey: string;
   sortOrder: number;
   count: number;
+  /** When set, admins can rename/reorder/remove this block via workspace row index. */
+  editorRef?: VirtualSectionEditorRef;
 };
 
-export type VirtualPartnerCardsSection = SectionBase & {
-  sectionType: "partner_cards";
-  partners: DMCPartner[];
-  /** Disambiguates map pins / deep-link section ids when multiple partner card blocks exist. */
-  partnerCardsKind?: "dmc" | "yachts";
-};
-
-export type VirtualProductListPillsSection = SectionBase & {
+export type VirtualProductListSection = SectionBase & {
   sectionType: "product_list";
-  groupingStyle: "pills";
-  restaurants: Record<string, Restaurant[]>;
-};
-
-export type VirtualProductListAccordionSection = SectionBase & {
-  sectionType: "product_list";
-  groupingStyle: "accordion";
-  hotels: Record<string, Hotel[]>;
+  items: ProductListItem[];
 };
 
 export type VirtualContactListSection = SectionBase & {
@@ -81,50 +98,90 @@ export type VirtualRichTextSection = SectionBase & {
   text: string;
 };
 
-export type VirtualTripReportsSection = SectionBase & {
-  sectionType: "trip_reports";
-  reports: DestinationTripReport[];
-};
+// VirtualTripReportsSection removed — moved to v2
 
 export type VirtualDestinationSection =
-  | VirtualPartnerCardsSection
-  | VirtualProductListPillsSection
-  | VirtualProductListAccordionSection
+  | VirtualProductListSection
   | VirtualContactListSection
   | VirtualDocumentListSection
-  | VirtualRichTextSection
-  | VirtualTripReportsSection;
+  | VirtualRichTextSection;
 
-function countHotels(h: Record<string, Hotel[]>) {
-  return Object.values(h).reduce((n, list) => n + list.length, 0);
+function dmcToItem(p: DMCPartner): ProductListItem {
+  return {
+    productId: p.productId,
+    catalogUnavailable: p.catalogUnavailable,
+    name: p.name,
+    url: p.website,
+    meta: p.keyContact,
+    note: p.notes,
+    latitude: p.latitude,
+    longitude: p.longitude,
+    productKind: "dmc",
+  };
 }
 
-function countRestaurants(r: Record<string, Restaurant[]>) {
-  return Object.values(r).reduce((n, list) => n + list.length, 0);
+function restaurantToItem(r: Restaurant, subRegion: string): ProductListItem {
+  return {
+    productId: r.productId,
+    catalogUnavailable: r.catalogUnavailable,
+    name: r.name,
+    url: r.url,
+    tags: [subRegion],
+    note: r.note,
+    latitude: r.latitude,
+    longitude: r.longitude,
+    productKind: "restaurant",
+  };
 }
 
-function yachtToPartner(y: YachtCompany): DMCPartner {
+function hotelToItem(h: Hotel, subRegion: string): ProductListItem {
+  const metaParts = [h.contact, h.repFirm ? `Rep: ${h.repFirm}` : undefined].filter(Boolean);
+  return {
+    productId: h.productId,
+    catalogUnavailable: h.catalogUnavailable,
+    name: h.name,
+    url: h.url,
+    tags: [subRegion],
+    pill: h.properties?.[0],
+    meta: metaParts.length > 0 ? metaParts.join(" · ") : undefined,
+    note: h.note,
+    latitude: h.latitude,
+    longitude: h.longitude,
+    productKind: "hotel",
+  };
+}
+
+function yachtToItem(y: YachtCompany): ProductListItem {
+  const contact =
+    y.contactName && (y.email || y.phone)
+      ? `${y.contactName} · ${y.email ?? ""}${y.email && y.phone ? " · " : ""}${y.phone ?? ""}`
+      : y.contact;
   return {
     productId: y.productId,
     catalogUnavailable: y.catalogUnavailable,
     name: y.name,
-    preferred: false,
-    reppedBy: y.destinations,
-    website: y.url,
-    keyContact:
-      y.contactName && (y.email || y.phone)
-        ? `${y.contactName} · ${y.email ?? ""}${y.email && y.phone ? " · " : ""}${y.phone ?? ""}`
-        : y.contact,
-    generalRequests: y.email,
-    pricing: undefined,
-    paymentProcess: undefined,
-    commissionProcess: undefined,
-    afterHours: y.phone,
-    notes: undefined,
-    feedback: undefined,
+    url: y.url,
+    meta: contact,
     latitude: y.latitude,
     longitude: y.longitude,
+    productKind: "yacht",
   };
+}
+
+function flattenRestaurants(byRegion: Record<string, Restaurant[]>): ProductListItem[] {
+  const items: ProductListItem[] = [];
+  for (const [region, list] of Object.entries(byRegion)) {
+    for (const r of list) items.push(restaurantToItem(r, region));
+  }
+  return items;
+}
+
+function flattenHotels(byGroup: Record<string, Hotel[]>): ProductListItem[] {
+  const items: ProductListItem[] = [];
+  for (const [group, list] of Object.entries(byGroup)) {
+    for (const h of list) items.push(hotelToItem(h, group));
+  }
+  return items;
 }
 
 function tourismToContacts(slug: string, sectionId: string, regions: TourismRegion[]): DestinationContactRow[] {
@@ -145,6 +202,12 @@ function pickDocumentsByIndices(all: DestinationDocument[], indices: number[] | 
   return indices.map((i) => all[i]).filter((x): x is DestinationDocument => x != null);
 }
 
+function sectionDocumentsForEditorBlock(d: Destination, sec: EditorTabSection): DestinationDocument[] {
+  const fromVault = sec.sectionFiles?.filter((x) => x?.name?.trim());
+  if (fromVault && fromVault.length > 0) return fromVault;
+  return pickDocumentsByIndices(d.documents, sec.documentIndices);
+}
+
 function slotToLegacyKey(slot: EditorProductSlot): Exclude<DestinationLegacySectionKey, "overview" | "trip-reports"> {
   if (slot === "yachts") return "yacht";
   return slot;
@@ -157,9 +220,15 @@ function blockTitle(d: Destination, sec: EditorTabSection, slot: EditorProductSl
   return resolveAdvisorNavTitle(d, slotToLegacyKey(slot));
 }
 
+function workspaceNavIcon(sec: EditorTabSection, lk: DestinationLegacySectionKey, d: Destination): string {
+  const custom = sec.navIconKey?.trim();
+  if (custom) return custom;
+  return resolveAdvisorNavIcon(d, lk);
+}
+
 /**
- * Builds page sections from flat `editorWorkspace.sections` order. Each block can emit products, text, and/or
- * documents in that order.
+ * Builds tab-nav sections from flat `editorWorkspace.sections` order (catalog lists + file blocks).
+ * Long-form intro copy is the destination `description` field under the hero, not a workspace text slice.
  */
 export function buildVirtualSectionsFromDestination(destination: Destination): VirtualDestinationSection[] {
   const d = mergeLegacyEditorTabLabels(destination);
@@ -168,176 +237,101 @@ export function buildVirtualSectionsFromDestination(destination: Destination): V
   const cat = getDestinationCatalogBundles(d);
   const out: VirtualDestinationSection[] = [];
   let sortOrder = 0;
-  /** One full-catalog block per slot — multiple editor blocks with the same slot would otherwise duplicate the same list in nav. */
-  const fullCatalogSlotEmitted = new Set<EditorProductSlot>();
-
-  for (const sec of ws.sections) {
+  /** Each workspace row may own at most one catalog list type (enforced in the editor). */
+  for (let wi = 0; wi < ws.sections.length; wi++) {
+    const sec = ws.sections[wi]!;
     const sid = sec.id;
 
     if (sec.includeProducts && sec.productSlot) {
         const slot = sec.productSlot;
         const lk = slotToLegacyKey(slot);
         const title = blockTitle(d, sec, slot);
-        const iconKey = resolveAdvisorNavIcon(d, lk);
+        const iconKey = workspaceNavIcon(sec, lk, d);
 
-        if (slot === "dmc" && cat.dmcPartners.length > 0) {
-          if (!fullCatalogSlotEmitted.has("dmc")) {
-            fullCatalogSlotEmitted.add("dmc");
-            out.push({
-              id: stableSectionId(slug, `${sid}-p-dmc`),
-              title,
-              iconKey,
-              sectionType: "partner_cards",
-              partnerCardsKind: "dmc",
-              sortOrder: sortOrder++,
-              count: cat.dmcPartners.length,
-              partners: cat.dmcPartners,
-            });
-          }
+        let items: ProductListItem[] = [];
+        let slice: VirtualSectionWorkspaceSlice = "dmc";
+        let sidSuffix = "p";
+
+        if (slot === "dmc") {
+          items = cat.dmcPartners.map(dmcToItem);
+          slice = "dmc";
+          sidSuffix = "p-dmc";
+        } else if (slot === "restaurants") {
+          items = flattenRestaurants(cat.restaurants);
+          slice = "restaurants";
+          sidSuffix = "p-rest";
+        } else if (slot === "hotels") {
+          items = flattenHotels(cat.hotels);
+          slice = "hotels";
+          sidSuffix = "p-hot";
+        } else if (slot === "yachts") {
+          items = (cat.yachtCompanies ?? []).map(yachtToItem);
+          slice = "yachts";
+          sidSuffix = "p-yacht";
+        } else if (slot === "tourism" && d.tourismRegions.length > 0) {
+          const sectionId = stableSectionId(slug, `${sid}-p-tour`);
+          const contacts = tourismToContacts(slug, sectionId, d.tourismRegions);
+          out.push({
+            id: sectionId,
+            title,
+            iconKey,
+            sectionType: "contact_list",
+            sortOrder: sortOrder++,
+            count: contacts.length,
+            contacts,
+            editorRef: { kind: "workspace", workspaceIndex: wi, slice: "tourism" },
+          });
         }
 
-        if (slot === "restaurants") {
-          const restaurantTotal = countRestaurants(cat.restaurants);
-          if (restaurantTotal > 0 && !fullCatalogSlotEmitted.has("restaurants")) {
-            fullCatalogSlotEmitted.add("restaurants");
-            out.push({
-              id: stableSectionId(slug, `${sid}-p-rest`),
-              title,
-              iconKey,
-              sectionType: "product_list",
-              groupingStyle: "pills",
-              sortOrder: sortOrder++,
-              count: restaurantTotal,
-              restaurants: cat.restaurants,
-            });
-          }
+        if (items.length > 0) {
+          const secId = stableSectionId(slug, `${sid}-${sidSuffix}`);
+          out.push({
+            id: secId,
+            title,
+            iconKey,
+            sectionType: "product_list",
+            sortOrder: sortOrder++,
+            count: items.length,
+            items,
+            editorRef: { kind: "workspace", workspaceIndex: wi, slice },
+          });
         }
 
-        if (slot === "hotels") {
-          const hotelTotal = countHotels(cat.hotels);
-          if (hotelTotal > 0 && !fullCatalogSlotEmitted.has("hotels")) {
-            fullCatalogSlotEmitted.add("hotels");
-            out.push({
-              id: stableSectionId(slug, `${sid}-p-hot`),
-              title,
-              iconKey,
-              sectionType: "product_list",
-              groupingStyle: "accordion",
-              sortOrder: sortOrder++,
-              count: hotelTotal,
-              hotels: cat.hotels,
-            });
-          }
-        }
-
-        if (slot === "yachts") {
-          const yachts = cat.yachtCompanies;
-          if (yachts.length > 0 && !fullCatalogSlotEmitted.has("yachts")) {
-            fullCatalogSlotEmitted.add("yachts");
-            out.push({
-              id: stableSectionId(slug, `${sid}-p-yacht`),
-              title,
-              iconKey,
-              sectionType: "partner_cards",
-              partnerCardsKind: "yachts",
-              sortOrder: sortOrder++,
-              count: yachts.length,
-              partners: yachts.map(yachtToPartner),
-            });
-          }
-        }
-
-        if (slot === "tourism" && d.tourismRegions.length > 0) {
-          if (!fullCatalogSlotEmitted.has("tourism")) {
-            fullCatalogSlotEmitted.add("tourism");
-            const sectionId = stableSectionId(slug, `${sid}-p-tour`);
-            const contacts = tourismToContacts(slug, sectionId, d.tourismRegions);
-            out.push({
-              id: sectionId,
-              title,
-              iconKey,
-              sectionType: "contact_list",
-              sortOrder: sortOrder++,
-              count: contacts.length,
-              contacts,
-            });
-          }
-        }
-
-        if (slot === "documents" && d.documents.length > 0) {
-          if (!fullCatalogSlotEmitted.has("documents")) {
-            fullCatalogSlotEmitted.add("documents");
-            out.push({
-              id: stableSectionId(slug, `${sid}-p-docs`),
-              title,
-              iconKey,
-              sectionType: "document_list",
-              sortOrder: sortOrder++,
-              count: d.documents.length,
-              documents: d.documents,
-            });
-          }
-        }
       }
 
       if (sec.includeText) {
-        const text = sec.textBody?.trim() ?? "";
-        if (text) {
-          const lk = sec.productSlot ? slotToLegacyKey(sec.productSlot) : "overview";
-          out.push({
-            id: stableSectionId(slug, `${sid}-t`),
-            title: sec.heading?.trim() || resolveAdvisorNavTitle(d, lk),
-            iconKey: resolveAdvisorNavIcon(d, lk),
-            sectionType: "rich_text",
-            sortOrder: sortOrder++,
-            count: 1,
-            text,
-          });
-        }
+        const lk = sec.productSlot ? slotToLegacyKey(sec.productSlot) : "overview";
+        const tid = stableSectionId(slug, `${sid}-t`);
+        const text = sec.textBody ?? "";
+        out.push({
+          id: tid,
+          title: sec.heading?.trim() || resolveAdvisorNavTitle(d, lk),
+          iconKey: workspaceNavIcon(sec, lk, d),
+          sectionType: "rich_text",
+          sortOrder: sortOrder++,
+          count: 1,
+          text,
+          editorRef: { kind: "workspace", workspaceIndex: wi, slice: "text" },
+        });
       }
 
     if (sec.includeDocuments) {
-      const docs = pickDocumentsByIndices(d.documents, sec.documentIndices);
+      const docs = sectionDocumentsForEditorBlock(d, sec);
       if (docs.length > 0) {
         const lk = sec.productSlot ? slotToLegacyKey(sec.productSlot) : "documents";
+        const did = stableSectionId(slug, `${sid}-d`);
         out.push({
-          id: stableSectionId(slug, `${sid}-d`),
+          id: did,
           title: sec.heading?.trim() || resolveAdvisorNavTitle(d, lk),
-          iconKey: resolveAdvisorNavIcon(d, lk),
+          iconKey: workspaceNavIcon(sec, lk, d),
           sectionType: "document_list",
           sortOrder: sortOrder++,
           count: docs.length,
           documents: docs,
+          editorRef: { kind: "workspace", workspaceIndex: wi, slice: "documents" },
         });
       }
     }
-  }
-
-  const trips = d.tripReports ?? [];
-  if (trips.length > 0) {
-    const trPres = resolveDestinationSectionPresentation("trip-reports");
-    out.push({
-      id: stableSectionId(slug, "trip-reports"),
-      title: trPres.title,
-      iconKey: trPres.iconKey,
-      sectionType: "trip_reports",
-      sortOrder: sortOrder++,
-      count: trips.length,
-      reports: trips,
-    });
-  }
-
-  if (out.length === 0 && d.description.trim() !== "") {
-    const ovPres = resolveDestinationSectionPresentation("overview");
-    out.push({
-      id: stableSectionId(slug, "overview"),
-      title: ovPres.title,
-      iconKey: ovPres.iconKey,
-      sectionType: "rich_text",
-      sortOrder: 0,
-      count: 1,
-      text: d.description,
-    });
   }
 
   return out;
@@ -346,22 +340,21 @@ export function buildVirtualSectionsFromDestination(destination: Destination): V
 /** @deprecated Prefer {@link buildVirtualSectionsFromDestination}. */
 export const buildLegacyVirtualSectionsFromDestination = buildVirtualSectionsFromDestination;
 
+/** Virtual tab count for destination grid cards (sidebar mirrors this list). */
+export function countDestinationVirtualSections(destination: Destination): number {
+  return buildVirtualSectionsFromDestination(destination).length;
+}
+
 function countForVirtual(s: VirtualDestinationSection): number {
   switch (s.sectionType) {
-    case "partner_cards":
-      return s.partners.length;
     case "product_list":
-      return s.groupingStyle === "pills"
-        ? countRestaurants(s.restaurants)
-        : countHotels(s.hotels);
+      return s.items.length;
     case "contact_list":
       return s.contacts.length;
     case "document_list":
       return s.documents.length;
     case "rich_text":
       return 1;
-    case "trip_reports":
-      return s.reports.length;
     default: {
       const _e: never = s;
       return _e;
@@ -383,28 +376,11 @@ export function buildDestinationItemSectionMap(
 
   for (const s of sections) {
     switch (s.sectionType) {
-      case "partner_cards":
-        s.partners.forEach((p, i) => {
-          const key = p.productId ?? `${p.name}-${i}`;
+      case "product_list":
+        s.items.forEach((item, i) => {
+          const key = item.productId ?? `${item.name}-${i}`;
           m.set(stableItemId(slug, s.id, key), s.id);
         });
-        break;
-      case "product_list":
-        if (s.groupingStyle === "pills") {
-          for (const [region, list] of Object.entries(s.restaurants)) {
-            list.forEach((r, i) => {
-              const key = r.productId ?? `${region}-${r.name}-${i}`;
-              m.set(stableItemId(slug, s.id, key), s.id);
-            });
-          }
-        } else {
-          for (const [group, list] of Object.entries(s.hotels)) {
-            list.forEach((h, i) => {
-              const key = h.productId ?? `${group}-${h.name}-${i}`;
-              m.set(stableItemId(slug, s.id, key), s.id);
-            });
-          }
-        }
         break;
       case "contact_list":
         s.contacts.forEach((c) => m.set(c.id, s.id));
@@ -414,9 +390,6 @@ export function buildDestinationItemSectionMap(
           const key = d.kvDocumentId ?? `${d.name}-${i}`;
           m.set(stableItemId(slug, s.id, key), s.id);
         });
-        break;
-      case "trip_reports":
-        s.reports.forEach((r) => m.set(r.id, s.id));
         break;
       default:
         break;

@@ -10,11 +10,9 @@ import { countDestinationCatalogProductRows } from "@/lib/destinationUnifiedCata
 import { stableDestinationUuid } from "@/lib/stableDestinationIds";
 import { DESTINATION_HERO_IMAGE_URLS } from "./destinationHeroImages.generated";
 
-export type FreshnessTone = "green" | "neutral" | "amber";
-
 export type DestinationDocument = {
   name: string;
-  type: "pdf" | "docx" | "xlsx";
+  type: "pdf" | "docx" | "xlsx" | "pptx";
   /** Knowledge Vault document id — opens `url` from the vault catalog when set. */
   kvDocumentId?: string;
 };
@@ -39,11 +37,8 @@ export type DMCPartner = {
   /** Responsible tourism partner — green badge on the card shell. */
   responsibleTourism?: boolean;
   notes?: string;
-  feedback?: string;
-  /** Mock: product-level endorsements (display-only in prototype). */
-  endorsementCount?: number;
-  /** Mock: display-only freshness (Drop 2 computes from signals). */
-  freshnessTone?: FreshnessTone;
+  /** Admin-only curation line on partner cards. */
+  curationNote?: string;
   specialAmenity?: string;
   destinationsServed?: string;
   featuredRegions?: string;
@@ -65,8 +60,6 @@ export type Restaurant = {
   name: string;
   url?: string;
   note?: string;
-  endorsementCount?: number;
-  freshnessTone?: FreshnessTone;
   latitude?: number;
   longitude?: number;
 };
@@ -80,10 +73,10 @@ export type Hotel = {
   /** Rep firm line from catalog (prototype: plain string). */
   repFirm?: string;
   url?: string;
+  /** Handle or URL — partner cards when expanded. */
+  socialMedia?: string;
   note?: string;
   properties?: string[];
-  endorsementCount?: number;
-  freshnessTone?: FreshnessTone;
   latitude?: number;
   longitude?: number;
 };
@@ -181,6 +174,10 @@ export type EditorTabSection = {
   productSlot?: EditorProductSlot;
   textBody?: string;
   documentIndices?: number[];
+  /** Files linked from Knowledge Vault for this block (preferred over {@link documentIndices}). */
+  sectionFiles?: DestinationDocument[];
+  /** Optional Lucide icon name for sidebar nav — overrides slot default when set. */
+  navIconKey?: string;
 };
 
 /** @deprecated Legacy chapter-tab row; migrated to {@link EditorWorkspace.sections}. */
@@ -239,6 +236,8 @@ export type DestinationSummary = {
   tagline: string;
   heroImage: string;
   description: string;
+  /** Tab count from virtual sections (sidebar); set when enriching from full destination. */
+  sectionCount?: number;
   /** Sum of items across all configured sections (DMC + restaurants + hotels + …). */
   totalItemCount: number;
   dmcCount: number;
@@ -297,10 +296,7 @@ export function createStubDestination(slug: string, name: string, tagline: strin
 /** Mirrors virtual section totals — catalog rows counted via unified catalog list. */
 function totalDestinationItemCount(d: Destination): number {
   let n =
-    countDestinationCatalogProductRows(d) +
-    d.tourismRegions.length +
-    d.documents.length +
-    (d.tripReports?.length ?? 0);
+    countDestinationCatalogProductRows(d) + d.tourismRegions.length + d.documents.length;
   if (n === 0 && d.description.trim() !== "") return 1;
   return n;
 }
@@ -353,8 +349,6 @@ const GREECE: Destination = {
       productId: "cat-dmc-greece-001",
       name: "Aegean Elite DMC",
       preferred: true,
-      endorsementCount: 6,
-      freshnessTone: "green",
       responsibleTourism: true,
       specialAmenity: "Virtuoso welcome amenity + handwritten island primer for Virtuoso guests.",
       destinationsServed: "Greece (mainland + islands)",
@@ -377,15 +371,11 @@ const GREECE: Destination = {
       commissionProcess: "10–12% posted after travel; statement monthly.",
       afterHours: "WhatsApp line for active trips · +30 694 000 0000",
       notes: "Strong on Cyclades yacht + villa combos; prefer 7-night minimum July–Aug.",
-      feedback:
-        "Advisors report fast turnaround on bespoke island-hopping — highlight ferry buffer on tight same-day connections.",
     },
     {
       productId: "cat-dmc-greece-002",
       name: "Hellenic Horizons",
       preferred: false,
-      endorsementCount: 2,
-      freshnessTone: "neutral",
       latitude: 40.6401,
       longitude: 22.9444,
       reppedBy: "Partner services",
@@ -401,8 +391,6 @@ const GREECE: Destination = {
       productId: "cat-dmc-greece-003",
       name: "Eclectic Greece DMC",
       preferred: true,
-      endorsementCount: 11,
-      freshnessTone: "green",
       latitude: 37.9755,
       longitude: 23.7348,
       reppedBy: "Virtuoso Greece",
@@ -419,7 +407,6 @@ const GREECE: Destination = {
       productId: "cat-dmc-greece-004",
       name: "Mediterranean Pathways",
       preferred: false,
-      freshnessTone: "amber",
       latitude: 35.3387,
       longitude: 25.1442,
       reppedBy: "EU inbound desk",
@@ -435,7 +422,6 @@ const GREECE: Destination = {
       productId: "cat-dmc-greece-005",
       name: "Cyclades Concierge DMC",
       preferred: false,
-      endorsementCount: 3,
       latitude: 37.4467,
       longitude: 25.3289,
       reppedBy: "Island programs",
@@ -446,7 +432,6 @@ const GREECE: Destination = {
       paymentProcess: "Wire; EUR only.",
       commissionProcess: "9–11% depending on season.",
       afterHours: "WhatsApp group for active trips",
-      feedback: "Excellent ferry rebooking during Meltemi delays last season.",
     },
     {
       productId: "cat-dmc-greece-006",
@@ -471,8 +456,6 @@ const GREECE: Destination = {
         name: "Spondi",
         url: "https://example.com/spondi",
         note: "Two Michelin · advance booking",
-        endorsementCount: 5,
-        freshnessTone: "green",
         latitude: 37.9842,
         longitude: 23.7413,
       },
@@ -578,8 +561,6 @@ const GREECE: Destination = {
         name: "Selene",
         url: "https://example.com/selene",
         note: "Pyrgos",
-        endorsementCount: 8,
-        freshnessTone: "green",
         latitude: 36.407,
         longitude: 25.432,
       },
@@ -814,8 +795,6 @@ const GREECE: Destination = {
         repFirm: "Luxury Collection rep · NA desk",
         url: "https://example.com/mystique",
         properties: ["Santorini"],
-        endorsementCount: 7,
-        freshnessTone: "green",
         latitude: 36.462,
         longitude: 25.375,
       },
@@ -1288,8 +1267,8 @@ const CARIBBEAN: Destination = {
 };
 
 /**
- * Canonical Claromentis-parity destination portals (stub until curated).
- * Slugs are stable — do not rename once published.
+ * Stub destination portals (40 total with six curated: Greece, Italy, France, Japan, Africa, Caribbean).
+ * Replace rows from Claromentis export when `Claromentis_Destination_Data.xlsx` is wired into the build.
  */
 const OTHER_META: { slug: string; name: string; tagline: string }[] = [
   { slug: "antarctica", name: "Antarctica", tagline: "Expedition planning — content coming soon." },
@@ -1326,11 +1305,10 @@ const OTHER_META: { slug: string; name: string; tagline: string }[] = [
   { slug: "southeast-asia", name: "Southeast Asia", tagline: "Thailand, Vietnam, Cambodia, and neighbors." },
   { slug: "spain-portugal", name: "Spain & Portugal", tagline: "Iberian hub — sub-regions per country." },
   { slug: "switzerland", name: "Switzerland", tagline: "Alpine rail & lakes — distinct from Austria." },
-  { slug: "tahiti", name: "Tahiti", tagline: "French Polynesia escapes." },
-  { slug: "turkey", name: "Turkey", tagline: "Istanbul to Cappadocia." },
-  { slug: "uae", name: "UAE", tagline: "Dubai, Abu Dhabi & desert." },
-  { slug: "uruguay", name: "Uruguay", tagline: "Wine & coast." },
-  { slug: "usa", name: "USA", tagline: "National parks & gateways." },
+  { slug: "tahiti", name: "Tahiti", tagline: "French Polynesia overwater villas." },
+  { slug: "turkey", name: "Turkey", tagline: "Istanbul to Cappadocia & Aegean coast." },
+  { slug: "uruguay", name: "Uruguay", tagline: "Wine country & Punta del Este." },
+  { slug: "usa", name: "USA", tagline: "Coast to coast — sub-regions per state/area." },
 ];
 
 function buildStub(m: { slug: string; name: string; tagline: string }): Destination {

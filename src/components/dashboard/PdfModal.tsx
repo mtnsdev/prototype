@@ -102,22 +102,22 @@ export default function PdfModal({ isOpen, onClose, filename, pageNumber = 1, pd
     return (
         <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
             <DialogContent
-                className="!fixed top-1/2 left-1/2 !w-[95vw] !max-w-[1400px] sm:!max-w-[1400px] h-[90vh] -translate-x-1/2 -translate-y-1/2 m-4 bg-[#F5F5F5] rounded-2xl shadow-2xl flex flex-col overflow-hidden p-0 border-0 z-50"
+                className="!fixed top-1/2 left-1/2 !w-[95vw] !max-w-[1400px] sm:!max-w-[1400px] h-[90vh] -translate-x-1/2 -translate-y-1/2 m-4 rounded-2xl border border-border bg-background shadow-2xl flex flex-col overflow-hidden p-0 z-50"
                 onClick={(e) => e.stopPropagation()}
                 onPointerDownOutside={onClose}
                 onInteractOutside={onClose}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(0,0,0,0.08)] bg-white shrink-0">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-card shrink-0">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-10 h-10 rounded-lg bg-[rgba(0,0,0,0.05)] flex items-center justify-center shrink-0">
-                            <FileText size={20} className="text-[rgba(0,0,0,0.5)]" />
+                        <div className="w-10 h-10 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
+                            <FileText size={20} className="text-muted-foreground" />
                         </div>
                         <div className="min-w-0">
-                            <DialogTitle className="text-base font-semibold text-[#0C0C0C] truncate">
+                            <DialogTitle className="text-base font-semibold text-foreground truncate">
                                 {filename}
                             </DialogTitle>
-                            <p className="text-sm text-[rgba(0,0,0,0.5)] mt-0.5">
+                            <p className="text-sm text-muted-foreground mt-0.5">
                                 {customUrl ? "Document Preview" : `Page ${pageNumber}`}
                             </p>
                         </div>
@@ -126,7 +126,7 @@ export default function PdfModal({ isOpen, onClose, filename, pageNumber = 1, pd
                         variant="ghost"
                         size="icon"
                         onClick={onClose}
-                        className="ml-4 w-9 h-9 bg-transparent hover:bg-[rgba(0,0,0,0.05)] text-[rgba(0,0,0,0.5)]"
+                        className="ml-4 w-9 h-9 text-muted-foreground hover:bg-muted/80 hover:text-foreground"
                         aria-label="Close"
                     >
                         <X className="w-5 h-5" />
@@ -134,15 +134,15 @@ export default function PdfModal({ isOpen, onClose, filename, pageNumber = 1, pd
                 </div>
 
                 {/* PDF Viewer - min-h-0 allows flex item to shrink; fills remaining height */}
-                <div className="flex-1 min-h-0 overflow-hidden bg-[#e5e5e5] relative flex flex-col">
+                <div className="flex-1 min-h-0 overflow-hidden bg-muted/40 relative flex flex-col">
                     {!customUrl && loading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-[#e5e5e5] z-10">
-                            <Loader2 className="w-10 h-10 animate-spin text-[rgba(0,0,0,0.4)]" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-muted/40 z-10">
+                            <Loader2 className="w-10 h-10 animate-spin text-muted-foreground" />
                         </div>
                     )}
                     {!customUrl && error && (
-                        <div className="absolute inset-0 flex items-center justify-center p-6 bg-[#e5e5e5] z-10">
-                            <p className="text-base text-[rgba(0,0,0,0.7)]">{error}</p>
+                        <div className="absolute inset-0 flex items-center justify-center p-6 bg-muted/40 z-10">
+                            <p className="text-base text-foreground/90">{error}</p>
                         </div>
                     )}
                     {iframeSrc && !error && (

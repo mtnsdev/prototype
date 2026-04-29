@@ -62,14 +62,14 @@ type UsersResponse = {
 };
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; icon: typeof UserCheck }> = {
-    active: { bg: "bg-green-500/10", text: "text-green-400", icon: UserCheck },
-    invited: { bg: "bg-amber-500/10", text: "text-[var(--color-warning)]", icon: Clock },
-    disabled: { bg: "bg-red-500/10", text: "text-red-400", icon: UserX },
+    active: { bg: "bg-[var(--muted-success-bg)]", text: "text-[var(--muted-success-text)]", icon: UserCheck },
+    invited: { bg: "bg-[var(--muted-warning-bg)]", text: "text-[var(--muted-warning-text)]", icon: Clock },
+    disabled: { bg: "bg-[var(--muted-error-bg)]", text: "text-[var(--muted-error-text)]", icon: UserX },
 };
 
 const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
-    admin: { bg: "bg-amber-500/10", text: "text-[var(--color-warning)]" },
-    user: { bg: "bg-blue-500/10", text: "text-blue-400" },
+    admin: { bg: "bg-[var(--muted-warning-bg)]", text: "text-[var(--muted-warning-text)]" },
+    user: { bg: "bg-[var(--muted-info-bg)]", text: "text-[var(--muted-info-text)]" },
 };
 
 // Password validation helper
@@ -364,8 +364,8 @@ export default function UsersPage() {
                 <div
                     className={`p-3.5 rounded-xl border text-compact flex items-center justify-between gap-3 ${
                         inviteMessage.type === "success"
-                            ? "bg-[rgba(52,211,153,0.08)] border-[rgba(52,211,153,0.2)] text-emerald-400"
-                            : "bg-[rgba(251,191,36,0.08)] border-[rgba(251,191,36,0.2)] text-[var(--color-warning)]"
+                            ? "bg-[var(--muted-success-bg)] border-[var(--muted-success-border)] text-[var(--muted-success-text)]"
+                            : "bg-[var(--muted-warning-bg)] border-[var(--muted-warning-border)] text-[var(--muted-warning-text)]"
                     }`}
                 >
                     <span>{inviteMessage.text}</span>
@@ -535,7 +535,7 @@ export default function UsersPage() {
                                                 {user.status === "disabled" && (
                                                     <Button
                                                         variant="ghost"
-                                                        className="w-full justify-start font-normal text-green-400"
+                                                        className="w-full justify-start font-normal text-[var(--muted-success-text)]"
                                                         onClick={() => handleUpdateUser(user.id, { status: "active" })}
                                                     >
                                                         Reactivate User
@@ -925,7 +925,7 @@ function EditUserModal({
                                 type="button"
                                 onClick={handlePasswordChange}
                                 disabled={isChangingPassword || !newPassword || !confirmPassword}
-                                className="w-full bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/30 text-[var(--color-warning)]"
+                                className="w-full border border-[var(--muted-warning-border)] bg-[var(--muted-warning-bg)] text-[var(--muted-warning-text)] hover:bg-[var(--muted-warning-bg)]/80"
                             >
                                 {isChangingPassword ? "Changing Password…" : "Change Password"}
                             </Button>

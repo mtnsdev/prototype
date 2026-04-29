@@ -130,7 +130,7 @@ export default function VICListRow({
               </DropdownMenuItem>
             )}
             {canDelete && (
-              <DropdownMenuItem onClick={onDelete} className="text-red-400 focus:text-red-400">
+              <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
                 <Trash2 size={14} className="mr-2" />
                 Delete
               </DropdownMenuItem>

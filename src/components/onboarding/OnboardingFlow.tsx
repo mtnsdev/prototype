@@ -1,9 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
-import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
+import {
+  OnboardingShell,
+  OnboardingShellSkeleton,
+} from "@/components/onboarding/OnboardingShell";
 import { WelcomeProfileStep } from "@/components/onboarding/steps/WelcomeProfileStep";
 import { KnowledgeHubStep } from "@/components/onboarding/steps/KnowledgeHubStep";
 import { TeamsBuilderStep } from "@/components/onboarding/steps/TeamsBuilderStep";
@@ -21,13 +24,15 @@ import {
   loadOnboardingResume,
   clearOnboardingResume,
   clearOnboardingTrackChoice,
-  POST_ONBOARDING_CHAT_PATH,
+  POST_ONBOARDING_HOME_PATH,
   setPostOnboardingSkippedIntegrationsNudge,
   setUserOnboardingComplete,
   setWorkspaceInitialSetupComplete,
   storeStarterChipsForChat,
   takePostOnboardingRedirect,
   shouldShowOnboarding,
+  storeOnboardingSummary,
+  setProductTourPending,
   type OnboardingPath,
   type OnboardingStepId,
 } from "@/lib/onboardingState";
@@ -52,6 +57,11 @@ export function OnboardingFlow() {
   const [hubSnapshot, setHubSnapshot] = useState<HubSnapshot>(() => emptyHubSnapshot());
   const [inviteRowsFromTeams, setInviteRowsFromTeams] = useState<InviteRow[] | null>(null);
   const [profileName, setProfileName] = useState("");
+  const [workspaceName, setWorkspaceName] = useState("");
+  /** Bumped any time the user completes a meaningful action — drives the "Saved" pill. */
+  const [saveToken, setSaveToken] = useState(0);
+  /** Step-supplied "advance" handler used by ⌘/Ctrl+Enter shortcut. */
+  const advanceRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (user?.username) setProfileName((p) => p || user.username || "");
@@ -68,14 +78,10 @@ export function OnboardingFlow() {
     saveOnboardingResume(user.id, path, step);
   }, [user, path, step]);
 
+  // Bump save token whenever the snapshot changes meaningfully.
   useEffect(() => {
-    if (userLoading || !user) return;
-    console.debug("[onboarding] onboarding_started", { path, user_id: user.id });
-  }, [path, user?.id, userLoading, user]);
-
-  useEffect(() => {
-    console.debug("[onboarding] screen_viewed", { screen_name: step, path });
-  }, [step, path]);
+    setSaveToken((n) => n + 1);
+  }, [hubSnapshot, profileName, workspaceName]);
 
   useEffect(() => {
     if (userLoading) return;
@@ -84,7 +90,7 @@ export function OnboardingFlow() {
       return;
     }
     if (!shouldShowOnboarding(user)) {
-      router.replace("/dashboard/chat");
+      router.replace(POST_ONBOARDING_HOME_PATH);
     }
   }, [user, userLoading, router]);
 
@@ -124,26 +130,45 @@ export function OnboardingFlow() {
     clearOnboardingTrackChoice();
     storeStarterChipsForChat(getStarterQuestionsForHub(hubSnapshot));
     setPostOnboardingSkippedIntegrationsNudge(hubSnapshot);
-    takePostOnboardingRedirect();
-    console.debug("[onboarding] onboarding_completed", {
+    storeOnboardingSummary({
       path,
-      user_id: user.id,
-      integrations_connected: {
-        intranet: hubSnapshot.intranetConnected,
-        shared: hubSnapshot.sharedDriveConnected,
-        personal: hubSnapshot.personalConnected,
-      },
+      workspaceName: workspaceName || "",
+      intranetConnected: hubSnapshot.intranetConnected,
+      sharedDriveConnected: hubSnapshot.sharedDriveConnected,
+      personalConnected: hubSnapshot.personalConnected,
+      emailForwardingConfigured: hubSnapshot.emailForwardingConfigured,
+      skippedIntranet: hubSnapshot.skippedIntranet,
+      skippedShared: hubSnapshot.skippedShared,
+      skippedPersonal: hubSnapshot.skippedPersonal,
+      skippedEmailForwarding: hubSnapshot.skippedEmailForwarding,
+      completedAt: Date.now(),
     });
-    router.replace(POST_ONBOARDING_CHAT_PATH);
-  }, [user, path, hubSnapshot, router]);
+    if (path === "A") setProductTourPending(true);
+    takePostOnboardingRedirect();
+    router.replace(POST_ONBOARDING_HOME_PATH);
+  }, [user, path, hubSnapshot, workspaceName, router]);
+
+  /** Demo-mode bypass — used by the welcome screen "Show me a demo" link. */
+  const enterDemoMode = useCallback(() => {
+    if (!user) return;
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("enable_vic_demo_mode", "1");
+      } catch {
+        /* ignore */
+      }
+    }
+    setUserOnboardingComplete(user.id);
+    clearOnboardingResume(user.id);
+    clearOnboardingTrackChoice();
+    router.replace(POST_ONBOARDING_HOME_PATH);
+  }, [user, router]);
 
   if (userLoading || !user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4 text-muted-foreground">
-        Loading…
-      </div>
-    );
+    return <OnboardingShellSkeleton />;
   }
+
+  const agencyForCopy = workspaceName || PROTOTYPE_AGENCY_NAME;
 
   return (
     <OnboardingShell
@@ -151,16 +176,25 @@ export function OnboardingFlow() {
       totalSteps={totalSteps}
       onBack={step === "welcome" ? goWelcomeBack : handleBack}
       canBack
+      saveToken={`${step}-${saveToken}`}
+      onAdvance={() => advanceRef.current?.()}
     >
       {step === "welcome" && (
         <WelcomeProfileStep
           path={path}
-          agencyName={PROTOTYPE_AGENCY_NAME}
+          agencyName={agencyForCopy}
           initialName={profileName || user.username || "there"}
           initialEmail={user.email}
-          onContinue={({ fullName }) => {
+          initialWorkspaceName={workspaceName}
+          onContinue={({ fullName, workspaceName: ws }) => {
             setProfileName(fullName);
+            if (ws) setWorkspaceName(ws);
+            setHubSnapshot((s) => ({ ...s, workspaceName: ws || s.workspaceName }));
             setStep("hub");
+          }}
+          onDemoMode={enterDemoMode}
+          registerAdvance={(fn) => {
+            advanceRef.current = fn;
           }}
         />
       )}
@@ -168,12 +202,18 @@ export function OnboardingFlow() {
       {step === "hub" && (
         <KnowledgeHubStep
           path={path}
+          agencyName={agencyForCopy}
+          adminUserName={user.username || ""}
+          adminUserEmail={user.email}
           onContinue={(snap) => {
-            setHubSnapshot(snap);
+            setHubSnapshot({ ...snap, workspaceName: workspaceName || snap.workspaceName });
             if (path === "A") {
               setInviteRowsFromTeams(null);
               setStep("teams");
             } else setStep("completion");
+          }}
+          registerAdvance={(fn) => {
+            advanceRef.current = fn;
           }}
         />
       )}
@@ -181,23 +221,31 @@ export function OnboardingFlow() {
       {step === "teams" && path === "A" && (
         <TeamsBuilderStep
           hubSnapshot={hubSnapshot}
+          agencyName={agencyForCopy}
           onContinue={(rows) => {
             setInviteRowsFromTeams(rows);
             setStep("completion");
           }}
           onBack={() => setStep("hub")}
+          registerAdvance={(fn) => {
+            advanceRef.current = fn;
+          }}
         />
       )}
 
       {step === "completion" && (
         <CompletionStep
           path={path}
+          agencyName={agencyForCopy}
           hubSnapshot={hubSnapshot}
           inviteRowsFromTeams={inviteRowsFromTeams}
           onFinishToChat={finishOnboarding}
           onBack={() => {
             if (path === "A") setStep("teams");
             else setStep("hub");
+          }}
+          registerAdvance={(fn) => {
+            advanceRef.current = fn;
           }}
         />
       )}

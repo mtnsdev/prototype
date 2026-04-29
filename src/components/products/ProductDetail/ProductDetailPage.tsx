@@ -472,7 +472,7 @@ export default function ProductDetailPage({ productId }: Props) {
   if (error || !product) {
     return (
       <div className="p-6">
-        <p className="text-red-400">{error ?? "Product not found"}</p>
+        <p className="text-[var(--muted-error-text)]">{error ?? "Product not found"}</p>
         <Button variant="outline" onClick={() => router.push("/dashboard/products")} className="mt-4">
           Back to products
         </Button>
@@ -489,7 +489,7 @@ export default function ProductDetailPage({ productId }: Props) {
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background">
-      <div className="relative aspect-[2/1] min-h-[220px] w-full max-h-[min(42vh,420px)] shrink-0 overflow-hidden bg-zinc-900 sm:min-h-[260px] sm:max-h-[min(45vh,460px)]">
+      <div className="relative aspect-[2/1] min-h-[220px] w-full max-h-[min(42vh,420px)] shrink-0 overflow-hidden bg-foreground sm:min-h-[260px] sm:max-h-[min(45vh,460px)]">
         <ImageWithFallback
           fallbackType="product"
           src={product.hero_image_url}
@@ -507,7 +507,7 @@ export default function ProductDetailPage({ productId }: Props) {
                 onClick={() =>
                   toast({ title: "Suggestion review — coming in v2", tone: "success" })
                 }
-                className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-2xs text-[var(--color-warning)] hover:bg-amber-500/20"
+                className="rounded-full bg-[var(--muted-warning-bg)] px-1.5 py-0.5 text-2xs text-[var(--muted-warning-text)] hover:bg-[var(--muted-warning-bg)]/80 border border-[var(--muted-warning-border)]/50"
               >
                 {pendingSuggestions} suggestion{pendingSuggestions > 1 ? "s" : ""}
               </button>
@@ -532,7 +532,8 @@ export default function ProductDetailPage({ productId }: Props) {
             <span
               className={cn(
                 "inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs",
-                VERIFICATION_BADGES[ver]?.variant === "default" && "bg-green-500/20 text-green-400"
+                VERIFICATION_BADGES[ver]?.variant === "default" &&
+                  "border-[var(--muted-success-border)] bg-[var(--muted-success-bg)] text-[var(--muted-success-text)]"
               )}
             >
               {VERIFICATION_BADGES[ver]?.label ?? ver}
@@ -558,7 +559,7 @@ export default function ProductDetailPage({ productId }: Props) {
             </Button>
           )}
           {canDelete && (
-            <Button variant="outline" size="sm" onClick={() => setDeleteModalOpen(true)} className="border-input text-red-400">
+            <Button variant="outline" size="sm" onClick={() => setDeleteModalOpen(true)} className="border-input text-destructive hover:bg-destructive/10">
               <Trash2 className="size-3.5" aria-hidden />
               Delete
             </Button>

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const destinationDocumentSchema = z.object({
   name: z.string().min(1),
-  type: z.enum(["pdf", "docx", "xlsx"]),
+  type: z.enum(["pdf", "docx", "xlsx", "pptx"]),
   kvDocumentId: z.string().optional(),
 });
 
@@ -35,6 +35,7 @@ const dmcPartnerSchema = z.object({
   preferred: z.boolean(),
   reppedBy: z.string().optional(),
   website: z.string().optional(),
+  socialMedia: z.string().optional(),
   keyContact: z.string().optional(),
   generalRequests: z.string().optional(),
   pricing: z.string().optional(),
@@ -42,7 +43,7 @@ const dmcPartnerSchema = z.object({
   commissionProcess: z.string().optional(),
   afterHours: z.string().optional(),
   notes: z.string().optional(),
-  feedback: z.string().optional(),
+  curationNote: z.string().optional(),
 });
 
 const restaurantSchema = z.object({
@@ -58,6 +59,7 @@ const hotelSchema = z.object({
   contact: z.string().optional(),
   repFirm: z.string().optional(),
   url: z.string().optional(),
+  socialMedia: z.string().optional(),
   note: z.string().optional(),
   properties: z.array(z.string()).optional(),
 });
@@ -93,6 +95,8 @@ const editorTabSectionSchema = z.object({
   productSlot: z.enum(["dmc", "restaurants", "hotels", "yachts", "tourism", "documents"]).optional(),
   textBody: z.string().optional(),
   documentIndices: z.array(z.number().int().nonnegative()).optional(),
+  sectionFiles: z.array(destinationDocumentSchema).optional(),
+  navIconKey: z.string().optional(),
 });
 
 function migrateEditorWorkspaceInput(data: unknown): unknown {

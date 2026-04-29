@@ -14,6 +14,26 @@ export const DEFAULT_DESTINATION_SECTION_PRESENTATION = {
 
 const FALLBACK_PRESENTATION = { title: "Section", iconKey: "LayoutGrid" };
 
+/** Lucide icon names offered when adding a workspace section (sidebar override). */
+export const DESTINATION_NAV_ICON_PICKER_KEYS = [
+  "ScrollText",
+  "Building2",
+  "UtensilsCrossed",
+  "Hotel",
+  "Anchor",
+  "Landmark",
+  "Files",
+  "LayoutGrid",
+  "MapPin",
+  "Compass",
+  "BookOpen",
+  "Image",
+  "Users",
+  "Sparkles",
+  "Heart",
+  "Star",
+] as const;
+
 export function resolveDestinationSectionPresentation(
   key: DestinationLegacySectionKey,
 ): { title: string; iconKey: string } {

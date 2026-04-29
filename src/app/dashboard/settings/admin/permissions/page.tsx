@@ -285,7 +285,7 @@ export default function PermissionsPage() {
             return <Folder size={16} className="text-[var(--color-warning)]" />;
         if (rule.target_type === "page" || rule.target_type === "script_page")
             return <FileText size={16} className="text-brand-cta" />;
-        return <FileText size={16} className="text-blue-400" />;
+        return <FileText size={16} className="text-[var(--muted-info-text)]" />;
     };
 
     return (
@@ -341,10 +341,10 @@ export default function PermissionsPage() {
             </div>
 
             {/* Info */}
-            <Card className="rounded-2xl bg-[rgba(59,130,246,0.08)] border-[rgba(59,130,246,0.2)] p-4">
+            <Card className="rounded-2xl border border-[var(--muted-info-border)] bg-[var(--muted-info-bg)] p-4">
                 <CardContent className="p-0">
                 <div className="flex items-start gap-3">
-                    <FolderLock size={20} className="text-blue-400 shrink-0 mt-0.5" />
+                    <FolderLock size={20} className="text-[var(--muted-info-text)] shrink-0 mt-0.5" />
                     <div className="text-sm text-muted-foreground space-y-1">
                         <p><strong>How permission rules work:</strong></p>
                         <ul className="list-disc ml-4 space-y-1">
@@ -436,9 +436,9 @@ export default function PermissionsPage() {
                                             </div>
                                         </TableCell>
                                         <TableCell className="px-5 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-medium ${rule.effect === "allow"
-                                                ? "bg-green-500/10 text-green-400"
-                                                : "bg-red-500/10 text-red-400"
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-medium border ${rule.effect === "allow"
+                                                ? "border-[var(--muted-success-border)] bg-[var(--muted-success-bg)] text-[var(--muted-success-text)]"
+                                                : "border-[var(--muted-error-border)] bg-[var(--muted-error-bg)] text-[var(--muted-error-text)]"
                                                 }`}>
                                                 {rule.effect === "allow" ? <Check size={12} /> : <X size={12} />}
                                                 {rule.effect.charAt(0).toUpperCase() + rule.effect.slice(1)}
@@ -517,7 +517,7 @@ function ConflictConfirmModal({
     };
 
     const effectLabel = (effect: string) => (
-        <span className={effect === "allow" ? "text-green-400 font-semibold" : "text-red-400 font-semibold"}>
+        <span className={effect === "allow" ? "text-[var(--muted-success-text)] font-semibold" : "text-[var(--muted-error-text)] font-semibold"}>
             {effect}
         </span>
     );
@@ -527,7 +527,7 @@ function ConflictConfirmModal({
             <DialogContent className="max-w-lg max-h-[90vh] flex flex-col bg-card border-input">
                 <DialogHeader>
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-[var(--muted-warning-bg)] flex items-center justify-center border border-[var(--muted-warning-border)]/50">
                             <X size={16} className="text-[var(--color-warning)]" />
                         </div>
                         <DialogTitle className="text-lg text-foreground">Conflicting Rules Found</DialogTitle>
@@ -571,7 +571,7 @@ function ConflictConfirmModal({
                     <Button
                         onClick={handleUpdate}
                         disabled={isUpdating || conflicts.every(c => c.conflict_type === "exact_duplicate")}
-                        className="flex-1 sm:flex-initial bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-[var(--color-warning)]"
+                        className="flex-1 sm:flex-initial border border-[var(--muted-warning-border)] bg-[var(--muted-warning-bg)] text-[var(--muted-warning-text)] hover:bg-[var(--muted-warning-bg)]/80"
                     >
                         {isUpdating ? "Updating…" : "Update conflicting rules"}
                     </Button>
@@ -891,9 +891,9 @@ function CreateRuleModal({
                                             key={String(t.external_id)}
                                             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-foreground/[0.07] border border-input text-sm text-muted-foreground"
                                         >
-                                            {t.node_type === "folder" ? <Folder size={10} className="text-[var(--color-warning)]" /> : <FileText size={10} className="text-blue-400" />}
+                                            {t.node_type === "folder" ? <Folder size={10} className="text-[var(--color-warning)]" /> : <FileText size={10} className="text-[var(--muted-info-text)]" />}
                                             {t.title}
-                                            <Button type="button" variant="ghost" size="icon-xs" className="ml-0.5 h-auto w-auto p-0 hover:text-red-400" onClick={() => setSelectedTargets(prev => prev.filter(x => String(x.external_id) !== String(t.external_id)))}><X size={10} /></Button>
+                                            <Button type="button" variant="ghost" size="icon-xs" className="ml-0.5 h-auto w-auto p-0 hover:text-[var(--muted-error-text)]" onClick={() => setSelectedTargets(prev => prev.filter(x => String(x.external_id) !== String(t.external_id)))}><X size={10} /></Button>
                                         </span>
                                     ))}
                                 </div>
@@ -910,7 +910,7 @@ function CreateRuleModal({
                             <Button
                                 type="button"
                                 variant="outline"
-                                className={`flex-1 gap-2 ${effect === "allow" ? "bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20" : ""}`}
+                                className={`flex-1 gap-2 ${effect === "allow" ? "border-[var(--muted-success-border)] bg-[var(--muted-success-bg)] text-[var(--muted-success-text)] hover:bg-[var(--muted-success-bg)]/80" : ""}`}
                                 onClick={() => setEffect("allow")}
                             >
                                 <Check size={16} /> Allow
@@ -918,7 +918,7 @@ function CreateRuleModal({
                             <Button
                                 type="button"
                                 variant="outline"
-                                className={`flex-1 gap-2 ${effect === "deny" ? "bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20" : ""}`}
+                                className={`flex-1 gap-2 ${effect === "deny" ? "border-[var(--muted-error-border)] bg-[var(--muted-error-bg)] text-[var(--muted-error-text)] hover:bg-[var(--muted-error-bg)]/80" : ""}`}
                                 onClick={() => setEffect("deny")}
                             >
                                 <X size={16} /> Deny

@@ -1748,7 +1748,7 @@ export function ProductDirectoryPartnerProgramsTab({
                               </span>
                               <button
                                 type="button"
-                                className="rounded-md border border-border p-1 text-muted-foreground transition-colors hover:border-red-400/30 hover:bg-red-400/10 hover:text-red-300"
+                                className="rounded-md border border-border p-1 text-muted-foreground transition-colors hover:border-[var(--muted-error-border)] hover:bg-[var(--muted-error-bg)] hover:text-[var(--muted-error-text)]"
                                 aria-label="Remove incentive"
                                 onClick={() =>
                                   setDrafts((prev) => ({

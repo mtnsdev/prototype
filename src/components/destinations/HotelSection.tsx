@@ -6,8 +6,6 @@ import type { Hotel } from "@/data/destinations";
 import { cn } from "@/lib/utils";
 import { destCardClass, destCardRowHover, destMuted, destMuted2 } from "./destinationStyles";
 import { stableItemId } from "@/lib/stableDestinationIds";
-import { EndorsementBadge } from "@/components/destinations/shared/EndorsementBadge";
-import { FreshnessIndicator } from "@/components/destinations/shared/FreshnessIndicator";
 import { logDestinationEvent } from "@/lib/destinationAnalytics";
 
 type Props = {
@@ -89,10 +87,6 @@ export function HotelSection({ byGroup, destinationSlug, sectionId }: Props) {
                               <span className="rounded border border-border bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                                 Unavailable
                               </span>
-                            ) : null}
-                            <FreshnessIndicator tone={h.freshnessTone} />
-                            {h.endorsementCount != null && h.endorsementCount > 0 ? (
-                              <EndorsementBadge count={h.endorsementCount} />
                             ) : null}
                           </div>
                           {h.contact ? <p className={cn("mt-0.5 text-xs", destMuted)}>{h.contact}</p> : null}

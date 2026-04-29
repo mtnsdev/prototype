@@ -20,6 +20,8 @@ import WorkspaceDock from "@/components/dashboard/WorkspaceDock";
 import MobileWorkspaceNav from "@/components/dashboard/MobileWorkspaceNav";
 import HistoryDrawer from "@/components/dashboard/HistoryDrawer";
 import { OnboardingDashboardGuard } from "@/components/dashboard/OnboardingDashboardGuard";
+import { ProductTour } from "@/components/onboarding/ProductTour";
+import { OnboardingChecklistCard } from "@/components/onboarding/OnboardingChecklistCard";
 import { cn } from "@/lib/utils";
 
 function DashboardChrome({ children }: { children: React.ReactNode }) {
@@ -66,6 +68,8 @@ function DashboardChrome({ children }: { children: React.ReactNode }) {
         <div className="md:hidden">
           <ReportIssueLauncher />
         </div>
+        {!isOnboarding && <ProductTour />}
+        {!isOnboarding && <OnboardingChecklistCard />}
       </div>
     </>
   );

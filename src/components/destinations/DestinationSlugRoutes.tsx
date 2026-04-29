@@ -16,7 +16,6 @@ import {
 } from "@/lib/destinationLocalEdits";
 import { DestinationDetailClient } from "./DestinationDetailClient";
 import { DestinationDetailSkeleton } from "./DestinationDetailSkeleton";
-import { DestinationEditorDynamic } from "./editor/DestinationEditorDynamic";
 import { Button } from "@/components/ui/button";
 
 function DestinationAccessDenied() {
@@ -32,13 +31,11 @@ function DestinationAccessDenied() {
   );
 }
 
-function DestinationNotFound({ context }: { context: "view" | "edit" }) {
+function DestinationNotFound() {
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 px-6 py-16 text-center">
       <p className="max-w-md text-sm text-muted-foreground">
-        {context === "edit"
-          ? "This destination is not in the catalog and no saved guide was found for this link."
-          : "No destination matches this address. It may have been removed or never created in this browser."}
+        No destination matches this address. It may have been removed or never created in this browser.
       </p>
       <Button type="button" variant="outline" size="sm" asChild>
         <Link href="/dashboard/products/destinations">Back to destinations</Link>
@@ -84,30 +81,7 @@ export function DestinationDetailResolve({ slug }: { slug: string }) {
 
   if (staticCanon) return <DestinationDetailClient canonical={staticCanon} />;
   if (resolved === "pending") return <DestinationDetailSkeleton />;
-  if (!resolved) return <DestinationNotFound context="view" />;
+  if (!resolved) return <DestinationNotFound />;
   if (!destinationIsVisibleForViewer(resolved, agencyId)) return <DestinationAccessDenied />;
   return <DestinationDetailClient canonical={resolved} />;
-}
-
-export function DestinationEditorResolve({ slug }: { slug: string }) {
-  const { user } = useUser();
-  const agencyId = user?.agency_id ?? null;
-  const staticCanon = getDestinationBySlug(slug);
-  const resolved = useResolvedCustomDestination(slug, !staticCanon);
-
-  if (staticCanon && !destinationIsVisibleForViewer(staticCanon, agencyId)) {
-    return <DestinationAccessDenied />;
-  }
-
-  if (staticCanon) return <DestinationEditorDynamic canonical={staticCanon} />;
-  if (resolved === "pending") {
-    return (
-      <div className="flex min-h-[40vh] flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
-        Loading editor…
-      </div>
-    );
-  }
-  if (!resolved) return <DestinationNotFound context="edit" />;
-  if (!destinationIsVisibleForViewer(resolved, agencyId)) return <DestinationAccessDenied />;
-  return <DestinationEditorDynamic canonical={resolved} />;
 }

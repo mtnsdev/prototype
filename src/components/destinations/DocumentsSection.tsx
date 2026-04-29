@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalLink, FileSpreadsheet, FileText } from "lucide-react";
+import { ExternalLink, FileSpreadsheet, FileText, Presentation } from "lucide-react";
 import type { DestinationDocument } from "@/data/destinations";
 import { getMockDocumentById } from "@/components/knowledge-vault/knowledgeVaultMockData";
 import { cn } from "@/lib/utils";
-import { destCardClass, destMuted } from "./destinationStyles";
 import { stableItemId } from "@/lib/stableDestinationIds";
 
 type Props = {
@@ -16,12 +15,25 @@ type Props = {
 
 function DocIcon({ type }: { type: DestinationDocument["type"] }) {
   if (type === "xlsx") {
-    return <FileSpreadsheet className="size-8 text-emerald-400/90" aria-hidden />;
+    return <FileSpreadsheet className="size-5 text-[var(--muted-success-text)]" aria-hidden />;
   }
   if (type === "docx") {
-    return <FileText className="size-8 text-sky-400/90" aria-hidden />;
+    return <FileText className="size-5 text-[var(--muted-info-text)]" aria-hidden />;
   }
-  return <FileText className="size-8 text-red-400/90" aria-hidden />;
+  if (type === "pptx") {
+    return <Presentation className="size-5 text-[var(--muted-warning-text)]" aria-hidden />;
+  }
+  return <FileText className="size-5 text-muted-foreground" aria-hidden />;
+}
+
+function docTypeLabel(type: DestinationDocument["type"]): string {
+  switch (type) {
+    case "xlsx": return "Excel";
+    case "docx": return "Word";
+    case "pptx": return "Slides";
+    case "pdf": return "PDF";
+    default: return "File";
+  }
 }
 
 function vaultSearchHref(doc: DestinationDocument, destinationSlug: string) {
@@ -30,11 +42,11 @@ function vaultSearchHref(doc: DestinationDocument, destinationSlug: string) {
 
 export function DocumentsSection({ documents, destinationSlug, sectionId }: Props) {
   if (documents.length === 0) {
-    return <p className={cn("text-sm", destMuted)}>Content coming soon.</p>;
+    return <p className="text-sm text-muted-foreground">Content coming soon.</p>;
   }
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <ul className="divide-y divide-border/50">
       {documents.map((doc, i) => {
         const kv = doc.kvDocumentId ? getMockDocumentById(doc.kvDocumentId) : null;
         const fileUrl = kv?.url?.trim();
@@ -43,42 +55,50 @@ export function DocumentsSection({ documents, destinationSlug, sectionId }: Prop
         const itemId = stableItemId(destinationSlug, sectionId, key);
 
         return (
-          <div
+          <li
             key={itemId}
             id={`item-${itemId}`}
-            className={cn(destCardClass("scroll-mt-28"), "flex flex-row items-start gap-3 p-4")}
+            className="flex scroll-mt-28 items-center gap-3 px-1 py-3"
           >
-            <DocIcon type={doc.type} />
-            <div className="min-w-0 flex-1">
-              <p className="font-medium leading-snug text-foreground">{doc.name}</p>
-              <p className={cn("mt-1 text-xs uppercase tracking-wide", destMuted)}>{doc.type}</p>
-              <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1">
-                {fileUrl ? (
-                  <a
-                    href={fileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-xs font-medium text-brand-cta hover:underline"
-                  >
-                    Download / open file
-                    <ExternalLink className="size-3" aria-hidden />
-                  </a>
-                ) : null}
-                <Link
-                  href={vaultLink}
-                  className={cn(
-                    "inline-flex items-center gap-1 text-xs font-medium hover:underline",
-                    fileUrl ? "text-muted-foreground" : "text-brand-cta",
-                  )}
-                >
-                  {fileUrl ? "View in Knowledge Vault" : "Open in Knowledge Vault"}
-                  {!fileUrl ? <span aria-hidden> →</span> : null}
-                </Link>
-              </div>
+            {/* File type icon + label */}
+            <div className="flex h-12 w-16 shrink-0 flex-col items-center justify-center rounded-md bg-muted/60">
+              <DocIcon type={doc.type} />
+              <span className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70">
+                {docTypeLabel(doc.type)}
+              </span>
             </div>
-          </div>
+
+            {/* Name */}
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-foreground truncate">{doc.name}</p>
+              {kv?.content_summary ? (
+                <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">{kv.content_summary}</p>
+              ) : null}
+            </div>
+
+            {/* Open link */}
+            {fileUrl ? (
+              <a
+                href={fileUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-brand-cta hover:underline"
+              >
+                Open
+                <ExternalLink className="size-3" aria-hidden />
+              </a>
+            ) : (
+              <Link
+                href={vaultLink}
+                className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-brand-cta hover:underline"
+              >
+                Open
+                <ExternalLink className="size-3" aria-hidden />
+              </Link>
+            )}
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }

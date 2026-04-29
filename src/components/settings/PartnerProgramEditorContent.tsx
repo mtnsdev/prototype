@@ -155,7 +155,7 @@ export function LinkDetailCard({
             {onAddProductIncentive ? (
               <button
                 type="button"
-                className="inline-flex h-7 items-center gap-1 rounded-lg border border-amber-400/35 bg-amber-400/10 px-2 text-2xs font-medium text-amber-200 transition-colors hover:bg-amber-400/15"
+                className="inline-flex h-7 items-center gap-1 rounded-lg border border-[var(--muted-warning-border)] bg-[var(--muted-warning-bg)] px-2 text-2xs font-medium text-[var(--muted-warning-text)] transition-colors hover:bg-[var(--muted-warning-bg)]/80"
                 onClick={onAddProductIncentive}
               >
                 <Plus className="h-3 w-3" aria-hidden />
@@ -195,7 +195,7 @@ export function LinkDetailCard({
           {onAddProductIncentive ? (
             <button
               type="button"
-              className="inline-flex h-7 items-center gap-1 rounded-lg border border-amber-400/35 bg-amber-400/10 px-2 text-2xs font-medium text-amber-200 transition-colors hover:bg-amber-400/15"
+              className="inline-flex h-7 items-center gap-1 rounded-lg border border-[var(--muted-warning-border)] bg-[var(--muted-warning-bg)] px-2 text-2xs font-medium text-[var(--muted-warning-text)] transition-colors hover:bg-[var(--muted-warning-bg)]/80"
               onClick={onAddProductIncentive}
             >
               <Plus className="h-3 w-3" aria-hidden />
@@ -487,7 +487,7 @@ export function PartnerProgramEditorContent({
   const renderIncentivesBlock = (headingLabel: string) => {
     const list = sortedIncentives;
     return (
-      <div className="rounded-lg border border-amber-400/25 bg-amber-400/[0.07] p-3">
+      <div className="rounded-lg border border-[var(--muted-warning-border)] bg-[var(--muted-warning-bg)] p-3">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/80">
@@ -497,7 +497,7 @@ export function PartnerProgramEditorContent({
           </div>
           <button
             type="button"
-            className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-amber-400/35 bg-amber-400/10 px-2.5 py-1.5 text-2xs font-medium text-amber-200 transition-colors hover:bg-amber-400/15"
+            className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-[var(--muted-warning-border)] bg-[var(--muted-warning-bg)] px-2.5 py-1.5 text-2xs font-medium text-[var(--muted-warning-text)] transition-colors hover:bg-[var(--muted-warning-bg)]/80"
             onClick={() => addIncentiveForAnchor(ANCHOR_PROGRAM_WIDE)}
           >
             <Plus className="h-3.5 w-3.5" aria-hidden />

@@ -24,16 +24,21 @@ export function editorProductSlotToCategories(slot: EditorProductSlot): Director
   }
 }
 
-export function filterCatalogByTypes(allowedTypes: DirectoryProductCategory[]): DirectoryProduct[] {
-  if (allowedTypes.length === 0) return [...MOCK_DIRECTORY_PRODUCTS];
-  return MOCK_DIRECTORY_PRODUCTS.filter((p) => allowedTypes.some((t) => p.types.includes(t)));
+export function filterCatalogByTypes(
+  allowedTypes: DirectoryProductCategory[],
+  productPool: DirectoryProduct[] = MOCK_DIRECTORY_PRODUCTS,
+): DirectoryProduct[] {
+  if (allowedTypes.length === 0) return [...productPool];
+  return productPool.filter((p) => allowedTypes.some((t) => p.types.includes(t)));
 }
 
 export function searchCatalogProducts(
   query: string,
   allowedTypes: DirectoryProductCategory[],
+  /** Persisted + mock merge — when omitted, search uses built-in mock only. */
+  productPool?: DirectoryProduct[],
 ): DirectoryProduct[] {
-  const pool = filterCatalogByTypes(allowedTypes);
+  const pool = filterCatalogByTypes(allowedTypes, productPool ?? MOCK_DIRECTORY_PRODUCTS);
   const q = query.trim().toLowerCase();
   if (!q) return pool.slice(0, 80);
   return pool

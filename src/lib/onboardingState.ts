@@ -13,8 +13,10 @@ const STARTER_CHIPS_KEY = "enable_onboarding_starter_chips";
 const RESUME_PREFIX = "enable_onboarding_resume_";
 const POST_ONBOARDING_NUDGE_KEY = "enable_vic_post_onboarding_nudge_skipped";
 
-/** Landing route after onboarding completes (PRD: Chat with starter chips). */
-export const POST_ONBOARDING_CHAT_PATH = "/dashboard/chat";
+/** Landing route after onboarding completes — homepage (briefing room) per Apr 29, 2026 review. */
+export const POST_ONBOARDING_HOME_PATH = "/dashboard";
+/** @deprecated retained for backwards-compat with older callers. */
+export const POST_ONBOARDING_CHAT_PATH = POST_ONBOARDING_HOME_PATH;
 
 /** Session-only: which onboarding storyline to run (prototype / demos). */
 const ONBOARDING_TRACK_KEY = "enable_vic_onboarding_track";
@@ -241,3 +243,69 @@ export function shouldShowPostOnboardingIntegrationNudge(): boolean {
     return false;
   }
 }
+
+
+// ── Onboarding completion summary (powers the dashboard checklist + tour) ──
+const ONBOARDING_SUMMARY_KEY = "enable_vic_onboarding_summary";
+const PRODUCT_TOUR_KEY = "enable_vic_product_tour_pending";
+
+export type OnboardingSummary = {
+  path: OnboardingPath;
+  workspaceName: string;
+  intranetConnected: boolean;
+  sharedDriveConnected: boolean;
+  personalConnected: boolean;
+  emailForwardingConfigured: boolean;
+  skippedIntranet: boolean;
+  skippedShared: boolean;
+  skippedPersonal: boolean;
+  skippedEmailForwarding: boolean;
+  /** Epoch ms — used to expire the post-onboarding checklist after 7 days. */
+  completedAt: number;
+};
+
+export function storeOnboardingSummary(summary: OnboardingSummary): void {
+  try {
+    localStorage.setItem(ONBOARDING_SUMMARY_KEY, JSON.stringify(summary));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function loadOnboardingSummary(): OnboardingSummary | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(ONBOARDING_SUMMARY_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as OnboardingSummary;
+  } catch {
+    return null;
+  }
+}
+
+export function clearOnboardingSummary(): void {
+  try {
+    localStorage.removeItem(ONBOARDING_SUMMARY_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function setProductTourPending(pending: boolean): void {
+  try {
+    if (pending) localStorage.setItem(PRODUCT_TOUR_KEY, "1");
+    else localStorage.removeItem(PRODUCT_TOUR_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function isProductTourPending(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(PRODUCT_TOUR_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+

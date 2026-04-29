@@ -1,2 +1,2 @@
-/** Collapsible partner row — catalog-linked operational fields render from {@link DMCPartnerCard}. */
-export { DMCPartnerCard as PartnerCard } from "@/components/destinations/DMCPartnerCard";
+/** @deprecated Replaced by unified ProductListSection — all products render as flat list rows. */
+export {};

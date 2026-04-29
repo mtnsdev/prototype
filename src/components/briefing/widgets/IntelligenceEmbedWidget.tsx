@@ -1,14 +1,16 @@
 "use client";
 
 import type { IntelligenceEmbedVariant } from "@/types/briefing";
-import { RecentActivityWidget as IntelRecentActivityWidget } from "@/components/briefing-room/widgets/RecentActivityWidget";
-import { ActionItemsWidget as IntelActionItemsWidget } from "@/components/briefing-room/widgets/ActionItemsWidget";
-import { AdvisoriesWidget } from "@/components/briefing-room/widgets/AdvisoriesWidget";
-import { UpcomingTripsWidget as IntelUpcomingTripsWidget } from "@/components/briefing-room/widgets/UpcomingTripsWidget";
-import { PreDepartureWidget } from "@/components/briefing-room/widgets/PreDepartureWidget";
-import { KnowledgeHighlightsWidget } from "@/components/briefing-room/widgets/KnowledgeHighlightsWidget";
-import { PublicationFeedWidget } from "@/components/briefing-room/widgets/PublicationFeedWidget";
-import { ProductIntelWidget } from "@/components/briefing-room/widgets/ProductIntelWidget";
+import {
+  RecentActivityWidget as IntelRecentActivityWidget,
+  ActionItemsWidget as IntelActionItemsWidget,
+  AdvisoriesWidget,
+  UpcomingTripsWidget as IntelUpcomingTripsWidget,
+  PreDepartureWidget,
+  KnowledgeHighlightsWidget,
+  PublicationFeedWidget,
+  ProductIntelWidget,
+} from "@/components/briefing/liveIntelWidgets";
 
 type Props = {
   variant: IntelligenceEmbedVariant;

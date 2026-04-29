@@ -33,14 +33,14 @@ export default function VICProposalModal({ open, onClose, itinerary, onCopyLink,
   const perPerson = travelerCount > 0 ? Math.round(totalVic / travelerCount) : totalVic;
 
   return (
-    <div className="fixed inset-0 z-50 bg-white overflow-auto">
-      <header className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-4 bg-white border-b border-neutral-200">
-        <h2 className="text-lg font-semibold text-neutral-900">VIC preview</h2>
+    <div className="fixed inset-0 z-50 overflow-auto bg-background">
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-border bg-card px-6 py-4">
+        <h2 className="text-lg font-semibold text-foreground">VIC preview</h2>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            className="border-neutral-300 text-neutral-700"
+            className="border-border text-foreground"
             onClick={() => {
               onCopyLink?.();
               showToast("Link copied — Coming soon");
@@ -51,7 +51,7 @@ export default function VICProposalModal({ open, onClose, itinerary, onCopyLink,
           <Button
             variant="outline"
             size="sm"
-            className="border-neutral-300 text-neutral-700"
+            className="border-border text-foreground"
             onClick={() => {
               onDownloadPdf?.();
               showToast("PDF export coming soon");
@@ -59,47 +59,51 @@ export default function VICProposalModal({ open, onClose, itinerary, onCopyLink,
           >
             <FileDown size={14} className="mr-1" /> Download PDF
           </Button>
-          <Button variant="ghost" size="icon" className="text-neutral-500 hover:text-neutral-900" onClick={onClose}>
+          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={onClose}>
             <X size={20} />
           </Button>
         </div>
       </header>
 
-      <div className="max-w-[720px] mx-auto py-16 px-8">
-        <p className="text-sm font-medium text-neutral-500 uppercase tracking-wider">TRAVELLUSTRE</p>
-        <p className="text-neutral-600 mt-1">Prepared by {itinerary.primary_advisor_name ?? "Your advisor"}</p>
+      <div className="mx-auto max-w-[720px] px-8 py-16">
+        <p className="text-sm font-medium uppercase tracking-wider text-muted-foreground">TRAVELLUSTRE</p>
+        <p className="mt-1 text-muted-foreground">Prepared by {itinerary.primary_advisor_name ?? "Your advisor"}</p>
 
-        <hr className="border-t border-neutral-200 my-8" />
+        <hr className="my-8 border-t border-border" />
 
-        <h1 className="text-2xl font-serif font-semibold text-neutral-900">{itinerary.trip_name}</h1>
-        <p className="text-neutral-600 mt-2">
+        <h1 className="font-serif text-2xl font-semibold text-foreground">{itinerary.trip_name}</h1>
+        <p className="mt-2 text-muted-foreground">
           {itinerary.trip_start_date && itinerary.trip_end_date
             ? `${new Date(itinerary.trip_start_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} – ${new Date(itinerary.trip_end_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
             : "Dates TBD"}
           {(itinerary.destinations ?? []).length > 0 && ` · ${itinerary.destinations.join(", ")}`}
         </p>
-        {travelerCount > 0 && <p className="text-neutral-500 text-sm mt-1">{travelerCount} traveler{travelerCount !== 1 ? "s" : ""}</p>}
+        {travelerCount > 0 && (
+          <p className="mt-1 text-sm text-muted-foreground">
+            {travelerCount} traveler{travelerCount !== 1 ? "s" : ""}
+          </p>
+        )}
 
-        <hr className="border-t border-neutral-200 my-8" />
+        <hr className="my-8 border-t border-border" />
 
         {days.map((day) => (
           <section key={day.day_number} className="mb-10">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 border-b border-neutral-200 pb-2 mb-4">
+            <h2 className="mb-4 border-b border-border pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Day {day.day_number} — {formatDayDate(day.date)} {day.location && `· ${day.location}`}
             </h2>
             <ul className="space-y-4">
               {(day.events ?? []).map((ev) => (
                 <li key={ev.id} className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <span className="text-neutral-400 text-sm font-mono">{ev.start_time ?? "—"}</span>
-                    <span className="mx-2 text-neutral-300">·</span>
-                    <span className="text-neutral-900">{ev.title}</span>
+                    <span className="font-mono text-sm text-muted-foreground">{ev.start_time ?? "—"}</span>
+                    <span className="mx-2 text-muted-foreground/40">·</span>
+                    <span className="text-foreground">{ev.title}</span>
                   </div>
                   <div className="shrink-0 text-right">
                     {ev.vic_price != null && ev.vic_price > 0 ? (
-                      <span className="text-neutral-900 font-medium">€{ev.vic_price.toLocaleString()}</span>
+                      <span className="font-medium text-foreground">€{ev.vic_price.toLocaleString()}</span>
                     ) : ev.vic_price === 0 ? (
-                      <span className="text-neutral-400 text-sm">included</span>
+                      <span className="text-sm text-muted-foreground">included</span>
                     ) : null}
                   </div>
                 </li>
@@ -108,28 +112,30 @@ export default function VICProposalModal({ open, onClose, itinerary, onCopyLink,
           </section>
         ))}
 
-        <hr className="border-t border-neutral-200 my-8" />
+        <hr className="my-8 border-t border-border" />
 
         <section>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 border-b border-neutral-200 pb-2 mb-4">Trip Summary</h2>
-          <div className="flex justify-between text-neutral-900 font-medium">
+          <h2 className="mb-4 border-b border-border pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Trip Summary
+          </h2>
+          <div className="flex justify-between font-medium text-foreground">
             <span>Total</span>
             <span>€{totalVic.toLocaleString()}</span>
           </div>
           {travelerCount > 1 && (
-            <div className="flex justify-between text-neutral-600 text-sm mt-1">
+            <div className="mt-1 flex justify-between text-sm text-muted-foreground">
               <span>Per person</span>
               <span>€{perPerson.toLocaleString()}</span>
             </div>
           )}
         </section>
 
-        <hr className="border-t border-neutral-200 my-8" />
+        <hr className="my-8 border-t border-border" />
 
-        <p className="text-neutral-500 text-sm">Prepared with care by</p>
-        <p className="text-neutral-900 font-medium">{itinerary.primary_advisor_name ?? "Your advisor"}</p>
-        <p className="text-neutral-600 text-sm">TravelLustre</p>
-        <p className="text-neutral-500 text-sm">marie@travellustre.com</p>
+        <p className="text-sm text-muted-foreground">Prepared with care by</p>
+        <p className="font-medium text-foreground">{itinerary.primary_advisor_name ?? "Your advisor"}</p>
+        <p className="text-sm text-muted-foreground">TravelLustre</p>
+        <p className="text-sm text-muted-foreground">marie@travellustre.com</p>
       </div>
     </div>
   );

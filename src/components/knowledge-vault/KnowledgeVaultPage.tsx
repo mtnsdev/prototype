@@ -756,13 +756,13 @@ export default function KnowledgeVaultPage() {
                 <div
                   className={cn(
                     "relative w-7 h-4 rounded-full transition-colors shrink-0",
-                    showAllPrivateDocs ? "bg-blue-500/20" : "bg-white/[0.06]"
+                    showAllPrivateDocs ? "bg-[var(--muted-info-bg)]" : "bg-white/[0.06]"
                   )}
                 >
                   <div
                     className={cn(
                       "absolute top-0.5 w-3 h-3 rounded-full transition-transform",
-                      showAllPrivateDocs ? "translate-x-3.5 bg-blue-400" : "translate-x-0.5 bg-muted-foreground/40"
+                      showAllPrivateDocs ? "translate-x-3.5 bg-[var(--color-info)]" : "translate-x-0.5 bg-muted-foreground/40"
                     )}
                   />
                 </div>

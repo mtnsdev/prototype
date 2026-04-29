@@ -6,8 +6,6 @@ import type { Restaurant } from "@/data/destinations";
 import { cn } from "@/lib/utils";
 import { destMuted } from "./destinationStyles";
 import { stableItemId } from "@/lib/stableDestinationIds";
-import { EndorsementBadge } from "@/components/destinations/shared/EndorsementBadge";
-import { FreshnessIndicator } from "@/components/destinations/shared/FreshnessIndicator";
 import { logDestinationEvent } from "@/lib/destinationAnalytics";
 
 type Props = {
@@ -99,10 +97,6 @@ export function RestaurantSection({ byRegion, destinationSlug, sectionId }: Prop
                     <span className="rounded border border-border bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                       Unavailable
                     </span>
-                  ) : null}
-                  <FreshnessIndicator tone={item.freshnessTone} />
-                  {item.endorsementCount != null && item.endorsementCount > 0 ? (
-                    <EndorsementBadge count={item.endorsementCount} />
                   ) : null}
                 </div>
                 {item.note ? <p className={cn("mt-0.5 text-xs", destMuted)}>{item.note}</p> : null}

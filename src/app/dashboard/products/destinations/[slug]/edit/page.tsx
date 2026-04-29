@@ -1,25 +1,11 @@
-import type { Metadata } from "next";
-import { DestinationEditorResolve } from "@/components/destinations/DestinationSlugRoutes";
-import { getDestinationBySlug } from "@/data/destinations";
+import { redirect } from "next/navigation";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
-  const { slug } = await params;
-  const d = getDestinationBySlug(slug);
-  if (!d) return { title: "Edit destination" };
-  return {
-    title: `Edit ${d.name} · Destinations`,
-  };
-}
-
-export default async function DestinationEditPage({
+/** Editing is inline on the destination page — keep this route as a stable redirect for old links. */
+export default async function DestinationEditRedirectPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  return <DestinationEditorResolve slug={slug} />;
+  redirect(`/dashboard/products/destinations/${slug}`);
 }

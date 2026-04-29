@@ -23,16 +23,13 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
-import {
-  type Destination,
-  type DestinationDocument,
-  type EditorProductSlot,
-  type EditorTabSection,
-} from "@/data/destinations";
+import { type Destination, type EditorProductSlot, type EditorTabSection } from "@/data/destinations";
 import {
   createEditorSectionFromPreset,
   DEFAULT_NEW_SECTION_PRODUCT_SLOT,
+  editorProductSlotLabel,
   ensureEditorWorkspace,
+  workspaceProductSlotsUsedByOtherRows,
   type EditorSectionPresetId,
 } from "@/lib/destinationEditorTabs";
 import { Button } from "@/components/ui/button";
@@ -48,7 +45,9 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { CatalogSectionMultiPicker } from "@/components/destinations/editor/CatalogProductPicker";
+import { KnowledgeVaultSectionFilePicker } from "@/components/destinations/editor/KnowledgeVaultSectionFilePicker";
 import { applyDirectoryProductToDestination } from "@/lib/catalogProductMerge";
+import { useToast } from "@/contexts/ToastContext";
 
 const PRODUCT_SLOT_OPTIONS: { value: EditorProductSlot; label: string }[] = [
   { value: "dmc", label: "DMC partners" },
@@ -56,7 +55,6 @@ const PRODUCT_SLOT_OPTIONS: { value: EditorProductSlot; label: string }[] = [
   { value: "hotels", label: "Hotels" },
   { value: "yachts", label: "Yachts" },
   { value: "tourism", label: "Tourism" },
-  { value: "documents", label: "Documents (library)" },
 ];
 
 const inputAreaClass =
@@ -174,78 +172,6 @@ function InsertDropSlot({
   );
 }
 
-function SectionDocumentPicker({
-  documents,
-  value,
-  onChange,
-}: {
-  documents: DestinationDocument[];
-  value: number[] | undefined;
-  onChange: (next: number[] | undefined) => void;
-}) {
-  const raw = value;
-
-  const isIncluded = (i: number) => {
-    if (raw === undefined) return true;
-    return raw.includes(i);
-  };
-
-  const toggle = (index: number) => {
-    const nn = documents.length;
-    let documentIndices: number[] | undefined;
-
-    if (raw === undefined) {
-      const next = documents.map((_, j) => j).filter((j) => j !== index);
-      if (next.length === 0) documentIndices = [];
-      else if (next.length === nn) documentIndices = undefined;
-      else documentIndices = next;
-    } else if (raw.length === 0) {
-      documentIndices = [index];
-    } else {
-      const s = new Set(raw);
-      if (s.has(index)) s.delete(index);
-      else s.add(index);
-      const arr = [...s].sort((a, b) => a - b);
-      if (arr.length === 0) documentIndices = [];
-      else if (arr.length === nn) documentIndices = undefined;
-      else documentIndices = arr;
-    }
-    onChange(documentIndices);
-  };
-
-  if (documents.length === 0) {
-    return (
-      <p className="rounded-md border border-dashed border-border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
-        Upload files on this destination first, then pick which appear in this section.
-      </p>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      <p className="text-xs font-medium text-foreground">Files in this section</p>
-      <ul className="space-y-2">
-        {documents.map((doc, i) => (
-          <li key={`${doc.name}-${i}`}>
-            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-card/40 px-3 py-2">
-              <input
-                type="checkbox"
-                className="mt-1 size-4 shrink-0 rounded border border-input bg-inset"
-                checked={isIncluded(i)}
-                onChange={() => toggle(i)}
-              />
-              <span className="min-w-0 flex-1 text-sm text-foreground">
-                <span className="font-medium">{doc.name}</span>
-                <span className="ml-2 text-2xs uppercase text-muted-foreground">{doc.type}</span>
-              </span>
-            </label>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 function SortableEditorSection({
   section: sec,
   sectionIndex: si,
@@ -261,6 +187,13 @@ function SortableEditorSection({
   patchSection: (si: number, patch: Partial<EditorTabSection>) => void;
   patchSections: (fn: (sections: EditorTabSection[]) => void) => void;
 }) {
+  const toast = useToast();
+  const wsSections = ensureEditorWorkspace(draft).sections;
+  const slotsTakenElsewhere = useMemo(
+    () => workspaceProductSlotsUsedByOtherRows(wsSections, si),
+    [wsSections, si],
+  );
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: sec.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -321,32 +254,13 @@ function SortableEditorSection({
         </CardHeader>
 
         <CardContent className="space-y-5 px-3 py-4 sm:px-4">
-          <div className="space-y-1.5">
-            <Label htmlFor={`sec-txt-${sec.id}`} className="text-xs font-medium text-foreground">
-              Text
-            </Label>
-            <p className="text-2xs text-muted-foreground">Optional — add narrative, tips, or positioning copy.</p>
-            <textarea
-              id={`sec-txt-${sec.id}`}
-              className={inputAreaClass}
-              rows={5}
-              value={sec.textBody ?? ""}
-              onChange={(e) => {
-                const v = e.target.value;
-                patchSection(si, {
-                  textBody: v,
-                  includeText: v.trim().length > 0,
-                });
-              }}
-            />
-          </div>
-
           <div className="space-y-3 rounded-lg border border-border/60 bg-background/50 p-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-medium text-foreground">Catalog</Label>
               <p className="text-2xs text-muted-foreground">
                 Search the product directory — items merge into this destination and surface in the advisor guide when
-                this block lists them.
+                this block lists them. Destination narrative is edited on the destination page (description under the
+                hero).
               </p>
               <div className="space-y-1.5">
                 <Label htmlFor={`sec-slot-${sec.id}`} className="text-2xs text-muted-foreground">
@@ -354,17 +268,33 @@ function SortableEditorSection({
                 </Label>
                 <Select
                   value={sec.productSlot ?? DEFAULT_NEW_SECTION_PRODUCT_SLOT}
-                  onValueChange={(value) => patchSection(si, { productSlot: value as EditorProductSlot })}
+                  onValueChange={(value) => {
+                    const next = value as EditorProductSlot;
+                    const rows = ensureEditorWorkspace(draft).sections;
+                    if (workspaceProductSlotsUsedByOtherRows(rows, si).has(next)) {
+                      toast({
+                        title: "List already in use",
+                        description: `Another section already uses ${editorProductSlotLabel(next)}. Choose a different list or edit that section.`,
+                        tone: "destructive",
+                      });
+                      return;
+                    }
+                    patchSection(si, { productSlot: next });
+                  }}
                 >
                   <SelectTrigger id={`sec-slot-${sec.id}`} className="h-9 w-full max-w-md text-sm">
                     <SelectValue placeholder="Choose list" />
                   </SelectTrigger>
                   <SelectContent>
-                    {PRODUCT_SLOT_OPTIONS.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>
-                        {o.label}
-                      </SelectItem>
-                    ))}
+                    {PRODUCT_SLOT_OPTIONS.map((o) => {
+                      const locked =
+                        slotsTakenElsewhere.has(o.value) && sec.productSlot !== o.value;
+                      return (
+                        <SelectItem key={o.value} value={o.value} disabled={locked}>
+                          {o.label}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
@@ -380,6 +310,14 @@ function SortableEditorSection({
                     lastSlot = slot;
                   }
                   const w = structuredClone(ensureEditorWorkspace(d));
+                  if (lastSlot && workspaceProductSlotsUsedByOtherRows(w.sections, si).has(lastSlot)) {
+                    toast({
+                      title: "List already in use",
+                      description: `Another section already uses ${editorProductSlotLabel(lastSlot)}.`,
+                      tone: "destructive",
+                    });
+                    return d0;
+                  }
                   const cur = w.sections[si];
                   if (cur) {
                     w.sections[si] = {
@@ -394,31 +332,23 @@ function SortableEditorSection({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-foreground">Attachments</Label>
-            <p className="text-2xs text-muted-foreground">
-              Choose which uploaded destination files appear with this section (add files to the destination first).
-            </p>
-            <SectionDocumentPicker
-              documents={draft.documents}
-              value={sec.documentIndices}
-              onChange={(documentIndices) => {
-                const nDocs = draft.documents.length;
-                const hasSelection = (() => {
-                  if (documentIndices === undefined) return nDocs > 0;
-                  return documentIndices.length > 0;
-                })();
-                patchSection(si, { documentIndices, includeDocuments: hasSelection });
-              }}
-            />
-          </div>
+          <KnowledgeVaultSectionFilePicker
+            value={sec.sectionFiles ?? []}
+            onChange={(sectionFiles) => {
+              patchSection(si, {
+                sectionFiles,
+                includeDocuments: sectionFiles.length > 0,
+                ...(sectionFiles.length > 0 ? { documentIndices: undefined } : {}),
+              });
+            }}
+          />
         </CardContent>
       </Card>
     </div>
   );
 }
 
-type BuildEditorContextValue = {
+export type BuildEditorContextValue = {
   draft: Destination;
   setDraft: Dispatch<SetStateAction<Destination>>;
   paletteDragging: boolean;
@@ -435,15 +365,23 @@ function useBuildEditor() {
   return v;
 }
 
+/** Safe for optional admin chrome on the destination page (returns null outside provider). */
+export function useBuildEditorOptional(): BuildEditorContextValue | null {
+  return useContext(BuildEditorContext);
+}
+
 /** Wraps sidebar palette + main guide; drag-and-drop connects both. */
 export function BuildEditorProvider({
   draft,
   setDraft,
   children,
+  /** When false, only React context is provided (no {@link DndContext}) — use for inline destination editing. */
+  enableDndShell = true,
 }: {
   draft: Destination;
   setDraft: Dispatch<SetStateAction<Destination>>;
   children: ReactNode;
+  enableDndShell?: boolean;
 }) {
   const [paletteDragging, setPaletteDragging] = useState(false);
   const [dragPaletteId, setDragPaletteId] = useState<string | null>(null);
@@ -532,6 +470,10 @@ export function BuildEditorProvider({
   );
 
   const dragOverlayItem = dragPaletteId ? PALETTE.find((p) => p.id === dragPaletteId) : undefined;
+
+  if (!enableDndShell) {
+    return <BuildEditorContext.Provider value={ctx}>{children}</BuildEditorContext.Provider>;
+  }
 
   return (
     <BuildEditorContext.Provider value={ctx}>

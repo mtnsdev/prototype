@@ -245,7 +245,9 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
                   onChange={(e) => setTripEndDate(e.target.value)}
                   className="mt-1 bg-white/5 border-input text-foreground"
                 />
-                {!endDateValid && <p className="text-xs text-red-400 mt-0.5">End date must be after start date.</p>}
+                {!endDateValid && (
+                  <p className="text-xs text-[var(--muted-error-text)] mt-0.5">End date must be after start date.</p>
+                )}
               </div>
             </div>
             <div>
@@ -270,7 +272,11 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
                       className="text-xs px-2 py-0.5 rounded bg-white/10 text-foreground flex items-center gap-1"
                     >
                       {d}
-                      <button type="button" onClick={() => setDestinations((prev) => prev.filter((x) => x !== d))} className="hover:text-red-400">
+                      <button
+                        type="button"
+                        onClick={() => setDestinations((prev) => prev.filter((x) => x !== d))}
+                        className="hover:text-[var(--muted-error-text)]"
+                      >
                         ×
                       </button>
                     </span>
@@ -327,7 +333,11 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
                       className="text-xs px-2 py-0.5 rounded bg-white/10 text-foreground flex items-center gap-1"
                     >
                       {t}
-                      <button type="button" onClick={() => setTags((prev) => prev.filter((x) => x !== t))} className="hover:text-red-400">
+                      <button
+                        type="button"
+                        onClick={() => setTags((prev) => prev.filter((x) => x !== t))}
+                        className="hover:text-[var(--muted-error-text)]"
+                      >
                         ×
                       </button>
                     </span>
@@ -412,7 +422,7 @@ export default function CreateItineraryModal({ open, onClose, onCreated, prefill
           </div>
         )}
 
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {error && <p className="text-sm text-[var(--muted-error-text)]">{error}</p>}
 
         <DialogFooter className="gap-2 flex-wrap">
           {step > 1 ? (

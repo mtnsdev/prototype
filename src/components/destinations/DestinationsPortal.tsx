@@ -9,7 +9,9 @@ import {
   type CatalogSegment,
 } from "@/components/products/productDirectoryCatalogSegments";
 import { useUser } from "@/contexts/UserContext";
-import { listDestinationSummaries } from "@/data/destinations";
+import { createStubDestination, getDestinationBySlug, listDestinationSummaries } from "@/data/destinations";
+import { loadPublishedDestination } from "@/lib/destinationLocalEdits";
+import { countDestinationVirtualSections } from "@/lib/destinationSectionModel";
 import {
   buildMergedDestinationSummaries,
   DESTINATION_STORAGE_EVENT,
@@ -48,6 +50,20 @@ export function DestinationsPortal() {
         d.slug.includes(s.replace(/\s+/g, "-")),
     );
   }, [q, summaries]);
+
+  const filteredWithSections = useMemo(
+    () =>
+      filtered.map((s) => {
+        const full =
+          getDestinationBySlug(s.slug) ??
+          loadPublishedDestination(s.slug, createStubDestination(s.slug, s.name, s.tagline));
+        return {
+          ...s,
+          sectionCount: countDestinationVirtualSections(full),
+        };
+      }),
+    [filtered],
+  );
 
   const hasQuery = q.trim().length > 0;
 
@@ -120,20 +136,20 @@ export function DestinationsPortal() {
         )}
       >
         <h1 className="sr-only">Destinations</h1>
-        {filtered.length > 0 ? (
+        {filteredWithSections.length > 0 ? (
           <div
             className={cn(
               "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 view-transition-active",
               "xl:grid-cols-4",
             )}
           >
-            {filtered.map((s) => (
+            {filteredWithSections.map((s) => (
               <DestinationCard key={s.slug} summary={s} highlightQuery={q.trim()} />
             ))}
           </div>
         ) : null}
 
-        {filtered.length === 0 ? (
+        {filteredWithSections.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-foreground/[0.03] px-6 py-12 text-center">
             <p className="text-compact font-medium text-foreground">
               {hasQuery ? "No destinations match your search" : "No destinations yet"}

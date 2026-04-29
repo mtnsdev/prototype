@@ -135,22 +135,25 @@ function AccessLevelBadge({ level }: { level?: string }) {
         public: {
             label: "Public",
             icon: <Globe size={10} />,
-            className: "bg-green-500/15 text-green-400 border-green-500/25",
+            className:
+                "bg-[var(--muted-success-bg)] text-[var(--muted-success-text)] border-[var(--muted-success-border)]",
         },
         admin_only: {
             label: "Admin only",
             icon: <Lock size={10} />,
-            className: "bg-amber-500/15 text-[var(--color-warning)] border-amber-500/25",
+            className:
+                "bg-[var(--muted-warning-bg)] text-[var(--muted-warning-text)] border-[var(--muted-warning-border)]",
         },
         user_specific: {
             label: "Restricted",
             icon: <Shield size={10} />,
-            className: "bg-blue-500/15 text-blue-400 border-blue-500/25",
+            className: "bg-[var(--muted-info-bg)] text-[var(--muted-info-text)] border-[var(--muted-info-border)]",
         },
         role_restricted: {
             label: "Role restricted",
             icon: <Shield size={10} />,
-            className: "bg-purple-500/15 text-purple-400 border-purple-500/25",
+            className:
+                "bg-[var(--muted-accent-bg)] text-[var(--muted-accent-text)] border-[var(--muted-accent-border)]",
         },
     };
 
@@ -282,7 +285,7 @@ function DriveTreeNodeItem({
 
                 {/* Sync status indicator */}
                 {node.file && !isFolder && node.file.index_status === "pending" && (
-                    <span className="text-2xs px-1.5 py-0.5 rounded bg-amber-500/15 text-[var(--color-warning)] border border-amber-500/25">
+                    <span className="rounded border border-[var(--muted-warning-border)] bg-[var(--muted-warning-bg)] px-1.5 py-0.5 text-2xs text-[var(--muted-warning-text)]">
                         Indexing…
                     </span>
                 )}

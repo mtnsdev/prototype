@@ -9,22 +9,24 @@ import { AlertTriangle, ChevronDown, ChevronUp, Database, Globe, Mail, Sparkles,
 
 /** Icon + label for each source type */
 const SOURCE_META: Record<string, { icon: typeof Database; label: string; color: string }> = {
-  manual:   { icon: User,     label: "Manual entry",   color: "text-blue-400" },
-  axus:     { icon: Database,  label: "Axus",           color: "text-emerald-400" },
-  virtuoso: { icon: Globe,     label: "Virtuoso",       color: "text-purple-400" },
-  acuity:   { icon: Sparkles,  label: "Acuity AI",      color: "text-amber-400" },
-  email:    { icon: Mail,      label: "Email extract",  color: "text-cyan-400" },
-  tripsuite:{ icon: Ship,      label: "TripSuite",      color: "text-rose-400" },
-  import:   { icon: Database,  label: "CSV import",     color: "text-muted-foreground" },
+  manual: { icon: User, label: "Manual entry", color: "text-[var(--muted-info-text)]" },
+  axus: { icon: Database, label: "Axus", color: "text-[var(--muted-success-text)]" },
+  virtuoso: { icon: Globe, label: "Virtuoso", color: "text-[var(--muted-accent-text)]" },
+  acuity: { icon: Sparkles, label: "Acuity AI", color: "text-[var(--muted-warning-text)]" },
+  email: { icon: Mail, label: "Email extract", color: "text-[var(--muted-info-text)]" },
+  tripsuite: { icon: Ship, label: "TripSuite", color: "text-[var(--muted-error-text)]" },
+  import: { icon: Database, label: "CSV import", color: "text-muted-foreground" },
 };
 
 function ConfidenceBadge({ confidence }: { confidence?: number }) {
   if (confidence == null) return null;
   const pct = Math.round(confidence * 100);
   const color =
-    pct >= 80 ? "text-emerald-400 bg-emerald-400/10" :
-    pct >= 50 ? "text-amber-400 bg-amber-400/10" :
-               "text-red-400 bg-red-400/10";
+    pct >= 80
+      ? "bg-[var(--muted-success-bg)] text-[var(--muted-success-text)]"
+      : pct >= 50
+        ? "bg-[var(--muted-warning-bg)] text-[var(--muted-warning-text)]"
+        : "bg-[var(--muted-error-bg)] text-[var(--muted-error-text)]";
   return (
     <span className={cn("inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-2xs font-medium", color)}>
       {pct}% confidence

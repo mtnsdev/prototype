@@ -16,18 +16,18 @@ function AccessDeniedContent() {
                     icon: UserX,
                     title: "Account Disabled",
                     description: "Your account has been disabled by an administrator. If you believe this is a mistake, please contact your administrator.",
-                    iconColor: "text-red-400",
-                    bgColor: "from-red-500/20 to-red-600/10",
-                    borderColor: "border-red-500/20",
+                    iconColor: "text-[var(--muted-error-text)]",
+                    bgColor: "from-[var(--muted-error-bg)] to-[var(--muted-error-bg)]/40",
+                    borderColor: "border-[var(--muted-error-border)]",
                 };
             case "session_expired":
                 return {
                     icon: Clock,
                     title: "Session Expired",
                     description: "Your session has expired. Please sign in again to continue.",
-                    iconColor: "text-[var(--color-warning)]",
-                    bgColor: "from-amber-500/20 to-amber-600/10",
-                    borderColor: "border-amber-500/20",
+                    iconColor: "text-[var(--muted-warning-text)]",
+                    bgColor: "from-[var(--muted-warning-bg)] to-[var(--muted-warning-bg)]/40",
+                    borderColor: "border-[var(--muted-warning-border)]",
                 };
             default:
                 return {
@@ -88,7 +88,7 @@ function AccessDeniedContent() {
                 </div>
 
                 {/* Footer */}
-                <p className="text-center text-sm text-[rgba(245,245,245,0.3)] mt-8">
+                <p className="text-center text-sm text-muted-foreground/45 mt-8">
                     This is an invite-only application. Access is restricted to authorized users.
                 </p>
             </div>

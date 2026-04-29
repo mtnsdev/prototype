@@ -12,11 +12,15 @@ import { IS_PREVIEW_MODE } from "@/config/preview";
 import { DirectoryRoleToggle } from "@/components/products/DirectoryRoleToggle";
 import { resetPrototypeClientStorage } from "@/lib/prototypeSessionReset";
 import { PostOnboardingIntegrationNudge } from "@/components/dashboard/PostOnboardingIntegrationNudge";
+import { useUser } from "@/contexts/UserContext";
+import { workspaceDisplayName } from "@/lib/workspaceDisplay";
 
 export default function DashboardShellChrome() {
+  const { user } = useUser();
   const search = useGlobalSearchOptional();
   const notificationPanel = useNotificationPanelOptional();
   const unread = notificationPanel?.unreadCount ?? 0;
+  const workspaceLabel = workspaceDisplayName(user?.agency_id);
 
   const handleRestartPrototype = useCallback(() => {
     resetPrototypeClientStorage();
@@ -42,7 +46,7 @@ export default function DashboardShellChrome() {
             ) : null}
           </div>
           <p className="truncate text-2xs text-muted-foreground/75" title="Active workspace">
-            Travel Lustre
+            {workspaceLabel}
           </p>
         </div>
 

@@ -162,21 +162,21 @@ export default function EmailIngestionPage() {
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background text-foreground">
       <header className="shrink-0 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between px-6 py-4 border-b border-border">
         <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-semibold text-white">Email Ingestion</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Email Ingestion</h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-xl">
             Forward emails to your agency address. Content and attachments land in the Knowledge Vault.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3 shrink-0">
           <div className="flex items-center gap-2 bg-foreground/[0.03] rounded-lg px-4 py-2 border border-white/[0.04]">
-            <Mail className="w-4 h-4 text-sky-400 shrink-0" />
+            <Mail className="h-4 w-4 shrink-0 text-[var(--muted-info-text)]" />
             <code className="text-sm text-foreground/88 truncate max-w-[min(100vw-8rem,22rem)]">
               {AGENCY_EMAIL_INGEST_ADDRESS}
             </code>
             <button
               type="button"
               onClick={copyAddress}
-              className="text-xs text-blue-400/50 hover:text-blue-400/70 ml-2 shrink-0"
+              className="ml-2 shrink-0 text-xs text-[var(--muted-info-text)]/70 hover:text-[var(--muted-info-text)]"
             >
               Copy
             </button>
@@ -190,7 +190,7 @@ export default function EmailIngestionPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div className="bg-foreground/[0.03] border border-white/[0.04] rounded-xl p-4">
               <span className="text-2xs text-muted-foreground uppercase tracking-wider">Total Emails</span>
-              <div className="text-2xl font-semibold text-white mt-1">{TOTAL_EMAILS_DEMO}</div>
+              <div className="mt-1 text-2xl font-semibold text-foreground">{TOTAL_EMAILS_DEMO}</div>
             </div>
             <div className="bg-foreground/[0.03] border border-white/[0.04] rounded-xl p-4">
               <span className="text-2xs text-muted-foreground uppercase tracking-wider">Unprocessed</span>
@@ -198,7 +198,7 @@ export default function EmailIngestionPage() {
             </div>
             <div className="bg-foreground/[0.03] border border-white/[0.04] rounded-xl p-4">
               <span className="text-2xs text-muted-foreground uppercase tracking-wider">Attachments Indexed</span>
-              <div className="text-2xl font-semibold text-emerald-400 mt-1">{ATTACHMENTS_INDEXED_DEMO}</div>
+              <div className="mt-1 text-2xl font-semibold text-[var(--muted-success-text)]">{ATTACHMENTS_INDEXED_DEMO}</div>
             </div>
           </div>
 
@@ -251,13 +251,13 @@ export default function EmailIngestionPage() {
                       className={cn(
                         listTbodyRowClass,
                         "cursor-pointer",
-                        email.status === "unprocessed" && "bg-amber-500/[0.02]"
+                        email.status === "unprocessed" && "bg-[var(--muted-warning-bg)]/40"
                       )}
                     >
                       <td className="py-3 pl-4">
                         <div className="flex items-center gap-2">
                           {email.status === "unprocessed" && (
-                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                            <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--muted-warning-text)]/70" />
                           )}
                           <span className="text-sm text-foreground truncate max-w-[300px]">{email.subject}</span>
                           {email.attachments.length > 0 && (
@@ -380,13 +380,13 @@ function EmailDetailBody({
   return (
     <>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-medium text-white">Email Details</h2>
+        <h2 className="text-lg font-medium text-foreground">Email Details</h2>
         <button type="button" onClick={onClose} className="p-1 rounded-lg hover:bg-foreground/[0.06]" aria-label="Close">
           <X className="w-4 h-4 text-muted-foreground/90" />
         </button>
       </div>
 
-      <h3 className="text-base text-white mb-1">{email.subject}</h3>
+      <h3 className="mb-1 text-base text-foreground">{email.subject}</h3>
       <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-4">
         <span>{email.senderName}</span>
         <span>·</span>
@@ -468,7 +468,7 @@ function EmailDetailBody({
         <button
           type="button"
           onClick={onMarkReviewed}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-sm text-emerald-400 mb-4"
+          className="mb-4 flex items-center gap-1.5 rounded-lg border border-[var(--muted-success-border)] bg-[var(--muted-success-bg)] px-3 py-1.5 text-sm text-[var(--muted-success-text)]"
         >
           <Check className="w-3.5 h-3.5" />
           Mark as reviewed
@@ -495,7 +495,7 @@ function EmailDetailBody({
               >
                 <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <span className="text-sm text-white truncate block">{att.filename}</span>
+                  <span className="block truncate text-sm text-foreground">{att.filename}</span>
                   <span className="text-2xs text-muted-foreground">
                     {formatFileSize(att.size)} · {mimeToLabel(att.mimeType)}
                   </span>
@@ -510,10 +510,10 @@ function EmailDetailBody({
       <div className="mt-6 pt-4 border-t border-white/[0.04]">
         <span className="text-2xs text-muted-foreground/70 uppercase tracking-wider">Metadata</span>
         {email.forwarder_departed ? (
-          <div className="mt-2 mb-2 flex items-start gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/[0.06] px-3 py-2 text-2xs text-amber-100/90">
-            <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[var(--color-warning)]/90" aria-hidden />
+          <div className="mb-2 mt-2 flex items-start gap-1.5 rounded-lg border border-[var(--muted-warning-border)] bg-[var(--muted-warning-bg)] px-3 py-2 text-2xs text-[var(--muted-warning-text)]/95">
+            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--muted-warning-text)]" aria-hidden />
             <span>
-              Forwarder <span className="font-medium text-amber-50">{email.forwardedByName}</span> no longer has an
+              Forwarder <span className="font-medium text-[var(--muted-warning-text)]">{email.forwardedByName}</span> no longer has an
               account. Vault access and retention follow the same rules as other leaver content; confirm attachment access
               with an admin if unsure.
             </span>

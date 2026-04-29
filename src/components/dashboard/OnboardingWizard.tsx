@@ -200,7 +200,6 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               </div>
             ) : (
               <>
-                {/* TODO: wire OAuth */}
                 <Button disabled className="w-full opacity-60">Coming soon</Button>
                 <button type="button" onClick={handleSkipSource} className="mt-2 text-compact text-muted-foreground/75 hover:text-foreground underline">
                   Skip for now

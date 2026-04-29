@@ -84,13 +84,39 @@ export function regroupDestinationCatalogFromFlat(items: DestinationCatalogItem[
  * Canonical catalog bundles for section rendering — derived from the unified flat list so there is one
  * conceptual pipeline for all product-backed rows.
  */
+function byNameAsc<T extends { name: string }>(a: T, b: T): number {
+  return a.name.localeCompare(b.name);
+}
+
+function sortRestaurantMap(m: Record<string, Restaurant[]>): Record<string, Restaurant[]> {
+  const out: Record<string, Restaurant[]> = {};
+  for (const [k, list] of Object.entries(m)) {
+    out[k] = [...list].sort(byNameAsc);
+  }
+  return out;
+}
+
+function sortHotelMap(m: Record<string, Hotel[]>): Record<string, Hotel[]> {
+  const out: Record<string, Hotel[]> = {};
+  for (const [k, list] of Object.entries(m)) {
+    out[k] = [...list].sort(byNameAsc);
+  }
+  return out;
+}
+
 export function getDestinationCatalogBundles(d: Destination): {
   dmcPartners: DMCPartner[];
   yachtCompanies: YachtCompany[];
   restaurants: Record<string, Restaurant[]>;
   hotels: Record<string, Hotel[]>;
 } {
-  return regroupDestinationCatalogFromFlat(flattenDestinationCatalogProducts(d));
+  const raw = regroupDestinationCatalogFromFlat(flattenDestinationCatalogProducts(d));
+  return {
+    dmcPartners: [...raw.dmcPartners].sort(byNameAsc),
+    yachtCompanies: [...raw.yachtCompanies],
+    restaurants: sortRestaurantMap(raw.restaurants),
+    hotels: sortHotelMap(raw.hotels),
+  };
 }
 
 export function countDestinationCatalogProductRows(d: Destination): number {

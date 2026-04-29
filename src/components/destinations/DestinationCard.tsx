@@ -82,18 +82,9 @@ export function DestinationCard({ summary, highlightQuery = "" }: Props) {
             {highlightMatch(summary.tagline, highlightQuery)}
           </p>
           <p className="mt-2 text-[8px] leading-relaxed text-muted-foreground">
-            <span className="tabular-nums font-medium text-foreground/90">{summary.totalItemCount}</span> curated items
+            <span className="tabular-nums font-medium text-foreground/90">{summary.sectionCount ?? 0}</span> sections
             <span className="mx-1 text-muted-foreground/80">·</span>
-            <span className="tabular-nums">{summary.dmcCount}</span> DMC ·{" "}
-            <span className="tabular-nums">{summary.hotelCount}</span> hotels ·{" "}
-            <span className="tabular-nums">{summary.restaurantCount}</span> restaurants ·{" "}
-            <span className="tabular-nums">{summary.documentCount}</span> docs
-            {summary.tripReportCount > 0 ? (
-              <>
-                <span className="mx-1 text-muted-foreground/80">·</span>
-                <span className="tabular-nums">{summary.tripReportCount}</span> trip reports
-              </>
-            ) : null}
+            <span className="tabular-nums font-medium text-foreground/90">{summary.totalItemCount}</span> items
           </p>
           {summary.activityHint ? (
             <p className="mt-1.5 text-[8px] text-muted-foreground/90">{summary.activityHint}</p>

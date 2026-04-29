@@ -27,6 +27,7 @@ import UpcomingTripsWidget from "./widgets/UpcomingTripsWidget";
 import CalendarWidget from "./widgets/CalendarWidget";
 import RecentActivityWidget from "./widgets/RecentActivityWidget";
 import ClientIntelligenceWidget from "./widgets/ClientIntelligenceWidget";
+import IntelligenceEmbedWidget from "./widgets/IntelligenceEmbedWidget";
 import { cn } from "@/lib/utils";
 import {
     BRIEFING_USER_GRID_WIDGET_IDS,
@@ -96,6 +97,9 @@ function renderWidgetCore(
     staggerIndex: number,
     isAdmin: boolean,
 ): ReactElement | null {
+    if (w.content.type === "intelligence_embed") {
+        return <IntelligenceEmbedWidget variant={w.content.variant} />;
+    }
     switch (id) {
         case "w-client-intel":
             return (
