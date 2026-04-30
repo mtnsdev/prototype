@@ -19,6 +19,7 @@ import {
     BookOpen,
     BarChart3,
     Zap,
+    Palette,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -263,6 +264,14 @@ export default function Sidebar({
 
                 <div className="shrink-0 border-t border-border p-2.5 pt-2 space-y-1">
                     <NavLink
+                        href="/dashboard/design-system"
+                        collapsed={!showLabels}
+                        onNavigate={navClose}
+                        icon={<Palette size={18} />}
+                        label="Design system"
+                        active={pathname.startsWith("/dashboard/design-system")}
+                    />
+                    <NavLink
                         href="/dashboard/notifications"
                         collapsed={!showLabels}
                         onNavigate={navClose}
@@ -449,7 +458,7 @@ function NavLink({
             <span
                 className={cn(
                     "shrink-0 inline-flex items-center justify-center relative",
-                    active ? "text-white" : "text-muted-foreground"
+                    active ? "text-foreground" : "text-muted-foreground"
                 )}
             >
                 {icon}

@@ -1,42 +1,55 @@
 "use client";
 
 import { Search } from "lucide-react";
+import { APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS } from "@/lib/dashboardChrome";
+import { listToolbarChipFontClass } from "@/lib/list-ui";
 import { cn } from "@/lib/utils";
 
 /** Wrapper: primary row search — height matches `Button` `size="sm"` (`h-8`) in filter toolbars */
 export const catalogSearchFieldWrapperClass =
   "flex h-8 min-h-8 w-full min-w-0 items-center gap-2 rounded-xl border border-border bg-white/[0.03] px-3";
 
-export const catalogSearchInputClass =
-  "min-w-0 flex-1 h-full bg-transparent text-sm leading-tight text-foreground placeholder:text-muted-foreground/60 outline-none";
+export const catalogSearchInputClass = cn(
+  "min-w-0 flex-1 h-full bg-transparent leading-tight text-foreground placeholder:text-muted-foreground/60 outline-none",
+  listToolbarChipFontClass,
+);
 
 /** Inline / panel search (e.g. attach picker) — one step denser than primary */
 const compactSearchWrapperClass =
   "flex h-7 min-h-7 w-full min-w-0 items-center gap-1.5 rounded-lg border border-border bg-white/[0.03] px-2.5";
 
-const compactSearchInputClass =
-  "min-w-0 flex-1 h-full bg-transparent text-xs leading-tight text-foreground placeholder:text-muted-foreground/60 outline-none";
+const compactSearchInputClass = cn(
+  "min-w-0 flex-1 h-full bg-transparent leading-tight text-foreground placeholder:text-muted-foreground/60 outline-none",
+  listToolbarChipFontClass,
+);
 
 /** Shadcn SelectTrigger — use with cn(catalogSelectTriggerClass, "w-[…]") */
-export const catalogSelectTriggerClass =
-  "h-9 border-input bg-white/5 text-foreground shadow-none focus-visible:ring-1 focus-visible:ring-[#C9A96E]/35";
+export const catalogSelectTriggerClass = cn(
+  APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS,
+  "border-input bg-white/5 text-foreground shadow-none focus-visible:ring-1 focus-visible:ring-[#C9A96E]/35",
+  listToolbarChipFontClass,
+);
 
 /** Compact text/date inputs beside catalog selects */
-export const catalogCompactInputClass =
-  "h-9 rounded-md border border-input bg-white/5 px-3 text-sm text-foreground placeholder:text-muted-foreground/65";
+export const catalogCompactInputClass = cn(
+  "h-8 min-h-8 rounded-md border border-input bg-white/5 px-3 text-foreground placeholder:text-muted-foreground/65",
+  listToolbarChipFontClass,
+);
 
 /**
  * Product Directory filter row — buttons, SelectTrigger, and compact inputs.
  * Use with SelectTrigger `className={cn(directoryFilterSelectTriggerClass, "w-[…]")}`.
  */
 export const directoryFilterSelectTriggerClass = cn(
-  "flex w-fit min-w-0 items-center justify-between gap-2 rounded-lg border border-border bg-popover px-3 py-1.5 text-xs text-muted-foreground shadow-none outline-none transition-colors",
+  "flex w-fit min-w-0 items-center justify-between gap-2 rounded-lg border border-border bg-popover px-3 py-0 text-muted-foreground shadow-none outline-none transition-colors",
+  listToolbarChipFontClass,
+  APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS,
+  "!h-[30px] !min-h-[30px] data-[size=default]:!h-[30px] data-[size=sm]:!h-[30px]",
   "hover:border-border focus-visible:border-border focus-visible:!ring-1 focus-visible:ring-[#C9A96E]/40 focus-visible:!ring-offset-0",
   "dark:!bg-popover dark:hover:!bg-popover",
   "data-[placeholder]:!text-muted-foreground",
-  "data-[size=default]:!h-auto data-[size=default]:min-h-0 data-[size=sm]:!h-auto data-[size=sm]:min-h-0",
   "[&_svg]:!size-3 [&_svg]:shrink-0 [&_svg]:!text-muted-foreground/65 [&_svg]:!opacity-100",
-  "[&_[data-slot=select-value]]:line-clamp-1 [&_[data-slot=select-value]]:text-left [&_[data-slot=select-value]]:text-inherit"
+  "[&_[data-slot=select-value]]:line-clamp-1 [&_[data-slot=select-value]]:text-left [&_[data-slot=select-value]]:text-inherit",
 );
 
 export const directoryFilterSelectContentClass =
@@ -51,12 +64,17 @@ export const directoryFilterSelectTriggerActiveClass =
   "border-[rgba(201,169,110,0.20)] !bg-[rgba(201,169,110,0.08)] !text-brand-cta [&_[data-slot=select-value]]:!text-foreground";
 
 /** SelectItem styling for directory filter dropdowns (Product Directory popover rhythm). */
-export const directoryFilterSelectItemClass =
-  "py-2 pl-2 pr-8 text-xs text-muted-foreground focus:bg-white/[0.04] focus:text-foreground data-[highlighted]:bg-white/[0.04] data-[highlighted]:text-foreground data-[state=checked]:text-brand-cta [&_[data-slot=select-item-indicator]_svg]:size-3 [&_[data-slot=select-item-indicator]_svg]:text-brand-cta";
+export const directoryFilterSelectItemClass = cn(
+  "py-2 pl-2 pr-8 text-muted-foreground focus:bg-white/[0.04] focus:text-foreground data-[highlighted]:bg-white/[0.04] data-[highlighted]:text-foreground data-[state=checked]:text-brand-cta [&_[data-slot=select-item-indicator]_svg]:size-3 [&_[data-slot=select-item-indicator]_svg]:text-brand-cta",
+  listToolbarChipFontClass,
+);
 
 /** Text / date inputs in the directory-style filter row */
-export const directoryFilterTextInputClass =
-  "h-auto min-h-8 rounded-lg border border-border bg-popover px-2.5 py-1.5 text-xs text-foreground shadow-none transition-colors placeholder:text-muted-foreground/65 hover:border-border focus-visible:border-border focus-visible:!ring-1 focus-visible:ring-[#C9A96E]/40 focus-visible:!ring-offset-0 focus-visible:outline-none md:text-xs";
+export const directoryFilterTextInputClass = cn(
+  "rounded-lg border border-border bg-popover px-2.5 py-0 text-foreground shadow-none transition-colors placeholder:text-muted-foreground/65 hover:border-border focus-visible:border-border focus-visible:!ring-1 focus-visible:ring-[#C9A96E]/40 focus-visible:!ring-offset-0 focus-visible:outline-none",
+  listToolbarChipFontClass,
+  APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS,
+);
 
 type PageSearchFieldProps = {
   value: string;

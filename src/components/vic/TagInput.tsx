@@ -96,7 +96,7 @@ export default function TagInput({
             <li key={s}>
               <button
                 type="button"
-                className="w-full text-left px-3 py-1.5 text-sm text-[rgba(245,245,245,0.9)] hover:bg-white/10"
+                className="w-full px-3 py-1.5 text-left text-sm text-foreground hover:bg-muted focus:bg-muted focus:text-foreground"
                 onClick={() => addTag(s)}
               >
                 {s}

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CalendarRange, ChevronDown } from "lucide-react";
+import { APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS } from "@/lib/dashboardChrome";
+import { listToolbarChipFontClass } from "@/lib/list-ui";
 import { cn } from "@/lib/utils";
 import { directoryFilterTextInputClass } from "@/components/ui/page-search-field";
 
@@ -67,7 +69,9 @@ export default function ItineraryDateRangeDropdown({
         }
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          "flex max-w-[240px] min-w-0 items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-xs transition-colors",
+          APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS,
+          listToolbarChipFontClass,
+          "flex max-w-[240px] min-w-0 items-center gap-2 rounded-lg border px-3 py-0 text-left transition-colors",
           hasRange
             ? "border-brand-cta/20 bg-brand-cta/10 text-brand-cta"
             : "border-border bg-popover text-muted-foreground hover:border-border"
@@ -75,7 +79,7 @@ export default function ItineraryDateRangeDropdown({
       >
         <CalendarRange className="h-3 w-3 shrink-0 text-muted-foreground/65" aria-hidden />
         {!hasRange ? (
-          <span className="text-xs text-muted-foreground">Trip dates</span>
+          <span className="text-muted-foreground">Trip dates</span>
         ) : (
           <span className="min-w-0 flex-1 truncate text-foreground">{summary}</span>
         )}
@@ -92,7 +96,7 @@ export default function ItineraryDateRangeDropdown({
           </p>
           <div className="space-y-2">
             <label className="block">
-              <span className="mb-1 block text-2xs text-muted-foreground">Ends on or after</span>
+              <span className="mb-1 block text-compact text-muted-foreground">Ends on or after</span>
               <input
                 type="date"
                 value={dateFrom}
@@ -101,7 +105,7 @@ export default function ItineraryDateRangeDropdown({
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-2xs text-muted-foreground">Starts on or before</span>
+              <span className="mb-1 block text-compact text-muted-foreground">Starts on or before</span>
               <input
                 type="date"
                 value={dateTo}
@@ -113,7 +117,7 @@ export default function ItineraryDateRangeDropdown({
           {hasRange ? (
             <button
               type="button"
-              className="mt-3 w-full text-left text-2xs text-brand-cta transition-colors hover:text-brand-cta-hover hover:underline"
+              className="mt-3 w-full text-left text-compact text-brand-cta transition-colors hover:text-brand-cta-hover hover:underline"
               onClick={() => {
                 onDateFromChange("");
                 onDateToChange("");

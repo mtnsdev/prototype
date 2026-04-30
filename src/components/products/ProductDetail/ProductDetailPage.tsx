@@ -408,8 +408,8 @@ export default function ProductDetailPage({ productId }: Props) {
 
   if (isCatalogDirectoryProduct && !directoryProduct) {
     return (
-      <div className="min-h-screen bg-inset p-6 md:p-8">
-        <div className="mx-auto w-full max-w-[420px] p-6 text-muted-foreground">Loading catalog product…</div>
+      <div className="min-h-screen bg-background p-6 md:p-8">
+        <div className="mx-auto w-full max-w-4xl p-6 text-muted-foreground">Loading catalog product…</div>
       </div>
     );
   }
@@ -417,8 +417,8 @@ export default function ProductDetailPage({ productId }: Props) {
   if (directoryProduct) {
     const directoryProductForView = directoryProductView ?? directoryProduct;
     return (
-      <div className="min-h-screen bg-inset p-6 md:p-8">
-        <div className="mx-auto w-full max-w-[420px]">
+      <div className="min-h-screen bg-background p-6 md:p-8">
+        <div className="mx-auto w-full max-w-4xl">
           <ProductDirectoryDetailBody
             product={directoryProductForView}
             canViewCommissions={canViewCommissions}

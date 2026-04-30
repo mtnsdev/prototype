@@ -339,17 +339,7 @@ export default function VICPage() {
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background">
       <AppWindowHeader
-        eyebrow="Contacts"
         title="VICs"
-        subtitle={
-          activeTab === "mine"
-            ? hasActiveFilters
-              ? "Your contacts · results narrowed by search or filters"
-              : "Your contacts"
-            : hasActiveFilters
-              ? "Shared with you · results narrowed by search or filters"
-              : "Shared with you"
-        }
         actions={
           activeTab === "mine" ? (
             <Button type="button" variant="toolbarAccent" size="sm" onClick={openAdd} className="shrink-0">

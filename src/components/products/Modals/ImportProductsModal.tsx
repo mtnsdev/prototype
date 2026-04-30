@@ -190,12 +190,12 @@ export default function ImportProductsModal({ open, onClose, onImported }: Props
         {step === 4 && (
           <div className={cn(listSurfaceClass, listScrollClass, "overflow-hidden")}>
             <p className="px-3 pt-3 text-xs text-muted-foreground/75 mb-2">First 5 rows (validation errors would be highlighted here)</p>
-            <table className={cn(listTableClass(), "text-xs")}>
+            <table className={listTableClass()}>
               <tbody>
                 {previewRows.slice(0, 5).map((row, i) => (
                   <tr key={i} className={listTbodyRowClass}>
                     {row.map((cell, j) => (
-                      <td key={j} className={cn(listTdClass, "text-xs text-foreground max-w-[120px] truncate")}>
+                      <td key={j} className={cn(listTdClass, "text-foreground max-w-[120px] truncate")}>
                         {cell}
                       </td>
                     ))}

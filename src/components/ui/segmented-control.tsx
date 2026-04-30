@@ -1,5 +1,6 @@
 "use client";
 
+import { listToolbarChipFontClass } from "@/lib/list-ui";
 import { cn } from "@/lib/utils";
 
 export type SegmentedOption<T extends string = string> = { value: T; label: string };
@@ -10,7 +11,7 @@ type Props<T extends string> = {
   options: SegmentedOption<T>[];
   className?: string;
   /** Active segment style — `gold` matches Enable dark toolbar accent. */
-  activeTone?: "default" | "gold";
+  activeTone?: "default" | "gold" | "moss";
   /** Accessible label for the tablist */
   "aria-label"?: string;
 };
@@ -46,12 +47,15 @@ export function SegmentedControl<T extends string>({
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(o.value)}
             className={cn(
-              "relative rounded-lg px-3 py-1.5 text-xs font-medium transition-[color,background-color,box-shadow,border-color] duration-150",
+              "relative flex shrink-0 items-center justify-center whitespace-nowrap rounded-lg px-2.5 py-1 transition-[color,background-color,box-shadow,border-color] duration-150",
+              listToolbarChipFontClass,
               selected
                 ? activeTone === "gold"
                   ? "border border-[rgba(201,169,110,0.35)] bg-[rgba(201,169,110,0.12)] text-brand-cta shadow-sm ring-1 ring-[rgba(201,169,110,0.12)]"
+                  : activeTone === "moss"
+                  ? "border border-[rgba(58,89,56,0.30)] bg-[var(--surface-card)] text-[color:var(--brand-primary)] shadow-sm ring-1 ring-[rgba(58,89,56,0.10)]"
                   : "bg-background/90 text-foreground shadow-sm"
-                : "border border-transparent text-muted-foreground hover:text-foreground"
+                : "border border-transparent text-muted-foreground hover:bg-muted/40 hover:text-foreground"
             )}
           >
             {o.label}

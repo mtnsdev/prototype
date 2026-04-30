@@ -38,9 +38,9 @@ function BadgeIcon({ source }: { source: DataSource }) {
   if (source.source_type === DataSourceType.GoogleDrivePersonal)
     return <User size={10} className="text-[var(--muted-info-text)]" />;
   if (source.source_type === DataSourceType.IntranetDocuments)
-    return <FileText size={10} className="text-[rgba(245,245,245,0.85)]" />;
+    return <FileText size={10} className="text-[var(--muted-warning-text)]" />;
   if (source.source_type === DataSourceType.IntranetPages)
-    return <BookOpen size={10} className="text-[rgba(245,245,245,0.85)]" />;
+    return <BookOpen size={10} className="text-[var(--muted-accent-text)]" />;
   return null;
 }
 
@@ -114,7 +114,7 @@ export default function DataSourceCards({
             )}
           >
             <div className="flex items-center gap-2 mb-1">
-              <div className="relative w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-white/10 text-[rgba(245,245,245,0.9)]">
+              <div className="relative w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-muted text-foreground">
                 <Icon size={18} />
                 {badge && (
                   <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-md bg-background border border-white/15 flex items-center justify-center">
@@ -122,7 +122,7 @@ export default function DataSourceCards({
                   </span>
                 )}
               </div>
-              <span className="text-xs font-medium text-white line-clamp-2 leading-tight">{src.name}</span>
+              <span className="text-xs font-medium text-foreground line-clamp-2 leading-tight">{src.name}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span
@@ -176,10 +176,10 @@ export default function DataSourceCards({
         )}
       >
         <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-[rgba(245,245,245,0.9)]">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
             <Plus size={18} />
           </div>
-          <span className="text-xs font-medium leading-tight text-white">Connect source</span>
+          <span className="text-xs font-medium leading-tight text-foreground">Connect source</span>
         </div>
       </button>
     </div>

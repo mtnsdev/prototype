@@ -15,6 +15,11 @@ import {
 } from "lucide-react";
 import type { DirectoryAmenityTag, DirectoryCollectionOption, DirectoryProductCategory } from "@/types/product-directory";
 import type { DirectoryPriceTier, DirectoryTierLevel } from "@/components/products/productDirectoryDetailMeta";
+import {
+  APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS,
+  APP_FILTER_CHIP_ALIGNED_SEGMENT_ICON_CLASS,
+} from "@/lib/dashboardChrome";
+import { listToolbarChipFontClass } from "@/lib/list-ui";
 import { cn } from "@/lib/utils";
 import { FilterBar } from "@/components/ui/filter-bar";
 import {
@@ -48,7 +53,6 @@ import {
   DIRECTORY_TIER_FILTER_UI,
   type DirectoryProductSortOption,
 } from "./productDirectoryFilterConfig";
-import { DIRECTORY_PRODUCT_TYPE_CONFIG } from "./productDirectoryProductTypes";
 import { directoryCategoryLabel } from "./productDirectoryVisual";
 
 type Props = {
@@ -99,7 +103,7 @@ type Props = {
 
 function filterSectionLabel(className?: string) {
   return cn(
-    "text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80",
+    "text-compact font-semibold uppercase tracking-[0.18em] text-muted-foreground/80",
     className
   );
 }
@@ -224,8 +228,10 @@ export default function ProductDirectoryFilterBar({
     selectedPriceTiers.length > 0 ||
     sortByCommission;
 
-  const pillBtn =
-    "flex max-w-[min(100%,280px)] shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[9px] transition-colors";
+  const pillBtn = cn(
+    "flex max-w-[min(100%,280px)] shrink-0 items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
+    listToolbarChipFontClass,
+  );
 
   return (
     <>
@@ -249,16 +255,6 @@ export default function ProductDirectoryFilterBar({
                     >
                       &quot;{searchQuery.trim().slice(0, 24)}
                       {searchQuery.trim().length > 24 ? "…" : ""}&quot;
-                      <span className="text-muted-foreground">✕</span>
-                    </button>
-                  ) : null}
-                  {activeTypeFilters.length > 0 ? (
-                    <button
-                      type="button"
-                      onClick={onClearTypeFilters}
-                      className={cn(pillBtn, "bg-white/[0.04] text-muted-foreground hover:bg-foreground/[0.06]")}
-                    >
-                      {activeTypeFilters.map((id) => directoryCategoryLabel(id)).join(", ")}
                       <span className="text-muted-foreground">✕</span>
                     </button>
                   ) : null}
@@ -410,7 +406,7 @@ export default function ProductDirectoryFilterBar({
                   <button
                     type="button"
                     onClick={onClearAllFilters}
-                    className="shrink-0 px-1 text-[9px] text-muted-foreground transition-colors hover:text-foreground"
+                    className="shrink-0 px-1 text-compact text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Clear all
                   </button>
@@ -434,7 +430,9 @@ export default function ProductDirectoryFilterBar({
                 aria-label={`Sort products. Current: ${DIRECTORY_PRODUCT_SORT_OPTIONS.find((o) => o.id === sortBy)?.label ?? "Name A → Z"}`}
                 onClick={() => setSortOpen((o) => !o)}
                 className={cn(
-                  "flex h-9 max-w-[220px] min-w-0 items-center gap-2 rounded-lg border px-3 text-left text-xs transition-colors",
+                  APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS,
+                  listToolbarChipFontClass,
+                  "flex max-w-[220px] min-w-0 items-center gap-2 rounded-lg border px-3 py-0 text-left transition-colors",
                   sortBy !== DEFAULT_DIRECTORY_PRODUCT_SORT
                     ? "border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
                     : "border-border bg-popover text-muted-foreground hover:border-border"
@@ -460,7 +458,7 @@ export default function ProductDirectoryFilterBar({
                         setSortOpen(false);
                       }}
                       className={cn(
-                        "flex w-full items-center justify-between px-3 py-2.5 text-left text-xs transition-colors hover:bg-muted/40",
+                        "flex w-full items-center justify-between px-3 py-2.5 text-left text-compact transition-colors hover:bg-muted/40",
                         sortBy === option.id ? "text-brand-cta" : "text-muted-foreground"
                       )}
                     >
@@ -481,7 +479,8 @@ export default function ProductDirectoryFilterBar({
                 type="button"
                 title="Grid view"
                 className={cn(
-                  "rounded-md p-2 transition-colors",
+                  APP_FILTER_CHIP_ALIGNED_SEGMENT_ICON_CLASS,
+                  "transition-colors",
                   viewMode === "grid"
                     ? "bg-[rgba(201,169,110,0.12)] text-brand-cta"
                     : "text-muted-foreground hover:text-foreground"
@@ -494,7 +493,8 @@ export default function ProductDirectoryFilterBar({
                 type="button"
                 title="List view"
                 className={cn(
-                  "rounded-md p-2 transition-colors",
+                  APP_FILTER_CHIP_ALIGNED_SEGMENT_ICON_CLASS,
+                  "transition-colors",
                   viewMode === "list"
                     ? "bg-[rgba(201,169,110,0.12)] text-brand-cta"
                     : "text-muted-foreground hover:text-foreground"
@@ -507,7 +507,8 @@ export default function ProductDirectoryFilterBar({
                 type="button"
                 title="Map view"
                 className={cn(
-                  "rounded-md p-2 transition-colors",
+                  APP_FILTER_CHIP_ALIGNED_SEGMENT_ICON_CLASS,
+                  "transition-colors",
                   viewMode === "map"
                     ? "bg-[rgba(201,169,110,0.12)] text-brand-cta"
                     : "text-muted-foreground hover:text-foreground"
@@ -523,7 +524,9 @@ export default function ProductDirectoryFilterBar({
               variant="outline"
               size="sm"
               className={cn(
-                "h-9 gap-2 border-border",
+                APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS,
+                "!h-[30px] !min-h-[30px]",
+                "gap-2 border-border",
                 activeFacetCount > 0 && "border-[rgba(201,169,110,0.28)] bg-[rgba(201,169,110,0.06)] text-foreground"
               )}
               onClick={() => setFiltersOpen(true)}
@@ -532,7 +535,7 @@ export default function ProductDirectoryFilterBar({
               <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
               Filters
               {activeFacetCount > 0 ? (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-cta/20 px-1.5 text-[10px] font-semibold tabular-nums text-brand-cta">
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-cta/20 px-1.5 text-compact font-semibold tabular-nums text-brand-cta">
                   {activeFacetCount > 99 ? "99+" : activeFacetCount}
                 </span>
               ) : null}
@@ -542,7 +545,11 @@ export default function ProductDirectoryFilterBar({
               type="button"
               variant="toolbarAccent"
               size="sm"
-              className="h-9 shrink-0"
+              className={cn(
+                APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS,
+                "!h-[30px] !min-h-[30px]",
+                "shrink-0"
+              )}
               onClick={onAddProduct}
               title="Add a product. You can also save from chat or external search."
             >
@@ -554,7 +561,8 @@ export default function ProductDirectoryFilterBar({
               type="button"
               onClick={onBulkModeToggle}
               className={cn(
-                "flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs transition-colors",
+                APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS,
+                "flex items-center gap-1.5 rounded-lg border px-2.5 text-compact transition-colors",
                 bulkMode
                   ? "border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
                   : "border-border bg-popover text-muted-foreground hover:text-foreground"
@@ -564,7 +572,7 @@ export default function ProductDirectoryFilterBar({
               {bulkMode ? `${bulkSelectedCount} selected` : "Select"}
             </button>
 
-            <span className="text-2xs text-muted-foreground tabular-nums min-[900px]:border-l min-[900px]:border-border min-[900px]:pl-3">
+            <span className="text-compact text-muted-foreground tabular-nums min-[900px]:border-l min-[900px]:border-border min-[900px]:pl-3">
               {resultCount} product{resultCount !== 1 ? "s" : ""}
             </span>
           </div>
@@ -585,53 +593,6 @@ export default function ProductDirectoryFilterBar({
 
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-4">
             <div className="space-y-8">
-              <section className="space-y-3" aria-labelledby="pd-filter-type">
-                <h3 id="pd-filter-type" className={filterSectionLabel()}>
-                  Product type
-                </h3>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={onClearTypeFilters}
-                    className={cn(
-                      "flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-2xs whitespace-nowrap transition-colors",
-                      activeTypeFilters.length === 0
-                        ? "border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
-                        : "border-transparent text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    All
-                  </button>
-                  {DIRECTORY_PRODUCT_TYPE_CONFIG.map((type) => {
-                    const Icon = type.icon;
-                    const active = activeTypeFilters.includes(type.id);
-                    return (
-                      <button
-                        key={type.id}
-                        type="button"
-                        onClick={() => onToggleTypeFilter(type.id)}
-                        className={cn(
-                          "flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-2xs whitespace-nowrap transition-colors",
-                          active ? "border-solid" : "border-transparent text-muted-foreground hover:text-foreground"
-                        )}
-                        style={
-                          active
-                            ? {
-                                background: type.bg,
-                                color: type.color,
-                                borderColor: type.border,
-                              }
-                            : undefined
-                        }
-                      >
-                        <Icon className="h-3 w-3 shrink-0" />
-                        {type.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-
               <section className="space-y-2" aria-labelledby="pd-filter-location">
                 <h3 id="pd-filter-location" className={filterSectionLabel()}>
                   Location
@@ -696,12 +657,12 @@ export default function ProductDirectoryFilterBar({
 
               <section className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-card/40 px-3 py-3">
                 <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-                  <span className="text-xs text-muted-foreground">Planned opening</span>
+                  <span className="text-compact text-muted-foreground">Planned opening</span>
                   <ProductDirectoryFilterSwitch checked={hasPlannedOpening} onCheckedChange={onHasPlannedOpeningChange} />
                 </div>
                 {canViewCommissions ? (
                   <div className="flex min-w-0 flex-1 items-center justify-between gap-3 border-border min-[400px]:border-l min-[400px]:pl-4">
-                    <span className="text-xs text-muted-foreground">Active incentives</span>
+                    <span className="text-compact text-muted-foreground">Active incentives</span>
                     <ProductDirectoryFilterSwitch
                       checked={hasActiveIncentive}
                       onCheckedChange={onHasActiveIncentiveChange}

@@ -170,7 +170,7 @@ function AcuityProfileContent({ content }: { content: string }) {
   );
 
   return (
-    <div className="prose prose-invert prose-sm max-w-none text-[rgba(245,245,245,0.9)] [&_ul]:list-disc [&_ul]:pl-5 [&_li]:my-0.5 [&_p]:my-2">
+    <div className="prose prose-sm max-w-none text-foreground [&_ul]:list-disc [&_ul]:pl-5 [&_li]:my-0.5 [&_p]:my-2 [&_strong]:text-foreground">
       <ReactMarkdown components={components}>{processed}</ReactMarkdown>
     </div>
   );

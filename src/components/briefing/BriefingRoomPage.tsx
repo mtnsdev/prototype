@@ -161,16 +161,10 @@ export default function BriefingRoomPage({ desktopMode = false }: BriefingRoomPa
       <AppPageHeroHeader
         scrollRoot={scrollRoot}
         collapseOnScroll
-        eyebrow={desktopMode ? "Desktop" : "Briefing"}
         title={
           <>
             {getGreeting()}, {firstName}
           </>
-        }
-        subtitle={
-          desktopMode
-            ? "Widgets and recents on your workspace. Open apps from the dock below."
-            : "Priorities, calendar, and agency updates in one place."
         }
         belowSubtitle={
           !desktopMode ? (

@@ -78,15 +78,17 @@ export default function VICCard({ vic, onEdit, onDelete, onShare, canEdit, canDe
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link href={`/dashboard/vics/${vicId}`} className="text-[rgba(245,245,245,0.9)]">View</Link>
+              <Link href={`/dashboard/vics/${vicId}`} className="font-medium text-[var(--brand-primary)] hover:underline">
+                View
+              </Link>
             </DropdownMenuItem>
             {canEdit && (
-              <DropdownMenuItem onClick={onEdit} className="text-[rgba(245,245,245,0.9)]">
+              <DropdownMenuItem onClick={onEdit} className="text-foreground focus:text-foreground">
                 <Pencil size={14} className="mr-2" /> Edit
               </DropdownMenuItem>
             )}
             {canShare && onShare && (
-              <DropdownMenuItem onClick={onShare} className="text-[rgba(245,245,245,0.9)]">
+              <DropdownMenuItem onClick={onShare} className="text-foreground focus:text-foreground">
                 <Share2 size={14} className="mr-2" /> Share
               </DropdownMenuItem>
             )}
@@ -96,7 +98,7 @@ export default function VICCard({ vic, onEdit, onDelete, onShare, canEdit, canDe
               </DropdownMenuItem>
             )}
             {showRequestFullAccess && onRequestFullAccess && (
-              <DropdownMenuItem onClick={onRequestFullAccess} className="text-[rgba(245,245,245,0.9)]">
+              <DropdownMenuItem onClick={onRequestFullAccess} className="text-foreground focus:text-foreground">
                 Request Full Access
               </DropdownMenuItem>
             )}

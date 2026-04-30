@@ -12,7 +12,7 @@ import {
   listTdClass,
   listThCheckboxClass,
   listThClass,
-  listTbodyRowClass,
+  listTbodyRowStripedClass,
 } from "@/lib/list-ui";
 
 type Props = {
@@ -110,7 +110,7 @@ export default function VICListView({
           {isLoading && vics.length === 0 ? (
             <>
               {[1, 2, 3, 4, 5].map((i) => (
-                <tr key={i} className={listTbodyRowClass}>
+                <tr key={i} className={listTbodyRowStripedClass}>
                   <td className={listTdCheckboxClass}>
                     <div className="h-4 w-4 rounded bg-white/10 animate-pulse" />
                   </td>

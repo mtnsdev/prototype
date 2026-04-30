@@ -25,6 +25,7 @@ import {
 } from "@/lib/itinerariesUrl";
 import { AppPageHeroHeader } from "@/components/ui/app-page-hero-header";
 import { APP_PAGE_CONTENT_SHELL } from "@/lib/dashboardChrome";
+import { listToolbarChipFontClass } from "@/lib/list-ui";
 import { cn } from "@/lib/utils";
 import { PIPELINE_STAGE_LABEL_MAP, PIPELINE_STAGES } from "@/config/pipelineStages";
 import { ITINERARY_STATUS_BADGES } from "./statusConfig";
@@ -305,8 +306,10 @@ export default function ItinerariesPage() {
     return out;
   }, [itinerariesForStageCounts]);
 
-  const chipBtn =
-    "flex items-center gap-1 rounded-full border border-border/50 bg-muted/30 px-2 py-0.5 text-[9px] text-muted-foreground transition-colors hover:bg-muted/45";
+  const chipBtn = cn(
+    "flex items-center gap-1 rounded-full border border-border/50 bg-muted/30 px-2 py-0.5 text-muted-foreground transition-colors hover:bg-muted/45",
+    listToolbarChipFontClass,
+  );
 
   const isEmpty = !isLoading && itineraries.length === 0 && !hasActiveFilters;
   const noResults = !isLoading && itineraries.length === 0 && hasActiveFilters;
@@ -316,23 +319,7 @@ export default function ItinerariesPage() {
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background text-foreground">
       <AppPageHeroHeader
-        eyebrow="Travel"
         title="Itineraries"
-        subtitle={
-          hasActiveFilters ? (
-            <>
-              <span>
-                {totalCount} {totalCount === 1 ? "itinerary" : "itineraries"}
-              </span>
-              {" · "}
-              matching filters
-            </>
-          ) : (
-            <span>
-              {totalCount} {totalCount === 1 ? "itinerary" : "itineraries"}
-            </span>
-          )
-        }
         toolbar={<ItineraryTabBar activeTab={activeTab} variant="inline" className="min-w-0" />}
         toolbarPlacement="with-title"
       />
@@ -454,7 +441,7 @@ export default function ItinerariesPage() {
       )}
 
       {upcomingTrips && (
-        <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-lg border border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.06)] px-3 py-2 text-xs text-brand-cta">
+        <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-lg border border-[rgba(201,169,110,0.15)] bg-[rgba(201,169,110,0.06)] px-3 py-2 text-compact text-brand-cta">
           <span>Showing upcoming trips: Committed, Preparing, Final Review, or Traveling.</span>
           <button type="button" onClick={() => setUpcomingTrips(false)} className="font-medium text-[#E8D5B5] hover:text-foreground">
             Clear
@@ -482,7 +469,7 @@ export default function ItinerariesPage() {
               </div>
             )}
             {viewMode === "list" && (
-            <div className="flex min-h-0 flex-1 overflow-auto pb-4 pt-0">
+            <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-auto pb-4 pt-0 md:pb-6">
               <ItineraryListView
                 itineraries={itineraries}
                 isLoading={isLoading}
@@ -513,7 +500,7 @@ export default function ItinerariesPage() {
             </div>
             )}
             {viewMode === "cards" && (
-            <div className="flex min-h-0 flex-1 overflow-auto pb-4 pt-0">
+            <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-auto pb-4 pt-0 md:pb-6">
               <ItineraryCardView
                 itineraries={itineraries}
                 isLoading={isLoading}

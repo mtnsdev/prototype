@@ -37,8 +37,8 @@ export default function DetailTabBar({ activeTab, onTabChange }: Props) {
           className={cn(
             "px-3 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition-colors",
             activeTab === tab.id
-              ? "text-foreground border-[#F5F5F5]"
-              : "text-muted-foreground/75 border-transparent hover:text-muted-foreground"
+              ? "border-foreground text-foreground"
+              : "border-transparent text-muted-foreground/75 hover:text-muted-foreground"
           )}
         >
           {tab.label}

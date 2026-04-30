@@ -23,6 +23,7 @@ import { OnboardingDashboardGuard } from "@/components/dashboard/OnboardingDashb
 import { ProductTour } from "@/components/onboarding/ProductTour";
 import { OnboardingChecklistCard } from "@/components/onboarding/OnboardingChecklistCard";
 import { cn } from "@/lib/utils";
+import { ClaireFab } from "@/components/claire/ClaireFab";
 
 function DashboardChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -46,6 +47,7 @@ function DashboardChrome({ children }: { children: React.ReactNode }) {
         selectedConversationId={selectedConversationId}
       />
       <AssistantPanel />
+      <ClaireFab />
       <div className="min-h-screen bg-background text-foreground">
         {!isOnboarding ? <MobileWorkspaceNav /> : null}
         <div className="flex h-screen flex-col">

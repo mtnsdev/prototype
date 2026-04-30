@@ -105,7 +105,7 @@ export default function TeamsManagementSection() {
         <div className="flex items-center gap-3">
           <Users className="w-5 h-5 text-blue-400 shrink-0" />
           <div>
-            <h3 className="text-base font-medium text-white">Teams</h3>
+            <h3 className="text-base font-medium text-foreground">Teams</h3>
             <p className="text-sm text-muted-foreground">
               Manage teams to control content visibility across the platform.
             </p>
@@ -137,7 +137,7 @@ export default function TeamsManagementSection() {
       <Dialog open={showCreateTeam} onOpenChange={setShowCreateTeam}>
         <DialogContent className="bg-background border border-border max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-white">Create Team</DialogTitle>
+            <DialogTitle className="text-foreground">Create Team</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <div>
@@ -196,7 +196,7 @@ export default function TeamsManagementSection() {
       <Dialog open={!!editingTeam} onOpenChange={(o) => !o && setEditingTeam(null)}>
         <DialogContent className="bg-background border border-border max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-white">Rename team</DialogTitle>
+            <DialogTitle className="text-foreground">Rename team</DialogTitle>
           </DialogHeader>
           <div className="mt-4">
             <label className="text-2xs text-muted-foreground uppercase tracking-wider block mb-1">Team Name</label>
@@ -241,7 +241,7 @@ export default function TeamsManagementSection() {
       <Dialog open={!!managingTeam} onOpenChange={(o) => !o && setManagingTeam(null)}>
         <DialogContent className="bg-background border border-border max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-white">Manage Members — {managingTeamLive?.name}</DialogTitle>
+            <DialogTitle className="text-foreground">Manage Members — {managingTeamLive?.name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-2 max-h-64 overflow-y-auto mt-4 pr-1">
             {agencyUsers.map((user) => {
@@ -315,7 +315,7 @@ function TeamCard({
     <div className="bg-foreground/[0.03] border border-white/[0.04] rounded-xl p-4">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-sm text-white font-medium truncate">{team.name}</span>
+          <span className="truncate text-sm font-medium text-foreground">{team.name}</span>
           {team.isDefault && (
             <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground uppercase tracking-wider shrink-0">
               Default
@@ -334,7 +334,7 @@ function TeamCard({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="bg-popover border border-border">
-              <DropdownMenuItem onClick={onRename} className="text-sm text-foreground/88 focus:text-white">
+              <DropdownMenuItem onClick={onRename} className="text-sm text-foreground/88 focus:text-foreground">
                 Rename
               </DropdownMenuItem>
               <DropdownMenuItem

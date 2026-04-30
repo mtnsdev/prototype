@@ -263,7 +263,7 @@ export default function AddEditVICModal({ vic, onClose, onSaved }: Props) {
                 {s.label}
               </span>
               {i < STEPS.length - 1 && (
-                <ChevronRight size={14} className="text-[rgba(245,245,245,0.3)] shrink-0" />
+                <ChevronRight size={14} className="shrink-0 text-muted-foreground/40" />
               )}
             </div>
           ))}

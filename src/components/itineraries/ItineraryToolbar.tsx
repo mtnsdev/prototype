@@ -9,6 +9,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS,
+  APP_FILTER_CHIP_ALIGNED_SEGMENT_ICON_CLASS,
+} from "@/lib/dashboardChrome";
+import { listToolbarChipFontClass } from "@/lib/list-ui";
 import { cn } from "@/lib/utils";
 import {
   FilterBar,
@@ -56,8 +61,10 @@ const SORT_OPTIONS: { value: string; label: string; by: string; order: "asc" | "
   { value: "updated_desc", label: "Recently updated", by: "updated_at", order: "desc" },
 ];
 
-const pillBase =
-  "flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-2xs whitespace-nowrap transition-colors";
+const pillBase = cn(
+  "flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 whitespace-nowrap transition-colors",
+  listToolbarChipFontClass,
+);
 
 const filterChipActive =
   "border-brand-cta/25 bg-brand-cta/10 text-brand-cta";
@@ -273,7 +280,9 @@ export default function ItineraryToolbar({
               aria-label={`Sort itineraries. Current: ${sortOption.label}`}
               onClick={() => setSortOpen((o) => !o)}
               className={cn(
-                "flex max-w-[220px] min-w-0 items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-xs transition-colors",
+                APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS,
+                listToolbarChipFontClass,
+                "flex max-w-[220px] min-w-0 items-center gap-2 rounded-lg border px-3 py-0 text-left transition-colors",
                 sortIsDefault
                   ? "border-border bg-popover text-muted-foreground hover:border-border"
                   : "border-brand-cta/20 bg-brand-cta/10 text-brand-cta"
@@ -281,7 +290,7 @@ export default function ItineraryToolbar({
             >
               <ArrowUpDown className="h-3 w-3 shrink-0 text-muted-foreground/65" aria-hidden />
               {sortIsDefault ? (
-                <span className="text-xs text-muted-foreground">Sort by</span>
+                <span className="text-muted-foreground">Sort by</span>
               ) : (
                 <span className="min-w-0 flex-1 truncate">{sortOption.label}</span>
               )}
@@ -300,7 +309,8 @@ export default function ItineraryToolbar({
                       type="button"
                       onClick={() => applySortOption(o)}
                       className={cn(
-                        "flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-muted/40",
+                        listToolbarChipFontClass,
+                        "flex w-full items-center justify-between px-3 py-2 text-left transition-colors hover:bg-muted/40",
                         selected ? "text-brand-cta" : "text-muted-foreground"
                       )}
                     >
@@ -373,14 +383,15 @@ export default function ItineraryToolbar({
           />
         </div>
         <FilterBarActionsCluster>
-          <span className="text-2xs text-muted-foreground">
+          <span className="text-compact text-muted-foreground">
             {resultTotal} {resultTotal === 1 ? "itinerary" : "itineraries"}
           </span>
           <button
             type="button"
             onClick={() => onViewModeChange("list")}
             className={cn(
-              "rounded-lg p-1.5 transition-colors",
+              APP_FILTER_CHIP_ALIGNED_SEGMENT_ICON_CLASS,
+              "transition-colors",
               viewMode === "list" ? "bg-brand-cta/10 text-brand-cta" : "text-muted-foreground/65 hover:text-muted-foreground hover:bg-muted/30"
             )}
             title="List view"
@@ -391,7 +402,8 @@ export default function ItineraryToolbar({
             type="button"
             onClick={() => onViewModeChange("cards")}
             className={cn(
-              "rounded-lg p-1.5 transition-colors",
+              APP_FILTER_CHIP_ALIGNED_SEGMENT_ICON_CLASS,
+              "transition-colors",
               viewMode === "cards" ? "bg-brand-cta/10 text-brand-cta" : "text-muted-foreground/65 hover:text-muted-foreground hover:bg-muted/30"
             )}
             title="Card view"
@@ -402,7 +414,8 @@ export default function ItineraryToolbar({
             type="button"
             onClick={() => onViewModeChange("board")}
             className={cn(
-              "rounded-lg p-1.5 transition-colors",
+              APP_FILTER_CHIP_ALIGNED_SEGMENT_ICON_CLASS,
+              "transition-colors",
               viewMode === "board" ? "bg-brand-cta/10 text-brand-cta" : "text-muted-foreground/65 hover:text-muted-foreground hover:bg-muted/30"
             )}
             title="Board (Kanban)"

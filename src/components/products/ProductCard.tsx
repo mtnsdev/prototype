@@ -63,8 +63,8 @@ export default function ProductCard({
 
   if (compact) {
     return (
-      <div className={cn("rounded-lg border border-border bg-foreground/[0.04] p-3 flex items-center gap-3", accent)}>
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-foreground">
+      <div className={cn("rounded-lg border border-border bg-card p-3 flex items-center gap-3", accent)}>
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
           <Icon size={18} />
         </div>
         <div className="min-w-0 flex-1">
@@ -79,7 +79,7 @@ export default function ProductCard({
   }
 
   return (
-    <div className={cn("relative rounded-xl border border-border bg-foreground/[0.04] overflow-hidden flex flex-col min-h-[200px] hover:border-foreground/15 hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 transition-all duration-200", accent)}>
+    <div className={cn("relative flex min-h-[200px] flex-col overflow-hidden rounded-xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/15 hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)]", accent)}>
       <DemoBadge />
       <div className="relative aspect-video w-full overflow-hidden rounded-t-xl bg-muted">
         <ImageWithFallback

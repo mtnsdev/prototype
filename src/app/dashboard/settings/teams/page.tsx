@@ -108,7 +108,7 @@ export default function TeamsSettingsPage() {
             <Shield className="w-5 h-5 text-violet-400" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-white">Teams</h1>
+            <h1 className="text-xl font-semibold text-foreground">Teams</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
               Create teams to scope shared content. Everyone is included in the default team automatically.
             </p>
@@ -123,7 +123,7 @@ export default function TeamsSettingsPage() {
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm text-white">{team.name}</span>
+                  <span className="text-sm font-medium text-foreground">{team.name}</span>
                   {team.isDefault && (
                     <span className="text-2xs text-muted-foreground bg-white/5 px-2 py-0.5 rounded-full">Default</span>
                   )}

@@ -27,6 +27,8 @@ import {
   FilterBarActionsCluster,
 } from "@/components/ui/filter-bar";
 import { PageSearchField } from "@/components/ui/page-search-field";
+import { APP_TOOLBAR_CONTROL_HEIGHT_CLASS } from "@/lib/dashboardChrome";
+import { listToolbarChipFontClass } from "@/lib/list-ui";
 import { cn } from "@/lib/utils";
 import {
   ArrowDown,
@@ -225,7 +227,10 @@ export default function VICToolbar({
               key={chip.key}
               type="button"
               onClick={chip.onRemove}
-              className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-xs text-foreground transition-colors hover:bg-muted/60"
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-foreground transition-colors hover:bg-muted/60",
+                listToolbarChipFontClass,
+              )}
             >
               <span>{chip.label}</span>
               <span className="text-muted-foreground" aria-hidden>
@@ -233,7 +238,7 @@ export default function VICToolbar({
               </span>
             </button>
           ))}
-          <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={onClearFilters}>
+          <Button type="button" variant="ghost" size="sm" className={cn(APP_TOOLBAR_CONTROL_HEIGHT_CLASS, "px-2 text-compact")} onClick={onClearFilters}>
             Clear all
           </Button>
         </div>
@@ -243,7 +248,7 @@ export default function VICToolbar({
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button type="button" variant="outline" size="sm" className="h-8 shrink-0 gap-1 px-2.5 text-xs">
+              <Button type="button" variant="outline" size="sm" className="h-8 shrink-0 gap-1 px-2.5 text-compact">
                 Sort: {sortLabel}
                 {sortOrder === "asc" ? (
                   <ArrowUp className="h-3 w-3 text-muted-foreground" aria-hidden />
@@ -293,30 +298,30 @@ export default function VICToolbar({
                 variant="outline"
                 size="sm"
                 className={cn(
-                  "h-8 shrink-0 gap-1.5 px-2.5 text-xs",
+                  "h-8 shrink-0 gap-1.5 px-2.5 text-compact",
                   hasFacetFilters && "border-brand/40 bg-brand/5 text-foreground"
                 )}
               >
                 <ListFilter className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
                 Filters
                 {facetCount > 0 ? (
-                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1 text-[10px] font-medium tabular-nums text-foreground">
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1 text-compact font-medium tabular-nums text-foreground">
                     {facetCount}
                   </span>
                 ) : null}
               </Button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-[min(100vw-2rem,20rem)] p-4" sideOffset={6}>
-              <p className="text-xs font-semibold text-foreground">Narrow results</p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">Country, relationship, and acuity</p>
+              <p className="text-compact font-semibold text-foreground">Narrow results</p>
+              <p className="mt-0.5 text-compact text-muted-foreground">Country, relationship, and acuity</p>
               <div className="mt-3 space-y-3">
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Country</Label>
+                  <Label className="text-compact text-muted-foreground">Country</Label>
                   <Select
                     value={selectedCountry ?? "all"}
                     onValueChange={(v) => onCountryChange(v === "all" ? null : v)}
                   >
-                    <SelectTrigger className="h-9 w-full text-xs">
+                    <SelectTrigger className={cn(APP_TOOLBAR_CONTROL_HEIGHT_CLASS, "w-full text-compact")}>
                       <SelectValue placeholder="All countries" />
                     </SelectTrigger>
                     <SelectContent>
@@ -330,14 +335,14 @@ export default function VICToolbar({
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Relationship</Label>
+                  <Label className="text-compact text-muted-foreground">Relationship</Label>
                   <Select
                     value={relationshipStatus ?? "all"}
                     onValueChange={(v) =>
                       onRelationshipStatusChange(v === "all" ? null : (v as RelationshipStatus))
                     }
                   >
-                    <SelectTrigger className="h-9 w-full text-xs">
+                    <SelectTrigger className={cn(APP_TOOLBAR_CONTROL_HEIGHT_CLASS, "w-full text-compact")}>
                       <SelectValue placeholder="All relationships" />
                     </SelectTrigger>
                     <SelectContent>
@@ -351,12 +356,12 @@ export default function VICToolbar({
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Acuity</Label>
+                  <Label className="text-compact text-muted-foreground">Acuity</Label>
                   <Select
                     value={acuityStatus ?? "all"}
                     onValueChange={(v) => onAcuityStatusChange(v === "all" ? null : (v as AcuityStatus))}
                   >
-                    <SelectTrigger className="h-9 w-full text-xs">
+                    <SelectTrigger className={cn(APP_TOOLBAR_CONTROL_HEIGHT_CLASS, "w-full text-compact")}>
                       <SelectValue placeholder="All acuity states" />
                     </SelectTrigger>
                     <SelectContent>
@@ -374,7 +379,7 @@ export default function VICToolbar({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-8 text-xs"
+                  className="h-8 text-compact"
                   disabled={!hasFacetFilters}
                   onClick={() => {
                     onClearFacetFilters();
@@ -382,7 +387,7 @@ export default function VICToolbar({
                 >
                   Reset filters
                 </Button>
-                <Button type="button" variant="secondary" size="sm" className="h-8 text-xs" onClick={() => setFiltersOpen(false)}>
+                <Button type="button" variant="secondary" size="sm" className="h-8 text-compact" onClick={() => setFiltersOpen(false)}>
                   Done
                 </Button>
               </div>
@@ -391,15 +396,14 @@ export default function VICToolbar({
         </div>
 
         <FilterBarActionsCluster>
-          <span className="hidden text-xs text-muted-foreground sm:inline">
+          <span className="hidden text-compact text-muted-foreground sm:inline">
             {totalCount === 0 ? "No results" : `${startIndex}–${endIndex} of ${totalCount}`}
           </span>
           <div className="flex items-center gap-0.5 rounded-md border border-border bg-background p-0.5">
             <Button
               type="button"
               variant={viewMode === "list" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-7 w-7"
+              size="icon-sm"
               onClick={() => onViewModeChange("list")}
               aria-label="List view"
             >
@@ -408,8 +412,7 @@ export default function VICToolbar({
             <Button
               type="button"
               variant={viewMode === "cards" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-7 w-7"
+              size="icon-sm"
               onClick={() => onViewModeChange("cards")}
               aria-label="Card view"
             >
@@ -422,13 +425,13 @@ export default function VICToolbar({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 gap-1 px-2 text-xs"
+                className="h-8 gap-1 px-2 text-compact"
                 disabled={selectedCount === 0}
               >
                 <MoreHorizontal className="h-3.5 w-3.5" aria-hidden />
                 Bulk
                 {selectedCount > 0 ? (
-                  <span className="ml-0.5 rounded bg-muted px-1 text-[10px] font-medium tabular-nums">
+                  <span className="ml-0.5 rounded bg-muted px-1 text-compact font-medium tabular-nums">
                     {selectedCount}
                   </span>
                 ) : null}
@@ -454,7 +457,7 @@ export default function VICToolbar({
       </FilterBarToolbarRow>
 
       <div className="mt-1 sm:hidden">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-compact text-muted-foreground">
           {totalCount === 0 ? "No results" : `${startIndex}–${endIndex} of ${totalCount}`}
         </p>
       </div>

@@ -20,10 +20,11 @@ import {
   listTableClass,
   listTheadRowClass,
   listThClass,
-  listTbodyRowClass,
+  listTbodyRowStripedClass,
   listTdClass,
   listMutedCellClass,
   listPrimaryTextClass,
+  listTablePillClass,
 } from "@/lib/list-ui";
 import type { PipelineStage } from "@/types/itinerary";
 import { PIPELINE_STAGE_LABEL_MAP, pipelineStageBadgeClass } from "@/config/pipelineStages";
@@ -72,7 +73,13 @@ export default function ItineraryListView({
 
   if (isLoading && itineraries.length === 0) {
     return (
-      <div className={cn(listSurfaceWithState({ refetching: false }), listScrollClass, "overflow-hidden")}>
+      <div
+        className={cn(
+          listSurfaceWithState({ refetching: false }),
+          listScrollClass,
+          "w-full min-w-0 overflow-hidden",
+        )}
+      >
         <table className={listTableClass("min-w-[900px]")}>
           <thead>
             <tr className={listTheadRowClass}>
@@ -85,7 +92,7 @@ export default function ItineraryListView({
           </thead>
           <tbody>
             {[1, 2, 3, 4, 5].map((i) => (
-              <tr key={i} className={listTbodyRowClass}>
+              <tr key={i} className={listTbodyRowStripedClass}>
                 {Array.from({ length: colCount }, (_, j) => (
                   <td key={j} className={listTdClass}>
                     <div
@@ -105,8 +112,14 @@ export default function ItineraryListView({
   }
 
   return (
-    <div className={cn(listSurfaceWithState({ refetching: isRefetching }), listScrollClass, "overflow-hidden transition-opacity")}>
-      <table className={listTableClass("min-w-[900px]")}>
+      <div
+        className={cn(
+          listSurfaceWithState({ refetching: isRefetching }),
+          listScrollClass,
+          "w-full min-w-0 overflow-hidden transition-opacity",
+        )}
+      >
+        <table className={listTableClass("min-w-[900px]")}>
         <thead>
           <tr className={listTheadRowClass}>
             {columns.map((col) => (
@@ -129,7 +142,7 @@ export default function ItineraryListView({
             return (
               <tr
                 key={id}
-                className={cn(listTbodyRowClass, "cursor-pointer")}
+                className={cn(listTbodyRowStripedClass, "cursor-pointer")}
                 onClick={() => router.push(`/dashboard/itineraries/${id}`)}
               >
                 <td className={listTdClass}>
@@ -160,14 +173,15 @@ export default function ItineraryListView({
                   {it.days?.length ?? 0} days
                 </td>
                 <td className={listTdClass}>
-                  <span className={cn("rounded-full px-2 py-0.5 text-2xs font-medium", pipelineStageBadgeClass(ps))}>
+                  <span className={cn(listTablePillClass, pipelineStageBadgeClass(ps))}>
                     {plLabel}
                   </span>
                 </td>
                 <td className={listTdClass}>
                   <span
                     className={cn(
-                      "rounded-full px-2 py-0.5 text-2xs font-medium capitalize",
+                      listTablePillClass,
+                      "capitalize",
                       statusBadge?.className ?? "border border-border bg-muted-foreground/8 text-muted-foreground"
                     )}
                   >

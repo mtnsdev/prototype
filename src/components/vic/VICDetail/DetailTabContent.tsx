@@ -32,7 +32,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <div className="rounded-xl border border-border bg-foreground/[0.04] p-4">
       <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/75 mb-3">{title}</h3>
-      <div className="text-sm text-[rgba(245,245,245,0.85)]">{children}</div>
+      <div className="text-sm text-foreground">{children}</div>
     </div>
   );
 }
@@ -81,7 +81,7 @@ function TravelProfilesInline({
         <div className="bg-white/[0.03] rounded-xl p-4 border border-border">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-white">{capitalize(activeProfileType)}</span>
+              <span className="text-sm font-medium text-foreground">{capitalize(activeProfileType)}</span>
               {activeProfile.is_primary && (
                 <span className="text-2xs text-[var(--color-warning)] bg-amber-500/10 px-1.5 py-0.5 rounded">PRIMARY</span>
               )}
@@ -259,7 +259,9 @@ function RelationshipInsightsWithActions({ insights }: { insights: import("@/typ
   if (list.length === 0) return null;
   return (
     <div className="rounded-xl border border-violet-400/25 bg-violet-500/10 p-4">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-violet-300 mb-3">Acuity Intelligence Insights</h3>
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-violet-950 dark:text-violet-200">
+        Acuity Intelligence Insights
+      </h3>
       <ul className="space-y-2 text-sm">
         {list.map((insight) => (
           <li key={insight.id} className="flex flex-wrap items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
@@ -650,16 +652,20 @@ export default function DetailTabContent({
     return (
       <div className="space-y-4">
         <div className="rounded-xl border border-violet-500/25 bg-violet-500/10 p-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-violet-300 mb-3">Acuity Intelligence Summary</h3>
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-violet-950 dark:text-violet-200">
+            Acuity Intelligence Summary
+          </h3>
           {acuityLastRun ? (
             <div className="space-y-2 text-sm">
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                <span className="text-[rgba(245,245,245,0.85)]">Last run: {formatDate(acuityLastRun) ?? acuityLastRun}</span>
-                <span className="text-[rgba(245,245,245,0.85)]">Primary run: {acuityProvider}</span>
-                <span className="text-[rgba(245,245,245,0.85)]">Headline confidence: {String(acuityConfidence).charAt(0).toUpperCase() + String(acuityConfidence).slice(1)}</span>
+                <span className="text-foreground">Last run: {formatDate(acuityLastRun) ?? acuityLastRun}</span>
+                <span className="text-foreground">Primary run: {acuityProvider}</span>
+                <span className="text-foreground">
+                  Headline confidence: {String(acuityConfidence).charAt(0).toUpperCase() + String(acuityConfidence).slice(1)}
+                </span>
               </div>
-              <p className="text-xs text-[rgba(245,245,245,0.65)]">
-                <span className="text-violet-300/90 font-medium">{enrichedCount}</span> fields enriched by Acuity
+              <p className="text-xs text-muted-foreground">
+                <span className="font-medium text-violet-900 dark:text-violet-200">{enrichedCount}</span> fields enriched by Acuity
                 {providerBreakdown ? (
                   <>
                     {" · "}
@@ -667,9 +673,9 @@ export default function DetailTabContent({
                   </>
                 ) : null}
               </p>
-              <p className="text-xs text-[rgba(245,245,245,0.65)]">
+              <p className="text-xs text-muted-foreground">
                 Estimated overall confidence (avg. across enriched fields):{" "}
-                <span className="text-emerald-400/90 font-medium">{avgConfPct}%</span>
+                <span className="font-medium text-emerald-800 dark:text-emerald-300">{avgConfPct}%</span>
               </p>
               <div className="flex items-center gap-3 pt-1">
                 <div className="flex-1 h-2 rounded-full border border-violet-500/20 bg-white/10 overflow-hidden max-w-[160px]">
@@ -678,7 +684,7 @@ export default function DetailTabContent({
                 <span className="text-xs text-muted-foreground">Coverage ~{completeness}% of enrichable field set</span>
               </div>
               {acuityDaysAgo != null && acuityDaysAgo > 30 && (
-                <Button variant="outline" size="sm" className="border-violet-500/30 text-violet-300 mt-2" onClick={onUpdate}>
+                <Button variant="outline" size="sm" className="mt-2 border-violet-500/40 text-violet-900 dark:text-violet-200" onClick={onUpdate}>
                   Refresh
                 </Button>
               )}
@@ -725,7 +731,7 @@ export default function DetailTabContent({
           >
             <div className="flex items-center gap-2">
               <Plane className="w-4 h-4 text-muted-foreground/90" />
-              <span className="text-sm font-medium text-white">Travel Profiles</span>
+              <span className="text-sm font-medium text-foreground">Travel Profiles</span>
               <span className="text-xs text-muted-foreground bg-white/5 px-2 py-0.5 rounded-full">
                 {(travelProfilesProp ?? vic.travel_profiles ?? []).length} of 7
               </span>
@@ -806,17 +812,20 @@ export default function DetailTabContent({
         className={[
           "inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize",
           vic.relationship_status === "active" && "bg-[var(--muted-success-bg)] text-[var(--muted-success-text)] border border-[var(--muted-success-border)]",
-          vic.relationship_status === "inactive" && "bg-[rgba(245,245,245,0.15)] text-muted-foreground",
+          vic.relationship_status === "inactive" && "bg-muted text-muted-foreground",
           vic.relationship_status === "prospect" && "bg-[var(--muted-info-bg)] text-[var(--muted-info-text)] border border-[var(--muted-info-border)]",
           vic.relationship_status === "past" && "bg-[var(--muted-amber-bg)] text-[var(--muted-amber-text)] border border-[var(--muted-amber-border)]",
           vic.relationship_status === "do_not_contact" && "bg-[var(--muted-error-bg)] text-[var(--muted-error-text)] border border-[var(--muted-error-border)]",
-        ].filter(Boolean).join(" ") || "bg-white/10 text-muted-foreground"}
+        ].filter(Boolean).join(" ") || "bg-muted text-muted-foreground"}
       >
         {vic.relationship_status.replace(/_/g, " ")}
       </span>
     ) : undefined;
     const referredByLink = vic.referred_by_vic_id ? (
-      <Link href={`/dashboard/vics/${vic.referred_by_vic_id}`} className="text-[rgba(245,245,245,0.9)] hover:underline">
+      <Link
+        href={`/dashboard/vics/${vic.referred_by_vic_id}`}
+        className="font-medium text-[var(--brand-primary)] underline-offset-2 hover:underline"
+      >
         {vic.referred_by_vic_name ?? vic.referred_by_vic_id}
       </Link>
     ) : undefined;
@@ -992,7 +1001,9 @@ export default function DetailTabContent({
               <div className="rounded-lg border border-border p-3">
                 <div className="flex justify-between items-start gap-2">
                   <span className="text-sm font-medium text-foreground">📋 Travel Preferences Form</span>
-                  <span className="text-2xs uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-500/30 text-emerald-400">Completed</span>
+                  <span className="text-2xs uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-600/35 text-emerald-800 dark:text-emerald-300">
+                    Completed
+                  </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">Submitted 12 Mar 2026</p>
                 <Button type="button" variant="outline" size="sm" className="mt-2 border-input text-xs h-8">
@@ -1153,7 +1164,7 @@ export default function DetailTabContent({
     return (
       <div className="space-y-4">
         <Section title="Data ownership">
-          <span className="inline-flex rounded-full bg-white/10 px-2 py-0.5 text-xs font-medium text-[rgba(245,245,245,0.9)] capitalize">
+          <span className="inline-flex rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-medium capitalize text-foreground">
             {ownershipBadge}
           </span>
         </Section>
@@ -1167,7 +1178,7 @@ export default function DetailTabContent({
         </Section>
         {lockedFields.length > 0 && (
           <Section title="Locked fields">
-            <ul className="list-disc pl-4 text-sm text-[rgba(245,245,245,0.85)]">
+            <ul className="list-disc pl-4 text-sm text-foreground">
               {lockedFields.map((f) => (
                 <li key={f}>{f}</li>
               ))}

@@ -14,9 +14,10 @@ import { cn } from "@/lib/utils";
 import {
   listTdCheckboxClass,
   listTdClass,
-  listTbodyRowClass,
+  listTbodyRowStripedClass,
   listPrimaryTextClass,
   listMutedCellClass,
+  listTablePillClass,
 } from "@/lib/list-ui";
 
 type Props = {
@@ -83,7 +84,7 @@ export default function VICListRow({
   const acuityLabel = acuityVal ? (ACUITY_LABELS[acuityVal] ?? acuityVal) : "—";
 
   return (
-    <tr className={listTbodyRowClass}>
+    <tr className={listTbodyRowStripedClass}>
       <td className={listTdCheckboxClass}>
         <input
           type="checkbox"
@@ -106,7 +107,7 @@ export default function VICListRow({
       <td className={cn(listTdClass, listMutedCellClass)}>{isBasic ? "—" : status}</td>
       <td className={listTdClass}>
         {isBasic ? "—" : acuityVal ? (
-          <span className={cn("rounded-full px-2 py-0.5 text-2xs font-medium capitalize", acuityBadgeClass(acuityVal))}>
+          <span className={cn(listTablePillClass, "capitalize", acuityBadgeClass(acuityVal))}>
             {acuityLabel.replace(/_/g, " ")}
           </span>
         ) : "—"}
@@ -121,10 +122,12 @@ export default function VICListRow({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link href={`/dashboard/vics/${vicId}`} className="text-[rgba(245,245,245,0.9)]">View</Link>
+              <Link href={`/dashboard/vics/${vicId}`} className="font-medium text-[var(--brand-primary)] hover:underline">
+                View
+              </Link>
             </DropdownMenuItem>
             {canEdit && (
-              <DropdownMenuItem onClick={onEdit} className="text-[rgba(245,245,245,0.9)]">
+              <DropdownMenuItem onClick={onEdit} className="text-foreground focus:text-foreground">
                 <Pencil size={14} className="mr-2" />
                 Edit
               </DropdownMenuItem>
@@ -136,7 +139,7 @@ export default function VICListRow({
               </DropdownMenuItem>
             )}
             {showRequestFullAccess && onRequestFullAccess && (
-              <DropdownMenuItem onClick={onRequestFullAccess} className="text-[rgba(245,245,245,0.9)]">
+              <DropdownMenuItem onClick={onRequestFullAccess} className="text-foreground focus:text-foreground">
                 Request Full Access
               </DropdownMenuItem>
             )}

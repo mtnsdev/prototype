@@ -1,6 +1,13 @@
 @import "tailwindcss";
 @import "shadcn/tailwind.css";
 
+/*
+ * Exclude IDE/metadata dirs from Tailwind’s plain-text scan. Otherwise strings that look like
+ * class names (e.g. in Cursor chats/transcripts) can be compiled into CSS that Lightning CSS
+ * rejects (e.g. descendant selectors targeting arbitrary `text-[10px]`).
+ */
+@source not "../../.cursor";
+
 @custom-variant dark (&:is(.dark *));
 
 /* ==========================================
@@ -17,9 +24,9 @@
     --surface-sunken: #e0ddd4;
     /* Menus, dropdown panels */
     --surface-overlay: #f7f6f2;
-    --surface-interactive: rgba(45, 90, 68, 0.07);
-    --surface-interactive-hover: rgba(45, 90, 68, 0.11);
-    --surface-interactive-active: rgba(45, 90, 68, 0.15);
+    --surface-interactive: rgba(58, 89, 56, 0.07);
+    --surface-interactive-hover: rgba(58, 89, 56, 0.11);
+    --surface-interactive-active: rgba(58, 89, 56, 0.15);
 
     /* Text — warm ink on paper (AA: secondary/tertiary tuned vs --surface-base / --surface-card) */
     --text-primary: #171512;
@@ -38,12 +45,12 @@
     --border-strong: rgba(40, 48, 42, 0.22);
 
     /* Brand — fern & honey (nature) */
-    --brand-primary: #2f5d45;
+    --brand-primary: #3a5938;
     --brand-accent: #c4923a;
-    --brand-cta: #3a7d56;
-    --brand-cta-hover: #326b4a;
+    --brand-cta: #517048;
+    --brand-cta-hover: #466240;
     --brand-cta-foreground: #f9fbf8;
-    --brand-chat-user: #4f8f6a;
+    --brand-chat-user: #6f8b62;
 
     /* Semantic — desaturated stone/slate (no traffic-light gamut; briefing palette = default) */
     --color-success: #5a6d66;

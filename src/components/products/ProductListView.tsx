@@ -19,6 +19,7 @@ import {
 import {
   listMutedCellClass,
   listPrimaryTextClass,
+  listTableTagClass,
   listSurfaceClass,
   listScrollClass,
   listTableClass,
@@ -174,12 +175,17 @@ export default function ProductListView({
                   {[p.city, (p.country && COUNTRY_NAMES[p.country]) || p.country].filter(Boolean).join(", ") || "—"}
                 </td>
                 <td className={listTdClass}>
-                  <span className="rounded border border-border-strong bg-muted/30 px-1.5 py-0.5 text-xs capitalize text-muted-foreground">
+                  <span
+                    className={cn(
+                      listTableTagClass,
+                      "border-border-strong bg-muted/30 capitalize text-muted-foreground",
+                    )}
+                  >
                     {p.status ?? "—"}
                   </span>
                 </td>
                 <td className={listTdClass}>
-                  <span className="rounded border border-border-strong px-1.5 py-0.5 text-xs text-muted-foreground">
+                  <span className={cn(listTableTagClass, "border-border-strong text-muted-foreground")}>
                     {p.partnership_tier ? PARTNERSHIP_TIER_LABELS[p.partnership_tier] : "—"}
                   </span>
                 </td>
@@ -187,7 +193,7 @@ export default function ProductListView({
                 <td className={listTdClass}>
                   <span
                     className={cn(
-                      "rounded border px-1.5 py-0.5 text-xs",
+                      listTableTagClass,
                       VERIFICATION_BADGES[ver]?.variant === "default" &&
                         "border-[var(--muted-success-border)] bg-[var(--muted-success-bg)] text-[var(--muted-success-text)]"
                     )}

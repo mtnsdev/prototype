@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import {
   Award,
   Bookmark,
@@ -122,7 +122,7 @@ function ContactChannelFormFields({
               type="email"
               inputMode="email"
               autoComplete="email"
-              className="min-w-0 flex-1 rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
+              className="min-w-0 flex-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none placeholder:text-muted-foreground/65"
             />
             {emailRows.length > 1 ? (
               <Button
@@ -160,7 +160,7 @@ function ContactChannelFormFields({
               type="tel"
               inputMode="tel"
               autoComplete="tel"
-              className="min-w-0 flex-1 rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
+              className="min-w-0 flex-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none placeholder:text-muted-foreground/65"
             />
             {phoneRows.length > 1 ? (
               <Button
@@ -221,7 +221,7 @@ function formatIsoDateStable(value: string): string {
 function dmcOperationsField(label: string, value: string | number | null | undefined) {
   return (
     <div>
-      <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wider text-[rgba(245,245,245,0.4)]">
+      <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
         {label}
       </p>
       <p className="text-[13px] text-[#F5F5F5]">
@@ -259,6 +259,13 @@ function advisoryProjectionText(
 
 type PersonalNoteRow = { id: string; text: string; createdAt: string };
 
+export type ProductDirectoryDetailBodyRef = {
+  /** Toggles inline collection picker when enabled; otherwise opens the collection modal flow. */
+  toggleCollectionPicker: () => void;
+  /** Opens the Enable “edit directory record” form (no-op if not admin). */
+  openDirectoryRecordEditor: () => void;
+};
+
 type Props = {
   product: DirectoryProduct;
   canViewCommissions: boolean;
@@ -279,25 +286,36 @@ type Props = {
   partnerProgramCustomKeys?: string[];
   /** Live rep firm registry (enables regions/footer lookup beyond seed mock). */
   repFirmsRegistry?: RepFirm[] | null;
+  /** Tighter hero + rhythm for the desktop split-pane preview (catalog beside panel). */
+  panelLayout?: boolean;
+  /** Split panel only: fired when inline collection picker opens/closes (header icon state). */
+  onPanelCollectionPickerOpenChange?: (open: boolean) => void;
 };
 
-export function ProductDirectoryDetailBody({
-  product,
-  canViewCommissions,
-  isAdmin,
-  teams,
-  showClose,
-  onClose,
-  onOpenCollectionPicker,
-  onPatchProduct,
-  onAddToItinerary,
-  canRemoveFromCollection: canRemoveFromCollectionProp,
-  availableCollections,
-  onQuickAddToCollection,
-  onRequestCreateCollection,
-  partnerProgramCustomKeys = [],
-  repFirmsRegistry = null,
-}: Props) {
+export const ProductDirectoryDetailBody = forwardRef<ProductDirectoryDetailBodyRef, Props>(
+  function ProductDirectoryDetailBody(
+    {
+      product,
+      canViewCommissions,
+      isAdmin,
+      teams,
+      showClose,
+      onClose,
+      onOpenCollectionPicker,
+      onPatchProduct,
+      onAddToItinerary,
+      canRemoveFromCollection: canRemoveFromCollectionProp,
+      availableCollections,
+      onQuickAddToCollection,
+      onRequestCreateCollection,
+      partnerProgramCustomKeys = [],
+      repFirmsRegistry = null,
+      panelLayout = false,
+      onPanelCollectionPickerOpenChange,
+    },
+    ref
+  ) {
+  const isPanel = panelLayout;
   const canRemoveFromCollection = canRemoveFromCollectionProp ?? (() => true);
   const inlinePickerEnabled = Boolean(
     availableCollections && availableCollections.length > 0 && onQuickAddToCollection
@@ -343,11 +361,34 @@ export function ProductDirectoryDetailBody({
   const [newAgencyContactNote, setNewAgencyContactNote] = useState("");
   const [panelCollectionOpen, setPanelCollectionOpen] = useState(false);
   const [panelCollectionSearch, setPanelCollectionSearch] = useState("");
+  const [enableMasterDetailsOpen, setEnableMasterDetailsOpen] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    toggleCollectionPicker: () => {
+      if (!inlinePickerEnabled) {
+        onOpenCollectionPicker();
+        return;
+      }
+      setPanelCollectionOpen((o) => {
+        const next = !o;
+        if (o) setPanelCollectionSearch("");
+        return next;
+      });
+    },
+    openDirectoryRecordEditor: () => {
+      if (!isAdmin) return;
+      setEnableMasterDetailsOpen(true);
+    },
+  }), [inlinePickerEnabled, onOpenCollectionPicker, isAdmin]);
+
+  useEffect(() => {
+    if (!isPanel || !onPanelCollectionPickerOpenChange) return;
+    onPanelCollectionPickerOpenChange(panelCollectionOpen);
+  }, [isPanel, panelCollectionOpen, onPanelCollectionPickerOpenChange]);
   const [showRepFirmEditor, setShowRepFirmEditor] = useState(false);
   const [repFirmSuggestOpen, setRepFirmSuggestOpen] = useState(false);
   const [repFirmSuggestText, setRepFirmSuggestText] = useState("");
   const [localRepFirmLinks, setLocalRepFirmLinks] = useState<RepFirmProductLink[]>([]);
-  const [enableMasterDetailsOpen, setEnableMasterDetailsOpen] = useState(false);
 
   const productTypesSig = product.types.join("|");
   const [typesDraft, setTypesDraft] = useState<DirectoryProductCategory[]>(() => [...product.types]);
@@ -900,10 +941,108 @@ export function ProductDirectoryDetailBody({
     setShowRepFirmEditor(false);
   };
 
+  function renderCollectionPickerInner() {
+    return (
+      <>
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-2xs font-medium text-foreground">Add to collection</span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            onClick={() => {
+              setPanelCollectionOpen(false);
+              setPanelCollectionSearch("");
+            }}
+            className="h-6 text-[9px] text-muted-foreground"
+          >
+            Cancel
+          </Button>
+        </div>
+        <div className="mb-2 flex items-center gap-1.5 rounded-lg border border-border bg-card px-2 py-1.5">
+          <Search className="h-3 w-3 shrink-0 text-muted-foreground/65" />
+          <input
+            value={panelCollectionSearch}
+            onChange={(e) => setPanelCollectionSearch(e.target.value)}
+            placeholder="Search collections…"
+            autoFocus
+            className="flex-1 bg-transparent text-2xs text-foreground outline-none placeholder:text-muted-foreground/65"
+          />
+        </div>
+        <div className="space-y-1">
+          {(availableCollections ?? [])
+            .filter((c) => c.name.toLowerCase().includes(panelCollectionSearch.toLowerCase()))
+            .map((col) => {
+              const alreadyIn = product.collectionIds.includes(col.id);
+              const count = col.productIds?.length ?? 0;
+              return (
+                <button
+                  key={col.id}
+                  type="button"
+                  disabled={alreadyIn}
+                  onClick={() => {
+                    if (alreadyIn || !onQuickAddToCollection) return;
+                    onQuickAddToCollection(col.id);
+                    toast(`Added to "${col.name}"`);
+                    setPanelCollectionOpen(false);
+                    setPanelCollectionSearch("");
+                  }}
+                  className={cn(
+                    "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-2xs transition-colors",
+                    alreadyIn
+                      ? "cursor-default bg-muted/50 text-muted-foreground"
+                      : "text-foreground hover:bg-muted"
+                  )}
+                >
+                  <div className="min-w-0">
+                    <span className="block truncate">{col.name}</span>
+                    <span className="text-[8px] text-muted-foreground">
+                      {count} product{count !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <ScopeBadge scope={col.scope} teams={teams} />
+                    {alreadyIn ? <Check className="h-3 w-3 text-[#5B8A6E]" /> : null}
+                  </div>
+                </button>
+              );
+            })}
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setPanelCollectionOpen(false);
+            setPanelCollectionSearch("");
+            if (onRequestCreateCollection) onRequestCreateCollection();
+            else onOpenCollectionPicker();
+          }}
+          className="mt-1.5 h-8 w-full justify-start rounded-lg text-xs text-brand-cta/70 hover:bg-[rgba(201,169,110,0.04)] hover:text-brand-cta"
+        >
+          <Plus className="size-3.5" aria-hidden />
+          New collection
+        </Button>
+      </>
+    );
+  }
+
   return (
     <div className="flex min-h-0 min-w-0 w-full max-w-full flex-col pb-0">
+      {isPanel && inlinePickerEnabled && panelCollectionOpen ? (
+        <div className="sticky top-0 z-20 max-h-[min(42vh,300px)] overflow-y-auto border-b border-border bg-card/95 px-3 py-3 shadow-sm backdrop-blur-sm">
+          {renderCollectionPickerInner()}
+        </div>
+      ) : null}
       {/* Block 1 — Hero + Identity */}
-      <div className="relative aspect-[2/1] min-h-[220px] w-full max-h-[min(42vh,400px)] shrink-0 overflow-hidden bg-popover sm:min-h-[260px] sm:max-h-[min(45vh,440px)]">
+      <div
+        className={cn(
+          "relative aspect-[2/1] w-full shrink-0 overflow-hidden bg-popover",
+          isPanel
+            ? "min-h-[176px] max-h-[min(32vh,320px)] sm:min-h-[200px] sm:max-h-[min(34vh,340px)]"
+            : "min-h-[220px] max-h-[min(42vh,400px)] sm:min-h-[260px] sm:max-h-[min(45vh,440px)]"
+        )}
+      >
         {product.imageUrl ? (
           <img
             src={product.imageUrl}
@@ -911,11 +1050,16 @@ export function ProductDirectoryDetailBody({
             className="h-full w-full object-cover object-center opacity-95"
           />
         ) : (
-          <div className="flex h-full min-h-[220px] w-full items-center justify-center">
-            <Building2 className="h-12 w-12 text-white/10" aria-hidden />
+          <div
+            className={cn(
+              "flex h-full w-full items-center justify-center",
+              isPanel ? "min-h-[176px]" : "min-h-[220px]"
+            )}
+          >
+            <Building2 className="h-12 w-12 text-muted-foreground/20" aria-hidden />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/25 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/25 to-transparent" />
         {showClose && onClose && (
           <Button
             type="button"
@@ -928,7 +1072,7 @@ export function ProductDirectoryDetailBody({
             <X className="size-3.5" aria-hidden />
           </Button>
         )}
-        <div className="absolute bottom-0 left-0 right-0 p-4">
+        <div className={cn("absolute bottom-0 left-0 right-0", isPanel ? "p-3" : "p-4")}>
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <span
               className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium"
@@ -944,15 +1088,22 @@ export function ProductDirectoryDetailBody({
               <span className="text-2xs text-brand-cta">{"★".repeat(tierStars)}</span>
             ) : null}
             {headerPriceDisplay ? (
-              <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[9px] text-muted-foreground">
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">
                 {headerPriceDisplay}
               </span>
             ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold leading-tight text-white drop-shadow-sm">{product.name}</h2>
+            <h2
+              className={cn(
+                "font-semibold leading-tight text-white drop-shadow-sm",
+                isPanel ? "text-base" : "text-lg"
+              )}
+            >
+              {product.name}
+            </h2>
             {isAdmin ? (
-              <span className="rounded-full border border-white/10 bg-white/[0.06] px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wide text-muted-foreground">
+              <span className="rounded-full border border-border bg-muted px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wide text-muted-foreground">
                 Admin
               </span>
             ) : null}
@@ -965,9 +1116,14 @@ export function ProductDirectoryDetailBody({
       </div>
 
       {galleryImages.length > 0 ? (
-        <div className="shrink-0 border-b border-border bg-inset px-3 py-2.5">
+        <div
+          className={cn(
+            "shrink-0 border-b border-border px-3 py-2.5",
+            isPanel ? "bg-card" : "bg-inset"
+          )}
+        >
           <p className="mb-2 text-[9px] font-medium uppercase tracking-wider text-muted-foreground">Gallery</p>
-          <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/15">
+          <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border">
             {galleryImages.map((url, i) => (
               <img
                 key={`${url}-${i}`}
@@ -981,15 +1137,19 @@ export function ProductDirectoryDetailBody({
         </div>
       ) : null}
 
-      <div className="space-y-5 px-5 pb-2">
-      {isAdmin && !enableMasterDetailsOpen ? (
+      <div
+        className={cn(
+          isPanel ? "space-y-4 px-4 pb-6 pt-0.5" : "space-y-5 px-5 pb-2"
+        )}
+      >
+      {isAdmin && !enableMasterDetailsOpen && !isPanel ? (
         <div className="-mt-2 flex justify-end">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => setEnableMasterDetailsOpen(true)}
-            className="h-8 gap-1.5 rounded-lg border-border bg-foreground/[0.03] text-xs text-foreground hover:bg-white/[0.05]"
+            className="h-8 gap-1.5 rounded-lg border-border bg-card text-xs text-foreground hover:bg-muted"
           >
             <Pencil className="size-3.5 shrink-0" aria-hidden />
             Edit product details (Enable)
@@ -998,8 +1158,8 @@ export function ProductDirectoryDetailBody({
       ) : null}
 
       {isAdmin && enableMasterDetailsOpen ? (
-        <div className="relative z-0 mt-1 rounded-xl border border-border/70 bg-card/50 p-4 shadow-sm">
-          <div className="mb-4 border-b border-border/50 pb-3">
+        <div className="relative z-0 mt-1 rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="mb-4 border-b border-border pb-3">
             <p className="text-xs font-medium text-foreground">Edit directory record</p>
             <p className="mt-0.5 text-2xs leading-snug text-muted-foreground">
               Updates cards, filters, and map for everyone in the agency.
@@ -1007,7 +1167,7 @@ export function ProductDirectoryDetailBody({
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-lg border border-border/40 bg-background/40 p-3">
+            <div className="rounded-lg border border-border bg-card p-3">
               <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Basics</p>
               <div className="space-y-3">
                 <div>
@@ -1055,7 +1215,7 @@ export function ProductDirectoryDetailBody({
               </div>
             </div>
 
-            <div className="rounded-lg border border-border/40 bg-background/40 p-3">
+            <div className="rounded-lg border border-border bg-card p-3">
               <div className="mb-2 flex items-baseline justify-between gap-2">
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Price bands</p>
                 <span className="text-[9px] text-muted-foreground/80">Max 5 · optional</span>
@@ -1116,7 +1276,7 @@ export function ProductDirectoryDetailBody({
               )}
             </div>
 
-            <div className="rounded-lg border border-border/40 bg-background/40 p-3">
+            <div className="rounded-lg border border-border bg-card p-3">
               <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Images</p>
               <div className="space-y-2">
                 <div>
@@ -1181,7 +1341,7 @@ export function ProductDirectoryDetailBody({
               </div>
             </div>
 
-            <div className="rounded-lg border border-border/40 bg-background/40 p-3">
+            <div className="rounded-lg border border-border bg-card p-3">
               <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Categories & opening
               </p>
@@ -1283,7 +1443,7 @@ export function ProductDirectoryDetailBody({
             </div>
           </div>
 
-          <div className="sticky bottom-0 z-[1] -mx-4 mt-1 flex flex-wrap justify-end gap-2 border-t border-border/50 bg-card/85 px-4 py-3 backdrop-blur-md supports-[backdrop-filter]:bg-card/70">
+          <div className="sticky bottom-0 z-[1] -mx-4 mt-1 flex flex-wrap justify-end gap-2 border-t border-border bg-card px-4 py-3">
             <Button
               type="button"
               variant="ghost"
@@ -1308,7 +1468,7 @@ export function ProductDirectoryDetailBody({
       ) : null}
 
       {/* Block 2 — Quick Facts */}
-      <div className="relative z-10 mt-3 rounded-xl border border-border bg-white/[0.03] p-3">
+      <div className="relative z-10 mt-3 rounded-xl border border-border bg-card p-3">
         <div className="grid grid-cols-3 gap-x-4 gap-y-2.5">
           <div>
             <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Type</p>
@@ -1432,7 +1592,7 @@ export function ProductDirectoryDetailBody({
           </p>
           <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
             <div>
-              <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wider text-[rgba(245,245,245,0.4)]">
+              <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                 General Requests
               </p>
               {product.general_requests_email != null && String(product.general_requests_email).trim() !== "" ? (
@@ -1458,13 +1618,13 @@ export function ProductDirectoryDetailBody({
 
       {/* Block 3 — Description + Tags + Website */}
       <div className="space-y-3">
-        <p className="text-sm leading-relaxed text-[rgba(245,240,235,0.75)]">{product.description}</p>
+        <p className="text-sm leading-relaxed text-foreground">{product.description}</p>
         {(product.tags?.length ?? 0) > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {product.tags!.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-border bg-foreground/[0.03] px-2 py-0.5 text-[9px] lowercase text-muted-foreground"
+                className="rounded-full border border-border bg-muted px-2 py-0.5 text-[9px] lowercase text-muted-foreground"
               >
                 {tag}
               </span>
@@ -1491,7 +1651,7 @@ export function ProductDirectoryDetailBody({
             <Award className="h-3.5 w-3.5 shrink-0 text-brand-cta" />
             <span className="text-xs font-medium text-foreground">Partner Programs</span>
             <TeamScopedFieldNotice show={!isAdmin} />
-            <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-muted-foreground">
+            <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">
               {product.partnerPrograms.length}
             </span>
           </div>
@@ -1515,7 +1675,7 @@ export function ProductDirectoryDetailBody({
         ) : null}
 
         {product.partnerPrograms.length === 0 ? (
-          <div className="rounded-xl border border-white/[0.03] bg-white/[0.015] py-6 text-center">
+          <div className="rounded-xl border border-border bg-card py-6 text-center">
             <p className="text-2xs text-muted-foreground">No partner programs linked</p>
           </div>
         ) : (
@@ -1544,7 +1704,7 @@ export function ProductDirectoryDetailBody({
                 <div
                   key={program.id}
                   className={cn(
-                    "overflow-hidden rounded-xl border border-white/[0.05] bg-foreground/[0.03]",
+                    "overflow-hidden rounded-xl border border-border bg-card",
                     !active && "opacity-75"
                   )}
                 >
@@ -1569,7 +1729,7 @@ export function ProductDirectoryDetailBody({
                     </div>
                   </div>
                   {showCommissionPublic ? (
-                    <div className="border-b border-white/[0.06] bg-foreground/[0.03] px-3 py-2">
+                    <div className="border-b border-border bg-card px-3 py-2">
                       <p className="text-[8px] font-medium uppercase tracking-wider text-[#B8976E]">
                         Guaranteed base rate
                       </p>
@@ -1579,7 +1739,7 @@ export function ProductDirectoryDetailBody({
                     </div>
                   ) : null}
                   {incentiveCount > 0 ? (
-                    <div className="border-b border-white/[0.04] px-3 py-2">
+                    <div className="border-b border-border px-3 py-2">
                       <p className="mb-1 text-[8px] font-medium uppercase tracking-wider text-[#B8976E]">
                         Temporary incentives
                       </p>
@@ -1588,7 +1748,7 @@ export function ProductDirectoryDetailBody({
                       </p>
                       <ul className="space-y-2 text-[9px] text-muted-foreground">
                         {program.activeIncentives!.map((pr) => (
-                          <li key={pr.id} className="space-y-1 rounded-lg border border-white/[0.06] bg-foreground/[0.03] p-2">
+                          <li key={pr.id} className="space-y-1 rounded-lg border border-border bg-card p-2">
                             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                               <span className="font-semibold text-brand-cta">
                                 {(pr.rateType ?? "percentage") === "flat"
@@ -1648,7 +1808,7 @@ export function ProductDirectoryDetailBody({
                     </p>
                   ) : null}
                   {showFooter ? (
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.04] bg-white/[0.015] px-3 py-2">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-card px-3 py-2">
                       <div className="flex min-w-0 flex-wrap items-center gap-2">
                         {showLockedCommissionHint ? (
                           <>
@@ -1684,7 +1844,7 @@ export function ProductDirectoryDetailBody({
 
         {canViewCommissions ? (
           totalVisibleAdvisories === 0 ? (
-            <div className="mt-4 rounded-xl border border-white/[0.03] bg-white/[0.015] py-6 text-center">
+            <div className="mt-4 rounded-xl border border-border bg-card py-6 text-center">
               <p className="mb-1 text-[10px] font-medium text-foreground">Commission incentives</p>
               <p className="text-2xs text-muted-foreground">No advisory incentives on this product yet.</p>
             </div>
@@ -1718,7 +1878,7 @@ export function ProductDirectoryDetailBody({
                           <div
                             key={advisory.id}
                             className={cn(
-                              "rounded-xl border border-white/[0.05] bg-foreground/[0.03] p-3",
+                              "rounded-xl border border-border bg-card p-3",
                               kind === "active" && "border-l-2 border-l-border",
                               kind === "upcoming" && "border-l-2 border-l-muted-foreground/40 border-dashed opacity-80",
                               kind === "expired" && "opacity-50"
@@ -1777,8 +1937,8 @@ export function ProductDirectoryDetailBody({
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Users className="h-3.5 w-3.5 shrink-0" style={{ color: "#B07A5B" }} />
-            <span className="text-[11px] font-medium text-[#F5F0EB]">Rep Firms</span>
-            <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-[#6B6560]">
+            <span className="text-[11px] font-medium text-foreground">Rep Firms</span>
+            <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">
               {repFirmLinks.length}
             </span>
           </div>
@@ -1825,7 +1985,7 @@ export function ProductDirectoryDetailBody({
         {showRepFirmEditor ? (
           <>
             {localRepFirmLinks.length === 0 ? (
-              <div className="rounded-xl border border-white/[0.03] bg-white/[0.015] py-6 text-center">
+              <div className="rounded-xl border border-border bg-card py-6 text-center">
                 <p className="text-[10px] text-[#6B6560]">No rep firms linked</p>
               </div>
             ) : (
@@ -1858,7 +2018,7 @@ export function ProductDirectoryDetailBody({
                           <input
                             value={link.repFirmName}
                             onChange={(e) => updateRepFirmLinkAt(index, { repFirmName: e.target.value })}
-                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                            className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-[11px] text-foreground outline-none"
                           />
                         </label>
                         <label className="block">
@@ -1866,7 +2026,7 @@ export function ProductDirectoryDetailBody({
                           <input
                             value={link.repFirmId}
                             onChange={(e) => updateRepFirmLinkAt(index, { repFirmId: e.target.value })}
-                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                            className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-[11px] text-foreground outline-none"
                           />
                         </label>
                         <label className="block">
@@ -1877,7 +2037,7 @@ export function ProductDirectoryDetailBody({
                               const v = e.target.value;
                               updateRepFirmLinkAt(index, { scope: v === "enable" ? "enable" : v });
                             }}
-                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                            className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-[11px] text-foreground outline-none"
                           >
                             <option value="enable">Enable</option>
                             {teams.map((t) => (
@@ -1896,7 +2056,7 @@ export function ProductDirectoryDetailBody({
                                 status: e.target.value as "active" | "inactive",
                               })
                             }
-                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                            className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-[11px] text-foreground outline-none"
                           >
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
@@ -1907,7 +2067,7 @@ export function ProductDirectoryDetailBody({
                           <input
                             value={link.contactName ?? ""}
                             onChange={(e) => updateRepFirmLinkAt(index, { contactName: e.target.value })}
-                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                            className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-[11px] text-foreground outline-none"
                           />
                         </label>
                         <label className="block">
@@ -1915,7 +2075,7 @@ export function ProductDirectoryDetailBody({
                           <input
                             value={link.contactEmail ?? ""}
                             onChange={(e) => updateRepFirmLinkAt(index, { contactEmail: e.target.value })}
-                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                            className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-[11px] text-foreground outline-none"
                           />
                         </label>
                         <label className="block">
@@ -1923,7 +2083,7 @@ export function ProductDirectoryDetailBody({
                           <input
                             value={link.contactPhone ?? ""}
                             onChange={(e) => updateRepFirmLinkAt(index, { contactPhone: e.target.value })}
-                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                            className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-[11px] text-foreground outline-none"
                           />
                         </label>
                         <label className="block sm:col-span-2">
@@ -1932,7 +2092,7 @@ export function ProductDirectoryDetailBody({
                             value={link.notes ?? ""}
                             onChange={(e) => updateRepFirmLinkAt(index, { notes: e.target.value })}
                             rows={2}
-                            className="w-full rounded-lg border border-white/[0.08] bg-[#0a0a0f] px-2 py-1.5 text-[11px] text-[#F5F0EB] outline-none"
+                            className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-[11px] text-foreground outline-none"
                           />
                         </label>
                       </div>
@@ -1966,7 +2126,7 @@ export function ProductDirectoryDetailBody({
             </div>
           </>
         ) : repFirmLinks.length === 0 ? (
-          <div className="rounded-xl border border-white/[0.03] bg-white/[0.015] py-6 text-center">
+          <div className="rounded-xl border border-border bg-card py-6 text-center">
             <p className="text-[10px] text-[#6B6560]">No rep firms linked</p>
           </div>
         ) : (
@@ -1998,13 +2158,13 @@ export function ProductDirectoryDetailBody({
                 <div
                   key={link.id}
                   className={cn(
-                    "overflow-hidden rounded-xl border border-white/[0.05] bg-foreground/[0.03]",
+                    "overflow-hidden rounded-xl border border-border bg-card",
                     !active && "opacity-75"
                   )}
                 >
                   <div className="flex items-center justify-between px-3 pb-1.5 pt-2.5">
                     <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-                      <span className="text-[11px] font-medium text-[#F5F0EB]">{link.repFirmName}</span>
+                      <span className="text-[11px] font-medium text-foreground">{link.repFirmName}</span>
                       {link.scope === "enable" ? (
                         <span className="shrink-0 rounded bg-[rgba(91,138,110,0.12)] px-1.5 py-0.5 text-[8px] text-[#5B8A6E]">
                           Enable
@@ -2062,7 +2222,7 @@ export function ProductDirectoryDetailBody({
                         contacts={firmRow.contacts}
                         firmName={firmRow.name}
                         attribution={link.repFirmName}
-                        className="[&_th]:text-[#6B6560] [&_td]:text-[#F5F0EB]"
+                        className="[&_th]:text-muted-foreground [&_td]:text-foreground"
                       />
                     </div>
                   ) : null}
@@ -2105,7 +2265,7 @@ export function ProductDirectoryDetailBody({
                   ) : null}
                   {link.market ? (
                     <p className="px-3 pb-2 text-[9px] text-[#9B9590]">
-                      Market: <span className="text-[#F5F0EB]/90">{link.market}</span>
+                      Market: <span className="text-foreground">{link.market}</span>
                     </p>
                   ) : null}
                   {link.notes ? (
@@ -2123,7 +2283,7 @@ export function ProductDirectoryDetailBody({
                         : ""}
                     </p>
                   ) : null}
-                  <div className="flex items-center gap-3 border-t border-white/[0.04] bg-white/[0.015] px-3 py-2">
+                  <div className="flex items-center gap-3 border-t border-border bg-card px-3 py-2">
                     <span
                       className={cn(
                         "shrink-0 text-[9px] font-medium",
@@ -2158,7 +2318,7 @@ export function ProductDirectoryDetailBody({
                 Private
               </span>
               {personalContacts.length > 0 ? (
-                <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-muted-foreground">
+                <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">
                   {personalContacts.length}
                 </span>
               ) : null}
@@ -2184,12 +2344,12 @@ export function ProductDirectoryDetailBody({
                 return (
                 <div
                   key={c.id}
-                  className="flex items-start justify-between gap-2 rounded-lg border border-white/[0.05] bg-foreground/[0.03] px-2.5 py-2"
+                  className="flex items-start justify-between gap-2 rounded-lg border border-border bg-card px-2.5 py-2"
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-xs font-medium text-foreground">{c.name}</span>
-                      <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[8px] text-muted-foreground">{c.role}</span>
+                      <span className="rounded bg-muted px-1.5 py-0.5 text-[8px] text-muted-foreground">{c.role}</span>
                     </div>
                     <div className="mt-0.5 space-y-0.5">
                       {contactEmails.length > 0 ? (
@@ -2254,7 +2414,7 @@ export function ProductDirectoryDetailBody({
             </div>
           )}
           {personalContactFormOpen && (
-            <div className="mt-2 space-y-1.5 rounded-xl border border-border bg-foreground/[0.03] p-2.5">
+            <div className="mt-2 space-y-1.5 rounded-xl border border-border bg-card p-2.5">
               <p className="text-[9px] uppercase tracking-wider text-muted-foreground">
                 {editingPersonalContactId ? "Edit contact" : "New contact"}
               </p>
@@ -2262,13 +2422,13 @@ export function ProductDirectoryDetailBody({
                 value={pcName}
                 onChange={(e) => setPcName(e.target.value)}
                 placeholder="Name *"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
+                className="w-full rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none placeholder:text-muted-foreground/65"
               />
               <input
                 value={pcRole}
                 onChange={(e) => setPcRole(e.target.value)}
                 placeholder="Role *"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
+                className="w-full rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none placeholder:text-muted-foreground/65"
               />
               <ContactChannelFormFields
                 emailRows={pcEmails}
@@ -2292,7 +2452,7 @@ export function ProductDirectoryDetailBody({
                 value={pcNote}
                 onChange={(e) => setPcNote(e.target.value)}
                 placeholder="Note (optional)"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
+                className="w-full rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none placeholder:text-muted-foreground/65"
               />
               <div className="flex items-center gap-2">
                 <Button
@@ -2329,9 +2489,9 @@ export function ProductDirectoryDetailBody({
         </div>
 
         <div className="my-4 flex items-center gap-3">
-          <div className="h-px flex-1 bg-white/[0.04]" />
+          <div className="h-px flex-1 bg-border" />
           <span className="text-[9px] uppercase tracking-wider text-muted-foreground/65">Agency</span>
-          <div className="h-px flex-1 bg-white/[0.04]" />
+          <div className="h-px flex-1 bg-border" />
         </div>
 
         <div className="rounded-xl border border-[rgba(140,160,180,0.10)] bg-[rgba(140,160,180,0.03)] p-3">
@@ -2341,7 +2501,7 @@ export function ProductDirectoryDetailBody({
               <span className="text-[11px] font-medium text-foreground">Agency contacts</span>
               <TeamScopedFieldNotice show={!isAdmin} />
               {agencyContacts.length > 0 ? (
-                <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-muted-foreground">
+                <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">
                   {agencyContacts.length}
                 </span>
               ) : null}
@@ -2358,7 +2518,7 @@ export function ProductDirectoryDetailBody({
             </Button>
           </div>
           {agencyContacts.length === 0 ? (
-            <div className="rounded-xl border border-white/[0.03] bg-white/[0.015] py-5 text-center">
+            <div className="rounded-xl border border-border bg-card py-5 text-center">
               <UserPlus className="mx-auto mb-1.5 h-4 w-4 text-muted-foreground/65" />
               <p className="text-2xs text-muted-foreground">None yet</p>
               <Button
@@ -2380,12 +2540,12 @@ export function ProductDirectoryDetailBody({
                 return (
                   <div
                     key={c.id}
-                    className="flex items-start justify-between gap-2 rounded-lg border border-white/[0.04] bg-foreground/[0.03] px-2.5 py-2"
+                    className="flex items-start justify-between gap-2 rounded-lg border border-border bg-card px-2.5 py-2"
                   >
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-xs font-medium text-foreground">{c.name}</span>
-                        <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[8px] text-muted-foreground">{c.role}</span>
+                        <span className="rounded bg-muted px-1.5 py-0.5 text-[8px] text-muted-foreground">{c.role}</span>
                       </div>
                       <div className="mt-0.5 space-y-0.5">
                         {contactEmails.length > 0 ? (
@@ -2478,7 +2638,7 @@ export function ProductDirectoryDetailBody({
             </div>
           )}
           {agencyContactFormOpen && (
-            <div className="mt-2 space-y-1.5 rounded-xl border border-border bg-foreground/[0.03] p-2.5">
+            <div className="mt-2 space-y-1.5 rounded-xl border border-border bg-card p-2.5">
               <p className="text-[9px] uppercase tracking-wider text-muted-foreground">
                 {editingAgencyContactId ? "Edit contact" : "New contact"}
               </p>
@@ -2486,13 +2646,13 @@ export function ProductDirectoryDetailBody({
                 value={newAgencyContactName}
                 onChange={(e) => setNewAgencyContactName(e.target.value)}
                 placeholder="Name *"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
+                className="w-full rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none placeholder:text-muted-foreground/65"
               />
               <input
                 value={newAgencyContactRole}
                 onChange={(e) => setNewAgencyContactRole(e.target.value)}
                 placeholder="Role *"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
+                className="w-full rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none placeholder:text-muted-foreground/65"
               />
               <ContactChannelFormFields
                 emailRows={newAgencyContactEmails}
@@ -2520,7 +2680,7 @@ export function ProductDirectoryDetailBody({
                 value={newAgencyContactNote}
                 onChange={(e) => setNewAgencyContactNote(e.target.value)}
                 placeholder="Note (optional)"
-                className="w-full rounded-lg border border-white/[0.05] bg-white/[0.03] px-2.5 py-1.5 text-xs text-[rgba(245,240,235,0.7)] outline-none placeholder:text-muted-foreground/65"
+                className="w-full rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none placeholder:text-muted-foreground/65"
               />
               <div className="flex items-center gap-2">
                 <Button
@@ -2578,7 +2738,7 @@ export function ProductDirectoryDetailBody({
               personalNotes.map((note) => (
                 <div
                   key={note.id}
-                  className="rounded-lg border border-white/[0.05] bg-foreground/[0.03] p-2.5"
+                  className="rounded-lg border border-border bg-card p-2.5"
                 >
                   {editingPersonalNoteId === note.id ? (
                     <>
@@ -2586,7 +2746,7 @@ export function ProductDirectoryDetailBody({
                         value={editPersonalNoteDraft}
                         onChange={(e) => setEditPersonalNoteDraft(e.target.value)}
                         rows={3}
-                        className="w-full resize-none rounded-lg border border-border bg-white/[0.03] px-2 py-1.5 text-xs text-[#C8C0B8] outline-none"
+                        className="w-full resize-none rounded-lg border border-border bg-background px-2 py-1.5 text-xs text-foreground outline-none"
                       />
                       <div className="mt-1.5 flex gap-2">
                         <Button type="button" variant="secondary" size="xs" onClick={savePersonalNoteEdit} className="h-7 text-[#5B8A6E]">
@@ -2608,7 +2768,7 @@ export function ProductDirectoryDetailBody({
                     </>
                   ) : (
                     <>
-                      <p className="text-xs leading-relaxed text-[#C8C0B8]">{note.text}</p>
+                      <p className="text-xs leading-relaxed text-muted-foreground">{note.text}</p>
                       <div className="mt-1.5 flex flex-wrap items-center gap-2">
                         <span className="text-[9px] text-muted-foreground/65">{relativeTime(note.createdAt)}</span>
                         <Button
@@ -2641,13 +2801,13 @@ export function ProductDirectoryDetailBody({
             )}
           </div>
 
-          <div className="flex gap-2 border-t border-white/[0.05] pt-3">
+          <div className="flex gap-2 border-t border-border pt-3">
             <textarea
               value={newPersonalNote}
               onChange={(e) => setNewPersonalNote(e.target.value)}
               placeholder="Write a private note…"
               rows={2}
-              className="min-h-0 flex-1 resize-none rounded-lg border border-border bg-white/[0.03] px-2 py-1.5 text-xs text-[#C8C0B8] outline-none placeholder:text-muted-foreground/65"
+              className="min-h-0 flex-1 resize-none rounded-lg border border-border bg-background px-2 py-1.5 text-xs text-foreground outline-none placeholder:text-muted-foreground/65"
             />
             <Button
               type="button"
@@ -2668,7 +2828,7 @@ export function ProductDirectoryDetailBody({
         <div className="mb-3 flex items-center gap-2">
           <Bookmark className="h-3.5 w-3.5 shrink-0 text-brand-cta" />
           <span className="text-xs font-medium text-foreground">Collections</span>
-          <span className="rounded-full bg-white/[0.04] px-1.5 py-0.5 text-[9px] text-muted-foreground">
+          <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">
             {product.collections.length}
           </span>
         </div>
@@ -2701,135 +2861,59 @@ export function ProductDirectoryDetailBody({
       </div>
       </div>
 
-      {/* Block 7 — Sticky quick actions + inline collection picker */}
-      <div className="sticky bottom-0 z-10 mt-4 border-t border-border bg-inset/95 backdrop-blur-sm">
-        {inlinePickerEnabled && panelCollectionOpen && (
-          <div className="max-h-[220px] overflow-y-auto border-b border-white/[0.04] px-4 py-3">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-2xs font-medium text-foreground">Add to collection</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="xs"
-                onClick={() => {
-                  setPanelCollectionOpen(false);
-                  setPanelCollectionSearch("");
-                }}
-                className="h-6 text-[9px] text-muted-foreground"
-              >
-                Cancel
-              </Button>
+      {/* Block 7 — Sticky quick actions + inline collection picker (modal / non-panel only) */}
+      {!isPanel ? (
+        <div className="sticky bottom-0 z-10 mt-4 border-t border-border bg-inset/95 backdrop-blur-sm">
+          {inlinePickerEnabled && panelCollectionOpen ? (
+            <div className="max-h-[220px] overflow-y-auto border-b border-border px-4 py-3">
+              {renderCollectionPickerInner()}
             </div>
-            <div className="mb-2 flex items-center gap-1.5 rounded-lg border border-white/[0.05] bg-white/[0.03] px-2 py-1.5">
-              <Search className="h-3 w-3 shrink-0 text-muted-foreground/65" />
-              <input
-                value={panelCollectionSearch}
-                onChange={(e) => setPanelCollectionSearch(e.target.value)}
-                placeholder="Search collections…"
-                autoFocus
-                className="flex-1 bg-transparent text-2xs text-foreground outline-none placeholder:text-muted-foreground/65"
-              />
-            </div>
-            <div className="space-y-1">
-              {(availableCollections ?? [])
-                .filter((c) => c.name.toLowerCase().includes(panelCollectionSearch.toLowerCase()))
-                .map((col) => {
-                  const alreadyIn = product.collectionIds.includes(col.id);
-                  const count = col.productIds?.length ?? 0;
-                  return (
-                    <button
-                      key={col.id}
-                      type="button"
-                      disabled={alreadyIn}
-                      onClick={() => {
-                        if (alreadyIn || !onQuickAddToCollection) return;
-                        onQuickAddToCollection(col.id);
-                        toast(`Added to "${col.name}"`);
-                        setPanelCollectionOpen(false);
-                        setPanelCollectionSearch("");
-                      }}
-                      className={cn(
-                        "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-2xs transition-colors",
-                        alreadyIn
-                          ? "cursor-default bg-white/[0.01] text-muted-foreground"
-                          : "text-foreground hover:bg-white/[0.04]"
-                      )}
-                    >
-                      <div className="min-w-0">
-                        <span className="block truncate">{col.name}</span>
-                        <span className="text-[8px] text-muted-foreground">
-                          {count} product{count !== 1 ? "s" : ""}
-                        </span>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1.5">
-                        <ScopeBadge scope={col.scope} teams={teams} />
-                        {alreadyIn ? <Check className="h-3 w-3 text-[#5B8A6E]" /> : null}
-                      </div>
-                    </button>
-                  );
-                })}
-            </div>
+          ) : null}
+          <div className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-stretch">
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               size="sm"
-              onClick={() => {
-                setPanelCollectionOpen(false);
-                setPanelCollectionSearch("");
-                if (onRequestCreateCollection) onRequestCreateCollection();
-                else onOpenCollectionPicker();
-              }}
-              className="mt-1.5 h-8 w-full justify-start rounded-lg text-xs text-brand-cta/70 hover:bg-[rgba(201,169,110,0.04)] hover:text-brand-cta"
+              onClick={onAddToItinerary}
+              className="h-8 flex-1 rounded-lg border border-brand-cta/20 bg-brand-cta/10 text-xs font-medium text-foreground hover:bg-brand-cta/15"
             >
               <Plus className="size-3.5" aria-hidden />
-              New collection
+              Add to Itinerary
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (inlinePickerEnabled) {
+                  setPanelCollectionOpen((o) => {
+                    const next = !o;
+                    if (o) setPanelCollectionSearch("");
+                    return next;
+                  });
+                } else {
+                  onOpenCollectionPicker();
+                }
+              }}
+              className={cn(
+                "h-8 flex-1 rounded-lg text-xs font-medium",
+                inlinePickerEnabled && panelCollectionOpen
+                  ? "border-brand-cta/20 bg-brand-cta/10 text-brand-cta"
+                  : "border-border bg-card hover:bg-muted"
+              )}
+            >
+              <Bookmark className="size-3.5" aria-hidden />
+              Add to Collection
+            </Button>
+            <Button variant="outline" size="sm" className="h-8 flex-1 rounded-lg text-xs font-medium" asChild>
+              <Link href={`/dashboard/products/${product.id}`}>
+                <ExternalLink className="size-3.5" aria-hidden />
+                Full page
+              </Link>
             </Button>
           </div>
-        )}
-        <div className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-stretch">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={onAddToItinerary}
-            className="h-8 flex-1 rounded-lg border border-brand-cta/20 bg-brand-cta/10 text-xs font-medium text-foreground hover:bg-brand-cta/15"
-          >
-            <Plus className="size-3.5" aria-hidden />
-            Add to Itinerary
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              if (inlinePickerEnabled) {
-                setPanelCollectionOpen((o) => {
-                  const next = !o;
-                  if (o) setPanelCollectionSearch("");
-                  return next;
-                });
-              } else {
-                onOpenCollectionPicker();
-              }
-            }}
-            className={cn(
-              "h-8 flex-1 rounded-lg text-xs font-medium",
-              inlinePickerEnabled && panelCollectionOpen
-                ? "border-brand-cta/20 bg-brand-cta/10 text-brand-cta"
-                : "border-border bg-white/[0.03] hover:bg-foreground/[0.06]"
-            )}
-          >
-            <Bookmark className="size-3.5" aria-hidden />
-            Add to Collection
-          </Button>
-          <Button variant="outline" size="sm" className="h-8 flex-1 rounded-lg text-xs font-medium" asChild>
-            <Link href={`/dashboard/products/${product.id}`}>
-              <ExternalLink className="size-3.5" aria-hidden />
-              Full page
-            </Link>
-          </Button>
         </div>
-      </div>
+      ) : null}
 
       <Dialog open={repFirmSuggestOpen} onOpenChange={setRepFirmSuggestOpen}>
         <DialogContent className="border-border bg-popover sm:max-w-md">
@@ -2871,7 +2955,7 @@ export function ProductDirectoryDetailBody({
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="w-80 rounded-2xl border border-border bg-popover p-5 shadow-2xl">
             <h3 className="mb-2 text-sm font-medium text-foreground">Share contact with agency?</h3>
-            <div className="mb-3 rounded-lg border border-white/[0.04] bg-white/[0.03] p-2.5">
+            <div className="mb-3 rounded-lg border border-border bg-card p-2.5">
               <p className="text-xs font-medium text-foreground">{contactUpgradeTarget.name}</p>
               <p className="text-2xs text-muted-foreground">{contactUpgradeTarget.role}</p>
               <div className="mt-1.5 space-y-1">
@@ -2939,4 +3023,6 @@ export function ProductDirectoryDetailBody({
       )}
     </div>
   );
-}
+});
+
+ProductDirectoryDetailBody.displayName = "ProductDirectoryDetailBody";

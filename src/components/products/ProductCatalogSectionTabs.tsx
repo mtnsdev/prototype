@@ -31,7 +31,7 @@ export function ProductCatalogSectionTabs({
       aria-label="Product directory section"
       value={value}
       onChange={onChange}
-      activeTone="gold"
+      activeTone="moss"
       className={cn("relative z-[60]", className)}
       options={options}
     />

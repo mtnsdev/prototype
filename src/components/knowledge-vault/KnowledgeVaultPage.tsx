@@ -703,31 +703,7 @@ export default function KnowledgeVaultPage() {
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-background text-foreground">
       <AppPageHeroHeader
-        eyebrow="Knowledge"
         title="Knowledge Vault"
-        subtitle={
-          vaultDocFiltersActive ? (
-            <>
-              {emailOnlyView ? (
-                <>Email ingestion · </>
-              ) : null}
-              <span className="border-b border-dotted border-input cursor-help" title={VAULT_CATALOG_COUNT_TOOLTIP}>
-                {listCount} documents
-              </span>
-              {emailOnlyView ? null : <> matching · </>}
-              {" "}
-              {connectedCount} sources · {lastSyncLabel}
-            </>
-          ) : (
-            <>
-              <span className="border-b border-dotted border-input cursor-help" title={VAULT_CATALOG_COUNT_TOOLTIP}>
-                {listCount} documents
-              </span>
-              {" · "}
-              {connectedCount} sources · {lastSyncLabel}
-            </>
-          )
-        }
         toolbar={
           <>
             {isAdmin && !emailOnlyView && (
@@ -846,7 +822,7 @@ export default function KnowledgeVaultPage() {
                           {MOCK_TEAMS.map((team) => (
                             <DropdownMenuItem
                               key={team.id}
-                              className="text-xs text-muted-foreground/90 focus:text-white"
+                              className="text-xs text-muted-foreground/90 focus:text-foreground"
                               onClick={() => bulkShareWithTeam(team.id)}
                             >
                               {team.name}
@@ -952,7 +928,7 @@ export default function KnowledgeVaultPage() {
                             className={cn(
                               "min-w-[2rem] px-2 py-1 rounded-md tabular-nums",
                               item === listPage
-                                ? "bg-white/15 text-white"
+                                ? "bg-foreground/[0.12] text-foreground"
                                 : "bg-foreground/[0.05] text-muted-foreground/90 hover:text-foreground"
                             )}
                           >

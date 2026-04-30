@@ -26,7 +26,7 @@ import { DestinationSectionNav, type DestinationNavItem } from "./DestinationSec
 import { SectionRenderer } from "./SectionRenderer";
 import { DestinationSectionChrome } from "./DestinationSectionChrome";
 import { SectionEditPanel } from "./editor/SectionEditPanel";
-import { destMuted, destPage } from "./destinationStyles";
+import { destCard, destMuted, destPage } from "./destinationStyles";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { CatalogChromeNavRow } from "@/components/products/CatalogChromeNavRow";
@@ -54,19 +54,33 @@ function SectionBlock({
   return (
     <section
       id={`section-${section.id}`}
-      className="scroll-mt-28"
+      className="scroll-mt-28 flex min-h-0 flex-col"
       aria-labelledby={`section-heading-${section.id}`}
     >
-      <DestinationSectionChrome
-        section={section}
-        headingId={`section-heading-${section.id}`}
-      />
-      <SectionRenderer section={section} destinationSlug={destinationSlug} activeTagFilters={activeTagFilters} />
+      <div
+        className={cn(
+          destCard,
+          "flex max-h-[min(72vh,34rem)] flex-col overflow-hidden p-4 sm:p-5",
+        )}
+      >
+        <DestinationSectionChrome
+          section={section}
+          headingId={`section-heading-${section.id}`}
+          className="mb-3 shrink-0"
+        />
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-gutter:stable]">
+          <SectionRenderer
+            section={section}
+            destinationSlug={destinationSlug}
+            activeTagFilters={activeTagFilters}
+          />
+        </div>
+      </div>
     </section>
   );
 }
 
-/** Section list — drag reorder now lives in the sidebar nav. */
+/** Bento grid (up to 3 columns on large screens). */
 function SectionList({
   sections,
   destinationSlug,
@@ -77,9 +91,14 @@ function SectionList({
   activeTagFilters?: ReadonlySet<string>;
 }) {
   return (
-    <div className="space-y-12">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-5">
       {sections.map((section) => (
-        <SectionBlock key={section.id} section={section} destinationSlug={destinationSlug} activeTagFilters={activeTagFilters} />
+        <SectionBlock
+          key={section.id}
+          section={section}
+          destinationSlug={destinationSlug}
+          activeTagFilters={activeTagFilters}
+        />
       ))}
     </div>
   );
@@ -400,6 +419,32 @@ export function DestinationDetailView({
     [displayDestination, sections],
   );
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const h = window.location.hash;
+    if (h) {
+      logDestinationEvent("destination_deep_link_open", { destination: displayDestination.slug, source: "hash" });
+    }
+  }, [displayDestination.slug]);
+
+  useEffect(() => {
+    logDestinationEvent(
+      "destination_view",
+      { destination: displayDestination.slug },
+      user?.id != null ? String(user.id) : undefined,
+    );
+  }, [displayDestination.slug, user?.id]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const itemId = resolveDestinationItemIdFromHash(clientHash);
+    if (!itemId) return;
+    const t = window.setTimeout(() => {
+      document.getElementById(`item-${itemId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+    return () => window.clearTimeout(t);
+  }, [clientHash, displayDestination.slug]);
+
   const handleAddSection = useCallback(
     (title: string) => {
       if (!editorCtx) return;
@@ -441,32 +486,6 @@ export function DestinationDetailView({
     },
     [editorCtx],
   );
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const h = window.location.hash;
-    if (h) {
-      logDestinationEvent("destination_deep_link_open", { destination: displayDestination.slug, source: "hash" });
-    }
-  }, [displayDestination.slug]);
-
-  useEffect(() => {
-    logDestinationEvent(
-      "destination_view",
-      { destination: displayDestination.slug },
-      user?.id != null ? String(user.id) : undefined,
-    );
-  }, [displayDestination.slug, user?.id]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const itemId = resolveDestinationItemIdFromHash(clientHash);
-    if (!itemId) return;
-    const t = window.setTimeout(() => {
-      document.getElementById(`item-${itemId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 120);
-    return () => window.clearTimeout(t);
-  }, [clientHash, displayDestination.slug]);
 
   const scrollToSection = useCallback(
     (id: string) => {
@@ -524,6 +543,7 @@ export function DestinationDetailView({
           <div className="sticky top-0 z-40 shrink-0 border-b border-border/60 bg-background/95 px-6 pb-3 pt-3 backdrop-blur-md supports-[backdrop-filter]:bg-background/90">
             <CatalogChromeNavRow
               activeSegment="destinations"
+              omitSegmentTabs
               backNavigation={{
                 href: "/dashboard/products/destinations",
                 label: "All destinations",

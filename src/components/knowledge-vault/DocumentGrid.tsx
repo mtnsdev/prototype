@@ -46,11 +46,11 @@ import {
   listThCheckboxClass,
   listThClass,
   listTheadRowClass,
-  listTbodyRowClass,
+  listTbodyRowStripedClass,
 } from "@/lib/list-ui";
 
 const SOURCE_BADGE =
-  "text-xs px-1.5 py-0.5 rounded-md bg-white/[0.06] text-foreground/[0.55] border border-white/[0.08] max-w-[160px] truncate";
+  "text-compact px-1.5 py-0.5 rounded-md bg-white/[0.06] text-foreground/[0.55] border border-white/[0.08] max-w-[160px] truncate";
 
 type TeamOpt = { id: string; name: string };
 
@@ -208,7 +208,7 @@ function DocumentActionsMenu({
             {teams.map((team) => (
               <DropdownMenuItem
                 key={team.id}
-                className="w-full text-left px-3 py-1.5 text-xs text-muted-foreground/90 focus:text-white hover:bg-white/[0.04]"
+                className="w-full px-3 py-1.5 text-left text-xs text-muted-foreground/90 hover:bg-foreground/[0.06] focus:bg-foreground/[0.06] focus:text-foreground"
                 onClick={() => onShareDocument?.(doc, team.id)}
               >
                 {team.name}
@@ -315,9 +315,10 @@ export default function DocumentGrid({
     );
   }
 
-  const stickyCbClass =
+  /** Header row: solid fill so horizontal scroll doesn’t show bleed; tbody stripes set per row. */
+  const stickyHeaderCheckboxClass =
     "sticky left-0 z-[2] bg-background shadow-[4px_0_12px_-4px_rgba(0,0,0,0.65)]";
-  const stickyTitleClass = cn(
+  const stickyHeaderTitleClass = cn(
     "sticky z-[2] bg-background shadow-[4px_0_12px_-4px_rgba(0,0,0,0.65)]",
     "left-10"
   );
@@ -337,7 +338,7 @@ export default function DocumentGrid({
         </caption>
         <thead>
           <tr className={listTheadRowClass}>
-            <th className={cn(listThCheckboxClass, stickyCbClass)} scope="col">
+            <th className={cn(listThCheckboxClass, stickyHeaderCheckboxClass)} scope="col">
               <input
                 ref={headerCbRef}
                 type="checkbox"
@@ -352,7 +353,7 @@ export default function DocumentGrid({
               column="title"
               sortOption={listSort.option}
               onColumnClick={listSort.onColumnClick}
-              className={stickyTitleClass}
+              className={stickyHeaderTitleClass}
             />
             <th className={cn(listThClass, "font-medium")} scope="col">
               Source
@@ -379,18 +380,32 @@ export default function DocumentGrid({
           </tr>
         </thead>
         <tbody>
-          {documents.map((doc) => {
+          {documents.map((doc, rowIndex) => {
             const oversight = isOversightPrivate?.(doc) ?? false;
             const rowTone = cn(
-              listTbodyRowClass,
+              listTbodyRowStripedClass,
+              "group/kvrow",
               doc.ingestion_status === "not_indexed" && "border-l-4 border-l-border",
               oversight && "opacity-60"
+            );
+            /** Sticky cells need their own fill or they paint over the `<tr>` stripe (`bg-background` was hiding half the row). */
+            const stickyStripeBg =
+              rowIndex % 2 === 0 ? "bg-card" : "bg-[var(--surface-elevated)]";
+            const stickyBodyCheckboxClass = cn(
+              "sticky left-0 z-[2] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.65)] transition-colors",
+              stickyStripeBg,
+              "group-hover/kvrow:bg-muted/35"
+            );
+            const stickyBodyTitleClass = cn(
+              "sticky left-10 z-[2] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.65)] transition-colors",
+              stickyStripeBg,
+              "group-hover/kvrow:bg-muted/35"
             );
             const checked = selectedSet.has(doc.id);
             const docTd = cn(listTdClass, "align-top");
             return (
               <tr key={doc.id} className={rowTone}>
-                <td className={cn(docTd, stickyCbClass)}>
+                <td className={cn(docTd, stickyBodyCheckboxClass)}>
                   <input
                     type="checkbox"
                     className="checkbox-on-dark checkbox-on-dark-sm mt-1"
@@ -400,7 +415,7 @@ export default function DocumentGrid({
                     onClick={(e) => e.stopPropagation()}
                   />
                 </td>
-                <td className={cn(docTd, stickyTitleClass)}>
+                <td className={cn(docTd, stickyBodyTitleClass)}>
                   <div className="flex min-w-0 items-start gap-2">
                     {oversight && (
                       <span title="This document belongs to another user" className="mt-1 inline-flex shrink-0">

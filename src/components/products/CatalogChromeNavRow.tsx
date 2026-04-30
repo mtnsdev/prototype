@@ -17,6 +17,11 @@ type Props = {
   activeSegment: CatalogSegment;
   className?: string;
   /**
+   * When true, catalog segment tabs are omitted here (e.g. shown above the destination hero).
+   * Back navigation / trailing still render when provided.
+   */
+  omitSegmentTabs?: boolean;
+  /**
    * Second row under tabs — primary back control on destination detail
    * (replaces the old muted inline “All destinations” link).
    */
@@ -30,6 +35,7 @@ type Props = {
  */
 export function CatalogChromeNavRow({
   activeSegment,
+  omitSegmentTabs = false,
   backNavigation,
   trailing,
   className,
@@ -39,12 +45,14 @@ export function CatalogChromeNavRow({
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <div className="min-w-0 max-w-full overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <ProductCatalogSectionTabs
-          value={activeSegment}
-          onChange={(segment) => router.push(hrefForCatalogTab(segment))}
-        />
-      </div>
+      {!omitSegmentTabs ? (
+        <div className="min-w-0 max-w-full overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <ProductCatalogSectionTabs
+            value={activeSegment}
+            onChange={(segment) => router.push(hrefForCatalogTab(segment))}
+          />
+        </div>
+      ) : null}
       {hasSecondRow ? (
         <div className="flex min-h-[36px] items-center justify-between gap-2">
           <div className="min-w-0">

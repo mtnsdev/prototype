@@ -56,7 +56,7 @@ export function ProductDetailLayers({ product }: Props) {
 
       {/* Notes — unified view (matches directory slide-in) */}
       <div className="border-t border-border pt-5 mt-5">
-        <h3 className="mb-4 text-sm font-medium text-white">Notes</h3>
+        <h3 className="mb-4 text-sm font-medium text-foreground">Notes</h3>
             <div className="space-y-3 rounded-xl border border-violet-500/10 bg-violet-500/[0.04] p-3">
                 <div className="flex items-center gap-1.5 mb-2">
                   <Lock className="w-3 h-3 text-violet-400/50" />
@@ -160,7 +160,7 @@ function PartnerProgramsSection({ programs }: { programs: PartnerProgramMock[] }
     <div className="border-t border-border pt-5 mt-5">
       <div className="flex items-center gap-2 mb-4">
         <Award className="w-4 h-4 text-[var(--color-warning)]" />
-        <span className="text-sm font-medium text-white">Partner Programs</span>
+        <span className="text-sm font-medium text-foreground">Partner Programs</span>
         <span className="text-2xs text-muted-foreground bg-white/5 px-2 py-0.5 rounded-full">
           {programs.length}
         </span>
@@ -178,7 +178,7 @@ function PartnerProgramsSection({ programs }: { programs: PartnerProgramMock[] }
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-medium text-white">{program.name}</span>
+                  <span className="text-xs font-medium text-foreground">{program.name}</span>
                   {program.scope === "enable" ? (
                     <span className="text-2xs px-1.5 py-0.5 rounded border border-[var(--muted-success-border)] bg-[var(--muted-success-bg)] text-[var(--muted-success-text)]">
                       Enable
@@ -243,7 +243,7 @@ function SuggestionModal({
       aria-labelledby="suggest-change-title"
     >
       <div className="bg-card border border-input rounded-2xl p-5 w-full max-w-[400px] shadow-2xl">
-        <h3 id="suggest-change-title" className="text-sm font-medium text-white mb-3">
+        <h3 id="suggest-change-title" className="mb-3 text-sm font-medium text-foreground">
           Suggest a Change
         </h3>
         <p className="text-2xs text-muted-foreground mb-4">

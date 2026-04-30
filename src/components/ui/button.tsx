@@ -2,6 +2,7 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
 
+import { listToolbarChipFontClass } from "@/lib/list-ui"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
@@ -22,9 +23,11 @@ const buttonVariants = cva(
         ghost:
           "text-muted-foreground hover:bg-accent hover:text-foreground",
         link: "text-primary underline-offset-4 hover:underline hover:text-foreground",
-        /** Primary row actions next to search (Add…, New collection, etc.) */
-        toolbarAccent:
-          "gap-1.5 border-primary/25 bg-primary/10 px-2.5 text-sm text-primary hover:border-primary/35 hover:bg-primary/15 has-[>svg]:px-2.5",
+        /** Primary row actions next to search — same font-size token as filter chips (`listToolbarChipFontClass`) */
+        toolbarAccent: cn(
+          "gap-1.5 border-primary/25 bg-primary/10 px-2.5 text-primary hover:border-primary/35 hover:bg-primary/15 has-[>svg]:px-2.5",
+          listToolbarChipFontClass,
+        ),
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

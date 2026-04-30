@@ -10,7 +10,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/75 mb-2">
         {title}
       </h3>
-      <div className="text-sm text-[rgba(245,245,245,0.85)] whitespace-pre-wrap">
+      <div className="whitespace-pre-wrap text-sm text-foreground">
         {children || "—"}
       </div>
     </div>

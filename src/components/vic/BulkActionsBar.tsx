@@ -68,7 +68,7 @@ export default function BulkActionsBar({
                     onBulkUpdateStatus(s);
                     setStatusOpen(false);
                   }}
-                  className="text-[rgba(245,245,245,0.9)] capitalize"
+                  className="capitalize text-foreground"
                 >
                   {s.replace(/_/g, " ")}
                 </DropdownMenuItem>

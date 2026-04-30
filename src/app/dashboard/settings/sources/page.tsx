@@ -125,7 +125,7 @@ export default function SourcesSettingsPage() {
             <Database className="w-5 h-5 text-blue-400" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-white">Knowledge sources</h1>
+            <h1 className="text-xl font-semibold text-foreground">Knowledge sources</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
               Default access for new documents per connection. Private vs team visibility uses your Teams model.
             </p>
@@ -139,7 +139,7 @@ export default function SourcesSettingsPage() {
               className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-foreground/[0.03] border border-white/[0.04] rounded-xl"
             >
               <div className="min-w-0">
-                <span className="text-xs text-white block">{source.label}</span>
+                <span className="block text-xs font-medium text-foreground">{source.label}</span>
                 <span className="text-2xs text-muted-foreground block mt-0.5">
                   Connected by {source.connectedBy} · {source.documentCount} documents
                 </span>

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, MapPin } from "lucide-react";
+import { APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS } from "@/lib/dashboardChrome";
+import { listToolbarChipFontClass } from "@/lib/list-ui";
 import { cn } from "@/lib/utils";
 import {
   filterLocationGroupsBySearch,
@@ -71,7 +73,9 @@ export default function ProductDirectoryLocationDropdown({ selectedCountries, on
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          "flex max-w-[220px] min-w-0 items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-xs transition-colors",
+          APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS,
+          listToolbarChipFontClass,
+          "flex max-w-[220px] min-w-0 items-center gap-2 rounded-lg border px-3 py-0 text-left transition-colors",
           selectedCountries.length > 0
             ? "border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
             : "border-border bg-popover text-muted-foreground hover:border-border"
@@ -80,7 +84,7 @@ export default function ProductDirectoryLocationDropdown({ selectedCountries, on
         {selectedCountries.length === 0 ? (
           <>
             <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/65" />
-            <span className="text-xs text-muted-foreground">Location</span>
+            <span className="text-muted-foreground">Location</span>
           </>
         ) : (
           <span className="min-w-0 flex-1 truncate text-foreground">{summary}</span>
@@ -95,7 +99,7 @@ export default function ProductDirectoryLocationDropdown({ selectedCountries, on
               ref={inputRef}
               type="text"
               placeholder="Search countries…"
-              className="w-full rounded-lg border-none bg-foreground/[0.04] px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary/35"
+              className="w-full rounded-lg border-none bg-foreground/[0.04] px-2 py-1.5 text-compact text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary/35"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -120,7 +124,7 @@ export default function ProductDirectoryLocationDropdown({ selectedCountries, on
                   <button
                     key={country}
                     type="button"
-                    className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
+                    className="flex w-full items-center justify-between px-3 py-1.5 text-left text-compact text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
                     onClick={() => toggleCountry(country)}
                   >
                     <span>{country}</span>

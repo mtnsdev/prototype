@@ -87,7 +87,7 @@ export default function DetailSidebar({ vic, className, onShowTravelProfiles }: 
             <button
               type="button"
               onClick={onShowTravelProfiles}
-              className="flex items-center gap-2 w-full text-left text-sm text-[rgba(245,245,245,0.85)] hover:text-foreground hover:bg-white/[0.04] rounded-lg px-2 py-1.5 -mx-2 transition-colors"
+              className="-mx-2 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-foreground transition-colors hover:bg-muted"
             >
               <Plane size={14} className="text-muted-foreground/75 shrink-0" />
               <span>{(vic.travel_profiles?.length ?? 0)} of 7 profile types</span>
@@ -96,7 +96,7 @@ export default function DetailSidebar({ vic, className, onShowTravelProfiles }: 
         )}
         <div>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/75 mb-2">Quick info</h3>
-          <ul className="space-y-1.5 text-sm text-[rgba(245,245,245,0.85)]">
+          <ul className="space-y-1.5 text-sm text-foreground">
             <li><span className="text-muted-foreground/75">Advisor:</span> {advisorName}</li>
             <li><span className="text-muted-foreground/75">VIC since:</span> {vicSince}</li>
             <li>
@@ -129,7 +129,7 @@ export default function DetailSidebar({ vic, className, onShowTravelProfiles }: 
                 </li>
               )}
               {birthdaySoon && (
-                <li className="flex items-center gap-2 text-[rgba(245,245,245,0.85)]">
+                <li className="flex items-center gap-2 text-foreground">
                   <Cake size={14} />
                   Birthday coming up
                 </li>

@@ -56,16 +56,16 @@ export default function IngestionHealthBar({
         </div>
         <div className="text-xs text-[var(--text-secondary)] shrink-0 flex flex-wrap gap-x-2 gap-y-1">
           <span className="text-[var(--color-success)]">{health.indexed} indexed</span>
-          <span className="text-white/30">·</span>
+          <span className="text-muted-foreground/35">·</span>
           <span className="text-[var(--color-warning)]">{health.processing} processing</span>
-          <span className="text-white/30">·</span>
+          <span className="text-muted-foreground/35">·</span>
           <span className="text-[var(--text-tertiary)]">{health.not_indexed} not indexed</span>
         </div>
       </div>
       {activeIngestionFilter != null && !documentFiltersUnavailable && (
         <p className="text-xs text-muted-foreground/75 mt-2">
           Document list filtered by availability. Clear in{" "}
-          <span className="font-medium text-[rgba(245,245,245,0.85)]">Document filters</span> below.
+          <span className="font-medium text-foreground">Document filters</span> below.
         </p>
       )}
       <button

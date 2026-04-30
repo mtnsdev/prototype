@@ -31,6 +31,26 @@ export const APP_WINDOW_ACTIONS =
 export const APP_TOOLBAR_ROW =
   "flex shrink-0 flex-wrap items-center gap-2 border-b border-border/50 bg-muted/20 px-4 py-2 backdrop-blur-md supports-[backdrop-filter]:bg-muted/12 md:px-6";
 
+/**
+ * Unified height for primary toolbar row: search field + primary actions (`h-8` / `Button` `size="sm"`).
+ */
+export const APP_TOOLBAR_CONTROL_HEIGHT_CLASS = "h-8 min-h-8 shrink-0";
+
+/**
+ * Matches `FilterChipScrollRow` pill buttons (`px-2.5 py-1` + compact type), ~30px tall.
+ * Use for sort triggers, directory SelectTriggers, date/location dropdowns, and segment icons on that band.
+ */
+export const APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS =
+  "h-[30px] min-h-[30px] shrink-0";
+
+/** Icon-only segment — pairs with {@link APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS}. */
+export const APP_FILTER_CHIP_ALIGNED_SEGMENT_ICON_CLASS =
+  "inline-flex h-[30px] w-[30px] items-center justify-center rounded-md";
+
+/** Icon-only segment at `h-8` when the row uses {@link APP_TOOLBAR_CONTROL_HEIGHT_CLASS} only. */
+export const APP_TOOLBAR_SEGMENT_ICON_CLASS =
+  "inline-flex h-8 w-8 items-center justify-center rounded-md";
+
 /** Detail / document hero (trip name, product title strip). */
 export const APP_DOCUMENT_HEAD =
   "w-full border-b border-border/60 bg-background/40 px-5 py-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/30";

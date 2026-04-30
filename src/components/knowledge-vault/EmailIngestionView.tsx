@@ -221,7 +221,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-white truncate">{entry.subject}</span>
+                  <span className="truncate text-sm font-medium text-foreground">{entry.subject}</span>
                   {entry.status === "unprocessed" && (
                     <span className="w-1.5 h-1.5 bg-[color-mix(in_srgb,var(--color-info)_72%,transparent)] rounded-full flex-shrink-0" />
                   )}
@@ -271,7 +271,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                       Forwarded Email
                     </span>
                   </div>
-                  <h2 className="text-lg font-semibold text-white">{emailForPanel.subject}</h2>
+                  <h2 className="text-lg font-semibold text-foreground">{emailForPanel.subject}</h2>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground/90">
                     <span>From: {emailForPanel.senderName}</span>
                     <span className="text-muted-foreground/70">·</span>
@@ -393,7 +393,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                               {getAttachmentIcon(att.mimeType)}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <span className="text-xs text-white truncate block">{att.filename}</span>
+                              <span className="block truncate text-xs font-medium text-foreground">{att.filename}</span>
                               <span className="text-2xs text-muted-foreground/70">{formatFileSize(att.size)}</span>
                             </div>
                           </button>
@@ -460,7 +460,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                       Email Attachment
                     </span>
                   </div>
-                  <h2 className="text-lg font-semibold text-white">{attachmentPanel.attachment.filename}</h2>
+                  <h2 className="text-lg font-semibold text-foreground">{attachmentPanel.attachment.filename}</h2>
                   <button
                     type="button"
                     onClick={() => setPanel({ kind: "email", id: attachmentPanel.email.id })}
@@ -598,7 +598,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
 
         <div className="md:hidden fixed inset-0 z-50 bg-background flex flex-col">
           <div className="shrink-0 flex items-center justify-between p-3 border-b border-border">
-            <span className="text-sm font-medium text-white">Details</span>
+            <span className="text-sm font-medium text-foreground">Details</span>
             <Button variant="ghost" size="icon" onClick={() => setPanel(null)}>
               <X className="w-5 h-5" />
             </Button>
@@ -614,7 +614,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                       Forwarded Email
                     </span>
                   </div>
-                  <h2 className="text-lg font-semibold text-white">{emailForPanel.subject}</h2>
+                  <h2 className="text-lg font-semibold text-foreground">{emailForPanel.subject}</h2>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground/90">
                     <span>From: {emailForPanel.senderName}</span>
                     <span className="text-muted-foreground/70">·</span>
@@ -679,7 +679,7 @@ export default function EmailIngestionView({ loading = false }: EmailIngestionVi
                       Email Attachment
                     </span>
                   </div>
-                  <h2 className="text-lg font-semibold text-white">{attachmentPanel.attachment.filename}</h2>
+                  <h2 className="text-lg font-semibold text-foreground">{attachmentPanel.attachment.filename}</h2>
                 </div>
                 <div className="bg-foreground/[0.03] border border-white/[0.04] rounded-xl p-4 text-center text-xs text-muted-foreground">
                   Preview / download — see desktop for full controls.

@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronDown, Search, Tags, Users, Zap } from "lucide-react";
 import type { IngestionStatus } from "@/types/knowledge-vault";
+import { APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS } from "@/lib/dashboardChrome";
+import { listToolbarChipFontClass } from "@/lib/list-ui";
 import { cn } from "@/lib/utils";
 import { FilterBar, FilterBarPrimaryStack, FilterBarToolbarRow } from "@/components/ui/filter-bar";
 import { PageSearchField } from "@/components/ui/page-search-field";
@@ -80,8 +82,11 @@ function useFilterDropdownOpen() {
   return { open, setOpen, rootRef };
 }
 
-const triggerBase =
-  "flex max-w-[220px] min-w-0 items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-xs transition-colors";
+const triggerBase = cn(
+  APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS,
+  listToolbarChipFontClass,
+  "flex max-w-[220px] min-w-0 items-center gap-2 rounded-lg border px-3 py-0 text-left transition-colors",
+);
 const triggerIdle = "border-border bg-popover text-muted-foreground hover:border-border";
 const triggerActive = "border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] text-brand-cta";
 
@@ -124,7 +129,7 @@ function KvScopeDropdown({
         {!has ? (
           <>
             <Users className="h-3 w-3 shrink-0 text-muted-foreground/65" />
-            <span className="text-xs text-muted-foreground">Access</span>
+            <span className="text-compact text-muted-foreground">Access</span>
           </>
         ) : (
           <span className="min-w-0 flex-1 truncate text-foreground">{summary}</span>
@@ -139,7 +144,7 @@ function KvScopeDropdown({
           </div>
           <button
             type="button"
-            className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
+            className="flex w-full items-center justify-between px-3 py-1.5 text-left text-compact text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
             onClick={() => setScope(undefined)}
           >
             <span>All visible</span>
@@ -147,7 +152,7 @@ function KvScopeDropdown({
           </button>
           <button
             type="button"
-            className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
+            className="flex w-full items-center justify-between px-3 py-1.5 text-left text-compact text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
             onClick={() => setScope("private")}
           >
             <span>Private</span>
@@ -159,7 +164,7 @@ function KvScopeDropdown({
           {everyoneTeam ? (
             <button
               type="button"
-              className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
+              className="flex w-full items-center justify-between px-3 py-1.5 text-left text-compact text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
               onClick={() => setScope(everyoneTeam.id)}
             >
               <span className="truncate pr-2">Agency-wide ({everyoneTeam.name})</span>
@@ -168,7 +173,7 @@ function KvScopeDropdown({
           ) : (
             <button
               type="button"
-              className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
+              className="flex w-full items-center justify-between px-3 py-1.5 text-left text-compact text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
               onClick={() => setScope(TEAM_EVERYONE_ID)}
             >
               <span>Agency-wide</span>
@@ -179,7 +184,7 @@ function KvScopeDropdown({
             <button
               key={team.id}
               type="button"
-              className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
+              className="flex w-full items-center justify-between px-3 py-1.5 text-left text-compact text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
               onClick={() => setScope(team.id)}
             >
               <span className="truncate pr-2">{team.name}</span>
@@ -236,7 +241,7 @@ function KvTagsDropdown({
   const has = selectedTags.length > 0;
   const summary =
     has ? (
-      <span className="truncate text-xs text-foreground">
+      <span className="truncate text-compact text-foreground">
         {selectedTags.slice(0, 2).join(", ")}
         {selectedTags.length > 2 && ` +${selectedTags.length - 2}`}
       </span>
@@ -258,7 +263,7 @@ function KvTagsDropdown({
         {!has ? (
           <>
             <Tags className="h-3 w-3 shrink-0 text-muted-foreground/65" />
-            <span className="text-xs text-muted-foreground">Tags</span>
+            <span className="text-compact text-muted-foreground">Tags</span>
           </>
         ) : (
           <span className="min-w-0 flex-1">{summary}</span>
@@ -275,7 +280,7 @@ function KvTagsDropdown({
                 ref={inputRef}
                 type="text"
                 placeholder="Search tags…"
-                className="w-full rounded-lg border-none bg-foreground/[0.04] py-1.5 pl-8 pr-2 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary/35"
+                className="w-full rounded-lg border-none bg-foreground/[0.04] py-1.5 pl-8 pr-2 text-compact text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary/35"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -283,7 +288,7 @@ function KvTagsDropdown({
             {selectedTags.length > 0 ? (
               <button
                 type="button"
-                className="mt-1.5 text-2xs text-muted-foreground transition-colors hover:text-brand-cta"
+                className="mt-1.5 text-compact text-muted-foreground transition-colors hover:text-brand-cta"
                 onClick={clearTags}
               >
                 Clear all tags
@@ -291,7 +296,7 @@ function KvTagsDropdown({
             ) : null}
           </div>
           {filtered.length === 0 ? (
-            <p className="px-3 py-4 text-center text-xs text-muted-foreground">No match</p>
+            <p className="px-3 py-4 text-center text-compact text-muted-foreground">No match</p>
           ) : (
             filtered.map((tag) => {
               const on = selectedTags.includes(tag);
@@ -299,7 +304,7 @@ function KvTagsDropdown({
                 <button
                   key={tag}
                   type="button"
-                  className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
+                  className="flex w-full items-center justify-between px-3 py-1.5 text-left text-compact text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
                   onClick={() => toggleTag(tag)}
                 >
                   <span className="truncate pr-2">{tag}</span>
@@ -344,7 +349,7 @@ function KvIndexingDropdown({
         {!has ? (
           <>
             <Zap className="h-3 w-3 shrink-0 text-muted-foreground/65" />
-            <span className="text-xs text-muted-foreground">Indexing</span>
+            <span className="text-compact text-muted-foreground">Indexing</span>
           </>
         ) : (
           <span className="min-w-0 flex-1 truncate text-foreground">{summary}</span>
@@ -356,7 +361,7 @@ function KvIndexingDropdown({
         <div className={panelClass}>
           <button
             type="button"
-            className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
+            className="flex w-full items-center justify-between px-3 py-1.5 text-left text-compact text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
             onClick={() => setIngestion(undefined)}
           >
             <span>Any</span>
@@ -366,7 +371,7 @@ function KvIndexingDropdown({
             <button
               key={value}
               type="button"
-              className="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
+              className="flex w-full items-center justify-between px-3 py-1.5 text-left text-compact text-muted-foreground transition-colors hover:bg-foreground/[0.05]"
               onClick={() => setIngestion(value)}
             >
               <span>{label}</span>
@@ -432,11 +437,11 @@ export default function KnowledgeVaultFilters({
           </div>
           {hasDocumentFilters ? (
             <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-              <span className="text-2xs tabular-nums text-muted-foreground">{activeFilterCount} active</span>
+              <span className="text-compact tabular-nums text-muted-foreground">{activeFilterCount} active</span>
               <button
                 type="button"
                 onClick={onClearDocumentFilters}
-                className="text-xs text-brand-cta transition-colors hover:text-[#D4B383] hover:underline"
+                className="text-compact text-brand-cta transition-colors hover:text-[#D4B383] hover:underline"
               >
                 Clear all
               </button>

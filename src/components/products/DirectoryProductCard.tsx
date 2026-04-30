@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useRef } from "react";
 import { Check, Flame, Plus, Search, Users } from "lucide-react";
 import type { DirectoryProduct } from "@/types/product-directory";
+import { DIRECTORY_BROWSE_CARD_SURFACE } from "@/lib/briefingSurface";
 import { cn } from "@/lib/utils";
 import { getPrimaryDirectoryType } from "@/components/products/directoryProductTypeHelpers";
 import {
@@ -129,11 +130,11 @@ export default function DirectoryProductCard({
         onEnterBulkMode(product.id);
       }}
       className={cn(
-        "group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border transition-all",
-        compact && "rounded-lg",
-        bulkSelected
-          ? "border-[rgba(201,169,110,0.30)] ring-1 ring-[rgba(201,169,110,0.15)] bg-foreground/[0.03]"
-          : "border-white/[0.04] bg-foreground/[0.03] hover:border-border hover:bg-white/[0.04]"
+        DIRECTORY_BROWSE_CARD_SURFACE,
+        compact ? "rounded-lg" : "rounded-xl",
+        "group relative flex h-full cursor-pointer flex-col",
+        bulkSelected &&
+          "border-[rgba(201,169,110,0.35)] ring-1 ring-[rgba(201,169,110,0.18)] ring-offset-0"
       )}
       onClick={() => {
         if (ignoreNextClickRef.current) {
@@ -305,10 +306,8 @@ export default function DirectoryProductCard({
 
           <div
             className={cn(
-              "overflow-hidden border-t border-white/[0.04] text-brand-cta/80",
-              compact
-                ? "max-h-[2.25rem] border-white/[0.03] pt-1.5 text-[10px]"
-                : "min-h-6 pt-2 text-xs"
+              "overflow-hidden border-t border-border/70 text-brand-cta/80",
+              compact ? "max-h-[2.25rem] pt-1.5 text-[10px]" : "min-h-6 pt-2 text-xs"
             )}
           >
             <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">

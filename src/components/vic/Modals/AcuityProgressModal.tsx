@@ -74,7 +74,7 @@ export default function AcuityProgressModal({ vicIds, onClose, onStart }: Props)
           <ul className="max-h-48 overflow-y-auto space-y-1 text-sm">
             {progress.map((p) => (
               <li key={p.id} className="flex items-center justify-between gap-2">
-                <span className="truncate text-[rgba(245,245,245,0.9)]">{p.name}</span>
+                <span className="truncate text-foreground">{p.name}</span>
                 <span
                   className={
                     p.status === "complete"

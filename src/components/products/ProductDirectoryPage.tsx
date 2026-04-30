@@ -28,6 +28,8 @@ import {
   externalSearchSavedTooltip,
 } from "./productDirectoryMock";
 import ProductDirectoryFilterBar from "./ProductDirectoryFilterBar";
+import { CategoryStrip } from "./toolbar/CategoryStrip";
+import { DIRECTORY_PRODUCT_TYPE_CONFIG } from "./productDirectoryProductTypes";
 import AddProductModal from "./Modals/AddProductModal";
 import DirectoryProductCard from "./DirectoryProductCard";
 import { ProductCardSkeleton } from "@/components/ui/skeletons";
@@ -95,6 +97,7 @@ import { MOCK_REP_FIRMS } from "./productDirectoryRepFirmMock";
 import type { RepFirm, RepFirmProductLink } from "@/types/rep-firm";
 import { persistedPerProductRepLinkContacts } from "@/lib/repFirmContactChannels";
 import { getProductId } from "@/lib/products-api";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 function maxActiveIncentiveValue(product: DirectoryProduct): number {
   const active = (product.commissionAdvisories ?? []).filter((a) => a.status === "active");
@@ -225,7 +228,7 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
           return (
             <div
               key={product.id}
-              className="overflow-hidden rounded-xl border border-white/[0.04] bg-white/[0.02]"
+              className="overflow-hidden rounded-xl border border-border bg-card"
             >
               <img
                 src={product.imageUrl}
@@ -721,14 +724,6 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     else setBulkMode(true);
   }, [bulkMode, clearSelection]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && (bulkMode || compareMode)) clearSelection();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [bulkMode, compareMode, clearSelection]);
-
   const toggleTypeFilter = useCallback((id: DirectoryProductCategory) => {
     setActiveTypeFilters((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }, []);
@@ -1187,6 +1182,34 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
   }, [compareMode, compareProducts.length]);
 
   const detailProduct = detailProductId ? (viewProducts.find((p) => p.id === detailProductId) ?? null) : null;
+
+  const isLgViewport = useMediaQuery("(min-width: 1024px)");
+  const splitDetailEligible = Boolean(
+    detailProduct && mainTab === "browse" && !(compareMode && compareProducts.length >= 2)
+  );
+  const useSplitProductDetail = splitDetailEligible && isLgViewport;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (bulkMode || compareMode) {
+        clearSelection();
+        return;
+      }
+      if (detailProductId && splitDetailEligible && isLgViewport) {
+        setDetailProductId(null);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [
+    bulkMode,
+    compareMode,
+    clearSelection,
+    detailProductId,
+    splitDetailEligible,
+    isLgViewport,
+  ]);
 
   useLayoutEffect(() => {
     if (mainTab !== "browse" || viewMode !== "grid" || !detailProductId) return;
@@ -1879,6 +1902,22 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
           embedMode ? "px-3 py-2" : cn(APP_PAGE_CONTENT_MAX, APP_PAGE_CONTENT_PAD_X)
         )}
       >
+        <CategoryStrip
+          items={[
+            { id: "all", label: "All" },
+            ...DIRECTORY_PRODUCT_TYPE_CONFIG.map((t) => ({ id: t.id, label: t.label, icon: t.icon })),
+          ]}
+          active={activeTypeFilters.length === 1 ? (activeTypeFilters[0] as string) : "all"}
+          onChange={(id) => {
+            if (id === "all") {
+              clearTypeFilters();
+            } else {
+              clearTypeFilters();
+              toggleTypeFilter(id as typeof activeTypeFilters[number]);
+            }
+          }}
+          className="mb-3"
+        />
         <ProductDirectoryFilterBar
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}
@@ -2204,6 +2243,12 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
       </div>
 
       <div
+        className={cn(
+          "relative z-0 flex min-h-0 flex-1 flex-col",
+          useSplitProductDetail && "lg:flex-row lg:overflow-hidden"
+        )}
+      >
+      <div
         ref={browseScrollRef}
         className={cn(
           "relative z-0 min-h-0 flex-1 pb-6",
@@ -2213,7 +2258,8 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
             (mainTab === "rep-firms" && repFirmEditorOpen))
             ? "flex flex-col overflow-hidden"
             : "overflow-y-auto",
-          mainTab === "browse" ? "pt-4" : "pt-0"
+          mainTab === "browse" ? "pt-4" : "pt-0",
+          useSplitProductDetail && "lg:min-h-0 lg:min-w-0 lg:flex-1 lg:overflow-y-auto"
         )}
       >
         <div
@@ -2434,7 +2480,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
           )}
 
           {sortedProducts.length === 0 && (
-            <div className="rounded-xl border border-border bg-white/[0.02] p-8 text-center">
+            <div className="rounded-xl border border-border bg-card p-8 text-center">
               <Search className="mx-auto mb-3 h-6 w-6 text-muted-foreground/65" aria-hidden />
               <p className="mb-1 text-compact font-medium text-foreground">No products match</p>
               <p className="mb-4 text-xs text-muted-foreground">Your current filters are too narrow.</p>
@@ -2450,7 +2496,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
                 <button
                   type="button"
                   onClick={clearAllFilters}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-white/[0.06]"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted"
                 >
                   Clear all filters
                 </button>
@@ -2462,8 +2508,36 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
         </div>
       </div>
 
-      {/* Slide-in detail: 7-block layout + layer mock data in ProductDirectoryDetailBody */}
-      {detailProduct && (
+      {useSplitProductDetail && detailProduct ? (
+        <aside
+          className="flex min-h-0 w-full shrink-0 flex-col border-border bg-background lg:w-[min(440px,40vw)] lg:max-w-[520px] lg:border-l"
+          aria-label="Product preview"
+        >
+          <ProductDirectoryDetailPanel
+            variant="split"
+            product={detailProduct}
+            canViewCommissions={canViewCommissions}
+            isAdmin={isAdmin}
+            teams={MOCK_TEAMS}
+            onClose={() => setDetailProductId(null)}
+            onOpenCollectionPicker={() => {
+              setPickerProductId(detailProduct.id);
+            }}
+            onPatchProduct={patchProduct}
+            onAddToItinerary={handleAddToItinerary}
+            canRemoveFromCollection={canRemoveFromCollection}
+            availableCollections={availableCollections}
+            onQuickAddToCollection={handleQuickAddToCollection}
+            onRequestCreateCollection={() => setPickerProductId(detailProduct.id)}
+            partnerProgramCustomKeys={detailProductCustomProgramKeys}
+            repFirmsRegistry={repFirms}
+          />
+        </aside>
+      ) : null}
+      </div>
+
+      {/* Product preview (modal on narrow screens / when split is not used) */}
+      {detailProduct && !useSplitProductDetail ? (
         <ProductDirectoryDetailPanel
           product={detailProduct}
           canViewCommissions={canViewCommissions}
@@ -2482,7 +2556,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
           partnerProgramCustomKeys={detailProductCustomProgramKeys}
           repFirmsRegistry={repFirms}
         />
-      )}
+      ) : null}
 
       {pickerProduct && (
         <ProductDirectoryCollectionPicker

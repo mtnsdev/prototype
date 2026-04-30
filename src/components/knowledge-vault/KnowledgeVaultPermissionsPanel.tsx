@@ -43,7 +43,7 @@ function TeamsTab() {
         <div key={team.id} className="bg-foreground/[0.03] border border-white/[0.04] rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-sm text-white font-medium truncate">{team.name}</span>
+              <span className="text-sm font-medium text-foreground truncate">{team.name}</span>
               {team.isDefault && (
                 <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/[0.04] text-muted-foreground uppercase tracking-wider shrink-0">
                   Default
@@ -225,7 +225,7 @@ function SourceDefaultsTab({ sources }: { sources: DataSource[] }) {
             <div className="flex items-center gap-3 mb-3">
               <SourceRowIcon source={source} />
               <div className="min-w-0">
-                <span className="text-sm text-white block truncate">{source.name}</span>
+                <span className="block truncate text-sm font-medium text-foreground">{source.name}</span>
                 <div className="text-2xs text-muted-foreground">{source.document_count} documents</div>
               </div>
             </div>
@@ -289,7 +289,7 @@ function SourceDefaultsTab({ sources }: { sources: DataSource[] }) {
             <Mail className="w-4 h-4 text-sky-400" />
           </div>
           <div>
-            <span className="text-sm text-white">Email Forwarding</span>
+            <span className="text-sm font-medium text-foreground">Email Forwarding</span>
             <div className="text-2xs text-muted-foreground">Forward emails to ingest into KV</div>
           </div>
         </div>
@@ -317,7 +317,7 @@ function SourceDefaultsTab({ sources }: { sources: DataSource[] }) {
           className="bg-background border border-border sm:max-w-md"
         >
           <DialogHeader>
-            <DialogTitle className="text-white">Apply access change to existing documents?</DialogTitle>
+            <DialogTitle className="text-foreground">Apply access change to existing documents?</DialogTitle>
             <DialogDescription className="text-muted-foreground/90 text-sm">
               {confirmRetro && (
                 <>
@@ -368,7 +368,7 @@ export default function KnowledgeVaultPermissionsPanel({ sources, onClose }: Pro
       )}
     >
       <div className="shrink-0 flex items-center justify-between p-4 border-b border-border">
-        <h2 className="text-lg font-medium text-white">Permissions</h2>
+        <h2 className="text-lg font-medium text-foreground">Permissions</h2>
         <button
           type="button"
           onClick={onClose}
@@ -384,7 +384,9 @@ export default function KnowledgeVaultPermissionsPanel({ sources, onClose }: Pro
             type="button"
             className={cn(
               "flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
-              activeTab === "teams" ? "bg-white/[0.06] text-white" : "text-muted-foreground hover:text-foreground"
+              activeTab === "teams"
+                ? "bg-foreground/[0.08] text-foreground"
+                : "text-muted-foreground hover:text-foreground"
             )}
             onClick={() => setActiveTab("teams")}
           >
@@ -394,7 +396,9 @@ export default function KnowledgeVaultPermissionsPanel({ sources, onClose }: Pro
             type="button"
             className={cn(
               "flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
-              activeTab === "sources" ? "bg-white/[0.06] text-white" : "text-muted-foreground hover:text-foreground"
+              activeTab === "sources"
+                ? "bg-foreground/[0.08] text-foreground"
+                : "text-muted-foreground hover:text-foreground"
             )}
             onClick={() => setActiveTab("sources")}
           >
