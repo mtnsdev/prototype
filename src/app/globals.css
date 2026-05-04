@@ -607,3 +607,17 @@ input.chat-input-no-focus-outline:focus-visible,
 }
 
 /* App window chrome (menu bar, path, title, toolbar) — class names live in src/lib/dashboardChrome.ts */
+
+/* ==========================================
+   Claire citation flash — Knowledge Vault
+   Used by KnowledgeVaultPage when navigating with ?cite= deep link.
+   ========================================== */
+@keyframes kv-cite-flash {
+  0%   { background-color: rgba(196, 146, 58, 0.32); box-shadow: 0 0 0 4px rgba(196, 146, 58, 0.18); }
+  100% { background-color: transparent; box-shadow: 0 0 0 0 rgba(196, 146, 58, 0); }
+}
+.kv-cite-flash {
+  animation: kv-cite-flash 2.4s ease-out;
+  border-radius: var(--radius-md);
+  scroll-margin-top: 80px;
+}

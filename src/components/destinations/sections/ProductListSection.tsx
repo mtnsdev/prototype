@@ -19,7 +19,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ExternalLink, GripVertical, Trash2, ImageOff } from "lucide-react";
-
 import type { VirtualProductListSection, ProductListItem } from "@/lib/destinationSectionModel";
 import { useBuildEditorOptional } from "@/components/destinations/editor/DestinationEditorForms";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -68,7 +67,6 @@ function SortableRow({ id, admin, children }: { id: string; admin: boolean; chil
     </div>
   );
 }
-
 
 /** Extract a favicon/logo URL from a product website URL. */
 function productThumbnailUrl(url?: string): string | null {

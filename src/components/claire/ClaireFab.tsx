@@ -67,8 +67,9 @@ export function ClaireFab() {
           onOpenInBriefing={openInBriefingRoom}
           onNavigateToSource={(docId, cite) => {
             minimize();
-            const fragment = cite ? `#cite=${cite}` : "";
-            router.push(`/dashboard/knowledge-vault/${docId}${fragment}`);
+            const params = new URLSearchParams({ doc: docId });
+            if (cite) params.set("cite", cite);
+            router.push(`/dashboard/knowledge-vault?${params.toString()}`);
           }}
           draft={draft}
           onDraftChange={setDraft}

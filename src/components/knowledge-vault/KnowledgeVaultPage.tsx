@@ -153,6 +153,7 @@ export default function KnowledgeVaultPage() {
   const [selectedDoc, setSelectedDoc] = useState<KnowledgeDocument | null>(null);
   /** Deep-link `?doc=` until the panel opens or we give up (keeps URL stable vs sync effect). */
   const [kvPendingOpenDocId, setKvPendingOpenDocId] = useState<string | null>(null);
+  const [kvPendingCiteId, setKvPendingCiteId] = useState<string | null>(null);
   const [connectOpen, setConnectOpen] = useState(false);
   const [filters, setFilters] = useState<KnowledgeVaultFiltersState>({});
   const [docScopeOverrides, setDocScopeOverrides] = useState<KvScopeOverrides>({});
@@ -204,6 +205,7 @@ export default function KnowledgeVaultPage() {
       setKvPendingOpenDocId(null);
       setSelectedDoc(null);
     }
+    setKvPendingCiteId(p.citeId ?? null);
   }, []);
 
   const isSourcePolicyBlocked = useCallback(
@@ -324,6 +326,22 @@ export default function KnowledgeVaultPage() {
     }
     setKvPendingOpenDocId(null);
   }, [loading, visibleDocuments, documents, kvPendingOpenDocId]);
+
+  /** Scroll-to + highlight the cited passage when Claire navigates with ?cite=... */
+  useEffect(() => {
+    if (!kvPendingCiteId || !selectedDoc) return;
+    /* Wait a tick for the panel to render its content. */
+    const timer = setTimeout(() => {
+      const target = document.getElementById(`cite-${kvPendingCiteId}`);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        target.classList.add("kv-cite-flash");
+        setTimeout(() => target.classList.remove("kv-cite-flash"), 2400);
+      }
+      setKvPendingCiteId(null);
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [kvPendingCiteId, selectedDoc]);
 
   const oversightPrivate = useCallback(
     (doc: KnowledgeDocument) =>
@@ -703,7 +721,14 @@ export default function KnowledgeVaultPage() {
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-background text-foreground">
       <AppPageHeroHeader
-        title="Knowledge Vault"
+        title={
+          <>
+            Knowledge vault
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
+              · {visibleDocuments.length} document{visibleDocuments.length !== 1 ? "s" : ""}
+            </span>
+          </>
+        }
         toolbar={
           <>
             {isAdmin && !emailOnlyView && (

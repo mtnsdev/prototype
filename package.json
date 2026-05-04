@@ -45,6 +45,7 @@
     "ioredis": "^5.9.2",
     "jsonwebtoken": "^9.0.3",
     "leaflet": "^1.9.4",
+    "lightningcss-linux-arm64-gnu": "^1.32.0",
     "lucide-react": "^0.562.0",
     "mongoose": "^9.1.5",
     "next": "16.1.4",

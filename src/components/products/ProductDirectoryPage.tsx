@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Bookmark, Building2, LayoutGrid, Search, Trash2, Users } from "lucide-react";
+import { Bookmark, Building2, LayoutGrid, Plus, Search, Trash2, Users } from "lucide-react";
 import { ProductCatalogSectionTabs } from "@/components/products/ProductCatalogSectionTabs";
 import type { CatalogSegment, ProductDirectoryMainTab } from "@/components/products/productDirectoryCatalogSegments";
 import { cn } from "@/lib/utils";
@@ -1859,6 +1859,26 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-inset text-foreground">
       <div className="shrink-0">
+      {/* Page title — May 4 2026 decision: title only, no descriptive subline,
+          inline count pill, sits inside the existing sticky shrink-0 header so it
+          stays pinned with tabs/chips/filter bar as one unit. */}
+      {!embedMode ? (
+        <div className={cn(APP_PAGE_CONTENT_MAX, APP_PAGE_CONTENT_PAD_X, "flex items-baseline gap-2 pt-6 pb-2 md:pt-7")}>
+          <h1
+            className="text-balance text-2xl font-semibold tracking-[-0.02em] text-foreground md:text-[1.75rem] md:leading-snug"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            Product directory
+          </h1>
+          {mainTab === "browse" ? (
+            <span className="text-sm font-normal text-muted-foreground">
+              {sortedProducts.length === viewProducts.length
+                ? `· ${viewProducts.length} product${viewProducts.length !== 1 ? "s" : ""}`
+                : `· ${sortedProducts.length} of ${viewProducts.length} products`}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
       {embedMode ? (
         <div
           className={cn(
@@ -1902,6 +1922,16 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
           embedMode ? "px-3 py-2" : cn(APP_PAGE_CONTENT_MAX, APP_PAGE_CONTENT_PAD_X)
         )}
       >
+        <div className="mb-3 flex items-center justify-end">
+          <button
+            type="button"
+            onClick={() => setAddProductModalOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-md bg-[color:var(--brand-primary)] px-3 py-1.5 text-[12px] font-medium text-[color:var(--brand-cta-foreground)] shadow-sm transition-colors hover:bg-[color:var(--brand-cta-hover)]"
+          >
+            <Plus className="h-3.5 w-3.5" aria-hidden />
+            Add product
+          </button>
+        </div>
         <CategoryStrip
           items={[
             { id: "all", label: "All" },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { ArrowLeft, Search, X } from "lucide-react";
+import { ArrowLeft, FilePlus, Search, X } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -19,7 +19,6 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { FilePlus } from "lucide-react";
 import type { DirectoryProduct } from "@/types/product-directory";
 import type { Destination, DestinationDocument, EditorProductSlot } from "@/data/destinations";
 import { getMockDocuments } from "@/components/knowledge-vault/knowledgeVaultMockData";
@@ -190,12 +189,12 @@ export function SectionEditPanel({ workspaceIndex: wi, sectionTitle, onClose }: 
         >
           <ArrowLeft className="size-4" aria-hidden />
         </button>
-        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+        <span className="font-display min-w-0 flex-1 truncate text-sm font-medium tracking-tight text-foreground">
           {sectionTitle}
         </span>
         <button
           type="button"
-          className="shrink-0 rounded-md px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+          className="shrink-0 rounded-md bg-brand-cta px-3 py-1 text-xs font-medium text-brand-cta-foreground hover:bg-brand-cta-hover"
           onClick={onClose}
         >
           Done
@@ -387,7 +386,7 @@ function ProductsBlock({
       {products.length > 0 ? (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
           <SortableContext items={productIds} strategy={verticalListSortingStrategy}>
-            <div className="max-h-48 overflow-y-auto">
+            <div className="max-h-48 overflow-y-auto rounded-lg border border-border/40 bg-muted/60 p-1">
               {products.map((p, i) => (
                 <SortableProductRow
                   key={p.productId ?? `idx-${i}`}
@@ -580,8 +579,8 @@ function FilesBlock({
         <div className="space-y-0.5">
           {files.map((f, i) => (
             <div key={`${f.name}-${i}`} className="group/frow flex items-center gap-2 rounded-md px-1.5 py-1.5">
+              <span className="shrink-0 rounded bg-[var(--color-info-muted)] px-1.5 py-0.5 text-[10px] font-medium uppercase text-[var(--color-info)]">{f.type}</span>
               <span className="min-w-0 flex-1 truncate text-xs text-foreground">{f.name}</span>
-              <span className="shrink-0 text-[10px] uppercase text-muted-foreground/60">{f.type}</span>
               <button
                 type="button"
                 className="shrink-0 rounded p-0.5 text-muted-foreground/30 opacity-0 transition-opacity hover:text-destructive group-hover/frow:opacity-100"

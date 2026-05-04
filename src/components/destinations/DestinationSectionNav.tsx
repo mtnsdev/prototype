@@ -27,8 +27,6 @@ import { Input } from "@/components/ui/input";
 export type DestinationNavItem = {
   id: string;
   label: string;
-  /** @deprecated — kept for type compat but no longer rendered. */
-  iconKey?: string;
   count: number;
   /** Workspace index for editor operations. */
   workspaceIndex?: number;
@@ -194,7 +192,7 @@ function NavRow({
             />
           ) : (
             <>
-              <span className="min-w-0 text-xs font-medium leading-snug sm:text-sm">{item.label}</span>
+              <span className="min-w-0 truncate text-xs font-medium leading-snug">{item.label}</span>
               <span
                 className={cn("shrink-0 tabular-nums text-[10px]", isActive ? "text-muted-foreground" : "text-muted-foreground/70")}
                 aria-hidden

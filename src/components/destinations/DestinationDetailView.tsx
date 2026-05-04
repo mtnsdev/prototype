@@ -54,33 +54,25 @@ function SectionBlock({
   return (
     <section
       id={`section-${section.id}`}
-      className="scroll-mt-28 flex min-h-0 flex-col"
       aria-labelledby={`section-heading-${section.id}`}
     >
-      <div
-        className={cn(
-          destCard,
-          "flex max-h-[min(72vh,34rem)] flex-col overflow-hidden p-4 sm:p-5",
-        )}
-      >
+      <div className={cn(destCard, "p-4 sm:p-5")}>
         <DestinationSectionChrome
           section={section}
           headingId={`section-heading-${section.id}`}
-          className="mb-3 shrink-0"
+          className="mb-3"
         />
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-gutter:stable]">
-          <SectionRenderer
-            section={section}
-            destinationSlug={destinationSlug}
-            activeTagFilters={activeTagFilters}
-          />
-        </div>
+        <SectionRenderer
+          section={section}
+          destinationSlug={destinationSlug}
+          activeTagFilters={activeTagFilters}
+        />
       </div>
     </section>
   );
 }
 
-/** Bento grid (up to 3 columns on large screens). */
+/** All sections stacked vertically — sidebar highlights as you scroll. */
 function SectionList({
   sections,
   destinationSlug,
@@ -91,7 +83,7 @@ function SectionList({
   activeTagFilters?: ReadonlySet<string>;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-5">
+    <div className="space-y-5">
       {sections.map((section) => (
         <SectionBlock
           key={section.id}
@@ -346,31 +338,31 @@ export function DestinationDetailView({
   const heroRef = useRef<HTMLDivElement>(null);
   const heroScrollProgress = useHeroScrollProgress(heroRef, scrollRootRef);
 
+  // Scroll-spy: highlight the sidebar nav item for whichever section is most visible.
   useEffect(() => {
-    const root = scrollRootRef.current;
-    if (!root || sections.length === 0) return;
-    const ids = sections.map((s) => s.id);
-    const onScroll = () => {
-      const rt = root.getBoundingClientRect().top;
-      let best = ids[0]!;
-      let bestVisible = 0;
-      for (const id of ids) {
-        const el = document.getElementById(`section-${id}`);
-        if (!el) continue;
-        const er = el.getBoundingClientRect();
-        const vTop = Math.max(er.top, rt + 56);
-        const vBot = Math.min(er.bottom, rt + root.clientHeight);
-        const visible = Math.max(0, vBot - vTop);
-        if (visible > bestVisible) {
-          bestVisible = visible;
-          best = id;
+    if (sections.length === 0) return;
+    const els = sections
+      .map((s) => document.getElementById(`section-${s.id}`))
+      .filter(Boolean) as HTMLElement[];
+    if (els.length === 0) return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        let best: { id: string; ratio: number } | null = null;
+        for (const e of entries) {
+          const id = e.target.id.replace("section-", "");
+          if (!best || e.intersectionRatio > best.ratio) {
+            best = { id, ratio: e.intersectionRatio };
+          }
         }
-      }
-      if (bestVisible > 8) setActiveNavId(best);
-    };
-    root.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => root.removeEventListener("scroll", onScroll);
+        if (best && best.ratio > 0) {
+          setActiveNavId(best.id);
+        }
+      },
+      { threshold: [0, 0.25, 0.5, 0.75, 1] },
+    );
+    for (const el of els) io.observe(el);
+    return () => io.disconnect();
   }, [sections]);
 
   /** Collect all unique tags from every product_list section on the page. */
@@ -399,7 +391,6 @@ export function DestinationDetailView({
       sections.map((s) => ({
         id: s.id,
         label: s.title,
-        iconKey: s.iconKey,
         count: s.count,
         workspaceIndex: s.editorRef?.kind === "workspace" ? s.editorRef.workspaceIndex : undefined,
       })),
@@ -493,7 +484,12 @@ export function DestinationDetailView({
         destination: displayDestination.slug,
         section_id: id,
       });
+      setActiveNavId(id);
+      // Close edit panel when switching sections
+      setEditingWi(null);
+      // Smooth-scroll to the section
       document.getElementById(`section-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Update URL hash
       const p = new URLSearchParams(searchParams.toString());
       p.delete("section");
       const qs = p.toString();
@@ -501,7 +497,6 @@ export function DestinationDetailView({
       const nextHash = `#section-${id}`;
       window.history.replaceState(null, "", `${base}${nextHash}`);
       setClientHash(nextHash);
-      setActiveNavId(id);
     },
     [pathname, searchParams, displayDestination.slug],
   );
@@ -637,9 +632,10 @@ export function DestinationDetailView({
             <p className={cn("mt-4 text-sm leading-relaxed", destMuted)}>{displayDestination.description}</p>
           ) : null}
 
-          <div className="mt-8 lg:grid lg:grid-cols-[minmax(0,1fr)_260px] lg:gap-8">
-            <div className="min-w-0 space-y-5">
-              {navItems.length > 0 ? (
+          <div className="mt-8 lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-6">
+            {/* Sidebar nav — left column on desktop, horizontal tabs on mobile */}
+            {navItems.length > 0 || editorCtx ? (
+              <>
                 <div className="lg:hidden">
                   <DestinationSectionNav
                     variant="horizontal"
@@ -648,8 +644,26 @@ export function DestinationDetailView({
                     onChange={scrollToSection}
                   />
                 </div>
-              ) : null}
+                <aside className="hidden min-w-0 lg:block" aria-label="Section navigation">
+                  <div className="sticky top-24">
+                    <DestinationSectionNav
+                      variant="vertical"
+                      items={navItems}
+                      activeId={activeNavId}
+                      onChange={scrollToSection}
+                      onAddSection={editorCtx ? handleAddSection : undefined}
+                      onRenameSection={editorCtx ? handleRenameSection : undefined}
+                      onDeleteSection={editorCtx ? handleDeleteSection : undefined}
+                      onReorderSections={editorCtx ? handleReorderSections : undefined}
+                      onEditSection={editorCtx ? setEditingWi : undefined}
+                    />
+                  </div>
+                </aside>
+              </>
+            ) : null}
 
+            {/* Main content — right column */}
+            <div className="min-w-0 space-y-5">
               <main
                 id="destination-main"
                 tabIndex={-1}
@@ -686,24 +700,6 @@ export function DestinationDetailView({
                 )}
               </main>
             </div>
-
-            {navItems.length > 0 || editorCtx ? (
-              <aside className="hidden min-w-0 lg:block" aria-label="Section navigation">
-                <div className="sticky top-24">
-                  <DestinationSectionNav
-                    variant="vertical"
-                    items={navItems}
-                    activeId={activeNavId}
-                    onChange={scrollToSection}
-                    onAddSection={editorCtx ? handleAddSection : undefined}
-                    onRenameSection={editorCtx ? handleRenameSection : undefined}
-                    onDeleteSection={editorCtx ? handleDeleteSection : undefined}
-                    onReorderSections={editorCtx ? handleReorderSections : undefined}
-                    onEditSection={editorCtx ? setEditingWi : undefined}
-                  />
-                </div>
-              </aside>
-            ) : null}
           </div>
           </div>
         </div>

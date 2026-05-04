@@ -29,6 +29,8 @@ export type ProductListItem = {
   catalogUnavailable?: boolean;
   name: string;
   url?: string;
+  /** Hero/thumbnail image URL — preferred over favicon extraction when set. */
+  image?: string;
   /** Sub-region tags — rendered as small chips on each row. An item can have multiple. */
   tags?: string[];
   /** Short category/cuisine/type pill shown beside the name. */

@@ -164,6 +164,7 @@ function actionSummary(action: string): string {
 }
 
 export default function AutomationsPage() {
+  const [scrollRoot, setScrollRoot] = useState<HTMLElement | null>(null);
   const toast = useToast();
   const [builderOpen, setBuilderOpen] = useState(false);
   const [automations, setAutomations] = useState<AutomationRecord[]>(INITIAL_MOCK);
@@ -202,7 +203,10 @@ export default function AutomationsPage() {
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background text-foreground">
+      <div ref={setScrollRoot} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
       <AppPageHeroHeader
+        scrollRoot={scrollRoot}
+        collapseOnScroll
         title="Automations"
         toolbar={
           <>
@@ -259,7 +263,6 @@ export default function AutomationsPage() {
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-auto">
         <div className={cn(APP_PAGE_CONTENT_SHELL, "space-y-6 pb-8 pt-6")}>
           <div
             className={cn(
@@ -387,6 +390,7 @@ export default function AutomationsPage() {
             ))}
           </ul>
         </div>
+      </div>
       </div>
 
       <AutomationBuilderModal

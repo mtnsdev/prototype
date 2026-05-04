@@ -8,6 +8,8 @@ export type ParsedKnowledgeVaultUrl = {
   page: number | undefined;
   /** Open document detail panel when this id is in the loaded list */
   docId: string | undefined;
+  /** Citation anchor — scrolls to + highlights the matching #cite-{id} target inside the doc panel. */
+  citeId: string | undefined;
   filters: KnowledgeVaultFiltersState;
 };
 
@@ -25,6 +27,8 @@ export function parseKnowledgeVaultSearchParams(sp: URLSearchParams): ParsedKnow
   const page = Number.isFinite(pageNum) && pageNum >= 1 ? pageNum : undefined;
   const docRaw = sp.get("doc")?.trim();
   const docId = docRaw ? docRaw : undefined;
+  const citeRaw = sp.get("cite")?.trim();
+  const citeId = citeRaw ? citeRaw : undefined;
 
   const filters: KnowledgeVaultFiltersState = {};
   const scope = sp.get("scope");
@@ -42,7 +46,7 @@ export function parseKnowledgeVaultSearchParams(sp: URLSearchParams): ParsedKnow
     if (ids.length) filters.source_ids = ids;
   }
 
-  return { q, sort, page, docId, filters };
+  return { q, sort, page, docId, citeId, filters };
 }
 
 export function buildKnowledgeVaultSearchParams(args: {

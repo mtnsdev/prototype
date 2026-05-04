@@ -268,9 +268,13 @@ export default function AnalyticsPage() {
     });
   };
 
+  const [scrollRoot, setScrollRoot] = useState<HTMLElement | null>(null);
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background text-foreground">
+      <div ref={setScrollRoot} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
       <AppPageHeroHeader
+        scrollRoot={scrollRoot}
+        collapseOnScroll
         title="Analytics"
         toolbar={
           <>
@@ -323,7 +327,6 @@ export default function AnalyticsPage() {
         }
       />
 
-      <div className="min-h-0 flex-1 overflow-auto">
         <div className={cn(APP_PAGE_CONTENT_SHELL, "space-y-6 pb-8 pt-6")}>
           <AnalyticsKpiAttributionBanner />
           {/* KPI Row */}
@@ -682,6 +685,7 @@ export default function AnalyticsPage() {
             </table>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

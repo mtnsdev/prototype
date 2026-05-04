@@ -1,6 +1,17 @@
-import { redirect } from "next/navigation";
-import { BRIEFING_ROOM_PATH } from "@/lib/briefingRoutes";
+"use client";
 
+import BriefingRoomPage from "@/components/briefing/BriefingRoomPage";
+
+/**
+ * `/dashboard` — full-screen Claire chat surface.
+ * Implementation lives in `BriefingRoomPage` (kept for backwards-compat with
+ * the `/dashboard/briefing-room` route). The ClaireFab hides on this path
+ * because Claire IS the page here.
+ */
 export default function DashboardIndexPage() {
-  redirect(BRIEFING_ROOM_PATH);
+  return (
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
+      <BriefingRoomPage />
+    </div>
+  );
 }

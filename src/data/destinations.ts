@@ -26,6 +26,8 @@ export type DMCPartner = {
   preferred: boolean;
   reppedBy?: string;
   website?: string;
+  /** Hero/thumbnail image URL. */
+  image?: string;
   keyContact?: string;
   generalRequests?: string;
   /** Handle or URL — surfaced on partner cards when present. */
@@ -59,6 +61,8 @@ export type Restaurant = {
   catalogUnavailable?: boolean;
   name: string;
   url?: string;
+  /** Hero/thumbnail image URL. */
+  image?: string;
   note?: string;
   latitude?: number;
   longitude?: number;

@@ -1006,9 +1006,6 @@ function NotificationPanelHeader({
           <h2 id={titleId} className="text-base font-semibold text-foreground">
             Notifications
           </h2>
-          <p className="mt-0.5 text-2xs text-muted-foreground">
-            {unreadTotal} unread · {recentCount} in the last 24h
-          </p>
         </div>
       ) : null}
       <div className="flex shrink-0 flex-col items-end gap-1">

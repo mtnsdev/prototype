@@ -8,8 +8,6 @@ type Props = {
   headingId?: string;
   /** Merged with default spacing (e.g. compact tiles). */
   className?: string;
-  /** @deprecated — drag handle props no longer used; section management lives in sidebar. */
-  dragHandleProps?: Record<string, unknown>;
 };
 
 /**
@@ -19,7 +17,7 @@ type Props = {
 export function DestinationSectionChrome({ section, headingId, className }: Props) {
   return (
     <div className={cn("mb-5", className)}>
-      <h3 id={headingId} className="text-base font-semibold text-foreground">
+      <h3 id={headingId} className="font-display text-base font-medium tracking-tight text-foreground">
         {section.title}
       </h3>
     </div>

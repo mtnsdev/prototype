@@ -2,30 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowUpDown,
+  ArrowDownUp,
   Check,
-  CheckSquare,
-  ChevronDown,
-  LayoutGrid,
-  List,
-  Map as MapIcon,
-  Plus,
   Search,
   SlidersHorizontal,
+  X,
 } from "lucide-react";
 import type { DirectoryAmenityTag, DirectoryCollectionOption, DirectoryProductCategory } from "@/types/product-directory";
 import type { DirectoryPriceTier, DirectoryTierLevel } from "@/components/products/productDirectoryDetailMeta";
-import {
-  APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS,
-  APP_FILTER_CHIP_ALIGNED_SEGMENT_ICON_CLASS,
-} from "@/lib/dashboardChrome";
-import { listToolbarChipFontClass } from "@/lib/list-ui";
 import { cn } from "@/lib/utils";
-import { FilterBar } from "@/components/ui/filter-bar";
-import {
-  catalogSearchFieldWrapperClass,
-  catalogSearchInputClass,
-} from "@/components/ui/page-search-field";
 import ProductDirectoryLocationDropdown from "./ProductDirectoryLocationDropdown";
 import ProductDirectoryAmenitiesDropdown from "./ProductDirectoryAmenitiesDropdown";
 import ProductDirectoryProgramSearchDropdown from "./ProductDirectoryProgramSearchDropdown";
@@ -35,25 +20,13 @@ import ProductDirectoryCollectionSearchDropdown from "./ProductDirectoryCollecti
 import ProductDirectoryCommissionRangeDropdown from "./ProductDirectoryCommissionRangeDropdown";
 import ProductDirectoryTierDropdown from "./ProductDirectoryTierDropdown";
 import ProductDirectoryPriceFilterDropdown from "./ProductDirectoryPriceFilterDropdown";
-import { ProductDirectoryFilterSwitch } from "./ProductDirectoryFilterSwitch";
-import { Button } from "@/components/ui/button";
+import { FilterPill } from "@/components/products/toolbar/FilterPill";
+import { ResultsToolbar } from "@/components/products/toolbar/ResultsToolbar";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AGENCY_PROGRAM_OPTIONS,
-  AMENITY_LABELS,
   DEFAULT_DIRECTORY_PRODUCT_SORT,
   DIRECTORY_PRODUCT_SORT_OPTIONS,
-  DIRECTORY_TIER_FILTER_UI,
   type DirectoryProductSortOption,
 } from "./productDirectoryFilterConfig";
-import { directoryCategoryLabel } from "./productDirectoryVisual";
 
 type Props = {
   searchQuery: string;
@@ -101,627 +74,286 @@ type Props = {
   onClearAllFilters: () => void;
 };
 
-function filterSectionLabel(className?: string) {
-  return cn(
-    "text-compact font-semibold uppercase tracking-[0.18em] text-muted-foreground/80",
-    className
+/** Thin 0.5px vertical divider, matching the design-system reference. */
+function PillDivider() {
+  return (
+    <span
+      aria-hidden
+      className="mx-1 h-5 shrink-0 self-center bg-[color:var(--border-subtle)]"
+      style={{ width: "0.5px" }}
+    />
   );
 }
 
-/** Full-width triggers inside the filter sheet (dropdowns default to max-w-[220px] for the toolbar). */
-const sheetDropdownStretch = "w-full min-w-0 [&_button]:max-w-none [&_button]:w-full";
+export default function ProductDirectoryFilterBar(props: Props) {
+  const {
+    searchQuery,
+    onSearchQueryChange,
+    locationCountries,
+    onLocationCountriesChange,
+    collectionFilter,
+    onCollectionFilterChange,
+    collections,
+    selectedProgramIds,
+    onSelectedProgramIdsChange,
+    repFirmFilterOptions,
+    selectedRepFirmIds,
+    onSelectedRepFirmIdsChange,
+    selectedAmenities,
+    onSelectedAmenitiesChange,
+    commissionRange,
+    onCommissionRangeChange,
+    commissionFilterActive,
+    onCommissionFilterActiveChange,
+    hasActiveIncentive,
+    onHasActiveIncentiveChange,
+    sortByCommission,
+    onSortByCommissionChange,
+    selectedTiers,
+    onSelectedTiersChange,
+    selectedPriceTiers,
+    onSelectedPriceTiersChange,
+    sortBy,
+    onSortByChange,
+    canViewCommissions,
+    resultCount,
+    viewMode,
+    onViewModeChange,
+    bulkMode,
+    onBulkModeToggle,
+  } = props;
 
-export default function ProductDirectoryFilterBar({
-  searchQuery,
-  onSearchQueryChange,
-  activeTypeFilters,
-  onToggleTypeFilter,
-  onClearTypeFilters,
-  locationCountries,
-  onLocationCountriesChange,
-  collectionFilter,
-  onCollectionFilterChange,
-  onAddProduct,
-  collections,
-  selectedProgramIds,
-  onSelectedProgramIdsChange,
-  repFirmFilterOptions,
-  selectedRepFirmIds,
-  onSelectedRepFirmIdsChange,
-  selectedAmenities,
-  onSelectedAmenitiesChange,
-  commissionRange,
-  onCommissionRangeChange,
-  commissionFilterActive,
-  onCommissionFilterActiveChange,
-  hasActiveIncentive,
-  onHasActiveIncentiveChange,
-  hasPlannedOpening,
-  onHasPlannedOpeningChange,
-  sortByCommission,
-  onSortByCommissionChange,
-  selectedTiers,
-  onSelectedTiersChange,
-  selectedPriceTiers,
-  onSelectedPriceTiersChange,
-  sortBy,
-  onSortByChange,
-  canViewCommissions,
-  resultCount,
-  viewMode,
-  onViewModeChange,
-  bulkMode,
-  bulkSelectedCount,
-  onBulkModeToggle,
-  onClearFacetFilters,
-  onClearAllFilters,
-}: Props) {
+  // The following props live on row 1 (CategoryStrip — rendered at the page
+  // level) or are no-ops in this layout. They are kept on `Props` so the
+  // ProductDirectoryPage call site does not need to change.
+  void props.activeTypeFilters;
+  void props.onToggleTypeFilter;
+  void props.onClearTypeFilters;
+  void props.onAddProduct;
+  void props.hasPlannedOpening;
+  void props.onHasPlannedOpeningChange;
+  void props.bulkSelectedCount;
+  void props.onClearFacetFilters;
+  void props.onClearAllFilters;
+
   const [sortOpen, setSortOpen] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const sortWrapRef = useRef<HTMLDivElement>(null);
 
-  const activeFacetCount = useMemo(() => {
+  // Outside-click + Escape close for the inline Sort menu.
+  useEffect(() => {
+    if (!sortOpen) return;
+    const onClick = (e: MouseEvent) => {
+      const el = sortWrapRef.current;
+      if (el && e.target instanceof Node && !el.contains(e.target)) setSortOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSortOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [sortOpen]);
+
+  // Count of secondary filters that are currently active — drives the
+  // More-filters pill's badge.
+  const moreFiltersActiveCount = useMemo(() => {
     let n = 0;
-    if (activeTypeFilters.length > 0) n += activeTypeFilters.length;
-    if (locationCountries.length > 0) n++;
-    if (collectionFilter.length > 0) n++;
-    if (selectedProgramIds.length > 0) n++;
     if (selectedRepFirmIds.length > 0) n++;
     if (selectedAmenities.length > 0) n++;
-    if (commissionFilterActive) n++;
-    if (hasActiveIncentive) n++;
-    if (hasPlannedOpening) n++;
-    if (selectedTiers.length > 0) n++;
+    if (canViewCommissions && commissionFilterActive) n++;
     if (selectedPriceTiers.length > 0) n++;
     if (sortByCommission) n++;
     return n;
   }, [
-    activeTypeFilters.length,
-    locationCountries.length,
-    collectionFilter.length,
-    selectedProgramIds.length,
     selectedRepFirmIds.length,
     selectedAmenities.length,
+    canViewCommissions,
     commissionFilterActive,
-    hasActiveIncentive,
-    hasPlannedOpening,
-    selectedTiers.length,
     selectedPriceTiers.length,
     sortByCommission,
   ]);
 
-  useEffect(() => {
-    const close = (e: MouseEvent) => {
-      if (!sortOpen) return;
-      const el = sortWrapRef.current;
-      if (el && e.target instanceof Node && !el.contains(e.target)) setSortOpen(false);
-    };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [sortOpen]);
-
-  useEffect(() => {
-    if (!sortOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSortOpen(false);
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [sortOpen]);
-
-  const handleResetFiltersInSheet = () => {
-    onClearFacetFilters();
-  };
-
-  const hasInlineFilterPills =
-    searchQuery.trim().length > 0 ||
-    activeTypeFilters.length > 0 ||
-    locationCountries.length > 0 ||
-    collectionFilter.length > 0 ||
-    selectedProgramIds.length > 0 ||
-    selectedRepFirmIds.length > 0 ||
-    selectedAmenities.length > 0 ||
-    (canViewCommissions && commissionFilterActive) ||
-    hasActiveIncentive ||
-    hasPlannedOpening ||
-    selectedTiers.length > 0 ||
-    selectedPriceTiers.length > 0 ||
-    sortByCommission;
-
-  const pillBtn = cn(
-    "flex max-w-[min(100%,280px)] shrink-0 items-center gap-1 rounded-full px-2 py-0.5 transition-colors",
-    listToolbarChipFontClass,
-  );
+  const sortLabel =
+    DIRECTORY_PRODUCT_SORT_OPTIONS.find((o) => o.id === sortBy)?.label ?? "Name A → Z";
+  const sortIsCustom = sortBy !== DEFAULT_DIRECTORY_PRODUCT_SORT;
 
   return (
-    <>
-      <FilterBar className="mb-0 border-0 pb-0">
-        <div className="flex flex-col gap-3 min-[900px]:flex-row min-[900px]:flex-wrap min-[900px]:items-center min-[900px]:justify-between">
-          <div className="min-w-0 flex-1 basis-[min(100%,18rem)]">
-            <div
-              className={cn(
-                catalogSearchFieldWrapperClass,
-                "min-h-8 h-auto flex-wrap content-center gap-x-2 gap-y-1.5 py-1.5"
-              )}
-            >
-              <Search className="h-3.5 w-3.5 shrink-0 self-center text-muted-foreground/65" aria-hidden />
-              {hasInlineFilterPills ? (
-                <div className="flex max-w-full flex-wrap items-center gap-1.5">
-                  {searchQuery.trim() ? (
-                    <button
-                      type="button"
-                      onClick={() => onSearchQueryChange("")}
-                      className={cn(pillBtn, "bg-white/[0.04] text-muted-foreground hover:bg-foreground/[0.06]")}
-                    >
-                      &quot;{searchQuery.trim().slice(0, 24)}
-                      {searchQuery.trim().length > 24 ? "…" : ""}&quot;
-                      <span className="text-muted-foreground">✕</span>
-                    </button>
-                  ) : null}
-                  {locationCountries.length > 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => onLocationCountriesChange([])}
-                      className={cn(pillBtn, "bg-white/[0.04] text-muted-foreground hover:bg-foreground/[0.06]")}
-                    >
-                      {locationCountries.slice(0, 2).join(", ")}
-                      {locationCountries.length > 2 ? ` +${locationCountries.length - 2}` : ""}
-                      <span className="text-muted-foreground">✕</span>
-                    </button>
-                  ) : null}
-                  {collectionFilter.length > 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => onCollectionFilterChange([])}
-                      className={cn(
-                        pillBtn,
-                        "bg-[rgba(201,169,110,0.06)] text-[#B8976E] hover:bg-[rgba(201,169,110,0.10)]"
-                      )}
-                    >
-                      {collectionFilter.length === 1
-                        ? collections.find((c) => c.id === collectionFilter[0])?.name ?? "Collection"
-                        : `${collectionFilter.length} collections`}
-                      <span className="text-muted-foreground">✕</span>
-                    </button>
-                  ) : null}
-                  {selectedProgramIds.length > 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => onSelectedProgramIdsChange([])}
-                      className={cn(
-                        pillBtn,
-                        "bg-[rgba(201,169,110,0.06)] text-[#B8976E] hover:bg-[rgba(201,169,110,0.10)]"
-                      )}
-                    >
-                      {AGENCY_PROGRAM_OPTIONS.filter((p) => selectedProgramIds.includes(p.id))
-                        .map((p) => p.name)
-                        .join(", ")}
-                      <span className="text-muted-foreground">✕</span>
-                    </button>
-                  ) : null}
-                  {selectedAmenities.length > 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => onSelectedAmenitiesChange([])}
-                      className={cn(
-                        pillBtn,
-                        "bg-[rgba(91,138,110,0.06)] text-[#5B8A6E] hover:bg-[rgba(91,138,110,0.10)]"
-                      )}
-                    >
-                      {selectedAmenities.map((b) => AMENITY_LABELS[b]).join(", ")}
-                      <span className="text-muted-foreground">✕</span>
-                    </button>
-                  ) : null}
-                  {canViewCommissions && commissionFilterActive ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onCommissionFilterActiveChange(false);
-                        onCommissionRangeChange([0, 25]);
-                      }}
-                      className={cn(
-                        pillBtn,
-                        "bg-[rgba(184,151,110,0.06)] text-[#B8976E] hover:bg-[rgba(184,151,110,0.10)]"
-                      )}
-                    >
-                      {commissionRange[0]}%–{commissionRange[1]}%
-                      <span className="text-muted-foreground">✕</span>
-                    </button>
-                  ) : null}
-                  {hasActiveIncentive ? (
-                    <button
-                      type="button"
-                      onClick={() => onHasActiveIncentiveChange(false)}
-                      className={cn(pillBtn, "bg-amber-500/15 text-amber-400 hover:bg-amber-500/20")}
-                    >
-                      Active incentives
-                      <span className="text-muted-foreground">✕</span>
-                    </button>
-                  ) : null}
-                  {hasPlannedOpening ? (
-                    <button
-                      type="button"
-                      onClick={() => onHasPlannedOpeningChange(false)}
-                      className={cn(
-                        pillBtn,
-                        "bg-[rgba(201,169,110,0.10)] text-brand-cta hover:bg-[rgba(201,169,110,0.14)]"
-                      )}
-                    >
-                      Planned opening
-                      <span className="text-muted-foreground">✕</span>
-                    </button>
-                  ) : null}
-                  {selectedRepFirmIds.length > 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => onSelectedRepFirmIdsChange([])}
-                      className={cn(
-                        pillBtn,
-                        "truncate bg-[rgba(176,122,91,0.12)] text-[#B07A5B] hover:bg-[rgba(176,122,91,0.18)]"
-                      )}
-                    >
-                      <span className="min-w-0 truncate">
-                        {selectedRepFirmIds
-                          .map((id) => repFirmFilterOptions.find((f) => f.id === id)?.name ?? id)
-                          .slice(0, 3)
-                          .join(", ")}
-                        {selectedRepFirmIds.length > 3 ? ` +${selectedRepFirmIds.length - 3}` : ""}
-                      </span>
-                      <span className="shrink-0 text-muted-foreground">✕</span>
-                    </button>
-                  ) : null}
-                  {selectedTiers.length > 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => onSelectedTiersChange([])}
-                      className={cn(pillBtn, "bg-white/[0.04] text-muted-foreground hover:bg-foreground/[0.06]")}
-                    >
-                      {selectedTiers.map((t) => DIRECTORY_TIER_FILTER_UI.find((x) => x.id === t)?.label ?? t).join(", ")}
-                      <span className="text-muted-foreground">✕</span>
-                    </button>
-                  ) : null}
-                  {selectedPriceTiers.length > 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => onSelectedPriceTiersChange([])}
-                      className={cn(
-                        pillBtn,
-                        "bg-[rgba(201,169,110,0.06)] text-brand-cta hover:bg-[rgba(201,169,110,0.10)]"
-                      )}
-                    >
-                      {selectedPriceTiers.join(" ")}
-                      <span className="text-muted-foreground">✕</span>
-                    </button>
-                  ) : null}
-                  {sortByCommission ? (
-                    <button
-                      type="button"
-                      onClick={() => onSortByCommissionChange(false)}
-                      className={cn(pillBtn, "bg-white/[0.04] text-muted-foreground hover:bg-foreground/[0.06]")}
-                    >
-                      Sort by commission
-                      <span className="text-muted-foreground">✕</span>
-                    </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={onClearAllFilters}
-                    className="shrink-0 px-1 text-compact text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    Clear all
-                  </button>
-                </div>
-              ) : null}
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(e) => onSearchQueryChange(e.target.value)}
-                placeholder="Search products…"
-                className={cn(catalogSearchInputClass, "min-h-7 min-w-[10rem] flex-1 basis-[min(100%,12rem)] self-center")}
-                aria-label="Search products"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <div ref={sortWrapRef} className="relative">
-              <button
-                type="button"
-                aria-label={`Sort products. Current: ${DIRECTORY_PRODUCT_SORT_OPTIONS.find((o) => o.id === sortBy)?.label ?? "Name A → Z"}`}
-                onClick={() => setSortOpen((o) => !o)}
-                className={cn(
-                  APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS,
-                  listToolbarChipFontClass,
-                  "flex max-w-[220px] min-w-0 items-center gap-2 rounded-lg border px-3 py-0 text-left transition-colors",
-                  sortBy !== DEFAULT_DIRECTORY_PRODUCT_SORT
-                    ? "border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
-                    : "border-border bg-popover text-muted-foreground hover:border-border"
-                )}
-              >
-                <ArrowUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground/65" aria-hidden />
-                <span className="min-w-0 flex-1 truncate">
-                  {DIRECTORY_PRODUCT_SORT_OPTIONS.find((o) => o.id === sortBy)?.label ?? "Sort"}
-                </span>
-                <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground/65" aria-hidden />
-              </button>
-              {sortOpen && (
-                <div
-                  className="absolute left-0 top-full z-[80] mt-1 w-[min(100vw-2rem,220px)] overflow-hidden rounded-xl border border-border bg-popover py-1 text-popover-foreground shadow-2xl"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {DIRECTORY_PRODUCT_SORT_OPTIONS.map((option) => (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => {
-                        onSortByChange(option.id);
-                        setSortOpen(false);
-                      }}
-                      className={cn(
-                        "flex w-full items-center justify-between px-3 py-2.5 text-left text-compact transition-colors hover:bg-muted/40",
-                        sortBy === option.id ? "text-brand-cta" : "text-muted-foreground"
-                      )}
-                    >
-                      {option.label}
-                      {sortBy === option.id ? <Check className="h-3.5 w-3.5 text-brand-cta" /> : null}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div
-              className="flex shrink-0 items-center rounded-lg border border-border bg-muted/25 p-0.5"
-              role="group"
-              aria-label="View mode"
-            >
-              <button
-                type="button"
-                title="Grid view"
-                className={cn(
-                  APP_FILTER_CHIP_ALIGNED_SEGMENT_ICON_CLASS,
-                  "transition-colors",
-                  viewMode === "grid"
-                    ? "bg-[rgba(201,169,110,0.12)] text-brand-cta"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-                onClick={() => onViewModeChange("grid")}
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                title="List view"
-                className={cn(
-                  APP_FILTER_CHIP_ALIGNED_SEGMENT_ICON_CLASS,
-                  "transition-colors",
-                  viewMode === "list"
-                    ? "bg-[rgba(201,169,110,0.12)] text-brand-cta"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-                onClick={() => onViewModeChange("list")}
-              >
-                <List className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                title="Map view"
-                className={cn(
-                  APP_FILTER_CHIP_ALIGNED_SEGMENT_ICON_CLASS,
-                  "transition-colors",
-                  viewMode === "map"
-                    ? "bg-[rgba(201,169,110,0.12)] text-brand-cta"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-                onClick={() => onViewModeChange("map")}
-              >
-                <MapIcon className="h-4 w-4" />
-              </button>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className={cn(
-                APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS,
-                "!h-[30px] !min-h-[30px]",
-                "gap-2 border-border",
-                activeFacetCount > 0 && "border-[rgba(201,169,110,0.28)] bg-[rgba(201,169,110,0.06)] text-foreground"
-              )}
-              onClick={() => setFiltersOpen(true)}
-              aria-expanded={filtersOpen}
-            >
-              <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
-              Filters
-              {activeFacetCount > 0 ? (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-cta/20 px-1.5 text-compact font-semibold tabular-nums text-brand-cta">
-                  {activeFacetCount > 99 ? "99+" : activeFacetCount}
-                </span>
-              ) : null}
-            </Button>
-
-            <Button
-              type="button"
-              variant="toolbarAccent"
-              size="sm"
-              className={cn(
-                APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS,
-                "!h-[30px] !min-h-[30px]",
-                "shrink-0"
-              )}
-              onClick={onAddProduct}
-              title="Add a product. You can also save from chat or external search."
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Add product
-            </Button>
-
+    <div className="mb-4 space-y-3 border-b border-[color:var(--border-subtle)] pb-4">
+      {/* Row 2 — search + primary filter pills + More-filters trigger. */}
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Search input — 240px, pill-shaped, moss focus ring. */}
+        <div className="relative w-[240px] shrink-0">
+          <Search
+            size={14}
+            aria-hidden
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--chrome-icon-muted)]"
+          />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => onSearchQueryChange(e.target.value)}
+            placeholder="Search products…"
+            aria-label="Search products"
+            className={cn(
+              "h-8 w-full rounded-full border border-[color:var(--border-default)] bg-[color:var(--surface-card)]",
+              "pl-9 pr-9 text-[12px] text-[color:var(--text-primary)] placeholder:text-[color:var(--text-tertiary)]",
+              "transition-colors focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-cta)] focus:border-transparent"
+            )}
+          />
+          {searchQuery ? (
             <button
               type="button"
-              onClick={onBulkModeToggle}
-              className={cn(
-                APP_FILTER_CHIP_ALIGNED_CONTROL_HEIGHT_CLASS,
-                "flex items-center gap-1.5 rounded-lg border px-2.5 text-compact transition-colors",
-                bulkMode
-                  ? "border-[rgba(201,169,110,0.20)] bg-[rgba(201,169,110,0.08)] text-brand-cta"
-                  : "border-border bg-popover text-muted-foreground hover:text-foreground"
-              )}
+              onClick={() => onSearchQueryChange("")}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 inline-flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-[color:var(--chrome-icon-muted)] transition-colors hover:bg-[color:var(--surface-interactive)] hover:text-[color:var(--text-secondary)]"
             >
-              <CheckSquare className="h-3.5 w-3.5" />
-              {bulkMode ? `${bulkSelectedCount} selected` : "Select"}
+              <X size={12} aria-hidden />
             </button>
-
-            <span className="text-compact text-muted-foreground tabular-nums min-[900px]:border-l min-[900px]:border-border min-[900px]:pl-3">
-              {resultCount} product{resultCount !== 1 ? "s" : ""}
-            </span>
-          </div>
+          ) : null}
         </div>
-      </FilterBar>
 
-      <Dialog open={filtersOpen} onOpenChange={setFiltersOpen}>
-        <DialogContent
-          showCloseButton
-          className="flex max-h-[min(92dvh,880px)] w-full max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl"
-        >
-          <DialogHeader className="shrink-0 space-y-1 border-b border-border px-6 py-4 text-left">
-            <DialogTitle>Filters</DialogTitle>
-            <DialogDescription>
-              Refine by type, location, collections, and more. Search and sort stay on the toolbar.
-            </DialogDescription>
-          </DialogHeader>
+        <PillDivider />
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-4">
-            <div className="space-y-8">
-              <section className="space-y-2" aria-labelledby="pd-filter-location">
-                <h3 id="pd-filter-location" className={filterSectionLabel()}>
-                  Location
-                </h3>
-                <div className={sheetDropdownStretch}>
-                  <ProductDirectoryLocationDropdown
-                    selectedCountries={locationCountries}
-                    onChange={onLocationCountriesChange}
-                  />
-                </div>
-              </section>
-
-              <section className="space-y-2" aria-labelledby="pd-filter-collections">
-                <h3 id="pd-filter-collections" className={filterSectionLabel()}>
-                  Collections
-                </h3>
-                <div className={sheetDropdownStretch}>
-                  <ProductDirectoryCollectionSearchDropdown
-                    collections={collections}
-                    selectedIds={collectionFilter}
-                    onChange={onCollectionFilterChange}
-                  />
-                </div>
-              </section>
-
-              <section className="space-y-2" aria-labelledby="pd-filter-programs">
-                <h3 id="pd-filter-programs" className={filterSectionLabel()}>
-                  Partner programs
-                </h3>
-                <div className={sheetDropdownStretch}>
-                  <ProductDirectoryProgramSearchDropdown
-                    selectedProgramIds={selectedProgramIds}
-                    onChange={onSelectedProgramIdsChange}
-                  />
-                </div>
-              </section>
-
-              <section className="space-y-2" aria-labelledby="pd-filter-rep">
-                <h3 id="pd-filter-rep" className={filterSectionLabel()}>
-                  Rep firms
-                </h3>
-                <div className={sheetDropdownStretch}>
-                  <ProductDirectoryRepFirmFilterDropdown
-                    repFirms={repFirmFilterOptions}
-                    selectedRepFirmIds={selectedRepFirmIds}
-                    onChange={onSelectedRepFirmIdsChange}
-                  />
-                </div>
-              </section>
-
-              <section className="space-y-2" aria-labelledby="pd-filter-amenities">
-                <h3 id="pd-filter-amenities" className={filterSectionLabel()}>
-                  Amenities
-                </h3>
-                <div className={sheetDropdownStretch}>
-                  <ProductDirectoryAmenitiesDropdown
-                    selected={selectedAmenities}
-                    onChange={onSelectedAmenitiesChange}
-                  />
-                </div>
-              </section>
-
-              <section className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-card/40 px-3 py-3">
-                <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-                  <span className="text-compact text-muted-foreground">Planned opening</span>
-                  <ProductDirectoryFilterSwitch checked={hasPlannedOpening} onCheckedChange={onHasPlannedOpeningChange} />
-                </div>
-                {canViewCommissions ? (
-                  <div className="flex min-w-0 flex-1 items-center justify-between gap-3 border-border min-[400px]:border-l min-[400px]:pl-4">
-                    <span className="text-compact text-muted-foreground">Active incentives</span>
-                    <ProductDirectoryFilterSwitch
-                      checked={hasActiveIncentive}
-                      onCheckedChange={onHasActiveIncentiveChange}
-                    />
-                  </div>
-                ) : null}
-              </section>
-
-              {canViewCommissions ? (
-                <section className="space-y-2" aria-labelledby="pd-filter-commission">
-                  <h3 id="pd-filter-commission" className={filterSectionLabel()}>
-                    Commission
-                  </h3>
-                  <div className={sheetDropdownStretch}>
-                    <ProductDirectoryCommissionRangeDropdown
-                      commissionRange={commissionRange}
-                      onCommissionRangeChange={onCommissionRangeChange}
-                      commissionFilterActive={commissionFilterActive}
-                      onCommissionFilterActiveChange={onCommissionFilterActiveChange}
-                      sortByCommission={sortByCommission}
-                      onSortByCommissionChange={onSortByCommissionChange}
-                    />
-                  </div>
-                </section>
-              ) : null}
-
-              <section className="space-y-2" aria-labelledby="pd-filter-tiers">
-                <h3 id="pd-filter-tiers" className={filterSectionLabel()}>
-                  Partner tiers
-                </h3>
-                <div className={sheetDropdownStretch}>
-                  <ProductDirectoryTierDropdown selectedTiers={selectedTiers} onChange={onSelectedTiersChange} />
-                </div>
-              </section>
-
-              <section className="space-y-2" aria-labelledby="pd-filter-price">
-                <h3 id="pd-filter-price" className={filterSectionLabel()}>
-                  Price band
-                </h3>
-                <div className={sheetDropdownStretch}>
-                  <ProductDirectoryPriceFilterDropdown
-                    selectedPriceTiers={selectedPriceTiers}
-                    onChange={onSelectedPriceTiersChange}
-                  />
-                </div>
-              </section>
+        {/* Sort — uses FilterPill + custom dropdown (no existing dropdown for sort). */}
+        <div ref={sortWrapRef} className="relative">
+          <FilterPill
+            label="Sort"
+            value={sortLabel}
+            icon={ArrowDownUp}
+            active={sortIsCustom}
+            open={sortOpen}
+            onClick={() => setSortOpen((o) => !o)}
+          />
+          {sortOpen ? (
+            <div
+              className="absolute left-0 top-full z-[80] mt-1 w-[min(100vw-2rem,240px)] overflow-hidden rounded-xl border border-[color:var(--border-default)] bg-[color:var(--surface-card)] py-1 text-[color:var(--text-primary)] shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {DIRECTORY_PRODUCT_SORT_OPTIONS.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => {
+                    onSortByChange(option.id);
+                    setSortOpen(false);
+                  }}
+                  className={cn(
+                    "flex w-full items-center justify-between px-3 py-2 text-left text-[12px] transition-colors hover:bg-[color:var(--surface-interactive)]",
+                    sortBy === option.id
+                      ? "text-[color:var(--brand-primary)]"
+                      : "text-[color:var(--text-secondary)]"
+                  )}
+                >
+                  {option.label}
+                  {sortBy === option.id ? (
+                    <Check size={12} className="text-[color:var(--brand-primary)]" />
+                  ) : null}
+                </button>
+              ))}
             </div>
-          </div>
+          ) : null}
+        </div>
 
-          <DialogFooter className="shrink-0 flex-row justify-end gap-2 border-t border-border bg-background px-6 py-4 sm:justify-end">
-            <Button type="button" variant="outline" size="sm" onClick={handleResetFiltersInSheet}>
-              Reset filters
-            </Button>
-            <Button type="button" size="sm" variant="toolbarAccent" onClick={() => setFiltersOpen(false)}>
-              Done
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+        {/* Location — existing dropdown; renders its own pill-shaped trigger w/ value summary. */}
+        <ProductDirectoryLocationDropdown
+          selectedCountries={locationCountries}
+          onChange={onLocationCountriesChange}
+        />
+
+        {/* Collection */}
+        <ProductDirectoryCollectionSearchDropdown
+          collections={collections}
+          selectedIds={collectionFilter}
+          onChange={onCollectionFilterChange}
+        />
+
+        {/* Program */}
+        <ProductDirectoryProgramSearchDropdown
+          selectedProgramIds={selectedProgramIds}
+          onChange={onSelectedProgramIdsChange}
+        />
+
+        {/* Tier */}
+        <ProductDirectoryTierDropdown
+          selectedTiers={selectedTiers}
+          onChange={onSelectedTiersChange}
+        />
+
+        {/* Active incentives — boolean toggle pill. */}
+        <FilterPill
+          label="Active incentives"
+          toggle
+          toggleOn={hasActiveIncentive}
+          onToggle={onHasActiveIncentiveChange}
+        />
+
+        {/* More filters — far right; opens row 2.5. */}
+        <div className="ml-auto flex items-center gap-2">
+          <PillDivider />
+          <FilterPill
+            label="More filters"
+            icon={SlidersHorizontal}
+            value={moreFiltersActiveCount > 0 ? String(moreFiltersActiveCount) : undefined}
+            active={moreFiltersActiveCount > 0}
+            open={moreOpen}
+            onClick={() => setMoreOpen((o) => !o)}
+          />
+        </div>
+      </div>
+
+      {/* Row 2.5 — secondary filters (only when "More filters" is expanded). */}
+      {moreOpen ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[rgba(58,89,56,0.15)] bg-[rgba(58,89,56,0.04)] px-3 py-2">
+          <ProductDirectoryRepFirmFilterDropdown
+            repFirms={repFirmFilterOptions}
+            selectedRepFirmIds={selectedRepFirmIds}
+            onChange={onSelectedRepFirmIdsChange}
+          />
+
+          <ProductDirectoryAmenitiesDropdown
+            selected={selectedAmenities}
+            onChange={onSelectedAmenitiesChange}
+          />
+
+          {canViewCommissions ? (
+            <ProductDirectoryCommissionRangeDropdown
+              commissionRange={commissionRange}
+              onCommissionRangeChange={onCommissionRangeChange}
+              commissionFilterActive={commissionFilterActive}
+              onCommissionFilterActiveChange={onCommissionFilterActiveChange}
+              sortByCommission={sortByCommission}
+              onSortByCommissionChange={onSortByCommissionChange}
+            />
+          ) : null}
+
+          <ProductDirectoryPriceFilterDropdown
+            selectedPriceTiers={selectedPriceTiers}
+            onChange={onSelectedPriceTiersChange}
+          />
+
+          {canViewCommissions ? (
+            <FilterPill
+              label="Sort by commission"
+              toggle
+              toggleOn={sortByCommission}
+              onToggle={onSortByCommissionChange}
+            />
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Row 3 — count + Select toggle + Grid/List/Map. */}
+      <ResultsToolbar
+        count={resultCount}
+        view={viewMode}
+        onViewChange={onViewModeChange}
+        selectMode={bulkMode}
+        onSelectModeToggle={onBulkModeToggle}
+      />
+    </div>
   );
 }
