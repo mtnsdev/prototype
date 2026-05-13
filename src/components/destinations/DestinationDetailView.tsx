@@ -489,10 +489,18 @@ function useHeroScrollProgress(heroRef: RefObject<HTMLElement | null>, scrollRoo
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(update);
     };
+
+    // Some layouts (e.g. advisor view of the destination page) end up scrolling on
+    // the window/body rather than on the inner scroll root. Listening on both keeps
+    // the sticky hero bar in sync regardless of which element actually scrolls.
     root.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
     update();
     return () => {
       root.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
       cancelAnimationFrame(raf);
     };
   }, [heroRef, scrollRootRef]);
