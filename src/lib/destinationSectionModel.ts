@@ -3,6 +3,7 @@ import type {
   DestinationDocument,
   DestinationLegacySectionKey,
   EditorProductSlot,
+  EditorSliceKind,
   EditorTabSection,
   // DestinationTripReport, // removed — trip reports moved to v2
   DMCPartner,
@@ -15,6 +16,39 @@ import { mergeLegacyEditorTabLabels, resolveAdvisorNavIcon, resolveAdvisorNavTit
 import { ensureEditorWorkspace } from "@/lib/destinationEditorTabs";
 import { getDestinationCatalogBundles } from "@/lib/destinationUnifiedCatalog";
 import { stableItemId, stableSectionId } from "@/lib/stableDestinationIds";
+
+/** Default slice order when an `EditorTabSection` has no explicit `sliceOrder` — preserves legacy display order. */
+const DEFAULT_SLICE_ORDER: readonly EditorSliceKind[] = ["products", "text", "documents"];
+
+/** Resolve the in-card slice order for a row, filtered to slices that are actually enabled. */
+export function getRowSliceOrder(row: EditorTabSection): EditorSliceKind[] {
+  const enabled = (k: EditorSliceKind) =>
+    (k === "products" && row.includeProducts) ||
+    (k === "text" && row.includeText) ||
+    (k === "documents" && row.includeDocuments);
+
+  const seen = new Set<EditorSliceKind>();
+  const result: EditorSliceKind[] = [];
+  const explicit = row.sliceOrder ?? [];
+  for (const k of explicit) {
+    if (enabled(k) && !seen.has(k)) {
+      result.push(k);
+      seen.add(k);
+    }
+  }
+  for (const k of DEFAULT_SLICE_ORDER) {
+    if (enabled(k) && !seen.has(k)) {
+      result.push(k);
+      seen.add(k);
+    }
+  }
+  return result;
+}
+
+/** Stable DOM/URL anchor id for a section row card (one card may host multiple slices). */
+export function rowAnchorId(destinationSlug: string, row: EditorTabSection): string {
+  return stableSectionId(destinationSlug, `row-${row.id}`);
+}
 
 /** Mirrors production `DestinationSection.sectionType` — drives `SectionRenderer`. */
 export type DestinationSectionKind =
@@ -114,6 +148,7 @@ function dmcToItem(p: DMCPartner): ProductListItem {
     catalogUnavailable: p.catalogUnavailable,
     name: p.name,
     url: p.website,
+    image: p.image,
     meta: p.keyContact,
     note: p.notes,
     latitude: p.latitude,
@@ -128,6 +163,7 @@ function restaurantToItem(r: Restaurant, subRegion: string): ProductListItem {
     catalogUnavailable: r.catalogUnavailable,
     name: r.name,
     url: r.url,
+    image: r.image,
     tags: [subRegion],
     note: r.note,
     latitude: r.latitude,
@@ -143,6 +179,7 @@ function hotelToItem(h: Hotel, subRegion: string): ProductListItem {
     catalogUnavailable: h.catalogUnavailable,
     name: h.name,
     url: h.url,
+    image: h.image,
     tags: [subRegion],
     pill: h.properties?.[0],
     meta: metaParts.length > 0 ? metaParts.join(" · ") : undefined,
@@ -163,6 +200,7 @@ function yachtToItem(y: YachtCompany): ProductListItem {
     catalogUnavailable: y.catalogUnavailable,
     name: y.name,
     url: y.url,
+    image: y.image,
     meta: contact,
     latitude: y.latitude,
     longitude: y.longitude,
@@ -239,12 +277,14 @@ export function buildVirtualSectionsFromDestination(destination: Destination): V
   const cat = getDestinationCatalogBundles(d);
   const out: VirtualDestinationSection[] = [];
   let sortOrder = 0;
-  /** Each workspace row may own at most one catalog list type (enforced in the editor). */
+  /** Each workspace row emits its enabled slices in `getRowSliceOrder` order so the page reflects author intent. */
   for (let wi = 0; wi < ws.sections.length; wi++) {
     const sec = ws.sections[wi]!;
     const sid = sec.id;
+    const order = getRowSliceOrder(sec);
 
-    if (sec.includeProducts && sec.productSlot) {
+    for (const sliceKind of order) {
+      if (sliceKind === "products" && sec.includeProducts && sec.productSlot) {
         const slot = sec.productSlot;
         const lk = slotToLegacyKey(slot);
         const title = blockTitle(d, sec, slot);
@@ -270,19 +310,8 @@ export function buildVirtualSectionsFromDestination(destination: Destination): V
           items = (cat.yachtCompanies ?? []).map(yachtToItem);
           slice = "yachts";
           sidSuffix = "p-yacht";
-        } else if (slot === "tourism" && d.tourismRegions.length > 0) {
-          const sectionId = stableSectionId(slug, `${sid}-p-tour`);
-          const contacts = tourismToContacts(slug, sectionId, d.tourismRegions);
-          out.push({
-            id: sectionId,
-            title,
-            iconKey,
-            sectionType: "contact_list",
-            sortOrder: sortOrder++,
-            count: contacts.length,
-            contacts,
-            editorRef: { kind: "workspace", workspaceIndex: wi, slice: "tourism" },
-          });
+        } else if (slot === "tourism") {
+          // Tourism & contacts are handled as notes — skip generating a contact_list section.
         }
 
         if (items.length > 0) {
@@ -298,10 +327,7 @@ export function buildVirtualSectionsFromDestination(destination: Destination): V
             editorRef: { kind: "workspace", workspaceIndex: wi, slice },
           });
         }
-
-      }
-
-      if (sec.includeText) {
+      } else if (sliceKind === "text" && sec.includeText) {
         const lk = sec.productSlot ? slotToLegacyKey(sec.productSlot) : "overview";
         const tid = stableSectionId(slug, `${sid}-t`);
         const text = sec.textBody ?? "";
@@ -315,23 +341,22 @@ export function buildVirtualSectionsFromDestination(destination: Destination): V
           text,
           editorRef: { kind: "workspace", workspaceIndex: wi, slice: "text" },
         });
-      }
-
-    if (sec.includeDocuments) {
-      const docs = sectionDocumentsForEditorBlock(d, sec);
-      if (docs.length > 0) {
-        const lk = sec.productSlot ? slotToLegacyKey(sec.productSlot) : "documents";
-        const did = stableSectionId(slug, `${sid}-d`);
-        out.push({
-          id: did,
-          title: sec.heading?.trim() || resolveAdvisorNavTitle(d, lk),
-          iconKey: workspaceNavIcon(sec, lk, d),
-          sectionType: "document_list",
-          sortOrder: sortOrder++,
-          count: docs.length,
-          documents: docs,
-          editorRef: { kind: "workspace", workspaceIndex: wi, slice: "documents" },
-        });
+      } else if (sliceKind === "documents" && sec.includeDocuments) {
+        const docs = sectionDocumentsForEditorBlock(d, sec);
+        if (docs.length > 0) {
+          const lk = sec.productSlot ? slotToLegacyKey(sec.productSlot) : "documents";
+          const did = stableSectionId(slug, `${sid}-d`);
+          out.push({
+            id: did,
+            title: sec.heading?.trim() || resolveAdvisorNavTitle(d, lk),
+            iconKey: workspaceNavIcon(sec, lk, d),
+            sectionType: "document_list",
+            sortOrder: sortOrder++,
+            count: docs.length,
+            documents: docs,
+            editorRef: { kind: "workspace", workspaceIndex: wi, slice: "documents" },
+          });
+        }
       }
     }
   }
@@ -341,6 +366,73 @@ export function buildVirtualSectionsFromDestination(destination: Destination): V
 
 /** @deprecated Prefer {@link buildVirtualSectionsFromDestination}. */
 export const buildLegacyVirtualSectionsFromDestination = buildVirtualSectionsFromDestination;
+
+/** One sidebar nav entry per workspace row (groups together all its slices into a single card). */
+export type DestinationRowAnchor = {
+  /** Stable URL/DOM id for this row card (`section-row-<anchorId>`). */
+  anchorId: string;
+  /** Underlying workspace row index (for editor mutations). */
+  workspaceIndex: number;
+  /** Display label — author heading, else first slice's auto-title. */
+  label: string;
+  /** Lucide icon key from the row's first slice. */
+  iconKey: string;
+  /** Total item count across all enabled slices in the row. */
+  count: number;
+  /** Slice ids emitted by `buildVirtualSectionsFromDestination` for this row, in order. */
+  sliceIds: string[];
+};
+
+/**
+ * Builds one anchor per workspace row by re-using the virtual section builder and grouping by `editorRef.workspaceIndex`.
+ * Empty rows (no enabled/visible slices) get a placeholder anchor so admins can still see them in the nav.
+ */
+export function buildDestinationRowAnchors(destination: Destination): DestinationRowAnchor[] {
+  const d = mergeLegacyEditorTabLabels(destination);
+  const ws = ensureEditorWorkspace(d);
+  const sections = buildVirtualSectionsFromDestination(d);
+  const slug = d.slug;
+
+  const byRow = new Map<number, VirtualDestinationSection[]>();
+  for (const s of sections) {
+    if (s.editorRef?.kind !== "workspace") continue;
+    const wi = s.editorRef.workspaceIndex;
+    const list = byRow.get(wi) ?? [];
+    list.push(s);
+    byRow.set(wi, list);
+  }
+
+  const out: DestinationRowAnchor[] = [];
+  for (let wi = 0; wi < ws.sections.length; wi++) {
+    const row = ws.sections[wi]!;
+    const slices = byRow.get(wi) ?? [];
+    const first = slices[0];
+    const anchor = rowAnchorId(slug, row);
+    const heading = row.heading?.trim();
+    const label = heading || first?.title || "Untitled section";
+    const iconKey = first?.iconKey || "Folder";
+    const count = slices.reduce((n, s) => n + s.count, 0);
+    out.push({
+      anchorId: anchor,
+      workspaceIndex: wi,
+      label,
+      iconKey,
+      count,
+      sliceIds: slices.map((s) => s.id),
+    });
+  }
+  return out;
+}
+
+/** Map every emitted slice id to its parent row anchor id (used for legacy `#section-<sliceId>` deep links). */
+export function buildSliceToRowAnchorMap(destination: Destination): Map<string, string> {
+  const anchors = buildDestinationRowAnchors(destination);
+  const m = new Map<string, string>();
+  for (const a of anchors) {
+    for (const sid of a.sliceIds) m.set(sid, a.anchorId);
+  }
+  return m;
+}
 
 /** Virtual tab count for destination grid cards (sidebar mirrors this list). */
 export function countDestinationVirtualSections(destination: Destination): number {

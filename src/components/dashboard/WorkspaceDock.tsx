@@ -10,7 +10,6 @@ import {
   BookOpen,
   BarChart3,
   Zap,
-  Search,
   Settings,
   MessageSquare,
 } from "lucide-react";
@@ -49,12 +48,6 @@ const DOCK_APPS: {
     icon: BookOpen,
     match: (p) =>
       p.startsWith("/dashboard/knowledge-vault") || p.startsWith("/dashboard/knowledge"),
-  },
-  {
-    href: "/dashboard/search",
-    label: "Search",
-    icon: Search,
-    match: (p) => p.startsWith("/dashboard/search"),
   },
   {
     href: "/dashboard/analytics",

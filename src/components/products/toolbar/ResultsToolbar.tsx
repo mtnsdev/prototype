@@ -13,6 +13,8 @@ type Props = {
   onViewChange: (view: ViewMode) => void;
   selectMode?: boolean;
   onSelectModeToggle?: () => void;
+  /** When false, hides the grid/list/map view toggle group (used when toggles live elsewhere). */
+  showViewControls?: boolean;
   className?: string;
 };
 
@@ -26,6 +28,7 @@ export function ResultsToolbar({
   onViewChange,
   selectMode,
   onSelectModeToggle,
+  showViewControls = true,
   className,
 }: Props) {
   const label = `${count.toLocaleString()} ${count === 1 ? unit[0] : unit[1]}`;
@@ -55,11 +58,13 @@ export function ResultsToolbar({
         </button>
       ) : null}
 
-      <div className="ml-auto inline-flex items-center gap-0.5">
-        <ViewBtn icon={Grid2X2} label="Grid" active={view === "grid"} onClick={() => onViewChange("grid")} />
-        <ViewBtn icon={List} label="List" active={view === "list"} onClick={() => onViewChange("list")} />
-        <ViewBtn icon={Map} label="Map" active={view === "map"} onClick={() => onViewChange("map")} />
-      </div>
+      {showViewControls ? (
+        <div className="ml-auto inline-flex items-center gap-0.5">
+          <ViewBtn icon={Grid2X2} label="Grid" active={view === "grid"} onClick={() => onViewChange("grid")} />
+          <ViewBtn icon={List} label="List" active={view === "list"} onClick={() => onViewChange("list")} />
+          <ViewBtn icon={Map} label="Map" active={view === "map"} onClick={() => onViewChange("map")} />
+        </div>
+      ) : null}
     </div>
   );
 }

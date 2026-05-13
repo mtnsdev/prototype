@@ -38,23 +38,36 @@ export function parseDestinationHash(hash: string | null | undefined): Destinati
 
 /**
  * Resolve active section id from `?section=`, `#section-uuid`, or legacy query aliases.
+ *
+ * `validSectionIds` are now row-anchor ids (one per section card). Legacy `#section-<sliceId>`
+ * bookmarks resolve via `sliceToSection` (slice → owning row anchor).
  */
 export function resolveDestinationSectionId(args: {
   destinationSlug: string;
   querySection: string | null;
   hash: string | null;
   validSectionIds: string[];
-  /** When hash is `#item-…`, resolves parent section. */
+  /** When hash is `#item-…`, resolves parent row. */
   itemToSection?: Map<string, string>;
+  /** Legacy `#section-<sliceId>` bookmarks → owning row anchor id. */
+  sliceToSection?: Map<string, string>;
 }): string {
-  const { destinationSlug, querySection, hash, validSectionIds, itemToSection } = args;
+  const { destinationSlug, querySection, hash, validSectionIds, itemToSection, sliceToSection } = args;
   const { sectionId: hashSection, itemId } = parseDestinationHash(hash);
   if (hashSection && validSectionIds.includes(hashSection)) return hashSection;
+  if (hashSection && sliceToSection?.has(hashSection)) {
+    const mapped = sliceToSection.get(hashSection)!;
+    if (validSectionIds.includes(mapped)) return mapped;
+  }
 
   const q = (querySection ?? "").trim();
   if (q && validSectionIds.includes(q)) return q;
   const legacy = legacyQueryToSectionId(destinationSlug, q);
   if (legacy && validSectionIds.includes(legacy)) return legacy;
+  if (legacy && sliceToSection?.has(legacy)) {
+    const mapped = sliceToSection.get(legacy)!;
+    if (validSectionIds.includes(mapped)) return mapped;
+  }
 
   if (itemId && itemToSection?.has(itemId)) {
     return itemToSection.get(itemId)!;

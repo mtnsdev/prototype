@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Bookmark, Check, Folder, Plus, Search, X } from "lucide-react";
+import { Check, Folder, Plus, Search, X } from "lucide-react";
 import type {
   DirectoryCollectionOption,
   DirectoryProduct,
@@ -10,6 +10,7 @@ import type {
 import { ScopeBadge } from "@/components/ui/ScopeBadge";
 import type { Team } from "@/types/teams";
 import { cn } from "@/lib/utils";
+import { directoryHeroOrFallbackImageUrl } from "@/components/products/productDirectoryVisual";
 import { useUser } from "@/contexts/UserContext";
 
 type Props = {
@@ -121,13 +122,11 @@ export default function ProductDirectoryCollectionPicker({
         <div className="shrink-0 border-b border-border px-5 pb-4 pt-5">
           <div className="flex gap-3">
             <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-border bg-inset">
-              {product.imageUrl ? (
-                <img src={product.imageUrl} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <Bookmark className="h-6 w-6 text-[#2a2824]" aria-hidden />
-                </div>
-              )}
+              <img
+                src={directoryHeroOrFallbackImageUrl(product.id, product.imageUrl)}
+                alt=""
+                className="h-full w-full object-cover"
+              />
             </div>
             <div className="min-w-0 flex-1 pt-0.5">
               <p className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">Add to collections</p>

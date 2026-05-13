@@ -9,6 +9,7 @@ import { getPrimaryDirectoryType } from "@/components/products/directoryProductT
 import {
   directoryCategoryColors,
   directoryCategoryLabel,
+  directoryHeroOrFallbackImageUrl,
   directoryProductPriceDisplay,
 } from "./productDirectoryVisual";
 import {
@@ -155,7 +156,7 @@ export default function DirectoryProductCard({
         )}
       >
         <img
-          src={product.imageUrl}
+          src={directoryHeroOrFallbackImageUrl(product.id, product.imageUrl)}
           alt={product.name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
@@ -304,6 +305,7 @@ export default function DirectoryProductCard({
             </div>
           ) : null}
 
+          {(canViewCommissions && cardCommission != null) || showSavedFromSearch ? (
           <div
             className={cn(
               "overflow-hidden border-t border-border/70 text-brand-cta/80",
@@ -359,6 +361,7 @@ export default function DirectoryProductCard({
               ) : null}
             </div>
           </div>
+          ) : null}
         </div>
       </div>
     </div>

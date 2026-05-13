@@ -391,7 +391,6 @@ export default function AutomationsPage() {
           </ul>
         </div>
       </div>
-      </div>
 
       <AutomationBuilderModal
         open={builderOpen}

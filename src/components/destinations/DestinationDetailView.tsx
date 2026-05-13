@@ -3,15 +3,23 @@
 import type { Dispatch, ReactNode, SetStateAction, RefObject } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { List, Map as MapIcon } from "lucide-react";
-import { usePathname, useSearchParams } from "next/navigation";
-import type { Destination } from "@/data/destinations";
+import { LayoutGrid, List, Map as MapIcon } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import type { Destination, EditorTabSection } from "@/data/destinations";
+import type { DirectoryProduct } from "@/types/product-directory";
+import { ensureEditorWorkspace } from "@/lib/destinationEditorTabs";
+import { EmptySectionAddMenu, RowCardAdminControls, SliceDragHandle } from "./SectionAdminMenu";
 import { useUser } from "@/contexts/UserContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { resolveAdvisorCatalogFromStorage } from "@/components/products/productDirectoryCatalogResolve";
 import { mergeDestinationWithCatalog } from "@/lib/destinationCatalogJoin";
 import {
   buildDestinationItemSectionMap,
+  buildDestinationRowAnchors,
+  buildSliceToRowAnchorMap,
   buildVirtualSectionsFromDestination,
+  getRowSliceOrder,
+  type DestinationRowAnchor,
 } from "@/lib/destinationSectionModel";
 import {
   resolveDestinationItemIdFromHash,
@@ -24,74 +32,368 @@ import { buildDestinationMapPins } from "@/lib/destinationMapPins";
 import { DestinationHero, type DestinationHeroInlineEdit } from "./DestinationHero";
 import { DestinationSectionNav, type DestinationNavItem } from "./DestinationSectionNav";
 import { SectionRenderer } from "./SectionRenderer";
-import { DestinationSectionChrome } from "./DestinationSectionChrome";
-import { SectionEditPanel } from "./editor/SectionEditPanel";
 import { destCard, destMuted, destPage } from "./destinationStyles";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { CatalogChromeNavRow } from "@/components/products/CatalogChromeNavRow";
 import { DirectoryRoleToggle } from "@/components/products/DirectoryRoleToggle";
 import { useProductDirectoryCatalogOptional } from "@/components/products/ProductDirectoryCatalogContext";
-import { arrayMove } from "@dnd-kit/sortable";
+import { directoryHeroOrFallbackImageUrl } from "@/components/products/productDirectoryVisual";
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useBuildEditorOptional } from "./editor/DestinationEditorForms";
-import type { VirtualDestinationSection, ProductListItem } from "@/lib/destinationSectionModel";
-import { collectTags } from "@/components/destinations/sections/ProductListSection";
+import type {
+  VirtualDestinationSection,
+  ProductListItem,
+} from "@/lib/destinationSectionModel";
+import type { EditorSliceKind } from "@/data/destinations";
+import { DestinationPropertyChips } from "./DestinationPropertyChips";
+import { AssignProductsToPropertyDialog } from "./AssignProductsToPropertyDialog";
+import {
+  addProperty,
+  getProperties,
+  removeProperty,
+  toggleProductOnProperty,
+} from "@/lib/destinationProperties";
 
 const DestinationMapView = dynamic(
   () => import("./DestinationMapView").then((m) => m.DestinationMapView),
   { ssr: false, loading: () => <p className="text-sm text-muted-foreground">Loading map…</p> },
 );
 
-function SectionBlock({
-  section,
-  destinationSlug,
-  activeTagFilters,
-}: {
-  section: VirtualDestinationSection;
+/* ------------------------------------------------------------------ *
+ *  Row-card rendering: one card per workspace row, slices stacked    *
+ *  inside with hover-revealed admin affordances (drag + kebab).      *
+ * ------------------------------------------------------------------ */
+
+type RowCardCommonProps = {
   destinationSlug: string;
-  activeTagFilters?: ReadonlySet<string>;
+  /** Page-level destination-property filter (product-id allowlist). */
+  allowedProductIds?: ReadonlySet<string> | null;
+  productViewMode?: "cards" | "list";
+  productLookup?: Map<string, DirectoryProduct>;
+  onOpenProduct?: (productId: string) => void;
+  onAddToCollection?: (productId: string) => void;
+};
+
+/** Editable heading + admin controls for one row card. */
+function RowCardHeader({
+  workspaceIndex,
+  row,
+  fallbackLabel,
+  destinationSlug,
+  anchorId,
+  headingId,
+}: {
+  workspaceIndex: number;
+  row: EditorTabSection;
+  fallbackLabel: string;
+  destinationSlug: string;
+  anchorId: string;
+  headingId: string;
 }) {
+  const ctx = useBuildEditorOptional();
+  const { isAdmin } = usePermissions();
+  const editing = !!ctx && isAdmin;
+
+  const heading = row.heading?.trim() ?? "";
+
   return (
-    <section
-      id={`section-${section.id}`}
-      aria-labelledby={`section-heading-${section.id}`}
+    <div className="mb-3 flex items-start gap-2">
+      {editing ? (
+        <Input
+          id={headingId}
+          value={heading}
+          placeholder={fallbackLabel}
+          onChange={(e) =>
+            ctx!.patchSection(workspaceIndex, { heading: e.target.value || undefined })
+          }
+          className="h-7 min-w-0 flex-1 border-0 bg-transparent px-0 font-display text-sm font-medium tracking-tight text-foreground shadow-none placeholder:text-muted-foreground/70 focus-visible:ring-1 focus-visible:ring-brand-cta/40"
+          aria-label="Section heading"
+        />
+      ) : (
+        <h3
+          id={headingId}
+          className="min-w-0 flex-1 truncate font-display text-sm font-medium tracking-tight text-foreground"
+        >
+          {heading || fallbackLabel}
+        </h3>
+      )}
+      <RowCardAdminControls workspaceIndex={workspaceIndex} />
+    </div>
+  );
+}
+
+/** Slice container — hover-reveals a left-edge drag handle when reorderable. */
+function SortableSlice({
+  sliceKind,
+  reorderable,
+  children,
+}: {
+  sliceKind: EditorSliceKind;
+  reorderable: boolean;
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: sliceKind,
+    disabled: !reorderable,
+  });
+  const style = { transform: CSS.Transform.toString(transform), transition };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn("group/slice relative", isDragging && "z-10 opacity-90")}
     >
-      <div className={cn(destCard, "p-4 sm:p-5")}>
-        <DestinationSectionChrome
-          section={section}
-          headingId={`section-heading-${section.id}`}
-          className="mb-3"
+      {reorderable ? <SliceDragHandle dragHandleProps={{ ...attributes, ...listeners }} /> : null}
+      {children}
+    </div>
+  );
+}
+
+/** Renders one workspace row as a single card with stacked slices and dividers. */
+function RowCard({
+  row,
+  workspaceIndex,
+  rowSections,
+  anchor,
+  ...common
+}: RowCardCommonProps & {
+  row: EditorTabSection;
+  workspaceIndex: number;
+  rowSections: VirtualDestinationSection[];
+  anchor: DestinationRowAnchor;
+}) {
+  const ctx = useBuildEditorOptional();
+  const { isAdmin } = usePermissions();
+  const editing = !!ctx && isAdmin;
+  const headingId = `section-heading-row-${anchor.anchorId}`;
+
+  const order = useMemo(() => getRowSliceOrder(row), [row]);
+
+  // Map slice kind → matching virtual section emitted by the builder for this row.
+  const slicesByKind = useMemo(() => {
+    const m = new Map<EditorSliceKind, VirtualDestinationSection>();
+    for (const s of rowSections) {
+      if (s.editorRef?.kind !== "workspace") continue;
+      const slot = s.editorRef.slice;
+      if (slot === "text") m.set("text", s);
+      else if (slot === "documents") m.set("documents", s);
+      else if (slot === "dmc" || slot === "restaurants" || slot === "hotels" || slot === "yachts" || slot === "tourism") {
+        m.set("products", s);
+      }
+    }
+    return m;
+  }, [rowSections]);
+
+  const visibleOrder = order.filter((k) => slicesByKind.has(k));
+  const reorderable = editing && visibleOrder.length > 1;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const onDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      if (!ctx || !reorderable) return;
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const oldIdx = visibleOrder.indexOf(String(active.id) as EditorSliceKind);
+      const newIdx = visibleOrder.indexOf(String(over.id) as EditorSliceKind);
+      if (oldIdx < 0 || newIdx < 0) return;
+      const nextVisible = arrayMove(visibleOrder, oldIdx, newIdx);
+      // Preserve positions of disabled slices in the order array, only reshuffle the visible ones.
+      const enabledSet = new Set(visibleOrder);
+      const disabled = (row.sliceOrder ?? []).filter((k) => !enabledSet.has(k));
+      ctx.patchSection(workspaceIndex, { sliceOrder: [...nextVisible, ...disabled] });
+    },
+    [ctx, reorderable, visibleOrder, row.sliceOrder, workspaceIndex],
+  );
+
+  const isEmpty = rowSections.length === 0;
+
+  return (
+    <section id={`section-row-${anchor.anchorId}`} aria-labelledby={headingId}>
+      <div className={cn(destCard, "px-4 py-3", editing && "pl-9")}>
+        <RowCardHeader
+          workspaceIndex={workspaceIndex}
+          row={row}
+          fallbackLabel={anchor.label}
+          destinationSlug={common.destinationSlug}
+          anchorId={anchor.anchorId}
+          headingId={headingId}
         />
-        <SectionRenderer
-          section={section}
-          destinationSlug={destinationSlug}
-          activeTagFilters={activeTagFilters}
-        />
+
+        {isEmpty ? (
+          <EmptySectionAddMenu workspaceIndex={workspaceIndex} row={row} />
+        ) : (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext items={visibleOrder} strategy={verticalListSortingStrategy}>
+              <div className="divide-y divide-border/60">
+                {visibleOrder.map((kind) => {
+                  const s = slicesByKind.get(kind)!;
+                  return (
+                    <SortableSlice key={kind} sliceKind={kind} reorderable={reorderable}>
+                      <div className="py-3 first:pt-0 last:pb-0">
+                        <SectionRenderer
+                          section={s}
+                          destinationSlug={common.destinationSlug}
+                          allowedProductIds={common.allowedProductIds}
+                          productViewMode={common.productViewMode}
+                          productLookup={common.productLookup}
+                          onOpenProduct={common.onOpenProduct}
+                          onAddToCollection={common.onAddToCollection}
+                        />
+                      </div>
+                    </SortableSlice>
+                  );
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
       </div>
     </section>
   );
 }
 
-/** All sections stacked vertically — sidebar highlights as you scroll. */
-function SectionList({
+/** All section cards stacked vertically — sidebar highlights as you scroll. */
+function RowCardList({
+  destination,
   sections,
-  destinationSlug,
-  activeTagFilters,
-}: {
+  editorRows,
+  ...common
+}: RowCardCommonProps & {
+  destination: Destination;
   sections: VirtualDestinationSection[];
-  destinationSlug: string;
-  activeTagFilters?: ReadonlySet<string>;
+  /** Workspace rows in display order — required so empty rows still render with their `+ Add` placeholder. */
+  editorRows: EditorTabSection[];
+}) {
+  const byRow = useMemo(() => {
+    const m = new Map<number, VirtualDestinationSection[]>();
+    for (const s of sections) {
+      if (s.editorRef?.kind !== "workspace") continue;
+      const wi = s.editorRef.workspaceIndex;
+      const list = m.get(wi) ?? [];
+      list.push(s);
+      m.set(wi, list);
+    }
+    return m;
+  }, [sections]);
+
+  const anchors = useMemo(() => buildDestinationRowAnchors(destination), [destination]);
+  const anchorByWi = useMemo(() => new Map(anchors.map((a) => [a.workspaceIndex, a])), [anchors]);
+
+  return (
+    <div className="space-y-3">
+      {editorRows.map((row, wi) => {
+        const rowSections = byRow.get(wi) ?? [];
+        const anchor = anchorByWi.get(wi);
+        if (!anchor) return null;
+        return (
+          <RowCard
+            key={row.id}
+            row={row}
+            workspaceIndex={wi}
+            rowSections={rowSections}
+            anchor={anchor}
+            {...common}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Compact icon-only segmented control used in the hero overlay and the
+ * collapsed sticky bar. Kept in one place so both renderings stay in sync.
+ */
+function ViewToggle({
+  viewMode,
+  productViewMode,
+  onMapToggle,
+  onProductViewModeChange,
+  showMapToggle,
+}: {
+  viewMode: "list" | "map";
+  productViewMode: "cards" | "list";
+  onMapToggle: (mode: "list" | "map") => void;
+  onProductViewModeChange: (mode: "cards" | "list") => void;
+  showMapToggle: boolean;
 }) {
   return (
-    <div className="space-y-5">
-      {sections.map((section) => (
-        <SectionBlock
-          key={section.id}
-          section={section}
-          destinationSlug={destinationSlug}
-          activeTagFilters={activeTagFilters}
-        />
-      ))}
+    <div className="flex items-center gap-0.5 rounded-lg border border-white/25 bg-background/70 p-0.5 shadow-sm backdrop-blur-sm">
+      <button
+        type="button"
+        title="Card view"
+        aria-label="Card view"
+        aria-pressed={viewMode === "list" && productViewMode === "cards"}
+        className={cn(
+          "rounded-md p-1.5 transition-colors",
+          viewMode === "list" && productViewMode === "cards"
+            ? "bg-[rgba(201,169,110,0.12)] text-brand-cta"
+            : "text-muted-foreground/80 hover:text-foreground",
+        )}
+        onClick={() => {
+          onMapToggle("list");
+          onProductViewModeChange("cards");
+        }}
+      >
+        <LayoutGrid className="h-4 w-4" aria-hidden />
+      </button>
+      <button
+        type="button"
+        title="List view"
+        aria-label="List view"
+        aria-pressed={viewMode === "list" && productViewMode === "list"}
+        className={cn(
+          "rounded-md p-1.5 transition-colors",
+          viewMode === "list" && productViewMode === "list"
+            ? "bg-[rgba(201,169,110,0.12)] text-brand-cta"
+            : "text-muted-foreground/80 hover:text-foreground",
+        )}
+        onClick={() => {
+          onMapToggle("list");
+          onProductViewModeChange("list");
+        }}
+      >
+        <List className="h-4 w-4" aria-hidden />
+      </button>
+      {showMapToggle ? (
+        <button
+          type="button"
+          title="Map view"
+          aria-label="Map view"
+          aria-pressed={viewMode === "map"}
+          className={cn(
+            "rounded-md p-1.5 transition-colors",
+            viewMode === "map"
+              ? "bg-[rgba(201,169,110,0.12)] text-brand-cta"
+              : "text-muted-foreground/80 hover:text-foreground",
+          )}
+          onClick={() => onMapToggle("map")}
+        >
+          <MapIcon className="h-4 w-4" aria-hidden />
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -99,20 +401,16 @@ function SectionList({
 /** Condensed sticky hero bar — morphs in as the hero scrolls out. */
 function StickyHeroBar({
   destination,
-  allTags,
-  activeTagFilters,
-  onToggleTag,
   progress,
+  viewToggle,
 }: {
   destination: Destination;
-  allTags: string[];
-  activeTagFilters: Set<string>;
-  onToggleTag: (tag: string) => void;
   /** 0 = hero fully visible (bar hidden), 1 = hero fully scrolled out (bar fully shown). */
   progress: number;
+  /** Rendered on the right side of the collapsed bar (mirrors the hero overlay). */
+  viewToggle?: ReactNode;
 }) {
-  const heroSrc = destination.heroImage?.trim() ?? "";
-  const hasImage = heroSrc.length > 0;
+  const heroSrc = directoryHeroOrFallbackImageUrl(destination.slug, destination.heroImage ?? null);
 
   // Morph animation: bar slides down and fades in during the last 40% of scroll progress
   const barProgress = Math.max(0, Math.min(1, (progress - 0.6) / 0.4));
@@ -135,80 +433,28 @@ function StickyHeroBar({
       }}
       aria-hidden={!isVisible}
     >
-      {hasImage ? (
-        <div className="relative">
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${heroSrc})` }}
-            aria-hidden
-          />
-          <div
-            className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background/90 backdrop-blur-[2px]"
-            aria-hidden
-          />
-          <div className="relative px-6 pb-2.5 pt-3">
-            <h2 className="text-sm font-bold tracking-tight text-foreground drop-shadow-sm">
+      <div className="relative">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${heroSrc})` }}
+          aria-hidden
+        />
+        <div
+          className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background/90 backdrop-blur-[2px]"
+          aria-hidden
+        />
+        <div className="relative flex items-center justify-between gap-4 px-6 pb-3.5 pt-4">
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-lg font-bold tracking-tight text-foreground drop-shadow-sm md:text-xl">
               {destination.name}
             </h2>
-            <p className={cn("mt-0.5 text-2xs leading-snug", destMuted)}>
+            <p className={cn("mt-1 truncate text-sm leading-snug", destMuted)}>
               {destination.tagline}
             </p>
-            {allTags.length >= 2 ? (
-              <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="Filter by sub-region">
-                {allTags.map((tag) => {
-                  const on = activeTagFilters.has(tag);
-                  return (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => onToggleTag(tag)}
-                      className={cn(
-                        "inline-flex rounded-full border px-2 py-0.5 text-2xs font-medium transition-colors",
-                        on
-                          ? "border-brand-cta/40 bg-brand-cta/10 text-brand-cta"
-                          : "border-white/25 bg-background/65 text-foreground shadow-sm backdrop-blur-sm hover:bg-background/80",
-                      )}
-                    >
-                      {tag}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : null}
           </div>
+          {viewToggle ? <div className="shrink-0">{viewToggle}</div> : null}
         </div>
-      ) : (
-        <div className="bg-background/95 px-6 pb-2.5 pt-3 backdrop-blur-md">
-          <h2 className="text-sm font-bold tracking-tight text-foreground">
-            {destination.name}
-          </h2>
-          <p className={cn("mt-0.5 text-2xs leading-snug", destMuted)}>
-            {destination.tagline}
-          </p>
-          {allTags.length >= 2 ? (
-            <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="Filter by sub-region">
-              {allTags.map((tag) => {
-                const on = activeTagFilters.has(tag);
-                return (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => onToggleTag(tag)}
-                    className={cn(
-                      "inline-flex rounded-full border px-2 py-0.5 text-2xs font-medium transition-colors",
-                      on
-                        ? "border-brand-cta/40 bg-brand-cta/10 text-brand-cta"
-                        : "border-border bg-muted/40 text-muted-foreground hover:bg-muted/60",
-                    )}
-                  >
-                    {tag}
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -259,7 +505,7 @@ type Props = {
   previewMode?: boolean;
   headerAside?: ReactNode;
   /**
-   * Overview editor: edit name, tagline, hero URL, and description in the same layout as the published page.
+   * Overview editor: edit name, tagline, and hero URL in the same layout as the published page.
    */
   inlineOverviewEdit?: {
     setDraft: Dispatch<SetStateAction<Destination>>;
@@ -280,6 +526,7 @@ export function DestinationDetailView({
 }: Props) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { user, isLoading: userLoading } = useUser();
   const catalogCtx = useProductDirectoryCatalogOptional();
   const catalogRevision = catalogCtx?.catalogRevision ?? 0;
@@ -287,28 +534,83 @@ export function DestinationDetailView({
 
   const [clientHash, setClientHash] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
-  const [editingWi, setEditingWi] = useState<number | null>(null);
+  /** Cards (grid of DirectoryProductCards) vs List (compact directory-style rows). Persisted globally. */
+  const [productViewMode, setProductViewMode] = useState<"cards" | "list">("cards");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem("destination-product-view");
+    if (saved === "cards" || saved === "list") setProductViewMode(saved);
+  }, []);
+  const handleProductViewModeChange = useCallback((next: "cards" | "list") => {
+    setProductViewMode(next);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("destination-product-view", next);
+    }
+  }, []);
 
-  const displayDestination = useMemo(() => {
-    if (userLoading || !user) return destination;
-    const { products } = resolveAdvisorCatalogFromStorage(
+  const { products: directoryProducts } = useMemo(() => {
+    if (userLoading || !user) return { products: [] as DirectoryProduct[] };
+    return resolveAdvisorCatalogFromStorage(
       String(user.id),
       user.username ?? user.email?.split("@")[0] ?? "Advisor",
     );
-    return mergeDestinationWithCatalog(destination, products);
-  }, [destination, user, userLoading, catalogRevision]);
+  }, [user, userLoading, catalogRevision]);
+
+  const productLookup = useMemo(() => {
+    const m = new Map<string, DirectoryProduct>();
+    for (const p of directoryProducts) m.set(p.id, p);
+    return m;
+  }, [directoryProducts]);
+
+  const displayDestination = useMemo(() => {
+    if (userLoading || !user) return destination;
+    return mergeDestinationWithCatalog(destination, directoryProducts);
+  }, [destination, user, userLoading, directoryProducts]);
+
+  const openProductDetail = useCallback(
+    (productId: string) => {
+      router.push(`/dashboard/products?selected=${encodeURIComponent(productId)}`);
+    },
+    [router],
+  );
+
+  const openAddToCollection = useCallback(
+    (productId: string) => {
+      router.push(`/dashboard/products?selected=${encodeURIComponent(productId)}&action=add`);
+    },
+    [router],
+  );
 
   const sections = useMemo(
     () => buildVirtualSectionsFromDestination(displayDestination),
     [displayDestination],
   );
 
-  const itemToSection = useMemo(
-    () => buildDestinationItemSectionMap(displayDestination, sections),
-    [displayDestination, sections],
+  /** Row anchors drive the sidebar nav and scroll-spy (one entry per workspace row). */
+  const rowAnchors = useMemo(
+    () => buildDestinationRowAnchors(displayDestination),
+    [displayDestination],
   );
 
-  const validIds = useMemo(() => sections.map((s) => s.id), [sections]);
+  /** Item id (deep links) → owning row anchor id. Composes item→slice and slice→row maps. */
+  const itemToSection = useMemo(() => {
+    const itemToSlice = buildDestinationItemSectionMap(displayDestination, sections);
+    const sliceToRow = buildSliceToRowAnchorMap(displayDestination);
+    const m = new Map<string, string>();
+    for (const [itemId, sliceId] of itemToSlice) {
+      const row = sliceToRow.get(sliceId);
+      if (row) m.set(itemId, row);
+    }
+    return m;
+  }, [displayDestination, sections]);
+
+  /** Legacy `#section-<sliceId>` bookmarks → owning row anchor id. */
+  const sliceToSection = useMemo(
+    () => buildSliceToRowAnchorMap(displayDestination),
+    [displayDestination],
+  );
+
+  const validIds = useMemo(() => rowAnchors.map((a) => a.anchorId), [rowAnchors]);
 
   useEffect(() => {
     setClientHash(typeof window !== "undefined" ? window.location.hash : "");
@@ -325,8 +627,9 @@ export function DestinationDetailView({
         hash: clientHash || null,
         validSectionIds: validIds,
         itemToSection,
+        sliceToSection,
       }),
-    [displayDestination.slug, searchParams, clientHash, validIds, itemToSection],
+    [displayDestination.slug, searchParams, clientHash, validIds, itemToSection, sliceToSection],
   );
 
   const [activeNavId, setActiveNavId] = useState(resolvedNavId);
@@ -338,11 +641,11 @@ export function DestinationDetailView({
   const heroRef = useRef<HTMLDivElement>(null);
   const heroScrollProgress = useHeroScrollProgress(heroRef, scrollRootRef);
 
-  // Scroll-spy: highlight the sidebar nav item for whichever section is most visible.
+  // Scroll-spy: highlight the sidebar nav item for whichever row card is most visible.
   useEffect(() => {
-    if (sections.length === 0) return;
-    const els = sections
-      .map((s) => document.getElementById(`section-${s.id}`))
+    if (rowAnchors.length === 0) return;
+    const els = rowAnchors
+      .map((a) => document.getElementById(`section-row-${a.anchorId}`))
       .filter(Boolean) as HTMLElement[];
     if (els.length === 0) return;
 
@@ -350,7 +653,7 @@ export function DestinationDetailView({
       (entries) => {
         let best: { id: string; ratio: number } | null = null;
         for (const e of entries) {
-          const id = e.target.id.replace("section-", "");
+          const id = e.target.id.replace("section-row-", "");
           if (!best || e.intersectionRatio > best.ratio) {
             best = { id, ratio: e.intersectionRatio };
           }
@@ -363,38 +666,80 @@ export function DestinationDetailView({
     );
     for (const el of els) io.observe(el);
     return () => io.disconnect();
-  }, [sections]);
+  }, [rowAnchors]);
 
-  /** Collect all unique tags from every product_list section on the page. */
-  const allTags = useMemo(() => {
+  /** Flat list of all product items across product_list sections (for property assignment). */
+  const allProductItems = useMemo(() => {
     const items: ProductListItem[] = [];
     for (const s of sections) {
       if (s.sectionType === "product_list") {
         for (const item of s.items) items.push(item);
       }
     }
-    return collectTags(items);
+    return items;
   }, [sections]);
 
-  const [activeTagFilters, setActiveTagFilters] = useState<Set<string>>(new Set());
-  const toggleTagFilter = useCallback((tag: string) => {
-    setActiveTagFilters((prev) => {
+  const properties = useMemo(() => getProperties(displayDestination), [displayDestination]);
+
+  const [activePropertyFilters, setActivePropertyFilters] = useState<Set<string>>(new Set());
+  const togglePropertyFilter = useCallback((propertyId: string) => {
+    setActivePropertyFilters((prev) => {
       const next = new Set(prev);
-      if (next.has(tag)) next.delete(tag);
-      else next.add(tag);
+      if (next.has(propertyId)) next.delete(propertyId);
+      else next.add(propertyId);
       return next;
     });
   }, []);
 
+  /**
+   * Translate active property filters into the union of product ids those
+   * properties carry. Returns null when no filter is active (= show all).
+   */
+  const allowedProductIds = useMemo<ReadonlySet<string> | null>(() => {
+    if (activePropertyFilters.size === 0) return null;
+    const ids = new Set<string>();
+    for (const p of properties) {
+      if (activePropertyFilters.has(p.id)) {
+        for (const id of p.productIds) ids.add(id);
+      }
+    }
+    return ids;
+  }, [activePropertyFilters, properties]);
+
+  const [manageProperty, setManageProperty] = useState<string | null>(null);
+  const propertyAdmin = editorCtx
+    ? {
+        onAdd: (label: string) => {
+          editorCtx.setDraft((d) => {
+            const result = addProperty(d, label);
+            return result ? result.destination : d;
+          });
+        },
+        onRemove: (id: string) => {
+          editorCtx.setDraft((d) => removeProperty(d, id));
+          setActivePropertyFilters((prev) => {
+            if (!prev.has(id)) return prev;
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+          });
+        },
+        onManageProducts: (id: string) => setManageProperty(id),
+      }
+    : undefined;
+  const managedProperty = manageProperty
+    ? properties.find((p) => p.id === manageProperty) ?? null
+    : null;
+
   const navItems: DestinationNavItem[] = useMemo(
     () =>
-      sections.map((s) => ({
-        id: s.id,
-        label: s.title,
-        count: s.count,
-        workspaceIndex: s.editorRef?.kind === "workspace" ? s.editorRef.workspaceIndex : undefined,
+      rowAnchors.map((a) => ({
+        id: a.anchorId,
+        label: a.label,
+        count: a.count,
+        workspaceIndex: a.workspaceIndex,
       })),
-    [sections],
+    [rowAnchors],
   );
 
   const mapFeatureEnabled =
@@ -485,11 +830,9 @@ export function DestinationDetailView({
         section_id: id,
       });
       setActiveNavId(id);
-      // Close edit panel when switching sections
-      setEditingWi(null);
-      // Smooth-scroll to the section
-      document.getElementById(`section-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-      // Update URL hash
+      // Smooth-scroll to the row card
+      document.getElementById(`section-row-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Update URL hash (row anchor format — `#section-<rowAnchorId>`)
       const p = new URLSearchParams(searchParams.toString());
       p.delete("section");
       const qs = p.toString();
@@ -556,10 +899,16 @@ export function DestinationDetailView({
         >
           <StickyHeroBar
             destination={displayDestination}
-            allTags={allTags}
-            activeTagFilters={activeTagFilters}
-            onToggleTag={toggleTagFilter}
             progress={previewMode ? 0 : heroScrollProgress}
+            viewToggle={
+              <ViewToggle
+                viewMode={viewMode}
+                productViewMode={productViewMode}
+                onMapToggle={onMapToggle}
+                onProductViewModeChange={handleProductViewModeChange}
+                showMapToggle={showMapToggle}
+              />
+            }
           />
           <div className="w-full">
             <div
@@ -578,61 +927,34 @@ export function DestinationDetailView({
                 destination={displayDestination}
                 mode={heroMode}
                 inlineEdit={heroInlineEdit}
-                allTags={allTags}
-                activeTagFilters={activeTagFilters}
-                onToggleTagFilter={toggleTagFilter}
               />
+              <div className="absolute bottom-4 right-4 z-10 md:bottom-5 md:right-5">
+                <ViewToggle
+                  viewMode={viewMode}
+                  productViewMode={productViewMode}
+                  onMapToggle={onMapToggle}
+                  onProductViewModeChange={handleProductViewModeChange}
+                  showMapToggle={showMapToggle}
+                />
+              </div>
             </div>
 
           <div className="px-6">
-          {showMapToggle ? (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                View
-              </span>
-              <Button
-                type="button"
-                size="sm"
-                variant={viewMode === "list" ? "toolbarAccent" : "outline"}
-                className="gap-1.5"
-                onClick={() => onMapToggle("list")}
-              >
-                <List className="size-3.5" aria-hidden />
-                List
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={viewMode === "map" ? "toolbarAccent" : "outline"}
-                className="gap-1.5"
-                onClick={() => onMapToggle("map")}
-              >
-                <MapIcon className="size-3.5" aria-hidden />
-                Map
-              </Button>
-            </div>
-          ) : null}
 
-          {inlineOverviewEdit ? (
-            <div className="mt-4">
-              <label htmlFor="dest-inline-description" className="sr-only">
-                Destination introduction (optional)
-              </label>
-              <textarea
-                id="dest-inline-description"
-                value={displayDestination.description}
-                onChange={(e) =>
-                  inlineOverviewEdit.setDraft((d) => ({ ...d, description: e.target.value }))
-                }
-                rows={5}
-                className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed text-foreground shadow-xs outline-none placeholder:text-muted-foreground/70 focus-visible:border-primary/35 focus-visible:ring-[3px] focus-visible:ring-ring/30"
+          {/* Destination-scoped property pills (free-form, per-destination). */}
+          {(properties.length > 0 || editorCtx) ? (
+            <div className="mt-3">
+              <DestinationPropertyChips
+                properties={properties}
+                activeFilters={activePropertyFilters}
+                onToggleFilter={togglePropertyFilter}
+                admin={propertyAdmin}
+                variant="plain"
               />
             </div>
-          ) : displayDestination.description.trim() ? (
-            <p className={cn("mt-4 text-sm leading-relaxed", destMuted)}>{displayDestination.description}</p>
           ) : null}
 
-          <div className="mt-8 lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-6">
+          <div className="mt-6 lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-6">
             {/* Sidebar nav — left column on desktop, horizontal tabs on mobile */}
             {navItems.length > 0 || editorCtx ? (
               <>
@@ -655,7 +977,6 @@ export function DestinationDetailView({
                       onRenameSection={editorCtx ? handleRenameSection : undefined}
                       onDeleteSection={editorCtx ? handleDeleteSection : undefined}
                       onReorderSections={editorCtx ? handleReorderSections : undefined}
-                      onEditSection={editorCtx ? setEditingWi : undefined}
                     />
                   </div>
                 </aside>
@@ -673,25 +994,23 @@ export function DestinationDetailView({
                 <h2 id="destination-section-title" className="sr-only">
                   Destination sections
                 </h2>
-                {editingWi != null ? (
-                  <SectionEditPanel
-                    workspaceIndex={editingWi}
-                    sectionTitle={
-                      navItems.find((it) => it.workspaceIndex === editingWi)?.label ?? "Section"
-                    }
-                    onClose={() => setEditingWi(null)}
-                  />
-                ) : viewMode === "map" && showMapToggle && displayDestination.mapCenter ? (
+                {viewMode === "map" && showMapToggle && displayDestination.mapCenter ? (
                   <DestinationMapView
                     pins={mapPins}
                     destinationSlug={displayDestination.slug}
                     center={displayDestination.mapCenter}
                   />
-                ) : sections.length > 0 ? (
-                  <SectionList
+                ) : sections.length > 0 || editorCtx ? (
+                  <RowCardList
+                    destination={displayDestination}
                     sections={sections}
                     destinationSlug={displayDestination.slug}
-                    activeTagFilters={activeTagFilters}
+                    allowedProductIds={allowedProductIds}
+                    productViewMode={productViewMode}
+                    productLookup={productLookup}
+                    onOpenProduct={openProductDetail}
+                    onAddToCollection={openAddToCollection}
+                    editorRows={ensureEditorWorkspace(displayDestination).sections}
                   />
                 ) : (
                   <p className={cn("text-sm", destMuted)}>
@@ -705,6 +1024,19 @@ export function DestinationDetailView({
         </div>
         </div>
       </div>
+      {editorCtx ? (
+        <AssignProductsToPropertyDialog
+          open={managedProperty != null}
+          onOpenChange={(open) => {
+            if (!open) setManageProperty(null);
+          }}
+          property={managedProperty}
+          allProducts={allProductItems}
+          onToggleProduct={(propertyId, productId) => {
+            editorCtx.setDraft((d) => toggleProductOnProperty(d, propertyId, productId));
+          }}
+        />
+      ) : null}
     </div>
   );
 }

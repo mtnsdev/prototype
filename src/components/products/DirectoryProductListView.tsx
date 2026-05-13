@@ -10,7 +10,11 @@ import {
   dmcOperationalDataPresent,
   isDMCProduct,
 } from "@/components/products/directoryProductTypeHelpers";
-import { directoryProductPlaceLabel, directoryProductPriceDisplay } from "./productDirectoryVisual";
+import {
+  directoryHeroOrFallbackImageUrl,
+  directoryProductPlaceLabel,
+  directoryProductPriceDisplay,
+} from "./productDirectoryVisual";
 import {
   getTopBookableProgramByCommission,
   programDisplayCommissionRate,
@@ -167,7 +171,7 @@ export default function DirectoryProductListView({
             >
               <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md">
                 <img
-                  src={product.imageUrl}
+                  src={directoryHeroOrFallbackImageUrl(product.id, product.imageUrl)}
                   alt={product.name}
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   loading="lazy"

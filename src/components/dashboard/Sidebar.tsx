@@ -253,13 +253,6 @@ export default function Sidebar({
                         active={pathname.startsWith("/dashboard/chat")}
                     />
 
-                    {/* <NavLink
-                        href="/dashboard/search"
-                        collapsed={collapsed}
-                        icon={<Search size={18} />}
-                        label="Search"
-                        active={pathname.startsWith("/dashboard/search")}
-                    /> */}
                 </nav>
 
                 <div className="shrink-0 border-t border-border p-2.5 pt-2 space-y-1">

@@ -44,7 +44,10 @@ import {
   incentiveWindowParts,
 } from "@/lib/incentiveUi";
 import { directoryProductTypeShortLabel, getPrimaryDirectoryType } from "@/components/products/directoryProductTypeHelpers";
-import { directoryCategoryColors } from "@/components/products/productDirectoryVisual";
+import {
+  directoryCategoryColors,
+  directoryHeroOrFallbackImageUrl,
+} from "@/components/products/productDirectoryVisual";
 import {
   getActiveIncentiveOfferCount,
 } from "@/components/products/productDirectoryCommission";
@@ -137,18 +140,16 @@ function PartnerLinkedProductStripTile({
       className="flex w-[104px] shrink-0 snap-start flex-col overflow-hidden rounded-lg border border-border bg-inset text-left shadow-sm transition-colors hover:border-brand-cta/35"
     >
       <div className="relative h-[64px] w-full overflow-hidden bg-popover">
-        {product.imageUrl && !brokenImage ? (
-          <img
-            src={product.imageUrl}
-            alt=""
-            className="h-full w-full object-cover"
-            onError={onImageError}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
-            No image
-          </div>
-        )}
+        <img
+          src={
+            brokenImage
+              ? directoryHeroOrFallbackImageUrl(`${product.id}-portal-strip`, null)
+              : directoryHeroOrFallbackImageUrl(product.id, product.imageUrl)
+          }
+          alt=""
+          className="h-full w-full object-cover"
+          onError={onImageError}
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/55 via-transparent to-transparent" />
         <span
           className="absolute bottom-1.5 left-1.5 rounded-full border px-1.5 py-px text-[8px] backdrop-blur-sm"

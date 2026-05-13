@@ -29,7 +29,7 @@ import {
 import type { PartnerProgramsAdminSavePayload } from "./productDirectoryLogic";
 import { productMatchesPartnerAttachSearch } from "./productDirectoryLogic";
 import type { VolumeMetric } from "@/types/partner-programs";
-import { directoryCategoryLabel } from "./productDirectoryVisual";
+import { directoryCategoryLabel, directoryHeroOrFallbackImageUrl } from "./productDirectoryVisual";
 import { PageSearchField } from "@/components/ui/page-search-field";
 import {
   Dialog,
@@ -265,7 +265,7 @@ export function ProductDirectoryCollectionsTab({
                     {preview.map((p) => (
                       <div key={p.id} className="relative min-h-0 min-w-0 overflow-hidden bg-[#14141c]">
                         <img
-                          src={p.imageUrl}
+                          src={directoryHeroOrFallbackImageUrl(p.id, p.imageUrl)}
                           alt=""
                           className="h-full w-full object-cover"
                           loading="lazy"
@@ -2164,7 +2164,7 @@ export function ProductDirectoryPartnerProgramsTab({
                       ) : (
                         <>
                           <img
-                            src={p.imageUrl}
+                            src={directoryHeroOrFallbackImageUrl(p.id, p.imageUrl)}
                             alt=""
                             className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.04]"
                             loading="lazy"

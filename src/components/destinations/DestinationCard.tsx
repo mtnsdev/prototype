@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { DestinationSummary } from "@/data/destinations";
 import { productListingMetaLineClass } from "@/lib/productListingPrimitives";
@@ -8,20 +8,7 @@ import { DIRECTORY_BROWSE_CARD_SURFACE } from "@/lib/briefingSurface";
 import { cn } from "@/lib/utils";
 import { highlightMatch } from "./highlightSearch";
 import { DestinationRemoteHeroImage } from "./DestinationRemoteHeroImage";
-
-const GRADIENTS = [
-  "from-[#242436] to-[#1c2434]",
-  "from-[#2d132c] to-[#1f4068]",
-  "from-[#1a3050] to-[#16213e]",
-  "from-[#1b4332] to-[#2d6a4f]",
-  "from-[#3c096c] to-[#240046]",
-];
-
-function gradientForSlug(slug: string) {
-  let h = 0;
-  for (let i = 0; i < slug.length; i++) h = (h + slug.charCodeAt(i) * (i + 1)) % GRADIENTS.length;
-  return GRADIENTS[h]!;
-}
+import { directoryHeroOrFallbackImageUrl } from "@/components/products/productDirectoryVisual";
 
 type Props = {
   summary: DestinationSummary;
@@ -35,12 +22,13 @@ type Props = {
  */
 export function DestinationCard({ summary, highlightQuery = "" }: Props) {
   const href = `/dashboard/products/destinations/${summary.slug}`;
-  const hero = summary.heroImage?.trim() ?? "";
-  const [heroFailed, setHeroFailed] = useState(false);
+  const heroResolved = directoryHeroOrFallbackImageUrl(summary.slug, summary.heroImage ?? null);
+  const [heroSrc, setHeroSrc] = useState(heroResolved);
+  const heroRetryRef = useRef(false);
   useEffect(() => {
-    setHeroFailed(false);
-  }, [hero]);
-  const showHero = hero.length > 0 && !heroFailed;
+    heroRetryRef.current = false;
+    setHeroSrc(directoryHeroOrFallbackImageUrl(summary.slug, summary.heroImage ?? null));
+  }, [summary.slug, summary.heroImage]);
 
   return (
     <Link
@@ -54,17 +42,17 @@ export function DestinationCard({ summary, highlightQuery = "" }: Props) {
       )}
     >
       <div className="relative h-[140px] w-full shrink-0 overflow-hidden">
-        {showHero ? (
-          <DestinationRemoteHeroImage
-            src={hero}
-            alt=""
-            className="absolute inset-0 size-full"
-            sizes="(max-width: 768px) 100vw, 360px"
-            onBroken={() => setHeroFailed(true)}
-          />
-        ) : (
-          <div className={cn("h-full w-full bg-gradient-to-br", gradientForSlug(summary.slug))} aria-hidden />
-        )}
+        <DestinationRemoteHeroImage
+          src={heroSrc}
+          alt=""
+          className="absolute inset-0 size-full"
+          sizes="(max-width: 768px) 100vw, 360px"
+          onBroken={() => {
+            if (heroRetryRef.current) return;
+            heroRetryRef.current = true;
+            setHeroSrc(directoryHeroOrFallbackImageUrl(`${summary.slug}-alt`, null));
+          }}
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/35 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 px-3 pb-2.5 pt-8">
           <p

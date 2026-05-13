@@ -17,8 +17,6 @@ export const DEFAULT_DIRECTORY_PRODUCT_SORT: DirectoryProductSortOption = "name-
 export const DIRECTORY_PRODUCT_SORT_OPTIONS: { id: DirectoryProductSortOption; label: string }[] = [
   { id: "name-asc", label: "Name A → Z" },
   { id: "name-desc", label: "Name Z → A" },
-  { id: "commission-desc", label: "Commission (high → low)" },
-  { id: "highest-incentive", label: "Highest incentive" },
   { id: "tier-desc", label: "Tier (ultra-luxury first)" },
   { id: "recently-added", label: "Recently added" },
   { id: "enrichment-desc", label: "Enrichment score" },

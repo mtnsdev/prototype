@@ -71,9 +71,24 @@ function gallerySeedOffset(id: string, modulo: number): number {
   return Math.abs(h) % modulo;
 }
 
+const DIRECTORY_HERO_FALLBACK =
+  "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=480&fit=crop";
+
+/**
+ * Directory / destination card hero: trimmed `explicitImageUrl` when set, otherwise a stable
+ * Unsplash image from `seedKey` so list and grid surfaces are never imageless.
+ */
+export function directoryHeroOrFallbackImageUrl(seedKey: string, explicitImageUrl?: string | null): string {
+  const t = (explicitImageUrl ?? "").trim();
+  if (t) return t;
+  const pool = DIRECTORY_GALLERY_FALLBACK_POOL;
+  if (pool.length === 0) return DIRECTORY_HERO_FALLBACK;
+  return pool[gallerySeedOffset(seedKey, pool.length)]!;
+}
+
 /** Gallery thumbnails for detail (excludes hero); uses `imageGalleryUrls` when provided. */
 export function directoryProductGalleryImages(product: DirectoryProduct): string[] {
-  const hero = (product.imageUrl ?? "").trim();
+  const hero = directoryHeroOrFallbackImageUrl(product.id, product.imageUrl);
   const fromProduct = (product.imageGalleryUrls ?? []).map((u) => u.trim()).filter(Boolean);
   const custom = fromProduct.filter((u) => u !== hero);
   if (custom.length > 0) return custom;

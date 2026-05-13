@@ -8,6 +8,8 @@ import type { DirectoryProductCategory } from "@/types/product-directory";
 import { getDirectoryProductById } from "@/components/products/productDirectoryMock";
 import { resolveAdvisorCatalogFromStorage } from "@/components/products/productDirectoryCatalogResolve";
 import { searchCatalogProducts } from "@/lib/catalogPickerSource";
+import { inferEditorProductSlot } from "@/lib/catalogProductMerge";
+import type { EditorProductSlot } from "@/data/destinations";
 import { buildDirectoryProductQuickCreate, newQuickCreateProductId, type DirectoryQuickCreateCategory } from "@/lib/directoryQuickCreateProduct";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -241,18 +243,25 @@ export function CatalogProductPicker({
  * Search the full product directory, multi-select rows, and add — each product is merged into the
  * correct destination list (`inferEditorProductSlot` in catalog merge).
  *
- * Rendered inside a Dialog (from SectionBlockAppendRow). Search with icon, category badges,
+ * Rendered inside a Dialog. Search with icon, category badges,
  * polished checkboxes, and a solid "Add to guide" footer.
  */
 export function CatalogSectionMultiPicker({
   onAddProducts,
+  slot,
 }: {
   onAddProducts: (products: DirectoryProduct[]) => void;
+  /** When set, only products whose inferred slot matches are shown (and addable). */
+  slot?: EditorProductSlot;
 }) {
   const [q, setQ] = useState("");
   const [picked, setPicked] = useState<Set<string>>(() => new Set());
   const { pool } = useAdvisorProductPool();
-  const results = useMemo(() => searchCatalogProducts(q, [], pool), [q, pool]);
+  const baseResults = useMemo(() => searchCatalogProducts(q, [], pool), [q, pool]);
+  const results = useMemo(() => {
+    if (!slot) return baseResults;
+    return baseResults.filter((p) => inferEditorProductSlot(p) === slot);
+  }, [baseResults, slot]);
 
   const toggle = (id: string) => {
     setPicked((prev) => {

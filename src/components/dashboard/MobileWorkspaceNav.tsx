@@ -16,7 +16,6 @@ import {
   BookOpen,
   BarChart3,
   Zap,
-  Search,
   Settings,
   MessageSquare,
 } from "lucide-react";
@@ -27,7 +26,6 @@ const LINKS: { href: string; label: string; icon: typeof LayoutDashboard }[] = [
   { href: "/dashboard/itineraries", label: "Itineraries", icon: Route },
   { href: "/dashboard/products", label: "Catalog", icon: Building2 },
   { href: "/dashboard/knowledge-vault", label: "Knowledge", icon: BookOpen },
-  { href: "/dashboard/search", label: "Search", icon: Search },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/automations", label: "Automations", icon: Zap },
   { href: "/dashboard/chat", label: "Assistant (full)", icon: MessageSquare },

@@ -4,10 +4,22 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDownUp,
   Check,
+  ChevronDown,
+  Grid2X2,
+  List,
+  Map as MapIcon,
+  Plus,
   Search,
   SlidersHorizontal,
+  Upload,
   X,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { DirectoryAmenityTag, DirectoryCollectionOption, DirectoryProductCategory } from "@/types/product-directory";
 import type { DirectoryPriceTier, DirectoryTierLevel } from "@/components/products/productDirectoryDetailMeta";
 import { cn } from "@/lib/utils";
@@ -39,6 +51,8 @@ type Props = {
   collectionFilter: string[];
   onCollectionFilterChange: (v: string[]) => void;
   onAddProduct: () => void;
+  /** Optional bulk-import action — renders a chevron split next to "Add product" when provided. */
+  onBulkImport?: () => void;
   collections: DirectoryCollectionOption[];
   selectedProgramIds: string[];
   onSelectedProgramIdsChange: (v: string[]) => void;
@@ -105,8 +119,6 @@ export default function ProductDirectoryFilterBar(props: Props) {
     onCommissionRangeChange,
     commissionFilterActive,
     onCommissionFilterActiveChange,
-    hasActiveIncentive,
-    onHasActiveIncentiveChange,
     sortByCommission,
     onSortByCommissionChange,
     selectedTiers,
@@ -121,20 +133,28 @@ export default function ProductDirectoryFilterBar(props: Props) {
     onViewModeChange,
     bulkMode,
     onBulkModeToggle,
+    activeTypeFilters,
+    onAddProduct,
+    onBulkImport,
   } = props;
 
-  // The following props live on row 1 (CategoryStrip — rendered at the page
-  // level) or are no-ops in this layout. They are kept on `Props` so the
-  // ProductDirectoryPage call site does not need to change.
-  void props.activeTypeFilters;
+  // The following props are no-ops in this layout (kept on `Props` so the
+  // ProductDirectoryPage call site does not need to change).
   void props.onToggleTypeFilter;
   void props.onClearTypeFilters;
-  void props.onAddProduct;
+  void props.hasActiveIncentive;
+  void props.onHasActiveIncentiveChange;
   void props.hasPlannedOpening;
   void props.onHasPlannedOpeningChange;
   void props.bulkSelectedCount;
   void props.onClearFacetFilters;
   void props.onClearAllFilters;
+
+  // Tier filter only makes sense for accommodation-style categories.
+  const tierApplicableCategories = new Set(["hotel", "villa", "cruise"]);
+  const showTierFilter =
+    activeTypeFilters.length === 0 ||
+    activeTypeFilters.some((c) => tierApplicableCategories.has(c));
 
   const [sortOpen, setSortOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -166,7 +186,6 @@ export default function ProductDirectoryFilterBar(props: Props) {
     if (selectedAmenities.length > 0) n++;
     if (canViewCommissions && commissionFilterActive) n++;
     if (selectedPriceTiers.length > 0) n++;
-    if (sortByCommission) n++;
     return n;
   }, [
     selectedRepFirmIds.length,
@@ -174,7 +193,6 @@ export default function ProductDirectoryFilterBar(props: Props) {
     canViewCommissions,
     commissionFilterActive,
     selectedPriceTiers.length,
-    sortByCommission,
   ]);
 
   const sortLabel =
@@ -277,21 +295,15 @@ export default function ProductDirectoryFilterBar(props: Props) {
           onChange={onSelectedProgramIdsChange}
         />
 
-        {/* Tier */}
-        <ProductDirectoryTierDropdown
-          selectedTiers={selectedTiers}
-          onChange={onSelectedTiersChange}
-        />
+        {/* Tier — only relevant for accommodation-style categories. */}
+        {showTierFilter ? (
+          <ProductDirectoryTierDropdown
+            selectedTiers={selectedTiers}
+            onChange={onSelectedTiersChange}
+          />
+        ) : null}
 
-        {/* Active incentives — boolean toggle pill. */}
-        <FilterPill
-          label="Active incentives"
-          toggle
-          toggleOn={hasActiveIncentive}
-          onToggle={onHasActiveIncentiveChange}
-        />
-
-        {/* More filters — far right; opens row 2.5. */}
+        {/* More filters + view toggles + Add product — far right cluster. */}
         <div className="ml-auto flex items-center gap-2">
           <PillDivider />
           <FilterPill
@@ -302,6 +314,80 @@ export default function ProductDirectoryFilterBar(props: Props) {
             open={moreOpen}
             onClick={() => setMoreOpen((o) => !o)}
           />
+
+          <PillDivider />
+
+          {/* Inline grid/list/map view toggles. */}
+          <div className="inline-flex items-center gap-0.5">
+            <ViewToggleBtn
+              icon={Grid2X2}
+              label="Grid"
+              active={viewMode === "grid"}
+              onClick={() => onViewModeChange("grid")}
+            />
+            <ViewToggleBtn
+              icon={List}
+              label="List"
+              active={viewMode === "list"}
+              onClick={() => onViewModeChange("list")}
+            />
+            <ViewToggleBtn
+              icon={MapIcon}
+              label="Map"
+              active={viewMode === "map"}
+              onClick={() => onViewModeChange("map")}
+            />
+          </div>
+
+          {/* Primary CTA — split button: main "Add product" + chevron for bulk import. */}
+          <div className="inline-flex shadow-sm">
+            <button
+              type="button"
+              onClick={onAddProduct}
+              className={cn(
+                "inline-flex h-8 items-center gap-1.5 px-3 text-[12px] font-medium transition-colors",
+                "bg-[color:var(--brand-primary)] text-[color:var(--brand-cta-foreground)]",
+                "hover:bg-[color:var(--brand-cta-hover)]",
+                onBulkImport ? "rounded-l-md border-r border-[color:var(--brand-cta-foreground)]/15" : "rounded-md"
+              )}
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden />
+              Add product
+            </button>
+            {onBulkImport ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="More add options"
+                    className={cn(
+                      "inline-flex h-8 w-7 items-center justify-center rounded-r-md transition-colors",
+                      "bg-[color:var(--brand-primary)] text-[color:var(--brand-cta-foreground)]",
+                      "hover:bg-[color:var(--brand-cta-hover)]"
+                    )}
+                  >
+                    <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={onAddProduct} className="gap-2">
+                    <Plus className="h-3.5 w-3.5" aria-hidden />
+                    <div className="flex flex-col">
+                      <span className="text-xs font-medium">Add product</span>
+                      <span className="text-2xs text-muted-foreground">One product at a time</span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={onBulkImport} className="gap-2">
+                    <Upload className="h-3.5 w-3.5" aria-hidden />
+                    <div className="flex flex-col">
+                      <span className="text-xs font-medium">Bulk import…</span>
+                      <span className="text-2xs text-muted-foreground">Upload a CSV</span>
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -334,26 +420,49 @@ export default function ProductDirectoryFilterBar(props: Props) {
             selectedPriceTiers={selectedPriceTiers}
             onChange={onSelectedPriceTiersChange}
           />
-
-          {canViewCommissions ? (
-            <FilterPill
-              label="Sort by commission"
-              toggle
-              toggleOn={sortByCommission}
-              onToggle={onSortByCommissionChange}
-            />
-          ) : null}
         </div>
       ) : null}
 
-      {/* Row 3 — count + Select toggle + Grid/List/Map. */}
+      {/* Thin meta strip — count + Select. View toggles live on Row 2. */}
       <ResultsToolbar
         count={resultCount}
         view={viewMode}
         onViewChange={onViewModeChange}
         selectMode={bulkMode}
         onSelectModeToggle={onBulkModeToggle}
+        showViewControls={false}
       />
     </div>
+  );
+}
+
+/** Compact view-mode toggle button, inline within the filter row. */
+function ViewToggleBtn({
+  icon: Icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: typeof Grid2X2;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      aria-pressed={active}
+      title={label}
+      className={cn(
+        "inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors",
+        active
+          ? "bg-[color:var(--surface-interactive)] text-[color:var(--brand-primary)]"
+          : "text-[color:var(--chrome-icon-muted)] hover:bg-[color:var(--surface-interactive)] hover:text-[color:var(--text-secondary)]"
+      )}
+    >
+      <Icon size={14} aria-hidden />
+    </button>
   );
 }

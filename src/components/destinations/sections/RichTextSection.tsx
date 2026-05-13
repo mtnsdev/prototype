@@ -46,7 +46,6 @@ export function RichTextSection({ section }: Props) {
           rows={Math.min(24, Math.max(6, body.split("\n").length + 2))}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed text-foreground shadow-xs outline-none placeholder:text-muted-foreground/70 focus-visible:border-primary/35 focus-visible:ring-[3px] focus-visible:ring-ring/30"
         />
-        <p className="text-2xs text-muted-foreground">Markdown is supported (headings, lists, links, emphasis).</p>
       </div>
     );
   }

@@ -67,6 +67,7 @@ import { getRepFirmByIdWithOverlay } from "./productDirectoryRepFirmMock";
 import { RepFirmContactsLuxReadonlyTable } from "@/components/products/rep-firms/RepFirmContactsLuxTable";
 import {
   directoryCategoryColors,
+  directoryHeroOrFallbackImageUrl,
   directoryProductGalleryImages,
   directoryProductPlaceLabel,
   directoryProductPriceBandsNormalized,
@@ -1043,22 +1044,11 @@ export const ProductDirectoryDetailBody = forwardRef<ProductDirectoryDetailBodyR
             : "min-h-[220px] max-h-[min(42vh,400px)] sm:min-h-[260px] sm:max-h-[min(45vh,440px)]"
         )}
       >
-        {product.imageUrl ? (
-          <img
-            src={product.imageUrl}
-            alt={product.name}
-            className="h-full w-full object-cover object-center opacity-95"
-          />
-        ) : (
-          <div
-            className={cn(
-              "flex h-full w-full items-center justify-center",
-              isPanel ? "min-h-[176px]" : "min-h-[220px]"
-            )}
-          >
-            <Building2 className="h-12 w-12 text-muted-foreground/20" aria-hidden />
-          </div>
-        )}
+        <img
+          src={directoryHeroOrFallbackImageUrl(product.id, product.imageUrl)}
+          alt={product.name}
+          className="h-full w-full object-cover object-center opacity-95"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/25 to-transparent" />
         {showClose && onClose && (
           <Button

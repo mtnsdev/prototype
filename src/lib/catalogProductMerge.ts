@@ -1,4 +1,5 @@
 import type { DirectoryProduct } from "@/types/product-directory";
+import { directoryHeroOrFallbackImageUrl } from "@/components/products/productDirectoryVisual";
 import type {
   Destination,
   DMCPartner,
@@ -19,10 +20,12 @@ function primaryContactLine(product: DirectoryProduct): string | undefined {
 }
 
 export function mergeDirectoryProductIntoDmc(partner: DMCPartner, product: DirectoryProduct): DMCPartner {
+  const mergedImage = directoryHeroOrFallbackImageUrl(product.id, product.imageUrl ?? partner.image ?? null);
   return {
     ...partner,
     productId: product.id,
     name: product.name,
+    image: mergedImage,
     website: product.website ?? partner.website,
     keyContact: primaryContactLine(product) ?? partner.keyContact,
     generalRequests: product.general_requests_email ?? partner.generalRequests,
@@ -35,20 +38,24 @@ export function mergeDirectoryProductIntoDmc(partner: DMCPartner, product: Direc
 }
 
 export function mergeDirectoryProductIntoRestaurant(row: Restaurant, product: DirectoryProduct): Restaurant {
+  const mergedImage = directoryHeroOrFallbackImageUrl(product.id, product.imageUrl ?? row.image ?? null);
   return {
     ...row,
     productId: product.id,
     name: product.name,
+    image: mergedImage,
     url: product.website ?? row.url,
   };
 }
 
 export function mergeDirectoryProductIntoHotel(row: Hotel, product: DirectoryProduct): Hotel {
   const link = product.repFirmLinks[0];
+  const mergedImage = directoryHeroOrFallbackImageUrl(product.id, product.imageUrl ?? row.image ?? null);
   return {
     ...row,
     productId: product.id,
     name: product.name,
+    image: mergedImage,
     url: product.website ?? row.url,
     contact: primaryContactLine(product) ?? row.contact,
     repFirm: link?.repFirmName ?? row.repFirm,
@@ -60,10 +67,12 @@ export function mergeDirectoryProductIntoYacht(row: YachtCompany, product: Direc
   const contactLine = primaryContactLine(product) ?? row.contact;
   const em = c ? emailsForContact(c) : [];
   const ph = c ? phonesForContact(c) : [];
+  const mergedImage = directoryHeroOrFallbackImageUrl(product.id, product.imageUrl ?? row.image ?? null);
   return {
     ...row,
     productId: product.id,
     name: product.name,
+    image: mergedImage,
     url: product.website ?? row.url,
     destinations: product.destinations_served ?? product.destinations ?? row.destinations,
     contact: contactLine,

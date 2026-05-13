@@ -18,7 +18,6 @@ const APP_ROOT: Record<string, { label: string; href: string }> = {
   analytics: { label: "Analytics", href: "/dashboard/analytics" },
   automations: { label: "Automations", href: "/dashboard/automations" },
   notifications: { label: "Notifications", href: "/dashboard/notifications" },
-  search: { label: "Search", href: "/dashboard/search" },
   library: { label: "Library", href: "/dashboard/library" },
   "email-ingestion": { label: "Email ingestion", href: "/dashboard/email-ingestion" },
   settings: { label: "Settings", href: "/dashboard/settings" },

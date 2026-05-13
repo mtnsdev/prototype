@@ -10,7 +10,10 @@ import {
   incentiveWindowParts,
   INCENTIVE_REFERENCE_ISO,
 } from "@/lib/incentiveUi";
-import { directoryCategoryColors } from "@/components/products/productDirectoryVisual";
+import {
+  directoryCategoryColors,
+  directoryHeroOrFallbackImageUrl,
+} from "@/components/products/productDirectoryVisual";
 import {
   directoryProductTypeShortLabel,
   getPrimaryDirectoryType,
@@ -259,18 +262,16 @@ export function PartnerProgramDetailView({
                 className="group flex flex-col overflow-hidden rounded-xl border border-border bg-popover text-left shadow-sm transition-colors hover:border-brand-cta/35"
               >
                 <div className="relative aspect-[4/3] w-full overflow-hidden bg-white/[0.04]">
-                  {p.imageUrl && !broken ? (
-                    <img
-                      src={p.imageUrl}
-                      alt=""
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                      onError={() => onImageError(p.id)}
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">
-                      No image
-                    </div>
-                  )}
+                  <img
+                    src={
+                      broken
+                        ? directoryHeroOrFallbackImageUrl(`${p.id}-program-detail`, null)
+                        : directoryHeroOrFallbackImageUrl(p.id, p.imageUrl)
+                    }
+                    alt=""
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    onError={() => onImageError(p.id)}
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-foreground/65 via-transparent to-transparent" />
                   <span
                     className="absolute bottom-2 left-2 rounded-full border px-2 py-px text-[9px] backdrop-blur-sm"

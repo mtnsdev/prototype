@@ -77,6 +77,8 @@ export type Hotel = {
   /** Rep firm line from catalog (prototype: plain string). */
   repFirm?: string;
   url?: string;
+  /** Hero/thumbnail image URL. */
+  image?: string;
   /** Handle or URL — partner cards when expanded. */
   socialMedia?: string;
   note?: string;
@@ -92,6 +94,8 @@ export type YachtCompany = {
   /** Fallback single line (prototype). Prefer structured fields when set. */
   contact: string;
   url: string;
+  /** Hero/thumbnail image URL. */
+  image?: string;
   destinations: string;
   contactName?: string;
   email?: string;
@@ -165,8 +169,12 @@ export type DestinationEditorTabSettings = {
 /** Which catalog a products block edits (prototype: one pool per slot on `Destination`). */
 export type EditorProductSlot = "dmc" | "restaurants" | "hotels" | "yachts" | "tourism" | "documents";
 
+/** A composable content block inside a section row. Order is controlled by {@link EditorTabSection.sliceOrder}. */
+export type EditorSliceKind = "products" | "text" | "documents";
+
 /**
- * One guide section — authors add text, catalog rows, and/or file attachments as needed; flags turn on when content exists.
+ * One guide section — authors compose text, catalog rows, and/or file attachments inside the same row;
+ * flags turn on when content exists. Render order is controlled by {@link sliceOrder} (default: products → text → documents).
  */
 export type EditorTabSection = {
   id: string;
@@ -182,6 +190,14 @@ export type EditorTabSection = {
   sectionFiles?: DestinationDocument[];
   /** Optional Lucide icon name for sidebar nav — overrides slot default when set. */
   navIconKey?: string;
+  /** Author-controlled order in which the enabled slices stack inside this section card. */
+  sliceOrder?: EditorSliceKind[];
+  /**
+   * When true, the section is treated as "draft / coming soon" on the published advisor view:
+   * still rendered, but with a "Coming soon" badge and dimmed styling. Admins see the same
+   * card with full editing affordances plus a "Hidden" badge.
+   */
+  hidden?: boolean;
 };
 
 /** @deprecated Legacy chapter-tab row; migrated to {@link EditorWorkspace.sections}. */
@@ -201,6 +217,17 @@ export type EditorWorkspace = {
 /** Stored JSON may still use legacy `{ tabs }` until {@link ensureEditorWorkspace} runs. */
 export type EditorWorkspacePersisted = EditorWorkspace | { tabs: EditorWorkspaceTab[] };
 
+/**
+ * Free-form destination tag — Notion-style pill. Each destination owns its own
+ * property vocabulary (e.g. "Athens", "Party islands", "Quiet islands").
+ * `productIds` lists which products in this destination carry the pill.
+ */
+export type DestinationProperty = {
+  id: string;
+  label: string;
+  productIds: string[];
+};
+
 export type Destination = {
   slug: string;
   name: string;
@@ -218,6 +245,12 @@ export type Destination = {
   tripReports?: DestinationTripReport[];
   /** Mock map framing when map is enabled. */
   mapCenter?: { lat: number; lng: number; zoom?: number };
+  /**
+   * Destination-scoped pills (e.g. sub-region groupings, themes). Each pill is
+   * a filter chip in the unified product list; admins manage them inline from
+   * the hero.
+   */
+  properties?: DestinationProperty[];
   /**
    * Editor layout: ordered guide sections (products / text / documents per block).
    * @see `ensureEditorWorkspace` — migrates legacy `tabs[]` and `editorTabs` when absent.
@@ -330,7 +363,7 @@ export function destinationIsVisibleForViewer(d: Destination, agencyId: string |
   return ids.includes(agencyId);
 }
 
-/* ——— Full Greece dataset (Claromentis-parity prototype counts) ——— */
+/* ——— Full Greece dataset — sourced from the advisor-portal Greece destination page ——— */
 
 const GREECE: Destination = {
   slug: "greece",
@@ -338,666 +371,469 @@ const GREECE: Destination = {
   tagline: "Islands, history, and seamless land programs across the Aegean.",
   heroImage: heroImageUrlForDestination("greece"),
   description:
-    "Greece blends iconic island escapes with mainland culture and cuisine. Use this guide for DMC contacts, dining, hotels, and official tourism resources.",
+    "Greece — from Athens and the Peloponnese to Crete and the Cyclades. The following partner, restaurant, hotel and yacht intel is sourced directly from the agency's destination page.",
   subRegions: [
     "Athens",
-    "Santorini",
-    "Mykonos",
-    "Crete",
-    "Paros",
+    "Athens Riviera",
+    "Piraeus",
+    "Delphi",
     "Peloponnese",
     "Thessaloniki",
+    "Crete",
+    "Cyclades — Mykonos",
+    "Cyclades — Santorini",
+    "Cyclades — Paros",
+    "Cyclades — Milos",
+    "Cyclades — Naxos",
+    "Ionian — Corfu",
+    "Ionian — Zakynthos",
+    "Rhodes",
+    "Northwest Greece (Epirus / Zagori)",
   ],
   dmcPartners: [
     {
-      productId: "cat-dmc-greece-001",
-      name: "Aegean Elite DMC",
+      productId: "cat-dmc-gr-001",
+      name: "Original Senses",
       preferred: true,
       responsibleTourism: true,
-      specialAmenity: "Virtuoso welcome amenity + handwritten island primer for Virtuoso guests.",
       destinationsServed: "Greece (mainland + islands)",
-      featuredRegions: "Cyclades, Athens, Crete",
-      specializations: ["Culinary Experiences", "Private Touring", "Yacht + villa combos"],
-      languages: ["English", "Greek", "French"],
-      proposalTurnaround: "48 Hours",
-      minimumBooking: "€1,200/day FIT minimum peak season",
-      serviceOptions: ["Itinerary integration", "White-label proposals"],
-      itineraryPlatforms: ["Travefy", "AXUS"],
+      featuredRegions: "Athens, Cyclades, Crete, Peloponnese",
+      specializations: ["Itemized pricing", "Concierge services", "Cultural experiences"],
+      languages: ["English", "Greek"],
       latitude: 37.9838,
       longitude: 23.7275,
-      socialMedia: "Instagram @AegeanEliteDMC",
-      reppedBy: "TL Greece desk · advisor@example.com",
-      website: "https://example.com/aegean-elite",
-      keyContact: "Maria Konstantinou · maria.k@example.com",
-      generalRequests: "greece.requests@example.com",
-      pricing: "Net rates; FIT series on request.",
-      paymentProcess: "Wire 21 days prior to arrival; CC with fee.",
-      commissionProcess: "10–12% posted after travel; statement monthly.",
-      afterHours: "WhatsApp line for active trips · +30 694 000 0000",
-      notes: "Strong on Cyclades yacht + villa combos; prefer 7-night minimum July–Aug.",
+      socialMedia: "Instagram @originalsenses",
+      reppedBy: "JMAK · jon@jmak.com",
+      website: "https://www.originalsenses.gr/",
+      image: "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=600&h=400&fit=crop",
+      keyContact: "Maria Konstantopoulou · mariak@originalsenses.com",
+      generalRequests:
+        "Maria – mariak@originalsenses.com, Konstantina – konstantinak@originalsenses.com, Christina – christinan@originalsenses.com",
+      pricing: "Itemized breakdowns; pricing transparency.",
+      paymentProcess:
+        "No credit-card fees. Basic concierge (restaurant + beach-club reservations) free. Enhanced concierge billed on request based on length of stay.",
+      commissionProcess:
+        "Required by law to receive commission invoices. Group commission payments to IATAs on the 15th and 30th of each month. Accounting sends proof of payment + analysis (project number / client / dates / advisor); advisors notified by email when payment is processed.",
+      afterHours:
+        "Office 10:00–18:00 EET; team monitors email beyond hours. 24/7 emergency line for clients on the ground.",
+      notes: "Travel Designer point of contact for last-minute changes while clients are in market.",
     },
     {
-      productId: "cat-dmc-greece-002",
-      name: "Hellenic Horizons",
-      preferred: false,
-      latitude: 40.6401,
-      longitude: 22.9444,
-      reppedBy: "Partner services",
-      website: "https://example.com/hellenic",
-      keyContact: "Nikos Papadopoulos · groups@example.com",
-      generalRequests: "hello@example.com",
-      pricing: "Tiered net by season.",
-      paymentProcess: "Deposit + balance 30 days.",
-      commissionProcess: "Per program addendum.",
-      afterHours: "Email-only weekends",
-    },
-    {
-      productId: "cat-dmc-greece-003",
-      name: "Eclectic Greece DMC",
+      productId: "cat-dmc-gr-002",
+      name: "Eclectic Greece",
       preferred: true,
+      destinationsServed: "Greece, Turkey, Egypt",
       latitude: 37.9755,
       longitude: 23.7348,
-      reppedBy: "Virtuoso Greece",
-      website: "https://example.com/eclectic-greece",
-      keyContact: "Elena V. · elena@example.com",
-      generalRequests: "ops@eclecticgreece.example.com",
-      pricing: "Itemized net; series contracts available.",
-      paymentProcess: "Wire per confirmation; Amex with 4% surcharge.",
-      commissionProcess: "11% net of DMC invoice; paid within 45 days of travel.",
-      afterHours: "Duty mobile +30 697 000 1111 (active files)",
-      notes: "Preferred for mainland + islands combo; strong archaeology guides.",
+      reppedBy: "Dominique Debay · dominique@dominiquedebay.com",
+      website: "https://eclecticgreece.com/",
+      image: "https://images.unsplash.com/photo-1503152394-c571994fd383?w=600&h=400&fit=crop",
+      keyContact: "Christos Kyvernitis · c.kyvernitis@kyvernitis.gr",
+      generalRequests: "Eva Saringala (sales director) · e.saringala@kyvernitis.gr",
+      pricing: "Itemization.",
+      commissionProcess: "Commission can be sent via check.",
+      afterHours: "24/7 emergency phone +30 6991636363.",
+      notes: "Also serving Turkey & Egypt. Recent feedback (8/7/25): some tour / experience descriptions did not match — verify itineraries.",
     },
     {
-      productId: "cat-dmc-greece-004",
-      name: "Mediterranean Pathways",
-      preferred: false,
-      latitude: 35.3387,
-      longitude: 25.1442,
-      reppedBy: "EU inbound desk",
-      website: "https://example.com/med-pathways",
-      keyContact: "Dimitris S. · dimitris@example.com",
-      generalRequests: "bookings@medpathways.example.com",
-      pricing: "Package and FIT; min 4 nights high season.",
-      paymentProcess: "Deposit 30% / balance 45 days pre-arrival.",
-      commissionProcess: "10% posted on supplier statement.",
-      afterHours: "Sat emergency email only",
+      productId: "cat-dmc-gr-003",
+      name: "Myths & Muses",
+      preferred: true,
+      destinationsServed: "Greece",
+      featuredRegions: "Mainland & islands",
+      languages: ["English", "Greek"],
+      latitude: 37.9838,
+      longitude: 23.7275,
+      reppedBy: "Tina Lyra · TL Portfolio",
+      website: "https://mythsandmuses.com/",
+      image: "https://images.unsplash.com/photo-1571406761758-9a3eed5338ef?w=600&h=400&fit=crop",
+      keyContact:
+        "Christina Papavlasopoulos & Nektaria Panagiotari (Co-Founders) · christina@mythsandmuses.com",
+      generalRequests: "info@mythsandmuses.com",
+      pricing: "Itemization possible; can pay 15% commission or more depending on program.",
+      commissionProcess: "Paid 2 weeks after clients return from trip.",
+      notes:
+        "Smaller boutique DMC, founder based in Boston. 4★ / 5★ authentic, unique experiences with great value. Runs an ambassador program for advisors providing business and referrals.",
     },
     {
-      productId: "cat-dmc-greece-005",
-      name: "Cyclades Concierge DMC",
+      productId: "cat-dmc-gr-004",
+      name: "Greece a la Carte",
       preferred: false,
-      latitude: 37.4467,
-      longitude: 25.3289,
-      reppedBy: "Island programs",
-      website: "https://example.com/cyclades-concierge",
-      keyContact: "Yannis K. · yannis@example.com",
-      generalRequests: "hello@cycladesconcierge.example.com",
-      pricing: "Net island-hopping bundles.",
-      paymentProcess: "Wire; EUR only.",
-      commissionProcess: "9–11% depending on season.",
-      afterHours: "WhatsApp group for active trips",
+      destinationsServed: "Greece",
+      latitude: 37.9838,
+      longitude: 23.7275,
+      socialMedia: "Facebook @Greekdestinationconsultant",
+      reppedBy: "Virtuoso",
+      website: "https://www.greecealacarte.gr/",
+      image: "https://images.unsplash.com/photo-1601581875309-fafbf2a0a476?w=600&h=400&fit=crop",
+      keyContact: "Kasi Turpin (Owner) · kasiturpin@greecealacarte.gr",
+      generalRequests: "info@greecealacarte.gr · galacarte@hol.gr",
+      pricing: "Itemization — please request 12% commission at the time of initial request.",
+      commissionProcess: "Commission can be sent via check.",
+      afterHours: "24/7 emergency phone +30 6991636363.",
     },
     {
-      productId: "cat-dmc-greece-006",
-      name: "Ionian Select DMC",
+      productId: "cat-dmc-gr-005",
+      name: "Curated Greece",
       preferred: false,
-      latitude: 39.6243,
-      longitude: 19.9217,
-      reppedBy: "West coast specialists",
-      website: "https://example.com/ionian-select",
-      keyContact: "Sofia M. · sofia@example.com",
-      generalRequests: "requests@ionianselect.example.com",
-      pricing: "Net villa + crewed charter bundles.",
-      paymentProcess: "50/50 split deposit and pre-arrival.",
-      commissionProcess: "Per charter addendum.",
-      afterHours: "Local office 09:00–20:00 EET",
+      destinationsServed: "Greece (mainland + islands)",
+      latitude: 37.9838,
+      longitude: 23.7275,
+      reppedBy: "Rebecca Recommends",
+      image: "https://images.unsplash.com/photo-1530841377377-3ff06c0ca713?w=600&h=400&fit=crop",
+      keyContact: "Seetha Ramanathan · seetha@curatedgreece.com",
+      generalRequests: "info@curatedgreece.com · Vasilis Sarmantas · vasilis@curatedgreece.com",
+      pricing: "Entry 5★ from ~$758 pp/day; June from ~$800 pp/day with a few private experiences.",
+      notes:
+        "Experts in all of Greece. Can do yacht charters by the day to avoid ferries between Paros, Athens, Santorini — also charters shorter than a week.",
+    },
+    {
+      productId: "cat-dmc-gr-006",
+      name: "OAG Greece (Our A Game)",
+      preferred: false,
+      destinationsServed: "Greece",
+      latitude: 37.9838,
+      longitude: 23.7275,
+      website: "https://www.oag-greece.com/",
+      image: "https://images.unsplash.com/photo-1602940659805-770d1b3b9911?w=600&h=400&fit=crop",
+      notes:
+        "Very boutique DMC with one-of-a-kind activities. Founder Alex also arranges yachts; Elizabeth works with him often.",
     },
   ],
   restaurants: {
     Athens: [
-      {
-        productId: "cat-rest-gr-001",
-        name: "Spondi",
-        url: "https://example.com/spondi",
-        note: "Two Michelin · advance booking",
-        latitude: 37.9842,
-        longitude: 23.7413,
-      },
-      {
-        productId: "cat-rest-gr-002",
-        name: "Nolan",
-        note: "Casual fine dining, Psiri",
-        latitude: 37.9786,
-        longitude: 23.7267,
-      },
-      {
-        productId: "cat-rest-gr-003",
-        name: "CTC",
-        url: "https://example.com/ctc",
-        note: "Contemporary tasting menu",
-        latitude: 37.976,
-        longitude: 23.725,
-      },
-      {
-        productId: "cat-rest-gr-004",
-        name: "Funky Gourmet",
-        note: "Kerameikos · creative Greek",
-        latitude: 37.972,
-        longitude: 23.721,
-      },
-      {
-        productId: "cat-rest-gr-005",
-        name: "Varoulko Seaside",
-        note: "Piraeus · seafood",
-        latitude: 37.942,
-        longitude: 23.646,
-      },
-      {
-        productId: "cat-rest-gr-006",
-        name: "Oinomageiremata",
-        note: "Traditional · Mets",
-        latitude: 37.968,
-        longitude: 23.741,
-      },
-      {
-        productId: "cat-rest-gr-007",
-        name: "Soil",
-        url: "https://example.com/soil",
-        note: "Farm-to-table",
-        latitude: 37.981,
-        longitude: 23.738,
-      },
-      {
-        productId: "cat-rest-gr-008",
-        name: "Birdman",
-        note: "Grill & wine · downtown",
-        latitude: 37.979,
-        longitude: 23.732,
-      },
-      {
-        productId: "cat-rest-gr-009",
-        name: "Hytra",
-        note: "Acropolis views · rooftop",
-        latitude: 37.978,
-        longitude: 23.728,
-      },
-      {
-        productId: "cat-rest-gr-010",
-        name: "Dopios",
-        note: "Neighborhood wine bar",
-        latitude: 37.976,
-        longitude: 23.731,
-      },
+      { productId: "cat-rest-gr-001", name: "Balthazar", note: "Stylish all-day spot in Kolonaki.", url: "https://balthazar.gr/en/", image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop", latitude: 37.9777, longitude: 23.7444 },
+      { productId: "cat-rest-gr-002", name: "Cookoovaya", note: "Modern Greek cooking, six chefs.", url: "https://cookoovaya.gr/", image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop", latitude: 37.969, longitude: 23.7458 },
+      { productId: "cat-rest-gr-003", name: "Dionisos Acropolis", note: "Acropolis-view classic.", url: "https://dionysoszonars.gr/", image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&h=300&fit=crop", latitude: 37.9701, longitude: 23.7236 },
+      { productId: "cat-rest-gr-004", name: "Ella", note: "Greek cooking class & restaurant.", url: "http://www.ellagreekcooking.gr/en/", image: "https://images.unsplash.com/photo-1544148103-0773bf10d330?w=400&h=300&fit=crop", latitude: 37.9784, longitude: 23.7341 },
+      { productId: "cat-rest-gr-005", name: "Ergon House", note: "All-day Greek food hall + hotel.", url: "https://house.ergonfoods.com/", image: "https://images.unsplash.com/photo-1550966871-3ed3cdb51f3a?w=400&h=300&fit=crop", latitude: 37.9784, longitude: 23.7341 },
+      { productId: "cat-rest-gr-006", name: "GB Roof Garden", note: "Acropolis roof at Grande Bretagne.", url: "https://www.gbroofgarden.gr/", image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop", latitude: 37.9759, longitude: 23.7349 },
+      { productId: "cat-rest-gr-007", name: "Kuzina", note: "Plaka rooftop, modern Greek.", url: "https://www.kuzina.gr/en/home", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop", latitude: 37.9747, longitude: 23.726 },
+      { productId: "cat-rest-gr-008", name: "Papadakis", note: "Aegean seafood in Kolonaki.", url: "https://papadakisrestaurant.com/", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=300&fit=crop", latitude: 37.9787, longitude: 23.7439 },
+      { productId: "cat-rest-gr-009", name: "Strofi", note: "Acropolis-view rooftop classic.", url: "https://www.strofi.gr/en/", image: "https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?w=400&h=300&fit=crop", latitude: 37.9696, longitude: 23.7222 },
+      { productId: "cat-rest-gr-010", name: "Tzitzikas & Mermigas", note: "Mezze institution downtown.", url: "https://www.tzitzikasmermigas.gr/en/", image: "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=400&h=300&fit=crop", latitude: 37.978, longitude: 23.7297 },
+      { productId: "cat-rest-gr-011", name: "Vezene", note: "Wood-fired steak and seafood.", url: "https://www.vezene.gr", image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop", latitude: 37.985, longitude: 23.755 },
+      { productId: "cat-rest-gr-012", name: "Malconi's", note: "Italian-leaning Kolonaki staple.", url: "https://www.malconis.gr/", image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop", latitude: 37.9786, longitude: 23.7456 },
+      { productId: "cat-rest-gr-013", name: "Zurbaran", note: "Spanish & Mediterranean wine bar.", url: "https://zurbaranathens.gr", image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&h=300&fit=crop", latitude: 37.9777, longitude: 23.7396 },
+      { productId: "cat-rest-gr-014", name: "All Senses Gastronomy", note: "Greek tasting menu venue.", url: "https://www.foodhubs.eu/ASG.html", image: "https://images.unsplash.com/photo-1544148103-0773bf10d330?w=400&h=300&fit=crop", latitude: 37.978, longitude: 23.733 },
     ],
-    "Athens Vicinity": [
-      {
-        productId: "cat-rest-gr-011",
-        name: "Ithaki Vouliagmeni",
-        note: "Seaside · Riviera",
-        latitude: 37.858,
-        longitude: 23.754,
-      },
-      {
-        productId: "cat-rest-gr-012",
-        name: "Ark",
-        note: "Voula · seafood",
-        latitude: 37.842,
-        longitude: 23.758,
-      },
-      {
-        productId: "cat-rest-gr-013",
-        name: "Matsuhisa Athens",
-        note: "Astir · Japanese",
-        latitude: 37.856,
-        longitude: 23.753,
-      },
-      {
-        productId: "cat-rest-gr-014",
-        name: "Blue Fish Vouliagmeni",
-        note: "Casual fish",
-        latitude: 37.859,
-        longitude: 23.751,
-      },
+    Piraeus: [
+      { productId: "cat-rest-gr-020", name: "Varoulko Seaside", note: "Michelin-starred seafood by Lefteris Lazarou.", url: "https://www.varoulko.gr/", image: "https://images.unsplash.com/photo-1550966871-3ed3cdb51f3a?w=400&h=300&fit=crop", latitude: 37.94, longitude: 23.646 },
+      { productId: "cat-rest-gr-021", name: "Margaro", note: "Cash-only seafood institution by the naval academy.", url: "https://www.margaro-restaurant.com/", image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop", latitude: 37.943, longitude: 23.652 },
     ],
-    Santorini: [
-      {
-        productId: "cat-rest-gr-015",
-        name: "Selene",
-        url: "https://example.com/selene",
-        note: "Pyrgos",
-        latitude: 36.407,
-        longitude: 25.432,
-      },
-      {
-        productId: "cat-rest-gr-016",
-        name: "Metaxy Mas",
-        note: "Tavern · Megalochori",
-        latitude: 36.423,
-        longitude: 25.441,
-      },
-      {
-        productId: "cat-rest-gr-017",
-        name: "Katina",
-        note: "Ammoudi · fish",
-        latitude: 36.461,
-        longitude: 25.374,
-      },
-      {
-        productId: "cat-rest-gr-018",
-        name: "Lycabettus Restaurant",
-        note: "Oia · sunset",
-        latitude: 36.462,
-        longitude: 25.375,
-      },
-      {
-        productId: "cat-rest-gr-019",
-        name: "Aktaion",
-        note: "Fira · classic",
-        latitude: 36.42,
-        longitude: 25.431,
-      },
-      {
-        productId: "cat-rest-gr-020",
-        name: "Panorama",
-        note: "Firostefani views",
-        latitude: 36.423,
-        longitude: 25.433,
-      },
-      {
-        productId: "cat-rest-gr-021",
-        name: "Roka",
-        note: "Oia · casual",
-        latitude: 36.462,
-        longitude: 25.376,
-      },
+    Vouliagmeni: [
+      { productId: "cat-rest-gr-022", name: "Ithaki", note: "Athens Riviera seafront seafood.", url: "https://ithakirestaurantbar.gr", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop", latitude: 37.815, longitude: 23.78 },
+      { productId: "cat-rest-gr-023", name: "Labros", note: "Classic seafood meze on the water.", url: "https://labrosrestaurant.gr/en/", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=300&fit=crop", latitude: 37.821, longitude: 23.781 },
+      { productId: "cat-rest-gr-024", name: "Panorama", note: "Sweeping Saronic Gulf views.", url: "http://www.panoramarestaurant.gr", image: "https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?w=400&h=300&fit=crop", latitude: 37.815, longitude: 23.78 },
+      { productId: "cat-rest-gr-025", name: "Pelagos", note: "Refined Greek seafood by the marina.", url: "https://www.pelagosathens.com", image: "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=400&h=300&fit=crop", latitude: 37.815, longitude: 23.78 },
+      { productId: "cat-rest-gr-026", name: "Taverna 37 — Four Seasons", note: "Beachfront taverna at the Four Seasons Astir Palace.", url: "https://www.fourseasons.com/athens/dining/restaurants/taverna-37/", image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop", latitude: 37.818, longitude: 23.785 },
     ],
-    Mykonos: [
-      {
-        productId: "cat-rest-gr-022",
-        name: "Kiki's Tavern",
-        note: "Agios Sostis · lunch only",
-        latitude: 37.449,
-        longitude: 25.328,
-      },
-      {
-        productId: "cat-rest-gr-023",
-        name: "Nobu Mykonos",
-        note: "Belvedere",
-        latitude: 37.445,
-        longitude: 25.329,
-      },
-      {
-        productId: "cat-rest-gr-024",
-        name: "Interni",
-        note: "Garden dining",
-        latitude: 37.446,
-        longitude: 25.327,
-      },
-      {
-        productId: "cat-rest-gr-025",
-        name: "Matsuhisa Mykonos",
-        note: "Sea views",
-        latitude: 37.444,
-        longitude: 25.33,
-      },
-      {
-        productId: "cat-rest-gr-026",
-        name: "Bakalo",
-        note: "Chora · Greek",
-        latitude: 37.447,
-        longitude: 25.326,
-      },
-      {
-        productId: "cat-rest-gr-027",
-        name: "Scorpios",
-        note: "Paraga · beach club",
-        latitude: 37.431,
-        longitude: 25.328,
-      },
+    Delphi: [
+      { productId: "cat-rest-gr-027", name: "To Patriko Mas", note: "Mountain taverna near Delphi.", url: "https://www.facebook.com/to.patriko.mas.restaurant.delphi.greece/", image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop", latitude: 38.4824, longitude: 22.501 },
     ],
     Crete: [
-      {
-        productId: "cat-rest-gr-028",
-        name: "Peskesi",
-        note: "Heraklion region · Cretan cuisine",
-        latitude: 35.338,
-        longitude: 25.143,
-      },
-      {
-        productId: "cat-rest-gr-029",
-        name: "Chrisostomos",
-        note: "Chania · wood oven",
-        latitude: 35.513,
-        longitude: 24.018,
-      },
-      {
-        productId: "cat-rest-gr-030",
-        name: "Salis",
-        note: "Chania harbour",
-        latitude: 35.517,
-        longitude: 24.017,
-      },
-      {
-        productId: "cat-rest-gr-031",
-        name: "Dounias",
-        note: "Drakona · slow food",
-        latitude: 35.298,
-        longitude: 24.201,
-      },
-      {
-        productId: "cat-rest-gr-032",
-        name: "Pleiades",
-        note: "Elounda · fine dining",
-        latitude: 35.256,
-        longitude: 25.722,
-      },
-      {
-        productId: "cat-rest-gr-033",
-        name: "Ntounias",
-        note: "Village cooking",
-        latitude: 35.24,
-        longitude: 24.12,
-      },
+      { productId: "cat-rest-gr-040", name: "Ferryman Taverna (Elounda)", note: "Waterfront taverna in Elounda.", url: "https://www.facebook.com/FerrymanTaverna/", image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&h=300&fit=crop", latitude: 35.262, longitude: 25.728 },
+      { productId: "cat-rest-gr-041", name: "Lithos Taverna (Chania Town)", note: "Authentic Cretan in Chania Old Town.", url: "https://tavernalithos.gr/", image: "https://images.unsplash.com/photo-1544148103-0773bf10d330?w=400&h=300&fit=crop", latitude: 35.515, longitude: 24.019 },
+      { productId: "cat-rest-gr-042", name: "Peskesi (Heraklion)", note: "Heritage Cretan cuisine.", url: "https://peskesicrete.gr/en", image: "https://images.unsplash.com/photo-1550966871-3ed3cdb51f3a?w=400&h=300&fit=crop", latitude: 35.338, longitude: 25.143 },
+      { productId: "cat-rest-gr-043", name: "Portes (Neo Chora)", note: "Traditional Cretan cuisine with a modern twist.", image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop", latitude: 35.513, longitude: 24.012 },
+      { productId: "cat-rest-gr-044", name: "Salis (Chania Town)", note: "Harbour-side dining.", url: "https://www.salischania.com/", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop", latitude: 35.516, longitude: 24.018 },
+    ],
+    Mykonos: [
+      { productId: "cat-rest-gr-060", name: "Buddha Bar Beach Mykonos", note: "Beach club at Santa Marina resort.", url: "https://santa-marina.gr/dining/buddha-bar-beach-mykonos/", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=300&fit=crop", latitude: 37.4506, longitude: 25.3625 },
+      { productId: "cat-rest-gr-061", name: "Hippie Fish", note: "Agios Ioannis beachfront fish.", url: "https://hippiefish-mykonos.com/", image: "https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?w=400&h=300&fit=crop", latitude: 37.4361, longitude: 25.3144 },
+      { productId: "cat-rest-gr-062", name: "Scorpios", note: "Paraga Beach club, day-to-night dining.", url: "https://scorpios.com/", image: "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=400&h=300&fit=crop", latitude: 37.4319, longitude: 25.3286 },
+      { productId: "cat-rest-gr-063", name: "Interni", note: "Garden dining in Mykonos Town.", url: "https://internirestaurant.com/", image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop", latitude: 37.4456, longitude: 25.3289 },
+    ],
+    Santorini: [
+      { productId: "cat-rest-gr-080", name: "Agaze Bistro Restaurant (Pyrgos)", note: "Diamond Rock cliffside bistro.", url: "https://thediamondrock.com/restaurants/agaze-restaurant/", image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop", latitude: 36.404, longitude: 25.444 },
+      { productId: "cat-rest-gr-081", name: "Petra (Canaves, Oia)", note: "Canaves Oia Suites flagship.", url: "https://canaves.com/canaves-oia-suites/dining/petra-restaurant/", image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&h=300&fit=crop", latitude: 36.4618, longitude: 25.3753 },
+      { productId: "cat-rest-gr-082", name: "Pyrgos (Pyrgos)", note: "Historic village taverna.", url: "https://www.pyrgos-santorini.com/", image: "https://images.unsplash.com/photo-1544148103-0773bf10d330?w=400&h=300&fit=crop", latitude: 36.404, longitude: 25.444 },
+      { productId: "cat-rest-gr-083", name: "Elements (Canaves, Oia)", note: "Canaves Epitome signature dining.", url: "https://canaves.com/canaves-oia-epitome/dining/elements-restaurant/", image: "https://images.unsplash.com/photo-1550966871-3ed3cdb51f3a?w=400&h=300&fit=crop", latitude: 36.4618, longitude: 25.3753 },
+      { productId: "cat-rest-gr-084", name: "Naos (Oia)", note: "Sunset-view modern Greek.", url: "https://naosoia.gr/", image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop", latitude: 36.4618, longitude: 25.3753 },
+      { productId: "cat-rest-gr-085", name: "Lefkes (Finikia)", note: "Hidden village courtyard restaurant.", url: "https://lefkes.gr/lefkes-santorini/?lang=en", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop", latitude: 36.4661, longitude: 25.3784 },
+      { productId: "cat-rest-gr-086", name: "Fino", note: "Contemporary Greek with caldera views.", url: "https://finosantorini.gr/", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=300&fit=crop", latitude: 36.4173, longitude: 25.4316 },
+      { productId: "cat-rest-gr-087", name: "Roka (Oia)", note: "Cycladic small plates.", url: "https://www.roka.gr/", image: "https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?w=400&h=300&fit=crop", latitude: 36.4618, longitude: 25.3753 },
+      { productId: "cat-rest-gr-088", name: "Selene (Pyrgos)", note: "Iconic Santorini fine-dining.", url: "https://selene.gr/", image: "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=400&h=300&fit=crop", latitude: 36.4071, longitude: 25.4444 },
+      { productId: "cat-rest-gr-089", name: "Armeni Fish Tavern", note: "Fishing-village taverna below Oia.", url: "https://armenisantorinirestaurant.gr/", image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop", latitude: 36.4625, longitude: 25.376 },
+      { productId: "cat-rest-gr-090", name: "Ammoudi Fish Tavern", note: "Sea-spray seafood under Oia.", url: "https://ammoudisantorini.com/", image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop", latitude: 36.464, longitude: 25.371 },
+      { productId: "cat-rest-gr-091", name: "Sunset Ammoudi", note: "Sunset seafood mainstay.", url: "https://www.sunset-ammoudi.gr/", image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&h=300&fit=crop", latitude: 36.464, longitude: 25.371 },
+      { productId: "cat-rest-gr-092", name: "Kaliya", note: "Caldera-side modern Greek.", url: "https://www.kaliya-restaurant.com/", image: "https://images.unsplash.com/photo-1544148103-0773bf10d330?w=400&h=300&fit=crop", latitude: 36.435, longitude: 25.428 },
+      { productId: "cat-rest-gr-093", name: "Aktaion (Firostefani)", note: "Traditional Greek with caldera views.", url: "https://www.aktaionsantorini.com/", image: "https://images.unsplash.com/photo-1550966871-3ed3cdb51f3a?w=400&h=300&fit=crop", latitude: 36.4275, longitude: 25.4324 },
+      { productId: "cat-rest-gr-094", name: "Mama Thira (Firostefani)", note: "Family taverna with sea views.", url: "https://www.mamathira.gr/", image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop", latitude: 36.4275, longitude: 25.4324 },
+      { productId: "cat-rest-gr-095", name: "Metaxi Mas (Exo Gonia)", note: "Hilltop favourite — book ahead.", url: "https://santorini-metaximas.gr/en", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop", latitude: 36.402, longitude: 25.477 },
+      { productId: "cat-rest-gr-096", name: "To Psaraki (Vlychada)", note: "Marina-side seafood.", url: "http://www.topsaraki.gr/joomla/", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=300&fit=crop", latitude: 36.353, longitude: 25.43 },
+      { productId: "cat-rest-gr-097", name: "Theros Wave Bar (Vlychada)", note: "Beachfront wave bar.", url: "https://www.theroswavebar.gr/", image: "https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?w=400&h=300&fit=crop", latitude: 36.351, longitude: 25.434 },
+      { productId: "cat-rest-gr-098", name: "Seaside (Perissa)", note: "Casual seaside dining.", url: "https://www.luxuryrestaurantawards.com/restaurant/seaside-santorini/", image: "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=400&h=300&fit=crop", latitude: 36.358, longitude: 25.473 },
+      { productId: "cat-rest-gr-099", name: "Yalos", note: "Caldera waterline restaurant.", url: "https://www.yalos-santorini.com/", image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop", latitude: 36.4173, longitude: 25.4316 },
     ],
     Paros: [
-      {
-        productId: "cat-rest-gr-034",
-        name: "Barbarossa",
-        note: "Naoussa harbour",
-        latitude: 37.124,
-        longitude: 25.237,
-      },
-      {
-        productId: "cat-rest-gr-035",
-        name: "Sigi Ikthios",
-        note: "Naoussa · fish",
-        latitude: 37.125,
-        longitude: 25.236,
-      },
-      {
-        productId: "cat-rest-gr-036",
-        name: "Tsitsanis",
-        note: "Lefkes · taverna",
-        latitude: 37.045,
-        longitude: 25.18,
-      },
-      {
-        productId: "cat-rest-gr-037",
-        name: "Soso",
-        note: "Parikia · modern Greek",
-        latitude: 37.086,
-        longitude: 25.15,
-      },
-    ],
-    Peloponnese: [
-      {
-        productId: "cat-rest-gr-038",
-        name: "Tetramythos",
-        note: "Achaia · winery restaurant",
-        latitude: 38.246,
-        longitude: 22.084,
-      },
-      {
-        productId: "cat-rest-gr-039",
-        name: "Kinsterna",
-        note: "Monemvasia · estate",
-        latitude: 36.687,
-        longitude: 23.056,
-      },
-      {
-        productId: "cat-rest-gr-040",
-        name: "Yialos",
-        note: "Nafplio · harbour",
-        latitude: 37.563,
-        longitude: 22.806,
-      },
-      {
-        productId: "cat-rest-gr-041",
-        name: "Maris",
-        note: "Costa Navarino",
-        latitude: 37.18,
-        longitude: 21.68,
-      },
-    ],
-    Thessaloniki: [
-      {
-        productId: "cat-rest-gr-042",
-        name: "Duck Private Cheffing",
-        note: "Tasting menus",
-        latitude: 40.632,
-        longitude: 22.942,
-      },
-      {
-        productId: "cat-rest-gr-043",
-        name: "Mavri Thalassa",
-        note: "Seafood institution",
-        latitude: 40.635,
-        longitude: 22.945,
-      },
-      {
-        productId: "cat-rest-gr-044",
-        name: "Charoupi",
-        note: "Modern Anatolian",
-        latitude: 40.628,
-        longitude: 22.951,
-      },
-      {
-        productId: "cat-rest-gr-045",
-        name: "Sebrico",
-        note: "Wine bar · Ladadika",
-        latitude: 40.636,
-        longitude: 22.939,
-      },
+      { productId: "cat-rest-gr-120", name: "Soso", note: "Refined home-style food, off-the-radar.", url: "https://travelfoodpeople.com/paros-refined-homey-food-at-the-quiet-restaurant-of-soso/", image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop", latitude: 37.084, longitude: 25.151 },
+      { productId: "cat-rest-gr-121", name: "Yemeni", note: "Modern Greek by Naoussa.", url: "https://www.yemeni.gr/", image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&h=300&fit=crop", latitude: 37.124, longitude: 25.237 },
+      { productId: "cat-rest-gr-122", name: "Barbarossa", note: "Naoussa harbour stalwart.", url: "https://www.barbarossarestaurant.com/", image: "https://images.unsplash.com/photo-1544148103-0773bf10d330?w=400&h=300&fit=crop", latitude: 37.124, longitude: 25.237 },
+      { productId: "cat-rest-gr-123", name: "Bebop", note: "Beachside lounge & dining.", url: "https://www.bebopjoomla.gr/", image: "https://images.unsplash.com/photo-1550966871-3ed3cdb51f3a?w=400&h=300&fit=crop", latitude: 37.087, longitude: 25.158 },
+      { productId: "cat-rest-gr-124", name: "Mario Restaurant", note: "Family-run Greek classics.", url: "https://www.mariorestaurantparos.com/", image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop", latitude: 37.086, longitude: 25.15 },
+      { productId: "cat-rest-gr-125", name: "Monastiri Beach Club", note: "Day-to-night beach club.", url: "https://www.monastiri-paros.gr/", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop", latitude: 37.13, longitude: 25.213 },
     ],
   },
   hotels: {
-    Collections: [
+    "Collections & Hotel Groups": [
       {
-        productId: "cat-hotel-gr-001",
-        name: "Mystique, a Luxury Collection Hotel",
-        contact: "Reservations · reservations@example.com",
-        repFirm: "Luxury Collection rep · NA desk",
-        url: "https://example.com/mystique",
-        properties: ["Santorini"],
-        latitude: 36.462,
-        longitude: 25.375,
+        productId: "cat-hotel-gr-050",
+        name: "Grecotel Hotels & Resorts",
+        image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&h=400&fit=crop",
+        contact: "Sofia Grigoratou (Sr Regional Manager USA) · sofia.grigoratou@grecotel.com",
+        url: "https://www.grecotel.com/",
+        properties: [
+          "Athens & Riviera — The Dolli at Acropolis, Cape Sounio, The Roc Club, Grecotel Pallas Athena",
+          "Crete — Amirandes, Caramel, LUXME White, Creta Palace, Marine Palace & Aqua Park, Plaza Beach House, Casa Adele, Villa Oliva, Meli Palace",
+          "West Peloponnese — Mandola Rosa, La Riviera, LUXME Oasis, LUXME Palms, Casa Marron",
+          "Corfu — Corfu Imperial, Eva Palace, LUXME Daphnila Bay, LUXME Costa Botanica",
+          "Messinia — Filoxenia Kalamata",
+          "Mainland — Astir Palace Alexandroupolis, Egnatia, Larissa Imperial",
+          "Kos — LUXME Kos, Casa Paradiso",
+          "Mykonos — Mykonos Blu (Psarou Beach), Mykonos Lolita (Agios Sostis)",
+          "Rhodes — LUXME Dama Dama (Kallithea)",
+        ],
+        latitude: 37.9838,
+        longitude: 23.7275,
+        note: "Group-wide all-inclusive LUXME brand. Strong group / FIT distribution across Greece.",
       },
       {
-        productId: "cat-hotel-gr-002",
-        name: "Domes of Corfu, Autograph Collection",
-        contact: "Sales · sales@example.com",
-        repFirm: "Marriott Lux",
-        url: "https://example.com/domes-corfu",
-        properties: ["Domes White Coast (Milos)", "Domes Zeen (Corfu)"],
+        productId: "cat-hotel-gr-051",
+        name: "Domes Resorts",
+        image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=600&h=400&fit=crop",
+        contact: "Angelique · angelique@wanderluxcollection.com",
+        repFirm: "Wanderlux Collection",
+        url: "https://domesresorts.com/",
+        properties: ["Domes White Coast Milos", "Domes Zeen Chania", "Domes of Corfu"],
         latitude: 39.624,
         longitude: 19.922,
       },
       {
-        productId: "cat-hotel-gr-003",
-        name: "One&Only Aesthesis",
-        contact: "Partner desk",
-        repFirm: "O&O preferred",
-        url: "https://example.com/oneonly-aesthesis",
-        properties: ["Glyfada coast"],
-        latitude: 37.858,
-        longitude: 23.754,
-      },
-    ],
-    Mykonos: [
-      {
-        productId: "cat-hotel-gr-004",
-        name: "Bill & Coo Suites",
-        contact: "VIP desk",
-        repFirm: "Small Luxury Hotels",
-        url: "https://example.com/billcoo",
-        note: "Adults-oriented",
-        latitude: 37.448,
-        longitude: 25.327,
+        productId: "cat-hotel-gr-052",
+        name: "Naxion Collection",
+        image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=600&h=400&fit=crop",
+        contact: "Naxion Collection sales",
+        url: "https://www.naxiancollection.com/en",
+        properties: ["Naxos", "Paros (Cosme Hotel Paros)"],
+        latitude: 37.103,
+        longitude: 25.379,
       },
       {
-        productId: "cat-hotel-gr-005",
-        name: "Cavo Tagoo",
-        contact: "Reservations",
-        url: "https://example.com/cavotagoo",
-        latitude: 37.449,
-        longitude: 25.33,
-      },
-      {
-        productId: "cat-hotel-gr-006",
-        name: "Myconian Ambassador",
-        contact: "Groups",
-        repFirm: "Relais & Châteaux liaison",
-        note: "Platis Gialos",
-        latitude: 37.441,
-        longitude: 25.325,
-      },
-    ],
-    Santorini: [
-      {
-        productId: "cat-hotel-gr-007",
-        name: "Canaves Oia Epitome",
-        contact: "Sales",
-        repFirm: "Preferred portfolio",
-        properties: ["Epitome", "Canaves suites"],
-        latitude: 36.461,
-        longitude: 25.376,
-      },
-      {
-        productId: "cat-hotel-gr-008",
-        name: "Grace Hotel Santorini",
-        contact: "Luxury sales",
-        url: "https://example.com/grace-santorini",
-        latitude: 36.423,
-        longitude: 25.431,
-      },
-      {
-        productId: "cat-hotel-gr-009",
-        name: "Katikies Santorini",
-        contact: "Reservations",
-        note: "Oia cliff",
-        latitude: 36.462,
-        longitude: 25.375,
+        productId: "cat-hotel-gr-053",
+        name: "Yes Hotels",
+        image: "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=600&h=400&fit=crop",
+        contact: "Yes Hotels group reservations",
+        url: "https://www.yeshotels.gr/our-hotels/",
+        properties: ["New Hotel Athens", "Nous Santorini"],
+        latitude: 37.9764,
+        longitude: 23.7361,
       },
     ],
     Athens: [
-      {
-        productId: "cat-hotel-gr-010",
-        name: "Hotel Grande Bretagne",
-        contact: "Luxury sales",
-        repFirm: "LHW",
-        url: "https://example.com/gb",
-        latitude: 37.976,
-        longitude: 23.735,
-      },
-      {
-        productId: "cat-hotel-gr-011",
-        name: "Four Seasons Astir Palace",
-        contact: "Partner services",
-        url: "https://example.com/fs-astir",
-        latitude: 37.858,
-        longitude: 23.754,
-      },
-      {
-        productId: "cat-hotel-gr-012",
-        name: "King George",
-        contact: "City desk",
-        note: "Syntagma",
-        latitude: 37.975,
-        longitude: 23.734,
-      },
+      { productId: "cat-hotel-gr-001", name: "The Dolli at Acropolis", image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=600&h=400&fit=crop", repFirm: "Travellive", url: "https://thedolli.com/", note: "Luxury Acropolis-view hotel in the historical centre.", latitude: 37.9719, longitude: 23.7253 },
+      { productId: "cat-hotel-gr-002", name: "Athens Capital Hotel — M Gallery", image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=600&h=400&fit=crop", repFirm: "M Gallery Collection", url: "https://athenscapitalhotel-mgallery.com/", note: "Very modern.", latitude: 37.9784, longitude: 23.7341 },
+      { productId: "cat-hotel-gr-003", name: "Xenodocheio Milos", image: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=600&h=400&fit=crop", repFirm: "Dominique Debay", url: "https://www.xenodocheiomilos.com/", latitude: 37.9778, longitude: 23.7341 },
+      { productId: "cat-hotel-gr-004", name: "A77 Suites Athens", image: "https://images.unsplash.com/photo-1455587734955-081b22074882?w=600&h=400&fit=crop", contact: "Maria Papaconstantinou · maria@axiahospitality.com", repFirm: "Small Luxury Hotels of the World", url: "https://www.a77suites.com/", note: "Acropolis views.", latitude: 37.974, longitude: 23.728 },
+      { productId: "cat-hotel-gr-005", name: "New Hotel Athens", image: "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=600&h=400&fit=crop", repFirm: "Yes Hotels", url: "https://www.yeshotels.gr/newhotel/", note: "Funky, contemporary art.", latitude: 37.9764, longitude: 23.7361 },
+      { productId: "cat-hotel-gr-006", name: "King George — Luxury Collection", image: "https://images.unsplash.com/photo-1570213489059-0aac6626d401?w=600&h=400&fit=crop", repFirm: "Marriott Luxury Collection", url: "https://www.marriott.com/en-us/hotels/athgl-king-george-a-luxury-collection-hotel-athens/overview/", note: "Guests receive amenities of Grande Bretagne except the rooftop pool.", latitude: 37.9759, longitude: 23.7348 },
     ],
-    "Paros & Milos": [
-      {
-        productId: "cat-hotel-gr-013",
-        name: "Parilio Hotel Paros",
-        contact: "Bookings",
-        repFirm: "Design hotels",
-        note: "Naoussa adjacency",
-        latitude: 37.123,
-        longitude: 25.238,
-      },
-      {
-        productId: "cat-hotel-gr-014",
-        name: "White Coast Pool Suites",
-        contact: "Sales",
-        properties: ["Milos"],
-        latitude: 36.722,
-        longitude: 24.451,
-      },
+    Mykonos: [
+      { productId: "cat-hotel-gr-010", name: "Cali Mykonos", image: "https://images.unsplash.com/photo-1602002418816-5c0aeef426aa?w=600&h=400&fit=crop", contact: "Sophia Zachartos · sophia@calimykonos.com · Angela Rojas · arojas@mjlselect.com", url: "https://www.calimykonos.com/", latitude: 37.4467, longitude: 25.3289 },
+      { productId: "cat-hotel-gr-011", name: "Mykonos Blu — Grecotel", image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=600&h=400&fit=crop", repFirm: "Grecotel", url: "https://www.grecotel.com/", note: "Psarou Beach.", latitude: 37.4267, longitude: 25.3494 },
+      { productId: "cat-hotel-gr-012", name: "Mykonos Lolita — Grecotel", image: "https://images.unsplash.com/photo-1561501878-aabd62634533?w=600&h=400&fit=crop", repFirm: "Grecotel", url: "https://www.grecotel.com/", note: "Agios Sostis.", latitude: 37.4831, longitude: 25.3636 },
     ],
-    Crete: [
-      {
-        productId: "cat-hotel-gr-015",
-        name: "Blue Palace Elounda",
-        contact: "Luxury desk",
-        url: "https://example.com/blue-palace",
-        latitude: 35.256,
-        longitude: 25.722,
-      },
-      {
-        productId: "cat-hotel-gr-016",
-        name: "Domes Zeen Chania",
-        contact: "Reservations",
-        note: "Family-friendly",
-        latitude: 35.518,
-        longitude: 24.02,
-      },
+    Santorini: [
+      { productId: "cat-hotel-gr-020", name: "Diamond Rock Villas", image: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=600&h=400&fit=crop", url: "https://thediamondrock.com/accommodation/", note: "Cliffside villa accommodation.", latitude: 36.4618, longitude: 25.3753 },
+      { productId: "cat-hotel-gr-021", name: "Homeric Poems", image: "https://images.unsplash.com/photo-1601581875309-fafbf2a0a476?w=600&h=400&fit=crop", url: "https://www.homericpoems.gr/", note: "Caldera-facing cave suites.", latitude: 36.4618, longitude: 25.3753 },
+      { productId: "cat-hotel-gr-022", name: "Nous Santorini — a Yes Hotel", image: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=600&h=400&fit=crop", repFirm: "Yes Hotels", url: "https://www.yeshotels.gr/nous-santorini/", note: "Adults-only.", latitude: 36.3932, longitude: 25.4615 },
     ],
-    Peloponnese: [
-      {
-        productId: "cat-hotel-gr-017",
-        name: "The Westin Resort Costa Navarino",
-        contact: "Golf & spa desk",
-        repFirm: "Marriott STARS",
-        url: "https://example.com/costa-navarino",
-        latitude: 37.18,
-        longitude: 21.68,
-      },
+    Paros: [
+      { productId: "cat-hotel-gr-030", name: "Parilio Paros Design Hotel", image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=400&fit=crop", url: "https://pariliohotelparos.com/", note: "Naoussa.", latitude: 37.124, longitude: 25.237 },
+      { productId: "cat-hotel-gr-031", name: "Cosme Paros", image: "https://images.unsplash.com/photo-1540541338287-41700207dee6?w=600&h=400&fit=crop", repFirm: "Naxion Collection", url: "https://cosmehotelparos.com/", note: "Naxion Collection.", latitude: 37.072, longitude: 25.171 },
+    ],
+    Milos: [
+      { productId: "cat-hotel-gr-040", name: "Hotel Milos Sea Resort", image: "https://images.unsplash.com/photo-1596178065887-1198b6148b2b?w=600&h=400&fit=crop", url: "https://www.hotelmilosresort.com/", latitude: 36.7404, longitude: 24.421 },
+      { productId: "cat-hotel-gr-041", name: "Domes White Coast Milos", image: "https://images.unsplash.com/photo-1549294413-26f195200c16?w=600&h=400&fit=crop", repFirm: "Domes Resorts", url: "https://domesresorts.com/domeswhitecoastmilos/", note: "Adults-only pool suites.", latitude: 36.722, longitude: 24.451 },
+      { productId: "cat-hotel-gr-042", name: "Milos Breeze", image: "https://images.unsplash.com/photo-1455587734955-081b22074882?w=600&h=400&fit=crop", url: "https://www.milosbreeze.gr/en/", note: "Sweeping Aegean views.", latitude: 36.745, longitude: 24.43 },
     ],
   },
   yachtCompanies: [
     {
       productId: "cat-yacht-gr-001",
-      name: "Ionian Charter Co.",
-      contact: "charter@example.com · +30 210 111 2222",
-      url: "https://example.com/ionian-charter",
+      name: "Blue BNC",
+      image: "https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=600&h=400&fit=crop",
+      contact: "Morgane Candlot (Area Manager) · morgane@bluebnc.com · +34 674 324 156",
+      url: "https://www.bluebnc.com/en-es/yacht-charter/greece",
       latitude: 37.9402,
       longitude: 23.6427,
-      destinations: "Ionian & Saronic day charters",
-      contactName: "Marina Ioannou",
-      email: "charter@example.com",
-      phone: "+30 210 111 2222",
+      destinations:
+        "Greece, Mallorca, Ibiza, Formentera & Balearic Islands, French Riviera & Monaco, Bahamas, St Barth",
+      contactName: "Morgane Candlot",
+      email: "morgane@bluebnc.com",
+      phone: "+34 674 324 156",
+    },
+    {
+      productId: "cat-yacht-gr-002",
+      name: "Roccabella Yachts",
+      image: "https://images.unsplash.com/photo-1605281317010-fe5ffe798166?w=600&h=400&fit=crop",
+      contact: "Lewis Bloor · lewis.bloor@roccabellayachts.com",
+      url: "https://roccabellayachts.com/",
+      latitude: 37.9402,
+      longitude: 23.6427,
+      destinations: "Greek Islands, Turkey, Italy and wider Mediterranean",
+      contactName: "Lewis Bloor",
+      email: "lewis.bloor@roccabellayachts.com",
     },
   ],
   tourismRegions: [
     {
-      name: "National",
-      description: "Visit Greece — country-level planning and campaigns.",
-      contact: "GNTO North America · travel@gnto.example.com · +1 212 555 0199",
+      name: "Greece — National",
+      description: "Visit Greece, the Greek National Tourism Organization.",
+      contact:
+        "Mr Konstantinos Charokopos · Chief Officer, North America · +1 212 421 5777 ext. 306 · info@greektourism.com",
       links: [
-        { label: "Visit Greece", url: "https://www.visitgreece.gr/" },
-        { label: "GNTO", url: "https://www.gnto.gov.gr/" },
+        { label: "Visit Greece (GNTO)", url: "https://www.visitgreece.gr/" },
+        { label: "GNTO contact", url: "https://www.gtp.gr/TDirectoryDetails.asp?ID=1425" },
+        { label: "Greeka", url: "https://www.greeka.com/" },
+        { label: "Travel agent portal (Greeka)", url: "https://www.greeka.com/travel-agents/" },
+        { label: "UNESCO World Heritage Sites in Greece", url: "https://www.greeka.com/greece-history/world-heritage-sites/" },
       ],
       latitude: 37.9838,
       longitude: 23.7275,
     },
     {
+      name: "Athens",
+      description: "Athens & Attica region — Visit Athens / This Is Athens.",
+      contact: "info@thisisathens.org",
+      links: [
+        { label: "Visit Athens (GNTO)", url: "https://www.visitgreece.gr/mainland/attica/athens/" },
+        { label: "This Is Athens", url: "https://www.thisisathens.org/partners" },
+        { label: "Contact form", url: "https://www.thisisathens.org/contact" },
+      ],
+      latitude: 37.9838,
+      longitude: 23.7275,
+    },
+    {
+      name: "Greek Islands — Overview",
+      description: "Editorial round-ups and inspiration across the islands.",
+      links: [
+        { label: "Greek Islands (Greeka)", url: "https://www.greeka.com/greece-islands/" },
+        { label: "Condé Nast Traveller — Best Greek Islands to Visit", url: "https://www.cntraveller.com/gallery/best-greek-islands-beaches" },
+        { label: "The Greek Reporter — 20 Greek Islands", url: "https://greekreporter.com/2023/01/07/top-20-greek-islands-travel-greece/" },
+      ],
+      latitude: 37.5,
+      longitude: 25.0,
+    },
+    {
+      name: "Crete",
+      description: "Incredible Crete — regional tourism body.",
+      links: [
+        { label: "Incredible Crete", url: "https://www.incrediblecrete.gr/en/" },
+        { label: "Contact", url: "https://www.incrediblecrete.gr/en/contact/" },
+      ],
+      latitude: 35.2401,
+      longitude: 24.8093,
+    },
+    {
       name: "Cyclades",
-      description: "Island hopping, ferries, and regional highlights.",
-      contact: "Cyclades Prefecture tourism · info@cyclades.example.com",
-      links: [{ label: "Cyclades tourism", url: "https://example.com/cyclades" }],
+      description:
+        "33 islands and islets (24 inhabited): Amorgos, Anafi, Andros, Antiparos, Donousa, Iraklia, Thirasia, Ios, Kea, Kimolos, Koufonisi, Kythnos, Milos, Mykonos, Naxos, Paros, Santorini, Serifos, Sikinos, Sifnos, Syros, Schinoussa, Tinos, Folegandros.",
+      links: [
+        { label: "Cyclades (GNTO)", url: "https://www.visitgreece.gr/islands/cyclades/" },
+        { label: "Cyclades Chamber of Commerce — events, ferries, flights", url: "https://www.e-kyklades.gr/travel/?lang=en" },
+        { label: "Milos", url: "https://www.milos-island.com/" },
+        { label: "Mykonos", url: "https://www.mykonosgreece.com/" },
+        { label: "Santorini", url: "https://www.santorini.gr/" },
+        { label: "Naxos & the Small Cyclades", url: "https://www.naxos.gr/?lang=en" },
+      ],
       latitude: 37.1,
       longitude: 25.37,
     },
+    {
+      name: "Ionian Islands",
+      description: "Zakynthos, Ithaca, Corfu, Kefalonia, Lefkada, Paxos and Kythira.",
+      links: [
+        { label: "Ionian Islands (GNTO)", url: "https://www.visitgreece.gr/islands/ionian-islands/zakynthos/" },
+        { label: "Visit Greece contact form", url: "https://www.visitgreece.gr/contact-form/" },
+        { label: "Zakynthos Island", url: "https://www.zanteisland.com/en/information-zakynthos.php" },
+      ],
+      latitude: 38.4,
+      longitude: 20.6,
+    },
+    {
+      name: "Corfu",
+      description: "Visit Corfu — regional tourism organisation.",
+      contact: "info@corfu.gov.gr",
+      links: [
+        { label: "Visit Corfu", url: "https://visit.corfu.gr/" },
+        { label: "Contact form", url: "https://visit.corfu.gr/contact/" },
+      ],
+      latitude: 39.6243,
+      longitude: 19.9217,
+    },
+    {
+      name: "Rhodes",
+      description: "Rhodes Welcome — official tourist guide & contact info.",
+      contact: "touristinfo@rhodes.gr",
+      links: [
+        { label: "Rhodes Welcome", url: "https://rhodeswelcome.gr/" },
+        { label: "Tourist guide & contact", url: "https://www.rhodes.gr/tourist-guide/" },
+      ],
+      latitude: 36.4341,
+      longitude: 28.2176,
+    },
+    {
+      name: "Northwest Greece — Epirus & Zagori",
+      description:
+        "Region of Epirus / Zagori — dramatic terrain and 46 stone villages of Zagorohoria. Includes archaeological sites of Dodoni and Nekromanteion plus the Epirus coastline.",
+      contact: "+30 2651 037017 · info@travelioannina.com · tourism@ioannina.gr",
+      links: [
+        { label: "Discover Zagori (Discover Greece)", url: "https://www.discovergreece.com/epirus/zagori" },
+        { label: "Travel Ioannina — Ioannina, Mt Vikos, Zagorohoria", url: "https://www.travelioannina.com/" },
+      ],
+      latitude: 39.6675,
+      longitude: 20.85,
+    },
+    {
+      name: "Peloponnese",
+      description:
+        "Peloponnese Regional Tourism Office. Ancient Corinth, Temple of Apollo, Ancient Olympia, Corinthia, Kalamata, Nafplio, Epidaurus (UNESCO), Mystras (UNESCO), Sparta. Includes Porto Heli ('Peloponnesian Riviera') and Spetses Island.",
+      contact: "info@topel.gr",
+      links: [
+        { label: "Peloponnese Regional Tourism Office", url: "https://topel.gr/pelonnese/" },
+        { label: "Nafplio", url: "http://www.visitnafplio.com/" },
+        { label: "Nafplio — useful info", url: "https://www.visitnafplio.com/really-useful-info/contact-and-disclaimer.html" },
+        { label: "Argolis", url: "https://greekreporter.com/2022/08/26/greece-visit-argolis-peloponnese/" },
+        { label: "Porto Heli", url: "https://www.greeka.com/peloponnese/porto-heli/" },
+        { label: "Spetses Island", url: "https://www.visitgreece.gr/islands/saronic-islands/spetses/" },
+      ],
+      latitude: 37.563,
+      longitude: 22.806,
+    },
+    {
+      name: "Thessaloniki",
+      description:
+        "Greek capital of the Balkans — gastronomic and cultural capital; co-capital of the Byzantine Empire and modern Hellenic Republic.",
+      contact: "welcome@thessaloniki.travel · info@thessalonikitourism.gr",
+      links: [
+        { label: "Thessaloniki Travel", url: "https://thessaloniki.travel/" },
+        { label: "Contact", url: "https://thessaloniki.travel/contact/" },
+        { label: "Thessaloniki Tourism", url: "https://www.thessalonikitourism.gr/index.php/en/" },
+        { label: "Culture Trip — Awesome reasons", url: "https://theculturetrip.com/europe/greece/articles/10-awesome-reasons-thessaloniki-should-be-on-your-bucket-list/" },
+      ],
+      latitude: 40.6401,
+      longitude: 22.9444,
+    },
   ],
   documents: [
-    { name: "Greece — advisor commission cheat sheet", type: "pdf", kvDocumentId: "doc-kv-dest-gr-1" },
-    { name: "Island ferry timing guidelines", type: "docx", kvDocumentId: "doc-kv-dest-gr-2" },
-    { name: "Peak season hotel release calendar", type: "xlsx", kvDocumentId: "doc-kv-dest-gr-3" },
-    { name: "GNTO marketing toolkit — Greece 2026", type: "pdf", kvDocumentId: "doc-kv-dest-gr-4" },
-    { name: "Santorini & Mykonos vendor contacts", type: "docx", kvDocumentId: "doc-kv-dest-gr-5" },
-    { name: "Mainland driving times & tolls", type: "pdf", kvDocumentId: "doc-kv-dest-gr-6" },
-    { name: "Yacht charter terms & insurance checklist", type: "pdf", kvDocumentId: "doc-kv-dest-gr-7" },
+    { name: "Athens Dining Guide.docx", type: "docx", kvDocumentId: "doc-kv-dest-gr-1" },
+    { name: "Athens, Greece.pdf", type: "pdf", kvDocumentId: "doc-kv-dest-gr-2" },
+    { name: "Crete, Greece.pdf", type: "pdf", kvDocumentId: "doc-kv-dest-gr-3" },
+    { name: "Greece Destination Guide.pdf", type: "pdf", kvDocumentId: "doc-kv-dest-gr-4" },
+    { name: "Mykonos, Greece.pdf", type: "pdf", kvDocumentId: "doc-kv-dest-gr-5" },
+    { name: "Paros Dining.docx", type: "docx", kvDocumentId: "doc-kv-dest-gr-6" },
+    { name: "Santorini, Greece.pdf", type: "pdf", kvDocumentId: "doc-kv-dest-gr-7" },
   ],
   mapCenter: { lat: 37.9838, lng: 23.7275, zoom: 6 },
   tripReports: [
@@ -1006,13 +842,13 @@ const GREECE: Destination = {
       advisorId: "adv-demo-sarah",
       advisorName: "Sarah T.",
       travelDates: { start: "2026-03-08", end: "2026-03-15" },
-      subRegionsVisited: ["Santorini", "Mykonos", "Athens"],
+      subRegionsVisited: ["Cyclades — Santorini", "Cyclades — Mykonos", "Athens"],
       productReferences: [
-        { productId: "cat-dmc-greece-001", label: "Aegean Elite DMC" },
-        { productId: "cat-hotel-gr-007", label: "Canaves Oia Epitome" },
+        { productId: "cat-dmc-gr-001", label: "Original Senses" },
+        { productId: "cat-hotel-gr-022", label: "Nous Santorini" },
       ],
       content:
-        "**Just back** — Santorini ferries were smooth mid-week. Advise clients to book sunset tables 30+ days ahead in Oia. Aegean Elite reconfirmed drivers within 2 hours when winds shifted our hydrofoil.",
+        "**Just back** — Santorini ferries were smooth mid-week. Advise clients to book sunset tables 30+ days ahead in Oia. Original Senses reconfirmed drivers within 2 hours when winds shifted our hydrofoil.",
       helpfulCount: 14,
       createdAt: "2026-03-18T10:00:00.000Z",
       latitude: 36.3932,
@@ -1024,9 +860,9 @@ const GREECE: Destination = {
       advisorName: "Alex Chambers",
       travelDates: { start: "2025-09-02", end: "2025-09-12" },
       subRegionsVisited: ["Crete", "Athens"],
-      productReferences: [{ productId: "cat-rest-gr-028", label: "Peskesi" }],
+      productReferences: [{ productId: "cat-rest-gr-042", label: "Peskesi" }],
       content:
-        "Crete driving times are underestimated in most PDFs — pad 25% for mountain routes. Peskesi still a standout for foodie clients.",
+        "Crete driving times are underestimated in most PDFs — pad 25% for mountain routes. Peskesi (Heraklion) still a standout for foodie clients.",
       helpfulCount: 9,
       createdAt: "2025-09-15T14:20:00.000Z",
       latitude: 35.3387,
@@ -1040,12 +876,13 @@ const ITALY: Destination = {
   name: "Italy",
   tagline: "Regional specialists from the Dolomites to Sicily.",
   heroImage: heroImageUrlForDestination("italy"),
-  description: "Skeleton entry — expand with Claromentis parity.",
+  description: "",
   subRegions: ["Rome", "Florence", "Amalfi", "Sicily"],
   dmcPartners: [
     {
       productId: "cat-dmc-it-001",
       name: "Italia Curata DMC",
+      image: "https://images.unsplash.com/photo-1529260830199-42c24126f198?w=400&h=300&fit=crop",
       preferred: true,
       reppedBy: "EU desk",
       website: "https://example.com/italia-curata",
@@ -1054,10 +891,10 @@ const ITALY: Destination = {
     },
   ],
   restaurants: {
-    Rome: [{ productId: "cat-rest-it-001", name: "Roscioli", note: "Testaccio" }],
+    Rome: [{ productId: "cat-rest-it-001", name: "Roscioli", image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop", note: "Testaccio" }],
   },
   hotels: {
-    Rome: [{ productId: "cat-hotel-it-001", name: "Hotel de Russie", url: "https://example.com/russie" }],
+    Rome: [{ productId: "cat-hotel-it-001", name: "Hotel de Russie", image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop", url: "https://example.com/russie" }],
   },
   tourismRegions: [
     {
@@ -1074,22 +911,23 @@ const FRANCE: Destination = {
   name: "France",
   tagline: "City breaks, wine routes, and alpine escapes.",
   heroImage: heroImageUrlForDestination("france"),
-  description: "Skeleton entry — expand with Claromentis parity.",
+  description: "",
   subRegions: ["Paris", "Provence", "French Alps", "Loire"],
   dmcPartners: [
     {
       productId: "cat-dmc-fr-001",
       name: "Maison Routes DMC",
+      image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=300&fit=crop",
       preferred: false,
       website: "https://example.com/maison-routes",
       keyContact: "Claire D.",
     },
   ],
   restaurants: {
-    Paris: [{ productId: "cat-rest-fr-001", name: "Septime", note: "Book weeks ahead" }],
+    Paris: [{ productId: "cat-rest-fr-001", name: "Septime", image: "https://images.unsplash.com/photo-1550966871-3ed3cdb51f3a?w=400&h=300&fit=crop", note: "Book weeks ahead" }],
   },
   hotels: {
-    Paris: [{ productId: "cat-hotel-fr-001", name: "Le Bristol Paris", url: "https://example.com/bristol" }],
+    Paris: [{ productId: "cat-hotel-fr-001", name: "Le Bristol Paris", image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&h=300&fit=crop", url: "https://example.com/bristol" }],
   },
   tourismRegions: [
     {
@@ -1105,22 +943,23 @@ const JAPAN: Destination = {
   name: "Japan",
   tagline: "Urban energy, onsen retreats, and seasonal rail journeys.",
   heroImage: heroImageUrlForDestination("japan"),
-  description: "Skeleton entry — expand with Claromentis parity.",
+  description: "",
   subRegions: ["Tokyo", "Kyoto", "Hokkaido", "Okinawa"],
   dmcPartners: [
     {
       productId: "cat-dmc-jp-001",
       name: "Nippon Pathways",
+      image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&h=300&fit=crop",
       preferred: true,
       keyContact: "Kenji M.",
       generalRequests: "jp@example.com",
     },
   ],
   restaurants: {
-    Tokyo: [{ productId: "cat-rest-jp-001", name: "Den", note: "Kanda · reservation lottery" }],
+    Tokyo: [{ productId: "cat-rest-jp-001", name: "Den", image: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&h=300&fit=crop", note: "Kanda · reservation lottery" }],
   },
   hotels: {
-    Tokyo: [{ productId: "cat-hotel-jp-001", name: "Aman Tokyo", url: "https://example.com/aman-tokyo" }],
+    Tokyo: [{ productId: "cat-hotel-jp-001", name: "Aman Tokyo", image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400&h=300&fit=crop", url: "https://example.com/aman-tokyo" }],
   },
   tourismRegions: [
     {
@@ -1137,13 +976,13 @@ const AFRICA: Destination = {
   name: "Africa",
   tagline: "Safari, cities, and coastlines — curated coverage growing.",
   heroImage: heroImageUrlForDestination("africa"),
-  description:
-    "Multi-country hub for safari and city programs. Sub-regions organize South Africa, Kenya, Botswana, and more — expand with Claromentis parity.",
+  description: "",
   subRegions: ["South Africa", "Kenya", "Botswana", "Tanzania"],
   dmcPartners: [
     {
       productId: "cat-dmc-af-001",
       name: "Exeter Safari Collection",
+      image: "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=400&h=300&fit=crop",
       preferred: true,
       reppedBy: "Safari desk",
       website: "https://example.com/exeter-safari",
@@ -1157,6 +996,7 @@ const AFRICA: Destination = {
     {
       productId: "cat-dmc-af-002",
       name: "Giltedge Africa",
+      image: "https://images.unsplash.com/photo-1523805009345-7448845a9e53?w=400&h=300&fit=crop",
       preferred: false,
       website: "https://example.com/giltedge",
       keyContact: "team@giltedge.example.com",
@@ -1166,15 +1006,16 @@ const AFRICA: Destination = {
   ],
   restaurants: {
     "Cape Town": [
-      { productId: "cat-rest-af-001", name: "Test Kitchen", note: "Woodstock · book early" },
+      { productId: "cat-rest-af-001", name: "Test Kitchen", image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop", note: "Woodstock · book early" },
     ],
-    Nairobi: [{ productId: "cat-rest-af-002", name: "Carnivore", note: "Classic grill" }],
+    Nairobi: [{ productId: "cat-rest-af-002", name: "Carnivore", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=300&fit=crop", note: "Classic grill" }],
   },
   hotels: {
     "South Africa": [
       {
         productId: "cat-hotel-af-001",
         name: "Singita Lebombo",
+        image: "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=400&h=300&fit=crop",
         url: "https://example.com/singita",
         note: "Kruger",
         repFirm: "EU consortium",
@@ -1184,6 +1025,7 @@ const AFRICA: Destination = {
       {
         productId: "cat-hotel-af-002",
         name: "Giraffe Manor",
+        image: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=400&h=300&fit=crop",
         url: "https://example.com/giraffe",
         note: "Nairobi",
       },
@@ -1213,13 +1055,13 @@ const CARIBBEAN: Destination = {
   name: "Caribbean",
   tagline: "Island hopping — DMCs, dining, and yacht partners.",
   heroImage: heroImageUrlForDestination("caribbean"),
-  description:
-    "Multi-island overview. Sub-regions handle individual islands — expand with island-by-island dining and hotel curation.",
+  description: "",
   subRegions: ["Anguilla", "Antigua", "Aruba", "St. Barth", "Turks & Caicos"],
   dmcPartners: [
     {
       productId: "cat-dmc-cb-001",
       name: "Hummingbird Travel",
+      image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop",
       preferred: true,
       website: "https://example.com/hummingbird",
       keyContact: "charters@hummingbird.example.com",
@@ -1229,21 +1071,23 @@ const CARIBBEAN: Destination = {
     {
       productId: "cat-dmc-cb-002",
       name: "Caribbean Excursionist",
+      image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=300&fit=crop",
       preferred: false,
       website: "https://example.com/excursionist",
       keyContact: "hello@excursionist.example.com",
     },
   ],
   restaurants: {
-    Anguilla: [{ productId: "cat-rest-cb-001", name: "Blanchards", note: "Meads Bay" }],
-    "St. Barth": [{ productId: "cat-rest-cb-002", name: "Bonito", note: "Gustavia harbor" }],
-    Aruba: [{ productId: "cat-rest-cb-003", name: "Passions on the Beach", note: "Eagle Beach" }],
+    Anguilla: [{ productId: "cat-rest-cb-001", name: "Blanchards", image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop", note: "Meads Bay" }],
+    "St. Barth": [{ productId: "cat-rest-cb-002", name: "Bonito", image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&h=300&fit=crop", note: "Gustavia harbor" }],
+    Aruba: [{ productId: "cat-rest-cb-003", name: "Passions on the Beach", image: "https://images.unsplash.com/photo-1551918120-9739cb430c6d?w=400&h=300&fit=crop", note: "Eagle Beach" }],
   },
   hotels: {
     "Grand Cayman": [
       {
         productId: "cat-hotel-cb-001",
         name: "Ritz-Carlton Grand Cayman",
+        image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400&h=300&fit=crop",
         url: "https://example.com/ritz-gc",
         note: "Seven Mile Beach",
       },
@@ -1252,6 +1096,7 @@ const CARIBBEAN: Destination = {
       {
         productId: "cat-hotel-cb-002",
         name: "Jade Mountain",
+        image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&h=300&fit=crop",
         url: "https://example.com/jade",
         note: "Pitons views",
       },
@@ -1270,14 +1115,91 @@ const CARIBBEAN: Destination = {
   documents: [{ name: "Caribbean island-hopping primer", type: "pdf" }],
 };
 
+/* ——— Argentina dataset — sourced from the advisor-portal Argentina destination page ——— */
+
+const ARGENTINA: Destination = {
+  slug: "argentina",
+  name: "Argentina",
+  tagline: "Patagonia to Buenos Aires.",
+  heroImage: heroImageUrlForDestination("argentina"),
+  description:
+    "Argentina — partner intel sourced from the agency's destination page. Meals happen later in Buenos Aires: dinner usually starts around 10pm and can run into the early hours.",
+  subRegions: ["Buenos Aires", "Patagonia", "Mendoza", "Iguazú", "Salta"],
+  dmcPartners: [
+    {
+      productId: "cat-dmc-ar-001",
+      name: "Abercrombie & Kent Argentina",
+      preferred: true,
+      destinationsServed: "Argentina, Europe, France · Global DMC",
+      featuredRegions: "Buenos Aires, Patagonia, Mendoza",
+      latitude: -34.6037,
+      longitude: -58.3816,
+      website: "https://www.abercrombiekent.com/",
+      image: "https://images.unsplash.com/photo-1589909202802-8f4aadce1849?w=600&h=400&fit=crop",
+      keyContact: "Sonja Stoerr · Sales Director, NY & Northeast USA · +1 (630) 725-3400 x521",
+      generalRequests: "Abercrombie & Kent USA, LLC",
+      paymentProcess:
+        "General TL agent log-in: hello@travellustre.com (PW: Travel44!). Advisors can also self-register at abercrombiekent.com/agent-services/registration.",
+      notes: "Global DMC — A&K Europe / France desk in New York.",
+    },
+    {
+      productId: "cat-dmc-ar-002",
+      name: "Garcia Fernandez Turismo",
+      preferred: false,
+      destinationsServed: "Argentina, Latin America",
+      latitude: -34.6037,
+      longitude: -58.3816,
+      reppedBy: "Virtuoso",
+      website: "http://www.gft.com.ar",
+      image: "https://images.unsplash.com/photo-1589909202802-8f4aadce1849?w=600&h=400&fit=crop",
+      generalRequests: "garcia.fernandez@gft.com.ar · +54 011 5263 9969",
+      afterHours: "Office hours 09:30–18:30 ART · +54 011 5263 9969",
+      notes:
+        "Customised luxury trips, cruises, tourism from abroad, passenger transportation, travel experiences, business trips, incentive groups and luxury Central America. Also specialises in ski itineraries.",
+    },
+  ],
+  restaurants: {
+    "Buenos Aires": [
+      { productId: "cat-rest-ar-001", name: "Alvear Grill", note: "Hotel grill room with a great roof bar.", image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop", latitude: -34.5895, longitude: -58.3868 },
+      { productId: "cat-rest-ar-002", name: "Aramburu", note: "Fine dining 18-course tasting menu.", url: "https://www.arambururesto.com.ar/", image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop", latitude: -34.595, longitude: -58.391 },
+      { productId: "cat-rest-ar-003", name: "Aramburu Bis", note: "Relaxed sister bistro across the street from Aramburu.", url: "https://www.bisresto.com.ar/", image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&h=300&fit=crop", latitude: -34.595, longitude: -58.391 },
+      { productId: "cat-rest-ar-004", name: "Birkin", note: "Great Buenos Aires breakfast spot.", image: "https://images.unsplash.com/photo-1544148103-0773bf10d330?w=400&h=300&fit=crop", latitude: -34.585, longitude: -58.395 },
+      { productId: "cat-rest-ar-005", name: "Cadore", note: "Best ice cream downtown — craft Argentinian flavours with Italian roots since 1957.", image: "https://images.unsplash.com/photo-1550966871-3ed3cdb51f3a?w=400&h=300&fit=crop", latitude: -34.6075, longitude: -58.3786 },
+      { productId: "cat-rest-ar-006", name: "Cafe Rivas", note: "Old-world Argentinian comfort food, serious wine list, live piano weekends and Sunday brunch.", image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop", latitude: -34.617, longitude: -58.371 },
+      { productId: "cat-rest-ar-007", name: "Casa Cavia", note: "Palermo hideaway: bookshop, florist & restaurant.", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop", latitude: -34.575, longitude: -58.42 },
+      { productId: "cat-rest-ar-008", name: "Cucina Paradiso", note: "Amazing homemade pasta in Palermo.", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=300&fit=crop", latitude: -34.583, longitude: -58.426 },
+      { productId: "cat-rest-ar-009", name: "Cuervo", note: "Great breakfast and coffee.", image: "https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?w=400&h=300&fit=crop", latitude: -34.586, longitude: -58.426 },
+      { productId: "cat-rest-ar-010", name: "Don Julio", note: "Probably the most famous restaurant in all of Buenos Aires — parrilla.", image: "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=400&h=300&fit=crop", latitude: -34.586, longitude: -58.428 },
+      { productId: "cat-rest-ar-011", name: "El Burladero", note: "Spanish-leaning Recoleta classic.", image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop", latitude: -34.589, longitude: -58.39 },
+      { productId: "cat-rest-ar-012", name: "El Pobre Luís", note: "Beloved Belgrano parrilla.", image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop", latitude: -34.557, longitude: -58.456 },
+      { productId: "cat-rest-ar-013", name: "Duque", note: "Modern Argentinian dining.", image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&h=300&fit=crop", latitude: -34.585, longitude: -58.426 },
+      { productId: "cat-rest-ar-014", name: "Mishiguene", note: "Israeli & Jewish classics reimagined.", url: "https://www.facebook.com/mishiguene/", image: "https://images.unsplash.com/photo-1544148103-0773bf10d330?w=400&h=300&fit=crop", latitude: -34.581, longitude: -58.428 },
+      { productId: "cat-rest-ar-015", name: "Rapa Nui", note: "Best ice cream and chocolates.", url: "https://rapanui.com.ar/", image: "https://images.unsplash.com/photo-1550966871-3ed3cdb51f3a?w=400&h=300&fit=crop", latitude: -34.6, longitude: -58.4 },
+      { productId: "cat-rest-ar-016", name: "Salvaje Bakery", note: "Casual bakery: homemade breads, sandwiches, pastries.", url: "https://www.salvajebakery.com.ar/", image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop", latitude: -34.59, longitude: -58.43 },
+      { productId: "cat-rest-ar-017", name: "Tanta", note: "Peruvian by Gastón Acurio in Buenos Aires.", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop", latitude: -34.586, longitude: -58.426 },
+    ],
+  },
+  hotels: {},
+  tourismRegions: [
+    {
+      name: "Argentina — National",
+      description: "Tourism Board section to be expanded as content is provided.",
+      links: [],
+      latitude: -34.6037,
+      longitude: -58.3816,
+    },
+  ],
+  documents: [],
+  mapCenter: { lat: -34.6037, lng: -58.3816, zoom: 4 },
+};
+
 /**
- * Stub destination portals (40 total with six curated: Greece, Italy, France, Japan, Africa, Caribbean).
+ * Stub destination portals (curated entries above: Greece, Italy, France, Japan, Africa, Caribbean, Argentina).
  * Replace rows from Claromentis export when `Claromentis_Destination_Data.xlsx` is wired into the build.
  */
 const OTHER_META: { slug: string; name: string; tagline: string }[] = [
   { slug: "antarctica", name: "Antarctica", tagline: "Expedition planning — content coming soon." },
   { slug: "arctic", name: "Arctic", tagline: "Polar journeys — content coming soon." },
-  { slug: "argentina", name: "Argentina", tagline: "Patagonia to Buenos Aires." },
   { slug: "australia", name: "Australia", tagline: "Coastal cities and Outback." },
   { slug: "austria", name: "Austria", tagline: "Alpine culture & cities — distinct from Switzerland." },
   { slug: "baltics", name: "The Baltics", tagline: "Estonia, Lithuania, Latvia." },
@@ -1322,7 +1244,7 @@ function buildStub(m: { slug: string; name: string; tagline: string }): Destinat
 const STUBS = OTHER_META.map(buildStub);
 
 const BY_SLUG: Record<string, Destination> = Object.fromEntries(
-  [GREECE, ITALY, FRANCE, JAPAN, AFRICA, CARIBBEAN, ...STUBS].map((d) => [d.slug, d]),
+  [GREECE, ITALY, FRANCE, JAPAN, AFRICA, CARIBBEAN, ARGENTINA, ...STUBS].map((d) => [d.slug, d]),
 );
 
 export function listDestinationSlugs(): string[] {

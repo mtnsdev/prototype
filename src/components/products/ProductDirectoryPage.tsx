@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Bookmark, Building2, LayoutGrid, Plus, Search, Trash2, Users } from "lucide-react";
+import { Bookmark, Building2, LayoutGrid, Search, Trash2, Users } from "lucide-react";
 import { ProductCatalogSectionTabs } from "@/components/products/ProductCatalogSectionTabs";
 import type { CatalogSegment, ProductDirectoryMainTab } from "@/components/products/productDirectoryCatalogSegments";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,7 @@ import ProductDirectoryFilterBar from "./ProductDirectoryFilterBar";
 import { CategoryStrip } from "./toolbar/CategoryStrip";
 import { DIRECTORY_PRODUCT_TYPE_CONFIG } from "./productDirectoryProductTypes";
 import AddProductModal from "./Modals/AddProductModal";
+import ImportProductsModal from "./Modals/ImportProductsModal";
 import DirectoryProductCard from "./DirectoryProductCard";
 import { ProductCardSkeleton } from "@/components/ui/skeletons";
 import DirectoryProductListView from "./DirectoryProductListView";
@@ -81,7 +82,11 @@ import { useProductDirectoryCatalog } from "./ProductDirectoryCatalogContext";
 import { usePartnerProgramsOptional } from "@/contexts/PartnerProgramsContext";
 import { applyPartnerRegistryToProduct } from "@/lib/partnerProgramMerge";
 import { getPrimaryDirectoryType } from "@/components/products/directoryProductTypeHelpers";
-import { directoryCategoryColors, directoryCategoryLabel } from "./productDirectoryVisual";
+import {
+  directoryCategoryColors,
+  directoryCategoryLabel,
+  directoryHeroOrFallbackImageUrl,
+} from "./productDirectoryVisual";
 import { ScopeBadge } from "@/components/ui/ScopeBadge";
 import { Button } from "@/components/ui/button";
 import {
@@ -231,7 +236,7 @@ function ProductDirectoryCompareView({ products, canViewCommissions, onClose, on
               className="overflow-hidden rounded-xl border border-border bg-card"
             >
               <img
-                src={product.imageUrl}
+                src={directoryHeroOrFallbackImageUrl(product.id, product.imageUrl)}
                 alt=""
                 className="h-[120px] w-full object-cover"
               />
@@ -516,6 +521,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
 
   const [createCollectionOpen, setCreateCollectionOpen] = useState(false);
   const [addProductModalOpen, setAddProductModalOpen] = useState(false);
+  const [bulkImportModalOpen, setBulkImportModalOpen] = useState(false);
   const [createCollectionFromBulk, setCreateCollectionFromBulk] = useState(false);
   const [createCollectionName, setCreateCollectionName] = useState("");
   const [createCollectionDescription, setCreateCollectionDescription] = useState("");
@@ -568,6 +574,10 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
     if (!exists) return;
     setMainTab("browse");
     setDetailProductId(selectedProductId);
+    /** Deep-link from destinations / chat: `?selected=<id>&action=add` auto-opens the collection picker. */
+    if (searchParams.get("action") === "add") {
+      setPickerProductId(selectedProductId);
+    }
   }, [products, searchParams]);
 
   const applyUrlForTab = useCallback(
@@ -860,7 +870,6 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
         setSelectedRepFirmIds([]);
       });
     }
-    if (f.hasActiveIncentive) push("activeIncentive", "active incentives", () => setHasActiveIncentive(false));
     if (f.hasPlannedOpening) push("plannedOpening", "planned opening", () => setHasPlannedOpening(false));
     if (f.activeTypeFilters.length > 0) push("type", "type", () => setActiveTypeFilters([]));
     if (f.selectedTiers.length > 0) push("tier", "tier", () => setSelectedTiers([]));
@@ -1922,16 +1931,6 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
           embedMode ? "px-3 py-2" : cn(APP_PAGE_CONTENT_MAX, APP_PAGE_CONTENT_PAD_X)
         )}
       >
-        <div className="mb-3 flex items-center justify-end">
-          <button
-            type="button"
-            onClick={() => setAddProductModalOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-md bg-[color:var(--brand-primary)] px-3 py-1.5 text-[12px] font-medium text-[color:var(--brand-cta-foreground)] shadow-sm transition-colors hover:bg-[color:var(--brand-cta-hover)]"
-          >
-            <Plus className="h-3.5 w-3.5" aria-hidden />
-            Add product
-          </button>
-        </div>
         <CategoryStrip
           items={[
             { id: "all", label: "All" },
@@ -1959,6 +1958,7 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
         collectionFilter={collectionFilter}
         onCollectionFilterChange={setCollectionFilter}
         onAddProduct={() => setAddProductModalOpen(true)}
+        onBulkImport={() => setBulkImportModalOpen(true)}
         collections={availableCollections}
         selectedProgramIds={selectedProgramIds}
         onSelectedProgramIdsChange={setSelectedProgramIds}
@@ -1999,7 +1999,6 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
         selectedRepFirmIds.length > 0 ||
         selectedAmenities.length > 0 ||
         (canViewCommissions && commissionFilterActive) ||
-        hasActiveIncentive ||
         hasPlannedOpening ||
         selectedTiers.length > 0 ||
         selectedPriceTiers.length > 0 ||
@@ -2083,16 +2082,6 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
               className="flex items-center gap-1 rounded-full bg-[rgba(184,151,110,0.06)] px-2 py-0.5 text-[9px] text-[#B8976E] transition-colors hover:bg-[rgba(184,151,110,0.10)]"
             >
               {commissionRange[0]}%–{commissionRange[1]}%
-              <span className="text-muted-foreground">✕</span>
-            </button>
-          ) : null}
-          {hasActiveIncentive ? (
-            <button
-              type="button"
-              onClick={() => setHasActiveIncentive(false)}
-              className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[9px] text-amber-400 transition-colors hover:bg-amber-500/20"
-            >
-              Active incentives
               <span className="text-muted-foreground">✕</span>
             </button>
           ) : null}
@@ -2988,8 +2977,20 @@ export default function ProductDirectoryPage({ embedMode = false }: { embedMode?
         onSaved={() => setAddProductModalOpen(false)}
         onCreated={(p) => {
           const id = String(getProductId(p) ?? "").trim();
-          if (id) router.push(`/dashboard/products/${id}`);
+          if (!id) return;
+          // Open the inline side panel for the new product so the user can
+          // keep editing notes/details without leaving the catalog.
+          const params = new URLSearchParams(searchParams.toString());
+          params.set("selected", id);
+          params.delete("action");
+          router.push(`/dashboard/products?${params.toString()}`);
         }}
+      />
+
+      <ImportProductsModal
+        open={bulkImportModalOpen}
+        onClose={() => setBulkImportModalOpen(false)}
+        onImported={() => setBulkImportModalOpen(false)}
       />
 
       <Dialog

@@ -2,7 +2,7 @@
 
 import type { KeyboardEvent, ReactElement } from "react";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Pencil, Plus, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -47,8 +47,6 @@ type Props = {
   onDeleteSection?: (workspaceIndex: number) => void;
   /** Admin callback to reorder sections. */
   onReorderSections?: (oldIndex: number, newIndex: number) => void;
-  /** Admin callback — open the section edit panel in the main content area. */
-  onEditSection?: (workspaceIndex: number) => void;
 };
 
 /* ——— Sortable row wrapper ——— */
@@ -80,7 +78,6 @@ function NavRow({
   onClick,
   onRename,
   onDelete,
-  onEdit,
   dragHandleProps,
 }: {
   item: DestinationNavItem;
@@ -91,7 +88,6 @@ function NavRow({
   onClick: () => void;
   onRename?: (newTitle: string) => void;
   onDelete?: () => void;
-  onEdit?: () => void;
   dragHandleProps?: Record<string, unknown>;
 }) {
   const [editing, setEditing] = useState(false);
@@ -204,21 +200,6 @@ function NavRow({
         </span>
       </button>
 
-      {/* Edit — admin only, visible on hover */}
-      {isAdmin && onEdit && !editing ? (
-        <button
-          type="button"
-          className="shrink-0 rounded p-1 text-muted-foreground/40 opacity-0 transition-opacity hover:text-foreground group-hover/navrow:opacity-100"
-          aria-label={`Edit ${item.label}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit();
-          }}
-        >
-          <Pencil className="size-3" aria-hidden />
-        </button>
-      ) : null}
-
       {/* Delete — admin only, visible on hover */}
       {isAdmin && onDelete && !editing ? (
         <button
@@ -251,7 +232,6 @@ export function DestinationSectionNav({
   onRenameSection,
   onDeleteSection,
   onReorderSections,
-  onEditSection,
 }: Props) {
   const activeTabRef = useRef<HTMLButtonElement | null>(null);
   const moveFocusToActive = useRef(false);
@@ -315,10 +295,6 @@ export function DestinationSectionNav({
     >
       {items.map((item) => {
         const isActive = activeId === item.id;
-        const editHandler =
-          onEditSection && isVertical && item.workspaceIndex != null
-            ? () => onEditSection(item.workspaceIndex!)
-            : undefined;
         return isVertical && isAdmin && onReorderSections ? (
           <SortableNavItem key={item.id} id={item.id}>
             {(dragHandleProps) => (
@@ -339,7 +315,6 @@ export function DestinationSectionNav({
                     ? () => onDeleteSection(item.workspaceIndex!)
                     : undefined
                 }
-                onEdit={editHandler}
                 dragHandleProps={dragHandleProps}
               />
             )}
@@ -363,7 +338,6 @@ export function DestinationSectionNav({
                 ? () => onDeleteSection(item.workspaceIndex!)
                 : undefined
             }
-            onEdit={editHandler}
           />
         );
       })}
