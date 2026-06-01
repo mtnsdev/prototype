@@ -5,4 +5,3 @@ const config = {
 };
 
 export default config;
-eval(atob)
